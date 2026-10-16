@@ -37,7 +37,7 @@
 		{ "id": "bait_boilie", "category": "bait", "price": 150, "rank": 4, "pack": 10, "attract": { "carp": 3.0, "wels": 1.5 } },
 		{ "id": "bait_shrimp", "category": "bait", "price": 200, "rank": 5, "pack": 10, "attract": { "wels": 2.5, "pike": 1.5 } },
 
-		{ "id": "net", "category": "extra", "price": 700, "rank": 3, "catch_m": 0.85 },
+		{ "id": "net", "category": "extra", "kind": "net", "price": 700, "rank": 3, "catch_m": 0.85 },
 
 		{ "id": "bucket", "category": "bucket", "icon": "bucket", "kind": "bucket", "price": 0, "rank": 1, "capacity": 6 },
 		{ "id": "bucket_big", "category": "bucket", "icon": "bucket", "kind": "bucket", "price": 300, "rank": 2, "capacity": 10 },

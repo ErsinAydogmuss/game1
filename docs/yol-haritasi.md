@@ -60,7 +60,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 - [x] Para, kova, rütbe, oranlar ve şans garantisi (`Economy`, `Bucket`, `Rank`, `CatchOdds`); kayıt v2 ve göç testi.
 - [x] HUD'da para, kova ve rütbe.
 - [x] Nine ve dükkân binası: KayKit Mage'den Nine (yazma, önlük, gözlük), kodla ahşap dükkân; dokununca selam.
-- [ ] Dükkân paneli, takım çantası, kova ve satış.
+- [x] Dükkân paneli (sekmeler, kartlar, al ve tak, rütbe kilidi), kova ve satış; `shop` bot senaryosu. Takım çantası teknik düğmesiyle Dalga 3'te.
 - [ ] Nadirliğin gölgede ve kartta görünmesi.
 - [ ] Balık Defteri (sayfalı ızgara; oranlar için kaydırmalı metin).
 - [ ] Denge botu ve korkuluk testleri; oran kataloğu; `shop` senaryosu.

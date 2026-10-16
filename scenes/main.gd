@@ -51,6 +51,7 @@ var input: InputRouter
 var hud: Hud
 var card: FishCard
 var settings_panel: SettingsPanel
+var shop_panel: ShopPanel
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
 var bot_camera: bool = false
 
@@ -72,9 +73,9 @@ var _hint_shown: String = ""
 var _line: String = ""
 var _line_time: float = 0.0
 var _line_speaker: String = "dede"
-## Dede'nin son öğüdünün ve Nine'nin son selamının sırası.
+## Dede'nin son öğüdünün ve Nine'nin son uğurlama sözünün sırası.
 var _tip_index: int = 0
-var _hello_index: int = 0
+var _nine_index: int = 0
 
 
 func _ready() -> void:
@@ -427,6 +428,7 @@ func _on_catch() -> void:
 	session.set_pity_floor(CatchOdds.pity_floor(db, save))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir).
+	var was_full := Bucket.is_full(db, save)
 	var kept := Bucket.add(db, save, fish_id, size_cm, stars)
 	if not kept:
 		_release(fish_id, rarity)
@@ -437,9 +439,9 @@ func _on_catch() -> void:
 		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT)
 	if not kept:
 		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT)
-		if not bool(save.flags.get("bucket_full_told", false)):
-			save.flags["bucket_full_told"] = true
-			_say("UI_DEDE_BUCKET")
+	elif Bucket.is_full(db, save) and not was_full:
+		# Kova bu balıkla doldu: Dede hatırlatır (Nine'ye sat ki yenileri de sığsın).
+		_say("UI_DEDE_BUCKET")
 	bobber.hide_bobber()
 	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)
 	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
@@ -689,14 +691,34 @@ func _on_talk() -> void:
 
 
 ## Nine'ye ya da dükkânına dokunuldu: Nine selam verir (balon, baş sallama, tezgâha uzanma) ve
-## sıradaki sözünü söyler. Dükkân paneli sonraki adımda bağlanır.
+## dükkân açılır (kova doluysa Kova sekmesi). Olta suda değilken açılır: oturum zaten boşta.
 func _on_shop() -> void:
 	if session.state != FishingSession.State.IDLE or card.visible:
 		return
-	_hello_index = _hello_index % Nine.HELLO_COUNT + 1
-	_say(Nine.HELLO_KEY % _hello_index, "nine")
 	nine.greet()
 	Sounds.haptic(10)
+	angler.stop()
+	_pending_cast = Dice.NO_POINT
+	input.release_all()
+	shop_panel.open_shop()
+
+
+## Dükkân kapandı: Nine uğurlar (ipucu çubuğunda, sırayla uğurlama ve öğüt sözleri).
+func _on_shop_closed() -> void:
+	_nine_index = _nine_index % Nine.LINE_COUNT + 1
+	_say(Nine.LINE_KEY % _nine_index, "nine")
+
+
+## Takım değişti (dükkânda satın alma ya da kuşanma): oturumun takımı ve oranları yenilenir.
+func _on_gear_changed() -> void:
+	session.set_gear(Economy.gear_for(GameState.db, GameState.save))
+	_refresh_status()
+
+
+## Kova satıldı: para göstergesi ve Nine'nin sevinci.
+func _on_sold(_coins: int) -> void:
+	_refresh_status()
+	nine.cheer()
 
 
 ## İpucu çubuğundaki Dede ve Nine yüzleri: Ersin'in portresi yoksa modelden çekilir (birkaç kare
@@ -706,10 +728,12 @@ func _load_faces() -> void:
 		var face := await ElderBody.portrait(self, 192)
 		if face != null:
 			hud.set_portrait(face)
-	if ItemArt.portrait("nine_smile") == null:
-		var face := await NineBody.portrait(self, 192)
-		if face != null:
-			hud.set_portrait(face, "nine")
+	var nine_face := ItemArt.portrait("nine_smile")
+	if nine_face == null:
+		nine_face = await NineBody.portrait(self, 192)
+		if nine_face != null:
+			hud.set_portrait(nine_face, "nine")
+	shop_panel.set_face(nine_face)
 
 
 # --- Arayüz ----------------------------------------------------------------------
@@ -725,6 +749,11 @@ func _build_ui() -> void:
 	card.closed.connect(func() -> void: session.acknowledge())
 	settings_panel = SettingsPanel.new()
 	layer.add_child(settings_panel)
+	shop_panel = ShopPanel.new()
+	layer.add_child(shop_panel)
+	shop_panel.gear_changed.connect(_on_gear_changed)
+	shop_panel.sold.connect(_on_sold)
+	shop_panel.closed.connect(_on_shop_closed)
 	hud.settings_pressed.connect(func() -> void:
 		input.release_all()
 		session.release()

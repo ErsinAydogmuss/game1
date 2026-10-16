@@ -582,6 +582,47 @@ def amb_lake():
     return finish(loop_seam(x, 3.0), -7.0, 0.0)
 
 
+# --- Dükkân ----------------------------------------------------------------------------
+
+def coin_clink(freq, n, seed):
+    """Tek bir madeni paranın çınlaması: uyumsuz kısmi tonlar, hızlı sönüm."""
+    x = partials(freq, n, [(1.0, 1.0, 0.18), (2.76, 0.6, 0.12), (5.4, 0.35, 0.07), (8.93, 0.2, 0.04)], seed)
+    x += 0.15 * unit(band(noise(n, seed), 4000, 11000)) * env_exp(n, 0.004)
+    return x * np.clip(tl(n) / 0.001, 0, 1)
+
+
+def coins():
+    """Satış: tezgâha dökülen paralar (birkaç çınlama), sonda kısa bir çelesta."""
+    n = frames(1.0)
+    out = np.zeros(n)
+    r = rng(601)
+    at = 0.0
+    for k in range(7):
+        place(out, coin_clink(r.uniform(2400, 3600), frames(0.35), 610 + k) * r.uniform(0.5, 1.0), frames(at))
+        at += r.uniform(0.04, 0.09)
+    out = unit(out) * 0.7 + 0.45 * unit(arpeggio([88, 91, 96], 0.06, n, 0.8, 0.4))
+    return finish(out + 0.2 * reverb(out, 0.7)[:n], -1.0, 0.1)
+
+
+def buy():
+    """Satın alma: tezgâh zili (iki vuruş) ve bir para çınlaması."""
+    n = frames(0.9)
+    bell = partials(midi(88), n, [(1.0, 1.0, 0.5), (2.0, 0.4, 0.3), (2.98, 0.25, 0.2), (4.1, 0.12, 0.1)], 620)
+    place(bell, partials(midi(93), n, [(1.0, 1.0, 0.45), (2.0, 0.35, 0.25), (3.0, 0.2, 0.15)], 621), frames(0.09))
+    out = 0.6 * unit(bell)
+    place(out, 0.4 * unit(coin_clink(3100, frames(0.3), 622)), frames(0.02))
+    return finish(out + 0.25 * reverb(out, 0.8)[:n], -1.0, 0.1)
+
+
+def equip():
+    """Kuşanma: takımın yerine oturan kısa tahta vuruşu ve metal tıkırtısı."""
+    n = frames(0.18)
+    out = 0.7 * unit(thump(240, n, 0.03, 0.4)) + 0.45 * unit(band(noise(n, 630), 2500, 8000)) * env_exp(n, 0.006)
+    m = frames(0.05)
+    place(out, 0.35 * unit(band(noise(m, 631), 3000, 9000)) * env_exp(m, 0.004), frames(0.06))
+    return finish(out, -1.0, 0.01)
+
+
 # --- Liste ve çalıştırma ----------------------------------------------------------------
 
 def registry():
@@ -601,7 +642,7 @@ def registry():
         "bite_1": bite, "hook_1": hook, "warn_1": warn, "snap_1": snap, "escape_1": escape,
         "scare_1": scare, "reel_in_1": reel_in, "record_1": record, "error_1": lambda: buzz([50], 0.16),
         "panel_open_1": lambda: panel(True), "panel_close_1": lambda: panel(False), "card_1": card,
-        "hint_1": tutorial,
+        "hint_1": tutorial, "coins_1": coins, "buy_1": buy, "equip_1": equip,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

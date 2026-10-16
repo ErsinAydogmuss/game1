@@ -319,6 +319,10 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - Her eşyada en çok 2 değer, çubukla gösterilir; şimdiki takımla karşılaştırılır.
   - Rütbe kilidi var.
   - Sade tutulur: araştırmada en çok "seçenek kalabalığı" eleştirildi.
+  - ✅ Dalga 1'deki hâli: Nine'ye ya da dükkâna dokununca açılır (kovada balık varsa Kova sekmesi, yoksa en son bakılan sekme). Üstte Nine'nin yüzü ve sözü ("Hoş geldin evladım!", "Güle güle kullan!", "Paran biraz eksik...", "Rütbe 4 olunca gel!", "Eline sağlık!") ve para. Sekmeler: Kova, Kamış, Makara, Misina, İğne (iğne ve şamandıra), Yem, Ekstra (kepçe ve kovalar). Her sekmede en çok 6 kart (3×2), kaydırma yok.
+  - ✅ Kart: ikon (Ersin'in ekipman görseli gelene kadar kodla çizilir), ad, kısa açıklama, değer çubukları (koyu çizgi kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf; menzil ve kova kapasitesinin sayısı da yazar) ve tek düğme: fiyat (al ve tak), TAK, TAKILI, SENDE ya da kilitli rütbe. Para yetmeyen ya da rütbesi tutmayan düğme gri kalır ama basılınca Nine nedenini söyler (kilit sessiz kalmaz). Kuşanılan kartın kenarı yeşil.
+  - ✅ Yem kartında hangi balığı ne kadar çektiği (×1,8 gibi), elindeki sayı ve paket boyu. Takılı yem yeniden alınabilir.
+  - ✅ Sesler: satın almada tezgâh zili, kuşanmada tıkırtı, satışta para şıkırtısı; her birinin titreşimi ve Nine'nin sözü var.
 
 | Kategori | Ne yapar | Kademe |
 |---|---|---|
@@ -331,10 +335,10 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | Şamandıra | hassasiyet (VUR süresi +), görünürlük | 3 |
 | Ekstra | kepçe (son anda bir kaçışı kurtarır), sehpa + zil, sandal, tuzak, fener (gece), kova kapasitesi | — |
 
-- **Takım çantası:** her teknik için kuşanılmış bir set; teknik düğmesiyle geçilir.
+- **Takım çantası:** her teknik için kuşanılmış bir set; teknik düğmesiyle geçilir. Dalga 1'de tek teknik (şamandıra) olduğundan kuşanma dükkânda yapılır; çanta teknik düğmesiyle Dalga 3'te gelir.
 - **Kova ve satış:**
-  - Tutulan balık kovaya girer; dükkânda "hepsini sat" yapılır (Kazı'nın sırt çantası düzeni).
-  - Kova dolunca Dede uyarır; kova kapasitesi dükkândan büyür.
+  - Tutulan balık kovaya girer; dükkânda "hepsini sat" yapılır (Kazı'nın sırt çantası düzeni). ✅ Kova sekmesinde tür başına bir satır (sayı, değer), altta toplam ve HEPSİNİ SAT.
+  - Kova dolunca Dede uyarır ✅ (kova her dolduğunda; dolu kovaya gelen balık göle döner ve bildirim çıkar); kova kapasitesi dükkândan büyür.
   - Her türün en iyisi akvaryuma konabilir (§10.6).
 - **Bırakma:** bırakılan balık para vermez; göl sevgisi ve rütbe puanı verir.
 - **Para:** yalnızca oynayarak kazanılır, gerçek parayla asla satılmaz. Bu yüzden oranı değiştiren yem ve yapay yem satılabilir (§11).

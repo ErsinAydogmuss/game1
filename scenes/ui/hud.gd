@@ -56,6 +56,9 @@ var _toast: Label
 var _toast_age: float = -1.0
 ## Sırası gelince gösterilecek bildirimler: [metin, renk] (ör. rütbe atlama, kova dolu).
 var _toast_queue: Array[Array] = []
+## Açılıştan sonra kare başına bir tane çizilecek düğme dokuları (panellerin renkleri: dükkân,
+## ayarlar). Hepsi açılışta çizilse açılış uzar; ilk açılan panelde çizilse panel takılır.
+var _warm_later: Array[Array] = []
 var _action_kind: String = "-"
 var _clock: float = 0.0
 var _fps_clock: float = 0.0
@@ -66,6 +69,12 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	warm_styles()
+	# Paneldeki düğme renkleri (UiKit.style_button'ın dört hâli): sonraki karelerde birer birer.
+	for color: Color in [UiKit.SECONDARY, UiKit.NEUTRAL]:
+		_warm_later.append([color, false])
+		_warm_later.append([color.lightened(0.06), false])
+		_warm_later.append([color, true])
+		_warm_later.append([color.lerp(Color("#8c8f9e"), 0.7), false])
 	_build_top()
 	_build_bottom()
 	_build_center()
@@ -76,6 +85,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_clock += delta
+	if not _warm_later.is_empty():
+		var job: Array = _warm_later.pop_front()
+		UiKit.glossy(job[0], bool(job[1]))
 	if _fps.visible:
 		_fps_clock += delta
 		if _fps_clock >= FPS_INTERVAL:

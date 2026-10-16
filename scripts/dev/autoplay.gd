@@ -15,6 +15,8 @@ extends Node
 ##   hero: balıkçı, Dede ve Nine yakın çekim (kamerayı bot sürer): Dede konuşur, ikisi, dükkân,
 ##     Nine selam verir, atış, bekleme, çekme, balığı gösterme, Dede sevinir.
 ##   fish: beş balık elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez).
+##   shop: Nine'nin dükkânı (KONTROL satırları): dokununca açılır, para yetmezse ve rütbe tutmazsa
+##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, hepsini sat; sekme görüntüleri.
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~40 sn): Dede'ye dokun, gölgenin önüne at,
 ##     VUR, çekişme (bot uyarıda bırakır), ilk balık ve kartı; sonra nadir bir turna (ışık sütunu).
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
@@ -63,6 +65,8 @@ func _ready() -> void:
 			_play_fish.call_deferred()
 		"video":
 			_play_video.call_deferred()
+		"shop":
+			_play_shop.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -81,12 +85,17 @@ func _play_controls() -> void:
 	await _wait_frames(2)
 	_check("Dede'ye dokun → konuşur", str(main.get("_hint_shown")) == Elder.TIP_KEY % 1
 			and elder.bubble.is_showing() and not angler.is_walking())
-	# 0b) Nine'ye dokun: selam verir (sözü ipucu çubuğunda Nine'nin yüzüyle, balon); balıkçı yürümez.
+	# 0b) Nine'ye dokun: selam verir ve dükkân açılır; balıkçı yürümez. Kapatınca Nine uğurlar
+	# (sözü ipucu çubuğunda Nine'nin yüzüyle).
 	var nine := _nine()
+	var shop: ShopPanel = main.get("shop_panel")
 	await _tap(_screen(nine.head_point()))
-	await _wait_frames(2)
-	_check("Nine'ye dokun → selam verir", str(main.get("_hint_shown")) == Nine.HELLO_KEY % 1
-			and _hud().hint_speaker() == "nine" and nine.bubble.is_showing() and not angler.is_walking())
+	await _wait_frames(3)
+	var opened := shop.visible and nine.bubble.is_showing() and not angler.is_walking()
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	_check("Nine'ye dokun → dükkân açılır, kapanınca uğurlar", opened and not shop.visible
+			and str(main.get("_hint_shown")) == Nine.LINE_KEY % 1 and _hud().hint_speaker() == "nine")
 	# 1) Suyun öbür yanındaki karaya dokun: iskelenin kenarında (kıyıda) durmalı.
 	var across := Vector2(5.0, 7.0)
 	await _tap_world(across)
@@ -260,7 +269,8 @@ func _play_hero() -> void:
 	await _shot("02b_dukkan")
 	_frame_on(nine.head_point() + Vector3(0.0, -0.3, 0.0), 0.3)
 	await _wait_frames(2)
-	await _tap(_screen(nine.head_point()))
+	# Dokunmak dükkânı açar (shop senaryosu); burada yalnızca selam.
+	nine.greet()
 	await _wait(0.6)
 	await _shot("02c_nine_selam")
 	# Atış normal görünümde (dokunulan su ekranda olsun), sonra yakına.
@@ -290,6 +300,153 @@ func _play_hero() -> void:
 	await _wait_frames(2)
 	await _shot("07_dede_sevinir")
 	_quit()
+
+
+## Nine'nin dükkânı: Nine'ye dokun → dükkân açılır; parası yetmeyince satın alınmaz; satın al →
+## kuşanılır ve oturumun takımı değişir; eskisini yeniden kuşan; rütbe kilidi; yem al ve tak; kova
+## dolunca Dede uyarır; hepsini sat → para; kapatınca Nine uğurlar. Her sekmenin ekran görüntüsü.
+func _play_shop() -> void:
+	_use_save(3)
+	var db := GameState.db
+	var save := GameState.save
+	var angler := _angler()
+	var nine := _nine()
+	var shop: ShopPanel = main.get("shop_panel")
+	await _wait(1.5)
+	# 1) Nine'ye dokun: dükkân açılır (kova boş: Kamış sekmesi).
+	await _tap(_screen(nine.head_point()))
+	await _wait_frames(3)
+	_check("Nine'ye dokun → dükkân açılır", shop.visible and nine.bubble.is_showing() and not angler.is_walking()
+			and shop.current_tab() == "rod")
+	await _wait(0.4)
+	await _shot("01_kamis")
+	# 2) Para yetmezken satın alma olmaz; Nine söyler.
+	await _tap_control(shop.find_child("Tab_reel", true, false))
+	await _wait_frames(2)
+	await _shot("02_makara")
+	var smooth := "reel_smooth"
+	await _tap_card(shop, smooth, -1)
+	_check("parası yetmeyince satın alınmaz", save.coins == 0 and not Economy.owns(db, save, smooth)
+			and str(shop.get("_line_key")) == "UI_NINE_NO_COINS")
+	# 3) Para ver (bot); satın al → kuşanılır, oturumun takımı değişir.
+	save.coins = 1000
+	shop.refresh()
+	await _wait_frames(2)
+	await _tap_card(shop, smooth, -1)
+	await _wait_frames(2)
+	_check("satın al → kuşanılır", Economy.owns(db, save, smooth) and Economy.equipped(db, save, "reel") == smooth
+			and save.coins == 1000 - int(db.gear_item(smooth)["price"])
+			and is_equal_approx(_session().gear.reel_speed, float(db.gear_item(smooth)["reel_speed"])))
+	await _wait(0.3)
+	await _shot("03_satin_alindi")
+	# 4) Eski makarayı yeniden kuşan.
+	await _tap_card(shop, "reel_basic", 0)
+	await _wait_frames(2)
+	_check("kuşan → eski makara takılır", Economy.equipped(db, save, "reel") == "reel_basic"
+			and is_equal_approx(_session().gear.reel_speed, float(db.gear_item("reel_basic")["reel_speed"])))
+	# 5) Rütbe kilidi: cam kamış rütbe 2 ister.
+	await _tap_control(shop.find_child("Tab_rod", true, false))
+	await _wait_frames(2)
+	var coins := save.coins
+	await _tap_card(shop, "rod_float_glass", -1)
+	_check("rütbe kilidi → satın alınmaz", save.coins == coins and not Economy.owns(db, save, "rod_float_glass")
+			and str(shop.get("_line_key")) == "UI_NINE_RANK")
+	await _wait(0.3)
+	await _shot("04_kamis_kilit")
+	# 6) Yem: kurtçuk al (20 adet) ve tak; oturumun yem çekimi değişir.
+	await _tap_control(shop.find_child("Tab_bait", true, false))
+	await _wait_frames(2)
+	await _tap_card(shop, "bait_maggot", -1)
+	await _wait_frames(2)
+	_check("yem al → takılır", int(save.baits.get("bait_maggot", 0)) == 20 and Economy.equipped(db, save, "bait") == "bait_maggot"
+			and _session().gear.attraction("rudd") > 1.0)
+	await _wait(0.3)
+	await _shot("05_yem")
+	_check_panel_buttons(shop, "dükkân düğmeleri")
+	for tab in ["line", "tackle", "extra"]:
+		await _tap_control(shop.find_child("Tab_" + tab, true, false))
+		await _wait(0.3)
+		await _shot("06_%s" % tab)
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	_check("kapanınca Nine uğurlar", not shop.visible and _hud().hint_speaker() == "nine")
+	# 7) Kovada bir yer kala bir balık tut: kova dolar, Dede uyarır. Kızılkanat önceden büyük bir
+	# rekorla defterde: yeni tür ya da rekor kartı açılmasın.
+	Records.add(save.records, "rudd", 999, 3, 0)
+	var fill: Array[String] = ["rudd", "carp", "perch"]
+	for i in Bucket.capacity(db, save) - 1:
+		Bucket.add(db, save, fill[i % fill.size()], 20 + i * 3, 1)
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "rudd")
+	await _tap_world(Vector2(1.0, -1.0))
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait_state(FishingSession.State.CAUGHT, 25.0)
+	_touch(1, Vector2(260, 520), false)
+	await _wait_frames(3)
+	_check("kova dolunca Dede uyarır", Bucket.is_full(db, save) and str(main.get("_hint_shown")) == "UI_DEDE_BUCKET")
+	await _wait(0.3)
+	await _shot("07a_kova_doldu")
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	# 8) Nine'ye dokun: kova dolu, Kova sekmesi açılır; hepsini sat → para.
+	await _tap(_screen(nine.head_point()))
+	await _wait_frames(3)
+	await _wait(0.4)
+	await _shot("07_kova_dolu")
+	var value := Economy.bucket_value(db, save)
+	coins = save.coins
+	_check("kova doluyken Kova sekmesi açılır", shop.visible and shop.current_tab() == "sell" and value > 0)
+	await _tap_control(shop.find_child("SellAll", true, false))
+	await _wait_frames(3)
+	_check("hepsini sat → para", save.bucket.is_empty() and save.coins == coins + value
+			and str(shop.get("_line_key")) == "UI_NINE_SOLD")
+	await _wait(0.4)
+	await _shot("08_satildi")
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Bir paneldeki bütün düğmeler en az 122 birim ve güvenli alanın içinde mi? (Telefon oranında
+## çalıştır: 16:9 ve çentik payıyla panel ekrana sığmak için küçülür.)
+func _check_panel_buttons(panel: Control, label: String) -> void:
+	var view := get_viewport().get_visible_rect()
+	var inset := UiKit.safe_insets(panel)
+	var safe := Rect2(view.position + Vector2(inset.x, inset.y), view.size - Vector2(inset.x + inset.z, inset.y + inset.w))
+	var notes := PackedStringArray()
+	var count := 0
+	for node in panel.find_children("*", "BaseButton", true, false):
+		var b := node as BaseButton
+		if not b.is_visible_in_tree():
+			continue
+		count += 1
+		var r := b.get_global_rect()
+		if minf(r.size.x, r.size.y) < 121.5:
+			notes.append("%s küçük %s" % [b.name, str(r.size)])
+		if not safe.encloses(r):
+			notes.append("%s güvenli alan dışında" % b.name)
+	_check("%s büyük ve güvenli alanda (%d düğme)%s" % [label, count, "" if notes.is_empty() else ": " + ", ".join(notes)],
+			notes.is_empty() and count > 0)
+
+
+## Bir kontrolün ortasına dokunur.
+func _tap_control(control: Control) -> void:
+	await _tap(control.get_global_rect().get_center())
+
+
+## Dükkânda bir kartın düğmesine dokunur (which: sıra; -1 sonuncusu, ör. fiyat).
+func _tap_card(shop: ShopPanel, id: String, which: int) -> void:
+	var card := shop.find_child("Card_" + id, true, false)
+	if card == null:
+		_results.append("kart yok: " + id)
+		return
+	var buttons := card.find_children("*", "Button", true, false)
+	if buttons.is_empty():
+		_results.append("kartta düğme yok: " + id)
+		return
+	await _tap_control(buttons[which] as Control)
 
 
 ## Beş balık: elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları işlemez.

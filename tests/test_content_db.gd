@@ -95,6 +95,12 @@ func test_rarity_lookups() -> void:
 	assert_true(db.rarity_def(99).is_empty(), "olmayan sıra boş döner")
 
 
+## Takımın görseli yokken kodla çizilen ikonu var (dükkânda boş kart kalmasın).
+func test_gear_kinds_are_drawable() -> void:
+	for g in content().gear:
+		assert_true(str(g["kind"]) in GameIcon.DRAWN, "%s: kodla çizilen ikon yok (kind %s)" % [g["id"], g["kind"]])
+
+
 func test_every_content_id_has_translations() -> void:
 	var db := content()
 	var table := _read_translations()
@@ -113,8 +119,8 @@ func test_every_content_id_has_translations() -> void:
 		keys.append("SPOT_" + str(s["id"]))
 	for i in range(1, Elder.TIP_COUNT + 1):
 		keys.append(Elder.TIP_KEY % i)
-	for i in range(1, Nine.HELLO_COUNT + 1):
-		keys.append(Nine.HELLO_KEY % i)
+	for i in range(1, Nine.LINE_COUNT + 1):
+		keys.append(Nine.LINE_KEY % i)
 	for key in keys:
 		assert_true(table.has(key), "çeviri anahtarı eksik: " + key)
 		if table.has(key):

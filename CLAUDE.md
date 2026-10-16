@@ -75,7 +75,8 @@ Bot senaryoları (`scripts/dev/autoplay.gd`; gerçek dokunma olayları gönderir
 xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl3 --audio-driver Dummy \
   --resolution 1280x720 --fixed-fps 30 -- --autoplay --scenario=controls --locale=tr --safe-inset=130 --shots=/mutlak/yol
 # senaryolar: controls (KONTROL satırlarının hepsi TAMAM olmalı), first (ilk açılış, senaryolu ilk balık),
-#   hero (balıkçı ve Dede yakın çekim), fish (5 balık elde ve kartlarıyla), video (tanıtım; aşağıda)
+#   hero (balıkçı, Dede ve Nine yakın çekim), fish (5 balık elde ve kartlarıyla), video (tanıtım; aşağıda),
+#   shop (Nine'nin dükkânı; telefon oranında çalıştır: --resolution 1560x720)
 # --safe-inset: çentiği taklit eder (sol, sağ ve alt pay); düğmelerin güvenli alanda olduğu denetlenir
 ```
 
@@ -124,7 +125,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
   - ✅ `player/nine.gd` (`Nine` < `Villager`, Dede'nin eşi): dükkânın tezgâhının arkasında ayakta (`stand`), yaklaşan balıkçıya bakar (`watch`), dokununca selam verir (`greet`). Görünüm `NineBody` (KayKit Mage: boyanmış doku, kodla mavi çiçekli yazma, puantiyeli önlük, gözlük; Idle, üst gövdeden Interact ve Cheer; `portrait()`) ya da yedek `ToyNine`. `CharacterKit`: karakterlerin ortak yardımcıları (giydirme, dış çizgi, döngü, üst gövde süzgeçli tek seferlik animasyon, kemik yuvası).
   - ✅ `world/fish_mesh.gd` (`FishMesh`): kodla balık (halkalı gövde, çatal kuyruk, yüzgeçler, gözler, bıyık; köşe renkleri). `fish.gdshader` + `fish_outline.gdshader` kuyruk kıvrılmasını `fish_bend.gdshaderinc`'ten paylaşır. `display_length()`: elde gösterilen boy.
   - ✅ `fx/`: `Ripples` (su halkaları), `CatchFx` (tutulan balık balıkçının önünde, yükselen adı ve boyu, nadirde ışık sütunu), `PortraitStudio` (bir 3B nesneyi saydam SubViewport'ta çizip resim yapar), `FishPortrait` (açılışta her balığın resmi → `ItemArt`).
-  - ✅ `ui/`: `UiKit` (stil, fontlar, `upper()`, `safe_insets()`), `Dialog` (panellerin tabanı), `Hud` (eylem düğmesi, gerilim çubuğu `TensionBar`, bildirim, ipucu çubuğu ve konuşanın yüzü: `set_portrait(resim, "dede" | "nine")`, `show_hint(anahtar, konuşan)`), `FishCard` (balık kartı), `SettingsPanel`, `TouchButton`, `GameIcon` (kodla çizilen ikonlar), `ItemArt` (görsellere tek giriş), `SpeechBubble` (köylülerin 2B konuşma balonu).
+  - ✅ `ui/`: `UiKit` (stil, fontlar, `upper()`, `safe_insets()`), `Dialog` (panellerin tabanı; ekrana sığmazsa küçülür `fit_scale`), `Hud` (eylem düğmesi, gerilim çubuğu `TensionBar`, bildirim, ipucu çubuğu ve konuşanın yüzü: `set_portrait(resim, "dede" | "nine")`, `show_hint(anahtar, konuşan)`), `FishCard` (balık kartı), `SettingsPanel`, `ShopPanel` (Nine'nin dükkânı: sekmeler, 3×2 kart, değer çubukları, al ve tak, rütbe kilidi, kova ve satış; `gear_changed`, `sold`), `TouchButton`, `GameIcon` (kodla çizilen ikonlar; `DRAWN` listesi, bilinmeyen ad soru işareti), `ItemArt` (görsellere tek giriş; takım resimleri `gear()`), `SpeechBubble` (köylülerin 2B konuşma balonu).
 - `data/*.json`: içerik. `localization/strings.csv`: `keys,en,tr`.
 - `assets/`: `fonts/`, `icons/ui/` (Kazı'nın genel ikonları; Ersin'in görselleri gelince değişir), `audio/` (`tools/make_sounds.py` üretir), `incoming/` (Ersin'in ham görselleri; `.gdignore`'lu).
 - `tests/`: `run_tests.gd` (koşucu), `base_test.gd`, `test_*.gd`. Test metotları `test_` ile başlar.
@@ -197,4 +198,5 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - Kıyı çizgisinde arazi suyun biraz altındadır (`SHORE_DIP`): görünen kıyı, ağın üçgenleri değil, suyun pürüzsüz kenarıdır.
 - Bot çıkmadan önce `Sounds.stop_all()` çağırıp birkaç kare bekler; yoksa çalan ogg için çıkışta "resources still in use" hatası çıkar.
 - `FishingSession.advance` bir karede en fazla 0,5 sn işler: testlerde uzun süreyi parça parça ilerlet.
+- Luckiest Guy'da büyük harflerin üstündeki nokta ve şapkalar (İ, Ü, Ğ, Â) satır kutusunun dışına taşar: Label'da `clip_text` onları keser ("KUCUK IGNE"). Uzun adlarda `text_overrun_behavior` (…) ya da küçük yazı kullan.
 - Luckiest Guy ve Baloo 2 Türkçe karakterleri destekler. Yeni font seçilirse ğ, ş, ı, İ kontrol edilmeli. Varsayılan fontta ★ ve ok işaretleri yok.

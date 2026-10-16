@@ -6,9 +6,10 @@ extends Villager
 ## Konuşma, bakış, balon ve dokunma Villager'da.
 ## Görünüm NineBody (KayKit Mage) ya da yedek ToyNine; ikisi aynı arayüzü taşır.
 
-## Dokununca sırayla söylediği selamlar: çeviri anahtarı ve sayısı (strings.csv).
-const HELLO_KEY := "UI_NINE_HELLO_%d"
-const HELLO_COUNT := 4
+## Dükkândan çıkarken sırayla söylediği sözler (uğurlama, öğüt): çeviri anahtarı ve sayısı
+## (strings.csv). Dükkânın içindeki sözleri ShopPanel söyler.
+const LINE_KEY := "UI_NINE_LINE_%d"
+const LINE_COUNT := 4
 ## Balıkçı bu kadar yakındayken (m) ona bakar.
 const WATCH_RANGE := 4.5
 

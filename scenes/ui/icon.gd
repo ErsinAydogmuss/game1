@@ -3,8 +3,14 @@ extends Control
 ## Oyun ikonu. Görseli varsa (assets/icons/ui, kullanıcının ChatGPT çizimleri) onu çizer;
 ## yoksa 100×100'lük bir tasarım alanında kodla çizer ve boyuta ölçekler. (Kazı'dan uyarlandı.)
 ## kind: coin, star, star_empty, close, book, settings, lock, question, hand, burst, trophy,
-## sound, music, vibration, easy, globe, up, down, rod, reel, bait, bucket, aquarium, bobber,
-## hook, fish, shop, gem. "fish:<id>" balık portresini çizer.
+## sound, music, vibration, easy, globe, up, down, rod, reel, line, bait, net, bucket, aquarium,
+## bobber, hook, fish, shop, gem. "fish:<id>" balık portresini çizer.
+
+## Kodla çizilebilen ikonlar (görseli yoksa). Bilinmeyen ad soru işareti çizer (boş kalmasın);
+## takımın "kind"ı bunlardan biri olmalı (test_content_db denetler).
+const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
+		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
+		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -92,16 +98,19 @@ func _draw() -> void:
 		"settings":
 			_gear()
 		"question":
-			_round_rect(Rect2(14, 14, 72, 72), Color("#5b6bd6"), 36)
-			draw_arc(Vector2(50, 40), 14, PI, TAU + 0.6, 20, Color.WHITE, 9.0, true)
-			draw_line(Vector2(56, 52), Vector2(50, 60), Color.WHITE, 9.0, true)
-			draw_circle(Vector2(50, 72), 5.5, Color.WHITE)
+			_question()
 		"hand":
 			_hand()
 		"rod":
 			_rod()
 		"reel":
 			_reel()
+		"line":
+			_line_spool()
+		"bait":
+			_bait_jar()
+		"net":
+			_net()
 		"bobber":
 			_bobber()
 		"hook":
@@ -119,7 +128,16 @@ func _draw() -> void:
 		"lock":
 			_round_rect(Rect2(24, 44, 52, 42), STEEL_DARK, 8)
 			draw_arc(Vector2(50, 44), 16, PI, TAU, 18, STEEL_DARK, 8.0, true)
+		_:
+			_question()
 	draw_set_transform(Vector2.ZERO)
+
+
+func _question() -> void:
+	_round_rect(Rect2(14, 14, 72, 72), Color("#5b6bd6"), 36)
+	draw_arc(Vector2(50, 40), 14, PI, TAU + 0.6, 20, Color.WHITE, 9.0, true)
+	draw_line(Vector2(56, 52), Vector2(50, 60), Color.WHITE, 9.0, true)
+	draw_circle(Vector2(50, 72), 5.5, Color.WHITE)
 
 
 func _coin() -> void:
@@ -228,6 +246,45 @@ func _reel() -> void:
 	draw_circle(Vector2(50, 54), 12, STEEL_DARK)
 	draw_line(Vector2(50, 54), Vector2(80, 30), INK, 8.0, true)
 	draw_circle(Vector2(82, 28), 8, WOOD)
+
+
+## Misina makarası: iki kenar, sarılı misina ve dışarı sarkan ucu.
+func _line_spool() -> void:
+	var line := Color("#8fd3ff")
+	_round_rect(Rect2(30, 26, 40, 48), line, 6)
+	for i in 5:
+		draw_line(Vector2(30, 32 + i * 9), Vector2(70, 36 + i * 9), Color(1, 1, 1, 0.75), 2.5, true)
+	_round_rect(Rect2(20, 16, 60, 13), WOOD_DARK, 6)
+	_round_rect(Rect2(20, 71, 60, 13), WOOD_DARK, 6)
+	draw_circle(Vector2(50, 22), 4, WOOD)
+	draw_polyline(PackedVector2Array([Vector2(70, 46), Vector2(82, 40), Vector2(88, 50), Vector2(84, 62)]), line, 3.0, true)
+
+
+## Yem kavanozu: cam, içinde toprak, kapaktan kıvrılan pembe bir solucan.
+func _bait_jar() -> void:
+	_round_rect(Rect2(24, 30, 52, 60), Color("#dceff5"), 12)
+	_round_rect(Rect2(29, 50, 42, 35), Color("#7a4f22"), 8)
+	draw_circle(Vector2(40, 60), 3, Color("#5a3a18"))
+	draw_circle(Vector2(58, 70), 3, Color("#5a3a18"))
+	_round_rect(Rect2(21, 22, 58, 13), RED, 6)
+	var worm := PackedVector2Array([Vector2(44, 24), Vector2(38, 13), Vector2(47, 6), Vector2(58, 10), Vector2(60, 20)])
+	draw_polyline(worm, Color("#c85a74"), 9.0, true)
+	draw_polyline(worm, Color("#f08aa0"), 6.0, true)
+	draw_line(Vector2(34, 36), Vector2(34, 80), Color(1, 1, 1, 0.55), 4.0, true)
+
+
+## Kepçe: tahta sap, çember ve ağ.
+func _net() -> void:
+	draw_line(Vector2(14, 90), Vector2(46, 54), WOOD_DARK, 9.0, true)
+	draw_line(Vector2(14, 90), Vector2(46, 54), WOOD, 5.0, true)
+	var center := Vector2(62, 38)
+	var r := 26.0
+	draw_circle(center, r, Color(1, 1, 1, 0.18))
+	for k: float in [-16.0, -8.0, 0.0, 8.0, 16.0]:
+		var half := sqrt(r * r - k * k)
+		draw_line(center + Vector2(-half, k), center + Vector2(half, k), Color(1, 1, 1, 0.65), 2.0, true)
+		draw_line(center + Vector2(k, -half), center + Vector2(k, half), Color(1, 1, 1, 0.65), 2.0, true)
+	draw_arc(center, r, 0.0, TAU, 32, STEEL_DARK, 6.0, true)
 
 
 func _bobber() -> void:

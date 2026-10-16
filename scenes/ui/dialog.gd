@@ -3,6 +3,7 @@ extends Control
 ## Ortak modal pencere: arkası karartılır, ortada krem renkli kutu; üstte ikon + başlık,
 ## sağda isteğe bağlı göstergeler ve kapat butonu. "modal" grubundadır: açıkken oyun girdisi
 ## (joystick dışındaki dokunmalar) oyuna geçmez. Alt sınıflar _build() içinde body'yi doldurur.
+## Kutu ekrana (güvenli alan payıyla) sığmazsa küçültülür: dar ekranda (iPad) taşmasın.
 
 signal closed
 
@@ -16,6 +17,8 @@ var _panel: PanelContainer
 var _title: Label
 var _icon: GameIcon
 var _width: float = 1600.0
+## Açılış animasyonu sürüyor (ölçek animasyonda).
+var _opening: bool = false
 
 
 func _ready() -> void:
@@ -35,8 +38,14 @@ func _ready() -> void:
 	_panel = PanelContainer.new()
 	_panel.add_theme_stylebox_override("panel", UiKit.framed("panel", UiKit.dialog_style(), 64.0))
 	_panel.custom_minimum_size = Vector2(_width, 0)
-	# Açılış animasyonu ortadan büyüsün: boyut her değişince merkez güncellenir.
-	_panel.resized.connect(func() -> void: _panel.pivot_offset = _panel.size * 0.5)
+	# Açılış animasyonu ortadan büyüsün: boyut her değişince merkez ve sığma ölçeği güncellenir.
+	_panel.resized.connect(func() -> void:
+		_panel.pivot_offset = _panel.size * 0.5
+		if visible and not _opening:
+			_panel.scale = Vector2.ONE * fit_scale())
+	get_viewport().size_changed.connect(func() -> void:
+		if visible and not _opening:
+			_panel.scale = Vector2.ONE * fit_scale())
 	center.add_child(_panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 22)
@@ -91,11 +100,16 @@ func open() -> void:
 	# Kısa büyüme animasyonu. İlk açılışta boyut yerleşimden sonra belli olur: merkez boyut
 	# değişince de güncellenir (resized).
 	_panel.pivot_offset = _panel.size * 0.5
-	_panel.scale = Vector2(0.92, 0.92)
+	var fit := fit_scale()
+	_panel.scale = Vector2.ONE * fit * 0.92
 	_panel.modulate.a = 0.0
+	_opening = true
 	var tween := _panel.create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_panel, "scale", Vector2.ONE, 0.22)
+	tween.tween_property(_panel, "scale", Vector2.ONE * fit, 0.22)
 	tween.tween_property(_panel, "modulate:a", 1.0, 0.12)
+	tween.chain().tween_callback(func() -> void:
+		_opening = false
+		_panel.scale = Vector2.ONE * fit_scale())
 
 
 func close_panel() -> void:
@@ -109,6 +123,17 @@ func close_panel() -> void:
 ## Alt sınıf: içeriği güncel kayda göre yeniden kurar.
 func refresh() -> void:
 	pass
+
+
+## Kutunun ekrana sığma ölçeği (en çok 1): güvenli alan ve kenar payı çıkınca kalan yer.
+func fit_scale() -> float:
+	var view := get_viewport_rect().size
+	var inset := UiKit.safe_insets(self)
+	var room := Vector2(view.x - inset.x - inset.z, view.y - inset.y - inset.w) - Vector2(40.0, 24.0)
+	var need := _panel.get_combined_minimum_size()
+	if need.x <= 0.0 or need.y <= 0.0:
+		return 1.0
+	return clampf(minf(room.x / need.x, room.y / need.y), 0.5, 1.0)
 
 
 ## Bir kapsayıcının çocuklarını hemen siler (yeniden kurmadan önce).

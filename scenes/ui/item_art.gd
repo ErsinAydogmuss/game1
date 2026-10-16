@@ -12,6 +12,9 @@ const PORTRAITS := "res://assets/ui/portraits/%s.png"
 const ART := "res://assets/ui/art/%s"
 ## Arayüz kitinin 9 dilimli çerçeveleri ve düğmeleri (ör. "panel", "button_green", "frame_rare").
 const FRAMES := "res://assets/ui/frames/%s.png"
+## Nine'nin dükkânındaki takımın resimleri (gear.json "icon" ya da kimlik; docs/gorsel-istekleri.md
+## Parti 2).
+const GEAR := "res://assets/icons/gear/%s.png"
 
 ## Yer tutucunun boyu (piksel).
 const PLACEHOLDER_SIZE := 128
@@ -42,6 +45,11 @@ static func fish(id: String) -> Texture2D:
 
 static func ui(icon_name: String) -> Texture2D:
 	return _load(UI % icon_name)
+
+
+## Takımın resmi (yoksa null; dükkân kodla çizilen ikonu kullanır).
+static func gear(icon_name: String) -> Texture2D:
+	return _load(GEAR % icon_name)
 
 
 ## Arayüz kitinden 9 dilimli bir çerçeve ya da düğme görseli (yoksa null; UiKit.framed kullanır).

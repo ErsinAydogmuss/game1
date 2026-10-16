@@ -106,8 +106,8 @@ GEAR_hook_medium,Medium hook,Orta iğne
 GEAR_hook_medium_DESC,Fish escape a bit less often.,Balık biraz daha zor kaçar.
 GEAR_hook_large,Large hook,Büyük iğne
 GEAR_hook_large_DESC,Even big fish struggle to get away.,İri balık bile kolay kaçamaz.
-GEAR_bobber_basic,Red-and-white bobber,Kırmızı-beyaz şamandıra
-GEAR_bobber_basic_DESC,The classic.,Klasik şamandıra.
+GEAR_bobber_basic,Basic bobber,Basit şamandıra
+GEAR_bobber_basic_DESC,"Red and white, a classic.","Kırmızı-beyaz, klasik."
 GEAR_bobber_sensitive,Sensitive float,Hassas şamandıra
 GEAR_bobber_sensitive_DESC,Shows the tiniest touch: a little more time to strike.,En ufak dokunuşu gösterir: VUR için biraz daha vaktin olur.
 GEAR_bobber_bright,Bright bobber,Parlak şamandıra
@@ -141,7 +141,43 @@ UI_RANK_UP,Rank %d: %s!,Rütbe %d: %s!
 UI_BUCKET_FULL,Bucket full: the fish swam home,Kova dolu: balık göle döndü
 UI_DEDE_BUCKET,Your bucket is full! Sell your fish at Nana's shop.,Kovan doldu! Balıkları Nine'nin dükkânında satabilirsin.
 UI_SHOP_SIGN,Nana's shop,Nine'nin dükkânı
-UI_NINE_HELLO_1,"Welcome, dear! Fresh bait and sturdy rods, right here.","Hoş geldin evladım! Taze yem, sağlam olta, hepsi burada."
-UI_NINE_HELLO_2,"Caught something? Bring it to me, I pay well.","Balık mı tuttun? Getir bana, iyi fiyat veririm."
-UI_NINE_HELLO_3,Tell Dede the tea is brewing.,"Dede'ne söyle, çayı demledim."
-UI_NINE_HELLO_4,"Corn catches carp, dear. You didn't hear it from me!","Sazan mısıra gelir evladım. Benden duymuş olma!"
+UI_NINE_LINE_1,"Come again, dear!",Yine bekleriz evladım!
+UI_NINE_LINE_2,"Caught something? Bring it to me, I pay well.","Balık mı tuttun? Getir bana, iyi fiyat veririm."
+UI_NINE_LINE_3,Tell Dede the tea is brewing.,"Dede'ne söyle, çayı demledim."
+UI_NINE_LINE_4,"Corn catches carp, dear. You didn't hear it from me!","Sazan mısıra gelir evladım. Benden duymuş olma!"
+UI_SHOP_TITLE,Nana's shop,Nine'nin dükkânı
+UI_SHOP_TAB_SELL,Bucket,Kova
+UI_SHOP_TAB_ROD,Rods,Kamış
+UI_SHOP_TAB_REEL,Reels,Makara
+UI_SHOP_TAB_LINE,Lines,Misina
+UI_SHOP_TAB_TACKLE,Tackle,İğne
+UI_SHOP_TAB_BAIT,Bait,Yem
+UI_SHOP_TAB_EXTRA,Extras,Ekstra
+UI_STAT_RANGE,Range,Menzil
+UI_STAT_POWER,Power,Güç
+UI_STAT_SPEED,Speed,Sarma
+UI_STAT_DRAG,Drag,Fren
+UI_STAT_STRENGTH,Strength,Dayanım
+UI_STAT_STEALTH,Stealth,Görünmez
+UI_STAT_HOLD,Hold,Tutma
+UI_STAT_SENSITIVE,Feel,Hassasiyet
+UI_STAT_REACH,Reach,Erişim
+UI_STAT_CAPACITY,Capacity,Kapasite
+UI_SHOP_EQUIPPED,Equipped,Takılı
+UI_SHOP_EQUIP,Equip,Tak
+UI_SHOP_OWNED,Owned,Sende
+UI_SHOP_RANK,Rank %d,Rütbe %d
+UI_SHOP_UNLIMITED,Unlimited,Sınırsız
+UI_SHOP_HAVE,You have %d,Elinde %d
+UI_SHOP_PACK,Pack: %d,Paket: %d
+UI_SHOP_BUCKET,Bucket: %d/%d,Kova: %d/%d
+UI_SHOP_BUCKET_EMPTY,"Your bucket is empty. Bring me fish, I pay well!","Kovan boş. Balık tutunca getir, iyi fiyat veririm!"
+UI_SHOP_MORE_KINDS,+%d more kinds,+%d tür daha
+UI_SHOP_TOTAL,Total,Toplam
+UI_SHOP_SELL_ALL,Sell all,Hepsini sat
+UI_NINE_SHOP_HELLO,"Welcome, dear! What are you looking for?","Hoş geldin evladım! Neye bakmıştın?"
+UI_NINE_BOUGHT,"Enjoy it, dear!",Güle güle kullan evladım!
+UI_NINE_NO_COINS,"You're a little short, dear. Bring a few more fish!","Paran biraz eksik evladım. Birkaç balık daha getir!"
+UI_NINE_RANK,That takes some skill. Come back at rank %d!,Bu biraz ustalık ister. Rütbe %d olunca gel!
+UI_NINE_EQUIP,"There, all set!","Tamamdır, taktım!"
+UI_NINE_SOLD,Well done! %s coins for you.,Eline sağlık! %s para senin.
