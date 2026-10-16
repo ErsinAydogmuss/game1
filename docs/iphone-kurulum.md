@@ -201,16 +201,17 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 
 ### 11. Geri bildirim
 
-Oyun açılınca kullanıcıdan şunlara bakmasını iste (1. hafta prototipi, v0.1):
+Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.2: Nine'nin dükkânı, takım, para, nadirlik, Balık Defteri). Eski kaydı (v0.1) varsa kendiliğinden yeni biçime geçer; tuttuğu balıklar defterde kalır.
 
 1. Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
-2. Atış anlaşılıyor mu? Suya dokununca olta atılıyor, karaya dokununca balıkçı yürüyor mu?
-3. Sudaki balık gölgeleri görünüyor mu? Şamandıranın dürtmesi ve dalması fark ediliyor mu?
-4. VUR anı adil mi (şamandıra dalınca ekranın her yerine dokunmak)?
-5. Çekme zevkli mi, zor mu? Ayarlar'daki **Kolay çekme** gerekli mi, varsayılan mı olmalı?
-6. Takılma ya da telefonun ısınması var mı?
-7. Dede: iskelede oturuyor; konuşunca başının üstünde balon çıkıyor mu, ona dokununca öğüt veriyor mu? Yüzü okunuyor mu?
-8. Ekranın çentiği (notch) bir yeri kapatıyor mu? Yazılar okunuyor mu?
+2. Birkaç balık tut. Balık elde gösterilirken üstünde adı, boyu ve nadirlik simgesi (● ▲ ◆ ★) okunuyor mu?
+3. Sudaki gölgeler: bazıları arada pırıldıyor (Nadir), bazıları mor ışıldıyor (Destansı). Tutmadan önce fark ediliyor mu?
+4. Kova: sol üstteki kova sayısı artıyor mu? Kova dolunca Dede uyarıyor mu?
+5. Nine: iskelenin başındaki dükkâna ya da Nine'ye dokun. Kovayı sat, bir şey al ve tak. Kartlar ve yazılar okunuyor mu, düğmeler kolay basılıyor mu? Seçenek kalabalığı var mı?
+6. Aldığın takımın farkı hissediliyor mu (ör. cam kamışla daha uzağa atış, yeni makarayla hızlı sarma, yemle istediğin balık)?
+7. Balık Defteri (sağ üstteki kitap): tutmadığın balıkların ipuçları ve oranları anlaşılıyor mu?
+8. Para ve rütbe hızı: ilk yarım saatte sık sık yeni bir şey alabiliyor musun, sıkıcı bekleme var mı?
+9. Takılma ya da telefonun ısınması var mı? Ekranın çentiği (notch) bir yeri kapatıyor mu?
 
 Kullanıcıya söyle: ana ekrandaki ikon geçici (kodla çizilmiş basit bir balık). Ersin'in uygulama ikonu gelince değişecek.
 
