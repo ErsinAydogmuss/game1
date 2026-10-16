@@ -16,8 +16,6 @@ var rarities: Array[Dictionary] = []
 ## accent, fight { reel, pull, burst_pull, burst_every, burst_len (sn, Vector2), *_steps (Vector2i),
 ## run }.
 var fish: Array[Dictionary] = []
-## Oltalar: id, range_m, reel_speed.
-var rods: Array[Dictionary] = []
 ## Takım (gear.json): id, category, price, rank, icon, kind ve kategoriye göre değerler
 ## (rod: technique, range_m, power; reel: reel_speed, drag; line: snap_after, stealth;
 ## hook: escape_extra; bobber: window_add; bait: attract {tür: çarpan}, pack; extra: catch_m;
@@ -47,7 +45,6 @@ const SHADOW_FX: Array[String] = ["none", "glint", "shimmer", "trail", "guardian
 
 var _rarity_index: Dictionary = {}
 var _fish_index: Dictionary = {}
-var _rod_index: Dictionary = {}
 var _gear_index: Dictionary = {}
 var _spot_index: Dictionary = {}
 ## Atış noktası id -> LakeShape (bir kez kurulur).
@@ -63,7 +60,6 @@ static func load_from(dir: String) -> ContentDB:
 	db._load_rarities(db._read_json(dir.path_join("rarities.json")))
 	db.rules = FishingRules.from_dict(db._read_json(dir.path_join("rules.json")), db.errors)
 	db._load_fish(db._read_json(dir.path_join("fish.json")))
-	db._load_rods(db._read_json(dir.path_join("rods.json")))
 	db._load_gear(db._read_json(dir.path_join("gear.json")))
 	db._load_progression(db._read_json(dir.path_join("progression.json")))
 	db._load_spots(db._read_json(dir.path_join("spots.json")))
@@ -97,10 +93,6 @@ func fish_def(index: int) -> Dictionary:
 
 func fish_by_id(id: String) -> Dictionary:
 	return fish_def(fish_index(id))
-
-
-func rod(id: String) -> Dictionary:
-	return rods[int(_rod_index[id])] if _rod_index.has(id) else {}
 
 
 func gear_item(id: String) -> Dictionary:
@@ -227,18 +219,6 @@ func _load_fish(raw: Dictionary) -> void:
 		fish.append(def)
 
 
-func _load_rods(raw: Dictionary) -> void:
-	for entry: Variant in raw.get("rods", []):
-		var d: Dictionary = entry
-		var def := {
-			"id": str(d.get("id", "")),
-			"range_m": float(d.get("range_m", 8.0)),
-			"reel_speed": float(d.get("reel_speed", 1.5)),
-		}
-		_rod_index[def["id"]] = rods.size()
-		rods.append(def)
-
-
 func _load_gear(raw: Dictionary) -> void:
 	var start: Dictionary = raw.get("start", {})
 	for slot: Variant in start:
@@ -345,13 +325,10 @@ func _validate() -> void:
 		errors.append("rarities.json: nadirlik yok")
 	if fish.is_empty():
 		errors.append("fish.json: balık yok")
-	if rods.is_empty():
-		errors.append("rods.json: olta yok")
 	if spots.is_empty():
 		errors.append("spots.json: atış noktası yok")
 	_check_unique("rarities", rarities)
 	_check_unique("fish", fish)
-	_check_unique("rods", rods)
 	_check_unique("gear", gear)
 	_check_unique("spots", spots)
 	for r in rarities:
@@ -365,9 +342,6 @@ func _validate() -> void:
 	_validate_progression()
 	if spot(main_spot).is_empty():
 		errors.append("spots.json: main bilinmiyor: " + main_spot)
-	for r in rods:
-		if float(r["range_m"]) < 3.0 or float(r["reel_speed"]) <= 0.0:
-			errors.append("rods.json: %s: menzil ya da sarma hızı geçersiz" % r["id"])
 	for s in spots:
 		_validate_spot(s)
 

@@ -104,6 +104,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
   - ✅ `Dice`: seed türetme, ppm şans, ağırlıklı seçim. Oynanıştaki her zar buradan ya da ondan türeyen RNG'den.
   - ✅ `LakeShape`: göl şekli (elipsler + iskele), işaretli kıyı uzaklığı ızgarası, derinlik, şamandıranın düşeceği yer.
   - ✅ `FishShadow` + `ShadowSim`: gölgeler (doğma, dolaşma, fark etme, yaklaşma, kaçma, yeniden doğma; ilk av senaryolu).
+  - ✅ `GearStats`: kuşanılmış takımın etkisi (menzil, güç, sarma, fren, kopma süresi, görünmezlik, kaçma payı, VUR süresi, kepçe, yem çekimi). `starter` = bambu olta, `best` = en iyi takım (rapor ve testler). `FishingSession` ve `ReelModel` takımı yalnızca buradan okur.
   - ✅ `BiteRules` (fark etme konisi, korkutma, dürtme, VUR penceresi, erken dokunuş), `FishTable` (tür, boy yüzdeliği, yıldız, gölge uzunluğu), `ReelModel` (gerilim, patlama, kopma, kaçma, Kolay mod), `ReelBot` (oyuncu tarzı botları), `Records` (kayıt defteri, kart kuralı).
   - ✅ `FishingSession`: durum makinesi (BOŞ → ATIŞ → BEKLEME → DÜRTME → ISIRMA → ÇEKİŞME → TUTULDU / KAÇTI). Sabit 1/60 sn adım; girdiler `cast` / `press` / `release` / `acknowledge`; olaylar `poll_events()`.
   - ✅ `SaveData` (sürüm 1) / `SaveStore` (atomik yazma), `TimeProvider` (zaman soyutlaması).
@@ -151,7 +152,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - **Fontlar:** başlık Luckiest Guy (`UiKit.display_font()`), metin Baloo 2 (`UiKit.body_font()`).
 - **Hazır modeller:** `assets/models/<paket>/` + `ModelLibrary.MODELS` satırı + `assets/CREDITS.md`. GLB içe aktarmada gömülü dokular atılır; karakterin dokusu kodla verilir.
 - **Kayıt biçimi** değişirse: `SaveData.VERSION`'ı artır, `migrate()`'e adım ekle, `test_save_data.gd`'ye test yaz.
-- **Çekişme ya da balık ayarı** değişirse: `tools/reel_report.gd`'yi çalıştır, `docs/gdd.md` §5'teki tabloyu güncelle; `test_reel_model.gd` korkulukları yeşil kalsın. Balığın `pull` değeri sınırın en az 0,05 altında olmalı (ContentDB denetler).
+- **Çekişme, balık ya da takım ayarı** değişirse: `tools/reel_report.gd`'yi (ve `-- --gear=top`) çalıştır, `docs/gdd.md` §5'teki tabloları güncelle; `test_reel_model.gd` korkulukları (en iyi takımla da beceri gereksin) yeşil kalsın. Balığın `pull` değeri sınırın en az 0,05 altında olmalı; en güçlü frende patlama sınırın en az 0,1 üstünde kalmalı (ContentDB denetler).
 - **Koordinatlar:** dünya x/z metre; çekirdek mantık `Vector2(x, z)` kullanır, su yüzeyi y = 0. Kamera +x +z tarafında; iskele kıyıdan −z yönüne uzanır.
 - **Her sesin** bir görsel ve titreşim karşılığı olur (iPhone'un sessiz anahtarı sesi kapatır).
 - **Gelir:** yukarıdaki 10 kural. Parayla şans yok; oran ve pity gösterilir. **Oyun parası (`coins`) gerçek parayla asla satılmaz:** oranı değiştiren yem ve yapay yem ancak bu sayede oyun parasıyla satılabiliyor.

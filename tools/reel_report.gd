@@ -2,6 +2,7 @@ extends SceneTree
 ## Çekişme denge raporu: her balık, her bot tarzı ve mod için yakalama, kopma, kaçma oranları ve
 ## süreler. Sayılar data/fish.json ve data/rules.json'dan gelir.
 ##   godot --headless --path . -s res://tools/reel_report.gd
+##   godot --headless --path . -s res://tools/reel_report.gd -- --gear=top   (en iyi şamandıra takımı)
 ## Hedefler (docs/gdd.md §5): iyi oyuncu (kusursuz, 0,4 sn) her balığı tutar; Kızılkanat 4–7 sn,
 ## Yayın 14–20 sn; hep basılı tutan Normal'de koparır, Kolay'da tutar.
 
@@ -14,15 +15,17 @@ func _initialize() -> void:
 	var db := ContentDB.load_default()
 	for e in db.errors:
 		printerr("İçerik hatası: " + e)
-	var rod := db.rod("bamboo")
-	var max_distance: float = float(rod["range_m"]) + db.rules.escape_extra
+	var top := "--gear=top" in OS.get_cmdline_user_args()
+	var gear := GearStats.best(db) if top else GearStats.starter(db)
+	var max_distance: float = gear.range_m + db.rules.escape_extra + gear.escape_extra
 	var bots := [
 		["kusursuz", ReelBot.Style.PERFECT, 0.0],
 		["tepki 0,4", ReelBot.Style.REACT, 0.4],
 		["tepki 0,7", ReelBot.Style.REACT, 0.7],
 		["hep basılı", ReelBot.Style.ALWAYS, 0.0],
 	]
-	print("Çekişme raporu (%d deneme, başlangıç 4–9 m; süre: 6 m'den kusursuz oyuncu)" % RUNS)
+	print("Çekişme raporu (%d deneme, başlangıç 4–9 m; süre: 6 m'den kusursuz oyuncu; takım: %s)" % [RUNS,
+			"en iyi" if top else "başlangıç"])
 	for easy: bool in [false, true]:
 		print("")
 		print("== %s ==" % ("KOLAY" if easy else "NORMAL"))
@@ -37,8 +40,8 @@ func _initialize() -> void:
 				var red := 0.0
 				for i in RUNS:
 					var start: float = DISTANCES[i % DISTANCES.size()]
-					var model := ReelModel.new(db.rules, f["fight"], float(rod["reel_speed"]), start,
-							max_distance, easy, Dice.derive(4242, i))
+					var model := ReelModel.new(db.rules, f["fight"], gear.reel_speed, start,
+							max_distance, easy, Dice.derive(4242, i), gear)
 					var result := ReelBot.play(model, ReelBot.make(b[1], b[2]))
 					match int(result["outcome"]):
 						ReelModel.Outcome.CAUGHT:
@@ -58,8 +61,8 @@ func _initialize() -> void:
 	for f in db.fish:
 		var times: Array[float] = []
 		for i in RUNS:
-			var model := ReelModel.new(db.rules, f["fight"], float(rod["reel_speed"]), 6.0, max_distance,
-					false, Dice.derive(777, i))
+			var model := ReelModel.new(db.rules, f["fight"], gear.reel_speed, 6.0, max_distance,
+					false, Dice.derive(777, i), gear)
 			var result := ReelBot.play(model, ReelBot.make(ReelBot.Style.PERFECT))
 			times.append(float(result["seconds"]))
 		times.sort()

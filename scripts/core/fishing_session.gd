@@ -51,9 +51,10 @@ var last_catch: Dictionary = {}
 var last_loss: String = ""
 var lake: LakeShape
 var rules: FishingRules
+## Kuşanılmış takım (menzil, sarma, fren, misina, iğne, şamandıra, yem, kepçe).
+var gear: GearStats
 
 var _db: ContentDB
-var _rod: Dictionary
 var _acc: float = 0.0
 var _timer: int = 0
 var _waiting_steps: int = 0
@@ -64,13 +65,14 @@ var _window: int = 60
 var _events: Array[Dictionary] = []
 
 
-## seed: oturum tohumu (Dice.derive(kayıt seed'i, oturum sayısı)). first_catch: ilk av
-## senaryolu olsun (oyuncu henüz balık tutmadı).
-func _init(db: ContentDB, spot_id: String, rod_id: String, seed: int, easy_mode: bool,
+## gear: kuşanılmış takım (GearStats.starter = bambu olta). seed: oturum tohumu
+## (Dice.derive(kayıt seed'i, oturum sayısı)). first_catch: ilk av senaryolu olsun (oyuncu
+## henüz balık tutmadı).
+func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, easy_mode: bool,
 		first_catch: bool) -> void:
 	_db = db
 	rules = db.rules
-	_rod = db.rod(rod_id)
+	gear = gear_stats if gear_stats != null else GearStats.starter(db)
 	var spot := db.spot(spot_id)
 	lake = db.lake(spot_id)
 	angler = spot.get("start", Vector2.ZERO)
@@ -136,8 +138,7 @@ func poll_events() -> Array[Dictionary]:
 func cast(target: Vector2) -> bool:
 	if state != State.IDLE:
 		return false
-	var range_m: float = _rod["range_m"]
-	var point := lake.landing_point(angler, target, range_m, rules.min_shore)
+	var point := lake.landing_point(angler, target, gear.range_m, rules.min_shore)
 	if not Dice.is_point(point) or angler.distance_to(point) < rules.min_cast:
 		return false
 	cast_from = angler
@@ -205,7 +206,7 @@ func fight_point() -> Vector2:
 
 
 func range_m() -> float:
-	return float(_rod["range_m"])
+	return gear.range_m
 
 
 func state_name() -> String:
@@ -227,7 +228,7 @@ func _land() -> void:
 	state = State.WAITING
 	_waiting_steps = 0
 	_emit({ "type": "land", "pos": bobber })
-	for e in sim.scare(bobber):
+	for e in sim.scare(bobber, gear.stealth):
 		_emit(e)
 
 
@@ -257,7 +258,7 @@ func _next_nibble() -> void:
 	else:
 		state = State.BITING
 		_bite_steps = 0
-		_window = BiteRules.window_steps(rules, easy or s.scripted)
+		_window = BiteRules.window_steps(rules, easy or s.scripted) + gear.window_add_steps
 		_emit({ "type": "bite", "shadow": s.id })
 
 
@@ -296,12 +297,13 @@ func _hook() -> void:
 	hook_dir = offset.normalized() if offset.length_squared() > 0.0001 else Vector2(0.0, -1.0)
 	var dist := offset.length()
 	var fight: Dictionary = _db.fish_def(s.fish_index)["fight"]
-	# Balık kıyıya kadar kaçabilir; ama şamandıranın en az escape_extra ötesine (kıyı yakınsa
-	# çizimi kıyıda durur), en çok menzil + escape_extra'ya.
-	var cap := range_m() + rules.escape_extra
+	# Balık kıyıya kadar kaçabilir; ama şamandıranın en az kaçma payı ötesine (kıyı yakınsa
+	# çizimi kıyıda durur), en çok menzil + kaçma payına. İğne kaçma payını büyütür.
+	var extra := rules.escape_extra + gear.escape_extra
+	var cap := range_m() + extra
 	fight_reach = _water_reach(dist, cap)
-	reel = ReelModel.new(rules, fight, float(_rod["reel_speed"]), dist,
-			clampf(fight_reach, minf(dist + rules.escape_extra, cap), cap), easy or s.scripted, Dice.derive(s.seed, 1))
+	reel = ReelModel.new(rules, fight, gear.reel_speed, dist,
+			clampf(fight_reach, minf(dist + extra, cap), cap), easy or s.scripted, Dice.derive(s.seed, 1), gear)
 	reel.holding = holding
 	state = State.FIGHTING
 	_emit({ "type": "hook", "shadow": s.id, "fish": s.fish_id, "distance": dist })

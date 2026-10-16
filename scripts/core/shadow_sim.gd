@@ -109,14 +109,14 @@ func step(angler: Vector2, bobber: Vector2, listening: bool, waiting_steps: int)
 
 
 ## Şamandıra point'e düştü: yakındaki gölgeler korkup kaçar (ilk av korkmaz). Vazgeçmiş
-## balıklar yeni şamandırayı yeniden fark edebilir.
-func scare(point: Vector2) -> Array[Dictionary]:
+## balıklar yeni şamandırayı yeniden fark edebilir. stealth: misinanın görünmezliği.
+func scare(point: Vector2, stealth: float = 0.0) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for s in shadows:
 		s.bored = false
 		if s.scripted or s.mode == FishShadow.Mode.FLEE or s.mode == FishShadow.Mode.HOOKED:
 			continue
-		if BiteRules.scares(s, point, _rules):
+		if BiteRules.scares(s, point, _rules, stealth):
 			flee(s, point)
 			out.append({ "type": "scare", "shadow": s.id })
 	return out

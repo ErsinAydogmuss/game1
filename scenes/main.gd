@@ -117,8 +117,7 @@ func _ready() -> void:
 func _start_session() -> void:
 	var save := GameState.save
 	_save_ref = save
-	var rod := save.rod if not GameState.db.rod(save.rod).is_empty() else "bamboo"
-	session = FishingSession.new(GameState.db, spot_id, rod, Dice.derive(save.seed, save.session),
+	session = FishingSession.new(GameState.db, spot_id, GearStats.starter(GameState.db), Dice.derive(save.seed, save.session),
 			bool(GameState.setting("easy", false)), save.catches == 0)
 	angler.place(session.angler)
 	angler.face(Vector2(0, -1))

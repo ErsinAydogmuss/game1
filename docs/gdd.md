@@ -113,6 +113,17 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Yayın | düzensiz, güçlü | 16,1 sn | 17,7 sn | koparır |
 
   İyi ve yavaş oyuncu her balığı tutar. Kolay modda hep basılı tutan da tutar.
+- **Takımla** (H2, `GearStats`): başlangıç takımı yukarıdaki bambu oltayla aynıdır. En iyi şamandıra takımıyla (`tools/reel_report.gd -- --gear=top`):
+
+| Balık | İyi oyuncu (0,4 sn): başlangıç → en iyi takım | Hep basılı, en iyi takım (Normal) |
+|---|---|---|
+| Kızılkanat | 5,8 → 3,9 sn | tutar |
+| Sazan | 10,7 → 6,9 sn | %36 tutar |
+| Levrek | 9,5 → 5,7 sn | tutar |
+| Turna | 13,7 → 8,0 sn | %38 tutar |
+| Yayın | 16,1 → 9,7 sn | koparır |
+
+  Korkuluklar (`test_reel_model`): en iyi takımla yavaş oyuncu her balığı tutar; hep basılı tutan Nadir balığı en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar; çekişme en çok %40 kısalır. Misinanın kopma süresi bu yüzden en çok 0,95 sn.
 
 **Sonuç**
 

@@ -7,7 +7,6 @@ func test_loads_without_errors() -> void:
 	assert_eq(db.errors.size(), 0, "içerik hataları: " + ", ".join(db.errors))
 	assert_eq(db.rarities.size(), 6, "6 nadirlik (Masalsı eklendi)")
 	assert_eq(db.fish.size(), 5, "prototipte 5 balık")
-	assert_true(not db.rod("bamboo").is_empty(), "ilk olta bambu")
 	assert_true(not db.spot("home_lake").is_empty(), "testlerin gölü")
 	assert_eq(db.main_spot, "big_lake", "oyun Köy Gölü'nde açılır")
 	assert_true(db.gear.size() >= 30, "dükkân takımı okundu")
@@ -25,7 +24,6 @@ func test_fish_follow_the_design() -> void:
 			assert_eq(db.rarity_id(int(f["rarity"])), expected[id], id + " nadirliği")
 	assert_eq(db.fish_by_id("rudd")["size_cm"], Vector2i(15, 30), "Kızılkanat 15–30 cm")
 	assert_eq(db.fish_by_id("wels")["size_cm"], Vector2i(100, 250), "Yayın 100–250 cm")
-	assert_eq(db.rod("bamboo")["range_m"], 9.0, "bambu olta 9 m")
 	var spot := db.spot("home_lake")
 	assert_eq(int(spot["max_shadows"]), 4, "gölde 4 gölge")
 	assert_eq(str(spot["first_fish"]), "rudd", "ilk av Kızılkanat")
@@ -35,7 +33,7 @@ func test_fish_follow_the_design() -> void:
 func test_validation_catches_bad_data() -> void:
 	var dir := "user://test_bad_data"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
-	for file: String in ["rarities.json", "rules.json", "rods.json", "progression.json"]:
+	for file: String in ["rarities.json", "rules.json", "progression.json"]:
 		var text := FileAccess.get_file_as_string("res://data/" + file)
 		FileAccess.open(dir.path_join(file), FileAccess.WRITE).store_string(text)
 	var fish := JSON.parse_string(FileAccess.get_file_as_string("res://data/fish.json")) as Dictionary
@@ -106,8 +104,6 @@ func test_every_content_id_has_translations() -> void:
 	for f in db.fish:
 		keys.append("FISH_" + str(f["id"]))
 		keys.append("FISH_" + str(f["id"]) + "_DESC")
-	for r in db.rods:
-		keys.append("ROD_" + str(r["id"]))
 	for g in db.gear:
 		keys.append("GEAR_" + str(g["id"]))
 		keys.append("GEAR_" + str(g["id"]) + "_DESC")

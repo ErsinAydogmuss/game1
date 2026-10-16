@@ -17,9 +17,9 @@ static func notices(shadow: FishShadow, bobber: Vector2, rules: FishingRules) ->
 
 
 ## Şamandıra buraya düşerse gölge korkup kaçar mı? Gölgenin merkezine "gölge boyunun yarısı
-## + scare_extra"dan yakınsa evet.
-static func scares(shadow: FishShadow, point: Vector2, rules: FishingRules) -> bool:
-	return shadow.pos.distance_to(point) < shadow.length * 0.5 + rules.scare_extra
+## + scare_extra"dan yakınsa evet. stealth: misinanın görünmezliği (yarıçap × (1 − stealth)).
+static func scares(shadow: FishShadow, point: Vector2, rules: FishingRules, stealth: float = 0.0) -> bool:
+	return shadow.pos.distance_to(point) < (shadow.length * 0.5 + rules.scare_extra) * (1.0 - stealth)
 
 
 ## Isırmadan önce kaç kez dürter (0..3)?

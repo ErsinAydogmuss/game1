@@ -12,6 +12,9 @@ extends RefCounted
 ##   catch_m'ye gelince tutulur; max_distance'ı geçerse kaçar.
 ## - Kolay mod: gerilim sınırda durur (kopma yok); patlamada basılı tutunca misina kayar
 ##   (balık uzaklaşır); balık kaçmaz. Beceri yalnızca hızı belirler.
+## - Takım (GearStats, isteğe bağlı): kamışın gücü sarmayı hızlandırır ve patlamadaki kaçışı
+##   yavaşlatır; makaranın freni patlamadaki gerilimi kırpar; misina kopma süresini, kepçe
+##   tutma uzaklığını belirler. Takım verilmezse kurallardaki (bambu olta) sayılar.
 
 enum Phase { CALM, WARN, BURST }
 enum Outcome { NONE, CAUGHT, SNAPPED, ESCAPED }
@@ -43,15 +46,16 @@ var _every := Vector2i(120, 180)
 var _len := Vector2i(30, 60)
 var _recover: int = 350
 var _snap_units: int = 48000
+var _catch_m: float = 0.6
 var _rng := RandomNumberGenerator.new()
 
 
-## fight: balığın çekişme ayarları (ContentDB fish["fight"]); rod_reel_speed: oltanın sarma
-## hızı (m/sn); seed: patlama zamanlarının zarı.
-func _init(rules: FishingRules, fight: Dictionary, rod_reel_speed: float, start_distance: float,
-		max_dist: float, easy_mode: bool, seed: int) -> void:
+## fight: balığın çekişme ayarları (ContentDB fish["fight"]); reel_speed: makaranın sarma hızı
+## (m/sn); seed: patlama zamanlarının zarı; gear: kuşanılmış takım (yoksa kurallardaki sayılar).
+func _init(rules: FishingRules, fight: Dictionary, reel_speed: float, start_distance: float,
+		max_dist: float, easy_mode: bool, seed: int, gear: GearStats = null) -> void:
 	_rules = rules
-	_reel_speed = rod_reel_speed * float(fight["reel"])
+	_reel_speed = reel_speed * float(fight["reel"])
 	_pull = fight["pull"]
 	_burst_pull = fight["burst_pull"]
 	_run = fight["run"]
@@ -59,6 +63,13 @@ func _init(rules: FishingRules, fight: Dictionary, rod_reel_speed: float, start_
 	_len = fight["burst_len_steps"]
 	_recover = int(round(rules.snap_recover * UNIT))
 	_snap_units = rules.snap_steps * UNIT
+	_catch_m = rules.catch_m
+	if gear != null:
+		_reel_speed *= 1.0 + gear.power
+		_run *= 1.0 - gear.power
+		_burst_pull *= 1.0 - gear.drag
+		_snap_units = gear.snap_steps * UNIT
+		_catch_m = gear.catch_m
 	_rng.seed = seed
 	distance = start_distance
 	max_distance = max_dist
@@ -118,8 +129,8 @@ func step() -> PackedStringArray:
 		outcome = Outcome.SNAPPED
 		out.append("snap")
 		return out
-	if distance <= _rules.catch_m:
-		distance = _rules.catch_m
+	if distance <= _catch_m:
+		distance = _catch_m
 		outcome = Outcome.CAUGHT
 		out.append("caught")
 	elif distance >= max_distance:

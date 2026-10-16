@@ -10,7 +10,7 @@ const PARK := [Vector2(-10, -4), Vector2(-7, -5), Vector2(5.5, -2.5), Vector2(-4
 
 
 func _session(easy: bool = false, first: bool = false, seed: int = 99) -> FishingSession:
-	return FishingSession.new(content(), "home_lake", "bamboo", seed, easy, first)
+	return FishingSession.new(content(), "home_lake", GearStats.starter(content()), seed, easy, first)
 
 
 ## Bir gölge dışındakileri uzağa koyar ve uyutur (testi bozmasınlar).
