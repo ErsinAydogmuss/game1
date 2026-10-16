@@ -3,13 +3,17 @@ extends MeshInstance3D
 ## Misina: oltanın ucundan şamandıraya (ya da çekişmede balığa) kameraya dönük ince şerit.
 ## Ekranda hep WIDTH_UNITS kalınlıkta görünür (uzaklığa göre genişler). Beklerken sarkar,
 ## çekişmede gerilir ve gerilimle titrer. Kare çizilmeden hemen önce (frame_pre_draw) yeniden
-## kurulur: kamera ve uçlar o karenin son yerinde olur.
+## kurulur ve uçlar o anda okunur (from_point / to_point): kamera, olta ve şamandıra o karenin
+## son yerindedir (main'in _process'i çocuklardan önce çalışır; orada kopyalamak bir kare geç kalır).
 
 const SEGMENTS := 20
 ## Ekranda kalınlık (viewport birimi; 1080 yükseklik ≈ 1,3 pt telefonda).
 const WIDTH_UNITS := 3.6
 
 var camera: Camera3D
+## Uçları veren fonksiyonlar (Vector3 döner); verilmezse from / to kullanılır.
+var from_point: Callable
+var to_point: Callable
 var from := Vector3.ZERO
 var to := Vector3.ZERO
 ## Sarkma: 0 = gergin, 1 = boşta (ortası uzunluğun ~%12'si kadar düşer).
@@ -45,6 +49,10 @@ func _rebuild() -> void:
 	_mesh.clear_surfaces()
 	if not is_visible_in_tree() or camera == null:
 		return
+	if from_point.is_valid():
+		from = from_point.call()
+	if to_point.is_valid():
+		to = to_point.call()
 	var length := from.distance_to(to)
 	if length < 0.05:
 		return

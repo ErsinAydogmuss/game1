@@ -16,9 +16,11 @@ signal action_released
 ## Klavyeyle yürüme yönü (dünya xz, uzunluğu 0..1).
 signal walk_step(direction: Vector2)
 
-## Fareyle basılı tutulan "parmak" ve Space tuşu.
+## Fareyle basılı tutulan "parmak", Space tuşu ve HUD'daki eylem düğmesi. Hepsi aynı listede:
+## sarma, son parmak (ya da tuş, düğme) kalkınca biter.
 const MOUSE_POINTER := -2
 const KEY_POINTER := -3
+const BUTTON_POINTER := -4
 
 ## Ekran noktası → göl düzlemi (Vector2(x, z)); yoksa Dice.NO_POINT (Main.ground_point).
 var ground_point: Callable
@@ -29,6 +31,8 @@ var lake: LakeShape
 var view_yaw: float = FollowCamera.YAW
 ## true iken klavyeyle yürüme olur (olta suda değil, panel yok).
 var walking_allowed: bool = true
+## HUD'daki eylem düğmesi (release_all basılı görünümünü söndürür).
+var action_button: TouchButton
 
 var _down: Dictionary = {}
 
@@ -68,11 +72,18 @@ func blocked() -> bool:
 	return false
 
 
-## Basılı parmakları bırakır (odak kaybı, panel açılışı).
+## Eylem düğmesi ve tuş gibi ekrandışı "parmaklar" (main bağlar).
+func pointer(index: int, pressed: bool) -> void:
+	_pointer(index, Vector2.INF, pressed)
+
+
+## Basılı parmakları bırakır (odak kaybı, panel açılışı). Düğmenin basılı görünümü de söner.
 func release_all() -> void:
 	if not _down.is_empty():
 		_down.clear()
 		action_released.emit()
+	if action_button != null:
+		action_button.cancel()
 
 
 func _pointer(index: int, pos: Vector2, pressed: bool) -> void:
@@ -82,7 +93,7 @@ func _pointer(index: int, pos: Vector2, pressed: bool) -> void:
 		return
 	if blocked():
 		return
-	if bool(line_out.call()) or index == KEY_POINTER:
+	if bool(line_out.call()) or index == KEY_POINTER or index == BUTTON_POINTER:
 		_down[index] = true
 		action_pressed.emit()
 		get_viewport().set_input_as_handled()

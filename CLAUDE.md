@@ -81,7 +81,7 @@ Görsel değişikliklerde ekran görüntüsüne bak (Linux'ta `xvfb-run`; yalnı
 
 Sesler kodla üretilir: `python3 -I tools/make_sounds.py` (numpy; .ogg için ffmpeg). Ses adları `Sounds.BANK` ve `LOOPS` ile aynı olmalı (`test_sounds.gd`).
 
-Araçlar (`tools/`, sürüm paketine girmez): `make_sounds.py` (bütün sesler), `reel_report.gd` (çekişme denge raporu: her balık, bot tarzı ve mod için tutma, kopma, kaçma oranı ve süre), `process_images.gd` (Ersin'in görsel sayfalarını keser, `data/art_sheets.json`), `art_sheet.gd` (kesme ve arka plan silme), `recolor_texture.gd` (KayKit dokularını boyar; iş listesi model gelince uyarlanacak).
+Araçlar (`tools/`, sürüm paketine girmez): `make_sounds.py` (bütün sesler), `reel_report.gd` (çekişme denge raporu: her balık, bot tarzı ve mod için tutma, kopma, kaçma oranı ve süre), `process_images.gd` (Ersin'in görsel sayfalarını keser, `data/art_sheets.json`), `art_sheet.gd` (kesme ve arka plan silme), `recolor_texture.gd` (KayKit dokularını boyar: ortaçağ paketi ve Rogue; orijinaller `source/` altında, `.gdignore`'lu), `character_sheet.gd` (karakterin duruşları tek resimde; xvfb ile, `--angler` oyundaki duruşlar, `--model=` başka model, `--raw` boyasız).
 
 ## Mimari
 
@@ -103,8 +103,9 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
   - ✅ `input_router.gd` (`InputRouter`): dokunma / fare / klavye. Olta suda değilken karaya dokun → yürü, suya dokun → at (menzil dışıysa main önce yaklaştırır); olta sudayken ekranın her yeri eylem (parmak değdiği an `press`, kalkınca `release`).
   - ✅ `camera/follow_camera.gd`: sabit eğik açı, yumuşak takip, sarsıntı; `pitch` ve `zoom` main'den.
   - ✅ `world/`: `LakeScene` (ortam ve ışık, kıyıya doğru hafif yükselen arazi ağı, su, iskele, sallanan sazlar, KayKit ağaçları / kayaları / tepeleri ve kamp; model yoksa Props), `LakeTexture` (göl veri dokusu), `water` (derinlik rengi, dalga, parıltı, köpük) / `ground` / `shadow` / `reeds` shader'ları, `ShadowLayer` (gölgeler), `Bobber` (şamandıra), `FishingLine` (misina; `frame_pre_draw`'da kurulur), `Props`, `MeshKit`, `ModelLibrary`.
-  - ✅ `player/angler.gd` (`Angler`): gri kutu balıkçı (yürür, kıyıda durur, atar, sevinir). 🔜 6. adımda KayKit Rogue (`AnglerBody`), `RodModel`, `FishMesh`.
-  - ✅ `fx/`: `Ripples` (su halkaları), `Vignette`.
+  - ✅ `player/`: `Angler` (yürür, kıyıda durur; her kare `pose` = free / hold / reel ve `tension` verir; atış, gösterme, sevinç tek seferlik). Görünüm `AnglerBody` (KayKit Rogue: boyanmış doku, gizlenen parçalar, kodla şapka, AnimationTree, `AimModifier` ile geriye yaslanma) ya da yedek `ToyAngler` (aynı arayüz). `RodModel`: üç eklemli, gerilimle bükülen olta; el yuvasındaki `rod_mount`'a takılır, serbestken dik taşınır.
+  - ✅ `world/fish_mesh.gd` (`FishMesh`): kodla balık (halkalı gövde, çatal kuyruk, yüzgeçler, gözler, bıyık; köşe renkleri). `fish.gdshader` + `fish_outline.gdshader` kuyruk kıvrılmasını `fish_bend.gdshaderinc`'ten paylaşır. `display_length()`: elde gösterilen boy.
+  - ✅ `fx/`: `Ripples` (su halkaları), `CatchFx` (tutulan balık balıkçının önünde, yükselen adı ve boyu, nadirde ışık sütunu), `FishPortrait` (açılışta her balığı SubViewport'ta çizer → `ItemArt`), `Vignette`.
   - ✅ `ui/`: `UiKit` (stil, fontlar, `upper()`, `safe_insets()`), `Dialog` (panellerin tabanı), `Hud` (eylem düğmesi, gerilim çubuğu `TensionBar`, bildirim, ipucu çubuğu), `FishCard` (balık kartı), `SettingsPanel`, `TouchButton`, `GameIcon` (kodla çizilen ikonlar), `ItemArt` (görsellere tek giriş).
 - `data/*.json`: içerik. `localization/strings.csv`: `keys,en,tr`.
 - `assets/`: `fonts/`, `icons/ui/` (Kazı'nın genel ikonları; Ersin'in görselleri gelince değişir), `audio/` (`tools/make_sounds.py` üretir), `incoming/` (Ersin'in ham görselleri; `.gdignore`'lu).
@@ -153,6 +154,9 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - Renderer `gl_compatibility` (mobil + bu ortamdaki llvmpipe). SSAO, SDFGI, hacimsel sis, Decal ve derinlik dokusu yok: suyun rengi ve gölgeler aynı veri dokusundan çizilir; dış çizgi ters kabuk malzeme (`next_pass`, `grow`).
 - Kare başı hareket eden 3D parçaları Tween geri çağrısından değil `_process`'ten sür.
 - KayKit animasyonları döngüsüz gelir; döngü çalışırken açılır. Kemik pozuna animasyondan sonra dokunmak için `SkeletonModifier3D`.
+- KayKit Rogue'da baş yuvası yok (yalnızca `handslot_r` / `handslot_l`): şapka, `head` kemiğine bağlanan bir `BoneAttachment3D`'ye takılır. El yuvasında nişan duruşlarında +X ileri, +Y yukarı bakar; olta bu yüzden +X'e göre kurulur (`AnglerBody.ROD_TILT`).
+- `-s` ile çalışan araçlarda eklenen düğümlerin `_ready()`'si ilk karede çalışır: `_ready`'de kurulan parçalara (ör. `rod_mount`) `_initialize`'da değil, ilk `_process` karesinde dokun. Animasyonu `seek` ile ölçmek de ancak kareler ilerledikten sonra doğru sonuç verir.
+- Headless çalışmada (testler, `--headless`) `SubViewport` çizilmez: `FishPortrait` atlanır, kartta yer tutucu madalyon kalır.
 - Video kaydında (Movie Maker) oyun zamanı gerçek saatten yavaş akar; bot döngülerinde kare sayısı kullan.
 - `Image.blend_rect` iki görüntünün aynı biçimde olmasını ister (RGBA8).
 - Bu bulut ortamında `kenney.nl`, `quaternius.com`, `godotengine.org` erişime kapalı; KayKit'in GitHub depoları açık (seyrek klonla).

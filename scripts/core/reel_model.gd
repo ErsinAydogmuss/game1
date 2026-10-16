@@ -64,7 +64,8 @@ func _init(rules: FishingRules, fight: Dictionary, rod_reel_speed: float, start_
 	max_distance = max_dist
 	easy = easy_mode
 	phase = Phase.CALM
-	phase_steps = Dice.between(_rng, rules.first_burst_steps)
+	# first_burst uyarıyı da içerir: ilk patlama tam o anda başlar.
+	phase_steps = maxi(1, Dice.between(_rng, rules.first_burst_steps) - rules.warn_steps)
 
 
 ## Bir adım ilerler; bu adımda olanları döndürür: warn, burst, burst_end, strain (gerilim

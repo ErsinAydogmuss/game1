@@ -83,7 +83,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - **Balık sakinken basılı tutmak hiç kırmızıya çıkmaz.**
   - Bırakınca gerilim düşer, balık biraz uzaklaşır.
 - **Patlama:**
-  - Balık zaman zaman çırpınır.
+  - Balık zaman zaman çırpınır. İlk patlama çekişmenin 1,6–2,4. saniyesinde gelir (oyuncu hemen öğrensin).
   - Her patlamadan **0,5 sn önce** uyarı gelir: balık çırpınır, misina titrer, gıcırtı duyulur, telefon titrer, "!" çıkar.
   - Patlamada basılı tutarsan gerilim kırmızıya çıkar.
 - **Kopma:** gerilim sınırın üstünde toplam 0,8 sn kalırsa misina kopar ("Misina koptu!"). Sayaç sınırın altında yavaşça geri iner.
@@ -96,17 +96,17 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 | Balık | Çekiş | İyi oyuncu (0,4 sn tepki) | Yavaş oyuncu (0,7 sn) | Hep basılı (Normal) |
 |---|---|---|---|---|
-| Kızılkanat | sakin | 5,4 sn | 5,6 sn | tutar |
-| Sazan | ağır | 10,1 sn | 10,7 sn | koparır |
-| Levrek | ani | 8,6 sn | 9,4 sn | %62 tutar |
-| Turna | ani, güçlü | 12,6 sn | 13,9 sn | koparır |
-| Yayın | düzensiz, güçlü | 15,1 sn | 16,5 sn | koparır |
+| Kızılkanat | sakin | 5,8 sn | 6,0 sn | tutar |
+| Sazan | ağır | 10,7 sn | 11,4 sn | koparır |
+| Levrek | ani | 9,5 sn | 10,5 sn | %55 tutar |
+| Turna | ani, güçlü | 13,7 sn | 15,2 sn | koparır |
+| Yayın | düzensiz, güçlü | 16,1 sn | 17,7 sn | koparır |
 
   İyi ve yavaş oyuncu her balığı tutar. Kolay modda hep basılı tutan da tutar.
 
 **Sonuç**
 
-- Tutulan balık elde gösterilir; boy ve yıldızıyla yazı çıkar.
+- Tutulan balık balıkçının önünde kıvrılarak gösterilir, kamera yakınlaşır; üstünde adı ve boyu yükselir. Nadir ve üstünde ışık sütunu çıkar. Yeni tür, rekor ya da nadirde balıkçı sevinir.
 - **Tam kart** yalnızca yeni tür, yeni rekor ya da Nadir ve üstü için açılır; tekrarlarda kısa bildirim.
 - **Yıldız** boy yüzdeliğinden gelir:
 
@@ -148,7 +148,9 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 ## 7. Kahraman ve Dede
 
 - **Kendi balıkçın:**
-  - 1. hafta kız balıkçıyla çıkar (KayKit Rogue, yeniden boyanmış; kodla balıkçı şapkası).
+  - ✅ 1. hafta kız balıkçıyla çıkar (KayKit Rogue, yeniden boyanmış; pelerin ve silahlar gizli; kodla kova biçimli balıkçı şapkası).
+  - ✅ Duruşlar: bekleme, yürüme, atış (Throw), olta suda (tek el nişan), çekme (iki el nişan, gerilimle geriye yaslanır), gösterme ve sevinç (Cheer).
+  - Model dosyası yoksa kodla kurulan basit bir balıkçı çıkar (aynı duruşlar).
   - Erkek balıkçı ve seçim ekranı H2'de 🔜. KayKit'teki erkek modeller ya zırhlı (Knight) ya sakallı (Barbarian); karakter sayfasıyla bakılacak.
   - Kostümler (şapka, yelek, olta kaplaması) sonra gelir 🔜.
 - **Dede:**
@@ -176,7 +178,9 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - Gözler iri (boyun 0,075'i), göz bebeği ve parlama ile.
   - Renk: koyu sırt, açık karın, türe özgü bir vurgu.
   - Kuyruk kıvrılır; dış çizgi kıvrılmaya uyar.
-  - Elde gösterilen boy logaritmik: 250 cm'lik yayın en fazla 1,1 m görünür.
+  - Elde gösterilen boy gerçeğe göre küçültülür (boyun 0,55. kuvveti): 15 cm'lik kızılkanat 0,3 m, 250 cm'lik yayın en fazla 1,1 m görünür.
+  - Kartın balık resmi aynı modelden açılışta çizilir (Ersin'in balık görselleri gelince onlar kullanılır).
+- **Olta:** 2,3 m, üç eklemli; çekişmede gerilimle bükülür, gerilim yüksekken titrer. Serbestken dik taşınır.
 - **Çevre:** iskele (tahta), sazlık, KayKit ağaç, kaya, çadır, fıçı ve fenerleri; Kazı'nın çimeni, ışığı ve ortamı.
 - **Dış çizgi** yalnızca karakterlerde ve balıklarda.
 - **Erişilebilirlik:** gerilim çubuğu renk + ikon + sarsıntı + "BIRAK!" yazısı. Her sesin bir görsel ve titreşim karşılığı var.

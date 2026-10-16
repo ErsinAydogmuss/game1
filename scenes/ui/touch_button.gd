@@ -170,6 +170,14 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
+## Basılı durumu sessizce bırakır (released yayılmaz): odak kaybı, panel açılışı.
+func cancel() -> void:
+	_touch = -1
+	if held:
+		held = false
+		add_theme_stylebox_override("panel", _normal)
+
+
 ## Bu buton açık bir panelin (Dialog, kart) altında mı kalıyor: o zaman basış
 ## panele aittir (yoksa HUD düğmesi tıklamayı yutar, paneldeki düğme basılmaz).
 func _under_modal() -> bool:

@@ -30,7 +30,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
   - su (derinlik rengi, dalga, parıltı, köpük);
   - gölge ve halkalar;
   - iskele, sallanan sazlık, KayKit ağaçları, kayalar, tepeler ve küçük bir kamp.
-- [ ] Balıkçı (kız; KayKit Rogue), olta, misina, şamandıra; 5 balığın 3D modeli; elde balık ve kart.
+- [x] Balıkçı (kız; KayKit Rogue), olta, misina, şamandıra; 5 balığın 3D modeli; elde balık ve kart.
 - [ ] Ek işler (vakit kalırsa):
   - iskelede oturan Dede;
   - `hero` ve `fish` senaryoları;

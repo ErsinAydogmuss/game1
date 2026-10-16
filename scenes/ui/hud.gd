@@ -70,6 +70,7 @@ func _process(delta: float) -> void:
 			_toast.visible = false
 	# VUR! anında eylem düğmesi nabız gibi atar.
 	if _action_kind == "hook":
+		action_button.pivot_offset = action_button.size * 0.5
 		action_button.scale = Vector2.ONE * (1.0 + 0.07 * sin(_clock * 22.0))
 	else:
 		action_button.scale = Vector2.ONE
@@ -263,6 +264,9 @@ class TensionBar extends Control:
 	var _clock: float = 0.0
 	var _label: Label
 	var _alert: Label
+	var _shown_red: int = -1
+	var _back := UiKit.flat(Color(0.05, 0.06, 0.1, 0.72), 27)
+	var _fills := {}
 
 	func _init() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -277,22 +281,27 @@ class TensionBar extends Control:
 		add_child(_alert)
 
 	func _process(delta: float) -> void:
+		if not visible:
+			return
 		_clock += delta
 		queue_redraw()
 		_alert.visible = warn and fmod(_clock, 0.25) < 0.17
-		if red:
-			_label.text = UiKit.upper(tr("UI_LET_GO"))
-			_label.add_theme_color_override("font_color", UiKit.BAD)
-		else:
-			_label.text = tr("UI_DISTANCE") % distance
-			_label.add_theme_color_override("font_color", UiKit.TEXT)
+		if int(red) != _shown_red:
+			_shown_red = int(red)
+			_label.add_theme_color_override("font_color", UiKit.BAD if red else UiKit.TEXT)
+		_label.text = UiKit.upper(tr("UI_LET_GO")) if red else tr("UI_DISTANCE") % distance
+
+	func _fill(color: Color) -> StyleBoxFlat:
+		if not _fills.has(color):
+			_fills[color] = UiKit.flat(color, 22)
+		return _fills[color]
 
 	func _draw() -> void:
 		var shake := Vector2.ZERO
 		if warn or red:
 			shake = Vector2(sin(_clock * 53.0), cos(_clock * 47.0)) * (7.0 if red else 3.5)
 		var rect := Rect2(shake + Vector2(0, 12), BAR)
-		draw_style_box(UiKit.flat(Color(0.05, 0.06, 0.1, 0.72), 27), rect.grow(6))
+		draw_style_box(_back, rect.grow(6))
 		var red_from := limit / SHOWN_MAX
 		var zone := Rect2(rect.position + Vector2(rect.size.x * red_from, 0), Vector2(rect.size.x * (1.0 - red_from), rect.size.y))
 		draw_rect(zone, Color(0.9, 0.2, 0.22, 0.35))
@@ -303,7 +312,7 @@ class TensionBar extends Control:
 		elif tension > limit * 0.8:
 			color = UiKit.ACCENT
 		if fill > 0.0:
-			draw_style_box(UiKit.flat(color, 22), Rect2(rect.position, Vector2(maxf(rect.size.x * fill, 44.0), rect.size.y)))
+			draw_style_box(_fill(color), Rect2(rect.position, Vector2(maxf(rect.size.x * fill, 44.0), rect.size.y)))
 		var x := rect.position.x + rect.size.x * red_from
 		draw_line(Vector2(x, rect.position.y - 10), Vector2(x, rect.end.y + 10), UiKit.TEXT, 5.0)
 		if strain > 0.0:

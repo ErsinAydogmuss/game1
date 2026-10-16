@@ -13,20 +13,15 @@ extends SceneTree
 const GRID := Vector2i(8, 4)
 const JOBS: Array[Dictionary] = [
 	{
-		# Kazım Usta (Barbarian): Vector2i(sütun, satır) → yeni renk.
-		"source": "res://assets/models/characters/source/barbarian_texture.png",
-		"output": "res://assets/models/characters/kazim_texture.png",
+		# Balıkçı kız (Rogue): Vector2i(sütun, satır) → yeni renk. Yeşil tunik çimende ve sazlıkta
+		# kaybolmasın diye sarı; yaka ve kol uçları koyu turkuaz; pantolon kot mavisi.
+		"source": "res://assets/models/characters/source/rogue_texture.png",
+		"output": "res://assets/models/characters/angler_texture.png",
 		"swatches": {
-			Vector2i(0, 1): "#d9503a", # gömlek
-			Vector2i(1, 1): "#d9503a", # kollar
-			Vector2i(7, 1): "#3c6fc0", # pantolon → tulum
-			Vector2i(2, 1): "#2c5596", # kürk süsler → koyu kot kenarlar
-			Vector2i(1, 0): "#5a3520", # sakal ve kaşlar
-			Vector2i(7, 0): "#4a2c1a", # saç örgüleri, yaka
-			Vector2i(7, 2): "#b5793f", # eller → iş eldiveni
-			Vector2i(3, 2): "#5b3a25", # botlar
-			Vector2i(6, 0): "#7b4a27", # kemer ve kayış
-			Vector2i(3, 0): "#f2c443", # tokalar → pirinç
+			Vector2i(0, 1): "#f0b637", # tunik ve kollar → sarı balıkçı yeleği
+			Vector2i(1, 1): "#2c7d96", # yaka ve kol uçları (pelerin de bunu kullanır, gizli)
+			Vector2i(3, 2): "#3f69a6", # pantolon → kot
+			Vector2i(5, 2): "#8a5a36", # eldiven ve bileklik
 		},
 	},
 	{

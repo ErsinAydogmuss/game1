@@ -11,9 +11,13 @@ Kaynak: https://kaylousberg.com · https://github.com/KayKit-Game-Assets
 |---|---|---|
 | `assets/models/medieval/` | KayKit Medieval Hexagon Pack 1.0 | ağaç kümeleri, tek ağaçlar, kayalar, dağlar ve tepeler, çadır, fıçı, kasa, çuval, kova, kereste, bayrak |
 | `assets/models/halloween/` | KayKit Halloween Bits 1.0 | ahşap bank, fenerli direk, ayaklı fener |
+| `assets/models/characters/` | KayKit Character Pack: Adventures 1.0 | Rogue (balıkçı kız; iskeleti ve animasyonlarıyla) |
 
-Modeller Kazı projesinden değiştirilmeden kopyalandı. Ortaçağ paketinin dokusu `tools/recolor_texture.gd`
-ile yeniden boyandı (ahşap ve ağaç yeşili); orijinali `assets/models/medieval/source/` altında.
+Ortaçağ ve cadılar bayramı modelleri Kazı projesinden değiştirilmeden kopyalandı. Rogue,
+https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0 deposundan alındı.
+Dokular `tools/recolor_texture.gd` ile yeniden boyandı (ortaçağ: ahşap ve ağaç yeşili; Rogue: balıkçı
+renkleri); orijinaller `assets/models/medieval/source/` ve `assets/models/characters/source/` altında.
+Rogue'un pelerini ve silahları oyunda gizlenir; balıkçı şapkası ve olta kodla kurulur.
 Hangi modelin oyunda hangi ölçekle kullanıldığı `scenes/world/model_library.gd` içinde.
 
 ## Yazı tipleri — SIL Open Font License 1.1 / Apache 2.0
@@ -27,7 +31,8 @@ Hangi modelin oyunda hangi ölçekle kullanıldığı `scenes/world/model_librar
 
 `assets/icons/ui/`: Kazı projesinin genel arayüz ikonları (proje sahibi yapay zekâ araçlarıyla
 üretti, `tools/process_images.gd` ile kesildi). Olta'nın kendi görselleri `docs/gorsel-istekleri.md`'ye
-göre gelecek. Su, gölge, misina ve efektler kodla çizilir (`scenes/world/`, `scenes/fx/`).
+göre gelecek. Su, gölge, misina, balıklar ve efektler kodla çizilir (`scenes/world/`, `scenes/fx/`);
+kartlardaki balık resimleri açılışta balık modellerinden çekilir.
 
 ## Sesler
 

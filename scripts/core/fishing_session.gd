@@ -260,7 +260,9 @@ func _early() -> void:
 	var s := sim.approacher
 	if BiteRules.early_outcome(easy, s.scripted, s.startles) == "startle":
 		s.startles += 1
-		_timer = BiteRules.roll_gap(s.rng, rules)
+		# İlk av sözünü tutar: sık sık dokunan çocuk da ısırmayı görsün (sayaç baştan başlamaz).
+		if not s.scripted:
+			_timer = BiteRules.roll_gap(s.rng, rules)
 		_emit({ "type": "early", "shadow": s.id, "startle": true })
 		return
 	_emit({ "type": "early", "shadow": s.id, "startle": false })

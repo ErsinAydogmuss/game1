@@ -6,13 +6,16 @@ extends Node3D
 ## Girdiyi InputRouter okur; --autoplay botu (yalnızca debug) gerçek dokunma olayları gönderir.
 
 const SPOT := "home_lake"
-## Olta sudayken kamera eğimi; çekişmede yakınlaşma.
+## Olta sudayken kamera eğimi; çekişmede ve balık gösterilirken yakınlaşma.
 const LINE_PITCH := deg_to_rad(60.0)
 const FIGHT_ZOOM := 0.9
+const SHOW_ZOOM := 0.62
 ## Kartsız yakalayışta (tekrar eden balık) bildirimden sonra bu kadar sn içinde yeni atış serbest.
 const QUICK_CATCH_TIME := 1.3
 ## Space ya da AT düğmesiyle balıkçının önüne atış uzaklığı (m).
 const FORWARD_CAST := 6.0
+## Kart, balık elde gösterildikten bu kadar sn sonra açılır.
+const CARD_DELAY := 0.9
 ## Dede'nin ipuçları bu kadar balık tutulana kadar görünür.
 const HINT_CATCHES := 3
 const STEP_SOUND_EVERY := 0.36
@@ -27,6 +30,7 @@ var bobber: Bobber
 var line: FishingLine
 var shadows: ShadowLayer
 var ripples: Ripples
+var catch_fx: CatchFx
 var camera: FollowCamera
 var input: InputRouter
 var hud: Hud
@@ -39,6 +43,10 @@ var _pending_cast := Dice.NO_POINT
 var _quick_catch: float = -1.0
 var _step_clock: float = 0.0
 var _cue_clock: float = 0.0
+## Açılacak kart (balık elde gösterilirken bekler) ve kalan süre.
+var _card_info: Dictionary = {}
+var _card_outcome: Dictionary = {}
+var _card_wait: float = -1.0
 
 
 func _ready() -> void:
@@ -50,6 +58,8 @@ func _ready() -> void:
 	add_child(shadows)
 	ripples = Ripples.new()
 	add_child(ripples)
+	catch_fx = CatchFx.new()
+	add_child(catch_fx)
 	angler = Angler.new()
 	angler.lake = lake
 	angler.height_at = scene.stand_height
@@ -61,6 +71,8 @@ func _ready() -> void:
 	line = FishingLine.new()
 	line.camera = camera
 	line.visible = false
+	line.from_point = func() -> Vector3: return angler.rod_tip()
+	line.to_point = func() -> Vector3: return bobber.global_position + Vector3(0, Bobber.RADIUS * 1.4, 0)
 	add_child(line)
 	_build_ui()
 	_build_input()
@@ -69,6 +81,7 @@ func _ready() -> void:
 	GameState.focus_lost.connect(_on_focus_lost)
 	GameState.focus_gained.connect(func() -> void: _paused = false)
 	ItemArt.register_fish_colors(GameState.db.fish_colors())
+	FishPortrait.render_all(self, GameState.db)
 	Sounds.set_ambience("lake")
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has("--autoplay"):
 		var bot: Node = load("res://scripts/dev/autoplay.gd").new()
@@ -100,6 +113,8 @@ func _on_state_changed() -> void:
 		# Kayıt değişti (sıfırlama): göl baştan.
 		if card.visible:
 			card.close_card()
+		_card_wait = -1.0
+		catch_fx.clear()
 		_start_session()
 		return
 	session.easy = bool(GameState.setting("easy", false))
@@ -124,6 +139,10 @@ func _process(delta: float) -> void:
 	session.advance(delta)
 	for e in session.poll_events():
 		_on_event(e)
+	if _card_wait >= 0.0:
+		_card_wait -= delta
+		if _card_wait < 0.0:
+			card.show_catch(GameState.db, _card_info, _card_outcome)
 	if _quick_catch >= 0.0:
 		_quick_catch += delta
 		if _quick_catch >= QUICK_CATCH_TIME:
@@ -137,6 +156,7 @@ func _process(delta: float) -> void:
 func _build_input() -> void:
 	input = InputRouter.new()
 	input.lake = lake
+	input.action_button = hud.action_button
 	input.ground_point = ground_point
 	input.line_out = func() -> bool: return session.line_out()
 	add_child(input)
@@ -199,6 +219,9 @@ func _check_pending_cast() -> void:
 
 
 func _try_cast(target: Vector2) -> void:
+	# Hangi yoldan gelirse gelsin (dokunuş, AT, bekleyen atış) önceki hedef unutulur, yürüme biter.
+	_pending_cast = Dice.NO_POINT
+	angler.stop()
 	session.angler = angler.pos2()
 	angler.face(target - angler.pos2())
 	if not session.cast(target):
@@ -228,6 +251,7 @@ func _on_event(e: Dictionary) -> void:
 	match str(e["type"]):
 		"cast":
 			GameState.save.casts += 1
+			catch_fx.clear()
 			angler.play_cast()
 			var to: Vector2 = e["to"]
 			var from: Vector2 = e["from"]
@@ -268,6 +292,7 @@ func _on_event(e: Dictionary) -> void:
 				Sounds.play("escape")
 			Sounds.haptic(30)
 		"retry":
+			bobber.land(Vector3(session.bobber.x, 0.0, session.bobber.y))
 			hud.toast(tr("UI_RETRY"), UiKit.ACCENT)
 			Sounds.play("hint")
 		"hook":
@@ -333,14 +358,23 @@ func _on_catch() -> void:
 	GameState.save_game()
 	bobber.hide_bobber()
 	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)
-	angler.cheer()
+	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
+	var color := UiKit.rarity_color(GameState.db, rarity)
+	catch_fx.show_catch(GameState.db.fish_by_id(fish_id), int(info["size_cm"]), tr("FISH_" + fish_id), color,
+			_show_point, rarity >= Records.CARD_RARITY)
+	if bool(outcome["new_species"]) or bool(outcome["new_record"]) or rarity >= Records.CARD_RARITY:
+		angler.cheer()
+	else:
+		angler.show_fish()
 	Sounds.play("reel_in")
 	Sounds.find(rarity)
 	Sounds.haptic(50)
 	if bool(outcome["new_record"]):
 		Sounds.play("record")
 	if Records.wants_card(rarity, outcome):
-		card.show_catch(GameState.db, info, outcome)
+		_card_info = info
+		_card_outcome = outcome
+		_card_wait = CARD_DELAY
 	else:
 		hud.toast(tr("UI_CAUGHT_TOAST") % [tr("FISH_" + fish_id), int(info["size_cm"])],
 				UiKit.rarity_color(GameState.db, rarity))
@@ -359,8 +393,6 @@ func _present(delta: float) -> void:
 	var show_line := session.line_out() or bobber.look == Bobber.Look.RETURNING
 	line.visible = show_line and bobber.visible
 	if line.visible:
-		line.from = angler.rod_tip()
-		line.to = bobber.global_position + Vector3(0, Bobber.RADIUS * 1.4, 0)
 		match session.state:
 			FishingSession.State.CASTING:
 				line.sag = 0.08
@@ -371,8 +403,15 @@ func _present(delta: float) -> void:
 		line.shake = 0.0
 		if fighting:
 			line.shake = clampf(reel.tension, 0.0, 1.3) * (1.6 if reel.thrashing() else 0.6)
-	angler.rod_raise = clampf(reel.tension, 0.0, 1.0) if fighting else 0.0
 	var tension := reel.tension if fighting else 0.0
+	angler.tension = tension
+	match session.state:
+		FishingSession.State.FIGHTING:
+			angler.pose = "reel"
+		FishingSession.State.CASTING, FishingSession.State.WAITING, FishingSession.State.NIBBLING, FishingSession.State.BITING:
+			angler.pose = "hold"
+		_:
+			angler.pose = "free"
 	Sounds.set_loop("reel", fighting and reel.holding, 0.0, 0.9 + 0.3 * tension)
 	# Arayüz.
 	hud.set_action("" if card.visible else session.action_kind())
@@ -398,11 +437,25 @@ func _present(delta: float) -> void:
 	camera.target = _focus()
 	var line_view := session.line_out() or session.state == FishingSession.State.LOST
 	camera.pitch = lerpf(camera.pitch, LINE_PITCH if line_view else FollowCamera.PITCH, minf(1.0, delta * 2.5))
-	camera.zoom = lerpf(camera.zoom, FIGHT_ZOOM if fighting else 1.0, minf(1.0, delta * 2.0))
+	var zoom := 1.0
+	if fighting:
+		zoom = FIGHT_ZOOM
+	elif catch_fx.is_showing():
+		zoom = SHOW_ZOOM
+	camera.zoom = lerpf(camera.zoom, zoom, minf(1.0, delta * 2.5))
+
+
+## Yakalanan balığın gösterildiği yer: balıkçının önünde, kameraya doğru ve göğüs hizasında
+## (yukarıdan bakan kamerada şapkanın altında kalmasın).
+func _show_point() -> Vector3:
+	var toward := Vector3(sin(FollowCamera.YAW), 0.0, cos(FollowCamera.YAW))
+	return angler.global_position + toward * 0.6 + Vector3(0.0, 1.05, 0.0)
 
 
 func _focus() -> Vector3:
 	var a := angler.position + Vector3(0, 0.6, 0)
+	if catch_fx.is_showing():
+		return _show_point() + Vector3(0, -0.2, 0)
 	if session.line_out() or session.state == FishingSession.State.LOST:
 		var p := session.fight_point() if session.state == FishingSession.State.FIGHTING else session.bobber
 		return a.lerp(Vector3(p.x, 0.0, p.y), 0.45)
@@ -462,5 +515,5 @@ func _build_ui() -> void:
 		Sounds.set_loop("reel", false)
 		Sounds.set_loop("strain", false)
 		settings_panel.open())
-	hud.action_down.connect(_on_action_down)
-	hud.action_up.connect(_on_action_up)
+	hud.action_down.connect(func() -> void: input.pointer(InputRouter.BUTTON_POINTER, true))
+	hud.action_up.connect(func() -> void: input.pointer(InputRouter.BUTTON_POINTER, false))
