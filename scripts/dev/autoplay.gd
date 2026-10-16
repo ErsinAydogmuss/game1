@@ -11,6 +11,11 @@ extends Node
 ##     dokunuş, ekranın her yeri VUR, basılı tut tut, kart açıkken atış yok, patlamada bırakmazsa
 ##     kopar, 8 sn'de yeni balık, düğme boyu ve güvenli alan).
 ##   first: ilk açılış; senaryolu ilk balık (ekran görüntüleri; 45 sn denetimi).
+##   hero: balıkçı ve Dede yakın çekim (kamerayı bot sürer): Dede konuşur, ikisi, atış, bekleme,
+##     çekme, balığı gösterme, Dede sevinir.
+##   fish: beş balık elde ve kartlarıyla (görsel denetim; oyun kuralları işlemez).
+##   video: kısa tanıtım (--write-movie ile kaydedilir, ~40 sn): Dede'ye dokun, gölgenin önüne at,
+##     VUR, çekişme (bot uyarıda bırakır), ilk balık ve kartı; sonra nadir bir turna (ışık sütunu).
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -51,6 +56,12 @@ func _ready() -> void:
 	match _scenario:
 		"first":
 			_play_first.call_deferred()
+		"hero":
+			_play_hero.call_deferred()
+		"fish":
+			_play_fish.call_deferred()
+		"video":
+			_play_video.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -201,6 +212,141 @@ func _play_first() -> void:
 	_quit()
 
 
+## Yakın çekim: balıkçı ve Dede. Kamerayı bot sürer (main.bot_camera).
+func _play_hero() -> void:
+	_use_save(1)
+	main.set("bot_camera", true)
+	var angler := _angler()
+	var elder := _elder()
+	await _wait(1.2)
+	_frame_on(elder.head_point() + Vector3(0.0, -0.3, 0.0), 0.3)
+	await _wait_frames(2)
+	await _tap(_screen(elder.head_point()))
+	await _wait(0.5)
+	await _shot("01_dede_konusur")
+	_frame_on(angler.global_position.lerp(elder.global_position, 0.5) + Vector3(0.0, 0.6, 0.0), 0.42)
+	await _wait(0.3)
+	await _shot("02_balikci_ve_dede")
+	# Atış normal görünümde (dokunulan su ekranda olsun), sonra yakına.
+	_frame_on(angler.global_position + Vector3(0.0, 0.6, 0.0), 1.0)
+	await _wait_frames(2)
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "rudd")
+	await _tap_world(Vector2(1.0, -1.0))
+	var near := angler.global_position + Vector3(0.0, 0.8, 0.0)
+	_frame_on(near, 0.36)
+	await _wait(0.15)
+	await _shot("03_atis")
+	await _wait_state(FishingSession.State.WAITING, 3.0)
+	await _wait(0.6)
+	await _shot("04_bekleme")
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait(1.4)
+	await _shot("05_cekme")
+	await _wait_state(FishingSession.State.CAUGHT, 25.0)
+	_touch(1, Vector2(260, 520), false)
+	# Kart açılmadan (CARD_DELAY) önce: elde balık, sonra sevinen Dede.
+	await _wait(0.4)
+	_frame_on(main.call("_show_point"), 0.34)
+	await _wait_frames(2)
+	await _shot("06_gosterme")
+	_frame_on(elder.head_point() + Vector3(0.0, -0.25, 0.0), 0.34)
+	await _wait_frames(2)
+	await _shot("07_dede_sevinir")
+	_quit()
+
+
+## Beş balık: elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları işlemez.
+func _play_fish() -> void:
+	_use_save(1)
+	main.set("bot_camera", true)
+	var db := GameState.db
+	var catch_fx: CatchFx = main.get("catch_fx")
+	var card: FishCard = main.get("card")
+	# Balık portreleri (kart resimleri) açılışta çizilir.
+	await _wait(2.0)
+	var show: Vector3 = main.call("_show_point")
+	var index := 0
+	for def in db.fish:
+		index += 1
+		var id := str(def["id"])
+		var percentile := 800000
+		var rarity := int(def["rarity"])
+		var info := {"fish": id, "size_cm": FishTable.size_cm(def, percentile),
+				"stars": FishTable.stars(percentile), "rarity": rarity}
+		catch_fx.show_catch(def, int(info["size_cm"]), tr("FISH_" + id), UiKit.rarity_color(db, rarity),
+				func() -> Vector3: return show, rarity >= Records.CARD_RARITY)
+		# Oyundaki gösteri kamerası (main: SHOW_ZOOM, odak gösteri noktasının biraz altı).
+		_frame_on(show + Vector3(0.0, -0.2, 0.0), float(main.get("SHOW_ZOOM")))
+		await _wait(0.7)
+		await _shot("%d_%s_elde" % [index, id])
+		card.show_catch(db, info, {"new_species": true})
+		await _wait(0.5)
+		await _shot("%d_%s_kart" % [index, id])
+		card.close_card()
+		catch_fx.clear()
+		await _wait(0.2)
+	_quit()
+
+
+## Tanıtım videosu. Oyun zamanı --fixed-fps ile kare kare akar; bekleyişler oyun zamanıyla.
+func _play_video() -> void:
+	_use_save(0)
+	var session := _session()
+	var elder := _elder()
+	await _wait(1.6)
+	# Dede'ye dokun: öğüdünü söyler.
+	await _tap(_screen(elder.head_point()))
+	await _wait(2.4)
+	# Senaryolu ilk gölgenin önüne at: fark eder, gelir, ısırır.
+	var first := session.sim.shadows[0]
+	await _tap_world(first.pos + Vector2(-0.4, 1.4))
+	await _wait_state(FishingSession.State.BITING, 30.0)
+	await _wait(0.25)
+	await _reel_like_player(8, 30.0)
+	# Elde gösterme, Dede'nin sevinci, kart.
+	await _wait(2.6)
+	var card: FishCard = main.get("card")
+	if card.visible and card.ok_button != null:
+		await _tap(card.ok_button.get_global_rect().get_center())
+	await _wait_state(FishingSession.State.IDLE, 3.0)
+	await _wait(0.8)
+	# Nadir bir turna: gölgenin önüne at, dürtmeler, VUR, uzun çekişme, ışık sütunu.
+	_shadow_at(Vector2(-1.2, -3.0), Vector2(0.2, 1.0), "pike")
+	await _tap_world(Vector2(-1.0, -0.8))
+	await _wait_state(FishingSession.State.BITING, 30.0)
+	await _wait(0.2)
+	await _reel_like_player(7, 40.0)
+	await _wait(3.2)
+	if card.visible and card.ok_button != null:
+		await _tap(card.ok_button.get_global_rect().get_center())
+	await _wait(1.0)
+	_quit()
+
+
+## Çekişmeyi bir oyuncu gibi oynar: eylem düğmesine basar (VUR), sakinken basılı tutar, balık
+## çırpınınca (uyarı) reaction kare sonra bırakır, sakinleşince yeniden basar. Sonuç gelene kadar.
+func _reel_like_player(reaction: int, timeout: float) -> void:
+	var finger := _hud().action_button.get_global_rect().get_center()
+	_touch(1, finger, true)
+	await _wait_frames(2)
+	var hold := true
+	var lag := 0
+	var elapsed := 0.0
+	while _state() == FishingSession.State.FIGHTING and elapsed < timeout:
+		var reel := _session().reel
+		var want := reel != null and not reel.thrashing()
+		lag = lag + 1 if want != hold else 0
+		if lag >= reaction:
+			hold = want
+			lag = 0
+			_touch(1, finger, hold)
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+	if hold:
+		_touch(1, finger, false)
+
+
 func _check_buttons() -> void:
 	var view := get_viewport().get_visible_rect()
 	var inset := UiKit.safe_insets(_hud())
@@ -224,6 +370,14 @@ func _check_buttons() -> void:
 
 
 # --- Hazırlık ----------------------------------------------------------------------
+
+## Yakın çekim: kamerayı noktaya hemen yerleştirir (main.bot_camera açıkken).
+func _frame_on(point: Vector3, zoom: float, pitch: float = FollowCamera.PITCH) -> void:
+	var camera: FollowCamera = main.get("camera")
+	camera.zoom = zoom
+	camera.pitch = pitch
+	camera.snap(point)
+
 
 ## Bot için kayıt: sabit seed; catches = 0 ise ilk av senaryolu.
 func _use_save(catches: int) -> void:

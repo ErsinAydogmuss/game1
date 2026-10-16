@@ -33,7 +33,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 - [x] Balıkçı (kız; KayKit Rogue), olta, misina, şamandıra; 5 balığın 3D modeli; elde balık ve kart.
 - [ ] Ek işler (vakit kalırsa):
   - [x] iskelede oturan Dede (bakar, konuşur, sevinir; dokununca öğüt verir);
-  - [ ] `hero` ve `fish` senaryoları;
+  - [x] `hero` ve `fish` senaryoları;
   - [ ] kısa video.
 - [ ] README, CREDITS, kod incelemesi, "telefonda dene" listesi.
 

@@ -10,6 +10,8 @@ const SPOT := "home_lake"
 const LINE_PITCH := deg_to_rad(60.0)
 const FIGHT_ZOOM := 0.9
 const SHOW_ZOOM := 0.62
+## Balık gösterilirken balıkçının önünde, kameraya doğru bu kadar uzakta (m).
+const SHOW_REACH := 0.95
 ## Kartsız yakalayışta (tekrar eden balık) bildirimden sonra bu kadar sn içinde yeni atış serbest.
 const QUICK_CATCH_TIME := 1.3
 ## Space ya da AT düğmesiyle balıkçının önüne atış uzaklığı (m).
@@ -43,6 +45,8 @@ var input: InputRouter
 var hud: Hud
 var card: FishCard
 var settings_panel: SettingsPanel
+## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
+var bot_camera: bool = false
 
 var _save_ref: SaveData
 var _paused: bool = false
@@ -462,6 +466,8 @@ func _present(delta: float) -> void:
 			_step_clock = 0.0
 			Sounds.play("step")
 	# Kamera: olta sudayken eğilir ve balıkçı ile şamandıranın ortasına bakar; çekişmede yakınlaşır.
+	if bot_camera:
+		return
 	camera.target = _focus()
 	var line_view := session.line_out() or session.state == FishingSession.State.LOST
 	camera.pitch = lerpf(camera.pitch, LINE_PITCH if line_view else FollowCamera.PITCH, minf(1.0, delta * 2.5))
@@ -473,11 +479,12 @@ func _present(delta: float) -> void:
 	camera.zoom = lerpf(camera.zoom, zoom, minf(1.0, delta * 2.5))
 
 
-## Yakalanan balığın gösterildiği yer: balıkçının önünde, kameraya doğru ve göğüs hizasında
-## (yukarıdan bakan kamerada şapkanın altında kalmasın).
+## Yakalanan balığın gösterildiği yer: balıkçının önünde, kameraya doğru uzatılmış ve göğüs
+## hizasında. Yukarıdan bakan kamerada şapkanın kenarı (~0,5 m) altında kalmasın; ekranda
+## iskelenin açık tahtasının önünde görünür.
 func _show_point() -> Vector3:
 	var toward := Vector3(sin(FollowCamera.YAW), 0.0, cos(FollowCamera.YAW))
-	return angler.global_position + toward * 0.6 + Vector3(0.0, 1.05, 0.0)
+	return angler.global_position + toward * SHOW_REACH + Vector3(0.0, 1.0, 0.0)
 
 
 func _focus() -> Vector3:

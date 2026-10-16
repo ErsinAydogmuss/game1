@@ -73,7 +73,8 @@ Bot senaryoları (`scripts/dev/autoplay.gd`; gerçek dokunma olayları gönderir
 ```bash
 xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl3 --audio-driver Dummy \
   --resolution 1280x720 --fixed-fps 30 -- --autoplay --scenario=controls --locale=tr --safe-inset=130 --shots=/mutlak/yol
-# senaryolar: controls (KONTROL satırlarının hepsi TAMAM olmalı), first (ilk açılış, senaryolu ilk balık)
+# senaryolar: controls (KONTROL satırlarının hepsi TAMAM olmalı), first (ilk açılış, senaryolu ilk balık),
+#   hero (balıkçı ve Dede yakın çekim), fish (5 balık elde ve kartlarıyla), video (tanıtım; aşağıda)
 # --safe-inset: çentiği taklit eder (sol, sağ ve alt pay); düğmelerin güvenli alanda olduğu denetlenir
 ```
 
