@@ -10,7 +10,7 @@ const SHORE_SPAN := 12.0
 
 
 static func build(lake: LakeShape) -> ImageTexture:
-	var image := Image.create_empty(lake.width, lake.height, false, Image.FORMAT_RGBA8)
+	var image := Image.create_empty(lake.width, lake.height, false, Image.FORMAT_RGBAH)
 	for y in lake.height:
 		for x in lake.width:
 			var shore: float = lake.shore[y * lake.width + x]

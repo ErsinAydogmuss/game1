@@ -112,7 +112,9 @@ func cheer() -> void:
 	_talk_time = 0.0
 
 
-## Ekrandaki bir nokta Dede'nin üstünde mi (baş ile oturak arasındaki çizgiye yakın)?
+## Ekrandaki bir nokta Dede'nin üstünde mi (baş ile oturak arasındaki çizgiye yakın)? Balon
+## sayılmaz: sık çıkar ve iskelenin üstünde durur; yürümek ya da atmak için gelen dokunuşu
+## yutmasın.
 func hit(view: Camera3D, screen: Vector2) -> bool:
 	if not is_visible_in_tree() or view == null:
 		return false
@@ -187,3 +189,6 @@ func _add_tea() -> void:
 	Props.cylinder(tea, 0.03, 0.038, 0.05, Vector3(0, 0.039, 0), TEA, 10)
 	Props.cylinder(tea, 0.044, 0.03, 0.06, Vector3(0, 0.094, 0), TEA, 10)
 	Props.cylinder(tea, 0.046, 0.046, 0.012, Vector3(0, 0.127, 0), GLASS, 10)
+	# Gölge haritasının bir pikselinden ince: gölgesi görünmez, çizimi boşa gider.
+	for node in tea.find_children("*", "GeometryInstance3D", true, false):
+		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

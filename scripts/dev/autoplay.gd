@@ -13,7 +13,7 @@ extends Node
 ##   first: ilk açılış; senaryolu ilk balık (ekran görüntüleri; 45 sn denetimi).
 ##   hero: balıkçı ve Dede yakın çekim (kamerayı bot sürer): Dede konuşur, ikisi, atış, bekleme,
 ##     çekme, balığı gösterme, Dede sevinir.
-##   fish: beş balık elde ve kartlarıyla (görsel denetim; oyun kuralları işlemez).
+##   fish: beş balık elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez).
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~40 sn): Dede'ye dokun, gölgenin önüne at,
 ##     VUR, çekişme (bot uyarıda bırakır), ilk balık ve kartı; sonra nadir bir turna (ışık sütunu).
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
@@ -156,6 +156,8 @@ func _play_controls() -> void:
 	_check("yeni tür kartı açılır", card.visible)
 	await _tap_world(Vector2(0.0, 0.0))
 	_check("kart açıkken atış olmaz", _state() != FishingSession.State.CASTING and _state() != FishingSession.State.WAITING)
+	# Kart en kısa açık kalma süresinden önce düğmeyle de kapanmaz (görülmeden kapanmasın).
+	await _wait(FishCard.MIN_OPEN)
 	if card.visible and card.ok_button != null:
 		await _tap(card.ok_button.get_global_rect().get_center())
 	await _wait_state(FishingSession.State.IDLE, 2.0)
@@ -287,6 +289,10 @@ func _play_fish() -> void:
 		card.close_card()
 		catch_fx.clear()
 		await _wait(0.2)
+	# Ayarlar paneli (düğme boyları, sığma).
+	(main.get("settings_panel") as SettingsPanel).open()
+	await _wait(0.5)
+	await _shot("6_ayarlar")
 	_quit()
 
 

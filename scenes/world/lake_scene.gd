@@ -5,6 +5,8 @@ extends Node3D
 ## Su ve zemin, göl şeklinden (LakeShape) üretilen tek bir veri dokusunu paylaşır (LakeTexture).
 ## Hazır modeller yoksa (ModelLibrary.has) kodla kurulan basit parçalar (Props) kullanılır.
 ## Gölge yalnızca ağaçlardan, iskeleden, kamp eşyalarından ve karakterlerden düşer.
+## Çizim sayısı az tutulur: iskele renk başına tek ağ, aynı modelin kopyaları tek MultiMesh
+## (ModelLibrary.scatter), arazinin opak suyun altında kalan kareleri hiç kurulmaz.
 
 ## İskele güvertesinin su üstündeki yüksekliği (m).
 const DOCK_HEIGHT := 0.35
@@ -18,6 +20,8 @@ const TERRAIN_STEP := 0.5
 const TERRAIN_MARGIN := 6.0
 ## Ağın dışındaki düz zeminin genişliği (m).
 const OUTER_SIZE := 70.0
+## Dört köşesi kıyıdan bu kadar içeride (suyun altında) olan arazi kareleri kurulmaz (su opak).
+const HIDDEN_UNDER_WATER := 0.3
 const SKY := Color("#a9d2ef")
 const WOOD := Color("#9b6a3c")
 const WOOD_DARK := Color("#6e4526")
@@ -27,6 +31,8 @@ var data_texture: ImageTexture
 var environment: Environment
 
 var _rng := RandomNumberGenerator.new()
+## Toplu çizilecek modeller: "id|gölge" -> yerleşimler (_flush_batches).
+var _batches: Dictionary = {}
 
 
 func setup(shape: LakeShape) -> void:
@@ -109,17 +115,23 @@ func _build_terrain() -> void:
 	var rows := ceili(area.size.y / TERRAIN_STEP)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var under := PackedByteArray()
+	under.resize((rows + 1) * (cols + 1))
 	for j in rows + 1:
 		for i in cols + 1:
 			var p := area.position + Vector2(i, j) * TERRAIN_STEP
 			st.set_uv(Vector2(float(i) / cols, float(j) / rows))
 			st.add_vertex(Vector3(p.x, ground_height(p), p.y))
+			under[j * (cols + 1) + i] = 1 if lake.shore_distance(p) > HIDDEN_UNDER_WATER else 0
 	for j in rows:
 		for i in cols:
 			var a := j * (cols + 1) + i
 			var b := a + 1
 			var c := a + cols + 1
 			var d := c + 1
+			# Opak suyun altında kalan kare görünmez: kurulmaz (telefonda boşa piksel boyanmasın).
+			if under[a] == 1 and under[b] == 1 and under[c] == 1 and under[d] == 1:
+				continue
 			st.add_index(a)
 			st.add_index(b)
 			st.add_index(c)
@@ -175,29 +187,64 @@ func _shader_material(path: String) -> ShaderMaterial:
 
 # --- İskele ve sazlar --------------------------------------------------------------------
 
-## İskele: enine tahtalar, iki yanda kiriş, ayaklar (Props). Uzun kenarı z boyunca.
+## İskele: enine tahtalar, iki yanda kiriş, ayaklar. Uzun kenarı z boyunca. Parçalar renk başına
+## tek ağda birleşir (51 parça → 3 çizim).
 func _build_dock() -> void:
 	var dock := Props.pivot(self, Vector3.ZERO, "Dock")
 	var rect := lake.dock
+	var parts := {}
 	var plank := 0.3
 	var count := maxi(1, int(rect.size.y / (plank + 0.04)))
 	for i in count:
 		var z := rect.position.y + (float(i) + 0.5) * rect.size.y / count
 		var shade := WOOD if i % 2 == 0 else WOOD.darkened(0.08)
-		Props.box(dock, Vector3(rect.size.x, 0.08, plank), Vector3(rect.get_center().x, DOCK_HEIGHT, z), shade)
+		_dock_part(parts, _box_mesh(Vector3(rect.size.x, 0.08, plank)), Vector3(rect.get_center().x, DOCK_HEIGHT, z), shade)
 	for side: float in [-1.0, 1.0]:
 		var x := rect.get_center().x + side * (rect.size.x * 0.5 - 0.06)
-		Props.box(dock, Vector3(0.1, 0.12, rect.size.y), Vector3(x, DOCK_HEIGHT - 0.09, rect.get_center().y), WOOD_DARK)
+		_dock_part(parts, _box_mesh(Vector3(0.1, 0.12, rect.size.y)), Vector3(x, DOCK_HEIGHT - 0.09, rect.get_center().y), WOOD_DARK)
 	var post_z := rect.position.y + 0.15
 	while post_z < rect.end.y:
 		for side: float in [-1.0, 1.0]:
 			var x := rect.get_center().x + side * (rect.size.x * 0.5 - 0.08)
-			Props.cylinder(dock, 0.09, 0.09, 1.2, Vector3(x, -0.2, post_z), WOOD_DARK, 6)
+			_dock_part(parts, _post_mesh(0.09, 0.09, 1.2), Vector3(x, -0.2, post_z), WOOD_DARK)
 		post_z += 1.4
 	# Ucunda iki kısa direk (halat bağı).
 	for side: float in [-1.0, 1.0]:
 		var x := rect.get_center().x + side * (rect.size.x * 0.5 - 0.08)
-		Props.cylinder(dock, 0.07, 0.08, 0.35, Vector3(x, DOCK_HEIGHT + 0.2, rect.position.y + 0.15), WOOD_DARK, 6)
+		_dock_part(parts, _post_mesh(0.07, 0.08, 0.35), Vector3(x, DOCK_HEIGHT + 0.2, rect.position.y + 0.15), WOOD_DARK)
+	for key: String in parts:
+		var entry: Array = parts[key]
+		var node := MeshInstance3D.new()
+		node.name = "Planks"
+		node.mesh = (entry[0] as SurfaceTool).commit()
+		node.material_override = Props.material(entry[1])
+		dock.add_child(node)
+
+
+## Parçayı rengine göre birleşik ağa ekler (parts: renk -> [SurfaceTool, renk]).
+static func _dock_part(parts: Dictionary, mesh: PrimitiveMesh, pos: Vector3, color: Color) -> void:
+	var key := color.to_html()
+	if not parts.has(key):
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		parts[key] = [st, color]
+	((parts[key] as Array)[0] as SurfaceTool).append_from(mesh, 0, Transform3D(Basis.IDENTITY, pos))
+
+
+static func _box_mesh(size: Vector3) -> BoxMesh:
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	return mesh
+
+
+static func _post_mesh(top_radius: float, bottom_radius: float, height: float) -> CylinderMesh:
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = top_radius
+	mesh.bottom_radius = bottom_radius
+	mesh.height = height
+	mesh.radial_segments = 6
+	mesh.rings = 1
+	return mesh
 
 
 ## Kıyı boyunca saz kümeleri: sallanan ince yapraklar ve kamış başları (iki MultiMesh).
@@ -323,6 +370,7 @@ func _build_scenery() -> void:
 		_spawn(rocks[placed % rocks.size()], p, _rng.randf() * TAU, _rng.randf_range(0.6, 1.1), true)
 		placed += 1
 	_build_camp()
+	_flush_batches()
 
 
 ## İskelenin kara ucunun yanında küçük bir balıkçı kampı (ileride Dede'nin yeri).
@@ -347,10 +395,26 @@ func _near_camera_side(p: Vector2) -> bool:
 	return p.y > dock.position.y - 1.0 and p.x > dock.get_center().x - 7.0 and p.x < dock.get_center().x + 14.0
 
 
+## Modeli yerleştirir; aynı modelin kopyaları _flush_batches'te tek MultiMesh olarak kurulur.
 func _spawn(id: String, p: Vector2, yaw: float, size: float, shadows: bool) -> void:
-	var node := ModelLibrary.spawn(self, id, Vector3(p.x, maxf(ground_height(p), -0.05), p.y), yaw, size)
-	if node != null:
-		_set_shadows(node, shadows)
+	if not ModelLibrary.has(id):
+		return
+	var key := "%s|%d" % [id, 1 if shadows else 0]
+	if not _batches.has(key):
+		_batches[key] = []
+	var basis := Basis(Vector3.UP, yaw).scaled(Vector3.ONE * size)
+	(_batches[key] as Array).append(Transform3D(basis, Vector3(p.x, maxf(ground_height(p), -0.05), p.y)))
+
+
+func _flush_batches() -> void:
+	for key: String in _batches:
+		var parts := key.split("|")
+		var transforms: Array[Transform3D] = []
+		transforms.assign(_batches[key])
+		for node in ModelLibrary.scatter(self, parts[0], transforms):
+			node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if parts[1] == "1" \
+					else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_batches.clear()
 
 
 static func _set_shadows(root: Node, on: bool) -> void:

@@ -66,10 +66,12 @@ static func spawn(parent: Node3D, id: String, pos: Vector3, yaw: float = 0.0, si
 
 ## Aynı modelin birçok kopyası: modeldeki her mesh için bir MultiMeshInstance3D (tek çizim).
 ## transforms: her kopyanın yeri, dönüşü ve ek ölçeği (modelin kendi ölçeği eklenir).
-static func scatter(parent: Node3D, id: String, transforms: Array[Transform3D]) -> bool:
+## Kurulan düğümleri döndürür (model yoksa boş).
+static func scatter(parent: Node3D, id: String, transforms: Array[Transform3D]) -> Array[MultiMeshInstance3D]:
+	var out: Array[MultiMeshInstance3D] = []
 	var scene := _scene(id)
 	if scene == null or transforms.is_empty():
-		return false
+		return out
 	var root := scene.instantiate() as Node3D
 	var base := Transform3D(Basis.from_scale(Vector3.ONE * _scale(id)), Vector3.ZERO)
 	for node in root.find_children("*", "MeshInstance3D", true, false):
@@ -85,8 +87,9 @@ static func scatter(parent: Node3D, id: String, transforms: Array[Transform3D]) 
 		instance.name = "%s_%s" % [id.to_pascal_case(), mesh_node.name]
 		instance.multimesh = mm
 		parent.add_child(instance)
+		out.append(instance)
 	root.free()
-	return true
+	return out
 
 
 static func _path(id: String) -> String:

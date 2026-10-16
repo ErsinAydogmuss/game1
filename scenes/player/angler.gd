@@ -17,6 +17,9 @@ const BODY := 0.22
 const CARRY_DIR := Vector3(0.12, 0.9, -0.42)
 ## Balığı gösterirken olta gizlenir (sn).
 const SHOW_TIME := 1.6
+## Uzun bir karede (takılma) yürüme en çok bu kadarlık parçalarla işlenir: adım engelin
+## (Dede) içinden atlamasın.
+const MOVE_STEP := 0.05
 
 ## true ise KayKit modeli olsa bile kodla kurulan model kullanılır (testler, karşılaştırma).
 static var force_toy: bool = false
@@ -42,6 +45,7 @@ var _cast_time: float = -1.0
 var _show_time: float = -1.0
 var _speed: float = 0.0
 var _y: float = 0.0
+var _synced_carry: bool = false
 
 
 func _ready() -> void:
@@ -54,6 +58,12 @@ func _ready() -> void:
 	rod = RodModel.new()
 	rod.name = "Rod"
 	(_body.get("rod_mount") as Node3D).add_child(rod)
+	# Taşınan oltanın yönü, el yuvası kemikten güncellendikten sonra verilir (bir kare geride
+	# kalıp yürürken titremesin). Kodla kurulan modelde iskelet yok: _process'te verilir.
+	var skeleton := _body.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skeleton != null:
+		skeleton.skeleton_updated.connect(_apply_carry)
+		_synced_carry = true
 
 
 func pos2() -> Vector2:
@@ -93,7 +103,15 @@ func step_dir(dir: Vector2, delta: float) -> void:
 	if dir.length_squared() < 0.0001:
 		return
 	_walking = false
-	if _move(dir.normalized() * minf(dir.length(), 1.0), SPEED * delta):
+	var left := delta
+	var moved := false
+	while left > 0.0:
+		var dt := minf(left, MOVE_STEP)
+		left -= dt
+		if not _move(dir.normalized() * minf(dir.length(), 1.0), SPEED * dt):
+			break
+		moved = true
+	if moved:
 		_speed = SPEED
 
 
@@ -130,12 +148,15 @@ func cheer() -> void:
 
 func _process(delta: float) -> void:
 	var moved := false
-	if _walking:
+	var left := delta
+	while _walking and left > 0.0:
+		var dt := minf(left, MOVE_STEP)
+		left -= dt
 		var to := _target - pos2()
 		var d := to.length()
 		if d < 0.05:
 			stop()
-		elif _move(to / d, minf(SPEED * delta, d)):
+		elif _move(to / d, minf(SPEED * dt, d)):
 			moved = true
 		else:
 			stop()
@@ -163,6 +184,12 @@ func _update_rod(delta: float) -> void:
 	rod.visible = _show_time < 0.0
 	var free := pose == "free" and _cast_time < 0.0
 	_carry = move_toward(_carry, 1.0 if free else 0.0, delta * 4.0)
+	if not _synced_carry:
+		_apply_carry()
+
+
+## Serbestken olta gövdeye göre dik (yumuşak geçişle), atışta ve olta sudayken elde.
+func _apply_carry() -> void:
 	if _carry <= 0.0:
 		rod.transform = Transform3D.IDENTITY
 		return

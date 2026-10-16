@@ -71,7 +71,10 @@ func _process(delta: float) -> void:
 	var want := 0.0
 	if _has_target:
 		var local := to_local(_target) - _head.position
-		want = clampf(atan2(local.x, local.z), -1.3, 1.3)
+		var raw := atan2(local.x, local.z)
+		# Arkadaki hedefe dönmez (LookModifier gibi): baş bir omuzdan öbürüne savrulmasın.
+		if absf(raw) < LookModifier.BEHIND:
+			want = clampf(raw, -1.3, 1.3)
 	_yaw = lerpf(_yaw, want, 1.0 - exp(-LookModifier.SMOOTH * delta))
 	var pitch := 0.0
 	if _nod_time >= 0.0:

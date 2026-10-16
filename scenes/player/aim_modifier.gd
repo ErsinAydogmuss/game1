@@ -27,5 +27,10 @@ func _process_modification_with_delta(delta: float) -> void:
 	for bone in _bones:
 		if bone < 0:
 			continue
+		# Gövdenin yan ekseni (iskelet uzayında +X) üst kemiğin uzayına çevrilir: hazır duruş
+		# kemikleri döndürmüş olsa da (nişan duruşu) eğilme yana değil öne-arkaya olur.
+		var parent := skeleton.get_bone_parent(bone)
+		var basis := skeleton.get_bone_global_pose(parent).basis.orthonormalized() if parent >= 0 else Basis.IDENTITY
+		var side := (basis.inverse() * Vector3.RIGHT).normalized()
 		var rotation := skeleton.get_bone_pose_rotation(bone)
-		skeleton.set_bone_pose_rotation(bone, Quaternion(Vector3.RIGHT, amount * 0.5) * rotation)
+		skeleton.set_bone_pose_rotation(bone, Quaternion(side, amount * 0.5) * rotation)

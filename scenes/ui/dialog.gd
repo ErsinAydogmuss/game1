@@ -35,6 +35,8 @@ func _ready() -> void:
 	_panel = PanelContainer.new()
 	_panel.add_theme_stylebox_override("panel", UiKit.dialog_style())
 	_panel.custom_minimum_size = Vector2(_width, 0)
+	# Açılış animasyonu ortadan büyüsün: boyut her değişince merkez güncellenir.
+	_panel.resized.connect(func() -> void: _panel.pivot_offset = _panel.size * 0.5)
 	center.add_child(_panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 22)
@@ -54,11 +56,11 @@ func _ready() -> void:
 	close_button.texture_normal = ItemArt.ui("close")
 	close_button.ignore_texture_size = true
 	close_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	close_button.custom_minimum_size = Vector2(104, 104)
+	close_button.custom_minimum_size = Vector2(122, 122)
 	close_button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	close_button.pressed.connect(close_panel)
 	if close_button.texture_normal == null:
-		var fallback := UiKit.button("X", UiKit.DANGER, UiKit.SIZE_BODY, Vector2(104, 104))
+		var fallback := UiKit.button("X", UiKit.DANGER, UiKit.SIZE_BODY, Vector2(122, 122))
 		fallback.pressed.connect(close_panel)
 		header.add_child(fallback)
 	else:
@@ -86,7 +88,8 @@ func open() -> void:
 	show()
 	refresh()
 	Sounds.play("panel_open")
-	# Kısa büyüme animasyonu.
+	# Kısa büyüme animasyonu. İlk açılışta boyut yerleşimden sonra belli olur: merkez boyut
+	# değişince de güncellenir (resized).
 	_panel.pivot_offset = _panel.size * 0.5
 	_panel.scale = Vector2(0.92, 0.92)
 	_panel.modulate.a = 0.0

@@ -12,6 +12,7 @@ UI_LANG_NAME,English,Türkçe
 UI_ON,On,Açık
 UI_OFF,Off,Kapalı
 UI_DEBUG_RESET,Reset save,Kaydı sıfırla
+UI_DEBUG_RESET_SURE,Sure? Tap again,Emin misin? Yine dokun
 RARITY_common,Common,Sıradan
 RARITY_fine,Fine,Güzel
 RARITY_rare,Rare,Nadir
@@ -61,4 +62,4 @@ UI_NEW_RECORD,New record!,Yeni rekor!
 UI_SIZE_CM,%d cm,%d cm
 UI_CARD_OK,Great!,Harika!
 UI_CAUGHT_TOAST,%s · %d cm,%s · %d cm
-UI_DISTANCE,%.1f m,%.1f m
+UI_DISTANCE,%s m,%s m

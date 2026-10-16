@@ -140,6 +140,9 @@ func _on_state_changed() -> void:
 		_start_session()
 		return
 	session.easy = bool(GameState.setting("easy", false))
+	# Ayar çekişmenin ortasında değişirse (Ayarlar açıkken oyun donuk) süren çekişmeye de geçer.
+	if session.reel != null and session.hooked != null:
+		session.reel.easy = session.easy or session.hooked.scripted
 
 
 func _on_focus_lost() -> void:
@@ -220,7 +223,14 @@ func _on_walk_requested(target: Vector2) -> void:
 
 
 ## Suya dokunuş: menzildeyse hemen atar; değilse önce yaklaşır (kıyıda durursa oradan atar).
+## Olta dönerken (kaçtı, geri sarma, kartsız kısa yakalama) gelen dokunuş kaybolmaz: dönünce
+## atılır. Kartlı yakalamada saklanmaz: kartı kapatan dokunuş olta da atmasın.
 func _on_cast_requested(target: Vector2) -> void:
+	var returning := session.state in [FishingSession.State.LOST, FishingSession.State.RETRIEVING] \
+			or (session.state == FishingSession.State.CAUGHT and _quick_catch >= 0.0 and not card.visible)
+	if returning:
+		_pending_cast = target
+		return
 	if session.state != FishingSession.State.IDLE:
 		return
 	if angler.pos2().distance_to(target) <= session.range_m() - 0.3:
@@ -247,6 +257,12 @@ func _try_cast(target: Vector2) -> void:
 	_pending_cast = Dice.NO_POINT
 	angler.stop()
 	session.angler = angler.pos2()
+	# Çok yakına (en kısa atıştan az) dokunulduysa o yönde biraz öteye atılır: suya dokunan
+	# oyuncu "suya dokun" hatası almasın.
+	var offset := target - angler.pos2()
+	var near := session.rules.min_cast + 0.3
+	if offset.length() > 0.001 and offset.length() < near:
+		target = angler.pos2() + offset.normalized() * near
 	angler.face(target - angler.pos2())
 	if not session.cast(target):
 		Sounds.play("error")
@@ -335,10 +351,8 @@ func _on_event(e: Dictionary) -> void:
 			Sounds.play("splash")
 			Sounds.haptic(20)
 		"strain":
-			Sounds.set_loop("strain", true)
+			# Gıcırtı döngüsü _present'te her kare (duraklamadan sonra da) açılır.
 			Sounds.haptic(25)
-		"strain_end":
-			Sounds.set_loop("strain", false)
 		"lost":
 			_on_lost(str(e["reason"]))
 		"catch":
@@ -445,6 +459,7 @@ func _present(delta: float) -> void:
 		_:
 			angler.pose = "free"
 	Sounds.set_loop("reel", fighting and reel.holding, 0.0, 0.9 + 0.3 * tension)
+	Sounds.set_loop("strain", fighting and reel.in_red)
 	# Arayüz.
 	hud.set_action("" if card.visible else session.action_kind())
 	hud.tension_bar.visible = fighting

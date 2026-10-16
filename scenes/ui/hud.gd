@@ -19,6 +19,11 @@ signal action_up
 const MARGIN := 28.0
 const FPS_INTERVAL := 0.5
 const ACTION_SIZE := Vector2(300, 300)
+## Eylem düğmesi: tür → [yazı anahtarı, ikon].
+const ACTIONS := {
+	"cast": ["UI_ACT_CAST", "rod"], "retrieve": ["UI_ACT_RETRIEVE", "reel"], "wait": ["UI_ACT_WAIT", "hand"],
+	"hook": ["UI_ACT_HOOK", "hook"], "reel": ["UI_ACT_REEL", "reel"],
+}
 const TOAST_TIME := 1.7
 
 var settings_button: TouchButton
@@ -48,6 +53,7 @@ func _ready() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	warm_styles()
 	_build_top()
 	_build_bottom()
 	_build_center()
@@ -67,6 +73,8 @@ func _process(delta: float) -> void:
 		_toast_age += delta
 		var t := _toast_age / TOAST_TIME
 		_toast.modulate.a = clampf((1.0 - t) * 4.0, 0.0, 1.0)
+		# Boyut yeni yazıya göre ancak yerleşimden sonra belli: merkez her kare güncellenir.
+		_toast.pivot_offset = _toast.size * 0.5
 		_toast.scale = Vector2.ONE * (1.0 + 0.25 * maxf(0.0, 1.0 - _toast_age / 0.15))
 		if t >= 1.0:
 			_toast_age = -1.0
@@ -128,17 +136,33 @@ func set_action(kind: String) -> void:
 		return
 	_action_kind = kind
 	action_button.visible = not kind.is_empty()
+	if ACTIONS.has(kind):
+		var action: Array = ACTIONS[kind]
+		_set_button(tr(str(action[0])), str(action[1]), action_color(kind))
+
+
+## Eylem düğmesinin rengi.
+static func action_color(kind: String) -> Color:
 	match kind:
-		"cast":
-			_set_button(tr("UI_ACT_CAST"), "rod", UiKit.PRIMARY)
 		"retrieve":
-			_set_button(tr("UI_ACT_RETRIEVE"), "reel", UiKit.NEUTRAL)
+			return UiKit.NEUTRAL
 		"wait":
-			_set_button(tr("UI_ACT_WAIT"), "hand", UiKit.NEUTRAL.darkened(0.25))
+			return UiKit.NEUTRAL.darkened(0.25)
 		"hook":
-			_set_button(tr("UI_ACT_HOOK"), "hook", UiKit.DANGER)
+			return UiKit.DANGER
 		"reel":
-			_set_button(tr("UI_ACT_REEL"), "reel", UiKit.SUCCESS)
+			return UiKit.SUCCESS
+	return UiKit.PRIMARY
+
+
+## Oyunda sonradan görünen parlak düğme dokuları açılışta bir kez çizilir (her biri ~30-40 ms):
+## ilk dürtme, VUR ve çekişme anında ya da ilk kartta takılma olmasın.
+static func warm_styles() -> void:
+	for kind: String in ACTIONS:
+		UiKit.glossy(action_color(kind), false, 40)
+		UiKit.glossy(action_color(kind), true, 40)
+	# Balık kartının "Harika!" düğmesi.
+	UiKit.button("", UiKit.SUCCESS).free()
 
 
 func _set_button(text: String, icon_kind: String, color: Color) -> void:
@@ -298,7 +322,7 @@ class TensionBar extends Control:
 		if int(red) != _shown_red:
 			_shown_red = int(red)
 			_label.add_theme_color_override("font_color", UiKit.BAD if red else UiKit.TEXT)
-		_label.text = UiKit.upper(tr("UI_LET_GO")) if red else tr("UI_DISTANCE") % distance
+		_label.text = UiKit.upper(tr("UI_LET_GO")) if red else tr("UI_DISTANCE") % UiKit.format_float(distance)
 
 	func _fill(color: Color) -> StyleBoxFlat:
 		if not _fills.has(color):

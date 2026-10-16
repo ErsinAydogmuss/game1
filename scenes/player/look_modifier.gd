@@ -17,11 +17,16 @@ const CHEST_SHARE := 0.35
 ## En çok yukarı ve aşağı bakış (radyan).
 const PITCH_UP := 0.5
 const PITCH_DOWN := 0.3
+## Hedef bundan daha arkadaysa (radyan) baş ona dönmez, öne döner: arkadan geçen şamandıra başı
+## bir omuzdan öbürüne savurmasın. Yeniden izlemek için BEHIND - BEHIND_GAP'ın altına inmeli.
+const BEHIND := deg_to_rad(110.0)
+const BEHIND_GAP := deg_to_rad(12.0)
 ## Dönüşün yumuşaklığı (büyüdükçe hızlı).
 const SMOOTH := 5.0
 
 var _yaw: float = 0.0
 var _pitch: float = 0.0
+var _behind: bool = false
 var _head: int = -2
 var _chest: int = -1
 
@@ -42,9 +47,12 @@ func _process_modification_with_delta(delta: float) -> void:
 		var to := local - skeleton.get_bone_global_pose(_head).origin
 		var flat := Vector2(to.x, to.z).length()
 		if flat > 0.05:
-			want = clampf(atan2(to.x, to.z), -limit, limit)
-			# + öne eğilir: yukarıdaki hedefe bakarken baş geriye kalkar.
-			want_pitch = clampf(-atan2(to.y, flat), -PITCH_UP, PITCH_DOWN)
+			var raw := atan2(to.x, to.z)
+			_behind = absf(raw) > (BEHIND - BEHIND_GAP if _behind else BEHIND)
+			if not _behind:
+				want = clampf(raw, -limit, limit)
+				# + öne eğilir: yukarıdaki hedefe bakarken baş geriye kalkar.
+				want_pitch = clampf(-atan2(to.y, flat), -PITCH_UP, PITCH_DOWN)
 	var k := 1.0 - exp(-SMOOTH * delta)
 	_yaw = lerpf(_yaw, want, k)
 	_pitch = lerpf(_pitch, want_pitch, k)

@@ -39,8 +39,9 @@ func _ready() -> void:
 		_joints.append(joint)
 		parent = joint
 	tip = Props.pivot(parent, Vector3(0, 0, -segment), "Tip")
+	# Olta gölge haritasının bir pikselinden ince: gölgesi görünmez, gölge çizimi boşa gider.
 	for node in find_children("*", "GeometryInstance3D", true, false):
-		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 func _process(delta: float) -> void:

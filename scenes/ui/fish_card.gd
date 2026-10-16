@@ -85,7 +85,10 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	column.add_child(desc)
 	ok_button = UiKit.button(tr("UI_CARD_OK"), UiKit.SUCCESS, UiKit.SIZE_TITLE, Vector2(420, 130))
 	ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	ok_button.pressed.connect(close_card)
+	# Kart görülmeden kapanmasın: düğme de en kısa açık kalma süresine uyar.
+	ok_button.pressed.connect(func() -> void:
+		if _age >= MIN_OPEN:
+			close_card())
 	column.add_child(ok_button)
 	add_child(_card)
 	show()

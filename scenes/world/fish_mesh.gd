@@ -23,6 +23,8 @@ const SHAPES := {
 	"wels": { "ratio": 3.2, "nose": 2.8, "eye": 0.042, "whiskers": 0.45, "flat": 0.3 },
 }
 const DEFAULT_SHAPE := { "ratio": 2.2, "nose": 2.4, "eye": 0.075 }
+## Dış çizginin dünyadaki kalınlığı (m).
+const OUTLINE_M := 0.012
 
 static var _meshes: Dictionary = {}
 static var _material: ShaderMaterial
@@ -50,7 +52,8 @@ func set_instance_shader_parameters_safe(length: float) -> void:
 	material.next_pass = (material.next_pass as ShaderMaterial).duplicate()
 	material.set_shader_parameter("fish_length", 1.0)
 	(material.next_pass as ShaderMaterial).set_shader_parameter("fish_length", 1.0)
-	(material.next_pass as ShaderMaterial).set_shader_parameter("outline_width", 0.012 / maxf(length, 0.2) * 0.35)
+	# Dış çizgi dünyada ~12 mm (modelin biriminde, ölçeğe bölünür): telefonda ve portrede seçilsin.
+	(material.next_pass as ShaderMaterial).set_shader_parameter("outline_width", OUTLINE_M / maxf(length, 0.2))
 	material_override = material
 
 
@@ -255,13 +258,20 @@ class _Builder:
 				var p01 := center + _spherical(u1, v0) * r
 				var p10 := center + _spherical(u0, v1) * r
 				var p11 := center + _spherical(u1, v1) * r
-				_tri(p00, p10, p11, color, color, color)
-				_tri(p00, p11, p01, color, color, color)
+				_tri_as_is(p00, p10, p11, color, color, color)
+				_tri_as_is(p00, p11, p01, color, color, color)
 
 	static func _spherical(u: float, v: float) -> Vector3:
 		return Vector3(sin(v) * cos(u), cos(v), sin(v) * sin(u))
 
+	## Üçgen. Gövde, kuyruk, yüzgeç ve bıyık noktaları dışarıdan bakınca saat yönünün tersine
+	## sıralı; Godot'da ön yüz saat yönündedir: sıra burada çevrilir. Böylece normaller dışa
+	## bakar ve dış çizgi kabuğu (NORMAL yönünde büyür) gövdenin dışına çıkar.
 	func _tri(a: Vector3, b: Vector3, c: Vector3, ca: Color, cb: Color, cc: Color) -> void:
+		_tri_as_is(a, c, b, ca, cc, cb)
+
+	## Verilen sırayla (küre noktaları zaten saat yönünde).
+	func _tri_as_is(a: Vector3, b: Vector3, c: Vector3, ca: Color, cb: Color, cc: Color) -> void:
 		st.set_color(ca)
 		st.add_vertex(a)
 		st.set_color(cb)
