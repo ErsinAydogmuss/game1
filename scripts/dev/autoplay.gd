@@ -7,12 +7,13 @@ extends Node
 ##     [--shots=/mutlak/yol] [--locale=tr] [--safe-inset=130]
 ## Senaryolar:
 ##   controls: kontrollerin denemesi; KONTROL satırları TAMAM olmalı (Dede'ye dokun konuşsun,
-##     yürü, kıyıda dur, Dede'nin yanından geç, at, geri sar, gölgeyi korkut, gölgeyi çek, erken
+##     Nine'ye dokun selam versin, yürü, kıyıda dur, Dede'nin yanından ve dükkânın önünden geç,
+##     at, geri sar, gölgeyi korkut, gölgeyi çek, erken
 ##     dokunuş, ekranın her yeri VUR, basılı tut tut, kart açıkken atış yok, patlamada bırakmazsa
 ##     kopar, 8 sn'de yeni balık, düğme boyu ve güvenli alan).
 ##   first: ilk açılış; senaryolu ilk balık (ekran görüntüleri; 45 sn denetimi).
-##   hero: balıkçı ve Dede yakın çekim (kamerayı bot sürer): Dede konuşur, ikisi, atış, bekleme,
-##     çekme, balığı gösterme, Dede sevinir.
+##   hero: balıkçı, Dede ve Nine yakın çekim (kamerayı bot sürer): Dede konuşur, ikisi, dükkân,
+##     Nine selam verir, atış, bekleme, çekme, balığı gösterme, Dede sevinir.
 ##   fish: beş balık elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez).
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~40 sn): Dede'ye dokun, gölgenin önüne at,
 ##     VUR, çekişme (bot uyarıda bırakır), ilk balık ve kartı; sonra nadir bir turna (ışık sütunu).
@@ -80,6 +81,12 @@ func _play_controls() -> void:
 	await _wait_frames(2)
 	_check("Dede'ye dokun → konuşur", str(main.get("_hint_shown")) == Elder.TIP_KEY % 1
 			and elder.bubble.is_showing() and not angler.is_walking())
+	# 0b) Nine'ye dokun: selam verir (sözü ipucu çubuğunda Nine'nin yüzüyle, balon); balıkçı yürümez.
+	var nine := _nine()
+	await _tap(_screen(nine.head_point()))
+	await _wait_frames(2)
+	_check("Nine'ye dokun → selam verir", str(main.get("_hint_shown")) == Nine.HELLO_KEY % 1
+			and _hud().hint_speaker() == "nine" and nine.bubble.is_showing() and not angler.is_walking())
 	# 1) Suyun öbür yanındaki karaya dokun: iskelenin kenarında (kıyıda) durmalı.
 	var across := Vector2(5.0, 7.0)
 	await _tap_world(across)
@@ -102,6 +109,23 @@ func _play_controls() -> void:
 		return not angler.is_walking(), 8.0)
 	_check("Dede'nin yanından geçer (en yakın %.2f m)" % nearest[0],
 			nearest[0] >= block.z + Angler.BODY - 0.03 and angler.pos2().distance_to(far_end) < 0.4)
+	# 2c) İskelenin kara ucundan dükkânın önünden geçip ötesine yürü: dükkânın (olta sehpası dahil)
+	# içine girmemeli, sehpanın yanından kayıp varmalı.
+	await _tap_world(land)
+	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
+	var shop_blocks: Array[Vector3] = (main.get("shop") as ShopStall).blockers()
+	var gap: Array[float] = [INF]
+	var past_shop := Vector2(-3.0, 11.3)
+	await _tap_world(past_shop)
+	await _wait_until(func() -> bool:
+		for b in shop_blocks:
+			gap[0] = minf(gap[0], angler.pos2().distance_to(Vector2(b.x, b.y)) - b.z - Angler.BODY)
+		return not angler.is_walking(), 8.0)
+	_check("dükkânın içinden geçmez (pay %.2f m, hedefe %.2f m)" % [gap[0], angler.pos2().distance_to(past_shop)],
+			gap[0] > -0.05 and angler.pos2().distance_to(past_shop) < 0.6)
+	# İskeleye kara ucundan dön (düz yol kıyıya çıkar).
+	await _tap_world(land)
+	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
 	await _tap_world(Vector2(0.0, 4.0))
 	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
 	# 3) Suya dokun: atmalı.
@@ -229,6 +253,16 @@ func _play_hero() -> void:
 	_frame_on(angler.global_position.lerp(elder.global_position, 0.5) + Vector3(0.0, 0.6, 0.0), 0.42)
 	await _wait(0.3)
 	await _shot("02_balikci_ve_dede")
+	# Nine ve dükkânı: önce dükkânın tamamı, sonra Nine'ye dokun (selam) ve yakın çekim.
+	var nine := _nine()
+	_frame_on(nine.head_point() + Vector3(0.5, -0.5, 0.4), 0.55)
+	await _wait(0.3)
+	await _shot("02b_dukkan")
+	_frame_on(nine.head_point() + Vector3(0.0, -0.3, 0.0), 0.3)
+	await _wait_frames(2)
+	await _tap(_screen(nine.head_point()))
+	await _wait(0.6)
+	await _shot("02c_nine_selam")
 	# Atış normal görünümde (dokunulan su ekranda olsun), sonra yakına.
 	_frame_on(angler.global_position + Vector3(0.0, 0.6, 0.0), 1.0)
 	await _wait_frames(2)
@@ -457,6 +491,10 @@ func _hud() -> Hud:
 
 func _elder() -> Elder:
 	return main.get("elder")
+
+
+func _nine() -> Nine:
+	return main.get("nine")
 
 
 func _check(label: String, ok: bool) -> void:

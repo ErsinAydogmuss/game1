@@ -1,8 +1,9 @@
 extends BaseTest
-## Hazır modeller: balıkçı (KayKit Rogue) ve Dede (KayKit Barbarian) başsız yüklenir; gereken
-## parçalar, yuvalar, kemikler ve animasyonlar yerinde (paket güncellenince adlar değişirse burada
-## yakalanır). Göl çevresinin modelleri listede ve dosyaları var. Balık ağı her tür için kurulur.
-## Balıkçı Dede'nin içinden geçmez ama içinde kalırsa dışarı çıkabilir.
+## Hazır modeller: balıkçı (KayKit Rogue), Dede (KayKit Barbarian) ve Nine (KayKit Mage) başsız
+## yüklenir; gereken parçalar, yuvalar, kemikler ve animasyonlar yerinde (paket güncellenince adlar
+## değişirse burada yakalanır). Göl çevresinin modelleri listede ve dosyaları var. Balık ağı her tür
+## için kurulur. Balıkçı Dede'nin içinden geçmez ama içinde kalırsa dışarı çıkabilir. Nine'nin
+## dükkânı az çizimle kurulur; Nine tezgâhın arkasında durur, tezgâhın önü serbesttir.
 
 
 func test_angler_model_has_parts_and_animations() -> void:
@@ -50,6 +51,53 @@ func test_elder_model_has_parts_and_animations() -> void:
 		var cheer := CharacterKit.one_shot(player, ElderBody.CHEER_ANIM, 0.1, 0.1, true)
 		assert_true(cheer.filter_enabled, "oturarak sevinç yalnızca üst gövdeyi oynatır")
 	model.free()
+
+
+func test_nine_model_has_parts_and_animations() -> void:
+	assert_true(NineBody.available(), "Nine modeli ve dokusu var")
+	if not NineBody.available():
+		return
+	var model := (load(NineBody.SCENE_PATH) as PackedScene).instantiate() as Node3D
+	for part: String in NineBody.REQUIRED_NODES:
+		assert_true(model.find_child(part, true, false) != null, "Nine modelinde parça yok: " + part)
+	var skeleton := model.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skeleton != null:
+		for bone: String in NineBody.REQUIRED_BONES:
+			assert_true(skeleton.find_bone(bone) >= 0, "Nine iskeletinde kemik yok: " + bone)
+		for bone: String in CharacterKit.LOWER_BODY:
+			assert_true(skeleton.find_bone(bone) >= 0, "alt gövde kemiği yok: " + bone)
+	for part: String in NineBody.HIDDEN:
+		assert_true(model.find_child(part, true, false) != null, "gizlenecek parça yok (adı değişmiş olabilir): " + part)
+	var player := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	assert_true(player != null, "Nine'nin animasyon oynatıcısı var")
+	if player != null:
+		for anim: String in NineBody.REQUIRED_ANIMS:
+			assert_true(player.has_animation(anim), "Nine animasyonu yok: " + anim)
+	model.free()
+
+
+func test_shop_stall_layout() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var stall := ShopStall.new()
+	tree.root.add_child(stall)
+	stall.build(Vector3(2.0, 0.2, 3.0), Vector2(1.0, 0.0))
+	assert_true(stall.facing().distance_to(Vector2(1.0, 0.0)) < 0.001, "dükkân önüne bakar")
+	var keeper := stall.keeper_spot()
+	assert_between(keeper.x, 2.0 - ShopStall.DEPTH + 0.3, 2.0 - ShopStall.COUNTER_D, "Nine tezgâhla duvarın arasında")
+	assert_between(keeper.y, 0.3, 0.4, "Nine döşemenin üstünde")
+	var inside := Vector2(keeper.x, keeper.z)
+	var front := Vector2(2.6, 3.0)
+	var inside_blocked := false
+	var front_blocked := false
+	for b in stall.blockers():
+		var center := Vector2(b.x, b.y)
+		inside_blocked = inside_blocked or center.distance_to(inside) < b.z
+		front_blocked = front_blocked or center.distance_to(front) < b.z + Angler.BODY
+	assert_true(inside_blocked, "balıkçı dükkânın içine giremez")
+	assert_true(not front_blocked, "tezgâhın önünde durulur")
+	var draws := stall.find_children("*", "GeometryInstance3D", true, false).size()
+	assert_true(draws <= 6, "dükkân az çizimle kurulur (%d)" % draws)
+	stall.free()
 
 
 func test_angler_slides_around_blockers() -> void:

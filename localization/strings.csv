@@ -117,7 +117,7 @@ GEAR_bait_worm_DESC,Every fish likes it. From Dede's garden: free and unlimited.
 GEAR_bait_maggot,Grubs,Kurtçuk
 GEAR_bait_maggot_DESC,Rudd and perch love them.,Kızılkanat ve levrek bayılır.
 GEAR_bait_dough,Bread dough,Ekmek hamuru
-GEAR_bait_dough_DESC,Nine's recipe. Carp and rudd like it.,Nine'nin tarifi. Sazan ve kızılkanat sever.
+GEAR_bait_dough_DESC,Nana's recipe. Carp and rudd like it.,Nine'nin tarifi. Sazan ve kızılkanat sever.
 GEAR_bait_corn,Sweet corn,Mısır
 GEAR_bait_corn_DESC,A carp's favourite.,Sazanın en sevdiği.
 GEAR_bait_boilie,Boilies,Boili
@@ -139,4 +139,9 @@ GEAR_keepnet_huge_DESC,Holds 36 fish.,36 balık alır.
 UI_BUCKET_COUNT,%d/%d,%d/%d
 UI_RANK_UP,Rank %d: %s!,Rütbe %d: %s!
 UI_BUCKET_FULL,Bucket full: the fish swam home,Kova dolu: balık göle döndü
-UI_DEDE_BUCKET,Your bucket is full! Sell your fish at Nine's shop.,Kovan doldu! Balıkları Nine'nin dükkânında satabilirsin.
+UI_DEDE_BUCKET,Your bucket is full! Sell your fish at Nana's shop.,Kovan doldu! Balıkları Nine'nin dükkânında satabilirsin.
+UI_SHOP_SIGN,Nana's shop,Nine'nin dükkânı
+UI_NINE_HELLO_1,"Welcome, dear! Fresh bait and sturdy rods, right here.","Hoş geldin evladım! Taze yem, sağlam olta, hepsi burada."
+UI_NINE_HELLO_2,"Caught something? Bring it to me, I pay well.","Balık mı tuttun? Getir bana, iyi fiyat veririm."
+UI_NINE_HELLO_3,Tell Dede the tea is brewing.,"Dede'ne söyle, çayı demledim."
+UI_NINE_HELLO_4,"Corn catches carp, dear. You didn't hear it from me!","Sazan mısıra gelir evladım. Benden duymuş olma!"

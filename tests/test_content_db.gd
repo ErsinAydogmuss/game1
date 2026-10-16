@@ -113,6 +113,8 @@ func test_every_content_id_has_translations() -> void:
 		keys.append("SPOT_" + str(s["id"]))
 	for i in range(1, Elder.TIP_COUNT + 1):
 		keys.append(Elder.TIP_KEY % i)
+	for i in range(1, Nine.HELLO_COUNT + 1):
+		keys.append(Nine.HELLO_KEY % i)
 	for key in keys:
 		assert_true(table.has(key), "çeviri anahtarı eksik: " + key)
 		if table.has(key):

@@ -124,6 +124,8 @@ func _add_cap() -> void:
 	Props.sphere(cap, 0.46, Vector3(0, 0.02, -0.02), CAP_TOP, 16, 8, Vector3(1.04, 0.4, 1.06))
 	Props.cylinder(cap, 0.46, 0.5, 0.13, Vector3(0, -0.06, -0.02), CAP_COLOR, 18)
 	Props.box(cap, Vector3(0.56, 0.05, 0.24), Vector3(0, -0.1, 0.52), CAP_COLOR.darkened(0.18), Vector3(-0.22, 0, 0))
+	# Tek ağ (bir çizim, bir dış çizgi, bir gölge).
+	MeshBatch.merge(cap)
 	CharacterKit.outline_parts(cap, CharacterKit.OUTLINE_WIDTH / MODEL_SCALE * 0.5)
 
 

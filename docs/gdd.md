@@ -198,10 +198,11 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - Balıkçı onun içinden geçmez, yanından kayarak geçer.
   - Sonra her tekniği ilk kullanımda gösterir, her gün 3 küçük istekte bulunur ("bana 30 cm'lik bir kadife getir") ve "Gölün Sırrı"nı parça parça anlatır 🔜.
   - Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir 🔜.
-- **Nine** 🔜 (Dede'nin eşi):
-  - İskelenin kara ucundaki küçük ahşap dükkânı işletir; ona dokununca dükkân açılır.
-  - Model KayKit'ten seçilir ve boyanır; yazmayı ve önlüğü kod kurar. Yoksa kodla kurulan yedek çıkar.
-  - Hikâyede gençliğini anlatır; göl sevgisi yükselince "altın hamur"u verir.
+- **Nine** (Dede'nin eşi):
+  - ✅ İskelenin kara ucunun solundaki küçük ahşap dükkânı işletir: tezgâhın arkasında ayakta durur, yüzü iskeleye ve kameraya dönük. Balıkçı yaklaşınca ona bakar. Ona ya da dükkâna dokununca selam verir (balon, baş sallama, tezgâha uzanır); sözü ipucu çubuğunda kendi yüzüyle çıkar. Dükkân paneli 🔜 (Dalga 1, 6. adım).
+  - ✅ KayKit Mage, yeniden boyanmış: gümüş saç, hardal sarısı hırka. Kodla beyaz, mavi çiçekli yazma (çenenin altında bağlı), turkuaz puantiyeli önlük, yuvarlak gözlük ve pembe yanaklar (Ersin'in portre tarifi). Büyücü şapkası, asa ve kitap gizli. Model yoksa kodla kurulan yedek çıkar.
+  - ✅ Dükkân kodla kurulur: alçak döşeme, raflı arka duvar (yem kavanozları, kutular), tezgâh (solucan kovası, kavanozlar, mısır kasası, zil), olta sehpası ve kepçe, turkuaz-krem çizgili tente, "Nine'nin Dükkânı" tabelası; yanında fıçı, kasa, çuval. Kamera yukarıdan baktığı için tente yüksek ve kısa: Nine'nin başı altından görünür. Balıkçı dükkânın içinden geçmez.
+  - Hikâyede gençliğini anlatır; göl sevgisi yükselince "altın hamur"u verir 🔜.
 - **Kedi (Tekir)** 🔜:
   - İskelede bekler, peşinden biraz gelir. Dokununca mırlar (titreşim).
   - Küçük balık isteyebilir; her 5 beslemede sıradaki hediyeyi getirir (sabit sırayla, zar yok).
@@ -442,5 +443,5 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
 - Spin ve sinek dokunmatik ekranda anlaşılıyor mu?
 - Dükkânda seçenek kalabalığı var mı?
 - 24 dakikalık oyun günü doğru hızda mı?
-- Nine, erkek balıkçı ve kedi için hangi modeller?
+- Erkek balıkçı ve kedi için hangi modeller? (Nine: KayKit Mage.)
 - Kazı'ya benzerlik hissediliyor mu?

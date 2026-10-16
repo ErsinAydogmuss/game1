@@ -43,6 +43,24 @@ const JOBS: Array[Dictionary] = [
 		},
 	},
 	{
+		# Nine (Mage): Ersin'in portre tarifi (docs/gorsel-istekleri.md §9): gümüş saç, hardal
+		# sarısı örgü hırka (cüppe), krem yün kenarlar, tahta düğmeler. Kemer ve keseler önlüğün
+		# turkuazı: kodla takılan önlüğün bağı ve cepleri gibi görünür. Şapka ve pelerin gizli.
+		"source": "res://assets/models/characters/source/mage_texture.png",
+		"output": "res://assets/models/characters/nine_texture.png",
+		"swatches": {
+			Vector2i(1, 0): "#c4bfba", # saç ve kaşlar → gümüş
+			Vector2i(1, 1): "#3f6fb5", # saç bağı (şapka da bunu kullanır, gizli)
+			Vector2i(0, 1): "#d39b2f", # cüppe ve kollar → hardal hırka
+			Vector2i(4, 0): "#efe3c8", # etek ucu, yaka ve kol uçları → krem yün
+			Vector2i(3, 0): "#7a4a2a", # düğmeler ve toka → tahta
+			Vector2i(5, 0): "#1f7f7c", # kemer → önlük bağı
+			Vector2i(2, 2): "#2a9d96", # keseler → önlük cepleri
+			Vector2i(7, 1): "#5b4a5e", # çorap
+			Vector2i(3, 2): "#5b3a28", # ayakkabı
+		},
+	},
+	{
 		# Ortaçağ paketi: ahşap pembemsi görünmesin, ağaçlar çimenle uyuşsun.
 		"source": "res://assets/models/medieval/source/hexagons_medieval.png",
 		"output": "res://assets/models/medieval/hexagons_medieval.png",

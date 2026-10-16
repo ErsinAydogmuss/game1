@@ -383,10 +383,11 @@ func _build_camp() -> void:
 	_spawn("sack", land + Vector2(1.9, 1.1), 0.0, 1.0, true)
 	_spawn("lumber", land + Vector2(5.6, -0.4), 1.2, 0.9, true)
 	_spawn("lantern_post", land + Vector2(-1.15, -1.6), 0.0, 1.0, true)
-	_spawn("bench", land + Vector2(-2.3, -0.6), deg_to_rad(15.0), 1.0, true)
+	# İskelenin solu Nine'nin dükkânı (main kurar): bank kampın yanında, göle bakar.
+	_spawn("bench", land + Vector2(2.9, -1.0), deg_to_rad(15.0), 1.0, true)
 	var bucket := ModelLibrary.spawn(self, "bucket", Vector3(dock.get_center().x - 0.45, DOCK_HEIGHT + 0.04, dock.position.y + 0.55), 0.4)
 	if bucket != null:
-		_set_shadows(bucket, true)
+		set_shadows(bucket, true)
 
 
 ## Kameraya yakın taraf: iskelenin arkası (kamera +x +z yönünde). Ağaçlar balıkçıyı örtmesin.
@@ -417,7 +418,7 @@ func _flush_batches() -> void:
 	_batches.clear()
 
 
-static func _set_shadows(root: Node, on: bool) -> void:
+static func set_shadows(root: Node, on: bool) -> void:
 	for node in root.find_children("*", "GeometryInstance3D", true, false):
 		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on \
 				else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

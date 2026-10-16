@@ -10,6 +10,7 @@ extends SceneTree
 ##   --angler                          AnglerBody'yi (olta, şapka) oyundaki duruşlarla çiz
 ##   --elder                           Dede'yi (Elder: kasket, çay, balon) oyundaki duruşlarla, iskele
 ##                                     tahtasının kenarında oturtarak çiz (oturuş denetimi)
+##   --nine                            Nine'yi (yazma, önlük, gözlük) oyundaki duruşlarla, ayakta çiz
 ## Zamanlama kare sayısıyla: --fixed-fps 30 ile çalıştır (tek seferlik hareketler tepe anında çizilsin).
 
 ## Sütun sayısı (--elder'de 3: Dede küçük kalmasın).
@@ -23,12 +24,19 @@ const SPECS: Array[Array] = [
 	["Use_Item", "Use_Item", 0.5], ["Interact", "Interact", 0.5], ["Cheer 0.2", "Cheer", 0.2],
 	["Block", "Blocking", 0.5], ["PickUp 0.4", "PickUp", 0.4], ["PickUp 0.8", "PickUp", 0.8],
 	["Cheer", "Cheer", 0.4], ["Sit_Floor_Idle", "Sit_Floor_Idle", 0.5], ["Spellcast_Raise", "Spellcast_Raise", 0.6],
-	["2H_Melee_Idle", "2H_Melee_Idle", 0.5],
+	["2H_Melee_Idle", "2H_Melee_Idle", 0.5], ["Unarmed_Pose", "Unarmed_Pose", 0.5], ["Idle_B", "Spellcasting", 0.5],
+	["Walking_B", "Walking_B", 0.3], ["Walking_C", "Walking_C", 0.3], ["Jump_Idle", "Jump_Idle", 0.5],
+	["Hit_A", "Hit_A", 0.3],
 ]
 ## --elder: Dede durumları [etiket, durum, hareketin çizimden kaç kare önce başlayacağı].
 const ELDER_SPECS: Array[Array] = [
 	["oturma", "sit", 0], ["sola bakış", "look_left", 0], ["sağa bakış", "look_right", 0],
 	["konuşma", "say", 4], ["sevinç", "cheer", 15], ["yedek model", "toy", 0],
+]
+## --nine: Nine durumları (aynı biçim).
+const NINE_SPECS: Array[Array] = [
+	["bekleme", "idle", 0], ["sola bakış", "look_left", 0], ["sağa bakış", "look_right", 0],
+	["selam", "greet", 14], ["sevinç", "cheer", 15], ["yedek model", "toy", 0],
 ]
 ## Dede'nin oturduğu tahtanın yüksekliği (iskele güvertesi).
 const DECK := 0.4
@@ -44,9 +52,10 @@ var _model_path := AnglerBody.SCENE_PATH
 var _raw: bool = false
 var _angler: bool = false
 var _elder: bool = false
+var _nine: bool = false
 var _players: Array[AnimationPlayer] = []
 var _bodies: Array[AnglerBody] = []
-var _elders: Array[Elder] = []
+var _elders: Array[Villager] = []
 var _slots: Array[Vector3] = []
 var _world: Node3D
 var _camera: Camera3D
@@ -66,7 +75,9 @@ func _initialize() -> void:
 			_angler = true
 		elif arg == "--elder":
 			_elder = true
-	if _elder:
+		elif arg == "--nine":
+			_nine = true
+	if _elder or _nine:
 		_columns = ELDER_COLUMNS
 	var world := Node3D.new()
 	root.add_child(world)
@@ -83,7 +94,7 @@ func _initialize() -> void:
 	var sun := DirectionalLight3D.new()
 	sun.transform = Transform3D(Basis.looking_at(Vector3(-0.35, -1.0, -0.55)), Vector3.ZERO)
 	world.add_child(sun)
-	var specs := ANGLER_SPECS if _angler else (ELDER_SPECS if _elder else SPECS)
+	var specs := ANGLER_SPECS if _angler else (ELDER_SPECS if _elder else (NINE_SPECS if _nine else SPECS))
 	for i in specs.size():
 		var pos := Vector3((i % _columns - (_columns - 1) * 0.5) * 1.5, -floorf(i / float(_columns)) * 2.1, 0)
 		if _elder:
@@ -92,6 +103,12 @@ func _initialize() -> void:
 			elder.use_toy = str(specs[i][1]) == "toy"
 			world.add_child(elder)
 			_elders.append(elder)
+			_slots.append(pos)
+		elif _nine:
+			var nine := Nine.new()
+			nine.use_toy = str(specs[i][1]) == "toy"
+			world.add_child(nine)
+			_elders.append(nine)
 			_slots.append(pos)
 		elif _angler:
 			var body := AnglerBody.new()
@@ -106,7 +123,14 @@ func _initialize() -> void:
 			model.position = pos
 			model.rotation.y = PI * 0.5 - 0.6
 			if not _raw:
-				AnglerBody.dress(model)
+				# Modelin kendi kıyafeti: Nine (Mage), Dede (Barbarian) ya da balıkçı.
+				match _model_path:
+					NineBody.SCENE_PATH:
+						NineBody.dress(model)
+					ElderBody.SCENE_PATH:
+						ElderBody.dress(model)
+					_:
+						AnglerBody.dress(model)
 			var player := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 			_players.append(player)
 		var label := Label3D.new()
@@ -130,10 +154,33 @@ func _initialize() -> void:
 
 func _process(delta: float) -> bool:
 	_frames += 1
-	if _elder:
+	if _nine:
+		for i in _elders.size():
+			var spec: Array = NINE_SPECS[i]
+			var nine := _elders[i] as Nine
+			if _frames == 1:
+				# Kameraya üçte bir dönük, bir tahtanın üstünde.
+				nine.camera = _camera
+				nine.stand(_slots[i] + Vector3(0, DECK, 0), Vector2(sin(0.6), cos(0.6)))
+				Props.box(_world, Vector3(0.9, 0.08, 0.7), _slots[i] + Vector3(0, DECK - 0.04, 0), Color("#b07a4a"))
+			var side := 0.0
+			match str(spec[1]):
+				"look_left":
+					side = 1.0
+				"look_right":
+					side = -1.0
+			nine.has_focus = side != 0.0
+			nine.focus = nine.head_point() + nine.global_basis * Vector3(side * 2.0, -0.3, 0.8)
+			if _frames == CAPTURE_FRAME - int(spec[2]):
+				match str(spec[1]):
+					"greet":
+						nine.greet()
+					"cheer":
+						nine.cheer()
+	elif _elder:
 		for i in _elders.size():
 			var spec: Array = ELDER_SPECS[i]
-			var elder := _elders[i]
+			var elder := _elders[i] as Elder
 			if _frames == 1:
 				# Kameraya üçte bir dönük; kenarı diz arkasında, üstü güverte hizasında bir tahta.
 				var facing := Vector2(sin(0.6), cos(0.6))
@@ -186,7 +233,7 @@ func _process(delta: float) -> bool:
 				player.play(anim)
 				player.seek(player.get_animation(anim).length * float(spec[2]), true)
 				player.pause()
-	if _frames < (CAPTURE_FRAME if _angler or _elder else 8):
+	if _frames < (CAPTURE_FRAME if _angler or _elder or _nine else 8):
 		return false
 	root.get_viewport().get_texture().get_image().save_png(_out)
 	print("Kaydedildi: ", _out)

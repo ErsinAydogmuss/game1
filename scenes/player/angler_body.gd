@@ -124,6 +124,8 @@ func _add_hat() -> void:
 	# Aşağı eğik geniş kenar (kova şapka).
 	Props.cylinder(hat, 0.53, 0.76, 0.09, Vector3(0, -0.07, 0), HAT_COLOR.darkened(0.12), 18)
 	Props.cylinder(hat, 0.515, 0.515, 0.08, Vector3(0, 0.0, 0), HAT_BAND, 14)
+	# Tek ağ (bir çizim, bir dış çizgi, bir gölge).
+	MeshBatch.merge(hat)
 	CharacterKit.outline_parts(hat, CharacterKit.OUTLINE_WIDTH / MODEL_SCALE * 0.5)
 
 

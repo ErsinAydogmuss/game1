@@ -9,7 +9,8 @@ extends Control
 ##   aynı işi yapar, düğme ne olacağını yazar.
 ## - Üst orta: çekişmede gerilim çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü
 ##   oyuncu da okusun).
-## - Orta: kısa bildirimler ("Erken davrandın!"). Alt orta: Dede'nin ipucu çubuğu.
+## - Orta: kısa bildirimler ("Erken davrandın!"). Alt orta: ipucu çubuğu (konuşanın yüzü ve sözü:
+##   Dede ya da Nine).
 ## - Sol alt: geliştirme sürümünde FPS.
 
 signal settings_pressed
@@ -44,10 +45,13 @@ var _rank_bar: RankBar
 var _fps: Label
 var _hint: PanelContainer
 var _hint_label: Label
-## İpucu çubuğundaki Dede yüzü; resim yoksa yer tutucu ikon.
+## İpucu çubuğundaki konuşanın yüzü; resim yoksa yer tutucu ikon.
 var _face: TextureRect
 var _face_icon: Control
+## Konuşanların yüzleri: "dede", "nine" -> Texture2D (yoksa yer tutucu).
+var _faces: Dictionary = {}
 var _hint_key: String = ""
+var _speaker: String = "dede"
 var _toast: Label
 var _toast_age: float = -1.0
 ## Sırası gelince gösterilecek bildirimler: [metin, renk] (ör. rütbe atlama, kova dolu).
@@ -107,21 +111,36 @@ func refresh() -> void:
 	set_action(kind)
 
 
-## Alttaki ipucu çubuğu (çeviri anahtarıyla; boş anahtar gizler).
-## İpucu çubuğundaki yüz (Ersin'in portresi ya da modelden çekilen); null ise yer tutucu ikon.
-func set_portrait(texture: Texture2D) -> void:
-	_face.texture = texture
-	_face.visible = texture != null
-	_face_icon.visible = texture == null
+## İpucu çubuğunda bir konuşanın yüzü (Ersin'in portresi ya da modelden çekilen); null ise yer
+## tutucu ikon.
+func set_portrait(texture: Texture2D, speaker: String = "dede") -> void:
+	_faces[speaker] = texture
+	if speaker == _speaker:
+		_show_face()
 
 
-func show_hint(key: String) -> void:
-	if key == _hint_key:
+## Alttaki ipucu çubuğu: çeviri anahtarı ve konuşan ("dede", "nine"); boş anahtar gizler.
+func show_hint(key: String, speaker: String = "dede") -> void:
+	if key == _hint_key and speaker == _speaker:
 		return
 	_hint_key = key
+	_speaker = speaker
+	_show_face()
 	_hint.visible = not key.is_empty()
 	if _hint.visible:
 		_hint_label.text = tr(key)
+
+
+## Şu an ipucu çubuğunda konuşan.
+func hint_speaker() -> String:
+	return _speaker
+
+
+func _show_face() -> void:
+	var texture := _faces.get(_speaker) as Texture2D
+	_face.texture = texture
+	_face.visible = texture != null
+	_face_icon.visible = texture == null
 
 
 ## Sol üstteki durum: para, kova ve rütbe (progress: rütbe içindeki ilerleme 0..1).
@@ -283,6 +302,7 @@ func _build_bottom() -> void:
 	_face_icon = GameIcon.make("bobber", 64)
 	row.add_child(_face_icon)
 	set_portrait(ItemArt.portrait("dede_smile"))
+	set_portrait(ItemArt.portrait("nine_smile"), "nine")
 	_hint_label = UiKit.label("", UiKit.SIZE_BODY)
 	row.add_child(_hint_label)
 	action_button = TouchButton.make("", "rod", UiKit.PRIMARY, ACTION_SIZE, UiKit.SIZE_TITLE, 120.0)

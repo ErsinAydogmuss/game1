@@ -1,6 +1,7 @@
 extends Node3D
 ## Ana sahne: her şeyi bağlar. Göl (LakeScene), balıkçı (Angler), iskelede oturan Dede (Elder),
-## şamandıra, misina, gölgeler, kamera, arayüz ve balık tutma oturumu (FishingSession). Oyun mantığı oturumdadır; burası
+## iskelenin başında Nine ve dükkânı (Nine, ShopStall), şamandıra, misina, gölgeler, kamera, arayüz
+## ve balık tutma oturumu (FishingSession). Oyun mantığı oturumdadır; burası
 ## olayları dinleyip ses, titreşim, hareket ve yazıya çevirir. Her sesin bir görsel ve titreşim
 ## karşılığı vardır (iPhone'un sessiz anahtarı açık olabilir).
 ## Girdiyi InputRouter okur; --autoplay botu (yalnızca debug) gerçek dokunma olayları gönderir.
@@ -23,8 +24,12 @@ const HINT_CATCHES := 3
 ## olsun diye +x'ten +z'ye bu kadar döner (kamera +x +z tarafında).
 const ELDER_ALONG := 2.4
 const ELDER_TURN := deg_to_rad(25.0)
-## Dede'ye dokununca söylediği öğüt ipucu çubuğunda bu kadar kalır (sn).
-const DEDE_LINE_TIME := 4.0
+## Dede'nin ya da Nine'nin sözü ipucu çubuğunda bu kadar kalır (sn).
+const LINE_TIME := 4.0
+## Nine'nin dükkânı iskelenin kara ucunun solunda (-x): ön kenarının ortası kara ucundan bu kadar
+## ötede (m); önü iskeleye ve biraz kameraya (+z) döner.
+const SHOP_OFFSET := Vector2(-1.85, 0.4)
+const SHOP_TURN := deg_to_rad(30.0)
 const STEP_SOUND_EVERY := 0.36
 ## İlk atıştan önce ilk av gölgesinin çevresinde halka aralığı (sn): "bu gölge!"
 const FIRST_CUE_EVERY := 1.6
@@ -34,6 +39,8 @@ var lake: LakeShape
 var scene: LakeScene
 var angler: Angler
 var elder: Elder
+var nine: Nine
+var shop: ShopStall
 var bobber: Bobber
 var line: FishingLine
 var shadows: ShadowLayer
@@ -61,10 +68,13 @@ var spot_id: String = ""
 var _card_wait: float = -1.0
 ## İpucu çubuğunda şu an gösterilen anahtar (değişince Dede konuşur).
 var _hint_shown: String = ""
-## Dede'nin öğüdü (ona dokununca), kalan süresi ve son söylenenin sırası.
-var _dede_line: String = ""
-var _dede_time: float = 0.0
+## Dede'nin ya da Nine'nin sözü (onlara dokununca, bir olayda), kalan süresi ve konuşan.
+var _line: String = ""
+var _line_time: float = 0.0
+var _line_speaker: String = "dede"
+## Dede'nin son öğüdünün ve Nine'nin son selamının sırası.
 var _tip_index: int = 0
+var _hello_index: int = 0
 
 
 func _ready() -> void:
@@ -85,12 +95,18 @@ func _ready() -> void:
 	add_child(angler)
 	elder = Elder.new()
 	add_child(elder)
+	shop = ShopStall.new()
+	add_child(shop)
+	nine = Nine.new()
+	add_child(nine)
 	_seat_elder()
+	_place_shop()
 	bobber = Bobber.new()
 	add_child(bobber)
 	camera = FollowCamera.new()
 	add_child(camera)
 	elder.camera = camera
+	nine.camera = camera
 	line = FishingLine.new()
 	line.camera = camera
 	line.visible = false
@@ -106,7 +122,7 @@ func _ready() -> void:
 	GameState.focus_gained.connect(func() -> void: _paused = false)
 	ItemArt.register_fish_colors(GameState.db.fish_colors())
 	FishPortrait.render_all(self, GameState.db)
-	_load_dede_face()
+	_load_faces()
 	Sounds.set_ambience("lake")
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has("--autoplay"):
 		var bot: Node = load("res://scripts/dev/autoplay.gd").new()
@@ -133,6 +149,7 @@ func _start_session() -> void:
 
 func _on_state_changed() -> void:
 	hud.refresh()
+	shop.refresh()
 	if GameState.save != _save_ref:
 		# Kayıt değişti (sıfırlama): göl baştan.
 		if card.visible:
@@ -187,9 +204,12 @@ func _build_input() -> void:
 	input.action_button = hud.action_button
 	input.ground_point = ground_point
 	input.line_out = func() -> bool: return session.line_out()
-	input.talk_hit = func(screen: Vector2) -> bool: return elder.hit(camera, screen)
+	input.hit_targets = [
+		["dede", func(screen: Vector2) -> bool: return elder.hit(camera, screen)],
+		["shop", func(screen: Vector2) -> bool: return nine.hit(camera, screen) or shop.hit(camera, screen)],
+	]
 	add_child(input)
-	input.talk_requested.connect(_on_talk)
+	input.target_tapped.connect(_on_target)
 	input.walk_requested.connect(_on_walk_requested)
 	input.cast_requested.connect(_on_cast_requested)
 	input.action_pressed.connect(_on_action_down)
@@ -294,8 +314,8 @@ func _on_event(e: Dictionary) -> void:
 	match str(e["type"]):
 		"cast":
 			GameState.save.casts += 1
-			# Dede'nin öğüdü atışın ipuçlarına yer açar.
-			_dede_time = 0.0
+			# Dede'nin öğüdü (Nine'nin sözü) atışın ipuçlarına yer açar.
+			_line_time = 0.0
 			catch_fx.clear()
 			angler.play_cast()
 			var to: Vector2 = e["to"]
@@ -419,7 +439,7 @@ func _on_catch() -> void:
 		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT)
 		if not bool(save.flags.get("bucket_full_told", false)):
 			save.flags["bucket_full_told"] = true
-			_dede_say("UI_DEDE_BUCKET")
+			_say("UI_DEDE_BUCKET")
 	bobber.hide_bobber()
 	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)
 	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
@@ -471,10 +491,11 @@ func _present(delta: float) -> void:
 			line.shake = clampf(reel.tension, 0.0, 1.3) * (1.6 if reel.thrashing() else 0.6)
 	var tension := reel.tension if fighting else 0.0
 	angler.tension = tension
-	# Dede olta sudayken şamandırayı izler.
+	# Dede olta sudayken şamandırayı izler; Nine yaklaşan balıkçıya bakar.
 	elder.has_focus = session.line_out() and bobber.visible
 	elder.focus = bobber.global_position
-	_dede_time = maxf(0.0, _dede_time - delta)
+	nine.watch(angler.global_position + Vector3(0.0, 1.1, 0.0))
+	_line_time = maxf(0.0, _line_time - delta)
 	match session.state:
 		FishingSession.State.FIGHTING:
 			angler.pose = "reel"
@@ -552,21 +573,23 @@ func _first_cue(delta: float) -> void:
 
 func _update_hint() -> void:
 	var key := _hint_key()
+	var speaker := _line_speaker if _line_time > 0.0 and key == _line else "dede"
 	if key != _hint_shown:
 		_hint_shown = key
-		# Yeni bir söz: Dede konuşur (balon, baş sallama, oyuncuya bakış).
-		if not key.is_empty():
+		# Yeni bir söz: konuşan konuşur (balon, baş sallama, oyuncuya bakış). Nine'nin selamı
+		# dokunuşta söylenir (_on_shop).
+		if not key.is_empty() and speaker == "dede":
 			elder.say()
-	hud.show_hint(key)
+	hud.show_hint(key, speaker)
 
 
-## Gösterilecek ipucu: önce Dede'nin öğüdü (ona dokununca), sonra ilk 3 balığa kadar oyunun
-## durumuna göre ipucu. Kart açıkken ipucu yok.
+## Gösterilecek ipucu: önce Dede'nin öğüdü ya da Nine'nin sözü (onlara dokununca), sonra ilk 3
+## balığa kadar oyunun durumuna göre ipucu. Kart açıkken ipucu yok.
 func _hint_key() -> String:
 	if card.visible:
 		return ""
-	if _dede_time > 0.0:
-		return _dede_line
+	if _line_time > 0.0:
+		return _line
 	if GameState.save.catches >= HINT_CATCHES:
 		return ""
 	match session.state:
@@ -581,7 +604,7 @@ func _hint_key() -> String:
 		FishingSession.State.FIGHTING:
 			return "UI_HINT_REEL"
 	# Kayıp, yakalama, geri sarma: önceki ipucu kalır (süresi biten öğüt söner).
-	return "" if _hint_shown == _dede_line else _hint_shown
+	return "" if _hint_shown == _line else _hint_shown
 
 
 # --- Dede ------------------------------------------------------------------------
@@ -591,7 +614,27 @@ func _seat_elder() -> void:
 	var dock := lake.dock
 	var edge := Vector2(dock.end.x, dock.position.y + ELDER_ALONG)
 	elder.seat(edge, Vector2(1.0, 0.0).rotated(ELDER_TURN), LakeScene.DOCK_HEIGHT + 0.04)
-	angler.blockers = [elder.blocker()]
+
+
+## Nine'nin dükkânı iskelenin kara ucunun solunda; Nine tezgâhın arkasında. Döşeme, altındaki
+## zeminin en yüksek yerine oturur (eğimli kıyıda etek boşluğu örter). Balıkçı Dede'nin,
+## dükkânın ve Nine'nin içinden geçmez.
+func _place_shop() -> void:
+	var dock := lake.dock
+	var land := Vector2(dock.get_center().x, dock.end.y)
+	var front := land + SHOP_OFFSET
+	var facing := Vector2(1.0, 0.0).rotated(SHOP_TURN)
+	var side := Vector2(facing.y, -facing.x)
+	var floor_y := 0.0
+	for u: float in [-0.5, 0.0, 0.5]:
+		for v: float in [0.0, 0.5, 1.0]:
+			var p := front + side * u * ShopStall.WIDTH - facing * v * ShopStall.DEPTH
+			floor_y = maxf(floor_y, scene.ground_height(p))
+	shop.build(Vector3(front.x, floor_y, front.y), facing, scene.ground_height)
+	nine.stand(shop.keeper_spot(), shop.facing())
+	var blockers: Array[Vector3] = [elder.blocker()]
+	blockers.append_array(shop.blockers())
+	angler.blockers = blockers
 
 
 ## Balık göle bırakıldı: defterde bırakılan sayısı, göl sevgisi ve sayaç.
@@ -618,11 +661,22 @@ func _panel_open() -> bool:
 	return false
 
 
-## Dede bir söz söyler: ipucu çubuğunda (söz değişince _update_hint Dede'yi konuşturur).
-func _dede_say(key: String) -> void:
-	_dede_line = key
-	_dede_time = DEDE_LINE_TIME
+## Dede (ya da Nine) bir söz söyler: ipucu çubuğunda, konuşanın yüzüyle (söz değişince
+## _update_hint Dede'yi konuşturur).
+func _say(key: String, speaker: String = "dede") -> void:
+	_line = key
+	_line_time = LINE_TIME
+	_line_speaker = speaker
 	Sounds.play("hint")
+
+
+## Dünyadaki bir hedefe dokunuldu (InputRouter.hit_targets).
+func _on_target(id: String) -> void:
+	match id:
+		"dede":
+			_on_talk()
+		"shop":
+			_on_shop()
 
 
 ## Dede'ye dokunuldu: sıradaki öğüdü ipucu çubuğunda söyler (balon, baş sallama).
@@ -630,19 +684,32 @@ func _on_talk() -> void:
 	if session.state != FishingSession.State.IDLE or card.visible:
 		return
 	_tip_index = _tip_index % Elder.TIP_COUNT + 1
-	_dede_line = Elder.TIP_KEY % _tip_index
-	_dede_time = DEDE_LINE_TIME
-	Sounds.play("hint")
+	_say(Elder.TIP_KEY % _tip_index)
 	Sounds.haptic(10)
 
 
-## İpucu çubuğundaki Dede yüzü: Ersin'in portresi yoksa modelden çekilir (birkaç kare sürer).
-func _load_dede_face() -> void:
-	if ItemArt.portrait("dede_smile") != null:
+## Nine'ye ya da dükkânına dokunuldu: Nine selam verir (balon, baş sallama, tezgâha uzanma) ve
+## sıradaki sözünü söyler. Dükkân paneli sonraki adımda bağlanır.
+func _on_shop() -> void:
+	if session.state != FishingSession.State.IDLE or card.visible:
 		return
-	var face := await ElderBody.portrait(self, 192)
-	if face != null:
-		hud.set_portrait(face)
+	_hello_index = _hello_index % Nine.HELLO_COUNT + 1
+	_say(Nine.HELLO_KEY % _hello_index, "nine")
+	nine.greet()
+	Sounds.haptic(10)
+
+
+## İpucu çubuğundaki Dede ve Nine yüzleri: Ersin'in portresi yoksa modelden çekilir (birkaç kare
+## sürer).
+func _load_faces() -> void:
+	if ItemArt.portrait("dede_smile") == null:
+		var face := await ElderBody.portrait(self, 192)
+		if face != null:
+			hud.set_portrait(face)
+	if ItemArt.portrait("nine_smile") == null:
+		var face := await NineBody.portrait(self, 192)
+		if face != null:
+			hud.set_portrait(face, "nine")
 
 
 # --- Arayüz ----------------------------------------------------------------------
