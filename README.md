@@ -10,6 +10,8 @@
 |---|---|
 | ![Dede konuşuyor](docs/ekran/02_dede.jpg) | ![Çekişme](docs/ekran/03_cekisme.jpg) |
 | ![Nadir turna, ışık sütunu](docs/ekran/04_turna.jpg) | ![Destansı yayın kartı](docs/ekran/05_kart.jpg) |
+| ![Nine'nin dükkânı: yemler ve gerçek şansları](docs/ekran/06_dukkan.jpg) | ![Balık Defteri: siluet, ipucu, oranlar, şans garantisi](docs/ekran/07_defter.jpg) |
+| ![Gölgelerde nadirlik ipucu: Destansı mor ışıltı](docs/ekran/08_golgeler.jpg) | ![Nadir turna kartı ve Dede'nin sözü](docs/ekran/09_nadir_kart.jpg) |
 
 ## Nasıl oynanır
 

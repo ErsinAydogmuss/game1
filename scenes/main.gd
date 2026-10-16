@@ -165,6 +165,8 @@ func _start_session() -> void:
 func _on_state_changed() -> void:
 	hud.refresh()
 	shop.refresh()
+	# Kayıt dışarıdan değiştiyse (ayarlar, bot) para, kova ve rütbe de güncel olsun.
+	_refresh_status()
 	if GameState.save != _save_ref:
 		# Kayıt değişti (sıfırlama): göl baştan.
 		if card.visible:
