@@ -25,6 +25,24 @@ const JOBS: Array[Dictionary] = [
 		},
 	},
 	{
+		# Dede (Barbarian): beyaz sakal ve saç; mavi suda ve yeşil çimende seçilsin diye tuğla
+		# kırmızısı örgü kazak, krem yün yaka; kahverengi pantolon. Kutular Kazı'daki eşlemeden.
+		"source": "res://assets/models/characters/source/barbarian_texture.png",
+		"output": "res://assets/models/characters/dede_texture.png",
+		"swatches": {
+			Vector2i(1, 0): "#f4f1ea", # sakal ve kaşlar → beyaz
+			Vector2i(7, 0): "#dcd7ce", # saç örgüleri, yaka → kır
+			Vector2i(0, 1): "#a8443a", # gömlek → örgü kazak
+			Vector2i(1, 1): "#a8443a", # kollar → kazak kolları
+			Vector2i(2, 1): "#eadfc6", # kürk süsler → krem yün
+			Vector2i(7, 1): "#5c5242", # pantolon
+			Vector2i(7, 2): "#e8ae8c", # eller → ten
+			Vector2i(3, 2): "#4a3426", # botlar
+			Vector2i(6, 0): "#6b4428", # kemer ve kayış
+			Vector2i(3, 0): "#c9a24a", # tokalar → pirinç
+		},
+	},
+	{
 		# Ortaçağ paketi: ahşap pembemsi görünmesin, ağaçlar çimenle uyuşsun.
 		"source": "res://assets/models/medieval/source/hexagons_medieval.png",
 		"output": "res://assets/models/medieval/hexagons_medieval.png",

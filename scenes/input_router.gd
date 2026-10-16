@@ -5,6 +5,7 @@ extends Node
 ##   suya dokun → oraya at (main menzil dışındaysa önce yaklaştırır).
 ## - Olta sudayken ekranın her yeri eylem düğmesidir: parmak değdiği an action_pressed,
 ##   son parmak kalkınca action_released (çekişmede basılı tutunca sarılır).
+## - Olta suda değilken Dede'ye dokun → konuşur (talk_requested).
 ## - Mac: tıkla (yürü, at), WASD / oklar (yürü), Space (eylem; basılıyken sar).
 ## "modal" grubundaki görünür paneller (ayarlar, balık kartı) açıkken dokunuşlar oyuna geçmez.
 ## Ekrandaki TouchButton'lar dokunuşu kendileri alır (set_input_as_handled), buraya gelmez.
@@ -15,6 +16,8 @@ signal action_pressed
 signal action_released
 ## Klavyeyle yürüme yönü (dünya xz, uzunluğu 0..1).
 signal walk_step(direction: Vector2)
+## Dede'ye dokunuldu (olta suda değilken).
+signal talk_requested
 
 ## Fareyle basılı tutulan "parmak", Space tuşu ve HUD'daki eylem düğmesi. Hepsi aynı listede:
 ## sarma, son parmak (ya da tuş, düğme) kalkınca biter.
@@ -26,6 +29,8 @@ const BUTTON_POINTER := -4
 var ground_point: Callable
 ## Olta suda mı (FishingSession.line_out)?
 var line_out: Callable
+## Ekran noktası Dede'nin üstünde mi (Elder.hit)? Verilmezse denetlenmez.
+var talk_hit: Callable
 var lake: LakeShape
 ## Kameranın yatay açısı (WASD yönleri buna göre).
 var view_yaw: float = FollowCamera.YAW
@@ -96,6 +101,10 @@ func _pointer(index: int, pos: Vector2, pressed: bool) -> void:
 	if bool(line_out.call()) or index == KEY_POINTER or index == BUTTON_POINTER:
 		_down[index] = true
 		action_pressed.emit()
+		get_viewport().set_input_as_handled()
+		return
+	if talk_hit.is_valid() and bool(talk_hit.call(pos)):
+		talk_requested.emit()
 		get_viewport().set_input_as_handled()
 		return
 	var p: Vector2 = ground_point.call(pos)

@@ -118,12 +118,13 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 **İlk açılış**
 
-- Oyun doğrudan iskelede başlar; Dede ipucu çubuğundan konuşur.
+- Oyun doğrudan iskelede başlar; Dede iskelenin kenarında oturur ve ipucu çubuğundan konuşur.
 - İlk gölge iskelenin önüne gelir ve ilk av senaryoludur: hep Kızılkanat, dürtmesiz. İlk balık 45 sn içinde gelir.
   - İlk av göldeyken şamandıraya yalnızca o gelir. Nereye atılırsa atılsın fark eder ve korkmaz.
   - Erken dokunuş onu kaçırmaz, yalnızca irkiltir. Pencere kaçarsa biraz sonra yeniden ısırır. Çekişmesi Kolay kurallarıyla.
   - İlk atışa kadar ilk av gölgesinin çevresinde arada bir halka çıkar ("bu gölge!").
 - Dede'nin ipuçları ilk 3 balığa kadar ipucu çubuğunda görünür; oyunun durumuna göre değişir.
+- Dede'ye dokununca (olta suda değilken) sıradaki öğüdünü söyler; 3 balıktan sonra da. Öğütlerden biri gölün sırrına göz kırpar ("Bu gölün bir sırrı var... Bir gün anlatırım.").
 
 **Kayıt**
 
@@ -155,8 +156,11 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - Kostümler (şapka, yelek, olta kaplaması) sonra gelir 🔜.
 - **Dede:**
   - Köyün yaşlı balıkçısı.
-  - 1. hafta yalnızca ipucu çubuğunda konuşur (yer tutucu portre).
-  - Sonra iskelede oturur (KayKit Barbarian, beyaz sakal), eğitimi verir, istekte bulunur ("bana bir turna getir") ve "Gölün Sırrı"nı parça parça anlatır 🔜.
+  - ✅ İskelenin kenarında oturur, bacakları suya sarkar; yanında ince belli çay bardağı. KayKit Barbarian, yeniden boyanmış: beyaz sakal ve kaşlar, tuğla kırmızısı örgü kazak, kodla kasket. Miğfer, silahlar ve kupa gizli (kupa bira bardağına benziyor; oyun her yaşa).
+  - ✅ Yüzü görünsün diye kameraya üçte bir dönük oturur. Konuşurken başını kaldırıp oyuncuya (kameraya) bakar, başını sallar; başının üstünde konuşma balonu (üç nokta) çıkar. Olta sudayken şamandırayı izler. Balık tutulunca oturduğu yerde kollarını kaldırıp sevinir (yeni tür, rekor, nadir); sıradan balıkta ünlemle onaylar.
+  - ✅ İpucu çubuğundaki yüzü kendi modelinden çekilir (Ersin'in Dede portreleri gelince onlar).
+  - Balıkçı onun içinden geçmez, yanından kayarak geçer.
+  - Sonra eğitimi verir, istekte bulunur ("bana bir turna getir") ve "Gölün Sırrı"nı parça parça anlatır 🔜.
 
 ## 8. Görünüm
 

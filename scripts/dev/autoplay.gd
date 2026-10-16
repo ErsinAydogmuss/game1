@@ -6,10 +6,10 @@ extends Node
 ##     --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 -- --autoplay --scenario=controls \
 ##     [--shots=/mutlak/yol] [--locale=tr] [--safe-inset=130]
 ## Senaryolar:
-##   controls: kontrollerin denemesi; KONTROL satırları TAMAM olmalı (yürü, kıyıda dur, at,
-##     geri sar, gölgeyi korkut, gölgeyi çek, erken dokunuş, ekranın her yeri VUR, basılı tut tut,
-##     kart açıkken atış yok, patlamada bırakmazsa kopar, 8 sn'de yeni balık, düğme boyu ve
-##     güvenli alan).
+##   controls: kontrollerin denemesi; KONTROL satırları TAMAM olmalı (Dede'ye dokun konuşsun,
+##     yürü, kıyıda dur, Dede'nin yanından geç, at, geri sar, gölgeyi korkut, gölgeyi çek, erken
+##     dokunuş, ekranın her yeri VUR, basılı tut tut, kart açıkken atış yok, patlamada bırakmazsa
+##     kopar, 8 sn'de yeni balık, düğme boyu ve güvenli alan).
 ##   first: ilk açılış; senaryolu ilk balık (ekran görüntüleri; 45 sn denetimi).
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
@@ -63,6 +63,12 @@ func _play_controls() -> void:
 	await _shot("01_basla")
 	var angler := _angler()
 	var lake := _session().lake
+	# 0) Dede'ye dokun: konuşmalı (öğüt ipucu çubuğunda, balon); balıkçı yürümemeli.
+	var elder := _elder()
+	await _tap(_screen(elder.head_point()))
+	await _wait_frames(2)
+	_check("Dede'ye dokun → konuşur", str(main.get("_hint_shown")) == Elder.TIP_KEY % 1
+			and elder.bubble.is_showing() and not angler.is_walking())
 	# 1) Suyun öbür yanındaki karaya dokun: iskelenin kenarında (kıyıda) durmalı.
 	var across := Vector2(5.0, 7.0)
 	await _tap_world(across)
@@ -74,6 +80,17 @@ func _play_controls() -> void:
 	await _tap_world(land)
 	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
 	_check("karaya dokun → yürür", angler.pos2().distance_to(land) < 0.4)
+	# 2b) Dede'nin ötesindeki bir yere yürü: içinden geçmeden yanından kayıp varmalı.
+	var block := elder.blocker()
+	var center := Vector2(block.x, block.y)
+	var nearest: Array[float] = [INF]
+	var far_end := Vector2(0.6, 3.8)
+	await _tap_world(far_end)
+	await _wait_until(func() -> bool:
+		nearest[0] = minf(nearest[0], angler.pos2().distance_to(center))
+		return not angler.is_walking(), 8.0)
+	_check("Dede'nin yanından geçer (en yakın %.2f m)" % nearest[0],
+			nearest[0] >= block.z + Angler.BODY - 0.03 and angler.pos2().distance_to(far_end) < 0.4)
 	await _tap_world(Vector2(0.0, 4.0))
 	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
 	# 3) Suya dokun: atmalı.
@@ -269,6 +286,10 @@ func _angler() -> Angler:
 
 func _hud() -> Hud:
 	return main.get("hud")
+
+
+func _elder() -> Elder:
+	return main.get("elder")
 
 
 func _check(label: String, ok: bool) -> void:

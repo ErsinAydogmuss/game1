@@ -37,8 +37,6 @@ const WALK_SPEED := 2.4
 const ROD_TILT := deg_to_rad(35.0)
 ## Gerilimde en çok geriye yaslanma (radyan).
 const LEAN_BACK := 0.32
-const OUTLINE_WIDTH := 0.025
-const OUTLINE_COLOR := Color("#2b1a10")
 const HAT_COLOR := Color("#2c7d96")
 const HAT_BAND := Color("#f0b637")
 
@@ -80,27 +78,7 @@ func _ready() -> void:
 
 ## Kıyafet: boyanmış doku, dış çizgi, gizlenen parçalar. Karakter sayfası aracı da kullanır.
 static func dress(model: Node3D) -> void:
-	var material := StandardMaterial3D.new()
-	material.albedo_texture = load(TEXTURE_PATH)
-	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	material.roughness = 0.8
-	material.rim_enabled = true
-	material.rim = 0.25
-	material.rim_tint = 0.6
-	# Ters kabuk dış çizgi: karakter suyun ve çimenin önünde seçilsin.
-	var outline := StandardMaterial3D.new()
-	outline.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	outline.cull_mode = BaseMaterial3D.CULL_FRONT
-	outline.grow = true
-	outline.grow_amount = OUTLINE_WIDTH
-	outline.albedo_color = OUTLINE_COLOR
-	material.next_pass = outline
-	for node in model.find_children("*", "MeshInstance3D", true, false):
-		var mesh := node as MeshInstance3D
-		if HIDDEN.has(str(mesh.name)):
-			mesh.visible = false
-			continue
-		mesh.material_override = material
+	CharacterKit.dress(model, load(TEXTURE_PATH), HIDDEN)
 
 
 ## Her kare. speed: yatay hız (m/sn). pose: free, hold ya da reel. tension: çekişmede gerilim (0..1+).
@@ -136,37 +114,21 @@ func hand_point() -> Vector3:
 # --- Kurulum ---------------------------------------------------------------------
 
 ## Kova biçimli balıkçı şapkası: baş kemiğine bağlanan düğümde (modelin ölçeğinde).
+## Rogue'da baş yuvası yok; CharacterKit.bone_slot kurar.
 func _add_hat() -> void:
-	var skeleton := _model.find_child("Skeleton3D", true, false) as Skeleton3D
-	if skeleton == null or skeleton.find_bone("head") < 0:
+	var head := CharacterKit.bone_slot(_model, "head", "HeadSlot")
+	if head == null:
 		return
-	var head := BoneAttachment3D.new()
-	head.name = "HeadSlot"
-	head.bone_name = "head"
-	skeleton.add_child(head)
 	var hat := Props.pivot(head, Vector3(0, 0.74, 0.0), "Hat")
 	Props.cylinder(hat, 0.42, 0.52, 0.34, Vector3(0, 0.13, 0), HAT_COLOR, 14)
 	# Aşağı eğik geniş kenar (kova şapka).
 	Props.cylinder(hat, 0.53, 0.76, 0.09, Vector3(0, -0.07, 0), HAT_COLOR.darkened(0.12), 18)
 	Props.cylinder(hat, 0.515, 0.515, 0.08, Vector3(0, 0.0, 0), HAT_BAND, 14)
-	for node in hat.find_children("*", "GeometryInstance3D", true, false):
-		var mesh := node as MeshInstance3D
-		var material := (mesh.material_override as StandardMaterial3D).duplicate() as StandardMaterial3D
-		var outline := StandardMaterial3D.new()
-		outline.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		outline.cull_mode = BaseMaterial3D.CULL_FRONT
-		outline.grow = true
-		outline.grow_amount = OUTLINE_WIDTH / MODEL_SCALE * 0.5
-		outline.albedo_color = OUTLINE_COLOR
-		material.next_pass = outline
-		mesh.material_override = material
+	CharacterKit.outline_parts(hat, CharacterKit.OUTLINE_WIDTH / MODEL_SCALE * 0.5)
 
 
 func _build_tree(player: AnimationPlayer) -> void:
-	var library := player.get_animation_library("")
-	for anim_name in LOOPING:
-		if library.has_animation(anim_name):
-			library.get_animation(anim_name).loop_mode = Animation.LOOP_LINEAR
+	CharacterKit.set_looping(player, LOOPING)
 	var blend := AnimationNodeBlendTree.new()
 	var move := AnimationNodeBlendSpace1D.new()
 	move.add_blend_point(_clip(IDLE_ANIM), 0.0, -1, &"idle")
@@ -188,11 +150,8 @@ func _build_tree(player: AnimationPlayer) -> void:
 	blend.connect_node("state", 2, "reel_speed")
 	var previous := "state"
 	for shot: Array in [["cast_shot", CAST_ANIM, 0.08, 0.2], ["show_shot", SHOW_ANIM, 0.12, 0.3], ["cheer_shot", CHEER_ANIM, 0.15, 0.3]]:
-		var one := AnimationNodeOneShot.new()
-		one.fadein_time = float(shot[2])
-		one.fadeout_time = float(shot[3])
 		var shot_name := str(shot[0])
-		blend.add_node(shot_name, one)
+		blend.add_node(shot_name, CharacterKit.one_shot(player, str(shot[1]), float(shot[2]), float(shot[3]), false))
 		blend.add_node(shot_name + "_clip", _clip(str(shot[1])))
 		blend.connect_node(shot_name, 0, previous)
 		blend.connect_node(shot_name, 1, shot_name + "_clip")
@@ -207,6 +166,4 @@ func _build_tree(player: AnimationPlayer) -> void:
 
 
 static func _clip(anim_name: String) -> AnimationNodeAnimation:
-	var node := AnimationNodeAnimation.new()
-	node.animation = StringName(anim_name)
-	return node
+	return CharacterKit.clip(anim_name)

@@ -24,6 +24,8 @@ static var force_toy: bool = false
 var lake: LakeShape
 ## Durulan yerin yüksekliği (LakeScene.stand_height).
 var height_at: Callable
+## Girilemeyen daireler (iskelede oturan Dede): Vector3(x, z, yarıçap). Balıkçı çevresinden kayar.
+var blockers: Array[Vector3] = []
 var facing := Vector2(0.0, -1.0)
 ## Duruş: free (serbest), hold (olta suda), reel (çekişme).
 var pose: String = "free"
@@ -170,16 +172,38 @@ func _update_rod(delta: float) -> void:
 	rod.global_basis = Basis(mount.get_rotation_quaternion().slerp(carry.get_rotation_quaternion(), t))
 
 
-## Bir adım; yer yürünebilir değilse false.
+## Bir adım; yer yürünebilir değilse ya da engel tam karşıdaysa false.
 func _move(dir: Vector2, length: float) -> bool:
 	face(dir)
-	var next := pos2() + dir * length
-	var ahead := next + dir * BODY
+	var step := avoid(blockers, pos2(), dir * length)
+	if step == Vector2.ZERO:
+		return false
+	face(step)
+	var next := pos2() + step
+	var ahead := next + step.normalized() * BODY
 	if not lake.is_walkable(next) or not lake.is_walkable(ahead):
 		return false
 	position.x = next.x
 	position.z = next.y
 	return true
+
+
+## Engelden kaçınma: from'dan step kadarlık adım bir engelin içine (gövde payıyla) giriyorsa
+## adımın engele doğru bileşeni atılır; balıkçı engelin çevresinden kayar (Dede'nin yanından
+## geçip karaya yürür). Neredeyse tam karşıdan geliyorsa Vector2.ZERO (durur). Engelden
+## uzaklaşan adım hep serbest: balıkçı bir engelin içinde kalırsa takılmaz.
+static func avoid(list: Array[Vector3], from: Vector2, step: Vector2) -> Vector2:
+	var out := step
+	for b in list:
+		var center := Vector2(b.x, b.y)
+		var d := (from + out).distance_to(center)
+		if d >= b.z + BODY or d >= from.distance_to(center):
+			continue
+		var normal := (from - center).normalized()
+		out -= normal * out.dot(normal)
+		if out.length() < step.length() * 0.2:
+			return Vector2.ZERO
+	return out
 
 
 func _height(p: Vector2) -> float:

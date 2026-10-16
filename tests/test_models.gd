@@ -1,7 +1,8 @@
 extends BaseTest
-## Hazır modeller: balıkçı (KayKit Rogue) başsız yüklenir; gereken parçalar, el yuvası ve
-## animasyonlar yerinde (paket güncellenince adlar değişirse burada yakalanır). Göl çevresinin
-## modelleri listede ve dosyaları var. Balık ağı her tür için kurulur.
+## Hazır modeller: balıkçı (KayKit Rogue) ve Dede (KayKit Barbarian) başsız yüklenir; gereken
+## parçalar, yuvalar, kemikler ve animasyonlar yerinde (paket güncellenince adlar değişirse burada
+## yakalanır). Göl çevresinin modelleri listede ve dosyaları var. Balık ağı her tür için kurulur.
+## Balıkçı Dede'nin içinden geçmez ama içinde kalırsa dışarı çıkabilir.
 
 
 func test_angler_model_has_parts_and_animations() -> void:
@@ -23,6 +24,43 @@ func test_angler_model_has_parts_and_animations() -> void:
 		for anim: String in AnglerBody.REQUIRED_ANIMS:
 			assert_true(player.has_animation(anim), "animasyon yok: " + anim)
 	model.free()
+
+
+func test_elder_model_has_parts_and_animations() -> void:
+	assert_true(ElderBody.available(), "Dede modeli ve dokusu var")
+	if not ElderBody.available():
+		return
+	var model := (load(ElderBody.SCENE_PATH) as PackedScene).instantiate() as Node3D
+	for part: String in ElderBody.REQUIRED_NODES:
+		assert_true(model.find_child(part, true, false) != null, "Dede modelinde parça yok: " + part)
+	var skeleton := model.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skeleton != null:
+		for bone: String in ElderBody.REQUIRED_BONES:
+			assert_true(skeleton.find_bone(bone) >= 0, "Dede iskeletinde kemik yok: " + bone)
+		# Oturarak sevinçte bacaklar süzülür: süzgeçteki kemik adları iskelette olmalı.
+		for bone: String in CharacterKit.LOWER_BODY:
+			assert_true(skeleton.find_bone(bone) >= 0, "alt gövde kemiği yok: " + bone)
+	for part: String in ElderBody.HIDDEN:
+		assert_true(model.find_child(part, true, false) != null, "gizlenecek parça yok (adı değişmiş olabilir): " + part)
+	var player := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	assert_true(player != null, "Dede'nin animasyon oynatıcısı var")
+	if player != null:
+		for anim: String in ElderBody.REQUIRED_ANIMS:
+			assert_true(player.has_animation(anim), "Dede animasyonu yok: " + anim)
+		var cheer := CharacterKit.one_shot(player, ElderBody.CHEER_ANIM, 0.1, 0.1, true)
+		assert_true(cheer.filter_enabled, "oturarak sevinç yalnızca üst gövdeyi oynatır")
+	model.free()
+
+
+func test_angler_slides_around_blockers() -> void:
+	var list: Array[Vector3] = [Vector3(0.0, 0.0, 0.4)]
+	assert_eq(Angler.avoid(list, Vector2(1.0, 0.0), Vector2(-0.5, 0.0)), Vector2.ZERO, "tam karşıdan gelen durur")
+	var from := Vector2(0.7, -0.4)
+	var slid := Angler.avoid(list, from, Vector2(-0.5, 0.0))
+	assert_true(slid.length() > 0.1, "yandan gelen kayar")
+	assert_true((from + slid).length() >= from.length() - 0.001, "kayan adım engele yaklaşmaz")
+	assert_eq(Angler.avoid(list, Vector2(0.3, 0.0), Vector2(0.2, 0.0)), Vector2(0.2, 0.0), "engelin içinden dışarı çıkılır")
+	assert_eq(Angler.avoid(list, Vector2(2.0, 0.0), Vector2(-0.5, 0.0)), Vector2(-0.5, 0.0), "uzaktaki adım serbest")
 
 
 func test_scenery_models_exist() -> void:

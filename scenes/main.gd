@@ -1,6 +1,6 @@
 extends Node3D
-## Ana sahne: her şeyi bağlar. Göl (LakeScene), balıkçı (Angler), şamandıra, misina, gölgeler,
-## kamera, arayüz ve balık tutma oturumu (FishingSession). Oyun mantığı oturumdadır; burası
+## Ana sahne: her şeyi bağlar. Göl (LakeScene), balıkçı (Angler), iskelede oturan Dede (Elder),
+## şamandıra, misina, gölgeler, kamera, arayüz ve balık tutma oturumu (FishingSession). Oyun mantığı oturumdadır; burası
 ## olayları dinleyip ses, titreşim, hareket ve yazıya çevirir. Her sesin bir görsel ve titreşim
 ## karşılığı vardır (iPhone'un sessiz anahtarı açık olabilir).
 ## Girdiyi InputRouter okur; --autoplay botu (yalnızca debug) gerçek dokunma olayları gönderir.
@@ -18,6 +18,12 @@ const FORWARD_CAST := 6.0
 const CARD_DELAY := 0.9
 ## Dede'nin ipuçları bu kadar balık tutulana kadar görünür.
 const HINT_CATCHES := 3
+## Dede iskelenin +x kenarında, suya bakan uçtan bu kadar geride oturur; yüzü kameraya dönük
+## olsun diye +x'ten +z'ye bu kadar döner (kamera +x +z tarafında).
+const ELDER_ALONG := 2.4
+const ELDER_TURN := deg_to_rad(25.0)
+## Dede'ye dokununca söylediği öğüt ipucu çubuğunda bu kadar kalır (sn).
+const DEDE_LINE_TIME := 4.0
 const STEP_SOUND_EVERY := 0.36
 ## İlk atıştan önce ilk av gölgesinin çevresinde halka aralığı (sn): "bu gölge!"
 const FIRST_CUE_EVERY := 1.6
@@ -26,6 +32,7 @@ var session: FishingSession
 var lake: LakeShape
 var scene: LakeScene
 var angler: Angler
+var elder: Elder
 var bobber: Bobber
 var line: FishingLine
 var shadows: ShadowLayer
@@ -47,6 +54,12 @@ var _cue_clock: float = 0.0
 var _card_info: Dictionary = {}
 var _card_outcome: Dictionary = {}
 var _card_wait: float = -1.0
+## İpucu çubuğunda şu an gösterilen anahtar (değişince Dede konuşur).
+var _hint_shown: String = ""
+## Dede'nin öğüdü (ona dokununca), kalan süresi ve son söylenenin sırası.
+var _dede_line: String = ""
+var _dede_time: float = 0.0
+var _tip_index: int = 0
 
 
 func _ready() -> void:
@@ -64,10 +77,14 @@ func _ready() -> void:
 	angler.lake = lake
 	angler.height_at = scene.stand_height
 	add_child(angler)
+	elder = Elder.new()
+	add_child(elder)
+	_seat_elder()
 	bobber = Bobber.new()
 	add_child(bobber)
 	camera = FollowCamera.new()
 	add_child(camera)
+	elder.camera = camera
 	line = FishingLine.new()
 	line.camera = camera
 	line.visible = false
@@ -82,6 +99,7 @@ func _ready() -> void:
 	GameState.focus_gained.connect(func() -> void: _paused = false)
 	ItemArt.register_fish_colors(GameState.db.fish_colors())
 	FishPortrait.render_all(self, GameState.db)
+	_load_dede_face()
 	Sounds.set_ambience("lake")
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has("--autoplay"):
 		var bot: Node = load("res://scripts/dev/autoplay.gd").new()
@@ -159,7 +177,9 @@ func _build_input() -> void:
 	input.action_button = hud.action_button
 	input.ground_point = ground_point
 	input.line_out = func() -> bool: return session.line_out()
+	input.talk_hit = func(screen: Vector2) -> bool: return elder.hit(camera, screen)
 	add_child(input)
+	input.talk_requested.connect(_on_talk)
 	input.walk_requested.connect(_on_walk_requested)
 	input.cast_requested.connect(_on_cast_requested)
 	input.action_pressed.connect(_on_action_down)
@@ -251,6 +271,8 @@ func _on_event(e: Dictionary) -> void:
 	match str(e["type"]):
 		"cast":
 			GameState.save.casts += 1
+			# Dede'nin öğüdü atışın ipuçlarına yer açar.
+			_dede_time = 0.0
 			catch_fx.clear()
 			angler.play_cast()
 			var to: Vector2 = e["to"]
@@ -364,8 +386,10 @@ func _on_catch() -> void:
 			_show_point, rarity >= Records.CARD_RARITY)
 	if bool(outcome["new_species"]) or bool(outcome["new_record"]) or rarity >= Records.CARD_RARITY:
 		angler.cheer()
+		elder.cheer()
 	else:
 		angler.show_fish()
+		elder.approve()
 	Sounds.play("reel_in")
 	Sounds.find(rarity)
 	Sounds.haptic(50)
@@ -405,6 +429,10 @@ func _present(delta: float) -> void:
 			line.shake = clampf(reel.tension, 0.0, 1.3) * (1.6 if reel.thrashing() else 0.6)
 	var tension := reel.tension if fighting else 0.0
 	angler.tension = tension
+	# Dede olta sudayken şamandırayı izler.
+	elder.has_focus = session.line_out() and bobber.visible
+	elder.focus = bobber.global_position
+	_dede_time = maxf(0.0, _dede_time - delta)
 	match session.state:
 		FishingSession.State.FIGHTING:
 			angler.pose = "reel"
@@ -476,24 +504,67 @@ func _first_cue(delta: float) -> void:
 
 
 func _update_hint() -> void:
-	if GameState.save.catches >= HINT_CATCHES or card.visible:
-		hud.show_hint("")
-		return
-	var key := ""
+	var key := _hint_key()
+	if key != _hint_shown:
+		_hint_shown = key
+		# Yeni bir söz: Dede konuşur (balon, baş sallama, oyuncuya bakış).
+		if not key.is_empty():
+			elder.say()
+	hud.show_hint(key)
+
+
+## Gösterilecek ipucu: önce Dede'nin öğüdü (ona dokununca), sonra ilk 3 balığa kadar oyunun
+## durumuna göre ipucu. Kart açıkken ipucu yok.
+func _hint_key() -> String:
+	if card.visible:
+		return ""
+	if _dede_time > 0.0:
+		return _dede_line
+	if GameState.save.catches >= HINT_CATCHES:
+		return ""
 	match session.state:
 		FishingSession.State.IDLE:
-			key = "UI_HINT_FIRST_SHADOW" if GameState.save.catches == 0 else "UI_HINT_CAST"
+			return "UI_HINT_FIRST_SHADOW" if GameState.save.catches == 0 else "UI_HINT_CAST"
 		FishingSession.State.CASTING, FishingSession.State.WAITING:
-			key = "UI_HINT_COMING" if session.sim.approacher != null else "UI_HINT_WAIT"
+			return "UI_HINT_COMING" if session.sim.approacher != null else "UI_HINT_WAIT"
 		FishingSession.State.NIBBLING:
-			key = "UI_HINT_NIBBLE"
+			return "UI_HINT_NIBBLE"
 		FishingSession.State.BITING:
-			key = "UI_HINT_BITE"
+			return "UI_HINT_BITE"
 		FishingSession.State.FIGHTING:
-			key = "UI_HINT_REEL"
-		_:
-			return
-	hud.show_hint(key)
+			return "UI_HINT_REEL"
+	# Kayıp, yakalama, geri sarma: önceki ipucu kalır (süresi biten öğüt söner).
+	return "" if _hint_shown == _dede_line else _hint_shown
+
+
+# --- Dede ------------------------------------------------------------------------
+
+## Dede iskelenin +x kenarında oturur (bacakları suya sarkar); balıkçı onun içinden geçmez.
+func _seat_elder() -> void:
+	var dock := lake.dock
+	var edge := Vector2(dock.end.x, dock.position.y + ELDER_ALONG)
+	elder.seat(edge, Vector2(1.0, 0.0).rotated(ELDER_TURN), LakeScene.DOCK_HEIGHT + 0.04)
+	angler.blockers = [elder.blocker()]
+
+
+## Dede'ye dokunuldu: sıradaki öğüdü ipucu çubuğunda söyler (balon, baş sallama).
+func _on_talk() -> void:
+	if session.state != FishingSession.State.IDLE or card.visible:
+		return
+	_tip_index = _tip_index % Elder.TIP_COUNT + 1
+	_dede_line = Elder.TIP_KEY % _tip_index
+	_dede_time = DEDE_LINE_TIME
+	Sounds.play("hint")
+	Sounds.haptic(10)
+
+
+## İpucu çubuğundaki Dede yüzü: Ersin'in portresi yoksa modelden çekilir (birkaç kare sürer).
+func _load_dede_face() -> void:
+	if ItemArt.portrait("dede_smile") != null:
+		return
+	var face := await ElderBody.portrait(self, 192)
+	if face != null:
+		hud.set_portrait(face)
 
 
 # --- Arayüz ----------------------------------------------------------------------

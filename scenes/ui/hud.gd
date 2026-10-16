@@ -33,6 +33,9 @@ var _version: Label
 var _fps: Label
 var _hint: PanelContainer
 var _hint_label: Label
+## İpucu çubuğundaki Dede yüzü; resim yoksa yer tutucu ikon.
+var _face: TextureRect
+var _face_icon: Control
 var _hint_key: String = ""
 var _toast: Label
 var _toast_age: float = -1.0
@@ -88,6 +91,13 @@ func refresh() -> void:
 
 
 ## Alttaki ipucu çubuğu (çeviri anahtarıyla; boş anahtar gizler).
+## İpucu çubuğundaki yüz (Ersin'in portresi ya da modelden çekilen); null ise yer tutucu ikon.
+func set_portrait(texture: Texture2D) -> void:
+	_face.texture = texture
+	_face.visible = texture != null
+	_face_icon.visible = texture == null
+
+
 func show_hint(key: String) -> void:
 	if key == _hint_key:
 		return
@@ -189,17 +199,15 @@ func _build_bottom() -> void:
 	row.add_theme_constant_override("separation", 18)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hint.add_child(row)
-	var portrait := ItemArt.portrait("dede_smile")
-	if portrait != null:
-		var face := TextureRect.new()
-		face.texture = portrait
-		face.custom_minimum_size = Vector2(84, 84)
-		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(face)
-	else:
-		row.add_child(GameIcon.make("bobber", 64))
+	_face = TextureRect.new()
+	_face.custom_minimum_size = Vector2(84, 84)
+	_face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(_face)
+	_face_icon = GameIcon.make("bobber", 64)
+	row.add_child(_face_icon)
+	set_portrait(ItemArt.portrait("dede_smile"))
 	_hint_label = UiKit.label("", UiKit.SIZE_BODY)
 	row.add_child(_hint_label)
 	action_button = TouchButton.make("", "rod", UiKit.PRIMARY, ACTION_SIZE, UiKit.SIZE_TITLE, 120.0)

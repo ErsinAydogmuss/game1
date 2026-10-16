@@ -36,6 +36,12 @@ UI_HINT_COMING,It's coming! Don't touch yet...,Geliyor! Sakın dokunma...
 UI_HINT_NIBBLE,Nibbling... Strike when it dives!,Dürtüyor... Dalınca VUR!
 UI_HINT_BITE,Now! Tap anywhere!,Şimdi! Ekranın her yerine dokun!
 UI_HINT_REEL,Hold to reel in. Let go when it thrashes!,"Basılı tut, sar. Çırpınınca bırak!"
+UI_DEDE_TIP_1,"Cast in front of a shadow, not on top of it.","Gölgenin önüne at evlat, üstüne değil."
+UI_DEDE_TIP_2,Strike the moment the bobber dives!,Şamandıra dalınca hemen VUR!
+UI_DEDE_TIP_3,"Let go when it thrashes, or the line snaps.","Balık çırpınınca bırak, misina kopmasın."
+UI_DEDE_TIP_4,A big shadow means a big fish.,"Büyük gölge, büyük balık demek."
+UI_DEDE_TIP_5,This lake has a secret... I'll tell you one day.,Bu gölün bir sırrı var... Bir gün anlatırım.
+UI_DEDE_TIP_6,"Be patient, kid. The lake is generous.","Sabırlı ol evlat, göl cömerttir."
 UI_EARLY,Too early!,Erken davrandın!
 UI_STARTLE,The fish flinched!,Balık irkildi!
 UI_MISSED,It got away!,Kaçtı!

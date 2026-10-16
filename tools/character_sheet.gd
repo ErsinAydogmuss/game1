@@ -8,8 +8,13 @@ extends SceneTree
 ##   --model=res://.../Barbarian.glb  başka bir model (Dede ya da erkek balıkçı denemesi)
 ##   --raw                             dokuyu boyamadan ve parça gizlemeden çiz
 ##   --angler                          AnglerBody'yi (olta, şapka) oyundaki duruşlarla çiz
+##   --elder                           Dede'yi (Elder: kasket, çay, balon) oyundaki duruşlarla, iskele
+##                                     tahtasının kenarında oturtarak çiz (oturuş denetimi)
+## Zamanlama kare sayısıyla: --fixed-fps 30 ile çalıştır (tek seferlik hareketler tepe anında çizilsin).
 
+## Sütun sayısı (--elder'de 3: Dede küçük kalmasın).
 const COLUMNS := 6
+const ELDER_COLUMNS := 3
 ## [etiket, animasyon, zaman oranı (0..1)].
 const SPECS: Array[Array] = [
 	["Idle", "Idle", 0.3], ["Walking_A", "Walking_A", 0.25], ["Throw 0", "Throw", 0.05],
@@ -20,6 +25,14 @@ const SPECS: Array[Array] = [
 	["Cheer", "Cheer", 0.4], ["Sit_Floor_Idle", "Sit_Floor_Idle", 0.5], ["Spellcast_Raise", "Spellcast_Raise", 0.6],
 	["2H_Melee_Idle", "2H_Melee_Idle", 0.5],
 ]
+## --elder: Dede durumları [etiket, durum, hareketin çizimden kaç kare önce başlayacağı].
+const ELDER_SPECS: Array[Array] = [
+	["oturma", "sit", 0], ["sola bakış", "look_left", 0], ["sağa bakış", "look_right", 0],
+	["konuşma", "say", 4], ["sevinç", "cheer", 15], ["yedek model", "toy", 0],
+]
+## Dede'nin oturduğu tahtanın yüksekliği (iskele güvertesi).
+const DECK := 0.4
+const CAPTURE_FRAME := 40
 ## --angler: AnglerBody durumları [etiket, durum, gerilim].
 const ANGLER_SPECS: Array[Array] = [
 	["serbest", "free", 0.0], ["yürüme", "walk", 0.0], ["atış", "cast", 0.0], ["bekleme", "hold", 0.0],
@@ -30,9 +43,15 @@ var _out := "user://character_sheet.png"
 var _model_path := AnglerBody.SCENE_PATH
 var _raw: bool = false
 var _angler: bool = false
+var _elder: bool = false
 var _players: Array[AnimationPlayer] = []
 var _bodies: Array[AnglerBody] = []
+var _elders: Array[Elder] = []
+var _slots: Array[Vector3] = []
+var _world: Node3D
+var _camera: Camera3D
 var _frames := 0
+var _columns := COLUMNS
 
 
 func _initialize() -> void:
@@ -45,8 +64,13 @@ func _initialize() -> void:
 			_raw = true
 		elif arg == "--angler":
 			_angler = true
+		elif arg == "--elder":
+			_elder = true
+	if _elder:
+		_columns = ELDER_COLUMNS
 	var world := Node3D.new()
 	root.add_child(world)
+	_world = world
 	var env := WorldEnvironment.new()
 	env.environment = Environment.new()
 	env.environment.background_mode = Environment.BG_COLOR
@@ -59,10 +83,17 @@ func _initialize() -> void:
 	var sun := DirectionalLight3D.new()
 	sun.transform = Transform3D(Basis.looking_at(Vector3(-0.35, -1.0, -0.55)), Vector3.ZERO)
 	world.add_child(sun)
-	var specs := ANGLER_SPECS if _angler else SPECS
+	var specs := ANGLER_SPECS if _angler else (ELDER_SPECS if _elder else SPECS)
 	for i in specs.size():
-		var pos := Vector3((i % COLUMNS - (COLUMNS - 1) * 0.5) * 1.5, -floorf(i / float(COLUMNS)) * 2.1, 0)
-		if _angler:
+		var pos := Vector3((i % _columns - (_columns - 1) * 0.5) * 1.5, -floorf(i / float(_columns)) * 2.1, 0)
+		if _elder:
+			# Oturtma ilk karede (_ready'den sonra); tahta da orada konur.
+			var elder := Elder.new()
+			elder.use_toy = str(specs[i][1]) == "toy"
+			world.add_child(elder)
+			_elders.append(elder)
+			_slots.append(pos)
+		elif _angler:
 			var body := AnglerBody.new()
 			world.add_child(body)
 			body.position = pos
@@ -85,19 +116,49 @@ func _initialize() -> void:
 		label.outline_size = 12
 		label.position = pos + Vector3(0, -0.12, 0.6)
 		world.add_child(label)
-	# Dik izdüşüm: sıralar aynı boyda, üst üste binmez.
-	var rows := ceili(specs.size() / float(COLUMNS))
+	# Dik izdüşüm: sıralar aynı boyda, üst üste binmez; sütunlar da sığsın.
+	var rows := ceili(specs.size() / float(_columns))
 	var camera := Camera3D.new()
 	world.add_child(camera)
+	_camera = camera
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = rows * 2.1 + 0.4
+	var aspect := float(root.size.x) / maxf(float(root.size.y), 1.0)
+	camera.size = maxf(rows * 2.1 + 0.4, mini(specs.size(), _columns) * 1.5 / aspect + 0.2)
 	var center_y := -(rows - 1) * 2.1 * 0.5 + 0.7
 	camera.transform = Transform3D(Basis.looking_at(Vector3(0, -0.25, -1).normalized()), Vector3(0, center_y + 2.0, 8.0))
 
 
 func _process(delta: float) -> bool:
 	_frames += 1
-	if _angler:
+	if _elder:
+		for i in _elders.size():
+			var spec: Array = ELDER_SPECS[i]
+			var elder := _elders[i]
+			if _frames == 1:
+				# Kameraya üçte bir dönük; kenarı diz arkasında, üstü güverte hizasında bir tahta.
+				var facing := Vector2(sin(0.6), cos(0.6))
+				var edge := Vector2(_slots[i].x, _slots[i].z)
+				elder.camera = _camera
+				elder.seat(edge, facing, _slots[i].y + DECK)
+				var deck := Props.box(_world, Vector3(0.9, 0.08, 0.7), Vector3.ZERO, Color("#b07a4a"))
+				deck.global_transform = Transform3D(elder.global_basis, Vector3(edge.x, _slots[i].y + DECK - 0.04, edge.y)) \
+						* Transform3D(Basis.IDENTITY, Vector3(0, 0, -0.35))
+			var side := 0.0
+			match str(spec[1]):
+				"look_left":
+					side = 1.0
+				"look_right":
+					side = -1.0
+			# Dede'nin soluna (+x yerel) ya da sağına bir hedef.
+			elder.has_focus = side != 0.0
+			elder.focus = elder.head_point() + elder.global_basis * Vector3(side * 2.0, -0.3, 0.8)
+			if _frames == CAPTURE_FRAME - int(spec[2]):
+				match str(spec[1]):
+					"say":
+						elder.say()
+					"cheer":
+						elder.cheer()
+	elif _angler:
 		for i in _bodies.size():
 			var spec: Array = ANGLER_SPECS[i]
 			var state := str(spec[1])
@@ -125,7 +186,7 @@ func _process(delta: float) -> bool:
 				player.play(anim)
 				player.seek(player.get_animation(anim).length * float(spec[2]), true)
 				player.pause()
-	if _frames < (40 if _angler else 8):
+	if _frames < (CAPTURE_FRAME if _angler or _elder else 8):
 		return false
 	root.get_viewport().get_texture().get_image().save_png(_out)
 	print("Kaydedildi: ", _out)

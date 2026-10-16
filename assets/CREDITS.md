@@ -11,13 +11,14 @@ Kaynak: https://kaylousberg.com · https://github.com/KayKit-Game-Assets
 |---|---|---|
 | `assets/models/medieval/` | KayKit Medieval Hexagon Pack 1.0 | ağaç kümeleri, tek ağaçlar, kayalar, dağlar ve tepeler, çadır, fıçı, kasa, çuval, kova, kereste, bayrak |
 | `assets/models/halloween/` | KayKit Halloween Bits 1.0 | ahşap bank, fenerli direk, ayaklı fener |
-| `assets/models/characters/` | KayKit Character Pack: Adventures 1.0 | Rogue (balıkçı kız; iskeleti ve animasyonlarıyla) |
+| `assets/models/characters/` | KayKit Character Pack: Adventures 1.0 | Rogue (balıkçı kız) ve Barbarian (Dede); iskeletleri ve animasyonlarıyla |
 
-Ortaçağ ve cadılar bayramı modelleri Kazı projesinden değiştirilmeden kopyalandı. Rogue,
+Ortaçağ ve cadılar bayramı modelleri ile Barbarian Kazı projesinden değiştirilmeden kopyalandı. Rogue,
 https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0 deposundan alındı.
 Dokular `tools/recolor_texture.gd` ile yeniden boyandı (ortaçağ: ahşap ve ağaç yeşili; Rogue: balıkçı
-renkleri); orijinaller `assets/models/medieval/source/` ve `assets/models/characters/source/` altında.
-Rogue'un pelerini ve silahları oyunda gizlenir; balıkçı şapkası ve olta kodla kurulur.
+renkleri; Barbarian: Dede'nin beyaz sakalı ve kazağı); orijinaller `assets/models/medieval/source/` ve
+`assets/models/characters/source/` altında. Karakterlerin pelerinleri, silahları ve Barbarian'ın
+miğferi ile kupası oyunda gizlenir; balıkçı şapkası, Dede'nin kasketi ve çay bardağı, olta kodla kurulur.
 Hangi modelin oyunda hangi ölçekle kullanıldığı `scenes/world/model_library.gd` içinde.
 
 ## Yazı tipleri — SIL Open Font License 1.1 / Apache 2.0
