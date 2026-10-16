@@ -9,11 +9,18 @@ func test_roundtrip_keeps_every_field() -> void:
 	s.casts = 40
 	s.catches = 9
 	s.hint_step = 4
-	s.records = { "carp": { "count": 2, "best_cm": 61, "best_stars": 3, "first_unix": 1200 } }
+	s.records = { "carp": { "count": 2, "best_cm": 61, "best_stars": 3, "first_unix": 1200, "released": 1 } }
 	s.settings = { "sfx": false, "easy": true, "locale": "tr" }
 	s.flags = { "seen_card": true }
 	s.character = "rogue"
-	s.rod = "bamboo"
+	s.bucket = [{ "fish": "rudd", "size_cm": 22, "stars": 3 }]
+	s.owned = PackedStringArray(["reel_smooth", "bucket_big"])
+	s.loadouts = { "float": { "reel": "reel_smooth", "bait": "bait_corn" } }
+	s.baits = { "bait_corn": 12 }
+	s.xp = 150
+	s.love = 9
+	s.pity = { "rare": 14, "epic": 30 }
+	s.stats = { "earned": 120, "sold": 11 }
 	var back := SaveData.from_dict(s.to_dict())
 	assert_eq(back.to_dict(), s.to_dict(), "bütün alanlar aynen döner")
 	assert_eq(back.to_dict()["version"], SaveData.VERSION, "sürüm yazılır")
@@ -33,7 +40,12 @@ func test_bad_values_are_sanitized() -> void:
 			"pike": { "count": 0 },
 			"bad": "yok",
 		},
-		"settings": "bozuk", "character": "", "rod": "",
+		"settings": "bozuk", "character": "",
+		"bucket": [{ "fish": "rudd", "size_cm": 20 }, { "fish": "", "size_cm": 9 }, "yok", { "fish": "carp", "size_cm": -3 }],
+		"owned": ["reel_smooth", "reel_smooth", 5, ""],
+		"loadouts": { "float": { "reel": "reel_smooth", "line": 7 }, "spin": "bozuk" },
+		"baits": { "bait_corn": 5, "bait_dough": -2, "bait_maggot": "çok" },
+		"xp": -10, "pity": { "rare": "3" },
 	})
 	assert_eq(back.coins, 0, "negatif para sıfırlanır")
 	assert_eq(back.session, 0, "negatif oturum sıfırlanır")
@@ -43,7 +55,13 @@ func test_bad_values_are_sanitized() -> void:
 	assert_true(not back.records.has("bad"), "bozuk kayıt düşer")
 	assert_eq(back.settings, {}, "bozuk ayarlar boş sözlük olur")
 	assert_eq(back.character, "rogue", "boş karakter varsayılana döner")
-	assert_eq(back.rod, "bamboo", "boş olta varsayılana döner")
+	assert_eq(back.bucket.size(), 1, "kovada yalnızca geçerli satır kalır")
+	assert_eq(int(back.bucket[0]["stars"]), 1, "eksik yıldız 1 olur")
+	assert_eq(back.owned, PackedStringArray(["reel_smooth"]), "takım listesi tekrarsız ve yalnızca yazı")
+	assert_eq(back.loadouts, { "float": { "reel": "reel_smooth" } }, "bozuk kuşanma düşer")
+	assert_eq(back.baits, { "bait_corn": 5 }, "eksi ve bozuk yem sayısı düşer")
+	assert_eq(back.xp, 0, "eksi rütbe puanı sıfırlanır")
+	assert_eq(back.pity, { "rare": 3 }, "sayı yazısı okunur")
 
 
 ## Elle bozulmuş ya da hatalı yazılmış tek bir değer bütün ilerlemeyi sildirmez: o alan
@@ -88,7 +106,29 @@ func test_unreadable_saves_are_set_aside() -> void:
 
 func test_old_version_is_migrated() -> void:
 	var d := SaveData.migrate({ "coins": 3 })
-	assert_eq(int(d["version"]), 1, "sürümsüz kayıt v1 olur")
+	assert_eq(int(d["version"]), SaveData.VERSION, "sürümsüz kayıt güncel sürüme gelir")
+
+
+## Gerçek bir v1 kaydı (tests/fixtures/save_v1.json, değiştirme): v2'de olta alanı gider,
+## defter, ayarlar ve sayaçlar korunur, yeni alanlar boş başlar, bambu kamış kuşanılı kalır.
+func test_v1_save_migrates_to_v2() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v1.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v1 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var s := SaveData.from_dict(raw)
+	var out := s.to_dict()
+	assert_eq(int(out["version"]), SaveData.VERSION, "güncel sürüm")
+	assert_true(not out.has("rod"), "eski olta alanı gider")
+	assert_eq(s.seed, 4242, "seed korunur")
+	assert_eq(s.catches, 9, "sayaçlar korunur")
+	assert_eq(int(s.records["rudd"]["count"]), 7, "defter korunur")
+	assert_eq(int(s.records["rudd"]["released"]), 0, "bırakılan sayısı 0 başlar")
+	assert_eq(str(s.settings["locale"]), "tr", "ayarlar korunur")
+	assert_true(s.bucket.is_empty() and s.owned.is_empty() and s.baits.is_empty(), "kova, takım ve yem boş")
+	assert_eq(s.xp, 0, "rütbe puanı 0")
+	assert_eq(Economy.equipped(content(), s, "rod"), "rod_bamboo", "bambu kamış kuşanılı kalır")
+	assert_eq(SaveData.from_dict(out).to_dict(), out, "göçten sonraki kayıt gidiş-dönüşte aynı")
 
 
 func test_store_writes_atomically() -> void:

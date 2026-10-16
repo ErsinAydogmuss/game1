@@ -107,7 +107,8 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
   - ✅ `GearStats`: kuşanılmış takımın etkisi (menzil, güç, sarma, fren, kopma süresi, görünmezlik, kaçma payı, VUR süresi, kepçe, yem çekimi). `starter` = bambu olta, `best` = en iyi takım (rapor ve testler). `FishingSession` ve `ReelModel` takımı yalnızca buradan okur.
   - ✅ `BiteRules` (fark etme konisi, korkutma, dürtme, VUR penceresi, erken dokunuş), `FishTable` (tür, boy yüzdeliği, yıldız, gölge uzunluğu), `ReelModel` (gerilim, patlama, kopma, kaçma, Kolay mod), `ReelBot` (oyuncu tarzı botları), `Records` (kayıt defteri, kart kuralı).
   - ✅ `FishingSession`: durum makinesi (BOŞ → ATIŞ → BEKLEME → DÜRTME → ISIRMA → ÇEKİŞME → TUTULDU / KAÇTI). Sabit 1/60 sn adım; girdiler `cast` / `press` / `release` / `acknowledge`; olaylar `poll_events()`.
-  - ✅ `SaveData` (sürüm 1) / `SaveStore` (atomik yazma), `TimeProvider` (zaman soyutlaması).
+  - ✅ `Economy` (balığın değeri: tür değeri × boy çarpanı 0,6–1,6, binde birle; satış, satın alma, kuşanma, yem harcama; `gear_for` oturumun takımını kurar), `Bucket` (kapasite = sahip olunan en büyük kova; doluysa çağıran balığı bırakır), `Rank` (rütbe puanı, seviye, ilerleme).
+  - ✅ `SaveData` (sürüm 2: kova, takım kimlikle, kuşanma, yem, rütbe puanı, göl sevgisi, şans garantisi, sayaçlar) / `SaveStore` (atomik yazma), `TimeProvider` (zaman soyutlaması).
 - `scripts/autoload/`:
   - `game_state.gd` (`GameState`): içerik + kayıt, ayarlar, dil, ipucu adımı, bayraklar, klavye kontrolleri. Sinyaller: `changed`, `focus_lost`, `focus_gained`. Odak kaybında kaydeder.
   - `sounds.gd` (`Sounds`): efektler (`BANK`), döngüler (makara, gerilim), ortam sesi, müzik, titreşim. Dosya yoksa sessiz geçer.
@@ -151,7 +152,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - **Arayüz kurulumu:** Tam ekran Control için `set_anchors_and_offsets_preset(PRESET_FULL_RECT)` kullan. HUD öğeleri `MOUSE_FILTER_IGNORE`; basılı tutulan ve aynı anda basılacak butonlar `TouchButton`. Paneller `Dialog`'dan türer ve `"modal"` grubuna girer; açıkken oyun girdisi engellenir. Düğmeler güvenli alanın içinde (`UiKit.safe_insets`), en az 122 birim; eylem düğmesi en az 280 birim.
 - **Fontlar:** başlık Luckiest Guy (`UiKit.display_font()`), metin Baloo 2 (`UiKit.body_font()`).
 - **Hazır modeller:** `assets/models/<paket>/` + `ModelLibrary.MODELS` satırı + `assets/CREDITS.md`. GLB içe aktarmada gömülü dokular atılır; karakterin dokusu kodla verilir.
-- **Kayıt biçimi** değişirse: `SaveData.VERSION`'ı artır, `migrate()`'e adım ekle, `test_save_data.gd`'ye test yaz.
+- **Kayıt biçimi** değişirse: `SaveData.VERSION`'ı artır, `migrate()`'e adım ekle, `test_save_data.gd`'ye test yaz. Her sürümün gerçek bir örneği `tests/fixtures/save_vN.json`'da durur ve değiştirilmez (göç zinciri ondan sınanır). Takım kimlikle saklanır, kademe numarasıyla değil.
 - **Çekişme, balık ya da takım ayarı** değişirse: `tools/reel_report.gd`'yi (ve `-- --gear=top`) çalıştır, `docs/gdd.md` §5'teki tabloları güncelle; `test_reel_model.gd` korkulukları (en iyi takımla da beceri gereksin) yeşil kalsın. Balığın `pull` değeri sınırın en az 0,05 altında olmalı; en güçlü frende patlama sınırın en az 0,1 üstünde kalmalı (ContentDB denetler).
 - **Koordinatlar:** dünya x/z metre; çekirdek mantık `Vector2(x, z)` kullanır, su yüzeyi y = 0. Kamera +x +z tarafında; iskele kıyıdan −z yönüne uzanır.
 - **Her sesin** bir görsel ve titreşim karşılığı olur (iPhone'un sessiz anahtarı sesi kapatır).

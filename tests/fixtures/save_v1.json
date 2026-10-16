@@ -1,0 +1,20 @@
+{
+	"version": 1,
+	"player_id": "0123456789abcdef0123456789abcdef",
+	"created_unix": 1760000000,
+	"last_seen_unix": 1760003600,
+	"coins": 0,
+	"seed": 4242,
+	"session": 6,
+	"records": {
+		"rudd": { "count": 7, "best_cm": 27, "best_stars": 4, "first_unix": 1760000100 },
+		"carp": { "count": 2, "best_cm": 64, "best_stars": 3, "first_unix": 1760000900 }
+	},
+	"casts": 31,
+	"catches": 9,
+	"hint_step": 0,
+	"flags": {},
+	"settings": { "sfx": true, "music": true, "vibration": true, "locale": "tr", "easy": false },
+	"character": "rogue",
+	"rod": "bamboo"
+}

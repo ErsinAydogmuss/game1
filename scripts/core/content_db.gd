@@ -414,8 +414,10 @@ func _validate_progression() -> void:
 
 func _validate_fish(f: Dictionary) -> void:
 	var id := str(f["id"])
-	if int(f["value"]) <= 0:
-		errors.append("fish.json: %s: value pozitif olmalı" % id)
+	# Masalsı balık satılmaz (değeri 0); ötekiler pozitif.
+	var mythic := rarity_id(int(f["rarity"])) == "mythic"
+	if int(f["value"]) < 0 or (int(f["value"]) == 0) != mythic:
+		errors.append("fish.json: %s: value pozitif olmalı (yalnızca Masalsı balıkta 0)" % id)
 	var size: Vector2i = f["size_cm"]
 	if size.x <= 0 or size.y < size.x:
 		errors.append("fish.json: %s: boy aralığı geçersiz" % id)

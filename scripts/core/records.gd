@@ -1,7 +1,7 @@
 class_name Records
 extends RefCounted
-## Balık kayıt defteri (ansiklopedinin verisi): tür başına sayı, en büyük boy, en iyi yıldız ve
-## ilk yakalanma zamanı. SaveData.records sözlüğünü yerinde günceller.
+## Balık kayıt defteri (Balık Defteri'nin verisi): tür başına sayı, en büyük boy, en iyi yıldız,
+## ilk yakalanma zamanı ve bırakılan sayı. SaveData.records sözlüğünü yerinde günceller.
 
 ## Kart kuralı: tam kart yalnızca yeni tür, yeni rekor ya da bu nadirlik ve üstü için açılır.
 const CARD_RARITY := 2
@@ -19,8 +19,17 @@ static func add(records: Dictionary, fish_id: String, size_cm: int, stars: int, 
 		"best_cm": maxi(best, size_cm),
 		"best_stars": maxi(int(entry.get("best_stars", 1)), stars),
 		"first_unix": now_unix if new_species else int(entry.get("first_unix", now_unix)),
+		"released": int(entry.get("released", 0)),
 	}
 	return { "new_species": new_species, "new_record": new_record, "count": count }
+
+
+## Yakalanmış bir balık göle bırakıldı (deftere yazılmış olmalı).
+static func release(records: Dictionary, fish_id: String) -> void:
+	if not records.has(fish_id):
+		return
+	var entry: Dictionary = records[fish_id]
+	entry["released"] = mini(int(entry.get("count", 0)), int(entry.get("released", 0)) + 1)
 
 
 ## Bu yakalayış tam kartla mı gösterilsin (yoksa kısa bildirim)?

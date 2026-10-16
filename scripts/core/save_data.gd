@@ -4,7 +4,7 @@ extends RefCounted
 ## taşınabilir. Alan eklerken VERSION'ı artır, migrate()'e adım ekle ve test_save_data.gd'ye
 ## göç testi yaz.
 
-const VERSION := 1
+const VERSION := 2
 
 var player_id: String = ""
 var created_unix: int = 0
@@ -14,7 +14,7 @@ var coins: int = 0
 var seed: int = 0
 ## Kaçıncı açılış (her açılışta bir artar).
 var session: int = 0
-## Ansiklopedi: balık id -> { count, best_cm, best_stars, first_unix }.
+## Balık Defteri: balık id -> { count, best_cm, best_stars, first_unix, released }.
 var records: Dictionary = {}
 ## Toplam atış ve yakalanan balık sayısı.
 var casts: int = 0
@@ -27,8 +27,22 @@ var flags: Dictionary = {}
 var settings: Dictionary = {}
 ## Seçilen balıkçı (KayKit karakteri). H2'de seçim ekranı gelir.
 var character: String = "rogue"
-## Kullanılan olta (data/rods.json). H2'de dükkânla değişir.
-var rod: String = "bamboo"
+## Kovadaki balıklar (satılmayı bekleyen): [{ fish, size_cm, stars }].
+var bucket: Array[Dictionary] = []
+## Satın alınan takım kimlikleri (gear.json). Fiyatı 0 olan başlangıç takımı hep sahiplidir.
+## Takım kimlikle tutulur, kademe numarasıyla değil: araya yeni kademe eklenince kayıt bozulmaz.
+var owned: PackedStringArray = []
+## Teknik -> kuşanılan takım { yuva: kimlik } (eksik yuvada başlangıç takımı).
+var loadouts: Dictionary = {}
+## Tükenen yemler: yem kimliği -> kalan sayı (solucan sınırsız, burada tutulmaz).
+var baits: Dictionary = {}
+## Rütbe puanı ve göl sevgisi (bırakılan balık, toplanan çöp, istekler; hiç azalmaz).
+var xp: int = 0
+var love: int = 0
+## Şans garantisi sayaçları: nadirlik kimliği -> o nadirlik ve üstü gelmeden geçen av sayısı.
+var pity: Dictionary = {}
+## Sayaçlar (istekler ve denge için): earned, spent, sold, released...
+var stats: Dictionary = {}
 
 
 static func create_new(now_unix: int) -> SaveData:
@@ -67,7 +81,14 @@ func to_dict() -> Dictionary:
 		"flags": flags.duplicate(),
 		"settings": settings.duplicate(),
 		"character": character,
-		"rod": rod,
+		"bucket": bucket.duplicate(true),
+		"owned": Array(owned),
+		"loadouts": loadouts.duplicate(true),
+		"baits": baits.duplicate(),
+		"xp": xp,
+		"love": love,
+		"pity": pity.duplicate(),
+		"stats": stats.duplicate(),
 	}
 
 
@@ -94,8 +115,14 @@ static func from_dict(raw: Dictionary) -> SaveData:
 		s.settings = (raw_settings as Dictionary).duplicate()
 	var character := _text(d, "character", "rogue")
 	s.character = character if not character.is_empty() else "rogue"
-	var rod := _text(d, "rod", "bamboo")
-	s.rod = rod if not rod.is_empty() else "bamboo"
+	s.bucket = _bucket(d.get("bucket", []))
+	s.owned = _ids(d.get("owned", []))
+	s.loadouts = _loadouts(d.get("loadouts", {}))
+	s.baits = _counts(d.get("baits", {}))
+	s.xp = maxi(0, _int(d, "xp", 0))
+	s.love = maxi(0, _int(d, "love", 0))
+	s.pity = _counts(d.get("pity", {}))
+	s.stats = _counts(d.get("stats", {}))
 	return s
 
 
@@ -110,6 +137,18 @@ static func migrate(raw: Dictionary) -> Dictionary:
 	var v := _int(d, "version", 0)
 	if v < 1:
 		v = 1
+	if v < 2:
+		# v2 (H2 dükkân): tek "rod" alanı gitti. v1'de yalnızca bambu olta vardı; o da başlangıç
+		# takımında (rod_bamboo), yani hep sahipli ve boş kuşanılmışta zaten seçili. Kova, takım,
+		# yem, rütbe puanı, göl sevgisi ve sayaçlar boş başlar; bütün balık kayıtları korunur.
+		d.erase("rod")
+		for key: String in ["bucket", "owned"]:
+			if not d.has(key):
+				d[key] = []
+		for key: String in ["loadouts", "baits", "pity", "stats"]:
+			if not d.has(key):
+				d[key] = {}
+		v = 2
 	d["version"] = v
 	return d
 
@@ -132,7 +171,67 @@ static func _records(raw: Variant) -> Dictionary:
 			"best_cm": maxi(0, _int(e, "best_cm", 0)),
 			"best_stars": clampi(_int(e, "best_stars", 1), 1, 5),
 			"first_unix": maxi(0, _int(e, "first_unix", 0)),
+			"released": clampi(_int(e, "released", 0), 0, count),
 		}
+	return out
+
+
+## Kova satırları: balık kimliği yazı, boy ve yıldız sayı olmalı; bozuk satır düşer.
+static func _bucket(raw: Variant) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var e: Dictionary = entry
+		var fish := _text(e, "fish", "")
+		var size := _int(e, "size_cm", 0)
+		if fish.is_empty() or size <= 0:
+			continue
+		out.append({ "fish": fish, "size_cm": size, "stars": clampi(_int(e, "stars", 1), 1, 5) })
+	return out
+
+
+## Tekrarsız kimlik listesi (yazı olmayan ve boş öğeler düşer).
+static func _ids(raw: Variant) -> PackedStringArray:
+	var out := PackedStringArray()
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for item: Variant in raw:
+		if typeof(item) == TYPE_STRING and not str(item).is_empty() and not str(item) in out:
+			out.append(str(item))
+	return out
+
+
+## Teknik -> { yuva: kimlik }; yazı olmayan değerler düşer.
+static func _loadouts(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	for technique: Variant in raw:
+		var slots: Variant = (raw as Dictionary)[technique]
+		if typeof(slots) != TYPE_DICTIONARY:
+			continue
+		var clean := {}
+		for slot: Variant in slots:
+			var id: Variant = (slots as Dictionary)[slot]
+			if typeof(id) == TYPE_STRING and not str(id).is_empty():
+				clean[str(slot)] = str(id)
+		out[str(technique)] = clean
+	return out
+
+
+## Kimlik -> sıfır ya da pozitif tamsayı; bozuk değerler düşer.
+static func _counts(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	for key: Variant in raw:
+		var holder := { "v": (raw as Dictionary)[key] }
+		var n := _int(holder, "v", -1)
+		if n >= 0:
+			out[str(key)] = n
 	return out
 
 
