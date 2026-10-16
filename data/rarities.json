@@ -1,0 +1,10 @@
+{
+	"_note": "Nadirlikler yalnızca sona eklenir: kayıtlar sıra numarasını tutar. Renkler Kazı ile aynı.",
+	"rarities": [
+		{ "id": "common", "color": "#f4f1ea" },
+		{ "id": "fine", "color": "#5fd86a" },
+		{ "id": "rare", "color": "#3f8fff" },
+		{ "id": "epic", "color": "#b764ff" },
+		{ "id": "legendary", "color": "#ffc426" }
+	]
+}

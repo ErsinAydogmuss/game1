@@ -1,0 +1,15 @@
+# Godot 4
+.godot/
+/export/*
+!/export/.gdignore
+/android/build/
+
+# CSV'den otomatik üretilen çeviri dosyaları (editör/import yeniden üretir)
+*.translation
+
+# İşletim sistemi / geçici
+.DS_Store
+*.tmp
+
+# Video kaydı için geçici ayar dosyası (CLAUDE.md)
+override.cfg

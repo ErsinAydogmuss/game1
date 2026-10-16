@@ -5,7 +5,7 @@ Yarı zamanlı çalışma (iş arasında) ve kodun Claude tarafından yazılmas�
 ## Faz 0: Kurulum
 
 - [x] Saha araştırması ve fikir seçimi (Olta: Gölün Sırrı).
-- [ ] Godot projesi, testler ve iPhone dışa aktarma ayarı (1. hafta, adım 2).
+- [x] Godot projesi, testler ve iPhone dışa aktarma ayarı (1. hafta, adım 2).
 - [ ] Mac'teki Claude Code ile telefona ilk yükleme: [`iphone-kurulum.md`](iphone-kurulum.md).
   - **Not:** ücretsiz Apple hesabıyla aynı anda en fazla 3 uygulama yüklenebilir; Kazı da bunlardan biri.
 - [ ] **Apple Developer** (99 $/yıl) ve **Google Play Console** (25 $): dış testçilerden önce.
@@ -18,7 +18,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 
 - [x] Karar kaydı.
 - [x] Kısa tasarım belgesi ([`gdd.md`](gdd.md)), bu yol haritası, görsel istekleri ([`gorsel-istekleri.md`](gorsel-istekleri.md)).
-- [ ] Proje iskeleti: Kazı'nın test koşucusu, kayıt, arayüz parçaları, ses ve bot altyapısı. iPhone ayarı.
+- [x] Proje iskeleti: Kazı'nın test koşucusu, kayıt, arayüz parçaları ve ses motoru; yer tutucu göl; iPhone ayarı. (Bot altyapısı 4. adımda.)
 - [ ] Çekirdek mantık ve testler: `ContentDB`, `LakeShape`, `ShadowSim`, `BiteRules`, `ReelModel`, `FishTable`, `FishingSession`, `Records`, `SaveData`.
 - [ ] Gri kutu oynanış.
   - Düz su, yer tutucu balıkçı ve şamandıra, misina ve gölgeler.

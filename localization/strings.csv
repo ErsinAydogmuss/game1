@@ -1,0 +1,20 @@
+keys,en,tr
+UI_GAME_TITLE,Olta: Secret of the Lake,Olta: Gölün Sırrı
+UI_VERSION,v%s,v%s
+UI_FPS,%d FPS,%d FPS
+UI_SETTINGS,Settings,Ayarlar
+UI_SET_SFX,Sound effects,Ses efektleri
+UI_SET_MUSIC,Music,Müzik
+UI_SET_VIBRATION,Vibration,Titreşim
+UI_SET_EASY,Easy reeling,Kolay çekme
+UI_SET_LANGUAGE,Language,Dil
+UI_LANG_NAME,English,Türkçe
+UI_ON,On,Açık
+UI_OFF,Off,Kapalı
+UI_DEBUG_RESET,Reset save,Kaydı sıfırla
+UI_PLACEHOLDER_HINT,The lake is ready. Fishing comes in the next step!,Göl hazır. Balık tutmak bir sonraki adımda!
+RARITY_common,Common,Sıradan
+RARITY_fine,Fine,Güzel
+RARITY_rare,Rare,Nadir
+RARITY_epic,Epic,Destansı
+RARITY_legendary,Legendary,Efsanevi
