@@ -18,6 +18,8 @@ const QUICK_CATCH_TIME := 1.3
 const FORWARD_CAST := 6.0
 ## Kart, balık elde gösterildikten bu kadar sn sonra açılır.
 const CARD_DELAY := 0.9
+## Kart kapandıktan bu kadar sonra bekleyen bildirimler gelir (sn).
+const TOAST_AFTER_CARD := 0.5
 ## Dede'nin ipuçları bu kadar balık tutulana kadar görünür.
 const HINT_CATCHES := 3
 ## Dede iskelenin +x kenarında, suya bakan uçtan bu kadar geride oturur; yüzü kameraya dönük
@@ -77,6 +79,8 @@ var _hint_shown: String = ""
 ## Dede'nin ya da Nine'nin sözü (onlara dokununca, bir olayda), kalan süresi ve konuşan.
 var _line: String = ""
 var _line_time: float = 0.0
+## Yem bu atışta bitti: olta dönünce Dede söyler.
+var _bait_out: bool = false
 var _line_speaker: String = "dede"
 ## Dede'nin haber verdiği efsanevi gölgeler (kimlik → true) ve o gölgeye bakma süresi.
 var _announced: Dictionary = {}
@@ -205,6 +209,9 @@ func _process(delta: float) -> void:
 		_card_wait -= delta
 		if _card_wait < 0.0:
 			card.show_catch(GameState.db, _card_info, _card_outcome)
+	if _card_up():
+		# Kart açıkken (ya da açılacakken) rütbe ve kova bildirimleri bekler: kartın arkasında kalmasın.
+		hud.hold_toasts(TOAST_AFTER_CARD)
 	if _quick_catch >= 0.0:
 		_quick_catch += delta
 		if _quick_catch >= QUICK_CATCH_TIME:
@@ -378,8 +385,14 @@ func _on_event(e: Dictionary) -> void:
 			hud.toast(tr("UI_RETRY"), UiKit.ACCENT)
 			Sounds.play("hint")
 		"hook":
-			# Yem balık takılınca harcanır (kaçan gölge yemi yemez); biten yem solucana döner.
+			# Yem balık takılınca harcanır (kaçan gölge yemi yemez). Biten yem solucana döner; oturumun
+			# takımı da: yeni gölgeler solucanın oranlarıyla doğar (defter ve dükkânla aynı). Dede,
+			# olta dönünce ve o an başka bir söz (kova dolu) yokken söyler.
+			var bait_id := Economy.equipped(GameState.db, GameState.save, "bait")
 			Economy.use_bait(GameState.db, GameState.save)
+			if Economy.equipped(GameState.db, GameState.save, "bait") != bait_id:
+				session.set_gear(Economy.gear_for(GameState.db, GameState.save))
+				_bait_out = true
 			bobber.start_fight(bobber.global_position)
 			ripples.spawn(session.bobber, 1.2, 0.7, Color(1, 1, 1, 0.9), 0.18)
 			Sounds.play("hook")
@@ -440,7 +453,7 @@ func _on_catch() -> void:
 	var stars := int(info["stars"])
 	var outcome := Records.add(save.records, fish_id, size_cm, stars, GameState.clock.now_unix())
 	save.catches += 1
-	CatchOdds.note_catch(db, save, rarity)
+	CatchOdds.note_catch(db, save, rarity, db.spot(spot_id))
 	session.set_pity_floor(CatchOdds.pity_floor(db, save, db.spot(spot_id)))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir).
@@ -454,7 +467,7 @@ func _on_catch() -> void:
 	hud.hold_toasts(CatchFx.HOLD_TIME)
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
 		var rank := int(ranked["new_rank"])
-		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT)
+		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up")
 	if not kept:
 		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT)
 	elif Bucket.is_full(db, save) and not was_full:
@@ -522,7 +535,12 @@ func _present(delta: float) -> void:
 			elder.focus = point
 			elder.has_focus = true
 	nine.watch(angler.global_position + Vector3(0.0, 1.1, 0.0))
-	_line_time = maxf(0.0, _line_time - delta)
+	# Köylünün sözü kart açıkken saymaz (ipucu çubuğu kartın altında gizli).
+	if not _card_up():
+		_line_time = maxf(0.0, _line_time - delta)
+	if _bait_out and _line_time <= 0.0 and session.state == FishingSession.State.IDLE and not _card_up():
+		_bait_out = false
+		_say("UI_DEDE_BAIT_OUT")
 	match session.state:
 		FishingSession.State.FIGHTING:
 			angler.pose = "reel"
@@ -699,6 +717,11 @@ func _refresh_status() -> void:
 	var save := GameState.save
 	hud.set_status(save.coins, save.bucket.size(), Bucket.capacity(db, save), Rank.rank(db, save),
 			Rank.progress(db, save))
+
+
+## Balık kartı açık mı ya da açılmak üzere mi?
+func _card_up() -> bool:
+	return card.visible or _card_wait >= 0.0
 
 
 ## Açık bir panel (Dialog) var mı? Varken oyun donar.

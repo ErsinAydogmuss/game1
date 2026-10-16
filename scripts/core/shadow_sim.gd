@@ -194,9 +194,11 @@ func _has_scripted() -> bool:
 	return false
 
 
+## Şimdiki garantiyi karşılayan bir garanti gölgesi gölde mi? Eski (daha düşük) bir garantiyle
+## doğmuş gölge sayılmaz: Nadir garantisinin turnası göldeyken dolan Destansı garantisi beklemesin.
 func _has_pity() -> bool:
 	for s in shadows:
-		if s.pity:
+		if s.pity and s.rarity >= pity_floor:
 			return true
 	return false
 

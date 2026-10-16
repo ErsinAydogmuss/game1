@@ -5,6 +5,7 @@ extends RefCounted
 ## parayla asla satılmaz (CLAUDE.md, gelir kuralları): oranı değiştiren yem bu sayede satılabilir.
 ##
 ## Değerler tamsayı binde birle hesaplanır (Kazı'daki Economy gibi): cihazdan cihaza fark olmaz.
+@warning_ignore_start("integer_division")
 
 ## Boy çarpanı binde bir: en küçük boy 600 (0,6), en büyük boy 1600 (1,6).
 const SIZE_MIN := 600
@@ -32,12 +33,23 @@ static func bucket_value(db: ContentDB, save: SaveData) -> int:
 	return total
 
 
-## Kovayı Nine'ye satar: para eklenir, kova boşalır. Kazanılan parayı döndürür.
+## Kovayı Nine'ye satar: para eklenir, satılan balıklar kovadan çıkar. Değeri 0 olan (Masalsı)
+## balık satılmaz, kovada kalır. Kazanılan parayı döndürür (0 ise kayıt değişmez).
 static func sell_all(db: ContentDB, save: SaveData) -> int:
-	var earned := bucket_value(db, save)
-	var sold := save.bucket.size()
+	var earned := 0
+	var sold := 0
+	var kept: Array[Dictionary] = []
+	for entry in save.bucket:
+		var value := fish_value(db, str(entry["fish"]), int(entry["size_cm"]))
+		if value <= 0:
+			kept.append(entry)
+			continue
+		earned += value
+		sold += 1
+	if sold == 0:
+		return 0
 	save.coins += earned
-	save.bucket.clear()
+	save.bucket = kept
 	_add_stat(save, "earned", earned)
 	_add_stat(save, "sold", sold)
 	return earned
@@ -59,6 +71,9 @@ static func buy_block(db: ContentDB, save: SaveData, id: String) -> String:
 		return "unknown"
 	var consumable := str(item["category"]) == "bait" and int(item["pack"]) > 0
 	if not consumable and owns(db, save, id):
+		return "owned"
+	# Kapasite en büyük kovadan gelir: daha küçüğü (ya da eşiti) bir şey katmaz, "sende" sayılır.
+	if str(item["category"]) == "bucket" and int(item["capacity"]) <= Bucket.capacity(db, save):
 		return "owned"
 	if Rank.rank(db, save) < int(item["rank"]):
 		return "rank"

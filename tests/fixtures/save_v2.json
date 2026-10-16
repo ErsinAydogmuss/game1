@@ -1,0 +1,102 @@
+{
+	"baits": {
+		"bait_maggot": 17
+	},
+	"bucket": [
+		{
+			"fish": "pike",
+			"size_cm": 54,
+			"stars": 1
+		},
+		{
+			"fish": "rudd",
+			"size_cm": 18,
+			"stars": 1
+		}
+	],
+	"casts": 79,
+	"catches": 69,
+	"character": "rogue",
+	"coins": 195,
+	"created_unix": 1760100000,
+	"flags": {
+		"seen_card": true
+	},
+	"hint_step": 0,
+	"last_seen_unix": 1760101503,
+	"loadouts": {
+		"float": {
+			"bait": "bait_maggot",
+			"bobber": "bobber_sensitive",
+			"hook": "hook_medium",
+			"line": "line_mono",
+			"reel": "reel_smooth"
+		}
+	},
+	"love": 1,
+	"owned": [
+		"line_mono",
+		"reel_smooth",
+		"hook_medium",
+		"bobber_sensitive"
+	],
+	"pity": {
+		"epic": 18,
+		"rare": 1
+	},
+	"player_id": "0123456789abcdef0123456789abcdef",
+	"records": {
+		"carp": {
+			"best_cm": 77,
+			"best_stars": 5,
+			"count": 18,
+			"first_unix": 1760100029,
+			"released": 0
+		},
+		"perch": {
+			"best_cm": 41,
+			"best_stars": 4,
+			"count": 19,
+			"first_unix": 1760100042,
+			"released": 0
+		},
+		"pike": {
+			"best_cm": 104,
+			"best_stars": 4,
+			"count": 5,
+			"first_unix": 1760100444,
+			"released": 0
+		},
+		"rudd": {
+			"best_cm": 29,
+			"best_stars": 5,
+			"count": 25,
+			"first_unix": 1760100012,
+			"released": 1
+		},
+		"wels": {
+			"best_cm": 142,
+			"best_stars": 2,
+			"count": 1,
+			"first_unix": 1760101092,
+			"released": 0
+		}
+	},
+	"seed": 4242,
+	"session": 14,
+	"settings": {
+		"easy": false,
+		"locale": "tr",
+		"music": true,
+		"sfx": true,
+		"vibration": true
+	},
+	"stats": {
+		"earned": 835,
+		"released": 1,
+		"sold": 66,
+		"spent": 700
+	},
+	"version": 2,
+	"xp": 902
+}

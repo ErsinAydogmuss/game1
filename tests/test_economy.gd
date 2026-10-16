@@ -43,6 +43,37 @@ func test_bucket_capacity_and_overflow() -> void:
 	assert_eq(Bucket.counts(s), { "rudd": 6 }, "tür başına sayım")
 
 
+## Kapasite en büyük kovadan gelir: daha büyüğü alınmışsa küçüğü "sende" sayılır, satılmaz.
+func test_smaller_bucket_adds_nothing() -> void:
+	var db := content()
+	var s := _save()
+	s.coins = 100000
+	s.xp = 100000
+	s.owned.append("keepnet")
+	assert_eq(Bucket.capacity(db, s), 16, "file 16 balık")
+	assert_eq(Economy.buy_block(db, s, "bucket_big"), "owned", "daha küçük kova sende sayılır")
+	assert_true(not Economy.buy(db, s, "bucket_big"), "alınmaz")
+	assert_eq(s.coins, 100000, "para düşmez")
+	assert_eq(Economy.buy_block(db, s, "keepnet_big"), "", "daha büyüğü alınabilir")
+
+
+## Değeri 0 olan balık (Masalsı) satılmaz, kovada kalır; satılacak bir şey yoksa kayıt değişmez.
+func test_unsellable_fish_stay_in_the_bucket() -> void:
+	var db := ContentDB.load_default()
+	db.fish_by_id("wels")["value"] = 0
+	var s := _save()
+	Bucket.add(db, s, "wels", 200, 5)
+	Bucket.add(db, s, "rudd", 30, 5)
+	var rudd := Economy.fish_value(db, "rudd", 30)
+	assert_eq(Economy.sell_all(db, s), rudd, "yalnızca kızılkanat satılır")
+	assert_eq(s.bucket.size(), 1, "değersiz balık kovada kalır")
+	assert_eq(str(s.bucket[0]["fish"]), "wels", "kalan yayın")
+	assert_eq(int(s.stats["sold"]), 1, "satılan sayısı")
+	assert_eq(Economy.sell_all(db, s), 0, "satılacak yoksa 0")
+	assert_eq(s.bucket.size(), 1, "kova değişmez")
+	assert_eq(int(s.stats["sold"]), 1, "sayaç değişmez")
+
+
 func test_buying_needs_rank_and_coins() -> void:
 	var db := content()
 	var s := _save()

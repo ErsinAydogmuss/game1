@@ -16,7 +16,8 @@ extends Node
 ##     Nine selam verir, atış, bekleme, çekme, balığı gösterme, Dede sevinir.
 ##   fish: beş balık elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez).
 ##   shop: Nine'nin dükkânı (KONTROL satırları): dokununca açılır, para yetmezse ve rütbe tutmazsa
-##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, hepsini sat; sekme görüntüleri.
+##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, hepsini sat, son yem bitince
+##     solucana döner; sekme görüntüleri.
 ##   rarity: nadirlik ipuçları (görsel denetim): her nadirlikten bir gölge yan yana (pırıltı, ışıltı,
 ##     kabarcık), sonra her nadirliğin rozeti; gri tonlamalı kopyayla renk körü denetimi yapılır.
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~70 sn): dönen bir oyuncu; Dede'ye dokun,
@@ -416,6 +417,26 @@ func _play_shop() -> void:
 	await _shot("08_satildi")
 	await _tap(shop.close_button.get_global_rect().get_center())
 	await _wait_frames(3)
+	# 9) Son yem balık takılınca biter: oturum solucana döner (yeni gölgeler solucanın oranlarıyla,
+	# defterdeki gibi); olta dönünce Dede söyler.
+	save.baits["bait_maggot"] = 1
+	Economy.equip(db, save, "bait_maggot")
+	main.call("_on_gear_changed")
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "rudd")
+	await _tap_world(Vector2(1.0, -1.0))
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait_state(FishingSession.State.FIGHTING, 3.0)
+	await _wait_frames(2)
+	var reverted := Economy.equipped(db, save, "bait") == "bait_worm" \
+			and is_equal_approx(_session().gear.attraction("perch"), 1.0)
+	await _wait_state(FishingSession.State.CAUGHT, 25.0)
+	_touch(1, Vector2(260, 520), false)
+	await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_BAIT_OUT", 10.0)
+	_check("son yem biter → solucana döner, Dede söyler", reverted
+			and str(main.get("_hint_shown")) == "UI_DEDE_BAIT_OUT")
+	await _wait(0.3)
+	await _shot("09_yem_bitti")
 	_check_buttons()
 	for line in _results:
 		print("KONTROL ", line)

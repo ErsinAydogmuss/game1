@@ -4,7 +4,9 @@ extends RefCounted
 ## economy_report.gd ve test_session_sim.gd korkulukları kullanır. Oyunun kurallarını aynen
 ## kullanır, yalnızca zamanı ve el becerisini taklit eder:
 ## 1. Atış, gölgenin gelmesi ve dürtmeler: data/sim.json'daki süreler (zarla).
-## 2. Tür ve boy: oyunun zarları (CatchOdds, şans garantisi, FishTable), kuşanılan yemle.
+## 2. Tür ve boy: oyunun zarları (CatchOdds, şans garantisi, FishTable), kuşanılan yemle. Fark:
+##    oyunda garanti tek bir gölge doğurur (oyuncu önce başka bir gölgeyi tutabilir); bot garantiyi
+##    sıradaki ısırmaya uygular. 40 avda Nadir gelmeme olasılığı ~%0,4: ekonomiye etkisi yok.
 ## 3. Isırmada kaçırma: miss_ppm. Takılınca yem harcanır (Economy.use_bait).
 ## 4. Çekişme: ReelModel kuşanılan takımla, ReelBot (tepkili oyuncu, reaction_s) oynar.
 ## 5. Tutulan balık: defter, şans garantisi sayaçları, rütbe puanı, kova (doluysa bırakılır).
@@ -102,7 +104,7 @@ func _on_catch(def: Dictionary, percentile: int) -> void:
 	var outcome := Records.add(save.records, fish_id, size_cm, stars, int(elapsed))
 	catches += 1
 	save.catches += 1
-	CatchOdds.note_catch(db, save, rarity)
+	CatchOdds.note_catch(db, save, rarity, _spot)
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
 		for r in range(int(ranked["old_rank"]) + 1, int(ranked["new_rank"]) + 1):
@@ -147,13 +149,14 @@ func shop() -> Array[String]:
 	return bought
 
 
-## Bir kategoride sahip olunmayan en ucuz takım (kamışta yalnızca şamandıra); yoksa boş.
+## Bir kategoride sahip olunmayan en ucuz takım (kamışta yalnızca şamandıra; daha büyüğü alınmış
+## kova sahip sayılır); yoksa boş.
 func next_upgrade(category: String) -> Dictionary:
 	var best: Dictionary = {}
 	for g in db.gear_in(category):
 		if category == "rod" and str(g["technique"]) != "float":
 			continue
-		if Economy.owns(db, save, str(g["id"])):
+		if Economy.buy_block(db, save, str(g["id"])) == "owned":
 			continue
 		if best.is_empty() or int(g["price"]) < int(best["price"]):
 			best = g

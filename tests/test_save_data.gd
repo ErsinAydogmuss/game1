@@ -131,6 +131,31 @@ func test_v1_save_migrates_to_v2() -> void:
 	assert_eq(SaveData.from_dict(out).to_dict(), out, "göçten sonraki kayıt gidiş-dönüşte aynı")
 
 
+## v0.2'nin gerçek bir kaydı (oyunun mantığıyla üretildi; değiştirilmez): olduğu gibi okunur.
+## Sonraki sürümde (v3) göç testi bu örnekten yapılır.
+func test_v2_save_loads_as_is() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v2.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v2 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var db := content()
+	var s := SaveData.from_dict(raw)
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "güncel sürüm")
+	assert_eq(s.seed, 4242, "seed")
+	assert_eq(s.coins, 195, "para")
+	assert_eq(s.bucket.size(), 2, "kovadaki balıklar")
+	assert_eq(str(s.bucket[0]["fish"]), "pike", "kovadaki ilk balık")
+	assert_true("reel_smooth" in s.owned and "bobber_sensitive" in s.owned, "alınan takım")
+	assert_eq(Economy.equipped(db, s, "reel"), "reel_smooth", "kuşanılan makara")
+	assert_eq(Economy.equipped(db, s, "bait"), "bait_maggot", "kuşanılan yem")
+	assert_eq(int(s.baits["bait_maggot"]), 17, "yem sayısı")
+	assert_eq(Rank.rank(db, s), 7, "rütbe")
+	assert_eq(int(s.pity["epic"]), 18, "Destansı sayacı")
+	assert_eq(int(s.records["rudd"]["released"]), 1, "bırakılan balık")
+	assert_eq(s.love, 1, "göl sevgisi")
+	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
+
+
 func test_store_writes_atomically() -> void:
 	var path := "user://test_save_store.json"
 	var s := SaveData.create_new(77)

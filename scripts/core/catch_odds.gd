@@ -8,6 +8,7 @@ extends RefCounted
 ## Şans garantisi: bir nadirlik ve üstü uzun süre gelmezse (rarities.json "pity" av) yakında
 ## doğan sıradaki gölge o nadirlikten olur. Garanti bir gölge doğurur, balığı tutmak yine
 ## oyuncunun becerisi; sayaç ancak o nadirlikte bir balık tutulunca sıfırlanır.
+@warning_ignore_start("integer_division")
 
 const PPM := Dice.PPM
 
@@ -85,13 +86,19 @@ static func pity_left(db: ContentDB, save: SaveData, rarity: int) -> int:
 
 
 ## Bir balık tutuldu: tutulan nadirlik ve altındaki kademelerin sayacı sıfırlanır, üstündekiler
-## bir artar.
-static func note_catch(db: ContentDB, save: SaveData, rarity: int) -> void:
+## bir artar. spot verilirse o gölde tutulamayan kademelerin sayacı ilerlemez (olduğu gibi kalır):
+## sayaç yalnızca o kademenin gelebildiği avları sayar; gölde olmayan bir şey için biriken sayaç,
+## kademe bir gün göle gelince anında garanti vermesin.
+static func note_catch(db: ContentDB, save: SaveData, rarity: int, spot: Dictionary = {}) -> void:
+	var top := top_rarity(db, spot) if not spot.is_empty() else db.rarities.size() - 1
 	for i in db.rarities.size():
 		if int(db.rarities[i]["pity"]) <= 0:
 			continue
 		var id := db.rarity_id(i)
-		save.pity[id] = 0 if rarity >= i else int(save.pity.get(id, 0)) + 1
+		if rarity >= i:
+			save.pity[id] = 0
+		elif i <= top:
+			save.pity[id] = int(save.pity.get(id, 0)) + 1
 
 
 ## Ağırlıkları toplamı tam 1e6 olan ppm'e çevirir (en büyük kalan yöntemi; eşitlikte sıra).

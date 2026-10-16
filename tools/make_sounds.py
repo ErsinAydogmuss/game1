@@ -626,6 +626,17 @@ def sting():
     return finish(x + 0.45 * reverb(x, 1.8)[:n], -1.0, 0.4)
 
 
+def rank_up():
+    """Rütbe atlama: yükselen parlak arpej, altında kısa bir bakır akor."""
+    n = frames(1.5)
+    x = 0.7 * unit(arpeggio([72, 76, 79, 84, 88], 0.08, n, 1.0, 0.5))
+    horn = np.zeros(n)
+    for note in (60, 64, 67):
+        place(horn, brass(midi(note), frames(0.75), 0.42), frames(0.36))
+    x += 0.32 * unit(horn)
+    return finish(x + 0.3 * reverb(x, 1.0)[:n], -1.0, 0.2)
+
+
 def equip():
     """Kuşanma: takımın yerine oturan kısa tahta vuruşu ve metal tıkırtısı."""
     n = frames(0.18)
@@ -655,7 +666,7 @@ def registry():
         "scare_1": scare, "reel_in_1": reel_in, "record_1": record, "error_1": lambda: buzz([50], 0.16),
         "panel_open_1": lambda: panel(True), "panel_close_1": lambda: panel(False), "card_1": card,
         "hint_1": tutorial, "coins_1": coins, "buy_1": buy, "equip_1": equip,
-        "sting_1": sting,
+        "sting_1": sting, "rank_up_1": rank_up,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

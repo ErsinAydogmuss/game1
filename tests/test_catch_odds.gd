@@ -96,6 +96,59 @@ func test_pity_ignores_tiers_missing_from_the_lake() -> void:
 	assert_eq(CatchOdds.pity_floor(db, s, spot), -1, "gölde olmayan Efsanevi garanti vermez")
 
 
+## Gölde tutulamayan kademenin sayacı ilerlemez: Köy Gölü'nde Efsanevi yok; Efsanevi bir gün göle
+## gelince eski avlar yüzünden anında garanti çıkmasın.
+func test_pity_counter_waits_for_tiers_in_the_lake() -> void:
+	var db := content()
+	var s := SaveData.create_new(1)
+	var spot := db.spot("big_lake")
+	for i in 10:
+		CatchOdds.note_catch(db, s, db.rarity_index("common"), spot)
+	assert_eq(int(s.pity.get("rare", 0)), 10, "Nadir sayacı sayar")
+	assert_eq(int(s.pity.get("epic", 0)), 10, "Destansı sayacı sayar")
+	assert_eq(int(s.pity.get("legendary", 0)), 0, "gölde olmayan Efsanevi saymaz")
+	CatchOdds.note_catch(db, s, db.rarity_index("epic"), spot)
+	assert_eq(int(s.pity["rare"]), 0, "Destansı tutulunca Nadir sayacı da sıfırlanır")
+	assert_eq(int(s.pity["epic"]), 0, "Destansı sayacı sıfırlanır")
+	CatchOdds.note_catch(db, s, db.rarity_index("common"))
+	assert_eq(int(s.pity["legendary"]), 1, "göl verilmezse bütün kademeler sayar")
+
+
+## Eski (daha düşük) bir garantiyle doğmuş gölge göldeyken dolan yüksek garanti beklemez.
+func test_old_pity_shadow_does_not_block_a_higher_guarantee() -> void:
+	var db := content()
+	var spot := _spot()
+	var rare := db.rarity_index("rare")
+	var epic := db.rarity_index("epic")
+	var sim := ShadowSim.new(db, spot, db.lake("big_lake"), 777, false, Vector2(0, 4), { "pity_floor": rare })
+	var old: FishShadow = null
+	for s in sim.shadows:
+		if s.pity:
+			old = s
+	assert_true(old != null, "Nadir garantisinin gölgesi var")
+	if old == null:
+		return
+	# Senaryo: garanti gölgesi Nadir bir turna; oyuncu başka bir turna tuttu (Nadir sayacı sıfırlandı)
+	# ve sonra Destansı sayacı doldu.
+	old.rarity = rare
+	old.fish_id = "pike"
+	sim.pity_floor = epic
+	for s in sim.shadows.duplicate():
+		if s != old:
+			sim.remove(s)
+			break
+	var born: FishShadow = null
+	for i in 20 * FishingRules.HZ:
+		for e in sim.step(Vector2(0, 4), Vector2.ZERO, false, 0):
+			if str(e["type"]) == "spawn":
+				born = sim.find(int(e["shadow"]))
+		if born != null:
+			break
+	assert_true(born != null, "yeni gölge doğar")
+	if born != null:
+		assert_true(born.pity and born.rarity >= epic, "yeni gölge Destansı garantiyle doğar (eski turna engel olmaz)")
+
+
 ## Garanti yakında doğan sıradaki gölgeyi belirler; aynı anda tek garanti gölgesi olur; tür
 ## değişse de boy aynı tuzlu zardan gelir.
 func test_pity_shapes_the_next_shadow_only() -> void:

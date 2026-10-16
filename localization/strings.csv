@@ -139,6 +139,7 @@ UI_BUCKET_COUNT,%d/%d,%d/%d
 UI_RANK_UP,Rank %d: %s!,Rütbe %d: %s!
 UI_BUCKET_FULL,Bucket full: the fish swam home,Kova dolu: balık göle döndü
 UI_DEDE_BUCKET,Your bucket is full! Sell your fish at Nana's shop.,Kovan doldu! Balıkları Nine'nin dükkânında satabilirsin.
+UI_DEDE_BAIT_OUT,"Your bait's all gone, kiddo. Back to worms; Nana sells more.","Yemin bitti evlat. Solucanla devam; yenisi Nine'de."
 UI_SHOP_SIGN,Nana's shop,Nine'nin dükkânı
 UI_NINE_LINE_1,"Come again, dear!",Yine bekleriz evladım!
 UI_NINE_LINE_2,"Caught something? Bring it to me, I pay well.","Balık mı tuttun? Getir bana, iyi fiyat veririm."

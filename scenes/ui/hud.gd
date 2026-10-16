@@ -94,8 +94,7 @@ func _process(delta: float) -> void:
 	if _toast_hold > 0.0:
 		_toast_hold -= delta
 		if _toast_hold <= 0.0 and _toast_age < 0.0 and not _toast_queue.is_empty():
-			var held: Array = _toast_queue.pop_front()
-			toast(str(held[0]), held[1])
+			_show_queued()
 	if not _warm_later.is_empty():
 		var job: Array = _warm_later.pop_front()
 		UiKit.glossy(job[0], bool(job[1]))
@@ -115,8 +114,7 @@ func _process(delta: float) -> void:
 			_toast_age = -1.0
 			_toast.visible = false
 			if not _toast_queue.is_empty():
-				var next: Array = _toast_queue.pop_front()
-				toast(str(next[0]), next[1])
+				_show_queued()
 	# VUR! anında eylem düğmesi nabız gibi atar.
 	if _action_kind == "hook":
 		action_button.pivot_offset = action_button.size * 0.5
@@ -177,12 +175,20 @@ func set_status(coins: int, bucket: int, capacity: int, rank: int, progress: flo
 
 
 ## Bildirim: biri gösteriliyorsa ya da bekletiliyorsa (hold_toasts) sırasını bekler (rütbe atlama,
-## kova dolu gibi ikincil haberler).
-func toast_later(text: String, color: Color = UiKit.TEXT) -> void:
+## kova dolu gibi ikincil haberler). sound: göründüğü an çalan ses (titreşimiyle; "" = yok).
+func toast_later(text: String, color: Color = UiKit.TEXT, sound: String = "") -> void:
+	_toast_queue.append([text, color, sound])
 	if _toast_age < 0.0 and _toast_hold <= 0.0:
-		toast(text, color)
-	else:
-		_toast_queue.append([text, color])
+		_show_queued()
+
+
+func _show_queued() -> void:
+	var next: Array = _toast_queue.pop_front()
+	toast(str(next[0]), next[1])
+	var sound := str(next[2])
+	if not sound.is_empty():
+		Sounds.play(sound)
+		Sounds.haptic(30)
 
 
 ## Olta suda mı: eylem ve ayarlar dışındaki düğmeler gizlenir (ekranın her yeri eylem).

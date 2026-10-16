@@ -2,6 +2,7 @@ class_name Rank
 extends RefCounted
 ## Rütbe (docs/gdd.md §10.4): rütbe puanı tutulan ve bırakılan balıktan ve isteklerden gelir;
 ## rütbe bölge ve takım kilitlerini açar. Eşikler data/progression.json'da.
+@warning_ignore_start("integer_division")
 
 ## Yıldız başına ek puan (binde bir): 5 yıldızlı balık 2 katı puan verir.
 const STAR_BONUS := 250

@@ -251,6 +251,9 @@ func _action(item: Dictionary) -> Button:
 			return _button(tr("UI_SHOP_EQUIPPED"), UiKit.SUCCESS, func() -> void: Sounds.play("ui_tap"), ACTION)
 		return _button(tr("UI_SHOP_EQUIP"), UiKit.SECONDARY, func() -> void: _equip(id), ACTION)
 	var block := Economy.buy_block(db, save, id)
+	if block == "owned":
+		# Daha büyük bir kova sende: bu bir şey katmaz.
+		return _button(tr("UI_SHOP_OWNED"), UiKit.SUCCESS, func() -> void: Sounds.play("ui_tap"), ACTION)
 	if block == "rank":
 		var lock := _button(tr("UI_SHOP_RANK") % int(item["rank"]), UiKit.NEUTRAL,
 				func() -> void: _refuse("UI_NINE_RANK", [int(item["rank"])]), ACTION)
@@ -278,13 +281,15 @@ func _stat_row(item: Dictionary, stat: Array) -> Control:
 	var label := UiKit.ink(tr(str(stat[1])), 24, UiKit.INK_SOFT)
 	label.custom_minimum_size = Vector2(112, 0)
 	row.add_child(label)
+	var value := float(item.get(key, 0.0))
+	var current := _current_value(str(item["category"]), key)
+	# Aralık şimdikini de kapsar: tek eşyalı kategoride (kepçe) işaret "kepçesiz" yerinde dursun.
 	var span := _span(str(item["category"]), key)
+	span = Vector2(minf(span.x, current), maxf(span.y, current))
 	var bar := StatBar.new()
 	bar.custom_minimum_size = Vector2(70, 22)
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var value := float(item.get(key, 0.0))
-	var current := _current_value(str(item["category"]), key)
 	bar.value = _fraction(value, span)
 	bar.marker = _fraction(current, span)
 	bar.color = BETTER if value > current + 0.0001 else (WORSE if value < current - 0.0001 else SAME)
