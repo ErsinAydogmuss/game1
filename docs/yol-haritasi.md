@@ -35,7 +35,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
   - [x] iskelede oturan Dede (bakar, konuşur, sevinir; dokununca öğüt verir);
   - [x] `hero` ve `fish` senaryoları;
   - [x] kısa video (35 sn, `video` senaryosu).
-- [ ] README, CREDITS, kod incelemesi, "telefonda dene" listesi.
+- [x] README, CREDITS, kod incelemesi (3 ayrı inceleme: çekirdek, akış ve arayüz, 3B; bulgular düzeltildi), "telefonda dene" listesi.
 
 ### H2: Döngü
 

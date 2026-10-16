@@ -6,7 +6,7 @@ Ersin'in Kazı'dan sonraki yeni oyun projesi: her yaşa hitap eden, rahat bir 3D
 
 - Saha araştırması bitti: `docs/saha-arastirmasi.md`.
 - Fikir seçildi: **Olta: Gölün Sırrı** (`docs/fikirler.md`, Karar bölümü). Görünüm eğik üstten, suda balık gölgeleri. Kahraman kendi balıkçın + köyde Dede.
-- Şu an: 1. hafta prototipi (`docs/yol-haritasi.md`). Tasarım: `docs/gdd.md`. Sürüm: v0.1.
+- 1. hafta prototipi hazır (`docs/yol-haritasi.md`); sırada Ersin'in telefon denemesi (`docs/iphone-kurulum.md` 11. adım). Tasarım: `docs/gdd.md`. Sürüm: v0.1.
 
 ## Ersin ve çalışma şartları
 
