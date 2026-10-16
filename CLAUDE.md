@@ -102,7 +102,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
   - ✅ `main.gd`: her şeyi bağlar. Oturumun olaylarını ses + titreşim + görsele çevirir; kamera (olta sudayken eğilir, çekişmede yakınlaşır); Dede'nin ipuçları; yakalayışta kayıt; odak kaybında ve ayarlar açıkken oyun donar.
   - ✅ `input_router.gd` (`InputRouter`): dokunma / fare / klavye. Olta suda değilken karaya dokun → yürü, suya dokun → at (menzil dışıysa main önce yaklaştırır); olta sudayken ekranın her yeri eylem (parmak değdiği an `press`, kalkınca `release`).
   - ✅ `camera/follow_camera.gd`: sabit eğik açı, yumuşak takip, sarsıntı; `pitch` ve `zoom` main'den.
-  - ✅ `world/`: `LakeScene` (ortam ve ışık, zemin, su, iskele, basit süsler), `LakeTexture` (göl veri dokusu), `water` / `ground` / `shadow` shader'ları, `ShadowLayer` (gölgeler), `Bobber` (şamandıra), `FishingLine` (misina; `frame_pre_draw`'da kurulur), `Props`, `MeshKit`, `ModelLibrary`.
+  - ✅ `world/`: `LakeScene` (ortam ve ışık, kıyıya doğru hafif yükselen arazi ağı, su, iskele, sallanan sazlar, KayKit ağaçları / kayaları / tepeleri ve kamp; model yoksa Props), `LakeTexture` (göl veri dokusu), `water` (derinlik rengi, dalga, parıltı, köpük) / `ground` / `shadow` / `reeds` shader'ları, `ShadowLayer` (gölgeler), `Bobber` (şamandıra), `FishingLine` (misina; `frame_pre_draw`'da kurulur), `Props`, `MeshKit`, `ModelLibrary`.
   - ✅ `player/angler.gd` (`Angler`): gri kutu balıkçı (yürür, kıyıda durur, atar, sevinir). 🔜 6. adımda KayKit Rogue (`AnglerBody`), `RodModel`, `FishMesh`.
   - ✅ `fx/`: `Ripples` (su halkaları), `Vignette`.
   - ✅ `ui/`: `UiKit` (stil, fontlar, `upper()`, `safe_insets()`), `Dialog` (panellerin tabanı), `Hud` (eylem düğmesi, gerilim çubuğu `TensionBar`, bildirim, ipucu çubuğu), `FishCard` (balık kartı), `SettingsPanel`, `TouchButton`, `GameIcon` (kodla çizilen ikonlar), `ItemArt` (görsellere tek giriş).
@@ -159,6 +159,9 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - Export: `data/*.json` pakete girmeli (`include_filter`); `tests/*`, `tools/*`, `scripts/dev/*` hariç.
 - Dokunuştan üretilen taklit fare olayı dokunuşun kendisinden **önce** işlenir. Basışta kapanan bir panel, aynı dokunuşu arkasındaki oyuna da geçirir (kart kapanır, olta atılır). Paneller parmak kalkınca kapanır (`FishCard`).
 - Botun `Input.parse_input_event` ile gönderdiği dokunuş bir sonraki karede işlenir: sonucu ölçmeden önce 1–2 kare bekle.
+- Compatibility renderer'da `blend_mul` (çarpma karışımı) dörtgenin tamamını karartıyor: gölgeler koyu renkli `blend_mix` ile çizilir.
+- Göl suyu y = 0'da: suyun üstüne düşen büyük bir düzlem (ör. dış zemin) gölü örter. Dış zemin, arazi ağının çevresinde dört şerittir.
+- Kıyı çizgisinde arazi suyun biraz altındadır (`SHORE_DIP`): görünen kıyı, ağın üçgenleri değil, suyun pürüzsüz kenarıdır.
 - Bot çıkmadan önce `Sounds.stop_all()` çağırıp birkaç kare bekler; yoksa çalan ogg için çıkışta "resources still in use" hatası çıkar.
 - `FishingSession.advance` bir karede en fazla 0,5 sn işler: testlerde uzun süreyi parça parça ilerlet.
 - Luckiest Guy ve Baloo 2 Türkçe karakterleri destekler. Yeni font seçilirse ğ, ş, ı, İ kontrol edilmeli. Varsayılan fontta ★ ve ok işaretleri yok.

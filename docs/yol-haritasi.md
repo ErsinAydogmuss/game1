@@ -25,11 +25,11 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
   - [x] Dokunma kontrolleri, HUD, gerilim çubuğu, Dede'nin ipucu çubuğu, balık kartı.
   - [x] Sesler (`tools/make_sounds.py`) ve titreşim; `controls` ve `first` bot senaryoları.
   - [ ] **1. telefon denemesi** (Ersin).
-- [ ] Göl görselleri:
+- [x] Göl görselleri:
   - arazi ve kumsal;
-  - su (derinlik rengi, dalga, köpük);
+  - su (derinlik rengi, dalga, parıltı, köpük);
   - gölge ve halkalar;
-  - iskele, sazlık, ağaçlar.
+  - iskele, sallanan sazlık, KayKit ağaçları, kayalar, tepeler ve küçük bir kamp.
 - [ ] Balıkçı (kız; KayKit Rogue), olta, misina, şamandıra; 5 balığın 3D modeli; elde balık ve kart.
 - [ ] Ek işler (vakit kalırsa):
   - iskelede oturan Dede;

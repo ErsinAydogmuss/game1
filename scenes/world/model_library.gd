@@ -27,31 +27,18 @@ const MODELS := {
 	"mountain_a": ["medieval/mountain_A_grass_trees.gltf", 9.0],
 	"mountain_b": ["medieval/mountain_B_grass_trees.gltf", 9.0],
 	"hills": ["medieval/hills_A_trees.gltf", 8.0],
-	# Yapılar ve eşyalar (ortaçağ altıgen paketi)
-	"market": ["medieval/building_market_blue.gltf", 2.6],
-	"mine": ["medieval/building_mine_blue.gltf", 4.5],
-	"barrel": ["medieval/barrel.gltf", 4.2],
-	"bucket": ["medieval/bucket_water.gltf", 3.4],
-	"crate_a": ["medieval/crate_A_big.gltf", 3.6],
-	"crate_b": ["medieval/crate_B_big.gltf", 3.6],
-	"crate_open": ["medieval/crate_open.gltf", 3.6],
-	"crate_long": ["medieval/crate_long_A.gltf", 3.6],
-	"pallet": ["medieval/pallet.gltf", 4.0],
-	"lumber": ["medieval/resource_lumber.gltf", 3.2],
-	"stones": ["medieval/resource_stone.gltf", 3.4],
-	"sack": ["medieval/sack.gltf", 4.2],
+	# Kamp eşyaları (ortaçağ altıgen paketi)
 	"tent": ["medieval/tent.gltf", 5.2],
-	"wheelbarrow": ["medieval/wheelbarrow.gltf", 3.6],
+	"barrel": ["medieval/barrel.gltf", 4.2],
+	"crate": ["medieval/crate_A_big.gltf", 3.6],
+	"sack": ["medieval/sack.gltf", 4.2],
+	"bucket": ["medieval/bucket_water.gltf", 3.4],
+	"lumber": ["medieval/resource_lumber.gltf", 3.2],
 	"flag": ["medieval/flag_red.gltf", 4.0],
-	# Cadılar Bayramı paketi (ahşap bank, fenerler, taş yol)
+	# Cadılar Bayramı paketi (ahşap bank, fenerler)
 	"bench": ["halloween/bench.gltf", 0.8],
 	"lantern_post": ["halloween/post_lantern.gltf", 0.62],
 	"lantern": ["halloween/lantern_standing.gltf", 0.6],
-	"path_a": ["halloween/path_A.gltf", 0.62],
-	"path_b": ["halloween/path_B.gltf", 0.62],
-	# Mobilya paketi (temizleme tezgâhı)
-	"table": ["furniture/table_medium.gltf", 0.75],
-	"stool": ["furniture/chair_stool_wood.gltf", 0.85],
 }
 
 ## yol → PackedScene (malzemeleri ayarlanmış).

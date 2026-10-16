@@ -1,9 +1,11 @@
 shader_type spatial;
 // Balık gölgesi: suyun hemen üstünde yumuşak, koyu, balık biçimli bir leke (önde dolgun,
-// kuyruğa doğru incelen). Dörtgenin -Z yönü (UV.y = 0) balığın başıdır. Işıksız, saydam.
-render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, shadows_disabled;
+// kuyruğa doğru incelen). Dörtgenin -Z yönü (UV.y = 0) balığın başı. Işıksız, saydam; sis yok.
+// Not: çarpma karışımı (blend_mul) Compatibility renderer'da dörtgenin tamamını karartıyor;
+// bu yüzden koyu renkli alfa karışımı (blend_mix) kullanılır.
+render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
 
-uniform vec4 color : source_color = vec4(0.02, 0.06, 0.10, 0.66);
+uniform vec4 color : source_color = vec4(0.02, 0.07, 0.12, 0.62);
 uniform float fade = 1.0;
 
 void fragment() {
