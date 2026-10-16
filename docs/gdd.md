@@ -60,6 +60,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - Hız 0,3–0,5 m/sn; aralarda 1–3 sn duraklar. Yalnızca 0,8 m'den derin yerlerde dolaşırlar.
 - Gölgenin balığı ve boyu doğduğu anda belli (Kazı'daki çamurlu eşya gibi): gizli ama değişmez.
 - Gölge uzunluğu türün taban gölgesi × (0,85 + 0,30 × boy yüzdeliği).
+- Şamandıra 6 sn'den uzun süredir suda bekliyorsa gölgeler yarı yarıya onun çevresine yönelir (bekleme uzamasın).
 
 **Korkutma ve fark etme**
 
@@ -90,6 +91,18 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - **Yakalama:** balık 0,6 m'ye gelince tutulur.
 - **Kolay çekme (Ayarlar):** gerilim tavanlıdır, misina kopmak yerine kayar, balık kaçmaz; beceri yalnızca hızı belirler.
 - **Süre:** iyi bir oyuncuyla çekişme Kızılkanat'ta 4–7 sn, Yayın'da 14–20 sn sürer.
+- **Kolay modda** patlamada basılı tutunca misina kayar: balık, kaçış hızının 2 katıyla uzaklaşır. Hep basılı tutan yine tutar; bırakmayı bilen daha hızlı tutar.
+- **Denge raporu** (`tools/reel_report.gd`; 4–9 m'den 200 deneme, ortalama süre):
+
+| Balık | Çekiş | İyi oyuncu (0,4 sn tepki) | Yavaş oyuncu (0,7 sn) | Hep basılı (Normal) |
+|---|---|---|---|---|
+| Kızılkanat | sakin | 5,4 sn | 5,6 sn | tutar |
+| Sazan | ağır | 10,1 sn | 10,7 sn | koparır |
+| Levrek | ani | 8,6 sn | 9,4 sn | %62 tutar |
+| Turna | ani, güçlü | 12,6 sn | 13,9 sn | koparır |
+| Yayın | düzensiz, güçlü | 15,1 sn | 16,5 sn | koparır |
+
+  İyi ve yavaş oyuncu her balığı tutar. Kolay modda hep basılı tutan da tutar.
 
 **Sonuç**
 
@@ -107,6 +120,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 - Oyun doğrudan iskelede başlar; Dede ipucu çubuğundan konuşur.
 - İlk gölge iskelenin önüne gelir ve ilk av senaryoludur: hep Kızılkanat, dürtmesiz. İlk balık 45 sn içinde gelir.
+  - İlk av göldeyken şamandıraya yalnızca o gelir. Nereye atılırsa atılsın fark eder ve korkmaz.
+  - Erken dokunuş onu kaçırmaz, yalnızca irkiltir. Pencere kaçarsa biraz sonra yeniden ısırır. Çekişmesi Kolay kurallarıyla.
 
 **Kayıt**
 
@@ -205,7 +220,8 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
 ## 12. Teknik özet
 
 - **Motor:** Godot 4.7, statik tipli GDScript, Compatibility renderer.
-- **Oyun mantığı** `scripts/core/` altında, saf ve testli: `FishingSession`, `ShadowSim`, `BiteRules`, `ReelModel`, `FishTable`, `LakeShape`.
+- **Oyun mantığı** `scripts/core/` altında, saf ve testli: `FishingSession`, `ShadowSim`, `BiteRules`, `ReelModel`, `FishTable`, `LakeShape`, `Records`.
+  - Çekişme sayıları `tools/reel_report.gd` ile denetlenir; `tests/test_reel_model.gd` sınırları korur.
   - İç adım sabit 1/60 sn; sonuç fps'e ve video kaydına bağlı değil.
 - **Sunum** yalnızca olayları dinler.
 - **Kazı'nın genel altyapısı** kullanılır: test koşucusu, kayıt, arayüz parçaları, ses, bot.

@@ -1,0 +1,18 @@
+{
+	"_note": "Atış noktaları (göller). Koordinatlar dünya x/z metre; kamera +x +z tarafında. ellipses: gölü oluşturan elipsler (merkez, yarıçaplar, derece cinsinden dönüş); dock: iskele dikdörtgeni (merkez, boyut); start: balıkçının başladığı yer; fish: tür -> doğma ağırlığı; first_fish ve first_shadow: ilk av (senaryolu, dürtmesiz); max_depth ve shelf_m: derinlik kıyıdan shelf_m metrede max_depth'e iner.",
+	"spots": [
+		{ "id": "home_lake",
+			"ellipses": [
+				{ "center": [0.0, 0.0], "radius": [9.0, 6.5], "angle": 0.0 },
+				{ "center": [-8.0, -3.5], "radius": [5.5, 4.2], "angle": 30.0 }
+			],
+			"dock": { "center": [0.0, 6.0], "size": [1.6, 5.0] },
+			"start": [0.0, 4.0],
+			"max_shadows": 4,
+			"fish": { "rudd": 35, "carp": 25, "perch": 17, "pike": 15, "wels": 8 },
+			"first_fish": "rudd",
+			"first_shadow": { "pos": [0.6, 0.5], "heading": [-1.0, 0.0] },
+			"max_depth": 3.5,
+			"shelf_m": 4.0 }
+	]
+}

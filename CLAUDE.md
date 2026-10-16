@@ -65,6 +65,7 @@ godot --headless --path . --import                       # yeni dosya/sınıf ek
 godot --headless --path . -s res://tests/run_tests.gd    # tüm testler; çıkış kodu 0 olmalı, çıktıyı oku
 godot --headless --path . --quit-after 600               # ana sahne hatasız açılmalı (çıktıda SCRIPT ERROR yok)
 godot --headless --path . --export-pack "iPhone" /mutlak/yol/olta.zip   # paket: data/*.json var; tests, tools, scripts/dev yok
+godot --headless --path . -s res://tools/reel_report.gd  # balık ya da çekişme ayarı değiştiyse
 ```
 
 Görsel değişikliklerde ekran görüntüsü al ve incele (Linux'ta `xvfb-run` ile; yalnızca OpenGL var). Bot senaryoları 4. adımda gelir (`scripts/dev/autoplay.gd`):
@@ -74,16 +75,20 @@ xvfb-run -a -s "-screen 0 2560x1440x24" godot --path . --rendering-driver opengl
   --resolution 2532x1170 -- --autoplay --locale=tr --shots=/mutlak/yol --scenario=controls
 ```
 
-Araçlar (`tools/`, sürüm paketine girmez): `process_images.gd` (Ersin'in görsel sayfalarını keser, `data/art_sheets.json`), `art_sheet.gd` (kesme ve arka plan silme), `recolor_texture.gd` (KayKit dokularını boyar; iş listesi model gelince uyarlanacak).
+Araçlar (`tools/`, sürüm paketine girmez): `reel_report.gd` (çekişme denge raporu: her balık, bot tarzı ve mod için tutma, kopma, kaçma oranı ve süre), `process_images.gd` (Ersin'in görsel sayfalarını keser, `data/art_sheets.json`), `art_sheet.gd` (kesme ve arka plan silme), `recolor_texture.gd` (KayKit dokularını boyar; iş listesi model gelince uyarlanacak).
 
 ## Mimari
 
 Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 
 - `scripts/core/`: **saf oyun mantığı**. `class_name` + `extends RefCounted`; Node, sahne ve `GameState`'e bağlı değil; headless test edilir.
-  - ✅ `ContentDB`: `data/*.json`'u yükler ve doğrular (şimdilik nadirlikler). 🔜 balıklar, oltalar, atış noktaları.
+  - ✅ `ContentDB`: `data/*.json`'u (nadirlikler, balıklar, oltalar, atış noktaları, kurallar) yükler ve doğrular. `FishingRules`: `rules.json`'daki sayılar (süreler adım olarak da).
+  - ✅ `Dice`: seed türetme, ppm şans, ağırlıklı seçim. Oynanıştaki her zar buradan ya da ondan türeyen RNG'den.
+  - ✅ `LakeShape`: göl şekli (elipsler + iskele), işaretli kıyı uzaklığı ızgarası, derinlik, şamandıranın düşeceği yer.
+  - ✅ `FishShadow` + `ShadowSim`: gölgeler (doğma, dolaşma, fark etme, yaklaşma, kaçma, yeniden doğma; ilk av senaryolu).
+  - ✅ `BiteRules` (fark etme konisi, korkutma, dürtme, VUR penceresi, erken dokunuş), `FishTable` (tür, boy yüzdeliği, yıldız, gölge uzunluğu), `ReelModel` (gerilim, patlama, kopma, kaçma, Kolay mod), `ReelBot` (oyuncu tarzı botları), `Records` (kayıt defteri, kart kuralı).
+  - ✅ `FishingSession`: durum makinesi (BOŞ → ATIŞ → BEKLEME → DÜRTME → ISIRMA → ÇEKİŞME → TUTULDU / KAÇTI). Sabit 1/60 sn adım; girdiler `cast` / `press` / `release` / `acknowledge`; olaylar `poll_events()`.
   - ✅ `SaveData` (sürüm 1) / `SaveStore` (atomik yazma), `TimeProvider` (zaman soyutlaması).
-  - 🔜 `LakeShape` (göl şekli, derinlik, kıyı uzaklığı), `ShadowSim` (gölgeler), `BiteRules` (dürtme, ısırma, VUR penceresi), `ReelModel` (gerilim), `FishTable` (tür, boy, yıldız), `FishingSession` (durum makinesi; sabit 1/60 sn adım; olay yayar), `Records`.
 - `scripts/autoload/`:
   - `game_state.gd` (`GameState`): içerik + kayıt, ayarlar, dil, ipucu adımı, bayraklar, klavye kontrolleri. Sinyaller: `changed`, `focus_lost`, `focus_gained`. Odak kaybında kaydeder.
   - `sounds.gd` (`Sounds`): efektler (`BANK`), döngüler (makara, gerilim), ortam sesi, müzik, titreşim. Dosya yoksa sessiz geçer.
@@ -124,6 +129,8 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - **Fontlar:** başlık Luckiest Guy (`UiKit.display_font()`), metin Baloo 2 (`UiKit.body_font()`).
 - **Hazır modeller:** `assets/models/<paket>/` + `ModelLibrary.MODELS` satırı + `assets/CREDITS.md`. GLB içe aktarmada gömülü dokular atılır; karakterin dokusu kodla verilir.
 - **Kayıt biçimi** değişirse: `SaveData.VERSION`'ı artır, `migrate()`'e adım ekle, `test_save_data.gd`'ye test yaz.
+- **Çekişme ya da balık ayarı** değişirse: `tools/reel_report.gd`'yi çalıştır, `docs/gdd.md` §5'teki tabloyu güncelle; `test_reel_model.gd` korkulukları yeşil kalsın. Balığın `pull` değeri sınırın en az 0,05 altında olmalı (ContentDB denetler).
+- **Koordinatlar:** dünya x/z metre; çekirdek mantık `Vector2(x, z)` kullanır, su yüzeyi y = 0. Kamera +x +z tarafında; iskele kıyıdan −z yönüne uzanır.
 - **Her sesin** bir görsel ve titreşim karşılığı olur (iPhone'un sessiz anahtarı sesi kapatır).
 - **Gelir:** yukarıdaki 10 kural. Parayla şans yok; oran ve pity gösterilir.
 - **Dil:** Dokümanlar ve yorumlar Türkçe, kod isimleri İngilizce. Commit mesajları Türkçe.

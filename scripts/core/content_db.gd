@@ -12,9 +12,23 @@ const PPM := 1_000_000
 ## Nadirlikler, sırayla (0 Sıradan .. 4 Efsanevi). Kayıtlar sıra numarasını tutar: yalnızca
 ## sona eklenir.
 var rarities: Array[Dictionary] = []
+## Balıklar: id, rarity (sıra), shadow_m, size_cm (Vector2i), weight, color, back, accent,
+## fight { reel, pull, burst_pull, burst_every, burst_len (sn, Vector2), *_steps (Vector2i), run }.
+var fish: Array[Dictionary] = []
+## Oltalar: id, range_m, reel_speed.
+var rods: Array[Dictionary] = []
+## Atış noktaları: id, ellipses [{center, radius, angle (radyan)}], dock (Rect2), start,
+## max_shadows, fish_ids, fish_weights, first_fish, first_shadow {pos, heading}, max_depth, shelf_m.
+var spots: Array[Dictionary] = []
+var rules: FishingRules
 var errors: PackedStringArray = []
 
 var _rarity_index: Dictionary = {}
+var _fish_index: Dictionary = {}
+var _rod_index: Dictionary = {}
+var _spot_index: Dictionary = {}
+## Atış noktası id -> LakeShape (bir kez kurulur).
+var _lakes: Dictionary = {}
 
 
 static func load_default() -> ContentDB:
@@ -24,6 +38,10 @@ static func load_default() -> ContentDB:
 static func load_from(dir: String) -> ContentDB:
 	var db := ContentDB.new()
 	db._load_rarities(db._read_json(dir.path_join("rarities.json")))
+	db.rules = FishingRules.from_dict(db._read_json(dir.path_join("rules.json")), db.errors)
+	db._load_fish(db._read_json(dir.path_join("fish.json")))
+	db._load_rods(db._read_json(dir.path_join("rods.json")))
+	db._load_spots(db._read_json(dir.path_join("spots.json")))
 	db._validate()
 	return db
 
@@ -40,6 +58,43 @@ func rarity_def(index: int) -> Dictionary:
 
 func rarity_id(index: int) -> String:
 	return str(rarity_def(index).get("id", ""))
+
+
+func fish_index(id: String) -> int:
+	return int(_fish_index.get(id, -1))
+
+
+func fish_def(index: int) -> Dictionary:
+	if index < 0 or index >= fish.size():
+		return {}
+	return fish[index]
+
+
+func fish_by_id(id: String) -> Dictionary:
+	return fish_def(fish_index(id))
+
+
+func rod(id: String) -> Dictionary:
+	return rods[int(_rod_index[id])] if _rod_index.has(id) else {}
+
+
+func spot(id: String) -> Dictionary:
+	return spots[int(_spot_index[id])] if _spot_index.has(id) else {}
+
+
+## Atış noktasının göl şekli (önbellekli).
+func lake(spot_id: String) -> LakeShape:
+	if not _lakes.has(spot_id):
+		_lakes[spot_id] = LakeShape.from_spot(spot(spot_id))
+	return _lakes[spot_id]
+
+
+## Balık id -> gövde rengi (ItemArt'ın yer tutucu madalyonları için).
+func fish_colors() -> Dictionary:
+	var out := {}
+	for f in fish:
+		out[f["id"]] = f["color"]
+	return out
 
 
 # --- Yükleme ------------------------------------------------------------------------
@@ -70,12 +125,174 @@ func _load_rarities(raw: Dictionary) -> void:
 		rarities.append(def)
 
 
+func _load_fish(raw: Dictionary) -> void:
+	for entry: Variant in raw.get("fish", []):
+		var d: Dictionary = entry
+		var id := str(d.get("id", ""))
+		var rarity_name := str(d.get("rarity", ""))
+		if rarity_index(rarity_name) < 0:
+			errors.append("fish.json: %s: bilinmeyen nadirlik: %s" % [id, rarity_name])
+		var size := _vec2(d.get("size_cm"), Vector2(10, 20))
+		var raw_fight: Dictionary = d.get("fight", {})
+		var every := _vec2(raw_fight.get("burst_every"), Vector2(2, 3))
+		var burst_len := _vec2(raw_fight.get("burst_len"), Vector2(0.5, 1))
+		var fight := {
+			"reel": float(raw_fight.get("reel", 1.0)),
+			"pull": float(raw_fight.get("pull", 0.5)),
+			"burst_pull": float(raw_fight.get("burst_pull", 1.1)),
+			"burst_every": every,
+			"burst_len": burst_len,
+			"burst_every_steps": Vector2i(FishingRules.to_steps(every.x), FishingRules.to_steps(every.y)),
+			"burst_len_steps": Vector2i(FishingRules.to_steps(burst_len.x), FishingRules.to_steps(burst_len.y)),
+			"run": float(raw_fight.get("run", 1.0)),
+		}
+		var def := {
+			"id": id,
+			"rarity": maxi(0, rarity_index(rarity_name)),
+			"shadow_m": float(d.get("shadow_m", 0.5)),
+			"size_cm": Vector2i(int(size.x), int(size.y)),
+			"weight": int(d.get("weight", 0)),
+			"color": Color(str(d.get("color", "#9fb3c8"))),
+			"back": Color(str(d.get("back", "#4a5560"))),
+			"accent": Color(str(d.get("accent", "#e2463a"))),
+			"fight": fight,
+		}
+		_fish_index[id] = fish.size()
+		fish.append(def)
+
+
+func _load_rods(raw: Dictionary) -> void:
+	for entry: Variant in raw.get("rods", []):
+		var d: Dictionary = entry
+		var def := {
+			"id": str(d.get("id", "")),
+			"range_m": float(d.get("range_m", 8.0)),
+			"reel_speed": float(d.get("reel_speed", 1.5)),
+		}
+		_rod_index[def["id"]] = rods.size()
+		rods.append(def)
+
+
+func _load_spots(raw: Dictionary) -> void:
+	for entry: Variant in raw.get("spots", []):
+		var d: Dictionary = entry
+		var id := str(d.get("id", ""))
+		var ellipses: Array[Dictionary] = []
+		for e: Variant in d.get("ellipses", []):
+			var ed: Dictionary = e
+			ellipses.append({
+				"center": _vec2(ed.get("center"), Vector2.ZERO),
+				"radius": _vec2(ed.get("radius"), Vector2.ONE),
+				"angle": deg_to_rad(float(ed.get("angle", 0.0))),
+			})
+		var dock_raw: Dictionary = d.get("dock", {})
+		var dock_size := _vec2(dock_raw.get("size"), Vector2.ZERO)
+		var dock_center := _vec2(dock_raw.get("center"), Vector2.ZERO)
+		var ids := PackedStringArray()
+		var weights := PackedInt32Array()
+		var raw_fish: Dictionary = d.get("fish", {})
+		for fid: Variant in raw_fish:
+			ids.append(str(fid))
+			weights.append(int(raw_fish[fid]))
+		var first_raw: Dictionary = d.get("first_shadow", {})
+		var def := {
+			"id": id,
+			"ellipses": ellipses,
+			"dock": Rect2(dock_center - dock_size * 0.5, dock_size),
+			"start": _vec2(d.get("start"), Vector2.ZERO),
+			"max_shadows": int(d.get("max_shadows", 4)),
+			"fish_ids": ids,
+			"fish_weights": weights,
+			"first_fish": str(d.get("first_fish", ids[0] if ids.size() > 0 else "")),
+			"first_shadow": {
+				"pos": _vec2(first_raw.get("pos"), Vector2.ZERO),
+				"heading": _vec2(first_raw.get("heading"), Vector2(-1, 0)).normalized(),
+			},
+			"max_depth": float(d.get("max_depth", 3.5)),
+			"shelf_m": float(d.get("shelf_m", 4.0)),
+		}
+		_spot_index[id] = spots.size()
+		spots.append(def)
+
+
 # --- Doğrulama ----------------------------------------------------------------------
 
 func _validate() -> void:
 	if rarities.is_empty():
 		errors.append("rarities.json: nadirlik yok")
+	if fish.is_empty():
+		errors.append("fish.json: balık yok")
+	if rods.is_empty():
+		errors.append("rods.json: olta yok")
+	if spots.is_empty():
+		errors.append("spots.json: atış noktası yok")
 	_check_unique("rarities", rarities)
+	_check_unique("fish", fish)
+	_check_unique("rods", rods)
+	_check_unique("spots", spots)
+	for f in fish:
+		_validate_fish(f)
+	for r in rods:
+		if float(r["range_m"]) < 3.0 or float(r["reel_speed"]) <= 0.0:
+			errors.append("rods.json: %s: menzil ya da sarma hızı geçersiz" % r["id"])
+	for s in spots:
+		_validate_spot(s)
+
+
+func _validate_fish(f: Dictionary) -> void:
+	var id := str(f["id"])
+	var size: Vector2i = f["size_cm"]
+	if size.x <= 0 or size.y < size.x:
+		errors.append("fish.json: %s: boy aralığı geçersiz" % id)
+	if float(f["shadow_m"]) <= 0.0:
+		errors.append("fish.json: %s: gölge uzunluğu geçersiz" % id)
+	var fight: Dictionary = f["fight"]
+	# Sakin balıkta basılı tutmak kırmızıya hiç çıkmamalı; patlamada çıkmalı.
+	if float(fight["pull"]) >= rules.limit - 0.05 or float(fight["pull"]) <= 0.0:
+		errors.append("fish.json: %s: pull sınırın (%.2f) en az 0,05 altında olmalı" % [id, rules.limit])
+	if float(fight["burst_pull"]) <= rules.limit:
+		errors.append("fish.json: %s: burst_pull sınırın üstünde olmalı" % id)
+	var every: Vector2i = fight["burst_every_steps"]
+	var burst_len: Vector2i = fight["burst_len_steps"]
+	if every.x <= rules.warn_steps or every.y < every.x:
+		errors.append("fish.json: %s: burst_every uyarıdan uzun olmalı" % id)
+	if burst_len.x <= 0 or burst_len.y < burst_len.x:
+		errors.append("fish.json: %s: burst_len geçersiz" % id)
+	if float(fight["reel"]) <= 0.0 or float(fight["run"]) < 0.0:
+		errors.append("fish.json: %s: reel ya da run geçersiz" % id)
+
+
+func _validate_spot(s: Dictionary) -> void:
+	var id := str(s["id"])
+	var ellipses: Array[Dictionary] = s["ellipses"]
+	if ellipses.is_empty():
+		errors.append("spots.json: %s: elips yok" % id)
+		return
+	for e in ellipses:
+		var r: Vector2 = e["radius"]
+		if r.x <= 0.5 or r.y <= 0.5:
+			errors.append("spots.json: %s: elips yarıçapı çok küçük" % id)
+			return
+	var ids: PackedStringArray = s["fish_ids"]
+	var weights: PackedInt32Array = s["fish_weights"]
+	if ids.is_empty():
+		errors.append("spots.json: %s: balık listesi boş" % id)
+	for i in ids.size():
+		if fish_index(ids[i]) < 0:
+			errors.append("spots.json: %s: bilinmeyen balık: %s" % [id, ids[i]])
+		if weights[i] <= 0:
+			errors.append("spots.json: %s: %s ağırlığı pozitif olmalı" % [id, ids[i]])
+	if fish_index(str(s["first_fish"])) < 0:
+		errors.append("spots.json: %s: ilk av balığı bilinmiyor" % id)
+	if int(s["max_shadows"]) < 1:
+		errors.append("spots.json: %s: max_shadows en az 1" % id)
+	var shape := lake(id)
+	var start: Vector2 = s["start"]
+	if not shape.is_walkable(start):
+		errors.append("spots.json: %s: başlangıç noktası suyun içinde" % id)
+	var first: Dictionary = s["first_shadow"]
+	if not shape.is_deep(first["pos"], rules.min_depth):
+		errors.append("spots.json: %s: ilk gölge derin suda değil" % id)
 
 
 func _check_unique(label: String, list: Array[Dictionary]) -> void:
@@ -92,3 +309,10 @@ func _check_unique(label: String, list: Array[Dictionary]) -> void:
 ## Oran: ppm'e çevrilmiş tamsayı (JSON sayıları float gelir).
 static func _ppm(value: Variant) -> int:
 	return int(round(float(value) * PPM))
+
+
+static func _vec2(raw: Variant, fallback: Vector2) -> Vector2:
+	if typeof(raw) != TYPE_ARRAY or (raw as Array).size() != 2:
+		return fallback
+	var a: Array = raw
+	return Vector2(float(a[0]), float(a[1]))

@@ -18,3 +18,15 @@ RARITY_fine,Fine,Güzel
 RARITY_rare,Rare,Nadir
 RARITY_epic,Epic,Destansı
 RARITY_legendary,Legendary,Efsanevi
+FISH_rudd,Rudd,Kızılkanat
+FISH_rudd_DESC,A small silver fish with red fins. The most curious one in the lake.,"Gümüş gövdeli, kırmızı yüzgeçli küçük balık. Gölün en meraklısı."
+FISH_carp,Carp,Sazan
+FISH_carp_DESC,A heavy bronze fish with big scales. Patient on the line.,"İri pullu, bronz renkli, ağır bir balık. Oltada sabırlıdır."
+FISH_perch,Perch,Levrek
+FISH_perch_DESC,Green-gold stripes and orange fins. Watch out for sudden jerks!,"Yeşil-sarı çizgili, turuncu yüzgeçli. Ani silkelenir, dikkat!"
+FISH_pike,Pike,Turna
+FISH_pike_DESC,"A long, olive-green, spotted hunter. Strong and quick.","Uzun, zeytin yeşili, benekli bir avcı. Güçlü ve hızlıdır."
+FISH_wels,Wels Catfish,Yayın
+FISH_wels_DESC,The whiskered giant! Lives at the bottom and fights unpredictably.,"Bıyıklı dev! Gölün dibinde yaşar, çekişi düzensizdir."
+ROD_bamboo,Bamboo rod,Bambu olta
+SPOT_home_lake,Grandpa's Lake,Dede'nin Gölü

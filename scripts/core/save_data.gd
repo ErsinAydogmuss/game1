@@ -27,6 +27,8 @@ var flags: Dictionary = {}
 var settings: Dictionary = {}
 ## Seçilen balıkçı (KayKit karakteri). H2'de seçim ekranı gelir.
 var character: String = "rogue"
+## Kullanılan olta (data/rods.json). H2'de dükkânla değişir.
+var rod: String = "bamboo"
 
 
 static func create_new(now_unix: int) -> SaveData:
@@ -65,6 +67,7 @@ func to_dict() -> Dictionary:
 		"flags": flags.duplicate(),
 		"settings": settings.duplicate(),
 		"character": character,
+		"rod": rod,
 	}
 
 
@@ -89,6 +92,8 @@ static func from_dict(raw: Dictionary) -> SaveData:
 		s.settings = (raw_settings as Dictionary).duplicate()
 	var character := str(d.get("character", "rogue"))
 	s.character = character if not character.is_empty() else "rogue"
+	var rod := str(d.get("rod", "bamboo"))
+	s.rod = rod if not rod.is_empty() else "bamboo"
 	return s
 
 

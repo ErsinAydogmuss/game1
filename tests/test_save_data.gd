@@ -13,6 +13,7 @@ func test_roundtrip_keeps_every_field() -> void:
 	s.settings = { "sfx": false, "easy": true, "locale": "tr" }
 	s.flags = { "seen_card": true }
 	s.character = "rogue"
+	s.rod = "bamboo"
 	var back := SaveData.from_dict(s.to_dict())
 	assert_eq(back.to_dict(), s.to_dict(), "bütün alanlar aynen döner")
 	assert_eq(back.to_dict()["version"], SaveData.VERSION, "sürüm yazılır")
@@ -32,7 +33,7 @@ func test_bad_values_are_sanitized() -> void:
 			"pike": { "count": 0 },
 			"bad": "yok",
 		},
-		"settings": "bozuk", "character": "",
+		"settings": "bozuk", "character": "", "rod": "",
 	})
 	assert_eq(back.coins, 0, "negatif para sıfırlanır")
 	assert_eq(back.session, 0, "negatif oturum sıfırlanır")
@@ -42,6 +43,7 @@ func test_bad_values_are_sanitized() -> void:
 	assert_true(not back.records.has("bad"), "bozuk kayıt düşer")
 	assert_eq(back.settings, {}, "bozuk ayarlar boş sözlük olur")
 	assert_eq(back.character, "rogue", "boş karakter varsayılana döner")
+	assert_eq(back.rod, "bamboo", "boş olta varsayılana döner")
 
 
 func test_old_version_is_migrated() -> void:

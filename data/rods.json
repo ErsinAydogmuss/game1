@@ -1,0 +1,6 @@
+{
+	"_note": "Oltalar. range_m: atış menzili (m); reel_speed: sarma hızı (m/sn, balığın reel çarpanıyla çarpılır). H2'de dükkânla yenileri gelir.",
+	"rods": [
+		{ "id": "bamboo", "range_m": 9.0, "reel_speed": 1.6 }
+	]
+}
