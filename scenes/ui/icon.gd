@@ -11,7 +11,7 @@ const ART_NAMES := {
 	"coin": "coin", "close": "close", "star": "star", "star_empty": "star_empty", "book": "book",
 	"settings": "settings", "lock": "lock", "question": "question", "hand": "hand", "burst": "burst",
 	"trophy": "trophy", "rod": "rod", "reel": "reel", "bait": "bait", "bucket": "bucket",
-	"aquarium": "aquarium",
+	"aquarium": "aquarium", "hook": "hook",
 }
 
 const WOOD := Color("#b07a3b")

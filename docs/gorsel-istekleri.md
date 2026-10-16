@@ -6,11 +6,30 @@ Bu sayfadaki görselleri ChatGPT ile üretip game1'e yüklersen gerisini ben hal
 - sayfaları ikonlara keserim;
 - adlandırıp oyuna bağlarım.
 
-Görsel gelene kadar oyun kodla çizilen yer tutucuları kullanır.
+Görsel gelene kadar oyun kodla çizilen yer tutucuları kullanır, yani oyun görselsiz de çalışıyor. Senin görsellerin onu bitmiş bir oyun gibi gösterecek.
 
-**Balık görseli istemiyoruz:** balıkların ikonları oyunun kendi 3D modelinden çekiliyor. Böylece senin işin Kazı'dakinden çok daha az.
+**Balık görseli istemiyoruz:** balıkların resimleri oyunun kendi 3D modelinden çekiliyor. Böylece senin işin Kazı'dakinden çok daha az.
 
-Toplam **6 görsel** var. En önemlisi ilk ikisi (stil sayfası + arayüz ikonları).
+## Kısaca
+
+| Görsel | Oyunda nerede görünecek? | Şu an yerinde ne var? |
+|---|---|---|
+| 1. `style_sheet.png` | Oyunda görünmez; ötekilerin stil referansı | — |
+| 2. `app_icon.png` | Telefonun ana ekranı | Kodla çizdiğim basit bir balık |
+| 3. `portraits.png` | İpucu çubuğu: Dede konuşurken yüzü | 3D Dede'den çekilen küçük yüz |
+| 4. `ui_1.png` | Büyük eylem düğmesi (AT, SAR, VUR, BEKLE); sonra kova ve akvaryum | Kodla çizilen ikonlar ve Kazı'nın eli |
+| 5. `logo.png` | Açılış ekranı (H2'de gelecek) | Yok |
+| 6. `key_art.png` | Tanıtım görseli | Sonra istenecek |
+
+Sıra, önem sırası:
+
+1. **Stil sayfası:** ötekilerin hepsine referans olur, o yüzden önce bu.
+2. **Uygulama ikonu:** oyunu açmadan önce ilk gördüğün şey.
+3. **Dede portreleri:** Dede oyun boyunca konuşuyor. Çizilmiş bir yüz, 3D'den çekilen küçük yüzden çok daha canlı durur.
+4. **Arayüz ikonları:** eylem düğmesi ekranda hep duruyor.
+5. **Logo:** açılış ekranı gelince lazım olacak.
+
+Hepsini birden beklemene gerek yok: hazır olanı yükle, ben bağlayayım.
 
 ## Nasıl teslim edersin?
 
@@ -48,30 +67,28 @@ Plus a small color palette strip. Solid flat pure magenta background (#FF00FF).
 No text, no labels, no shadows.
 ```
 
-## 2. Arayüz ikonları: `ui_1.png`
+## 2. Uygulama ikonu: `app_icon.png` (1024×1024)
 
 ```
-Sheet of 6 glossy cartoon mobile game UI icons in a 3x2 grid, exactly matching the attached
-style reference: chunky shapes, soft gradients, thick dark outline, warm top-left light,
-3/4 view. Each icon centered in its own cell with generous empty space around it, all at a
-similar size. No text, no labels, no shadows, no floor.
-Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
-Icons, left to right, top row then bottom row: a fishing rod with a reel, a fishing reel
-close-up, a glass jar of worms (bait), a wooden bucket with a fish tail sticking out,
-a round fish tank aquarium with a small fish, an open book with a fish drawing.
+Mobile app icon, square, stylized low-poly 3D: a cute plump fish jumping out of teal water
+toward a red-and-white bobber, wooden dock edge at the bottom, soft warm light, bold simple
+shapes readable at small size, matching the attached style reference. No text.
+Fill the whole square edge to edge with the scene: no magenta background, no border,
+no transparency, sharp square corners (the phone rounds the corners itself).
 ```
 
-Kesilen adlar sırasıyla: `rod`, `reel`, `bait`, `bucket`, `aquarium`, `book`.
+- Köşeleri yuvarlatma; iPhone kendisi yuvarlar.
+- İkon telefonda küçük görünecek: görsele uzaktan bir bak, balık ve şamandıra seçiliyor mu?
 
 ## 3. Dede portreleri: `portraits.png` (3×1)
 
-Dede, 1. haftada ipucu çubuğunda konuşuyor; portresi orada görünecek.
+Dede ipucu çubuğunda konuşuyor; portresi orada görünecek. Oyundaki 3D Dede'ye benzemeli: kahverengi kasket, beyaz sakal, tuğla kırmızısı kazak.
 
 ```
 Sheet of 3 portrait busts of the same character in a 3x1 grid, exactly matching the attached
 style reference, stylized low-poly 3D look: a kind Turkish grandfather fisherman, round friendly
-face, short white beard and mustache, bushy white eyebrows, sun-tanned skin, a faded green
-bucket hat with a small fishing fly pinned on it, a beige fishing vest over a checkered shirt.
+face, short white beard and mustache, bushy white eyebrows, sun-tanned skin, a brown flat cap
+with a short brim, a brick-red chunky knitted sweater with a cream wool collar.
 Head and shoulders, facing slightly toward the viewer. Moods, left to right: warm smile;
 surprised and excited (eyebrows up, mouth open); telling a mysterious story (one finger raised,
 eyes narrowed playfully). Same size and framing in each cell.
@@ -80,7 +97,32 @@ Solid flat pure magenta background (#FF00FF). No text, no shadows.
 
 Kesilen adlar: `dede_smile`, `dede_wow`, `dede_story`.
 
-## 4. Logo: `logo.png` (1024×1024)
+## 4. Arayüz ikonları: `ui_1.png`
+
+İlk dördü büyük eylem düğmesinde görünür; son ikisi sonraki hafta (H2) gelecek kova ve akvaryum için.
+
+```
+Sheet of 6 glossy cartoon mobile game UI icons in a 3x2 grid, exactly matching the attached
+style reference: chunky shapes, soft gradients, thick dark outline, warm top-left light,
+3/4 view. Each icon centered in its own cell with generous empty space around it, all at a
+similar size. No text, no labels, no shadows, no floor.
+Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
+Icons, left to right, top row then bottom row: a fishing rod with a reel and a red-and-white
+bobber hanging from the tip, a fishing reel close-up with a crank handle, a big shiny steel
+fishing hook, an open hand with the palm facing the viewer (a calm "wait" gesture),
+a wooden bucket with a fish tail sticking out, a round fish tank aquarium with a small fish.
+```
+
+| Kesilen ad | Nerede |
+|---|---|
+| `rod` | AT |
+| `reel` | SAR ve GERİ SAR |
+| `hook` | VUR |
+| `hand` | BEKLE. Şimdiki el Kazı'nın "dokun" parmağı; beklerken dokunma demeli, o yüzden açık el. |
+| `bucket` | kova (H2) |
+| `aquarium` | akvaryum (H2) |
+
+## 5. Logo: `logo.png` (1024×1024)
 
 ```
 Game logo for a cozy fishing game titled "OLTA" with a small subtitle "Gölün Sırrı",
@@ -92,25 +134,9 @@ Solid flat pure magenta background (#FF00FF).
 
 Türkçe harfleri kontrol et: "Gölün Sırrı"daki **ö, ü ve ı** doğru çizilmiş olmalı. Yanlışsa "Fix the Turkish letters: Ö, ü and dotless ı" diye düzelttir.
 
-## 5. Uygulama ikonu: `app_icon.png` (1024×1024)
-
-```
-Mobile app icon, square, stylized low-poly 3D: a cute plump fish jumping out of teal water
-toward a red-and-white bobber, wooden dock edge at the bottom, soft warm light, bold simple
-shapes readable at small size, matching the attached style reference. No text.
-Fill the whole square (no magenta background for this one).
-```
-
 ## 6. (Sonra) Tanıtım görseli: `key_art.png`
 
 H2'de istenecek.
-
-## Öncelik
-
-1. `style_sheet.png`
-2. `ui_1.png`
-3. `portraits.png`
-4. `logo.png`, `app_icon.png`
 
 ## Teknik not (Claude için)
 
@@ -121,4 +147,12 @@ godot --headless --path . -s res://tools/process_images.gd
 godot --headless --path . --import
 ```
 
-Sayfa adları ve kesilen adlar `data/art_sheets.json`'da.
+Sayfa adları ve kesilen adlar `data/art_sheets.json`'da. Oyuna bağlama:
+
+| Görsel | Çıktı | Bağlantı |
+|---|---|---|
+| `ui_1` | `assets/icons/ui/<ad>.png` | `GameIcon.ART_NAMES` ile kendiliğinden; eylem düğmesi (`Hud.ACTIONS`) bunları kullanır. `hand`, Kazı'nın elinin yerini alır. |
+| `portraits` | `assets/ui/portraits/` | `dede_smile` ipucu çubuğunda hemen görünür (`Hud.set_portrait`); varsa 3B yüz çekilmez (`main._load_dede_face`). `dede_wow` (nadir ve üstü balık) ve `dede_story` (Dede'ye dokununca öğüt) gelince `main.gd`'de bağlanır. |
+| `app_icon` | `assets/ui/art/app_icon.png` | `project.godot`'ta `config/icon="res://assets/ui/art/app_icon.png"` (Kazı'daki gibi). iOS ikonları bundan üretilir; opak ve 1024×1024 olmalı. |
+| `logo` | `assets/ui/art/logo.png` | H2'deki açılış ekranı (Kazı'da `boot_splash/image`). |
+| `style_sheet` | `docs/img/stil_sayfasi.jpg` | Yalnızca referans. |

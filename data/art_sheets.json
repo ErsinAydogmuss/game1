@@ -3,7 +3,7 @@
 	"sheets": [
 		{ "file": "style_sheet", "reference": true, "out": "res://docs/img/stil_sayfasi.jpg" },
 		{ "file": "ui_1", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
-			"names": ["rod", "reel", "bait", "bucket", "aquarium", "book"] },
+			"names": ["rod", "reel", "hook", "hand", "bucket", "aquarium"] },
 		{ "file": "portraits", "out": "res://assets/ui/portraits", "size": 320, "grid": [3, 1],
 			"names": ["dede_smile", "dede_wow", "dede_story"] },
 		{ "file": "logo", "out": "res://assets/ui/art", "size": 1024, "fit": "box", "names": ["logo"] },
