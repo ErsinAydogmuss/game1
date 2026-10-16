@@ -64,7 +64,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 - [x] Nadirliğin gölgede ve kartta görünmesi: simgeli rozetler, gölgede pırıltı / ışıltı / iz, efsanevi gölgede Dede'nin uyarısı ve ezgi, yakalamada 2B etiket, kartta Dede'nin sözü; gri tonlama denetimi (`rarity` senaryosu).
 - [x] Balık Defteri: sayfalı 6×2 ızgara (siluet ve nadirlik simgesi), rekor ve sayılar, ipuçları (sevdiği yem, görülme sıklığı), takımla gerçek oranlar ve şans garantisi sayaçları; HUD'da defter düğmesi. (Kaydırmalı metin mektuplarla Dalga 4'te.)
 - [x] Denge botu (`SessionSim`; süreler gerçek oturumdan `tools/session_timing.gd` ile) ve korkuluk testleri (`test_session_sim.gd`); ekonomi raporu (gdd §10.4); oran kataloğu ([`balik-katalogu.md`](balik-katalogu.md)); yemler kendi türünü belirgin çağırır, kartta gerçek şans; `shop` senaryosu.
-- [ ] Kapanış: inceleme, tanıtım videosu (Nine, dükkân, defter, nadir ve destansı balık), telefonda dene listesi. **v0.2.**
+- [x] Kapanış: inceleme (10 bulgu düzeltildi), tanıtım videosu (Nine, dükkân, defter, nadir ve destansı balık), telefonda dene listesi. **v0.2.**
 
 **Dalga 2 — Büyük göl → v0.3**
 
