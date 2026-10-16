@@ -60,6 +60,15 @@ func on_dock(p: Vector2, margin: float = 0.0) -> bool:
 	return dock.size.x > 0.0 and dock.grow(margin).has_point(p)
 
 
+## İskeleye uzaklık (m); iskelenin üstünde 0, iskele yoksa INF.
+func dock_distance(p: Vector2) -> float:
+	if dock.size.x <= 0.0:
+		return INF
+	var half := dock.size * 0.5
+	var q := (p - dock.get_center()).abs() - half
+	return Vector2(maxf(q.x, 0.0), maxf(q.y, 0.0)).length()
+
+
 ## Balıkçı burada durabilir mi (kara ya da iskele)?
 func is_walkable(p: Vector2) -> bool:
 	return on_dock(p) or not is_water(p)

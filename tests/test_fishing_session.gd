@@ -319,11 +319,14 @@ func test_random_input_never_gets_stuck() -> void:
 				since_change = 0
 			else:
 				since_change += 1
+			# Kolay modda balık kaçmaz: oyuncu sarmazsa çekişme sürer (tasarım gereği), sınır yok.
 			var limits := {
 				FishingSession.State.CASTING: 1.0, FishingSession.State.NIBBLING: 12.0,
-				FishingSession.State.BITING: 1.7, FishingSession.State.FIGHTING: 125.0,
-				FishingSession.State.RETRIEVING: 0.5, FishingSession.State.LOST: 1.0,
+				FishingSession.State.BITING: 1.7, FishingSession.State.RETRIEVING: 0.5,
+				FishingSession.State.LOST: 1.0,
 			}
+			if not session.easy:
+				limits[FishingSession.State.FIGHTING] = 50.0
 			if limits.has(session.state) and since_change > float(limits[session.state]) * HZ:
 				problem = "%s durumunda takıldı" % session.state_name()
 			if session.state in [FishingSession.State.WAITING, FishingSession.State.NIBBLING, FishingSession.State.BITING]:
@@ -333,6 +336,10 @@ func test_random_input_never_gets_stuck() -> void:
 					problem = "dürtme/ısırmada balık yok"
 			if session.state == FishingSession.State.FIGHTING and (session.reel == null or session.hooked == null):
 				problem = "çekişmede model yok"
+			# Balık şamandıranın ötesine kaçarken karaya çıkmaz (balıkçının dibi kara olabilir).
+			if session.state == FishingSession.State.FIGHTING and session.reel != null and session.reel.distance >= 2.0 \
+					and not lake.is_water(session.fight_point()):
+				problem = "çekişmede balık karada: %s" % str(session.fight_point())
 			if session.sim.shadows.size() > 4:
 				problem = "4'ten çok gölge"
 			for s in session.sim.shadows:
@@ -343,6 +350,54 @@ func test_random_input_never_gets_stuck() -> void:
 				break
 		assert_true(ok, "deneme %d: %s" % [run, problem])
 		assert_true(casts >= 3, "deneme %d: oyun ilerler (%d atış)" % [run, casts])
+
+
+## Yaklaşırken iskelenin dibine ya da kıyının sığına sokulan balık, oyuncu geri sarınca orada
+## donup kalmaz: derin suya geri yüzer.
+func test_stranded_fish_swims_back_to_deep_water() -> void:
+	for start: Vector2 in [Vector2(1.05, 4.3), Vector2(0.0, -6.1)]:
+		var session := _session()
+		var fish := session.sim.shadows[0]
+		_park_others(session, fish)
+		fish.pos = start
+		fish.mode = FishShadow.Mode.PAUSE
+		fish.timer = 1
+		var limit := session.rules.min_depth * 0.75
+		assert_true(session.lake.is_water(start) and not session.lake.is_deep(start, limit),
+				"%s: balık dolaşma sınırının dışında başlar" % str(start))
+		_advance_seconds(session, 20.0)
+		assert_true(fish.pos.distance_to(start) > 0.5, "%s: balık yerinden kıpırdar" % str(start))
+		assert_true(session.lake.is_deep(fish.pos, limit), "%s: balık derin suya döner (%s)" % [start, fish.pos])
+
+
+## Çekişmede balık (yerinde çizilen şamandıra ve gölge) karaya çıkmaz: kıyı yakınsa kıyıda durur.
+## Kaçış payı yine şamandıranın en az escape_extra ötesidir (Normal'de bırakan oyuncu hemen
+## kaybetmez).
+func test_fight_stays_in_water() -> void:
+	for easy: bool in [true, false]:
+		var session := _session(easy)
+		# Balıkçı iskelenin ucunda (0, 4); +x yönünde kıyı ~7 m'de.
+		_to_biting(session, Vector2(5.0, 4.0))
+		session.press()
+		session.step()
+		assert_eq(session.state, FishingSession.State.FIGHTING, "çekişme başlar")
+		session.release()
+		var bobber_distance := session.reel.distance
+		assert_true(session.reel.max_distance >= bobber_distance + session.rules.escape_extra - 0.01,
+				"kaçış payı şamandıranın en az escape_extra ötesi")
+		var on_land := false
+		for i in 40 * HZ:
+			if session.state != FishingSession.State.FIGHTING:
+				break
+			session.step()
+			if session.state == FishingSession.State.FIGHTING and not session.lake.is_water(session.fight_point()):
+				on_land = true
+				break
+		assert_true(not on_land, "%s: balık karaya çıkmaz" % ("Kolay" if easy else "Normal"))
+		if easy:
+			assert_eq(session.state, FishingSession.State.FIGHTING, "Kolay: bırakan oyuncunun balığı kaçmaz")
+		else:
+			assert_eq(session.last_loss, "escaped", "Normal: bırakan oyuncunun balığı sonunda kaçar")
 
 
 ## Aynı girdiler 30, 60 ve 120 fps'te birebir aynı olayları üretir. Bot yalnızca çift adımlarda

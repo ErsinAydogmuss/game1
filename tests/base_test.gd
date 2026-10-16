@@ -31,6 +31,9 @@ func assert_between(value: float, low: float, high: float, message: String = "")
 
 
 static func _equal(a: Variant, b: Variant) -> bool:
+	# İki tamsayı tam eşit olmalı (is_equal_approx büyük sayılarda 1e-5 oranında pay bırakır).
+	if typeof(a) == TYPE_INT and typeof(b) == TYPE_INT:
+		return a == b
 	var numeric := [TYPE_INT, TYPE_FLOAT]
 	if typeof(a) in numeric and typeof(b) in numeric:
 		return is_equal_approx(float(a), float(b))

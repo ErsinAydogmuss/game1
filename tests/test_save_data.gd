@@ -46,6 +46,46 @@ func test_bad_values_are_sanitized() -> void:
 	assert_eq(back.rod, "bamboo", "boş olta varsayılana döner")
 
 
+## Elle bozulmuş ya da hatalı yazılmış tek bir değer bütün ilerlemeyi sildirmez: o alan
+## varsayılana döner, gerisi korunur.
+func test_wrong_types_keep_the_rest() -> void:
+	var back := SaveData.from_dict({
+		"version": 1, "coins": null, "catches": "yedi", "casts": "12", "seed": 4242,
+		"player_id": 99, "records": { "rudd": { "count": "3", "best_cm": null } },
+	})
+	assert_true(back != null, "türü bozuk alanlarla da kayıt okunur")
+	if back == null:
+		return
+	assert_eq(back.coins, 0, "null para varsayılana döner")
+	assert_eq(back.catches, 0, "sayı olmayan yazı varsayılana döner")
+	assert_eq(back.casts, 12, "sayı yazısı okunur")
+	assert_eq(back.seed, 4242, "sağlam alan korunur")
+	assert_eq(back.player_id, "", "yazı olmayan kimlik boş kalır (açılışta yenisi verilir)")
+	assert_true(back.records.has("rudd") and int(back.records["rudd"]["count"]) == 3, "kayıt defteri korunur")
+
+
+## Okunamayan kayıt üstüne yazılmadan kenara alınır: bozuksa .corrupt, daha yeni bir sürümün
+## kaydıysa (eski bir yapı yüklendiyse) .newer.
+func test_unreadable_saves_are_set_aside() -> void:
+	var path := "user://test_save_aside.json"
+	var abs_path := ProjectSettings.globalize_path(path)
+	for suffix: String in [".corrupt", ".newer"]:
+		DirAccess.remove_absolute(abs_path + suffix)
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(JSON.stringify({ "version": SaveData.VERSION + 1, "coins": 9 }))
+	f.close()
+	assert_true(SaveStore.read(path) == null, "yeni sürümün kaydı okunmaz")
+	assert_true(FileAccess.file_exists(path + ".newer") and not FileAccess.file_exists(path),
+			"yeni sürümün kaydı kenara alınır")
+	f = FileAccess.open(path, FileAccess.WRITE)
+	f.store_string("{ bozuk")
+	f.close()
+	assert_true(SaveStore.read(path) == null, "bozuk kayıt okunmaz")
+	assert_true(FileAccess.file_exists(path + ".corrupt"), "bozuk kayıt kenara alınır")
+	for suffix: String in [".corrupt", ".newer"]:
+		DirAccess.remove_absolute(abs_path + suffix)
+
+
 func test_old_version_is_migrated() -> void:
 	var d := SaveData.migrate({ "coins": 3 })
 	assert_eq(int(d["version"]), 1, "sürümsüz kayıt v1 olur")

@@ -33,6 +33,8 @@ var scripted: bool = false
 var home := Vector2.ZERO
 ## Kolay modda erken dokunuşla kaç kez irkildi.
 var startles: int = 0
+## Yolu kapalı olduğu için vazgeçti: şamandıra yeniden düşene kadar onu fark etmez.
+var bored: bool = false
 
 
 func mode_name() -> String:

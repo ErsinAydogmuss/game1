@@ -25,16 +25,29 @@ static func write(save: SaveData, path: String) -> bool:
 	return true
 
 
-## Dosya yoksa ya da bozuksa null döner. Bozuk dosya "<ad>.corrupt" olarak kenara alınır.
+## Dosya yoksa ya da okunamıyorsa null döner; çağıran yeni kayıt açar ve yazar. Bu yüzden
+## okunamayan dosya önce kenara alınır, üstüne yazılmaz: bozuksa "<ad>.corrupt", daha yeni bir
+## sürümün kaydıysa (eski bir yapı yüklendiyse) "<ad>.newer".
 static func read(path: String) -> SaveData:
 	if not FileAccess.file_exists(path):
 		return null
 	var json := JSON.new()
 	if json.parse(FileAccess.get_file_as_string(path)) != OK or typeof(json.data) != TYPE_DICTIONARY:
-		var abs_path := ProjectSettings.globalize_path(path)
-		var backup := abs_path + ".corrupt"
-		DirAccess.remove_absolute(backup)
-		DirAccess.rename_absolute(abs_path, backup)
-		push_warning("Bozuk kayıt kenara alındı: " + backup)
+		_set_aside(path, ".corrupt")
 		return null
-	return SaveData.from_dict(json.data)
+	var data: Dictionary = json.data
+	if SaveData.is_newer(data):
+		_set_aside(path, ".newer")
+		return null
+	var save := SaveData.from_dict(data)
+	if save == null:
+		_set_aside(path, ".corrupt")
+	return save
+
+
+static func _set_aside(path: String, suffix: String) -> void:
+	var abs_path := ProjectSettings.globalize_path(path)
+	var backup := abs_path + suffix
+	DirAccess.remove_absolute(backup)
+	DirAccess.rename_absolute(abs_path, backup)
+	push_warning("Okunamayan kayıt kenara alındı: " + backup)

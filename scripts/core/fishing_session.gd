@@ -26,6 +26,8 @@ enum State { IDLE, CASTING, WAITING, NIBBLING, BITING, FIGHTING, RETRIEVING, CAU
 const STEP := 1.0 / FishingRules.HZ
 ## Bir karede en fazla bu kadar adım (uzun bir takılmadan sonra oyun "koşmasın").
 const MAX_STEPS_PER_FRAME := 30
+## Çekişmede balık kıyıya bu kadar yaklaşabilir (m): şamandıra ve gölge karaya çizilmez.
+const FIGHT_SHORE := 0.3
 
 var state: State = State.IDLE
 ## Toplam adım (oturum saati).
@@ -42,6 +44,8 @@ var reel: ReelModel
 var hooked: FishShadow
 ## Oltaya takılan balığın yönü (balıkçıdan şamandıraya).
 var hook_dir := Vector2(0.0, -1.0)
+## Çekişmede balığın hook_dir yönünde gidebileceği en uzak su (balıkçıdan uzaklık, m).
+var fight_reach: float = 0.0
 ## Son yakalanan balık (catch olayının içeriği) ve son kaçırma nedeni.
 var last_catch: Dictionary = {}
 var last_loss: String = ""
@@ -192,11 +196,12 @@ func action_kind() -> String:
 	return ""
 
 
-## Çekişmede balığın yeri (balıkçıdan hook_dir yönünde, reel.distance uzakta).
+## Çekişmede balığın yeri (balıkçıdan hook_dir yönünde, reel.distance uzakta; suyun bittiği
+## yerin ötesine çizilmez).
 func fight_point() -> Vector2:
 	if reel == null:
 		return bobber
-	return angler + hook_dir * reel.distance
+	return angler + hook_dir * minf(reel.distance, fight_reach)
 
 
 func range_m() -> float:
@@ -291,11 +296,27 @@ func _hook() -> void:
 	hook_dir = offset.normalized() if offset.length_squared() > 0.0001 else Vector2(0.0, -1.0)
 	var dist := offset.length()
 	var fight: Dictionary = _db.fish_def(s.fish_index)["fight"]
-	reel = ReelModel.new(rules, fight, float(_rod["reel_speed"]), dist, range_m() + rules.escape_extra,
-			easy or s.scripted, Dice.derive(s.seed, 1))
+	# Balık kıyıya kadar kaçabilir; ama şamandıranın en az escape_extra ötesine (kıyı yakınsa
+	# çizimi kıyıda durur), en çok menzil + escape_extra'ya.
+	var cap := range_m() + rules.escape_extra
+	fight_reach = _water_reach(dist, cap)
+	reel = ReelModel.new(rules, fight, float(_rod["reel_speed"]), dist,
+			clampf(fight_reach, minf(dist + rules.escape_extra, cap), cap), easy or s.scripted, Dice.derive(s.seed, 1))
 	reel.holding = holding
 	state = State.FIGHTING
 	_emit({ "type": "hook", "shadow": s.id, "fish": s.fish_id, "distance": dist })
+
+
+## Balıkçıdan hook_dir yönünde, from_dist'ten dışarı doğru suyun sürdüğü en uzak uzaklık
+## (kıyıdan FIGHT_SHORE payıyla, en çok cap).
+func _water_reach(from_dist: float, cap: float) -> float:
+	var d := from_dist
+	while d + 0.1 <= cap:
+		var p := angler + hook_dir * (d + 0.1)
+		if not lake.is_water(p) or lake.on_dock(p) or lake.shore_distance(p) < FIGHT_SHORE:
+			break
+		d += 0.1
+	return d
 
 
 func _step_fight() -> void:

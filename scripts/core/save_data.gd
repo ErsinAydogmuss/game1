@@ -71,36 +71,43 @@ func to_dict() -> Dictionary:
 	}
 
 
+## Sözlükten kayıt. Alanların türü bozuksa (elle değiştirilmiş ya da hatalı kayıt) o alan
+## varsayılana döner, gerisi korunur: tek bir bozuk değer bütün ilerlemeyi sildirmez.
 static func from_dict(raw: Dictionary) -> SaveData:
 	var d := migrate(raw)
 	var s := SaveData.new()
-	s.player_id = str(d.get("player_id", ""))
-	s.created_unix = int(d.get("created_unix", 0))
-	s.last_seen_unix = int(d.get("last_seen_unix", 0))
-	s.coins = maxi(0, int(d.get("coins", 0)))
-	s.seed = maxi(0, int(d.get("seed", 0)))
-	s.session = maxi(0, int(d.get("session", 0)))
+	s.player_id = _text(d, "player_id", "")
+	s.created_unix = _int(d, "created_unix", 0)
+	s.last_seen_unix = _int(d, "last_seen_unix", 0)
+	s.coins = maxi(0, _int(d, "coins", 0))
+	s.seed = maxi(0, _int(d, "seed", 0))
+	s.session = maxi(0, _int(d, "session", 0))
 	s.records = _records(d.get("records", {}))
-	s.casts = maxi(0, int(d.get("casts", 0)))
-	s.catches = maxi(0, int(d.get("catches", 0)))
-	s.hint_step = maxi(0, int(d.get("hint_step", 0)))
+	s.casts = maxi(0, _int(d, "casts", 0))
+	s.catches = maxi(0, _int(d, "catches", 0))
+	s.hint_step = maxi(0, _int(d, "hint_step", 0))
 	var raw_flags: Variant = d.get("flags", {})
 	if typeof(raw_flags) == TYPE_DICTIONARY:
 		s.flags = (raw_flags as Dictionary).duplicate()
 	var raw_settings: Variant = d.get("settings", {})
 	if typeof(raw_settings) == TYPE_DICTIONARY:
 		s.settings = (raw_settings as Dictionary).duplicate()
-	var character := str(d.get("character", "rogue"))
+	var character := _text(d, "character", "rogue")
 	s.character = character if not character.is_empty() else "rogue"
-	var rod := str(d.get("rod", "bamboo"))
+	var rod := _text(d, "rod", "bamboo")
 	s.rod = rod if not rod.is_empty() else "bamboo"
 	return s
+
+
+## Kayıt bu yapının bilmediği daha yeni bir sürümden mi (eski bir yapı yüklendiyse)?
+static func is_newer(raw: Dictionary) -> bool:
+	return _int(raw, "version", 0) > VERSION
 
 
 ## Eski sürüm kayıtları güncel biçime getirir. Her sürüm için bir adım (v1 ilk sürüm).
 static func migrate(raw: Dictionary) -> Dictionary:
 	var d := raw.duplicate(true)
-	var v := int(d.get("version", 0))
+	var v := _int(d, "version", 0)
 	if v < 1:
 		v = 1
 	d["version"] = v
@@ -117,13 +124,31 @@ static func _records(raw: Variant) -> Dictionary:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		var e: Dictionary = entry
-		var count := maxi(0, int(e.get("count", 0)))
+		var count := maxi(0, _int(e, "count", 0))
 		if count <= 0:
 			continue
 		out[str(key)] = {
 			"count": count,
-			"best_cm": maxi(0, int(e.get("best_cm", 0))),
-			"best_stars": clampi(int(e.get("best_stars", 1)), 1, 5),
-			"first_unix": maxi(0, int(e.get("first_unix", 0))),
+			"best_cm": maxi(0, _int(e, "best_cm", 0)),
+			"best_stars": clampi(_int(e, "best_stars", 1), 1, 5),
+			"first_unix": maxi(0, _int(e, "first_unix", 0)),
 		}
 	return out
+
+
+## Tamsayı alan: sayı ya da sayı yazısı değilse varsayılan (int(null) betiği durdurur).
+static func _int(d: Dictionary, key: String, fallback: int) -> int:
+	var v: Variant = d.get(key, fallback)
+	match typeof(v):
+		TYPE_INT, TYPE_FLOAT:
+			return int(v)
+		TYPE_STRING:
+			var text: String = v
+			return text.to_int() if text.is_valid_int() else fallback
+	return fallback
+
+
+## Yazı alan: yazı değilse varsayılan.
+static func _text(d: Dictionary, key: String, fallback: String) -> String:
+	var v: Variant = d.get(key, fallback)
+	return str(v) if typeof(v) == TYPE_STRING else fallback
