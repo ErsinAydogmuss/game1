@@ -118,5 +118,58 @@ func test_art_sheets_are_consistent() -> void:
 			var key := str(def["out"]) + "/" + str(n)
 			assert_true(not seen.has(key), "çıktı adı tekrar: " + key)
 			seen[key] = true
-	for needed: String in ["style_sheet", "ui_1", "portraits", "logo", "app_icon"]:
+	for needed: String in ["style_sheet", "ui_1", "ui_2", "ui_frames", "ui_buttons", "rarity_frames",
+			"rarity_badges", "portraits", "portraits_nine", "logo", "app_icon", "gear_rods_1", "gear_extras"]:
 		assert_true(files.has(needed), "sayfa var: " + needed)
+
+
+## Kesilen her 9 dilimli çerçevenin ve düğmenin (fit "trim") UiKit'te kenar payları var.
+func test_frame_sheets_have_slices() -> void:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/art_sheets.json"))
+	var frames := 0
+	for raw: Variant in (parsed as Dictionary)["sheets"]:
+		var def: Dictionary = raw
+		if str(def.get("fit", "")) != "trim":
+			continue
+		assert_eq(str(def["out"]), ItemArt.FRAMES.get_base_dir(), "%s: çerçeve klasörü" % def["file"])
+		for n: Variant in def["names"]:
+			frames += 1
+			assert_eq(UiKit.frame_slices(str(n)).size(), 4, "kenar payı var: " + str(n))
+	assert_true(frames >= 18, "çerçeve, düğme ve nadirlik çerçeveleri tanımlı")
+
+
+## Görsel yokken kodla çizilen stil döner; görsel gelince 9 dilimli doku köşe boyuna göre
+## ölçeklenir ve içerik payları korunur.
+func test_framed_scales_art_and_keeps_layout() -> void:
+	var fallback := UiKit.pill_style()
+	ItemArt.register_frame("pill", null)
+	assert_true(UiKit.framed("pill", fallback, 30.0) == fallback, "görsel yoksa kodla çizilen stil")
+	var img := Image.create_empty(200, 100, false, Image.FORMAT_RGBA8)
+	img.fill(Color.WHITE)
+	ItemArt.register_frame("pill", ImageTexture.create_from_image(img))
+	var sb := UiKit.framed("pill", fallback, 30.0) as StyleBoxTexture
+	assert_true(sb != null, "görsel varsa 9 dilimli doku")
+	if sb != null:
+		# Kısa kenar 100, en kalın pay 0,5 → 50 piksel; 30'a inmesi için 0,6 ölçek.
+		assert_eq(sb.texture.get_size(), Vector2(120, 60), "doku ölçeklenir")
+		assert_between(sb.texture_margin_left, 29.9, 30.1, "sol pay köşe boyu")
+		assert_between(sb.texture_margin_top, 17.9, 18.1, "üst pay orantılı")
+		assert_eq(sb.get_content_margin(SIDE_LEFT), fallback.get_content_margin(SIDE_LEFT), "içerik payı korunur")
+		assert_eq(sb.get_content_margin(SIDE_TOP), fallback.get_content_margin(SIDE_TOP), "içerik payı korunur")
+	ItemArt.register_frame("pill", null)
+
+
+## Paletin düğme renkleri arayüz kitindeki düğmeyi kullanır; basılı hâli biraz koyu.
+func test_button_art_matches_palette() -> void:
+	var img := Image.create_empty(300, 120, false, Image.FORMAT_RGBA8)
+	img.fill(Color.WHITE)
+	ItemArt.register_frame("button_green", ImageTexture.create_from_image(img))
+	var normal := UiKit._button_art(UiKit.SUCCESS, false, 30)
+	var pressed := UiKit._button_art(UiKit.SUCCESS, true, 30)
+	assert_true(normal != null and pressed != null, "yeşil düğme görseli kullanılır")
+	if normal != null and pressed != null:
+		assert_true(pressed.modulate_color.v < normal.modulate_color.v, "basılıyken koyu")
+		assert_true(pressed.content_margin_top > normal.content_margin_top, "basılıyken yazı aşağıda")
+	assert_true(UiKit._button_art(Color("#123456"), false, 30) == null, "palet dışı renk kodla çizilir")
+	ItemArt.register_frame("button_green", null)
+	assert_true(UiKit._button_art(UiKit.SUCCESS, false, 30) == null, "görsel yoksa kodla çizilir")

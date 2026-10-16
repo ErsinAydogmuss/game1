@@ -212,7 +212,7 @@ func _build_top() -> void:
 
 func _build_bottom() -> void:
 	_hint = PanelContainer.new()
-	_hint.add_theme_stylebox_override("panel", UiKit.pill_style())
+	_hint.add_theme_stylebox_override("panel", UiKit.framed("pill", UiKit.pill_style(), 46.0))
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hint.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_hint.size_flags_vertical = Control.SIZE_SHRINK_END

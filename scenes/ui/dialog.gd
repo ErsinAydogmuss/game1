@@ -33,7 +33,7 @@ func _ready() -> void:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
 	_panel = PanelContainer.new()
-	_panel.add_theme_stylebox_override("panel", UiKit.dialog_style())
+	_panel.add_theme_stylebox_override("panel", UiKit.framed("panel", UiKit.dialog_style(), 64.0))
 	_panel.custom_minimum_size = Vector2(_width, 0)
 	# Açılış animasyonu ortadan büyüsün: boyut her değişince merkez güncellenir.
 	_panel.resized.connect(func() -> void: _panel.pivot_offset = _panel.size * 0.5)

@@ -38,10 +38,32 @@ const SIZE_HERO := 76
 const DISPLAY_FONT := "res://assets/fonts/LuckiestGuy-Regular.ttf"
 const BODY_FONT := "res://assets/fonts/Baloo2-Variable.ttf"
 
+## Ersin'in arayüz kitindeki 9 dilimli görsellerin kenar payları (docs/gorsel-istekleri.md):
+## [sol, üst, sağ, alt], görselin kısa kenarına oranla. Köşe ve kenar süsleri bu payın içinde
+## kalır; orta düzdür ve gerilir. Görsel yoksa kodla çizilen stil kullanılır (framed).
+const FRAME_SLICES := {
+	"panel": [0.2, 0.2, 0.2, 0.2],
+	"card": [0.18, 0.18, 0.18, 0.18],
+	"tab": [0.3, 0.3, 0.3, 0.3],
+	"ribbon": [0.45, 0.3, 0.45, 0.3],
+	"pill": [0.5, 0.3, 0.5, 0.3],
+	"bubble": [0.3, 0.3, 0.3, 0.42],
+	"button_round": [0.5, 0.5, 0.5, 0.5],
+}
+## "button_<renk>" düğmeleri (altta kalınlık payı) ve "frame_<nadirlik>" kart çerçeveleri.
+const BUTTON_SLICES := [0.38, 0.3, 0.38, 0.42]
+const RARITY_FRAME_SLICES := [0.22, 0.22, 0.22, 0.22]
+## Paletin düğme renkleri → arayüz kitindeki düğme görseli. Başka renkler kodla çizilir.
+const BUTTON_ART := {
+	"ff9f1c": "button_orange", "3d8bff": "button_blue", "25b864": "button_green",
+	"59617f": "button_gray", "e5484d": "button_red",
+}
+
 static var _theme: Theme
 static var _body: Font
 static var _display: Font
 static var _glossy_cache: Dictionary = {}
+static var _frame_cache: Dictionary = {}
 
 
 ## Metin fontu: Baloo 2 kalın (Türkçe harflerin tamamı var). Dosya yoksa varsayılan font.
@@ -180,6 +202,10 @@ static func glossy(color: Color, pressed: bool, radius: int = 30) -> StyleBoxTex
 	var key := "%s|%s|%d" % [color.to_html(), pressed, radius]
 	if _glossy_cache.has(key):
 		return _glossy_cache[key]
+	var art := _button_art(color, pressed, radius)
+	if art != null:
+		_glossy_cache[key] = art
+		return art
 	var w := radius * 2 + 32
 	var lip := 3 if pressed else 12
 	var h := radius * 2 + 32 + lip
@@ -215,6 +241,70 @@ static func glossy(color: Color, pressed: bool, radius: int = 30) -> StyleBoxTex
 	sb.content_margin_top = 14 + (9 if pressed else 0)
 	sb.content_margin_bottom = 12 + lip
 	_glossy_cache[key] = sb
+	return sb
+
+
+## Arayüz kitinde bu renge ait düğme görseli varsa ondan 9 dilimli stil (basılıyken biraz
+## koyu ve yazı aşağıda); yoksa null.
+static func _button_art(color: Color, pressed: bool, radius: int) -> StyleBoxTexture:
+	var frame_name: String = BUTTON_ART.get(color.to_html(false), "")
+	if frame_name.is_empty() or ItemArt.frame(frame_name) == null:
+		return null
+	var sb := framed(frame_name, StyleBoxEmpty.new(), radius + 4) as StyleBoxTexture
+	if sb == null:
+		return null
+	sb.content_margin_left = 34
+	sb.content_margin_right = 34
+	sb.content_margin_top = 14 + (9 if pressed else 0)
+	sb.content_margin_bottom = 12
+	if pressed:
+		sb.modulate_color = Color(0.86, 0.86, 0.86)
+	return sb
+
+
+## Bir çerçeve adının 9 dilim payları (FRAME_SLICES; "button_" ve "frame_" önekleri ortak).
+## Tanınmayan adda boş dizi.
+static func frame_slices(frame_name: String) -> Array:
+	if FRAME_SLICES.has(frame_name):
+		return FRAME_SLICES[frame_name]
+	if frame_name.begins_with("button_"):
+		return BUTTON_SLICES
+	if frame_name.begins_with("frame_"):
+		return RARITY_FRAME_SLICES
+	return []
+
+
+## Arayüz kitinde görseli varsa 9 dilimli StyleBoxTexture, yoksa fallback döner.
+## corner: en kalın kenar payının ekrandaki boyu (tasarım birimi). Doku buna göre ölçeklenir:
+## aynı görsel büyük panelde ve küçük hapta orantılı durur. İçerik payları fallback'ten
+## alınır, böylece görsel gelince yerleşim kaymaz.
+static func framed(frame_name: String, fallback: StyleBox, corner: float) -> StyleBox:
+	var slices := frame_slices(frame_name)
+	var texture := ItemArt.frame(frame_name)
+	if texture == null or slices.size() != 4:
+		return fallback
+	var short := float(mini(texture.get_width(), texture.get_height()))
+	var widest := maxf(maxf(float(slices[0]), float(slices[1])), maxf(float(slices[2]), float(slices[3])))
+	var scale := corner / maxf(1.0, short * widest)
+	var key := "%s|%d" % [frame_name, roundi(corner)]
+	var scaled: Texture2D = _frame_cache.get(key)
+	if scaled == null:
+		var img := texture.get_image()
+		if img.is_compressed():
+			img.decompress()
+		img.resize(maxi(1, roundi(img.get_width() * scale)), maxi(1, roundi(img.get_height() * scale)),
+				Image.INTERPOLATE_LANCZOS)
+		scaled = ImageTexture.create_from_image(img)
+		_frame_cache[key] = scaled
+	var sb := StyleBoxTexture.new()
+	sb.texture = scaled
+	var px := short * scale
+	sb.texture_margin_left = px * float(slices[0])
+	sb.texture_margin_top = px * float(slices[1])
+	sb.texture_margin_right = px * float(slices[2])
+	sb.texture_margin_bottom = px * float(slices[3])
+	for side: int in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		sb.set_content_margin(side, fallback.get_content_margin(side))
 	return sb
 
 

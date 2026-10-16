@@ -3,6 +3,8 @@ extends SceneTree
 ##   godot --headless --path . -s res://tools/process_images.gd
 ##   godot --headless --path . -s res://tools/process_images.gd -- --keep --only=items_modern_1 --preview=/tmp/onizleme
 ## Hangi görselin nasıl kesileceği data/art_sheets.json'da, promptlar docs/gorsel-istekleri.md'de.
+## fit: "square" (varsayılan; ikon kareye ortalanır), "box" (tek görsel, oran korunur),
+## "trim" (ızgaradaki her parça kırpılır, oran korunur: 9 dilimli çerçeveler ve düğmeler).
 ## --keep: işlenen orijinali silme (varsayılan: silinir, depo şişmesin).
 ## --preview=KLASÖR: kesilen ikonları dama desenli bir önizleme sayfasına da çizer.
 ## Sonra yeni PNG'ler için: godot --headless --path . --import
@@ -85,12 +87,18 @@ func _process_file(path: String, def: Dictionary, margin: float, outputs: Array[
 	var names: Array = def.get("names", [])
 	var size := int(def.get("size", 256))
 	var pieces: Array[Image] = []
-	if str(def.get("fit", "square")) == "box":
+	var fit := str(def.get("fit", "square"))
+	if fit == "box":
 		pieces.append(ArtSheet.fit_box(keyed, size, bool(def.get("key", true)), margin))
 	else:
 		var grid: Array = def.get("grid", [1, 1])
 		for piece in sheet.split(keyed, int(grid[0]), int(grid[1])):
-			if piece != null:
+			if piece == null:
+				continue
+			# "trim": 9 dilimli çerçeveler ve düğmeler; en boy oranı korunur, kenar payı eklenmez.
+			if fit == "trim":
+				pieces.append(ArtSheet.fit_box(piece, size, true, 0.0))
+			else:
 				pieces.append(ArtSheet.fit_square(piece, size, margin))
 		if not sheet.errors.is_empty():
 			return sheet.errors

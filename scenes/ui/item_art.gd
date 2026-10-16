@@ -10,6 +10,8 @@ extends RefCounted
 const UI := "res://assets/icons/ui/%s.png"
 const PORTRAITS := "res://assets/ui/portraits/%s.png"
 const ART := "res://assets/ui/art/%s"
+## Arayüz kitinin 9 dilimli çerçeveleri ve düğmeleri (ör. "panel", "button_green", "frame_rare").
+const FRAMES := "res://assets/ui/frames/%s.png"
 
 ## Yer tutucunun boyu (piksel).
 const PLACEHOLDER_SIZE := 128
@@ -40,6 +42,16 @@ static func fish(id: String) -> Texture2D:
 
 static func ui(icon_name: String) -> Texture2D:
 	return _load(UI % icon_name)
+
+
+## Arayüz kitinden 9 dilimli bir çerçeve ya da düğme görseli (yoksa null; UiKit.framed kullanır).
+static func frame(frame_name: String) -> Texture2D:
+	return _load(FRAMES % frame_name)
+
+
+## Çerçeve görselini dışarıdan verir (testler; dosya yokken UiKit.framed'i denemek için).
+static func register_frame(frame_name: String, texture: Texture2D) -> void:
+	_cache[FRAMES % frame_name] = texture
 
 
 static func portrait(mood: String) -> Texture2D:

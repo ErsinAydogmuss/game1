@@ -48,7 +48,8 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	sb.set_content_margin_all(34)
 	sb.shadow_color = Color(color, 0.55)
 	sb.shadow_size = 38
-	_card.add_theme_stylebox_override("panel", sb)
+	# Ersin'in nadirlik çerçevesi varsa o (arayüz kiti), yoksa nadirlik renginde kenar.
+	_card.add_theme_stylebox_override("panel", UiKit.framed("frame_" + db.rarity_id(rarity), sb, 72.0))
 	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
