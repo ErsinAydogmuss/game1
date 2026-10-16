@@ -51,7 +51,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 
 - [x] Tasarım belgeleri (gdd §10, bu yol haritası).
 - [x] Görsel istekleri Parti 1–2 ([`gorsel-istekleri.md`](gorsel-istekleri.md)); 9 dilimli çerçeve desteği (`UiKit.framed`).
-- [ ] Mac'te CC0 3D paket indirme görevi ([`mac-indirme.md`](mac-indirme.md)).
+- [x] Mac'te CC0 3D paket indirme görevi ([`mac-indirme.md`](mac-indirme.md)).
 
 **Dalga 1 — Dükkân, takım, para, nadirlik, defter → v0.2**
 
