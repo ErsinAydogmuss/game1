@@ -121,6 +121,11 @@ func test_every_content_id_has_translations() -> void:
 		keys.append(Elder.TIP_KEY % i)
 	for i in range(1, Nine.LINE_COUNT + 1):
 		keys.append(Nine.LINE_KEY % i)
+	# Dede'nin karttaki sözleri: Nadir ve üstü her nadirlik için.
+	for r in db.rarities:
+		var line := FishCard.dede_line(db, db.rarity_index(str(r["id"])), {})
+		if not line.is_empty():
+			keys.append(line)
 	for key in keys:
 		assert_true(table.has(key), "çeviri anahtarı eksik: " + key)
 		if table.has(key):

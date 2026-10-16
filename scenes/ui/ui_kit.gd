@@ -414,12 +414,13 @@ static func stars(count: int, side: float = 34.0, total: int = 5) -> HBoxContain
 	return row
 
 
-## Nadirlik rozeti: nadirlik renginde hap, içinde büyük harfli adı.
+## Nadirlik rozeti: nadirlik renginde hap, içinde simgesi (daire, üçgen, karo...) ve büyük harfli
+## adı. Simge renk körü oyuncu için: renkler gri tonda birbirine benzese de şekil ayırır.
 static func rarity_badge(db: ContentDB, rarity: int, size: int = SIZE_SMALL) -> PanelContainer:
 	var color := rarity_color(db, rarity)
 	var pill := PanelContainer.new()
 	var sb := flat(color, 40)
-	sb.content_margin_left = 22
+	sb.content_margin_left = 14
 	sb.content_margin_right = 22
 	sb.content_margin_top = 4
 	sb.content_margin_bottom = 2
@@ -428,11 +429,21 @@ static func rarity_badge(db: ContentDB, rarity: int, size: int = SIZE_SMALL) -> 
 	pill.add_theme_stylebox_override("panel", sb)
 	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pill.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var text := title(translate("RARITY_" + db.rarity_id(rarity)), size,
-			DARK_TEXT if color.get_luminance() > 0.6 else TEXT, HORIZONTAL_ALIGNMENT_CENTER, 0)
+	var ink_color := DARK_TEXT if color.get_luminance() > 0.6 else TEXT
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", maxi(4, int(size * 0.22)))
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pill.add_child(row)
+	row.add_child(GameIcon.make(rarity_icon(db, rarity), size * 1.05, ink_color))
+	var text := title(translate("RARITY_" + db.rarity_id(rarity)), size, ink_color, HORIZONTAL_ALIGNMENT_CENTER, 0)
 	text.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
-	pill.add_child(text)
+	row.add_child(text)
 	return pill
+
+
+## Nadirliğin simgesinin GameIcon adı ("rarity:<şekil>", rarities.json "shape").
+static func rarity_icon(db: ContentDB, rarity: int) -> String:
+	return "rarity:" + str(db.rarity_def(rarity).get("shape", "circle"))
 
 
 ## Statik yerlerde çeviri (Node.tr() olmayan sınıflar için).

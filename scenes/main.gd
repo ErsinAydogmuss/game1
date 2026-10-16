@@ -33,6 +33,10 @@ const SHOP_TURN := deg_to_rad(30.0)
 const STEP_SOUND_EVERY := 0.36
 ## İlk atıştan önce ilk av gölgesinin çevresinde halka aralığı (sn): "bu gölge!"
 const FIRST_CUE_EVERY := 1.6
+## Efsanevi bir gölge balıkçıya bu kadar yaklaşınca (m) Dede uyarır ve kısa ezgi çalar; Dede o
+## gölgeye bu kadar sn bakar.
+const LEGEND_NOTICE_M := 9.0
+const LEGEND_LOOK_TIME := 3.0
 
 var session: FishingSession
 var lake: LakeShape
@@ -73,6 +77,10 @@ var _hint_shown: String = ""
 var _line: String = ""
 var _line_time: float = 0.0
 var _line_speaker: String = "dede"
+## Dede'nin haber verdiği efsanevi gölgeler (kimlik → true) ve o gölgeye bakma süresi.
+var _announced: Dictionary = {}
+var _legend_id: int = -1
+var _legend_look: float = 0.0
 ## Dede'nin son öğüdünün ve Nine'nin son uğurlama sözünün sırası.
 var _tip_index: int = 0
 var _nine_index: int = 0
@@ -85,9 +93,11 @@ func _ready() -> void:
 	add_child(scene)
 	scene.setup(lake)
 	shadows = ShadowLayer.new()
+	shadows.db = GameState.db
 	add_child(shadows)
 	ripples = Ripples.new()
 	add_child(ripples)
+	shadows.ripples = ripples
 	catch_fx = CatchFx.new()
 	add_child(catch_fx)
 	angler = Angler.new()
@@ -143,6 +153,8 @@ func _start_session() -> void:
 	line.visible = false
 	_pending_cast = Dice.NO_POINT
 	_quick_catch = -1.0
+	_announced.clear()
+	_legend_look = 0.0
 	camera.pitch = FollowCamera.PITCH
 	camera.zoom = 1.0
 	camera.snap(_focus())
@@ -434,6 +446,8 @@ func _on_catch() -> void:
 		_release(fish_id, rarity)
 	GameState.save_game()
 	_refresh_status()
+	# Rütbe atlama, kova dolu gibi bildirimler balığın etiketi sönünce (üst üste binmesin).
+	hud.hold_toasts(CatchFx.HOLD_TIME)
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
 		var rank := int(ranked["new_rank"])
 		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT)
@@ -447,7 +461,8 @@ func _on_catch() -> void:
 	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
 	var color := UiKit.rarity_color(GameState.db, rarity)
 	catch_fx.show_catch(GameState.db.fish_by_id(fish_id), int(info["size_cm"]), tr("FISH_" + fish_id), color,
-			_show_point, rarity >= Records.CARD_RARITY, func() -> Vector3: return angler.global_position)
+			_show_point, rarity >= Records.CARD_RARITY, func() -> Vector3: return angler.global_position,
+			UiKit.rarity_icon(db, rarity))
 	if bool(outcome["new_species"]) or bool(outcome["new_record"]) or rarity >= Records.CARD_RARITY:
 		angler.cheer()
 		elder.cheer()
@@ -464,8 +479,7 @@ func _on_catch() -> void:
 		_card_outcome = outcome
 		_card_wait = CARD_DELAY
 	else:
-		hud.toast(tr("UI_CAUGHT_TOAST") % [tr("FISH_" + fish_id), int(info["size_cm"])],
-				UiKit.rarity_color(GameState.db, rarity))
+		# Kartsız yakalama: adı ve boyu balığın üstündeki etikette (CatchTag); bildirim yok.
 		_quick_catch = 0.0
 
 
@@ -493,9 +507,16 @@ func _present(delta: float) -> void:
 			line.shake = clampf(reel.tension, 0.0, 1.3) * (1.6 if reel.thrashing() else 0.6)
 	var tension := reel.tension if fighting else 0.0
 	angler.tension = tension
-	# Dede olta sudayken şamandırayı izler; Nine yaklaşan balıkçıya bakar.
+	# Dede olta sudayken şamandırayı izler (efsanevi gölgeyi haber verdiyse önce ona bakar); Nine
+	# yaklaşan balıkçıya bakar.
+	_notice_legends(delta)
 	elder.has_focus = session.line_out() and bobber.visible
 	elder.focus = bobber.global_position
+	if _legend_look > 0.0:
+		var point := shadows.shadow_point(_legend_id)
+		if point != Vector3.INF:
+			elder.focus = point
+			elder.has_focus = true
 	nine.watch(angler.global_position + Vector3(0.0, 1.1, 0.0))
 	_line_time = maxf(0.0, _line_time - delta)
 	match session.state:
@@ -558,6 +579,27 @@ func _focus() -> Vector3:
 		var p := session.fight_point() if session.state == FishingSession.State.FIGHTING else session.bobber
 		return a.lerp(Vector3(p.x, 0.0, p.y), 0.45)
 	return a
+
+
+## Efsanevi (ve üstü) bir gölge yaklaşınca Dede bir kez haber verir: sözü, kısa ezgi, titreşim ve
+## o gölgeye bakışı. Çekişmede ve kart açıkken söylemez (sırası gelince söyler).
+func _notice_legends(delta: float) -> void:
+	_legend_look = maxf(0.0, _legend_look - delta)
+	if card.visible or session.state == FishingSession.State.FIGHTING:
+		return
+	var legendary := GameState.db.rarity_index("legendary")
+	for s in session.sim.shadows:
+		if s.rarity < legendary or _announced.has(s.id) or s.mode == FishShadow.Mode.FLEE:
+			continue
+		if s.pos.distance_to(angler.pos2()) > LEGEND_NOTICE_M:
+			continue
+		_announced[s.id] = true
+		_legend_id = s.id
+		_legend_look = LEGEND_LOOK_TIME
+		_say("UI_DEDE_LEGEND_NEAR")
+		Sounds.play("sting")
+		Sounds.haptic(30)
+		return
 
 
 ## İlk av gölgesi, ilk atışa kadar arada bir halkayla gösterilir.
@@ -724,10 +766,12 @@ func _on_sold(_coins: int) -> void:
 ## İpucu çubuğundaki Dede ve Nine yüzleri: Ersin'in portresi yoksa modelden çekilir (birkaç kare
 ## sürer).
 func _load_faces() -> void:
-	if ItemArt.portrait("dede_smile") == null:
-		var face := await ElderBody.portrait(self, 192)
-		if face != null:
-			hud.set_portrait(face)
+	var dede_face := ItemArt.portrait("dede_smile")
+	if dede_face == null:
+		dede_face = await ElderBody.portrait(self, 192)
+		if dede_face != null:
+			hud.set_portrait(dede_face)
+	card.dede_face = dede_face
 	var nine_face := ItemArt.portrait("nine_smile")
 	if nine_face == null:
 		nine_face = await NineBody.portrait(self, 192)

@@ -292,6 +292,12 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | Masalsı | ✪ | turkuaz | yalnızca Gölün Bekçisi |
 
 - **Tuttuktan sonra:** kademe çerçeveli kart ve rozet, kademe renginde ışık sütunu, kademe sesi, Dede'nin sözü.
+- ✅ **Dalga 1'deki hâli:**
+  - Simgeler kodla çizilir (daire, üçgen, karo, yıldız, dört köşeli parıltı, madalyon); her rozette (kart, dükkânın kovası, defter) adın önünde. Gri tonlamalı ekran görüntüsünde rozetler şekilleriyle ayrılıyor.
+  - Gölgede ipucu: Nadir 2,5 sn'de bir baştan kuyruğa kayan açık bir pırıltı; Destansı kenarında hiç sönmeyen, nabız gibi atan mor ışıltı ve arada kabarcık halkaları; Efsanevi altın parlayan kenar ve göbek, arkasında dalga izi (Efsanevi balık Dalga 2'de gelir).
+  - Efsanevi bir gölge balıkçıya 9 m yaklaşınca Dede bir kez uyarır ("Şşş! Şu parlayan gölgeyi gördün mü?"), kısa gizemli bir ezgi çalar, telefon titrer, Dede o gölgeye bakar.
+  - Tutunca balığın üstünde 2B etiket: simge ve ad kademe renginde, altında boy (kartsız yakalamadaki eski bildirim kalktı; rütbe ve kova bildirimleri etiket sönünce gelir).
+  - Kartta Dede'nin yüzü ve sözü: Nadir ve üstünde kademeye göre ("Vay be, nadir bir balık!", "Bunu ben bile az gördüm!", "Efsane! Bunu bütün köy duyacak!"), yoksa yeni tür ya da rekor için.
 - **Değer:** her türün bir taban değeri var (Sıradan ≈5, Güzel ≈12, Nadir ≈35, Destansı ≈120, Efsanevi ≈500 para) × boy çarpanı (0,6–1,6). Masalsı satılmaz.
 - **Şans garantisi:**
   - Nadir+ balık gelmeden geçen 40 avdan sonra, bulunduğun bölgede Nadir+ bir gölge doğar. Destansı+ için 150, Efsanevi için 400 av.

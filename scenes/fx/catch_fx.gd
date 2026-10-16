@@ -1,16 +1,18 @@
 class_name CatchFx
 extends Node3D
 ## Yakalanan balığın gösterisi: balık balıkçının önünde kıvrılır (FishMesh, küçültülmüş boy),
-## üstünde adı ve boyu yükselip söner; Nadir ve üstünde balıkçının çevresinde nadirlik renginde
-## ışık sütunu yükselir. Sütun balığın arkasında kalır (toplamalı ışık balığı ve yazıyı
-## soldurmasın): balık kameraya doğru uzatılmıştır, yazı sütundan sonra çizilir.
+## üstünde nadirlik simgesi, adı ve boyu (CatchTag, 2B) yükselip söner; Nadir ve üstünde balıkçının
+## çevresinde nadirlik renginde ışık sütunu yükselir. Sütun balığın arkasında kalır (toplamalı ışık
+## balığı soldurmasın): balık kameraya doğru uzatılmıştır.
 ## Balık kameraya yan döner (profilinden görünsün). Süreler _process(delta) toplamıyla ölçülür.
 
 const HOLD_TIME := 2.2
 const BEAM_TIME := 1.8
 
 var _fish: FishMesh
-var _label: Label3D
+var _tag: CatchTag
+## Etiketin bağlı olduğu 3B nokta (balığın üstü; yükselir).
+var _tag_point := Vector3.ZERO
 var _beam: MeshInstance3D
 var _beam_material: StandardMaterial3D
 var _hand: Callable
@@ -21,9 +23,10 @@ var _beam_age: float = -1.0
 
 ## def: balığın tanımı; size_cm: boyu; title: çevrilmiş adı; color: nadirlik rengi;
 ## hand: balığın gösterileceği yeri veren fonksiyon (her kare okunur); beam: ışık sütunu olsun mu;
-## origin: sütunun ortası (balıkçının yeri; verilmezse balığın yeri).
+## origin: sütunun ortası (balıkçının yeri; verilmezse balığın yeri); icon: nadirlik simgesi
+## (GameIcon adı, UiKit.rarity_icon).
 func show_catch(def: Dictionary, size_cm: int, title: String, color: Color, hand: Callable, beam: bool,
-		origin: Callable = Callable()) -> void:
+		origin: Callable = Callable(), icon: String = "") -> void:
 	clear()
 	_hand = hand
 	_origin = origin
@@ -33,21 +36,13 @@ func show_catch(def: Dictionary, size_cm: int, title: String, color: Color, hand
 	_fish.rotation.y = FollowCamera.YAW
 	_fish.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(_fish)
-	_label = Label3D.new()
-	_label.text = "%s\n%s" % [UiKit.upper(title), tr("UI_SIZE_CM") % size_cm]
-	_label.font = UiKit.display_font()
-	_label.font_size = 96
-	_label.pixel_size = 0.0042
-	_label.outline_size = 22
-	_label.modulate = color.lightened(0.15)
-	_label.outline_modulate = UiKit.OUTLINE
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.no_depth_test = true
-	_label.fixed_size = false
-	# Işık sütunundan sonra çizilsin (toplamalı ışık yazıyı soldurmasın).
-	_label.render_priority = 12
-	_label.outline_render_priority = 11
-	add_child(_label)
+	if _tag == null:
+		_tag = CatchTag.new()
+		_tag.name = "Tag"
+		add_child(_tag)
+	_tag_point = (hand.call() as Vector3) + Vector3(0.0, 0.85, 0.0) if hand.is_valid() else Vector3.ZERO
+	_place_tag()
+	_tag.show_tag(title, tr("UI_SIZE_CM") % size_cm, color, icon, HOLD_TIME)
 	_age = 0.0
 	if beam:
 		_make_beam(color)
@@ -60,11 +55,12 @@ func is_showing() -> bool:
 
 
 func clear() -> void:
-	for node: Node in [_fish, _label, _beam]:
+	for node: Node in [_fish, _beam]:
 		if node != null:
 			node.queue_free()
+	if _tag != null:
+		_tag.clear()
 	_fish = null
-	_label = null
 	_beam = null
 	_age = -1.0
 	_beam_age = -1.0
@@ -76,9 +72,8 @@ func _process(delta: float) -> void:
 	_age += delta
 	_place()
 	var t := _age / HOLD_TIME
-	_label.position.y += delta * 0.25
-	_label.modulate.a = clampf((1.0 - t) * 3.0, 0.0, 1.0)
-	_label.outline_modulate.a = _label.modulate.a
+	_tag_point.y += delta * 0.25
+	_place_tag()
 	if _fish != null:
 		_fish.set_wiggle(0.16 * maxf(0.3, 1.0 - t), 11.0)
 	if _beam != null:
@@ -95,12 +90,21 @@ func _place() -> void:
 		return
 	var hand: Vector3 = _hand.call()
 	_fish.position = hand + Vector3(0.0, 0.05 * sin(_age * 9.0), 0.0)
-	if _age < 0.05:
-		_label.position = hand + Vector3(0.0, 1.45, 0.0)
 	if _beam != null:
 		# Sütunun dibi yerde kalsın (ölçek ortadan büyür).
 		var base: Vector3 = _origin.call() if _origin.is_valid() else hand
 		_beam.position = Vector3(base.x, 3.5 * _beam.scale.y, base.z)
+
+
+## Etiket 3B noktanın ekrandaki yerine (kamera arkasındaysa gizli).
+func _place_tag() -> void:
+	if _tag == null:
+		return
+	var view := get_viewport().get_camera_3d()
+	if view == null or view.is_position_behind(_tag_point):
+		_tag.modulate.a = 0.0
+		return
+	_tag.anchor = view.unproject_position(_tag_point)
 
 
 func _make_beam(color: Color) -> void:

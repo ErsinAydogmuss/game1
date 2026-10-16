@@ -59,6 +59,8 @@ var _toast_queue: Array[Array] = []
 ## Açılıştan sonra kare başına bir tane çizilecek düğme dokuları (panellerin renkleri: dükkân,
 ## ayarlar). Hepsi açılışta çizilse açılış uzar; ilk açılan panelde çizilse panel takılır.
 var _warm_later: Array[Array] = []
+## Sıradaki bildirimler bu kadar sn bekler (yakalanan balığın etiketi ekrandayken).
+var _toast_hold: float = 0.0
 var _action_kind: String = "-"
 var _clock: float = 0.0
 var _fps_clock: float = 0.0
@@ -85,6 +87,11 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_clock += delta
+	if _toast_hold > 0.0:
+		_toast_hold -= delta
+		if _toast_hold <= 0.0 and _toast_age < 0.0 and not _toast_queue.is_empty():
+			var held: Array = _toast_queue.pop_front()
+			toast(str(held[0]), held[1])
 	if not _warm_later.is_empty():
 		var job: Array = _warm_later.pop_front()
 		UiKit.glossy(job[0], bool(job[1]))
@@ -165,9 +172,10 @@ func set_status(coins: int, bucket: int, capacity: int, rank: int, progress: flo
 	_rank_bar.queue_redraw()
 
 
-## Bildirim: biri gösteriliyorsa sırasını bekler (rütbe atlama, kova dolu gibi ikincil haberler).
+## Bildirim: biri gösteriliyorsa ya da bekletiliyorsa (hold_toasts) sırasını bekler (rütbe atlama,
+## kova dolu gibi ikincil haberler).
 func toast_later(text: String, color: Color = UiKit.TEXT) -> void:
-	if _toast_age < 0.0:
+	if _toast_age < 0.0 and _toast_hold <= 0.0:
 		toast(text, color)
 	else:
 		_toast_queue.append([text, color])
@@ -186,6 +194,11 @@ func toast(text: String, color: Color = UiKit.TEXT) -> void:
 	_toast.visible = true
 	_toast_age = 0.0
 	_toast.pivot_offset = _toast.size * 0.5
+
+
+## Sıradaki bildirimleri bir süre bekletir (toast_later ile gelenler).
+func hold_toasts(seconds: float) -> void:
+	_toast_hold = maxf(_toast_hold, seconds)
 
 
 ## Çekişmede durum gizlenir (gerilim çubuğuna yer, dikkat balıkta).

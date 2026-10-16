@@ -17,6 +17,8 @@ extends Node
 ##   fish: beş balık elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez).
 ##   shop: Nine'nin dükkânı (KONTROL satırları): dokununca açılır, para yetmezse ve rütbe tutmazsa
 ##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, hepsini sat; sekme görüntüleri.
+##   rarity: nadirlik ipuçları (görsel denetim): her nadirlikten bir gölge yan yana (pırıltı, ışıltı,
+##     kabarcık), sonra her nadirliğin rozeti; gri tonlamalı kopyayla renk körü denetimi yapılır.
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~40 sn): Dede'ye dokun, gölgenin önüne at,
 ##     VUR, çekişme (bot uyarıda bırakır), ilk balık ve kartı; sonra nadir bir turna (ışık sütunu).
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
@@ -67,6 +69,8 @@ func _ready() -> void:
 			_play_video.call_deferred()
 		"shop":
 			_play_shop.call_deferred()
+		"rarity":
+			_play_rarity.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -431,6 +435,50 @@ func _check_panel_buttons(panel: Control, label: String) -> void:
 			notes.is_empty() and count > 0)
 
 
+## Nadirlik ipuçları: her nadirlikten bir gölge iskelenin önünde yan yana; birkaç anda görüntü
+## (Nadir'in pırıltısı aralıklı). Sonra kartları nadirlik rozetleriyle.
+func _play_rarity() -> void:
+	_use_save(3)
+	main.set("bot_camera", true)
+	var db := GameState.db
+	var sim := _session().sim
+	await _wait(1.0)
+	var kinds: Array[String] = ["rudd", "carp", "pike", "wels"]
+	for i in mini(kinds.size(), sim.shadows.size()):
+		var s := sim.shadows[i]
+		var def := db.fish_by_id(kinds[i])
+		s.fish_id = kinds[i]
+		s.fish_index = db.fish_index(kinds[i])
+		s.rarity = int(def["rarity"])
+		s.percentile = 700000
+		s.length = FishTable.shadow_length(def, s.percentile)
+		s.pos = Vector2(-2.4 + i * 1.6, 0.6)
+		s.heading = Vector2(1, 0)
+		s.mode = FishShadow.Mode.PAUSE
+		s.timer = 1_000_000
+	_frame_on(Vector3(0.0, 0.0, 0.8), 0.55, deg_to_rad(62.0))
+	for k in 4:
+		await _wait(0.65)
+		await _shot("0%d_golgeler" % (k + 1))
+	var card: FishCard = main.get("card")
+	for r in db.rarities.size():
+		var rarity := r
+		var fish_id := ""
+		for f in db.fish:
+			if int(f["rarity"]) == rarity:
+				fish_id = str(f["id"])
+		if fish_id.is_empty():
+			continue
+		var def := db.fish_by_id(fish_id)
+		card.show_catch(db, {"fish": fish_id, "size_cm": FishTable.size_cm(def, 800000), "stars": 3, "rarity": rarity},
+				{"new_species": true})
+		await _wait(0.5)
+		await _shot("1%d_kart_%s" % [rarity, db.rarity_id(rarity)])
+		card.close_card()
+		await _wait(0.1)
+	_quit()
+
+
 ## Bir kontrolün ortasına dokunur.
 func _tap_control(control: Control) -> void:
 	await _tap(control.get_global_rect().get_center())
@@ -469,7 +517,7 @@ func _play_fish() -> void:
 				"stars": FishTable.stars(percentile), "rarity": rarity}
 		catch_fx.show_catch(def, int(info["size_cm"]), tr("FISH_" + id), UiKit.rarity_color(db, rarity),
 				func() -> Vector3: return show, rarity >= Records.CARD_RARITY,
-				func() -> Vector3: return _angler().global_position)
+				func() -> Vector3: return _angler().global_position, UiKit.rarity_icon(db, rarity))
 		# Oyundaki gösteri kamerası (main: SHOW_ZOOM, odak gösteri noktasının biraz altı).
 		_frame_on(show + Vector3(0.0, -0.2, 0.0), float(main.get("SHOW_ZOOM")))
 		await _wait(0.7)

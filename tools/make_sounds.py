@@ -614,6 +614,18 @@ def buy():
     return finish(out + 0.25 * reverb(out, 0.8)[:n], -1.0, 0.1)
 
 
+def sting():
+    """Efsanevi gölge yakında: alçak bir akorun üstünde yükselen, yankılı gizemli üç nota."""
+    n = frames(2.2)
+    pad = np.zeros(n)
+    for note in (50, 57, 62):
+        pad += sine(midi(note), n) * env_ar(n, 0.5, 1.6)
+    pad = spectral(pad, None, 1800.0)
+    x = 0.35 * unit(pad) + 0.6 * unit(arpeggio([74, 78, 81, 86], 0.16, n, 0.7, 0.9, 0.95))
+    x += 0.05 * band(noise(n, 640), 5000, 11000) * env_ar(n, 0.6, 1.5)
+    return finish(x + 0.45 * reverb(x, 1.8)[:n], -1.0, 0.4)
+
+
 def equip():
     """Kuşanma: takımın yerine oturan kısa tahta vuruşu ve metal tıkırtısı."""
     n = frames(0.18)
@@ -643,6 +655,7 @@ def registry():
         "scare_1": scare, "reel_in_1": reel_in, "record_1": record, "error_1": lambda: buzz([50], 0.16),
         "panel_open_1": lambda: panel(True), "panel_close_1": lambda: panel(False), "card_1": card,
         "hint_1": tutorial, "coins_1": coins, "buy_1": buy, "equip_1": equip,
+        "sting_1": sting,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

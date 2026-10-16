@@ -5,8 +5,9 @@ extends Control
 ## Kart, kart açıkken başlayan bir dokunuşun parmağı kalkınca kapanır: basışta kapansaydı aynı
 ## dokunuş (Godot dokunuştan önce taklit fare olayını işler) arkadaki suya atış da yapardı;
 ## çekerken basılı kalan parmağın kalkması da kartı kapatmaz.
-## İçerik: nadirlik, balığın resmi (Ersin'in görseli gelene kadar renkli madalyon), adı, boyu,
-## yıldızları, kısa tanımı ve "Yeni tür!" / "Yeni rekor!" şeritleri. Destansı ve üstünde konfeti.
+## İçerik: nadirlik (simgeli rozet), balığın resmi (Ersin'in görseli gelene kadar renkli madalyon),
+## adı, boyu, yıldızları, kısa tanımı, "Yeni tür!" / "Yeni rekor!" şeritleri ve Dede'nin sözü (Nadir
+## ve üstünde nadirliğe göre; yoksa yeni tür ya da rekor için). Destansı ve üstünde konfeti.
 ## Süreler _process(delta) toplamıyla ölçülür.
 
 signal closed
@@ -16,6 +17,8 @@ const MIN_OPEN := 0.6
 const CONFETTI_COLORS: Array[Color] = [Color("#ffcf3c"), Color("#ff5a7a"), Color("#4fd2ff"), Color("#7cf06a"), Color("#c47bff"), Color.WHITE]
 
 var ok_button: Button
+## Dede'nin sözünün yanındaki yüzü (main verir; yoksa yer tutucu ikon).
+var dede_face: Texture2D
 
 var _card: PanelContainer
 var _age: float = 0.0
@@ -84,6 +87,9 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.custom_minimum_size = Vector2(900, 0)
 	column.add_child(desc)
+	var line := dede_line(db, rarity, outcome)
+	if not line.is_empty():
+		column.add_child(_dede_row(tr(line)))
 	ok_button = UiKit.button(tr("UI_CARD_OK"), UiKit.SUCCESS, UiKit.SIZE_TITLE, Vector2(420, 130))
 	ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	# Kart görülmeden kapanmasın: düğme de en kısa açık kalma süresine uyar.
@@ -107,6 +113,46 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	if rarity >= db.rarity_index("epic"):
 		_confetti(size * 0.5, 120 if rarity >= db.rarity_index("legendary") else 70)
 		Sounds.haptic(160)
+
+
+## Dede'nin karttaki sözü: Nadir ve üstünde nadirliğe göre, yoksa yeni tür ya da rekor için
+## (çeviri anahtarı; "" = söz yok).
+static func dede_line(db: ContentDB, rarity: int, outcome: Dictionary) -> String:
+	if rarity >= db.rarity_index("rare"):
+		return "UI_DEDE_CARD_%s" % db.rarity_id(rarity)
+	if bool(outcome.get("new_species", false)):
+		return "UI_DEDE_CARD_NEW"
+	if bool(outcome.get("new_record", false)):
+		return "UI_DEDE_CARD_RECORD"
+	return ""
+
+
+## Dede'nin yüzü ve sözü (açık bir hap içinde).
+func _dede_row(text: String) -> Control:
+	var pill := PanelContainer.new()
+	var sb := UiKit.card_style(UiKit.CREAM_EDGE, 40, UiKit.CREAM_CARD, 3)
+	sb.content_margin_left = 14
+	sb.content_margin_right = 28
+	sb.content_margin_top = 6
+	sb.content_margin_bottom = 6
+	pill.add_theme_stylebox_override("panel", sb)
+	pill.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pill.add_child(row)
+	if dede_face != null:
+		var face := TextureRect.new()
+		face.texture = dede_face
+		face.custom_minimum_size = Vector2(76, 76)
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(face)
+	var label := UiKit.ink(text, UiKit.SIZE_BODY, UiKit.INK)
+	row.add_child(label)
+	return pill
 
 
 func close_card() -> void:

@@ -4,7 +4,8 @@ extends Control
 ## yoksa 100×100'lük bir tasarım alanında kodla çizer ve boyuta ölçekler. (Kazı'dan uyarlandı.)
 ## kind: coin, star, star_empty, close, book, settings, lock, question, hand, burst, trophy,
 ## sound, music, vibration, easy, globe, up, down, rod, reel, line, bait, net, bucket, aquarium,
-## bobber, hook, fish, shop, gem. "fish:<id>" balık portresini çizer.
+## bobber, hook, fish, shop, gem. "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini
+## (circle, triangle, diamond, star, sparkle, medallion; rengi tint) çizer.
 
 ## Kodla çizilebilen ikonlar (görseli yoksa). Bilinmeyen ad soru işareti çizer (boş kalmasın);
 ## takımın "kind"ı bunlardan biri olmalı (test_content_db denetler).
@@ -71,6 +72,10 @@ func _draw() -> void:
 		return
 	var s := minf(size.x, size.y) / 100.0
 	draw_set_transform((size - Vector2(100, 100) * s) * 0.5, 0.0, Vector2(s, s))
+	if kind.begins_with("rarity:"):
+		_rarity(kind.substr(7))
+		draw_set_transform(Vector2.ZERO)
+		return
 	match kind:
 		"coin":
 			_coin()
@@ -131,6 +136,47 @@ func _draw() -> void:
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
+
+
+## Nadirlik simgesi: renk tek başına yetmesin (renk körü oyuncu da ayırsın). Sıradan daire,
+## Güzel üçgen, Nadir karo, Destansı yıldız, Efsanevi dört köşeli parıltı, Masalsı madalyon.
+## Dolgusu tint, dış çizgisi koyu.
+func _rarity(shape: String) -> void:
+	var ink := Color("#2a160a")
+	var c := Vector2(50, 50)
+	match shape:
+		"triangle":
+			_outlined(PackedVector2Array([Vector2(50, 10), Vector2(91, 84), Vector2(9, 84)]), ink)
+		"diamond":
+			_outlined(PackedVector2Array([Vector2(50, 6), Vector2(88, 50), Vector2(50, 94), Vector2(12, 50)]), ink)
+		"star":
+			_outlined(_star_points(c + Vector2(0, 3), 46.0, 20.0, 5), ink)
+		"sparkle":
+			_outlined(_star_points(c, 48.0, 13.0, 4), ink)
+		"medallion":
+			draw_circle(c, 46, ink)
+			draw_circle(c, 39, tint)
+			draw_arc(c, 30, 0.0, TAU, 32, ink, 4.0, true)
+			_outlined(_star_points(c + Vector2(0, 2), 22.0, 9.0, 5), ink)
+		_:
+			draw_circle(c, 40, ink)
+			draw_circle(c, 33, tint)
+
+
+func _outlined(points: PackedVector2Array, ink: Color) -> void:
+	draw_colored_polygon(points, tint)
+	var loop := points.duplicate()
+	loop.append(points[0])
+	draw_polyline(loop, ink, 7.0, true)
+
+
+static func _star_points(center: Vector2, outer: float, inner: float, tips: int) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i in tips * 2:
+		var r := outer if i % 2 == 0 else inner
+		var a := -PI * 0.5 + i * PI / tips
+		points.append(center + Vector2(cos(a), sin(a)) * r)
+	return points
 
 
 func _question() -> void:

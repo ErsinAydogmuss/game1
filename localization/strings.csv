@@ -60,7 +60,6 @@ UI_NEW_SPECIES,New species!,Yeni tür!
 UI_NEW_RECORD,New record!,Yeni rekor!
 UI_SIZE_CM,%d cm,%d cm
 UI_CARD_OK,Great!,Harika!
-UI_CAUGHT_TOAST,%s · %d cm,%s · %d cm
 UI_DISTANCE,%s m,%s m
 RARITY_mythic,Mythic,Masalsı
 SPOT_big_lake,Village Lake,Köy Gölü
@@ -181,3 +180,10 @@ UI_NINE_NO_COINS,"You're a little short, dear. Bring a few more fish!","Paran bi
 UI_NINE_RANK,That takes some skill. Come back at rank %d!,Bu biraz ustalık ister. Rütbe %d olunca gel!
 UI_NINE_EQUIP,"There, all set!","Tamamdır, taktım!"
 UI_NINE_SOLD,Well done! %s coins for you.,Eline sağlık! %s para senin.
+UI_DEDE_CARD_NEW,"A new kind! Well done, kid.","Yeni bir tür! Aferin evlat."
+UI_DEDE_CARD_RECORD,Your biggest yet! A new record.,"En büyüğü bu! Rekor kırdın."
+UI_DEDE_CARD_rare,"Wow, a rare one! Sharp eyes, kid.","Vay be, nadir bir balık! Gözün keskinmiş."
+UI_DEDE_CARD_epic,Even I've rarely seen one of these! An epic catch.,"Bunu ben bile az gördüm! Destansı bir av."
+UI_DEDE_CARD_legendary,Legendary! The whole village will hear of this!,"Efsane! Bunu bütün köy duyacak!"
+UI_DEDE_CARD_mythic,"The Lake Keeper... So it's real.","Gölün Bekçisi... Demek gerçekmiş."
+UI_DEDE_LEGEND_NEAR,"Shh! See that glowing shadow? Could be legendary!","Şşş! Şu parlayan gölgeyi gördün mü? Efsanevi olabilir!"
