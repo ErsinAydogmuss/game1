@@ -105,7 +105,7 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	tween.tween_property(_card, "modulate:a", 1.0, 0.15)
 	Sounds.play("card")
 	if rarity >= db.rarity_index("epic"):
-		_confetti(size * 0.5, 120 if rarity >= db.rarities.size() - 1 else 70)
+		_confetti(size * 0.5, 120 if rarity >= db.rarity_index("legendary") else 70)
 		Sounds.haptic(160)
 
 

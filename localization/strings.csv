@@ -63,3 +63,77 @@ UI_SIZE_CM,%d cm,%d cm
 UI_CARD_OK,Great!,Harika!
 UI_CAUGHT_TOAST,%s · %d cm,%s · %d cm
 UI_DISTANCE,%s m,%s m
+RARITY_mythic,Mythic,Masalsı
+SPOT_big_lake,Village Lake,Köy Gölü
+RANK_novice,Novice,Acemi
+RANK_apprentice,Apprentice,Çırak
+RANK_angler,Angler,Balıkçı
+RANK_master,Master,Usta
+RANK_lake_master,Lake Master,Göl Ustası
+RANK_lake_legend,Lake Legend,Gölün Efsanesi
+GEAR_rod_bamboo,Bamboo rod,Bambu kamış
+GEAR_rod_bamboo_DESC,Dede's very first rod. Light and loyal.,Dede'nin ilk oltası. Hafif ve sadık.
+GEAR_rod_float_glass,Fiberglass rod,Cam elyafı kamış
+GEAR_rod_float_glass_DESC,Casts farther and handles bigger fish better.,"Daha uzağa atar, iri balığa daha dayanıklıdır."
+GEAR_rod_float_carbon,Carbon rod,Karbon kamış
+GEAR_rod_float_carbon_DESC,"Master-made: long casts, strong pull.","Usta işi: uzun atış, güçlü çekiş."
+GEAR_reel_basic,Basic reel,Basit makara
+GEAR_reel_basic_DESC,"Squeaky, but it does the job.",Gıcır gıcır ama işini görür.
+GEAR_reel_smooth,Smooth reel,Yumuşak makara
+GEAR_reel_smooth_DESC,Quiet and a little faster.,Sessiz ve biraz daha hızlı sarar.
+GEAR_reel_quick,Quick reel,Hızlı makara
+GEAR_reel_quick_DESC,Its big handle reels in fast.,Büyük kolu sayesinde çabuk sarar.
+GEAR_reel_strong,Strong reel,Güçlü makara
+GEAR_reel_strong_DESC,Its sturdy drag softens sudden pulls.,Sağlam freni balığın ani çekişini yumuşatır.
+GEAR_reel_pro,Pro reel,Usta makarası
+GEAR_reel_pro_DESC,"Fast, with a good drag.",Hem hızlı hem frenli.
+GEAR_reel_master,Golden reel,Altın makara
+GEAR_reel_master_DESC,The best reel on the lake. Nine's pride.,Gölün en iyi makarası. Nine'nin gözbebeği.
+GEAR_line_mono_thin,Thin line,İnce misina
+GEAR_line_mono_thin_DESC,Starter line. Remember to let go when the fish bursts!,Başlangıç misinası. Balık çırpınınca bırakmayı unutma!
+GEAR_line_mono,Nylon line,Naylon misina
+GEAR_line_mono_DESC,A little tougher.,Biraz daha dayanıklı.
+GEAR_line_fluoro,Fluorocarbon line,Florokarbon misina
+GEAR_line_fluoro_DESC,Nearly invisible underwater: you can cast closer to shadows.,Suda neredeyse görünmez: gölgeye daha yakın atabilirsin.
+GEAR_line_braid,Braided line,Örgü misina
+GEAR_line_braid_DESC,"Very strong, hard to snap.","Çok güçlü, kolay kopmaz."
+GEAR_line_fluoro_pro,Pro fluorocarbon,Usta florokarbon
+GEAR_line_fluoro_pro_DESC,Invisible and tough.,Hem görünmez hem dayanıklı.
+GEAR_line_braid_pro,Golden braid,Altın örgü
+GEAR_line_braid_pro_DESC,So strong it almost never snaps.,Kopmaz denecek kadar güçlü.
+GEAR_hook_small,Small hook,Küçük iğne
+GEAR_hook_small_DESC,For small fish.,Küçük balıklar için.
+GEAR_hook_medium,Medium hook,Orta iğne
+GEAR_hook_medium_DESC,Fish escape a bit less often.,Balık biraz daha zor kaçar.
+GEAR_hook_large,Large hook,Büyük iğne
+GEAR_hook_large_DESC,Even big fish struggle to get away.,İri balık bile kolay kaçamaz.
+GEAR_bobber_basic,Red-and-white bobber,Kırmızı-beyaz şamandıra
+GEAR_bobber_basic_DESC,The classic.,Klasik şamandıra.
+GEAR_bobber_sensitive,Sensitive float,Hassas şamandıra
+GEAR_bobber_sensitive_DESC,Shows the tiniest touch: a little more time to strike.,En ufak dokunuşu gösterir: VUR için biraz daha vaktin olur.
+GEAR_bobber_bright,Bright bobber,Parlak şamandıra
+GEAR_bobber_bright_DESC,Easy to see even far away: more time to strike.,Uzakta bile görünür: VUR için daha çok vaktin olur.
+GEAR_bait_worm,Worm,Solucan
+GEAR_bait_worm_DESC,Every fish likes it. From Dede's garden: free and unlimited.,Her balık sever. Dede'nin bahçesinden: bedava ve sınırsız.
+GEAR_bait_maggot,Grubs,Kurtçuk
+GEAR_bait_maggot_DESC,Rudd and perch love them.,Kızılkanat ve levrek bayılır.
+GEAR_bait_dough,Bread dough,Ekmek hamuru
+GEAR_bait_dough_DESC,Nine's recipe. Carp and rudd like it.,Nine'nin tarifi. Sazan ve kızılkanat sever.
+GEAR_bait_corn,Sweet corn,Mısır
+GEAR_bait_corn_DESC,A carp's favourite.,Sazanın en sevdiği.
+GEAR_bait_boilie,Boilies,Boili
+GEAR_bait_boilie_DESC,Round bait balls that draw big carp and catfish.,Yuvarlak yem topları: iri sazanı ve yayını çeker.
+GEAR_bait_shrimp,Shrimp,Karides
+GEAR_bait_shrimp_DESC,Catfish and pike can't resist.,Yayın ve turna dayanamaz.
+GEAR_net,Landing net,Kepçe
+GEAR_net_DESC,Land fish from a little farther away: shorter fights.,Balığı biraz daha uzaktan alırsın: çekişme kısalır.
+GEAR_bucket,Bucket,Kova
+GEAR_bucket_DESC,Holds 6 fish.,6 balık alır.
+GEAR_bucket_big,Big bucket,Büyük kova
+GEAR_bucket_big_DESC,Holds 10 fish.,10 balık alır.
+GEAR_keepnet,Keepnet,Balık filesi
+GEAR_keepnet_DESC,"Holds 16 fish, and they stay comfy in the water.",16 balık alır; balıklar suda rahat eder.
+GEAR_keepnet_big,Big keepnet,Büyük file
+GEAR_keepnet_big_DESC,Holds 24 fish.,24 balık alır.
+GEAR_keepnet_huge,Huge keepnet,Dev file
+GEAR_keepnet_huge_DESC,Holds 36 fish.,36 balık alır.

@@ -1,10 +1,11 @@
 {
-	"_note": "Nadirlikler yalnızca sona eklenir: kayıtlar sıra numarasını tutar. Renkler Kazı ile aynı.",
+	"_note": "Nadirlikler yalnızca sona eklenir: kayıtlar, sesler (find_N) ve kart kuralı (Records.CARD_RARITY) sıra numarasını kullanır. color: kademe rengi (Sıradan gri; krem beyaz yazıya benziyordu). shape: renk körleri için simge (rozet görseli yoksa kodla çizilir: circle, triangle, diamond, star, sparkle, medallion). shadow_fx: tutmadan önceki gölge ipucu (none, glint, shimmer, trail, guardian). xp: tutunca rütbe puanı. love: bırakınca göl sevgisi.",
 	"rarities": [
-		{ "id": "common", "color": "#f4f1ea" },
-		{ "id": "fine", "color": "#5fd86a" },
-		{ "id": "rare", "color": "#3f8fff" },
-		{ "id": "epic", "color": "#b764ff" },
-		{ "id": "legendary", "color": "#ffc426" }
+		{ "id": "common", "color": "#b8c2cc", "shape": "circle", "shadow_fx": "none", "xp": 5, "love": 1 },
+		{ "id": "fine", "color": "#5fd86a", "shape": "triangle", "shadow_fx": "none", "xp": 10, "love": 2 },
+		{ "id": "rare", "color": "#3f8fff", "shape": "diamond", "shadow_fx": "glint", "xp": 25, "love": 5 },
+		{ "id": "epic", "color": "#b764ff", "shape": "star", "shadow_fx": "shimmer", "xp": 60, "love": 12 },
+		{ "id": "legendary", "color": "#ffc426", "shape": "sparkle", "shadow_fx": "trail", "xp": 150, "love": 40 },
+		{ "id": "mythic", "color": "#2fe0d0", "shape": "medallion", "shadow_fx": "guardian", "xp": 500, "love": 100 }
 	]
 }

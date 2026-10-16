@@ -1,0 +1,12 @@
+{
+	"_note": "Rütbe (docs/gdd.md §10.4). xp: her rütbeye geçmek için gereken toplam rütbe puanı (ilk değer 1. rütbe = 0). Puan tutulan ve bırakılan balıktan (rarities.json xp) ve isteklerden gelir. titles: from rütbesinden başlayan unvan (strings.csv RANK_<id>). Sayılar taslak; denge botuyla ayarlanır.",
+	"xp": [0, 40, 110, 220, 380, 600, 900, 1300, 1800, 2400, 3100, 3900, 4800, 5800, 6900, 8100, 9400, 10800, 12300, 13900],
+	"titles": [
+		{ "from": 1, "id": "novice" },
+		{ "from": 3, "id": "apprentice" },
+		{ "from": 6, "id": "angler" },
+		{ "from": 10, "id": "master" },
+		{ "from": 15, "id": "lake_master" },
+		{ "from": 20, "id": "lake_legend" }
+	]
+}

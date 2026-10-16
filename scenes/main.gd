@@ -5,7 +5,6 @@ extends Node3D
 ## karşılığı vardır (iPhone'un sessiz anahtarı açık olabilir).
 ## Girdiyi InputRouter okur; --autoplay botu (yalnızca debug) gerçek dokunma olayları gönderir.
 
-const SPOT := "home_lake"
 ## Olta sudayken kamera eğimi; çekişmede ve balık gösterilirken yakınlaşma.
 const LINE_PITCH := deg_to_rad(60.0)
 const FIGHT_ZOOM := 0.9
@@ -57,6 +56,8 @@ var _cue_clock: float = 0.0
 ## Açılacak kart (balık elde gösterilirken bekler) ve kalan süre.
 var _card_info: Dictionary = {}
 var _card_outcome: Dictionary = {}
+## Oyunun gölü (spots.json "main").
+var spot_id: String = ""
 var _card_wait: float = -1.0
 ## İpucu çubuğunda şu an gösterilen anahtar (değişince Dede konuşur).
 var _hint_shown: String = ""
@@ -67,7 +68,8 @@ var _tip_index: int = 0
 
 
 func _ready() -> void:
-	lake = GameState.db.lake(SPOT)
+	spot_id = GameState.db.main_spot
+	lake = GameState.db.lake(spot_id)
 	scene = LakeScene.new()
 	add_child(scene)
 	scene.setup(lake)
@@ -116,7 +118,7 @@ func _start_session() -> void:
 	var save := GameState.save
 	_save_ref = save
 	var rod := save.rod if not GameState.db.rod(save.rod).is_empty() else "bamboo"
-	session = FishingSession.new(GameState.db, SPOT, rod, Dice.derive(save.seed, save.session),
+	session = FishingSession.new(GameState.db, spot_id, rod, Dice.derive(save.seed, save.session),
 			bool(GameState.setting("easy", false)), save.catches == 0)
 	angler.place(session.angler)
 	angler.face(Vector2(0, -1))

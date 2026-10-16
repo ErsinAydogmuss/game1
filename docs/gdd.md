@@ -147,12 +147,14 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Kimlik | TR | EN | Taban gölge | Nadirlik | Boy | Çekiş | Doğma | Görünüş |
 |---|---|---|---|---|---|---|---|---|
 | `rudd` | Kızılkanat | Rudd | 0,5 m | Sıradan | 15–30 cm | sakin | 35 | gümüş gövde, kırmızı yüzgeçler |
-| `carp` | Sazan | Carp | 0,75 m | Sıradan | 30–80 cm | ağır | 25 | bronz-altın, koyu sırt, iri pullar |
+| `carp` | Sazan | Carp | 0,75 m | Güzel (H2'de Sıradan'dan çıktı) | 30–80 cm | ağır | 25 | bronz-altın, koyu sırt, iri pullar |
 | `perch` | Levrek | Perch | 0,75 m | Güzel | 20–45 cm | ani | 17 | yeşil-sarı, koyu dikey çizgiler, turuncu yüzgeçler |
 | `pike` | Turna | Pike | 1,05 m | Nadir | 50–120 cm | ani, güçlü | 15 | uzun, zeytin yeşili, açık benekler |
 | `wels` | Yayın | Wels Catfish | 1,5 m | Destansı | 100–250 cm | düzensiz, güçlü | 8 | koyu gri-kahve, bıyıklı, yassı baş |
 
-**Nadirlikler (prototip):** Sıradan (beyaz), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın). Efsanevi henüz yok. Nadirlikler yalnızca sona eklenir. H2'de 6. kademe Masalsı eklenir; her kademeye bir simge gelir (§10.2).
+**Nadirlikler:** Sıradan (gri), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın), Masalsı (turkuaz; H2'de eklendi, yalnızca Gölün Bekçisi). Efsanevi ve Masalsı balık henüz yok. Nadirlikler yalnızca sona eklenir; her kademenin bir simgesi, rütbe puanı ve göl sevgisi değeri var (§10.2, `data/rarities.json`).
+
+**Değerler (para, orta boy):** Kızılkanat 5, Sazan 12, Levrek 12, Turna 35, Yayın 120. Doğma ağırlıkları Köy Gölü'nde 40/25/22/9/4 (testlerin gölünde 35/25/17/15/8).
 
 **H2 türleri 🔜** (18 tür; bugünkü 5 kimlik korunur, sazan Güzel'e çıkar). Bölge, teknik ve vakit ayrıntısı §10.1 ve §10.3'te.
 

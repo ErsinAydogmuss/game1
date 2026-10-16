@@ -100,7 +100,7 @@ Araçlar (`tools/`, sürüm paketine girmez): `make_sounds.py` (bütün sesler),
 Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 
 - `scripts/core/`: **saf oyun mantığı**. `class_name` + `extends RefCounted`; Node, sahne ve `GameState`'e bağlı değil; headless test edilir.
-  - ✅ `ContentDB`: `data/*.json`'u (nadirlikler, balıklar, oltalar, atış noktaları, kurallar) yükler ve doğrular. `FishingRules`: `rules.json`'daki sayılar (süreler adım olarak da).
+  - ✅ `ContentDB`: `data/*.json`'u yükler ve doğrular: nadirlikler (simge, gölge ipucu, rütbe puanı, göl sevgisi), balıklar, oltalar, takım (`gear.json`: kategori, fiyat, rütbe, değerler), rütbe (`progression.json`), atış noktaları, kurallar. Oyunun gölü `spots.json` `"main"` (`big_lake`); `home_lake` testlerin sabit gölüdür, değiştirilmez. `FishingRules`: `rules.json`'daki sayılar (süreler adım olarak da).
   - ✅ `Dice`: seed türetme, ppm şans, ağırlıklı seçim. Oynanıştaki her zar buradan ya da ondan türeyen RNG'den.
   - ✅ `LakeShape`: göl şekli (elipsler + iskele), işaretli kıyı uzaklığı ızgarası, derinlik, şamandıranın düşeceği yer.
   - ✅ `FishShadow` + `ShadowSim`: gölgeler (doğma, dolaşma, fark etme, yaklaşma, kaçma, yeniden doğma; ilk av senaryolu).
@@ -154,7 +154,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - **Çekişme ya da balık ayarı** değişirse: `tools/reel_report.gd`'yi çalıştır, `docs/gdd.md` §5'teki tabloyu güncelle; `test_reel_model.gd` korkulukları yeşil kalsın. Balığın `pull` değeri sınırın en az 0,05 altında olmalı (ContentDB denetler).
 - **Koordinatlar:** dünya x/z metre; çekirdek mantık `Vector2(x, z)` kullanır, su yüzeyi y = 0. Kamera +x +z tarafında; iskele kıyıdan −z yönüne uzanır.
 - **Her sesin** bir görsel ve titreşim karşılığı olur (iPhone'un sessiz anahtarı sesi kapatır).
-- **Gelir:** yukarıdaki 10 kural. Parayla şans yok; oran ve pity gösterilir.
+- **Gelir:** yukarıdaki 10 kural. Parayla şans yok; oran ve pity gösterilir. **Oyun parası (`coins`) gerçek parayla asla satılmaz:** oranı değiştiren yem ve yapay yem ancak bu sayede oyun parasıyla satılabiliyor.
 - **Dil:** Dokümanlar ve yorumlar Türkçe, kod isimleri İngilizce. Commit mesajları Türkçe.
 - Commit'ten önce: import + testler + headless ana sahne. Görsel değiştiyse ekran görüntüsüne bak; kontroller değiştiyse `controls` senaryosu.
 
