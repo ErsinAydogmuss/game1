@@ -35,6 +35,8 @@ var home := Vector2.ZERO
 var startles: int = 0
 ## Yolu kapalı olduğu için vazgeçti: şamandıra yeniden düşene kadar onu fark etmez.
 var bored: bool = false
+## Şans garantisiyle doğdu (aynı anda yalnızca bir tane).
+var pity: bool = false
 
 
 func mode_name() -> String:

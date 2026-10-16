@@ -57,7 +57,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 
 - [x] İçerik v2: 6 nadirlik kademesi ve simgeleri, takım verisi (`data/gear.json`), rütbe (`data/progression.json`), oyunun gölü `big_lake` (testlerin gölü `home_lake` sabit).
 - [x] Takımın çekişmeye etkisi (`GearStats`): menzil, güç, sarma, fren, misina, iğne, şamandıra, kepçe; en iyi takım korkulukları.
-- [ ] Para, kova, rütbe, oranlar ve şans garantisi; kayıt v2 ve göç testi.
+- [x] Para, kova, rütbe, oranlar ve şans garantisi (`Economy`, `Bucket`, `Rank`, `CatchOdds`); kayıt v2 ve göç testi.
 - [ ] Kaydırmalı liste; HUD'da para, kova ve rütbe.
 - [ ] Nine ve dükkân binası.
 - [ ] Dükkân paneli, takım çantası, kova ve satış.

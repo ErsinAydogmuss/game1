@@ -67,9 +67,9 @@ var _events: Array[Dictionary] = []
 
 ## gear: kuşanılmış takım (GearStats.starter = bambu olta). seed: oturum tohumu
 ## (Dice.derive(kayıt seed'i, oturum sayısı)). first_catch: ilk av senaryolu olsun (oyuncu
-## henüz balık tutmadı).
+## henüz balık tutmadı). pity_floor: şans garantisi (CatchOdds.pity_floor; -1 = yok).
 func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, easy_mode: bool,
-		first_catch: bool) -> void:
+		first_catch: bool, pity_floor: int = -1) -> void:
 	_db = db
 	rules = db.rules
 	gear = gear_stats if gear_stats != null else GearStats.starter(db)
@@ -77,7 +77,8 @@ func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, eas
 	lake = db.lake(spot_id)
 	angler = spot.get("start", Vector2.ZERO)
 	easy = easy_mode
-	sim = ShadowSim.new(db, spot, lake, seed, first_catch, angler)
+	sim = ShadowSim.new(db, spot, lake, seed, first_catch, angler,
+			{ "attract": gear.attract, "pity_floor": pity_floor })
 
 
 ## Gerçek zamanı sabit adımlara çevirir.
@@ -207,6 +208,17 @@ func fight_point() -> Vector2:
 
 func range_m() -> float:
 	return gear.range_m
+
+
+## Takım değişti (dükkân): menzil ve sarma sonraki atıştan, yemin çekimi sonraki gölgeden geçerli.
+func set_gear(gear_stats: GearStats) -> void:
+	gear = gear_stats
+	sim.set_odds({ "attract": gear.attract, "pity_floor": sim.pity_floor })
+
+
+## Şans garantisi değişti (bir balık tutuldu).
+func set_pity_floor(floor: int) -> void:
+	sim.pity_floor = floor
 
 
 func state_name() -> String:

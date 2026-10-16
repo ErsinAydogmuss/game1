@@ -9,7 +9,7 @@ extends RefCounted
 const DATA_DIR := "res://data"
 const PPM := 1_000_000
 
-## Nadirlikler, sırayla (0 Sıradan .. 5 Masalsı): id, color, shape, shadow_fx, xp, love.
+## Nadirlikler, sırayla (0 Sıradan .. 5 Masalsı): id, color, shape, shadow_fx, xp, love, pity.
 ## Kayıtlar sıra numarasını tutar: yalnızca sona eklenir.
 var rarities: Array[Dictionary] = []
 ## Balıklar: id, rarity (sıra), value (para), shadow_m, size_cm (Vector2i), weight, color, back,
@@ -177,6 +177,7 @@ func _load_rarities(raw: Dictionary) -> void:
 			"shadow_fx": str(d.get("shadow_fx", "none")),
 			"xp": int(d.get("xp", 0)),
 			"love": int(d.get("love", 0)),
+			"pity": int(d.get("pity", 0)),
 		}
 		_rarity_index[def["id"]] = rarities.size()
 		rarities.append(def)
@@ -334,8 +335,8 @@ func _validate() -> void:
 	for r in rarities:
 		if not str(r["shape"]) in RARITY_SHAPES or not str(r["shadow_fx"]) in SHADOW_FX:
 			errors.append("rarities.json: %s: shape ya da shadow_fx bilinmiyor" % r["id"])
-		if int(r["xp"]) <= 0 or int(r["love"]) <= 0:
-			errors.append("rarities.json: %s: xp ve love pozitif olmalı" % r["id"])
+		if int(r["xp"]) <= 0 or int(r["love"]) <= 0 or int(r["pity"]) < 0:
+			errors.append("rarities.json: %s: xp ve love pozitif, pity sıfır ya da pozitif olmalı" % r["id"])
 	for f in fish:
 		_validate_fish(f)
 	_validate_gear()

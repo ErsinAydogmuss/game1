@@ -117,8 +117,8 @@ func _ready() -> void:
 func _start_session() -> void:
 	var save := GameState.save
 	_save_ref = save
-	session = FishingSession.new(GameState.db, spot_id, GearStats.starter(GameState.db), Dice.derive(save.seed, save.session),
-			bool(GameState.setting("easy", false)), save.catches == 0)
+	session = FishingSession.new(GameState.db, spot_id, Economy.gear_for(GameState.db, save), Dice.derive(save.seed, save.session),
+			bool(GameState.setting("easy", false)), save.catches == 0, CatchOdds.pity_floor(GameState.db, save))
 	angler.place(session.angler)
 	angler.face(Vector2(0, -1))
 	bobber.hide_bobber()
@@ -339,6 +339,8 @@ func _on_event(e: Dictionary) -> void:
 			hud.toast(tr("UI_RETRY"), UiKit.ACCENT)
 			Sounds.play("hint")
 		"hook":
+			# Yem balık takılınca harcanır (kaçan gölge yemi yemez); biten yem solucana döner.
+			Economy.use_bait(GameState.db, GameState.save)
 			bobber.start_fight(bobber.global_position)
 			ripples.spawn(session.bobber, 1.2, 0.7, Color(1, 1, 1, 0.9), 0.18)
 			Sounds.play("hook")
@@ -396,6 +398,8 @@ func _on_catch() -> void:
 	var save := GameState.save
 	var outcome := Records.add(save.records, fish_id, int(info["size_cm"]), int(info["stars"]), GameState.clock.now_unix())
 	save.catches += 1
+	CatchOdds.note_catch(GameState.db, save, rarity)
+	session.set_pity_floor(CatchOdds.pity_floor(GameState.db, save))
 	GameState.save_game()
 	bobber.hide_bobber()
 	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)

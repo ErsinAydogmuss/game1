@@ -108,6 +108,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
   - ✅ `BiteRules` (fark etme konisi, korkutma, dürtme, VUR penceresi, erken dokunuş), `FishTable` (tür, boy yüzdeliği, yıldız, gölge uzunluğu), `ReelModel` (gerilim, patlama, kopma, kaçma, Kolay mod), `ReelBot` (oyuncu tarzı botları), `Records` (kayıt defteri, kart kuralı).
   - ✅ `FishingSession`: durum makinesi (BOŞ → ATIŞ → BEKLEME → DÜRTME → ISIRMA → ÇEKİŞME → TUTULDU / KAÇTI). Sabit 1/60 sn adım; girdiler `cast` / `press` / `release` / `acknowledge`; olaylar `poll_events()`.
   - ✅ `Economy` (balığın değeri: tür değeri × boy çarpanı 0,6–1,6, binde birle; satış, satın alma, kuşanma, yem harcama; `gear_for` oturumun takımını kurar), `Bucket` (kapasite = sahip olunan en büyük kova; doluysa çağıran balığı bırakır), `Rank` (rütbe puanı, seviye, ilerleme).
+  - ✅ `CatchOdds`: hangi balığın geleceği. Tür ağırlıkları × yem çekimi → ppm (toplamı tam 1e6; doğma, defter ve katalog aynı işlevi kullanır). Şans garantisi: `rarities.json` "pity" avdan sonra yakında doğan sıradaki gölge o nadirlikten (aynı anda tek garanti gölgesi; sayaç ancak o nadirlik tutulunca sıfırlanır).
   - ✅ `SaveData` (sürüm 2: kova, takım kimlikle, kuşanma, yem, rütbe puanı, göl sevgisi, şans garantisi, sayaçlar) / `SaveStore` (atomik yazma), `TimeProvider` (zaman soyutlaması).
 - `scripts/autoload/`:
   - `game_state.gd` (`GameState`): içerik + kayıt, ayarlar, dil, ipucu adımı, bayraklar, klavye kontrolleri. Sinyaller: `changed`, `focus_lost`, `focus_gained`. Odak kaybında kaydeder.
@@ -143,7 +144,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - **Statik tip her yerde.** Değer Variant ise (sözlükten okuma) `:=` kullanma, tipi yaz: `var x: int = d["k"]`.
   - JSON sayıları **float** gelir; `int()` ile çevir.
   - Tamsayı bölmede uyarı çıkar; `float` ya da `>> 1` kullan.
-- **Determinizm:** Oynanışı etkileyen rastgelelik (gölge, dürtme sayısı, balık boyu) yalnızca seed'li `RandomNumberGenerator` + tamsayı karşılaştırma (ppm = milyonda bir) ile yapılır. `scripts/core/` içinde global `randf`/`randi` kullanılmaz. Görsel efektlerde ve shader'larda rastgelelik serbest.
+- **Determinizm:** Oynanışı etkileyen rastgelelik (gölge, dürtme sayısı, balık boyu) yalnızca seed'li `RandomNumberGenerator` + tamsayı karşılaştırma (ppm = milyonda bir) ile yapılır. `scripts/core/` içinde global `randf`/`randi` kullanılmaz. Görsel efektlerde ve shader'larda rastgelelik serbest. Gölgenin türü `Dice.derive(seed, 2)`, boyu `Dice.derive(seed, 3)` tuzlu zarından, hareketi kendi `rng`'sinden: bir kural (şans garantisi, yem) türü değiştirse de boy ve yol kaymaz.
 - **Zaman:** Çekirdek mantık sabit 1/60 sn adımla ilerler; her fps'te aynı sonuç çıkar. Sunumda süre `_process(delta)` toplamıyla ölçülür, `Time.get_ticks_*` ile değil.
 - **Nadirlikler yalnızca sona eklenir:** kayıtlar sıra numarasını tutar. Balık kimlikleri değişmez.
 - **Yeni içerik** = `data/*.json` + `strings.csv`'de TR/EN anahtar (`FISH_x`, `ROD_x`, `RARITY_x`...) + görsel. Testler eksik çeviriyi yakalar.

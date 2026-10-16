@@ -17,6 +17,9 @@ const STRANDED_DOCK := 0.3
 var shadows: Array[FishShadow] = []
 ## Şamandıraya yaklaşan (ya da dürten) gölge.
 var approacher: FishShadow = null
+## Şans garantisi: yakında doğan sıradaki gölge en az bu nadirlikte (-1 = garanti yok). Aynı
+## anda yalnızca bir garanti gölgesi olur.
+var pity_floor: int = -1
 
 var _db: ContentDB
 var _rules: FishingRules
@@ -29,10 +32,13 @@ var _max: int = 4
 var _pending := PackedInt32Array()
 ## Sıradaki gölge ilk av mı (senaryolu)?
 var _first_pending: bool = false
+## Türlerin oranları (CatchOdds.species_ppm).
+var _species: Dictionary = {}
 
 
+## odds: { "attract": yemin tür çekimi, "pity_floor": şans garantisi } (CatchOdds).
 func _init(db: ContentDB, spot: Dictionary, lake: LakeShape, seed: int, first_catch: bool,
-		angler: Vector2) -> void:
+		angler: Vector2, odds: Dictionary = {}) -> void:
 	_db = db
 	_rules = db.rules
 	_lake = lake
@@ -40,6 +46,7 @@ func _init(db: ContentDB, spot: Dictionary, lake: LakeShape, seed: int, first_ca
 	_seed = seed
 	_max = int(spot.get("max_shadows", 4))
 	_first_pending = first_catch
+	set_odds(odds)
 	for i in _max:
 		# Yer bulunamazsa bir sn sonra yeniden denenir (küçük göllerde).
 		if _spawn(angler, Vector2.ZERO, false) == null:
@@ -167,11 +174,29 @@ func pending_spawns() -> int:
 	return _pending.size()
 
 
+## Yemin çekimi ya da şans garantisi değişti: bundan sonra doğan gölgeler yeni oranlarla.
+func set_odds(odds: Dictionary) -> void:
+	_species = CatchOdds.species_ppm(_db, _spot, odds)
+	pity_floor = int(odds.get("pity_floor", -1))
+
+
+## Bundan sonra doğacak gölgelerin tür oranları (Balık Defteri ve testler).
+func species_odds() -> Dictionary:
+	return _species
+
+
 # --- İç işler ----------------------------------------------------------------------
 
 func _has_scripted() -> bool:
 	for s in shadows:
 		if s.scripted:
+			return true
+	return false
+
+
+func _has_pity() -> bool:
+	for s in shadows:
+		if s.pity:
 			return true
 	return false
 
@@ -184,14 +209,22 @@ func _spawn(angler: Vector2, bobber: Vector2, bobber_active: bool) -> FishShadow
 	_serial += 1
 	s.seed = Dice.derive(_seed, s.id)
 	s.rng.seed = s.seed
+	# Tür ve boy ayrı tuzlu zarlardan: şans garantisi türü değiştirse de boy ve hareket kaymaz.
+	var species_rng := RandomNumberGenerator.new()
+	species_rng.seed = Dice.derive(s.seed, 2)
+	var size_rng := RandomNumberGenerator.new()
+	size_rng.seed = Dice.derive(s.seed, 3)
 	var ids: PackedStringArray = _spot["fish_ids"]
 	var scripted := _first_pending
-	var fish_id := str(_spot.get("first_fish", ids[0])) if scripted else ids[FishTable.roll_species(s.rng, _spot["fish_weights"])]
+	var forced := not scripted and pity_floor >= 0 and not _has_pity()
+	var fish_id := str(_spot.get("first_fish", ids[0])) if scripted \
+			else CatchOdds.roll(_db, species_rng, _species, pity_floor if forced else -1)
 	s.fish_index = _db.fish_index(fish_id)
 	var def := _db.fish_def(s.fish_index)
 	s.fish_id = fish_id
 	s.rarity = int(def["rarity"])
-	s.percentile = FishTable.roll_percentile(s.rng)
+	s.pity = forced and s.rarity >= pity_floor
+	s.percentile = FishTable.roll_percentile(size_rng)
 	s.size_cm = FishTable.size_cm(def, s.percentile)
 	s.stars = FishTable.stars(s.percentile)
 	s.length = FishTable.shadow_length(def, s.percentile)
