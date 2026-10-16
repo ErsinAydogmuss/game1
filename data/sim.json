@@ -1,0 +1,13 @@
+{
+	"_note": "Denge botunun (scripts/core/session_sim.gd) zamanlamaları, saniye. Oyunu etkilemez; yalnızca tools/economy_report.gd ve test_session_sim.gd kullanır. cast_s (nişan + uçuş), approach_s (şamandıra suya düştükten balığın gelişine; geri sarıp yeniden atmalar dahil), nibble_s, show_s (kartsız yakalamada oyunun beklemesi), start_m (takılan balığın uzaklığı) tools/session_timing.gd ölçümünden gelir: gerçek FishingSession'ı insan gibi şaşarak nişan alan bir bot oynar (kurallar değişince yeniden çalıştır). miss_ppm (dürtmede erken ya da ısırmada geç dokunan insan), card_s (kartı okuyup kapatma), lost_s (kaçırınca oltanın dönüşü) ve sell_s (Nine'ye yürüyüp satış ve dükkâna bakma) tahmindir.",
+	"cast_s": 1.9,
+	"approach_s": [1.0, 7.5],
+	"nibble_s": [1.2, 4.5],
+	"miss_ppm": 150000,
+	"show_s": 1.3,
+	"card_s": 2.5,
+	"lost_s": 0.8,
+	"sell_s": 30.0,
+	"reaction_s": 0.45,
+	"start_m": [2.3, 6.7]
+}

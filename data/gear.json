@@ -31,11 +31,11 @@
 		{ "id": "bobber_bright", "category": "bobber", "price": 1200, "rank": 5, "window_add": 0.3 },
 
 		{ "id": "bait_worm", "category": "bait", "price": 0, "rank": 1, "pack": 0, "attract": {} },
-		{ "id": "bait_maggot", "category": "bait", "price": 40, "rank": 1, "pack": 20, "attract": { "rudd": 1.8, "perch": 1.4 } },
-		{ "id": "bait_dough", "category": "bait", "price": 40, "rank": 1, "pack": 20, "attract": { "carp": 1.5, "rudd": 1.4 } },
-		{ "id": "bait_corn", "category": "bait", "price": 50, "rank": 2, "pack": 20, "attract": { "carp": 2.2 } },
-		{ "id": "bait_boilie", "category": "bait", "price": 150, "rank": 4, "pack": 10, "attract": { "carp": 3.0, "wels": 1.5 } },
-		{ "id": "bait_shrimp", "category": "bait", "price": 200, "rank": 5, "pack": 10, "attract": { "wels": 2.5, "pike": 1.5 } },
+		{ "id": "bait_maggot", "category": "bait", "price": 30, "rank": 1, "pack": 20, "attract": { "perch": 2.5 } },
+		{ "id": "bait_dough", "category": "bait", "price": 30, "rank": 1, "pack": 20, "attract": { "carp": 1.8, "perch": 1.8 } },
+		{ "id": "bait_corn", "category": "bait", "price": 40, "rank": 2, "pack": 20, "attract": { "carp": 3.0 } },
+		{ "id": "bait_boilie", "category": "bait", "price": 60, "rank": 4, "pack": 10, "attract": { "carp": 3.0, "wels": 2.5 } },
+		{ "id": "bait_shrimp", "category": "bait", "price": 100, "rank": 5, "pack": 10, "attract": { "wels": 3.0, "pike": 2.5 } },
 
 		{ "id": "net", "category": "extra", "kind": "net", "price": 700, "rank": 3, "catch_m": 0.85 },
 

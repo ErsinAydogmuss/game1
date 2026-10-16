@@ -73,7 +73,7 @@ func test_baits_are_packs_used_on_hook() -> void:
 	assert_true(Economy.buy(db, s, "bait_corn"), "mısır alınır")
 	assert_eq(int(s.baits["bait_corn"]), 20, "bir paket 20 tane")
 	assert_eq(Economy.equipped(db, s, "bait"), "bait_corn", "alınan yem takılır")
-	assert_eq(Economy.gear_for(db, s).attraction("carp"), 2.2, "mısır sazanı çeker")
+	assert_eq(Economy.gear_for(db, s).attraction("carp"), 3.0, "mısır sazanı çeker")
 	assert_true(Economy.buy(db, s, "bait_corn"), "yem tekrar alınabilir")
 	assert_eq(int(s.baits["bait_corn"]), 40, "paketler toplanır")
 	for i in 40:

@@ -67,6 +67,9 @@ godot --headless --path . -s res://tests/run_tests.gd    # tüm testler; çıkı
 godot --headless --path . --quit-after 600               # ana sahne hatasız açılmalı (çıktıda SCRIPT ERROR yok)
 godot --headless --path . --export-pack "iPhone" /mutlak/yol/olta.zip   # paket: data/*.json var; tests, tools, scripts/dev yok
 godot --headless --path . -s res://tools/reel_report.gd  # balık ya da çekişme ayarı değiştiyse
+godot --headless --path . -s res://tools/economy_report.gd -- --hours=12   # fiyat, değer, rütbe puanı değiştiyse
+godot --headless --path . -s res://tools/session_timing.gd  # gölge, fark etme, dürtme kuralı değiştiyse → data/sim.json
+godot --headless --path . -s res://tools/fish_catalog.gd    # balık, nadirlik, yem ya da oran değiştiyse (docs/balik-katalogu.md)
 ```
 
 Bot senaryoları (`scripts/dev/autoplay.gd`; gerçek dokunma olayları gönderir). `--fixed-fps 30` oyun zamanını sabit akıtır (bu ortamda kare hızı düşük):
@@ -95,7 +98,7 @@ ffmpeg -i /mutlak/yol/olta.avi -c:v libx264 -preset slow -crf 20 -pix_fmt yuv420
 
 Sesler kodla üretilir: `python3 -I tools/make_sounds.py` (numpy; .ogg için ffmpeg). Ses adları `Sounds.BANK` ve `LOOPS` ile aynı olmalı (`test_sounds.gd`).
 
-Araçlar (`tools/`, sürüm paketine girmez): `make_sounds.py` (bütün sesler), `reel_report.gd` (çekişme denge raporu: her balık, bot tarzı ve mod için tutma, kopma, kaçma oranı ve süre), `process_images.gd` (Ersin'in görsel sayfalarını keser, `data/art_sheets.json`), `art_sheet.gd` (kesme ve arka plan silme), `recolor_texture.gd` (KayKit dokularını boyar: ortaçağ paketi, Rogue, Barbarian ve Mage; orijinaller `source/` altında, `.gdignore`'lu), `character_sheet.gd` (karakterin duruşları tek resimde; xvfb ve `--fixed-fps 30` ile; `--angler` balıkçının, `--elder` Dede'nin, `--nine` Nine'nin oyundaki duruşları, `--model=` başka model (kendi kıyafetiyle), `--raw` boyasız).
+Araçlar (`tools/`, sürüm paketine girmez): `make_sounds.py` (bütün sesler), `reel_report.gd` (çekişme denge raporu: her balık, bot tarzı ve mod için tutma, kopma, kaçma oranı ve süre), `economy_report.gd` (denge botu saatlerce oynar: saatte para ve av, rütbelerin, takım alımlarının ve türlerin ilk görüldüğü dakika), `session_timing.gd` (gerçek `FishingSession`'ı insan gibi oynayan botla süreleri ölçer, `data/sim.json` için öneri yazar), `fish_catalog.gd` (`docs/balik-katalogu.md`: nadirlikler, yıldız şansı, şans garantisi, yem başına tür ve nadirlik oranı, ortalama değer), `process_images.gd` (Ersin'in görsel sayfalarını keser, `data/art_sheets.json`), `art_sheet.gd` (kesme ve arka plan silme), `recolor_texture.gd` (KayKit dokularını boyar: ortaçağ paketi, Rogue, Barbarian ve Mage; orijinaller `source/` altında, `.gdignore`'lu), `character_sheet.gd` (karakterin duruşları tek resimde; xvfb ve `--fixed-fps 30` ile; `--angler` balıkçının, `--elder` Dede'nin, `--nine` Nine'nin oyundaki duruşları, `--model=` başka model (kendi kıyafetiyle), `--raw` boyasız).
 
 ## Mimari
 
@@ -111,6 +114,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
   - ✅ `FishingSession`: durum makinesi (BOŞ → ATIŞ → BEKLEME → DÜRTME → ISIRMA → ÇEKİŞME → TUTULDU / KAÇTI). Sabit 1/60 sn adım; girdiler `cast` / `press` / `release` / `acknowledge`; olaylar `poll_events()`.
   - ✅ `Economy` (balığın değeri: tür değeri × boy çarpanı 0,6–1,6, binde birle; satış, satın alma, kuşanma, yem harcama; `gear_for` oturumun takımını kurar), `Bucket` (kapasite = sahip olunan en büyük kova; doluysa çağıran balığı bırakır), `Rank` (rütbe puanı, seviye, ilerleme).
   - ✅ `CatchOdds`: hangi balığın geleceği. Tür ağırlıkları × yem çekimi → ppm (toplamı tam 1e6; doğma, defter ve katalog aynı işlevi kullanır). Şans garantisi: `rarities.json` "pity" avdan sonra yakında doğan sıradaki gölge o nadirlikten (aynı anda tek garanti gölgesi; sayaç ancak o nadirlik tutulunca sıfırlanır). `pity_floor(db, save, spot)` gölde tutulamayan kademeyi saymaz (`top_rarity`).
+  - ✅ `SessionSim`: denge botu (Kazı'nın `TripSimulator`'ı gibi). Oyunun kurallarını aynen kullanır (oranlar, şans garantisi, boy, çekişme `ReelModel` + `ReelBot`, kova, rütbe, satış, alışveriş: rütbesi yeten en ucuz takım); zamanı ve el becerisini `data/sim.json`'dan taklit eder. `milestones`: olayların ilk olduğu dakika. Aynı seed aynı sonuç.
   - ✅ `SaveData` (sürüm 2: kova, takım kimlikle, kuşanma, yem, rütbe puanı, göl sevgisi, şans garantisi, sayaçlar) / `SaveStore` (atomik yazma), `TimeProvider` (zaman soyutlaması).
 - `scripts/autoload/`:
   - `game_state.gd` (`GameState`): içerik + kayıt, ayarlar, dil, ipucu adımı, bayraklar, klavye kontrolleri. Sinyaller: `changed`, `focus_lost`, `focus_gained`. Odak kaybında kaydeder.
@@ -161,6 +165,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - **Çekişme, balık ya da takım ayarı** değişirse: `tools/reel_report.gd`'yi (ve `-- --gear=top`) çalıştır, `docs/gdd.md` §5'teki tabloları güncelle; `test_reel_model.gd` korkulukları (en iyi takımla da beceri gereksin) yeşil kalsın. Balığın `pull` değeri sınırın en az 0,05 altında olmalı; en güçlü frende patlama sınırın en az 0,1 üstünde kalmalı (ContentDB denetler).
 - **Koordinatlar:** dünya x/z metre; çekirdek mantık `Vector2(x, z)` kullanır, su yüzeyi y = 0. Kamera +x +z tarafında; iskele kıyıdan −z yönüne uzanır.
 - **Her sesin** bir görsel ve titreşim karşılığı olur (iPhone'un sessiz anahtarı sesi kapatır).
+- **Ekonomi** (fiyat, balık değeri, rütbe puanı, kova, yem) değişirse: `tools/economy_report.gd`'yi çalıştır, `docs/gdd.md` §10.4'teki tabloyu güncelle; `test_session_sim.gd` korkulukları yeşil kalsın. Oran değiştiyse `tools/fish_catalog.gd` ile kataloğu yeniden üret. Gölge ya da ısırma kuralı değiştiyse önce `tools/session_timing.gd` ile `data/sim.json`'u güncelle.
 - **Gelir:** yukarıdaki 10 kural. Parayla şans yok; oran ve pity gösterilir. **Oyun parası (`coins`) gerçek parayla asla satılmaz:** oranı değiştiren yem ve yapay yem ancak bu sayede oyun parasıyla satılabiliyor.
 - **Dil:** Dokümanlar ve yorumlar Türkçe, kod isimleri İngilizce. Commit mesajları Türkçe.
 - Commit'ten önce: import + testler + headless ana sahne. Görsel değiştiyse ekran görüntüsüne bak; kontroller değiştiyse `controls` senaryosu.
@@ -200,4 +205,4 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - Bot çıkmadan önce `Sounds.stop_all()` çağırıp birkaç kare bekler; yoksa çalan ogg için çıkışta "resources still in use" hatası çıkar.
 - `FishingSession.advance` bir karede en fazla 0,5 sn işler: testlerde uzun süreyi parça parça ilerlet.
 - Luckiest Guy'da büyük harflerin üstündeki nokta ve şapkalar (İ, Ü, Ğ, Â) satır kutusunun dışına taşar: Label'da `clip_text` onları keser ("KUCUK IGNE"). Uzun adlarda `text_overrun_behavior` (…) ya da küçük yazı kullan.
-- Luckiest Guy ve Baloo 2 Türkçe karakterleri destekler. Yeni font seçilirse ğ, ş, ı, İ kontrol edilmeli. Varsayılan fontta ★ ve ok işaretleri yok.
+- Luckiest Guy ve Baloo 2 Türkçe karakterleri destekler. Yeni font seçilirse ğ, ş, ı, İ kontrol edilmeli. Varsayılan fontta ★ ve ok işaretleri yok. Baloo 2'de → ve × var, ★ yok; Luckiest Guy'da → da yok (» ve × var). Emin değilsen `FontFile.has_char` ile denetle; simgeler `GameIcon` ile çizilir.

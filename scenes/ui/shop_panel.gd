@@ -59,6 +59,8 @@ var _line: Label
 var _coins: HBoxContainer
 var _line_key: String = "UI_NINE_SHOP_HELLO"
 var _line_args: Array = []
+## Yem kartındaki oranların atış noktası (main verir; boşsa oyunun gölü).
+var spot_id: String = ""
 
 
 func _build() -> void:
@@ -295,17 +297,23 @@ func _stat_row(item: Dictionary, stat: Array) -> Control:
 	return row
 
 
-## Yemin çektiği balıklar (en çok iki) ve elindeki sayı.
+## Yemin çektiği balıklar (en çok iki): bir gölgenin o balık olma şansı solucanla ve bu yemle
+## ("Levrek %22 → %41"; Balık Defteri'yle aynı işlev, CatchOdds). Altında elindeki sayı.
 func _bait_info(parent: VBoxContainer, item: Dictionary) -> void:
+	var db := GameState.db
+	var spot := db.spot(spot_id if not spot_id.is_empty() else db.main_spot)
 	var attract: Dictionary = item["attract"]
-	var keys := attract.keys()
+	var plain := CatchOdds.species_ppm(db, spot)
+	var baited := CatchOdds.species_ppm(db, spot, { "attract": attract })
+	var keys := attract.keys().filter(func(k: Variant) -> bool: return plain.has(k))
 	keys.sort_custom(func(a: Variant, b: Variant) -> bool: return float(attract[a]) > float(attract[b]))
 	for i in mini(2, keys.size()):
 		var fish_id := str(keys[i])
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		row.add_child(GameIcon.make("fish:" + fish_id, 40))
-		row.add_child(UiKit.ink("%s ×%s" % [tr("FISH_" + fish_id), UiKit.format_float(float(attract[fish_id]))], 24))
+		row.add_child(UiKit.ink("%s %s → %s" % [tr("FISH_" + fish_id), UiKit.format_percent(int(plain[fish_id])),
+				UiKit.format_percent(int(baited[fish_id]))], 24))
 		parent.add_child(row)
 	var pack := int(item["pack"])
 	var count := int(GameState.save.baits.get(str(item["id"]), 0))

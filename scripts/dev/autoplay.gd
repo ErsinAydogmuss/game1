@@ -371,7 +371,7 @@ func _play_shop() -> void:
 	await _tap_card(shop, "bait_maggot", -1)
 	await _wait_frames(2)
 	_check("yem al → takılır", int(save.baits.get("bait_maggot", 0)) == 20 and Economy.equipped(db, save, "bait") == "bait_maggot"
-			and _session().gear.attraction("rudd") > 1.0)
+			and _session().gear.attraction("perch") > 1.0)
 	await _wait(0.3)
 	await _shot("05_yem")
 	_check_panel_buttons(shop, "dükkân düğmeleri")

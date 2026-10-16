@@ -329,7 +329,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - Sade tutulur: araştırmada en çok "seçenek kalabalığı" eleştirildi.
   - ✅ Dalga 1'deki hâli: Nine'ye ya da dükkâna dokununca açılır (kovada balık varsa Kova sekmesi, yoksa en son bakılan sekme). Üstte Nine'nin yüzü ve sözü ("Hoş geldin evladım!", "Güle güle kullan!", "Paran biraz eksik...", "Rütbe 4 olunca gel!", "Eline sağlık!") ve para. Sekmeler: Kova, Kamış, Makara, Misina, İğne (iğne ve şamandıra), Yem, Ekstra (kepçe ve kovalar). Her sekmede en çok 6 kart (3×2), kaydırma yok.
   - ✅ Kart: ikon (Ersin'in ekipman görseli gelene kadar kodla çizilir), ad, kısa açıklama, değer çubukları (koyu çizgi kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf; menzil ve kova kapasitesinin sayısı da yazar) ve tek düğme: fiyat (al ve tak), TAK, TAKILI, SENDE ya da kilitli rütbe. Para yetmeyen ya da rütbesi tutmayan düğme gri kalır ama basılınca Nine nedenini söyler (kilit sessiz kalmaz). Kuşanılan kartın kenarı yeşil.
-  - ✅ Yem kartında hangi balığı ne kadar çektiği (×1,8 gibi), elindeki sayı ve paket boyu. Takılı yem yeniden alınabilir.
+  - ✅ Yem kartında çektiği balıklar ve bir gölgenin o balık olma şansı solucanla ve bu yemle ("Levrek %22 → %41"; defterdeki oranın aynısı), elindeki sayı ve paket boyu. Takılı yem yeniden alınabilir.
   - ✅ Sesler: satın almada tezgâh zili, kuşanmada tıkırtı, satışta para şıkırtısı; her birinin titreşimi ve Nine'nin sözü var.
 
 | Kategori | Ne yapar | Kademe |
@@ -361,6 +361,27 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | sinek | 60–120 dk |
 | sandal | 90–180 dk |
 | bütün kademeler | 8–15 saat |
+
+- ✅ **Denge botu** (`SessionSim`): oyunun kurallarını aynen kullanır (oranlar ve şans garantisi `CatchOdds`, boy `FishTable`, çekişme `ReelModel` + tepkili oyuncu botu, kova, rütbe, satış), yalnızca zamanı ve el becerisini taklit eder. Süreler `data/sim.json`'dan; atış, balığın gelişi, dürtmeler ve çekişme uzaklığı `tools/session_timing.gd` ile gerçek `FishingSession`'dan ölçülür (insan gibi şaşarak nişan alan bot). Ölçüm (başlangıç takımı): ısırmaya ortalama 9 sn (atış ve geri sarma dahil), dürtmeler 2,8 sn, çekişme 5,2 sn, takılma uzaklığı 4,5 m; saatte 225 av (satışsız). İnsan hatası tahmin: ısırmaların %15'i kaçırılır.
+- ✅ **Dalga 1 ölçümü** (`tools/economy_report.gd -- --hours=12`, 3 seed; bot solucanla avlanır, kova dolunca satar, rütbesi yeten en ucuz takımı alır): saatte yaklaşık 3.100 para ve 200 av. Korkuluklar `tests/test_session_sim.gd`'de (100 dk, 3 seed).
+
+| Olay (ilk kez) | Dakika | Korkuluk |
+|---|---|---|
+| ilk satış | 2–3 | ≤ 5 |
+| ilk alışveriş (misina) | 4–5 | ≤ 10 |
+| rütbe 2 / 5 / 10 / 20 | 1–2 / 9–12 / 51–54 / 275–292 | ≤ 5 / 6–20 / 35–90 / — |
+| gölün 5 türü | 4–16 | ≤ 30 |
+| makara, iğne, şamandıra (ilk kademe) | 7–23 | — |
+| cam kamış | 23–29 | 10–45 |
+| büyük kova | 28–38 | 15–60 |
+| floro misina, hızlı makara, kepçe | 41–67 | kepçe 40–100 |
+| güçlü makara, parlak şamandıra, file | 102–165 | — |
+| örgü misina, karbon kamış, usta floro | 185–285 | — |
+| usta makara, büyük file, usta örgü | 343–646 | — |
+| büyük usta makara (15.000), dev file (15.000) | 12 saatte alınmadı | — |
+
+- **Değerlendirme:** ilk saat dolu: yaklaşık 7 dakikada bir yeni bir şey alınıyor (ilk saatte 8 alışveriş). Şamandıra takımının hepsi yaklaşık 62.700 para (bugünkü gölde ~20 saat); en üst kademe şimdilik uzak hedef. Dalga 2'de büyük gölün değerli türleri (Nadir ≈35, Destansı ≈120, Efsanevi ≈500) geliri artırır, Dalga 3'te tekniklerin takımı eklenir: fiyatlar ve rütbe puanı eğrisi o zaman "bütün kademeler 8–15 saat" hedefine göre yeniden ayarlanır. Rütbe 20'ye 5 saatte varılıyor; bölge ve teknik kilitleri (rütbe 3–9) geldiğinde eğri uzatılır.
+- ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (kurtçuk levrek %22 → %41, mısır sazan %25 → %50, karides yayın %4 → %9,9 ve turna %9 → %19). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
 ### 10.5 Canlı dünya
 
@@ -440,7 +461,7 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
     - teknikler: `Technique` stratejileri (`FloatTechnique`, `LureTechnique`, `BottomTechnique`, `FlyTechnique`), `TrapSim`;
     - göl: `ShorePath`;
     - canlı dünya: `DayClock`, `Weather`, `LakeLove`, `Requests`, `Story`.
-  - Denge botu (`SessionSim`, `tools/economy_report.gd`) ile korkuluk testleri; oran kataloğu (`tools/fish_catalog.gd`).
+  - ✅ Denge botu (`SessionSim`, `tools/economy_report.gd`, süreler `tools/session_timing.gd`) ile korkuluk testleri; oran kataloğu (`tools/fish_catalog.gd` → `balik-katalogu.md`).
   - Çekişme sayıları `tools/reel_report.gd` ile denetlenir; `tests/test_reel_model.gd` sınırları korur.
   - İç adım sabit 1/60 sn; sonuç fps'e ve video kaydına bağlı değil.
 - **Sunum** yalnızca olayları dinler.

@@ -797,6 +797,7 @@ func _build_ui() -> void:
 	layer.add_child(settings_panel)
 	shop_panel = ShopPanel.new()
 	layer.add_child(shop_panel)
+	shop_panel.spot_id = spot_id
 	shop_panel.gear_changed.connect(_on_gear_changed)
 	shop_panel.sold.connect(_on_sold)
 	shop_panel.closed.connect(_on_shop_closed)

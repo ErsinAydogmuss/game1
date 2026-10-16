@@ -28,8 +28,8 @@ func test_bait_attracts_its_fish() -> void:
 	# Köy Gölü ağırlıkları 40/25/22/9/4 = 100.
 	assert_eq(int(plain["rudd"]), 400000, "kızılkanat %40")
 	var corn := CatchOdds.species_ppm(db, _spot(), { "attract": db.gear_item("bait_corn")["attract"] })
-	# Sazan 25 × 2,2 = 55; toplam 75 + 55 = 130.
-	assert_between(float(corn["carp"]), 423076.0, 423078.0, "mısırla sazan %42,3")
+	# Sazan 25 × 3 = 75; toplam 75 + 75 = 150.
+	assert_eq(int(corn["carp"]), 500000, "mısırla sazan %50")
 	assert_true(int(corn["rudd"]) < int(plain["rudd"]), "öteki türlerin payı azalır")
 
 

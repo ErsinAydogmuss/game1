@@ -35,7 +35,7 @@ func test_items_set_the_stats() -> void:
 	assert_eq(g.escape_extra, 1.0, "büyük iğne +1 m")
 	assert_eq(g.window_add_steps, FishingRules.to_steps(0.3), "parlak şamandıra +0,3 sn")
 	assert_eq(g.catch_m, 0.85, "kepçe 0,85 m'den tutar")
-	assert_eq(g.attraction("carp"), 2.2, "mısır sazanı çeker")
+	assert_eq(g.attraction("carp"), 3.0, "mısır sazanı çeker")
 	assert_eq(g.attraction("rudd"), 1.0, "mısır kızılkanadı çekmez")
 
 
