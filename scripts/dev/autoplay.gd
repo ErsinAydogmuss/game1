@@ -312,7 +312,7 @@ func _play_video() -> void:
 	await _wait_state(FishingSession.State.IDLE, 3.0)
 	await _wait(0.8)
 	# Nadir bir turna: gölgenin önüne at, dürtmeler, VUR, uzun çekişme, ışık sütunu.
-	_shadow_at(Vector2(-1.2, -3.0), Vector2(0.2, 1.0), "pike")
+	_shadow_at(Vector2(-1.2, -3.0), Vector2(0.2, 1.0), "pike", 860000)
 	await _tap_world(Vector2(-1.0, -0.8))
 	await _wait_state(FishingSession.State.BITING, 30.0)
 	await _wait(0.2)
@@ -394,8 +394,9 @@ func _use_save(catches: int) -> void:
 
 
 ## Canlı bir gölgeyi p'ye koyar (heading'e bakarak, uyuyan), diğerlerini uzağa park eder.
-## fish_id verilirse balığın türü o olur (çekişme kontrolleri için).
-func _shadow_at(p: Vector2, heading: Vector2, fish_id: String) -> FishShadow:
+## fish_id verilirse balığın türü o olur (çekişme kontrolleri için); percentile (ppm) verilirse
+## boyu da (boy, yıldız ve gölge uzunluğu yeniden hesaplanır).
+func _shadow_at(p: Vector2, heading: Vector2, fish_id: String, percentile: int = -1) -> FishShadow:
 	var sim := _session().sim
 	var parks := [Vector2(-10, -4), Vector2(-7, -5), Vector2(5.5, -2.5), Vector2(-12, -6)]
 	var chosen: FishShadow = null
@@ -416,13 +417,18 @@ func _shadow_at(p: Vector2, heading: Vector2, fish_id: String) -> FishShadow:
 	chosen.heading = heading.normalized()
 	chosen.mode = FishShadow.Mode.PAUSE
 	chosen.timer = 1_000_000
-	if not fish_id.is_empty():
+	if percentile >= 0:
+		chosen.percentile = percentile
+	if not fish_id.is_empty() or percentile >= 0:
 		var db := GameState.db
-		chosen.fish_index = db.fish_index(fish_id)
-		chosen.fish_id = fish_id
-		chosen.rarity = int(db.fish_def(chosen.fish_index)["rarity"])
-		chosen.size_cm = FishTable.size_cm(db.fish_def(chosen.fish_index), chosen.percentile)
-		chosen.length = FishTable.shadow_length(db.fish_def(chosen.fish_index), chosen.percentile)
+		if not fish_id.is_empty():
+			chosen.fish_index = db.fish_index(fish_id)
+			chosen.fish_id = fish_id
+		var def := db.fish_def(chosen.fish_index)
+		chosen.rarity = int(def["rarity"])
+		chosen.size_cm = FishTable.size_cm(def, chosen.percentile)
+		chosen.stars = FishTable.stars(chosen.percentile)
+		chosen.length = FishTable.shadow_length(def, chosen.percentile)
 	return chosen
 
 

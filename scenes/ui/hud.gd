@@ -221,7 +221,8 @@ func _build_bottom() -> void:
 	_fps = UiKit.label("", UiKit.SIZE_SMALL, UiKit.MUTED)
 	_fps.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_fps.size_flags_vertical = Control.SIZE_SHRINK_END
-	_fps.visible = OS.is_debug_build()
+	# Hata ayıklama FPS etiketi; video kaydında (Movie Maker, "movie" özelliği) gizli.
+	_fps.visible = OS.is_debug_build() and not OS.has_feature("movie")
 	_frame().add_child(_fps)
 
 

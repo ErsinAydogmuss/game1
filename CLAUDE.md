@@ -80,6 +80,16 @@ xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl
 
 Görsel değişikliklerde ekran görüntüsüne bak (Linux'ta `xvfb-run`; yalnızca OpenGL var). Telefon boyutu için `--resolution 2532x1170` (iPhone 14). Movie Maker (`--write-movie`) pencere boyutunu `project.godot`'taki override'dan alır: telefon boyutunda kayıt için geçici bir `override.cfg` (`[display]` altında `window/size/window_width_override=2532`, `window_height_override=1170`) koy, sonra sil.
 
+Tanıtım videosu (`video` senaryosu; bot gerçek dokunma olayları gönderir, Movie Maker sabit 30 fps ve sesli kaydeder). Telefon oranında (iPhone 14 ≈ 2,16:1) kayıt için geçici `override.cfg`, kayıttan sonra silinir:
+
+```bash
+printf '[display]\n\nwindow/size/window_width_override=1560\nwindow/size/window_height_override=720\n\n[editor]\n\nmovie_writer/video_quality=0.95\n' > override.cfg
+xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl3 --audio-driver Dummy \
+  --resolution 1560x720 --write-movie /mutlak/yol/olta.avi --fixed-fps 30 -- --autoplay --scenario=video --locale=tr
+rm override.cfg
+ffmpeg -i /mutlak/yol/olta.avi -c:v libx264 -preset slow -crf 20 -pix_fmt yuv420p -c:a aac -b:a 128k -movflags +faststart olta.mp4
+```
+
 Sesler kodla üretilir: `python3 -I tools/make_sounds.py` (numpy; .ogg için ffmpeg). Ses adları `Sounds.BANK` ve `LOOPS` ile aynı olmalı (`test_sounds.gd`).
 
 Araçlar (`tools/`, sürüm paketine girmez): `make_sounds.py` (bütün sesler), `reel_report.gd` (çekişme denge raporu: her balık, bot tarzı ve mod için tutma, kopma, kaçma oranı ve süre), `process_images.gd` (Ersin'in görsel sayfalarını keser, `data/art_sheets.json`), `art_sheet.gd` (kesme ve arka plan silme), `recolor_texture.gd` (KayKit dokularını boyar: ortaçağ paketi, Rogue ve Barbarian; orijinaller `source/` altında, `.gdignore`'lu), `character_sheet.gd` (karakterin duruşları tek resimde; xvfb ve `--fixed-fps 30` ile; `--angler` balıkçının, `--elder` Dede'nin oyundaki duruşları, `--model=` başka model, `--raw` boyasız).
@@ -162,7 +172,7 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - Sahne ton eşlemesi (Filmic, `tonemap_white` 6) ve sis 3B'deki ışıksız beyazı da griye çeker: arayüz gibi görünmesi gereken parçalar (konuşma balonu) 2B çizilir ve her kare `unproject_position` ile 3B noktaya taşınır.
 - Kamera +x +z tarafında ve yukarıdan bakar: bir karakterin yüzü yalnızca kameraya dönükken görünür. Dede bu yüzden kameraya üçte bir dönük oturur ve konuşurken başını kameraya kaldırır (`LookModifier` yukarı bakış).
 - Balıkçı düz çizgide yürür: yoldaki engeller (Dede) `Angler.avoid` ile çevreden kayılarak geçilir; durdurmak yerine kaydırmak, "karaya dokun" yürüyüşünün takılmamasını sağlar.
-- Video kaydında (Movie Maker) oyun zamanı gerçek saatten yavaş akar; bot döngülerinde kare sayısı kullan.
+- Video kaydında (Movie Maker) oyun zamanı gerçek saatten yavaş akar; bot döngülerinde kare sayısı kullan. Kayıtta `OS.has_feature("movie")` true: hata ayıklama FPS etiketi gizlenir.
 - `Image.blend_rect` iki görüntünün aynı biçimde olmasını ister (RGBA8).
 - Bu bulut ortamında `kenney.nl`, `quaternius.com`, `godotengine.org` erişime kapalı; KayKit'in GitHub depoları açık (seyrek klonla).
 - Export: `data/*.json` pakete girmeli (`include_filter`); `tests/*`, `tools/*`, `scripts/dev/*` hariç.
