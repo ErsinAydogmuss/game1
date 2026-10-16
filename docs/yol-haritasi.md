@@ -62,7 +62,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 - [x] Nine ve dükkân binası: KayKit Mage'den Nine (yazma, önlük, gözlük), kodla ahşap dükkân; dokununca selam.
 - [x] Dükkân paneli (sekmeler, kartlar, al ve tak, rütbe kilidi), kova ve satış; `shop` bot senaryosu. Takım çantası teknik düğmesiyle Dalga 3'te.
 - [x] Nadirliğin gölgede ve kartta görünmesi: simgeli rozetler, gölgede pırıltı / ışıltı / iz, efsanevi gölgede Dede'nin uyarısı ve ezgi, yakalamada 2B etiket, kartta Dede'nin sözü; gri tonlama denetimi (`rarity` senaryosu).
-- [ ] Balık Defteri (sayfalı ızgara; oranlar için kaydırmalı metin).
+- [x] Balık Defteri: sayfalı 6×2 ızgara (siluet ve nadirlik simgesi), rekor ve sayılar, ipuçları (sevdiği yem, görülme sıklığı), takımla gerçek oranlar ve şans garantisi sayaçları; HUD'da defter düğmesi. (Kaydırmalı metin mektuplarla Dalga 4'te.)
 - [ ] Denge botu ve korkuluk testleri; oran kataloğu; `shop` senaryosu.
 
 **Dalga 2 — Büyük göl → v0.3**

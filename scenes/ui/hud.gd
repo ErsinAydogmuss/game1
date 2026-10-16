@@ -4,7 +4,7 @@ extends Control
 ## TouchButton'lar yakalar. Çentik ve yuvarlak köşeler için güvenli alan payı her kenara eklenir
 ## (UiKit.safe_insets).
 ## - Sol üst: para, kova (dolu/kapasite) ve rütbe (çekişmede gizli; oyunun adı ve sürüm
-##   ayarlarda). Sağ üst: ayarlar.
+##   ayarlarda). Sağ üst: Balık Defteri (olta sudayken gizli) ve ayarlar.
 ## - Sağ alt: büyük eylem düğmesi (AT / GERİ SAR / BEKLE / VUR! / SAR); ekranın her yeri de
 ##   aynı işi yapar, düğme ne olacağını yazar.
 ## - Üst orta: çekişmede gerilim çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü
@@ -14,6 +14,7 @@ extends Control
 ## - Sol alt: geliştirme sürümünde FPS.
 
 signal settings_pressed
+signal book_pressed
 signal action_down
 signal action_up
 
@@ -27,8 +28,11 @@ const ACTIONS := {
 	"hook": ["UI_ACT_HOOK", "hook"], "reel": ["UI_ACT_REEL", "reel"],
 }
 const TOAST_TIME := 1.7
+## Defter düğmesinin rengi (deri kapak).
+const BOOK_COLOR := Color("#a8643a")
 
 var settings_button: TouchButton
+var book_button: TouchButton
 var action_button: TouchButton
 var tension_bar: TensionBar
 ## Olta sudayken gizlenen düğmeler (eylem ve ayarlar dışındakiler): VUR dokunuşu onlara gitmesin.
@@ -249,7 +253,7 @@ func _set_button(text: String, icon_kind: String, color: Color) -> void:
 
 ## Ekrandaki düğmeler (bot denetimi: boyut ve güvenli alan).
 func buttons() -> Array[TouchButton]:
-	return [settings_button, action_button]
+	return [book_button, settings_button, action_button]
 
 
 # --- Kurulum ---------------------------------------------------------------------
@@ -275,11 +279,20 @@ func _build_top() -> void:
 	_rank = _pill("star")
 	_rank_bar = RankBar.new()
 	_rank.get_parent().add_child(_rank_bar)
+	var top_right := HBoxContainer.new()
+	top_right.add_theme_constant_override("separation", 18)
+	top_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_right.size_flags_horizontal = Control.SIZE_SHRINK_END
+	top_right.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_frame().add_child(top_right)
+	book_button = TouchButton.make("", "book", BOOK_COLOR, Vector2(132, 132), UiKit.SIZE_BODY, 84.0)
+	book_button.pressed.connect(func() -> void: book_pressed.emit())
+	top_right.add_child(book_button)
+	# Olta sudayken ekranın her yeri eylem: defter düğmesi VUR dokunuşunu almasın.
+	line_out_hidden.append(book_button)
 	settings_button = TouchButton.make("", "settings", UiKit.NEUTRAL, Vector2(132, 132), UiKit.SIZE_BODY, 84.0)
-	settings_button.size_flags_horizontal = Control.SIZE_SHRINK_END
-	settings_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	settings_button.pressed.connect(func() -> void: settings_pressed.emit())
-	_frame().add_child(settings_button)
+	top_right.add_child(settings_button)
 	tension_bar = TensionBar.new()
 	tension_bar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	tension_bar.size_flags_vertical = Control.SIZE_SHRINK_BEGIN

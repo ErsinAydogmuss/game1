@@ -100,6 +100,14 @@ func _play_controls() -> void:
 	await _wait_frames(3)
 	_check("Nine'ye dokun → dükkân açılır, kapanınca uğurlar", opened and not shop.visible
 			and str(main.get("_hint_shown")) == Nine.LINE_KEY % 1 and _hud().hint_speaker() == "nine")
+	# 0c) Defter düğmesi: Balık Defteri açılır; kapat düğmesiyle kapanır.
+	var book: BookPanel = main.get("book_panel")
+	await _tap(_hud().book_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	var book_open := book.visible
+	await _tap(book.close_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	_check("defter düğmesi → defter açılır", book_open and not book.visible and not angler.is_walking())
 	# 1) Suyun öbür yanındaki karaya dokun: iskelenin kenarında (kıyıda) durmalı.
 	var across := Vector2(5.0, 7.0)
 	await _tap_world(across)
@@ -476,6 +484,23 @@ func _play_rarity() -> void:
 		await _shot("1%d_kart_%s" % [rarity, db.rarity_id(rarity)])
 		card.close_card()
 		await _wait(0.1)
+	# Balık Defteri: iki tür tutulmuş (kızılkanat, turna), öbürleri siluet; tutulan ve tutulmayan
+	# bir türün ayrıntısı.
+	var save := GameState.save
+	Records.add(save.records, "rudd", 27, 3, 0)
+	Records.add(save.records, "pike", 96, 4, 0)
+	Records.add(save.records, "pike", 81, 2, 0)
+	Records.release(save.records, "pike")
+	save.pity["rare"] = 31
+	save.pity["epic"] = 140
+	var book: BookPanel = main.get("book_panel")
+	book.open_book("pike")
+	await _wait(0.4)
+	await _shot("20_defter_turna")
+	book.open_book("wels")
+	await _wait(0.4)
+	await _shot("21_defter_yayin_siluet")
+	book.close_panel()
 	_quit()
 
 

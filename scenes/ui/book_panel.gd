@@ -1,0 +1,301 @@
+class_name BookPanel
+extends Dialog
+## Balık Defteri (docs/gdd.md §10.2): gölün bütün türleri, nadirlik sırasıyla 6×2'lik sayfalarda
+## (kaydırma yok; 12'den çok tür olunca sayfa düğmeleri). Tutulanlar kendi resmi ve nadirlik
+## renginde çerçeveyle, tutulmayanlar koyu siluet ve "???" ile. Sağda seçili türün bilgisi:
+## nadirlik, rekor boy ve yıldız, sayılar ya da tutulmadıysa ipucu (sevdiği yem, ne sıklıkla
+## görüldüğü); bu göldeki gerçek oranı (CatchOdds: gölgeyi doğuran işlevin aynısı, kuşanılan yemle),
+## gölün nadirlik oranları ve şans garantisi sayaçları (gelir kuralı 10: oranlar ve garanti açık).
+
+## Bir sayfadaki tür (6 sütun × 2 satır).
+const PAGE_SIZE := 12
+const COLUMNS := 6
+const WIDTH := 1760.0
+const CARD := Vector2(168, 232)
+## Görülme sıklığı ipucu: tür oranı bu kadar ppm ve üstündeyse "sık", "ara sıra".
+const OFTEN_PPM := 200_000
+const SOMETIMES_PPM := 80_000
+const UNKNOWN_BORDER := Color("#cdb48a")
+const SILHOUETTE := Color(0.16, 0.1, 0.06, 0.6)
+
+## Defterin gölü (main verir; spots.json kimliği).
+var spot_id: String = ""
+
+var _grid: GridContainer
+var _pager: HBoxContainer
+var _detail: VBoxContainer
+var _page: int = 0
+var _selected: String = ""
+
+
+func _build() -> void:
+	set_header(tr("UI_BOOK"), "book", WIDTH)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 22)
+	body.add_child(row)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 12)
+	row.add_child(left)
+	_grid = GridContainer.new()
+	_grid.columns = COLUMNS
+	_grid.add_theme_constant_override("h_separation", 12)
+	_grid.add_theme_constant_override("v_separation", 12)
+	_grid.custom_minimum_size = Vector2(COLUMNS * CARD.x + (COLUMNS - 1) * 12, CARD.y * 2 + 12)
+	left.add_child(_grid)
+	_pager = HBoxContainer.new()
+	_pager.alignment = BoxContainer.ALIGNMENT_CENTER
+	_pager.add_theme_constant_override("separation", 14)
+	left.add_child(_pager)
+	var detail_panel := PanelContainer.new()
+	detail_panel.add_theme_stylebox_override("panel", UiKit.card_style())
+	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(detail_panel)
+	_detail = VBoxContainer.new()
+	_detail.add_theme_constant_override("separation", 8)
+	detail_panel.add_child(_detail)
+
+
+## Açar; fish_id verilirse onu seçer (sayfası açılır).
+func open_book(fish_id: String = "") -> void:
+	if not fish_id.is_empty():
+		_selected = fish_id
+	_page = -1
+	open()
+
+
+func refresh() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	set_header(tr("UI_BOOK"), "book", WIDTH)
+	clear(header_extra)
+	var count := PanelContainer.new()
+	count.add_theme_stylebox_override("panel", UiKit.pill_style(Color(0.18, 0.1, 0.04, 0.85)))
+	var fish := species(db, spot_id)
+	var found := 0
+	for f in fish:
+		if save.records.has(str(f["id"])):
+			found += 1
+	count.add_child(UiKit.title("%d / %d" % [found, fish.size()], 46, UiKit.ACCENT, HORIZONTAL_ALIGNMENT_CENTER, 10))
+	header_extra.add_child(count)
+	_build_grid(db, save, fish)
+	_build_detail(db, save)
+
+
+## Gölün türleri, defterin sırasıyla: nadirlik, sonra fish.json sırası.
+static func species(db: ContentDB, spot: String) -> Array[Dictionary]:
+	var ids: PackedStringArray = db.spot(spot).get("fish_ids", PackedStringArray())
+	var out: Array[Dictionary] = []
+	for f in db.fish:
+		if str(f["id"]) in ids:
+			out.append(f)
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a["rarity"]) < int(b["rarity"]) if int(a["rarity"]) != int(b["rarity"]) \
+				else db.fish_index(str(a["id"])) < db.fish_index(str(b["id"])))
+	return out
+
+
+## Bu göldeki tür oranları kuşanılan takımla (doğan gölgeler de bunu kullanır).
+static func odds(db: ContentDB, save: SaveData, spot: String) -> Dictionary:
+	return CatchOdds.species_ppm(db, db.spot(spot), {"attract": Economy.gear_for(db, save).attract})
+
+
+## Bot ve testler: seçili tür.
+func selected() -> String:
+	return _selected
+
+
+# --- Izgara ----------------------------------------------------------------------
+
+func _build_grid(db: ContentDB, save: SaveData, fish: Array[Dictionary]) -> void:
+	clear(_grid)
+	if fish.is_empty():
+		return
+	if _selected.is_empty() or fish.all(func(f: Dictionary) -> bool: return str(f["id"]) != _selected):
+		_selected = str(fish[0]["id"])
+	var pages := maxi(1, ceili(float(fish.size()) / PAGE_SIZE))
+	if _page < 0:
+		_page = 0
+		for i in fish.size():
+			if str(fish[i]["id"]) == _selected:
+				_page = floori(float(i) / PAGE_SIZE)
+	_page = clampi(_page, 0, pages - 1)
+	for i in range(_page * PAGE_SIZE, mini(fish.size(), (_page + 1) * PAGE_SIZE)):
+		_grid.add_child(_fish_card(db, save, fish[i]))
+	_build_pager(pages, fish)
+
+
+func _build_pager(pages: int, fish: Array[Dictionary]) -> void:
+	clear(_pager)
+	if pages <= 1:
+		return
+	for page in pages:
+		var b := UiKit.button(str(page + 1), UiKit.PRIMARY if page == _page else UiKit.NEUTRAL, UiKit.SIZE_BODY,
+				Vector2(122, 122))
+		var target := page
+		b.pressed.connect(func() -> void:
+			if _page != target:
+				Sounds.play("ui_tap")
+			_page = target
+			_build_grid(GameState.db, GameState.save, fish))
+		_pager.add_child(b)
+
+
+func _fish_card(db: ContentDB, save: SaveData, f: Dictionary) -> Button:
+	var id := str(f["id"])
+	var entry: Dictionary = save.records.get(id, {})
+	var found := not entry.is_empty()
+	var rarity := int(f["rarity"])
+	var border := UiKit.rarity_color(db, rarity) if found else UNKNOWN_BORDER
+	var b := Button.new()
+	b.name = "Fish_" + id
+	b.custom_minimum_size = CARD
+	b.focus_mode = Control.FOCUS_NONE
+	var fill := Color(border, 0.14) if found else Color("#efe2c6")
+	var sb := UiKit.card_style(border, 24, fill, 8 if id == _selected else 4)
+	for state: String in ["normal", "hover", "pressed", "hover_pressed"]:
+		b.add_theme_stylebox_override(state, sb)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 2)
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	column.offset_left = 8
+	column.offset_right = -8
+	column.offset_top = 8
+	column.offset_bottom = -8
+	b.add_child(column)
+	var art := _art(id, 118, found)
+	art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	column.add_child(art)
+	var label := UiKit.ink(tr("FISH_" + id) if found else "???", 26, UiKit.INK, HORIZONTAL_ALIGNMENT_CENTER)
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	column.add_child(label)
+	var foot := HBoxContainer.new()
+	foot.alignment = BoxContainer.ALIGNMENT_CENTER
+	foot.add_theme_constant_override("separation", 6)
+	foot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(foot)
+	# Nadirlik simgesi tutulmadan da görünür (ipucu); rengi tutulunca gelir.
+	foot.add_child(GameIcon.make(UiKit.rarity_icon(db, rarity), 30, border if found else Color("#b9a27c")))
+	if found:
+		foot.add_child(UiKit.ink(tr("UI_SIZE_CM") % int(entry["best_cm"]), 24, UiKit.INK_SOFT))
+	b.pressed.connect(func() -> void:
+		if _selected != id:
+			Sounds.play("ui_tap")
+		_selected = id
+		_build_grid(GameState.db, GameState.save, species(GameState.db, spot_id))
+		_build_detail(GameState.db, GameState.save))
+	return b
+
+
+## Balığın resmi; tutulmadıysa koyu siluet.
+static func _art(id: String, side: float, found: bool) -> TextureRect:
+	var art := TextureRect.new()
+	art.texture = ItemArt.fish(id)
+	art.custom_minimum_size = Vector2(side, side)
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if not found:
+		art.modulate = SILHOUETTE
+	return art
+
+
+# --- Ayrıntı ---------------------------------------------------------------------
+
+func _build_detail(db: ContentDB, save: SaveData) -> void:
+	clear(_detail)
+	var f := db.fish_by_id(_selected)
+	if f.is_empty():
+		return
+	var id := _selected
+	var entry: Dictionary = save.records.get(id, {})
+	var found := not entry.is_empty()
+	var rarity := int(f["rarity"])
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 14)
+	_detail.add_child(head)
+	head.add_child(_art(id, 140, found))
+	var text := VBoxContainer.new()
+	text.add_theme_constant_override("separation", 4)
+	text.alignment = BoxContainer.ALIGNMENT_CENTER
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(text)
+	var title_color := UiKit.rarity_color(db, rarity).darkened(0.25) if found else UiKit.INK
+	text.add_child(UiKit.title(tr("FISH_" + id) if found else "???", 44, title_color, HORIZONTAL_ALIGNMENT_LEFT, 0))
+	text.add_child(UiKit.rarity_badge(db, rarity, 26))
+	if found:
+		var best := HBoxContainer.new()
+		best.add_theme_constant_override("separation", 10)
+		text.add_child(best)
+		best.add_child(UiKit.ink(tr("UI_BOOK_BEST") % int(entry["best_cm"]), 28, UiKit.INK))
+		best.add_child(UiKit.stars(int(entry["best_stars"]), 30.0))
+		_detail.add_child(UiKit.ink(tr("UI_BOOK_COUNT") % [int(entry["count"]), int(entry.get("released", 0))], 28, UiKit.INK))
+		var desc := UiKit.ink(tr("FISH_%s_DESC" % id), 26, UiKit.INK_SOFT)
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.custom_minimum_size = Vector2(420, 0)
+		_detail.add_child(desc)
+	else:
+		_detail.add_child(UiKit.ink(tr("UI_BOOK_NOT_CAUGHT"), 28, UiKit.INK))
+		for hint in hints(db, save, spot_id, id):
+			var line := UiKit.ink(hint, 26, UiKit.INK_SOFT)
+			line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			line.custom_minimum_size = Vector2(420, 0)
+			_detail.add_child(line)
+	var species_odds := odds(db, save, spot_id)
+	_detail.add_child(UiKit.ink(tr("UI_BOOK_CHANCE") % UiKit.format_percent(int(species_odds.get(id, 0))), 28, UiKit.INK))
+	_detail.add_child(UiKit.spacer(true))
+	_add_lake_odds(db, save, species_odds)
+
+
+## Tutulmamış bir balığın ipuçları: sevdiği yem (en çok çeken) ve ne sıklıkla görüldüğü.
+static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	var best_bait := ""
+	var best := 1.0
+	for g in db.gear_in("bait"):
+		var attract: Dictionary = g["attract"]
+		var mult := float(attract.get(fish_id, 1.0))
+		if mult > best:
+			best = mult
+			best_bait = str(g["id"])
+	if not best_bait.is_empty():
+		out.append(UiKit.translate("UI_BOOK_BAIT_HINT") % UiKit.translate("GEAR_" + best_bait))
+	var ppm := int(CatchOdds.species_ppm(db, db.spot(spot)).get(fish_id, 0))
+	if ppm >= OFTEN_PPM:
+		out.append(UiKit.translate("UI_BOOK_HINT_OFTEN"))
+	elif ppm >= SOMETIMES_PPM:
+		out.append(UiKit.translate("UI_BOOK_HINT_SOMETIMES"))
+	else:
+		out.append(UiKit.translate("UI_BOOK_HINT_RARELY"))
+	return out
+
+
+## Gölün nadirlik oranları (kuşanılan yemle) ve şans garantisi sayaçları.
+func _add_lake_odds(db: ContentDB, save: SaveData, species_odds: Dictionary) -> void:
+	_detail.add_child(UiKit.ink(tr("UI_BOOK_ODDS"), 26, UiKit.INK_SOFT))
+	var by_rarity := CatchOdds.rarity_ppm(db, species_odds)
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 6)
+	_detail.add_child(grid)
+	for r in by_rarity.size():
+		if by_rarity[r] <= 0:
+			continue
+		grid.add_child(UiKit.rarity_badge(db, r, 22))
+		grid.add_child(UiKit.ink(UiKit.format_percent(by_rarity[r]), 26))
+	_detail.add_child(UiKit.ink(tr("UI_BOOK_PITY_TITLE"), 26, UiKit.INK_SOFT))
+	for r in db.rarities.size():
+		var left := CatchOdds.pity_left(db, save, r)
+		# Bu gölde o nadirlikte (ya da üstünde) tür yoksa garanti yazılmaz: boş söz verilmez.
+		var reachable := 0
+		for k in range(r, by_rarity.size()):
+			reachable += by_rarity[k]
+		if left < 0 or reachable <= 0:
+			continue
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		_detail.add_child(row)
+		row.add_child(UiKit.rarity_badge(db, r, 22))
+		row.add_child(UiKit.ink(tr("UI_BOOK_PITY_NOW") if left == 0 else tr("UI_BOOK_PITY") % left, 26, UiKit.INK))

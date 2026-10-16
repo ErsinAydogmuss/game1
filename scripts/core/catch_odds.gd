@@ -52,14 +52,28 @@ static func roll(db: ContentDB, rng: RandomNumberGenerator, species: Dictionary,
 
 
 ## Şans garantisi: sıradaki gölge en az hangi nadirlikte olmalı (garanti dolmadıysa -1).
-## Birden çok kademe dolduysa en yükseği.
-static func pity_floor(db: ContentDB, save: SaveData) -> int:
+## Birden çok kademe dolduysa en yükseği. spot verilirse yalnızca o gölde tutulabilen kademeler
+## sayılır: gölde Efsanevi tür yokken dolan Efsanevi sayacı Nadir ve Destansı garantisini
+## kilitlemez (ve gölde olmayan bir şey vaat edilmez).
+static func pity_floor(db: ContentDB, save: SaveData, spot: Dictionary = {}) -> int:
+	var top := top_rarity(db, spot) if not spot.is_empty() else db.rarities.size() - 1
 	var floor := -1
-	for i in db.rarities.size():
+	for i in mini(db.rarities.size(), top + 1):
 		var every := int(db.rarities[i]["pity"])
 		if every > 0 and int(save.pity.get(db.rarity_id(i), 0)) >= every:
 			floor = i
 	return floor
+
+
+## Bu gölde doğabilen en yüksek nadirlik (doğma ağırlığı olan türlerden; tür yoksa -1).
+static func top_rarity(db: ContentDB, spot: Dictionary) -> int:
+	var ids: PackedStringArray = spot.get("fish_ids", PackedStringArray())
+	var weights: PackedInt32Array = spot.get("fish_weights", PackedInt32Array())
+	var top := -1
+	for i in ids.size():
+		if weights[i] > 0:
+			top = maxi(top, int(db.fish_by_id(ids[i]).get("rarity", -1)))
+	return top
 
 
 ## Kademenin garantisine kaç av kaldı (defterde gösterilir; garantisi yoksa -1).

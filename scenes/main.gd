@@ -56,6 +56,7 @@ var hud: Hud
 var card: FishCard
 var settings_panel: SettingsPanel
 var shop_panel: ShopPanel
+var book_panel: BookPanel
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
 var bot_camera: bool = false
 
@@ -146,7 +147,8 @@ func _start_session() -> void:
 	var save := GameState.save
 	_save_ref = save
 	session = FishingSession.new(GameState.db, spot_id, Economy.gear_for(GameState.db, save), Dice.derive(save.seed, save.session),
-			bool(GameState.setting("easy", false)), save.catches == 0, CatchOdds.pity_floor(GameState.db, save))
+			bool(GameState.setting("easy", false)), save.catches == 0,
+			CatchOdds.pity_floor(GameState.db, save, GameState.db.spot(spot_id)))
 	angler.place(session.angler)
 	angler.face(Vector2(0, -1))
 	bobber.hide_bobber()
@@ -437,7 +439,7 @@ func _on_catch() -> void:
 	var outcome := Records.add(save.records, fish_id, size_cm, stars, GameState.clock.now_unix())
 	save.catches += 1
 	CatchOdds.note_catch(db, save, rarity)
-	session.set_pity_floor(CatchOdds.pity_floor(db, save))
+	session.set_pity_floor(CatchOdds.pity_floor(db, save, db.spot(spot_id)))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir).
 	var was_full := Bucket.is_full(db, save)
@@ -798,6 +800,12 @@ func _build_ui() -> void:
 	shop_panel.gear_changed.connect(_on_gear_changed)
 	shop_panel.sold.connect(_on_sold)
 	shop_panel.closed.connect(_on_shop_closed)
+	book_panel = BookPanel.new()
+	book_panel.spot_id = spot_id
+	layer.add_child(book_panel)
+	hud.book_pressed.connect(func() -> void:
+		input.release_all()
+		book_panel.open_book())
 	hud.settings_pressed.connect(func() -> void:
 		input.release_all()
 		session.release()

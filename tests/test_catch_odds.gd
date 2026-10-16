@@ -81,6 +81,21 @@ func test_pity_counters() -> void:
 	assert_eq(CatchOdds.pity_floor(db, s), -1, "garanti kullanıldı")
 
 
+## Gölde tutulamayan kademenin dolu sayacı garantiyi kilitlemez: Köy Gölü'nde Efsanevi yok.
+func test_pity_ignores_tiers_missing_from_the_lake() -> void:
+	var db := content()
+	var s := SaveData.create_new(1)
+	var spot := db.spot("big_lake")
+	s.pity["legendary"] = 999
+	s.pity["epic"] = 3
+	s.pity["rare"] = 40
+	assert_eq(CatchOdds.top_rarity(db, spot), db.rarity_index("epic"), "gölün en yükseği Destansı")
+	assert_eq(CatchOdds.pity_floor(db, s, spot), db.rarity_index("rare"), "Nadir garantisi işler")
+	assert_eq(CatchOdds.pity_floor(db, s), db.rarity_index("legendary"), "göl verilmezse bütün kademeler")
+	s.pity["rare"] = 2
+	assert_eq(CatchOdds.pity_floor(db, s, spot), -1, "gölde olmayan Efsanevi garanti vermez")
+
+
 ## Garanti yakında doğan sıradaki gölgeyi belirler; aynı anda tek garanti gölgesi olur; tür
 ## değişse de boy aynı tuzlu zardan gelir.
 func test_pity_shapes_the_next_shadow_only() -> void:

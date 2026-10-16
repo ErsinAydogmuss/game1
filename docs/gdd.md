@@ -306,6 +306,8 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 - **Balık Defteri:**
   - Kademeye göre ızgara; bulunmamış türler siluet ve ipucuyla (bölge, teknik, vakit, hava).
   - Rekorlar; o yerdeki, teknikteki ve vakitteki tam oranlar; şans garantisi sayaçları; göl sevgisi.
+  - ✅ Dalga 1'deki hâli: sağ üstteki defter düğmesiyle açılır (olta sudayken gizli). Nadirlik sırasıyla 6×2'lik sayfalar (12'den çok tür olunca sayfa düğmeleri). Tutulan tür kendi resmi, adı, en büyük boyu ve nadirlik renginde çerçeveyle; tutulmayan koyu siluet, "???" ve nadirlik simgesiyle (renksiz). Sağda seçili türün nadirliği, rekor boyu ve yıldızı, tutulan ve bırakılan sayısı, tanımı; tutulmadıysa ipuçları (sevdiği yem, gölde ne sıklıkla görüldüğü). Altında takımınla bir gölgenin bu balık olma şansı, gölün nadirlik oranları ve şans garantisi sayaçları ("9 av içinde garanti"). Oranlar gölgeyi doğuran işlevin aynısından gelir.
+  - ✅ Garanti yalnızca gölde tutulabilen kademeler için yazılır ve işler: Köy Gölü'nde Efsanevi tür yokken dolan Efsanevi sayacı Nadir ve Destansı garantisini kilitlemez (`CatchOdds.pity_floor(db, save, spot)`).
 
 ### 10.3 Teknikler
 
