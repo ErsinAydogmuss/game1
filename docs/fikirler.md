@@ -398,9 +398,17 @@ Bütün fikirlerde aynı gelir ve "her yaş" kuralları geçerli: parayla şans 
 
 **Uyarı:** Puan farkı küçük. Kazı'ya benzemesi seni rahatsız ediyorsa Pofuduk Adası'nı seç; o da güçlü bir fikir.
 
-## Karar
+## Karar (16 Ekim 2026)
 
-**Ersin'in seçimi bekleniyor.** Seçilince buraya yazılacak.
+**Seçilen: Olta: Gölün Sırrı.** Ersin'in diğer seçimleri:
+
+| Soru | Seçim |
+|---|---|
+| Şimdi ne yapılsın? | Kısa belgeler + 1. hafta prototipi (telefonda denenebilir ilk oynanış) |
+| Balık tutarken ekran | Eğik üstten kamera; suda balık gölgeleri görünür (Animal Crossing gibi). Gölgenin önüne atılır, gölgenin boyu balığın boyunu ele verir. |
+| Kahraman | Kendi balıkçın (kız ya da erkek) + köyde Dede. Dede balıkçılığı öğretir ve "Gölün Sırrı" efsanesini anlatır. |
+
+Tasarım: [`gdd.md`](gdd.md). İş sırası: [`yol-haritasi.md`](yol-haritasi.md).
 
 ## Seçimden sonra: 3 haftalık prototip planı
 

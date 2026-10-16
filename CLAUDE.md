@@ -1,12 +1,12 @@
-# CLAUDE.md: game1 (yeni oyun, araştırma aşaması)
+# CLAUDE.md: Olta: Gölün Sırrı (game1)
 
-Ersin'in Kazı'dan sonraki yeni oyun projesi. Kodu tamamen Claude yazıyor. Açıklamaları **Türkçe ve sade** yaz; terimleri ilk geçtiğinde kısaca açıkla.
+Ersin'in Kazı'dan sonraki yeni oyun projesi: her yaşa hitap eden, rahat bir 3D mobil balıkçılık oyunu. Kodu tamamen Claude yazıyor. Açıklamaları **Türkçe ve sade** yaz; terimleri ilk geçtiğinde kısaca açıkla.
 
 **Durum:**
 
 - Saha araştırması bitti: `docs/saha-arastirmasi.md`.
-- 5 fikir karşılaştırıldı: `docs/fikirler.md`.
-- **Ersin'in seçimi bekleniyor.** Henüz oyun kodu yok.
+- Fikir seçildi: **Olta: Gölün Sırrı** (`docs/fikirler.md`, Karar bölümü). Görünüm eğik üstten, suda balık gölgeleri. Kahraman kendi balıkçın + köyde Dede.
+- Şu an: 1. hafta prototipi.
 
 ## Ersin ve çalışma şartları
 
