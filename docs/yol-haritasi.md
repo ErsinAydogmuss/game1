@@ -10,7 +10,7 @@ Yarı zamanlı çalışma (iş arasında) ve kodun Claude tarafından yazılmas�
   - **Not:** ücretsiz Apple hesabıyla aynı anda en fazla 3 uygulama yüklenebilir; Kazı da bunlardan biri.
 - [ ] **Apple Developer** (99 $/yıl) ve **Google Play Console** (25 $): dış testçilerden önce.
 
-## Faz 1: Prototip (3 hafta) ← şu an buradayız
+## Faz 1: Prototip
 
 ### H1: Çekirdek his ve stil
 
@@ -37,39 +37,94 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
   - [x] kısa video (35 sn, `video` senaryosu).
 - [x] README, CREDITS, kod incelemesi (3 ayrı inceleme: çekirdek, akış ve arayüz, 3B; bulgular düzeltildi), "telefonda dene" listesi.
 
-### H2: Döngü
+### Ersin'in ilk geri bildirimi
 
-- [ ] Kova (6 balık), satış (kopyalar), akvaryum (yeni türler yüzer).
-- [ ] Dükkân: 2 olta, 2 yem. Şansı değiştirenler yalnızca oyun parasıyla.
-- [ ] Kıyı süsleri: 4–6 yuva, 3 tarif. Bulunan tarif türü garanti eder.
-- [ ] Balık ansiklopedisi: silüetler ve ipuçları.
-- [ ] Erkek balıkçı ve karakter seçim ekranı. Önce karakter sayfasıyla model seçilir.
-- [ ] Denge botu: kaç dakikada ilk olta, ilk nadir, ilk tarif?
-- [ ] Kayıt v2 ve göç testi.
+"Oyun mantığını beğendim, temel olarak güzel." İstekler: daha büyük göl, dükkân ve ekipman, balıklarda nadirlik, çeşitli teknikler, daha profesyonel görseller, Claude'un önerileri. Araştırma ve iki tur sorudan sonra H2 "Büyük Göl" planı çıktı. Tasarım: [`gdd.md`](gdd.md) §10.
 
-### H3: Çeşit ve test
+### H2: "Büyük Göl" ← şu an buradayız
 
-- [ ] Gün döngüsü ve yağmur; gece balıkları.
-- [ ] 15 balık; çöp eşyalar (eski çizme, şişede not).
-- [ ] Dede: tam eğitim ve istekler ("bana bir turna getir").
-- [ ] Müzik (kalimba, ud).
-- [ ] **5 kişiye oynat** (Kazı'nın 5 kişilik testiyle birlikte yapılabilir). Sorular:
-  - İlk 30 saniyede ne yapacaklarını anladılar mı?
-  - Gölgeleri gördüler mi? Gölgenin önüne atmayı kendiliğinden buldular mı?
-  - VUR anı adil mi? Erken dokunup kaçırdılar mı?
-  - Çekişme zevkli mi, zor mu? Kolay çekmeye ihtiyaç duydular mı?
-  - "Bir atış daha" dediler mi? Ertesi gün oyunu kendiliğinden açtılar mı?
-  - Kazı'ya benziyor mu, farklı mı geldi?
-- [ ] **Devam ya da vazgeç:** 5 kişiden en az 3'ü "bir atış daha" diyor ve ertesi gün açıyorsa tam tasarım belgesi ve Faz 2. Değilse sorun bulunur; düzeltilir ya da ikinci fikre (Pofuduk Adası) geçilir.
+- **Her adım:** ayrı commit.
+- **Her dalganın sonunda:** inceleme, video, "telefonda dene" listesi, sürüm artışı.
+- **Görseller ve 3D paketler:** gelene kadar kodla çizilen yedekler kullanılır; iş beklemez.
+
+**Dalga 0 — Hazırlık**
+
+- [ ] Tasarım belgeleri (gdd §10, bu yol haritası).
+- [ ] Görsel istekleri Parti 1–2 ([`gorsel-istekleri.md`](gorsel-istekleri.md)); 9 dilimli çerçeve desteği.
+- [ ] Mac'te CC0 3D paket indirme görevi ([`mac-indirme.md`](mac-indirme.md)).
+
+**Dalga 1 — Dükkân, takım, para, nadirlik, defter → v0.2**
+
+- [ ] İçerik v2: 6 nadirlik kademesi ve simgeleri, takım verisi (`data/gear.json`).
+- [ ] Takımın çekişmeye etkisi (`Loadout`, `GearStats`).
+- [ ] Para, kova, rütbe, oranlar ve şans garantisi; kayıt v2 ve göç testi.
+- [ ] Kaydırmalı liste; HUD'da para, kova ve rütbe.
+- [ ] Nine ve dükkân binası.
+- [ ] Dükkân paneli, takım çantası, kova ve satış.
+- [ ] Nadirliğin gölgede ve kartta görünmesi.
+- [ ] Balık Defteri.
+- [ ] Denge botu ve korkuluk testleri; oran kataloğu; `shop` senaryosu.
+
+**Dalga 2 — Büyük göl → v0.3**
+
+- [ ] Göl verisi v2: havzalar ve bölgeler; testler için sabit küçük göl; kıyı alanı önbelleği.
+- [ ] Gölgeler bölgelere göre doğar.
+- [ ] Kıyı yolu ve dünya sınırı.
+- [ ] Göl sahnesi ve bölge süsleri.
+- [ ] Harita ve hızlı geçiş.
+- [ ] Sandal.
+- [ ] Bölge balıkları (7 yeni tür).
+- [ ] 3D görsel geçişi: su, zemin dokuları, doğa modelleri; telefonda hız ölçümü.
+
+**Dalga 3 — Teknikler → v0.4**
+
+- [ ] Teknik soyutlaması (önce bugünkü şamandıra için altın test).
+- [ ] Spin.
+- [ ] Dip: sehpa ve zil.
+- [ ] Sinek (dere ağzı).
+- [ ] Kerevit tuzağı.
+- [ ] Teknik balıkları.
+- [ ] Dede'nin teknik ipuçları.
+- [ ] **5 kişiye oynat** (aşağıdaki sorular). Devam ya da vazgeç burada verilir; Dalga 4–5 beklemez.
+
+**Dalga 4 — Canlı dünya → v0.5**
+
+- [ ] Oyun saati ve hava (çekirdek).
+- [ ] Vakit ışığı, gece, yağmur, sis; Dede'yle çay; vakit müziği.
+- [ ] Tut-bırak, göl sevgisi, çöp toplama.
+- [ ] Dede'nin istekleri.
+- [ ] Gölün Sırrı: mektuplar ve harita parçaları.
+- [ ] Gölün Sırrı: final, Gölün Bekçisi, bitiş sahnesi.
+
+**Dalga 5 — Yuva ve kişilik → v0.6**
+
+- [ ] Kedi.
+- [ ] Akvaryum.
+- [ ] Karakter seçimi ve erkek balıkçı.
+- [ ] Kıyafetler.
+- [ ] Fotoğraf modu.
+- [ ] Son geçiş: telefonda hız ölçümü, tam inceleme.
+
+**5 kişilik test** (Kazı'nın 5 kişilik testiyle birlikte yapılabilir). Sorular:
+
+- İlk 30 saniyede ne yapacaklarını anladılar mı?
+- Gölgeleri gördüler mi? Gölgenin önüne atmayı kendiliğinden buldular mı?
+- VUR anı adil mi? Erken dokunup kaçırdılar mı?
+- Çekişme zevkli mi, zor mu? Kolay çekmeye ihtiyaç duydular mı?
+- Dükkânda ne alacaklarını anladılar mı? Yeni teknikleri denediler mi?
+- "Bir atış daha" dediler mi? Ertesi gün oyunu kendiliğinden açtılar mı?
+- Kazı'ya benziyor mu, farklı mı geldi?
+
+**Devam ya da vazgeç:** 5 kişiden en az 3'ü "bir atış daha" diyor ve ertesi gün açıyorsa devam. Değilse sorun bulunur; düzeltilir ya da ikinci fikre (Pofuduk Adası) geçilir.
 
 ## Faz 2: Dikey dilim
 
-- [ ] Görsel stili kilitle: ChatGPT stil sayfası, arayüz ikonları, Dede portreleri, logo.
-- [ ] Köy ve akvaryum binası; köylüler.
-- [ ] İkinci su (nehir) ve tekne.
+Tekne, Gölün Sırrı, kostümler ve akvaryum H2'ye taşındı.
+
+- [ ] Köy ve köylüler.
+- [ ] İkinci su (nehir).
 - [ ] Sonar (Kazı'daki dedektör gibi).
-- [ ] "Gölün Sırrı" hikâyesinin ilk bölümü: şişelerden çıkan notlar.
-- [ ] Kostümler: şapka, yelek, olta kaplaması.
+- [ ] Kıyı süsleri ve tarifler: bulunan tarif türü garanti eder.
 
 ## Faz 3: Ücretsiz oyun katmanı
 

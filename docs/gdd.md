@@ -1,14 +1,14 @@
-# Olta: Gölün Sırrı — Oyun Tasarım Belgesi (kısa sürüm v0.1)
+# Olta: Gölün Sırrı — Oyun Tasarım Belgesi (H2: Büyük Göl)
 
-> Kısa sürüm. Tam tasarım belgesi, 3. haftadaki devam/vazgeç testinden sonra yazılacak ([`yol-haritasi.md`](yol-haritasi.md)). ✅ = prototipte var, 🔜 = planlı. Fikrin neden seçildiği: [`fikirler.md`](fikirler.md).
+> Prototipin (v0.1) kuralları ✅ ile, H2 "Büyük Göl" güncellemesinin tasarımı 🔜 ile işaretli (§10). Sıra ve adımlar: [`yol-haritasi.md`](yol-haritasi.md). H2'nin sayıları taslaktır; denge botuyla ayarlanır. Fikrin neden seçildiği: [`fikirler.md`](fikirler.md).
 
 ## 1. Vizyon
 
-**"Kıyını süsle, havayı bekle: bu gece oltana ne takılacak?"**
+**"Gölü keşfet, takımını kur: bu gece oltana ne takılacak?"**
 
-Yazı Dede'nin göl köyünde geçiren bir çocuk ya da genç balıkçısın. Gölde balık gölgeleri dolaşıyor. Gölgenin önüne oltanı atıyorsun; gölge fark edip yaklaşıyor, şamandırayı dürtüyor ve sonunda ısırıyor: VUR! Sonra gerilim çubuğunu kırmızıya kaçırmadan çekiyorsun.
+Yazı Dede ile Nine'nin göl köyünde geçiren bir çocuk ya da genç balıkçısın. Gölde balık gölgeleri dolaşıyor. Gölgenin önüne oltanı atıyorsun; gölge fark edip yaklaşıyor, şamandırayı dürtüyor ve sonunda ısırıyor: VUR! Sonra gerilim çubuğunu kırmızıya kaçırmadan çekiyorsun.
 
-İleride kıyıyı süsleyerek hangi balığın geleceğini sen belirleyeceksin. Tuttuğun balıklar satılmayacak, canlı akvaryumunda yaşayacak.
+Göl büyük ve bölgelere ayrılmış: sazlık, nilüferli koy, kayalık burun, dere ağzı, derin orta 🔜. Her bölgenin kendi balıkları var; her balığın sevdiği bir teknik, yem, saat ve hava var. Nine'nin dükkânından aldığın takımla yeni tekniklere (spin, dip, sinek, tuzak) ve yeni sulara açılırsın. Tuttuğun balıkların kopyalarını Nine'ye satarsın; her türün en iyisi akvaryumda yaşar. İstersen balığı göle geri bırakırsın; bıraktıkça göl güzelleşir. Dede'nin anlattıkları ve şişelerden çıkan mektuplar seni gölün sırrına, Gölün Bekçisi'ne götürür.
 
 - **Platform:** iOS + Android, yatay ekran, low-poly 3D.
 - **Model:** ücretsiz oyun; gelir kuralları [`CLAUDE.md`](../CLAUDE.md)'de.
@@ -17,9 +17,9 @@ Yazı Dede'nin göl köyünde geçiren bir çocuk ya da genç balıkçısın. G�
 
 ## 2. Tasarım sütunları
 
-1. **Her gölge bir soru.** Gölgenin boyu balığın boyunu ele verir, türünü vermez. "Bu kocaman gölge ne?" merakı oyunun motorudur.
-2. **Tek parmak, her yaş.** Dokun-yürü, dokun-at, değdiği an VUR, basılı tut-çek. Okumadan oynanır.
-3. **Çağır, sakla, sergile** 🔜. Kıyı süsleri hangi balığın geleceğini belirler; balıklar akvaryumda yaşar.
+1. **Her gölge bir soru.** Gölgenin boyu balığın boyunu ele verir, türünü vermez. Nadir gölgeler arada pırıldar, ama yine türünü söylemez 🔜. "Bu kocaman gölge ne?" merakı oyunun motorudur.
+2. **Tek parmak, her yaş.** Dokun-yürü, dokun-at, değdiği an VUR, basılı tut-çek. Yeni teknikler de tek parmakla oynanır: bas-bırak, dokun 🔜. Okumadan oynanır.
+3. **Keşfet, kur, sergile** 🔜. Bölge, teknik, yem, saat ve hava hangi balığın geleceğini belirler; takımını sen kurarsın. Balık Defteri her türün nerede ve ne zaman çıktığını, oranlarıyla birlikte gösterir. En iyileri akvaryumda yaşar.
 4. **Sakin ve adil.** Oyuncu yokken ceza yok; parayla şans satılmaz; kötü şansa karşı garanti var.
 5. **Kısa oturum.** Bir atış 15–40 saniye; bir oturum 5–10 dakika.
 
@@ -28,8 +28,8 @@ Yazı Dede'nin göl köyünde geçiren bir çocuk ya da genç balıkçısın. G�
 | Döngü | Süre | İçerik | Durum |
 |---|---|---|---|
 | Çekirdek | 15–40 sn | Dokun → at → gölge yaklaşır, dürter → ısırır → VUR → çek → balık elde, kart | ✅ |
-| Oturum | 5–10 dk | Kova dolar → kopyaları sat, yenileri akvaryuma koy → olta, yem ya da süs al → kıyı süsünü değiştir, yeni türü çağır | 🔜 (H2) |
-| Haftalar | günler | Ansiklopedi (silüetler ve ipuçları), yeni sular, gece ve hava balıkları, köy, sezonluk türler, "Gölün Sırrı" hikâyesi | 🔜 |
+| Oturum | 5–10 dk | Kova dolar → Nine'ye sat (her türün en iyisi akvaryuma) → takım al → yeni teknik ya da bölge → Dede'nin isteğini bitir | 🔜 (H2) |
+| Haftalar | günler | Balık Defteri (siluetler, ipuçları, oranlar), rütbe, gece ve hava balıkları, göl sevgisi, "Gölün Sırrı" hikâyesi ve Gölün Bekçisi; sonra yeni sular, sezonluk türler | 🔜 |
 
 ## 4. Kontroller ✅
 
@@ -44,6 +44,16 @@ Yazı Dede'nin göl köyünde geçiren bir çocuk ya da genç balıkçısın. G�
 - **Joystick yok,** çünkü soldaki dokunuşları yutuyordu (Kazı deneyimi).
 
 **Mac:** tıkla (yürü, at), WASD (yürü), Space (VUR; basılı tutunca sar).
+
+**H2'de eklenecekler 🔜** (ayrıntı §10.3):
+
+- **Teknik düğmesi** (sol alt): geçerli tekniğin ikonu; dokununca şamandıra, spin, dip ya da sinek seçilir.
+- **Spin:** basılı tut = yem gelir, bırak = durur ve batar. Saldırı anında basılıysa balık kendiliğinden takılır, değilse kısa bir VUR anı açılır.
+- **Dip:** at, olta sehpaya konur; zil sürekli öterken ekranın her yerine dokun.
+- **Sinek:** halka çıkınca dokun.
+- **Tuzak:** kıyıdaki tuzak şamandırasına dokun → bırak ya da topla.
+- **Harita** (sağ üst): bir atış noktasına dokun → oraya geçilir. **Sandal:** iskeledeki sandala dokun → derin ortadaki şamandıralardan birini seç.
+- **Dünyada dokunulanlar:** Nine → dükkân; Dede → öğüt ve istekler; kedi → sev.
 
 ## 5. Kurallar ve başlangıç sayıları ✅
 
@@ -142,25 +152,46 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | `pike` | Turna | Pike | 1,05 m | Nadir | 50–120 cm | ani, güçlü | 15 | uzun, zeytin yeşili, açık benekler |
 | `wels` | Yayın | Wels Catfish | 1,5 m | Destansı | 100–250 cm | düzensiz, güçlü | 8 | koyu gri-kahve, bıyıklı, yassı baş |
 
-**Nadirlikler:** Sıradan (beyaz), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın). Efsanevi henüz yok; "Gölün Sırrı" ona ayrıldı. Nadirlikler yalnızca sona eklenir.
+**Nadirlikler (prototip):** Sıradan (beyaz), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın). Efsanevi henüz yok. Nadirlikler yalnızca sona eklenir. H2'de 6. kademe Masalsı eklenir; her kademeye bir simge gelir (§10.2).
 
-**Sonraki türler 🔜:** 15 tür ve gece, yağmur, sabah türleri; çöp eşyalar (eski çizme, şişede not); renk varyantları.
+**H2 türleri 🔜** (18 tür; bugünkü 5 kimlik korunur, sazan Güzel'e çıkar). Bölge, teknik ve vakit ayrıntısı §10.1 ve §10.3'te.
 
-## 7. Kahraman ve Dede
+| Kademe | Türler |
+|---|---|
+| Sıradan | kızılkanat, gümüş balığı, çapak, tatlısu kefali |
+| Güzel | sazan, levrek, kadife |
+| Nadir | turna, sudak, alabalık, aynalı sazan |
+| Destansı | yayın, altın sazan, dere alabalığı |
+| Efsanevi | mersin (yalnızca bırakılır; koruma mesajı), ay turnası (gece), Kocabaş (dev yayın, fırtınalı gece) |
+| Masalsı | Gölün Bekçisi (hikâyenin sonu) |
+
+- **Kerevit:** tuzakla ve dip avıyla çıkar.
+- **Eşyalar:** eski çizme, teneke, mesajlı şişe (hikâye), paslı anahtar. Çöp toplamak göl sevgisi verir.
+- **Katalog:** bütün oranlar araçla üretilen `docs/balik-katalogu.md`'de yazar.
+
+## 7. Kahraman, Dede ve Nine
 
 - **Kendi balıkçın:**
   - ✅ 1. hafta kız balıkçıyla çıkar (KayKit Rogue, yeniden boyanmış; pelerin ve silahlar gizli; kodla kova biçimli balıkçı şapkası).
   - ✅ Duruşlar: bekleme, yürüme, atış (Throw), olta suda (tek el nişan), çekme (iki el nişan, gerilimle geriye yaslanır), gösterme ve sevinç (Cheer).
   - Model dosyası yoksa kodla kurulan basit bir balıkçı çıkar (aynı duruşlar).
-  - Erkek balıkçı ve seçim ekranı H2'de 🔜. KayKit'teki erkek modeller ya zırhlı (Knight) ya sakallı (Barbarian); karakter sayfasıyla bakılacak.
-  - Kostümler (şapka, yelek, olta kaplaması) sonra gelir 🔜.
+  - Erkek balıkçı ve seçim ekranı 🔜 (H2, Dalga 5). İlk açılışta kız ya da erkek seçilir, ayarlardan değişir. Model KayKit Adventurers ve Mac'te indirilen paketlerden karakter sayfasıyla seçilir.
+  - Kıyafetler 🔜: şapka, yelek rengi, olta kaplaması. H2'de rütbe, defter ve isteklerle kazanılır; gerçek parayla satış Faz 3'te.
 - **Dede:**
   - Köyün yaşlı balıkçısı.
   - ✅ İskelenin kenarında oturur, bacakları suya sarkar; yanında ince belli çay bardağı. KayKit Barbarian, yeniden boyanmış: beyaz sakal ve kaşlar, tuğla kırmızısı örgü kazak, kodla kasket. Miğfer, silahlar ve kupa gizli (kupa bira bardağına benziyor; oyun her yaşa).
   - ✅ Yüzü görünsün diye kameraya üçte bir dönük oturur. Konuşurken başını kaldırıp oyuncuya (kameraya) bakar, başını sallar; başının üstünde konuşma balonu (üç nokta) çıkar. Olta sudayken şamandırayı izler. Balık tutulunca oturduğu yerde kollarını kaldırıp sevinir (yeni tür, rekor, nadir); sıradan balıkta ünlemle onaylar.
   - ✅ İpucu çubuğundaki yüzü kendi modelinden çekilir (Ersin'in Dede portreleri gelince onlar).
   - Balıkçı onun içinden geçmez, yanından kayarak geçer.
-  - Sonra eğitimi verir, istekte bulunur ("bana bir turna getir") ve "Gölün Sırrı"nı parça parça anlatır 🔜.
+  - Sonra her tekniği ilk kullanımda gösterir, her gün 3 küçük istekte bulunur ("bana 30 cm'lik bir kadife getir") ve "Gölün Sırrı"nı parça parça anlatır 🔜.
+  - Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir 🔜.
+- **Nine** 🔜 (Dede'nin eşi):
+  - İskelenin kara ucundaki küçük ahşap dükkânı işletir; ona dokununca dükkân açılır.
+  - Model KayKit'ten seçilir ve boyanır; yazmayı ve önlüğü kod kurar. Yoksa kodla kurulan yedek çıkar.
+  - Hikâyede gençliğini anlatır; göl sevgisi yükselince "altın hamur"u verir.
+- **Kedi (Tekir)** 🔜:
+  - İskelede bekler, peşinden biraz gelir. Dokununca mırlar (titreşim).
+  - Küçük balık isteyebilir; her 5 beslemede sıradaki hediyeyi getirir (sabit sırayla, zar yok).
 
 ## 8. Görünüm
 
@@ -188,6 +219,14 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - **Çevre:** iskele (tahta), sazlık, KayKit ağaç, kaya, çadır, fıçı ve fenerleri; Kazı'nın çimeni, ışığı ve ortamı.
 - **Dış çizgi** yalnızca karakterlerde ve balıklarda.
 - **Erişilebilirlik:** gerilim çubuğu renk + ikon + sarsıntı + "BIRAK!" yazısı. Her sesin bir görsel ve titreşim karşılığı var.
+- **H2 görsel hedefleri 🔜:**
+  - **Su:** normal haritası, gök rengine göre fresnel, sığda kostik, derede akış, yağmur halkaları.
+  - **Zemin:** dokulu (çimen, kum, çamur, patika; Ersin'in dikişsiz dokuları ya da kodla).
+  - **Doğa:** Forest Nature ve Quaternius doğa modelleri, nilüferler.
+  - **Işık:** vakte göre ışık, gök ve sis; gece ay, fenerler ve ateş böcekleri.
+  - **Nadirlik efektleri:** gölgede pırıltı, ışıltı, iz.
+  - **Arayüz:** Ersin'in arayüz kiti (çerçeveler, düğmeler, nadirlik çerçeveleri).
+  - **Ölçüt:** iPhone 14'te 60 fps.
 
 ## 9. Ses
 
@@ -198,26 +237,162 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - nadirliğe göre buluntu;
   - arayüz sesleri;
   - göl ortam sesi (su, kuş, rüzgâr).
-- 🔜 Müzik: sakin kalimba ve ud (H3).
+- 🔜 Müzik: her vakit için kodla üretilen sakin döngüler (kalimba, ud) ve dükkân ezgisi.
+- 🔜 Yeni sesler: spin makarası ve yem şapırtısı, dip zili (bip ve sürekli bip), sinek halkası, tuzak, kedi mırlaması, yağmur, gece böcekleri.
 - iPhone'un sessiz anahtarı açıkken oyunun sesi çıkmaz (Kazı deneyimi).
 
-## 10. Sonraki sistemler 🔜
+## 10. H2 sistemleri 🔜
 
-- **Kova ve satış (H2):** kova 6 balık alır. Kopyalar köye satılır; yeni türler ve rekorlar akvaryuma gider.
-- **Dükkân (H2):** 2 olta, 2 yem. Olta menzil, isabet ve çekme hızı verir.
-  - Şansı değiştiren her şey yalnızca oyun parasıyla alınır.
-- **Akvaryum (H2):** tuttuğun türler yüzer. Köylüler ziyaret eder ve bilet parası bırakır; bu boşta gelir üst sınırlıdır.
-- **Kıyı süsleri ve tarifler (H2):**
-  - Kıyının 4–6 süs yuvası var (sazlık, fener, nilüfer, yemlik...).
-  - Süs + hava + saat bir türü çağırır; bulunan tarif o türü **garanti** eder.
-- **Ansiklopedi (H2):** "?" silüetler ve ipuçları ("seviyor: fener, yağmur, gece").
-- **Gece ve hava (H3):** gün döngüsü, yağmur; gece balıkları.
-- **Sular (sonra):** göl → nehir → deniz → buzlu göl → mağara gölü.
-- **Gölün Sırrı (sonra):** şişelerden çıkan notlar ve efsanevi göl canavarı.
-- **Online (sonra):**
-  - arkadaşın akvaryumunu gezme, hediye;
-  - köyün ortak hedefi;
-  - açık sohbet ve sık yarışma yok.
+Sıra ve adımlar [`yol-haritasi.md`](yol-haritasi.md)'de (Dalga 1–5). Sayılar taslaktır, denge botuyla ayarlanır.
+
+### 10.1 Göl ve bölgeler
+
+- **Boyut:** su alanı bugünün yaklaşık 3 katı (≈700 m²; sınırları yaklaşık 60×36 m).
+- **İskele koyu bugünkü gibi kalır:** iskele, başlangıç noktası ve Dede aynı yerde.
+- **Derinlik:** her havzanın kendi derinliği ve kıyı eğimi var.
+
+| Bölge | Derinlik | Öne çıkan teknik | Balıklar | Açılış |
+|---|---|---|---|---|
+| İskele koyu | 1–3,5 m | şamandıra, spin | kızılkanat, gümüş, çapak, levrek, sazan | başta |
+| Sazlık | 0,5–1,5 m | şamandıra, dip, tuzak | kadife, sazan, kızılkanat, kerevit | başta |
+| Nilüferli koy | 1–2,5 m | spin | turna, levrek, altın sazan, ay turnası | rütbe 3 |
+| Kayalık burun | 2–6 m (dik) | spin, dip | sudak, tatlısu kefali, levrek, kerevit | rütbe 5 |
+| Dere ağzı (akıntılı) | 0,5–1,5 m | sinek, spin | alabalık, dere alabalığı, tatlısu kefali | rütbe 7 |
+| Derin orta | 4–10 m | dip (sandaldan) | yayın, aynalı sazan, mersin, Kocabaş, Gölün Bekçisi | rütbe 9 + sandal |
+
+- **Yürüme:** koyların çevresinden dolaşılır. Dokunulan yere sudan geçmeden varılamıyorsa balıkçı kıyı yolundan kısa yönü seçer.
+- **Harita:** bölgelerin atış noktalarına hızlı geçiş (ekran kararıp açılır). Kilitli noktalar rütbeyle açılır.
+- **Sandal:** dükkândan alınır. İskeleye bağlı sandala binilir; derin ortadaki 3 şamandıradan birine gidilir. Sandaldayken suya dokunmak yine atıştır.
+
+### 10.2 Nadirlik ve şans garantisi
+
+Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetmez: her kademenin bir simgesi, adı ve sesi var. Ekran gri tonlamada da denetlenir.
+
+| Kademe | Simge | Renk | Tutmadan önce ipucu |
+|---|---|---|---|
+| Sıradan | ● | gri (bugünkü krem beyaz yazıya benziyor) | — |
+| Güzel | ▲ | yeşil | — |
+| Nadir | ◆ | mavi | gölgede arada pırıltı |
+| Destansı | ★ | mor | mor ışıltı ve kabarcık |
+| Efsanevi | ✦ | altın | iz bırakan dalga, Dede'nin uyarısı, kısa müzik |
+| Masalsı | ✪ | turkuaz | yalnızca Gölün Bekçisi |
+
+- **Tuttuktan sonra:** kademe çerçeveli kart ve rozet, kademe renginde ışık sütunu, kademe sesi, Dede'nin sözü.
+- **Değer:** her türün bir taban değeri var (Sıradan ≈5, Güzel ≈12, Nadir ≈35, Destansı ≈120, Efsanevi ≈500 para) × boy çarpanı (0,6–1,6). Masalsı satılmaz.
+- **Şans garantisi:**
+  - Nadir+ balık gelmeden geçen 40 avdan sonra, bulunduğun bölgede Nadir+ bir gölge doğar. Destansı+ için 150, Efsanevi için 400 av.
+  - Sayaçlar defterde görünür.
+  - Garanti öteki zarları kaydırmaz (Kazı'daki `LootTable` düzeni: sabit sıralı zar).
+- **Balık Defteri:**
+  - Kademeye göre ızgara; bulunmamış türler siluet ve ipucuyla (bölge, teknik, vakit, hava).
+  - Rekorlar; o yerdeki, teknikteki ve vakitteki tam oranlar; şans garantisi sayaçları; göl sevgisi.
+
+### 10.3 Teknikler
+
+Çekişme her teknikte ortaktır (bugünkü `ReelModel`); teknik yalnızca ısırmaya kadarki kısmı değiştirir. Her türün bir teknik yatkınlığı var.
+
+| Teknik | Nasıl oynanır | Takım | Açılış |
+|---|---|---|---|
+| Şamandıra | bugünkü gibi | şamandıra kamışı, şamandıra, iğne, yem | başta |
+| Spin | Basılı tut = yem gelir, bırak = durur ve batar. Yırtıcı yemi kovalar; "dur-kalk" ritmiyle saldırır. Saldırı anında basılıysa balık kendiliğinden takılır, değilse kısa VUR anı. Otlu ve kayalık yerde uzun bekleyen yem takılır (yalnızca zaman kaybı). | spin kamışı, makara, yapay yem | rütbe 2 |
+| Dip | Uzağa at, olta sehpaya konur. Zil: tek tük bip = balık kokluyor; sürekli bip ve misina akıyor = koşu → dokun. İri balık, uzun çekişme. | dip kamışı, kurşun, yem, sehpa + zil | rütbe 4 |
+| Sinek | Yalnızca dere ağzında. Akıntıya at, sinek sürüklenir; halka çıkınca 0,5 sn içinde dokun. Hafif, zıplayan çekişme. | sinek kamışı, sinek | rütbe 7 |
+| Kerevit tuzağı | Sığ kıyıya bırak. Oyunda değilken de dolar: 20 dk'da bir, en çok 4. İçi bırakılırken belirlenir. | tuzak (en çok 3) | rütbe 3 |
+
+### 10.4 Dükkân, takım ve para
+
+- **Nine'nin dükkânı:** sekmeler: kamış, makara, misina, iğne, yem, yapay yem ve sinek, şamandıra, ekstra.
+  - Her eşyada en çok 2 değer, çubukla gösterilir; şimdiki takımla karşılaştırılır.
+  - Rütbe kilidi var.
+  - Sade tutulur: araştırmada en çok "seçenek kalabalığı" eleştirildi.
+
+| Kategori | Ne yapar | Kademe |
+|---|---|---|
+| Kamış (teknik başına) | menzil, güç (balığın çekişini azaltır) | 3–4 |
+| Makara | sarma hızı, fren (gerilim tepesini kırpar) | 4 |
+| Misina | dayanım (kopma eşiği), görünmezlik (ürkek balık) | 4 |
+| İğne | tutma (kaçışı azaltır) | 3 |
+| Yem | tür çekimi; tükenir, solucan bedava ve sınırsız | 6 |
+| Yapay yem, sinek | yırtıcı ve alabalık çekimi; kalıcı | 5 + 3 |
+| Şamandıra | hassasiyet (VUR süresi +), görünürlük | 3 |
+| Ekstra | kepçe (son anda bir kaçışı kurtarır), sehpa + zil, sandal, tuzak, fener (gece), kova kapasitesi | — |
+
+- **Takım çantası:** her teknik için kuşanılmış bir set; teknik düğmesiyle geçilir.
+- **Kova ve satış:**
+  - Tutulan balık kovaya girer; dükkânda "hepsini sat" yapılır (Kazı'nın sırt çantası düzeni).
+  - Kova dolunca Dede uyarır; kova kapasitesi dükkândan büyür.
+  - Her türün en iyisi akvaryuma konabilir (§10.6).
+- **Bırakma:** bırakılan balık para vermez; göl sevgisi ve rütbe puanı verir.
+- **Para:** yalnızca oynayarak kazanılır, gerçek parayla asla satılmaz. Bu yüzden oranı değiştiren yem ve yapay yem satılabilir (§11).
+- **Rütbe 1–20:** rütbe puanı av ve isteklerden gelir; bölge ve takım kilitlerini açar.
+- **Denge hedefleri** (denge botunun korkulukları):
+
+| Hedef | Süre |
+|---|---|
+| spin takımı | 4–10 dk |
+| tuzak | 10–20 dk |
+| dip takımı | 15–35 dk |
+| sinek | 60–120 dk |
+| sandal | 90–180 dk |
+| bütün kademeler | 8–15 saat |
+
+### 10.5 Canlı dünya
+
+- **Oyun saati:**
+  - 24 dk = 1 gün: sabah, öğle, akşam ve gece 6'şar dk.
+  - Saat yalnızca oynarken akar; yokken durur, ceza yok.
+  - Dede'yle çay = sonraki vakte geç (ücretsiz).
+  - Gerçek saat kullanılmaz: hep aynı saatlerde oynayan da her vakti görür, çocuk gece balığı için uyanık kalmaz.
+- **Hava:** her oyun günü için tohumlu (seed'li): açık %55, bulutlu %20, yağmur %15, sis %10 (yalnızca sabah ve gece).
+  - Yağmur ısırmayı artırır.
+  - Sis ve gece bazı türlerin tek zamanı.
+- **Göl sevgisi:**
+  - **Kaynaklar:** bırakılan balık (kademeye göre 1–40), toplanan çöp (3), istekler.
+  - **Etki:** 10 seviye; Nadir+ ağırlıkları seviye başına %4 artar, en çok %36. Defterdeki oranlara yansır.
+  - Göl seviyeyle güzelleşir: çiçek, kuş, kelebek, daha berrak su.
+  - Hiç azalmaz.
+- **Dede'nin istekleri:**
+  - Her oyun günü boş yuvalar dolar (3 yuva); süre sınırı yok, günde bir kez ücretsiz değiştirme hakkı var.
+  - Örnekler: "30 cm üstü kadife", "spinle 2 levrek", "gece bir balık", "3 balık bırak", "2 çöp topla".
+  - Ödül: para, rütbe puanı, göl sevgisi; bazıları harita parçası verir.
+  - Kazı'daki `quests.gd` uyarlanır.
+- **Gölün Sırrı:**
+  1. Dede efsaneyi anlatır; ilk şişe sazlıkta çıkar.
+  2. Her bölgeden bir mektup çıkar (6 mektup). Mektuplar Dede ile Nine'nin gençliğini anlatır: göl ölürken onu temizlemişler.
+  3. Dede'nin özel isteklerinden 4 harita parçası gelir. Göl sevgisi 6 olunca Nine "altın hamur" verir.
+  4. Final: gece ve sisli bir havada, derin ortada, dip tekniği ve altın hamurla Bekçi'nin gölgesi çıkar. Çok evreli bir çekişme olur; Bekçi tutulur ve yalnızca bırakılır. Bitiş sahnesi oynar, jenerik akar, göl çiçek açar.
+
+### 10.6 Yuva ve kişilik
+
+- **Akvaryum (Nine'nin dükkânında):**
+  - Bulunan her türden biri konabilir; tanktaki balıklar 3D yüzer.
+  - Ziyaretçi kutusu tanktaki türlere göre para biriktirir; en çok 2 saatlik birikimde durur.
+- **Kedi, erkek balıkçı ve kıyafetler:** §7.
+- **Fotoğraf modu:**
+  - Arayüz gizlenir, kamera biraz döndürülür, çerçeve seçilir.
+  - PNG `user://photos`'a kaydedilir ve iPhone'un Dosyalar uygulamasında görünür.
+  - Doğrudan Fotoğraflar'a kaydetmek yerel bir eklenti ister; sonraya kalır.
+
+### 10.7 Ekran düzeni
+
+Ekran kalabalık olmasın diye her şeyin bir yeri var:
+
+- **Sol üst:** para, kova (5/12), rütbe rozeti. Başlık ve sürüm yazısı ayarlara taşınır.
+- **Üst orta:** saat ve hava çipi. Çekişmede yerini gerilim çubuğu alır.
+- **Sağ üst:** harita, defter, ayarlar (her biri ≥122).
+- **Sol alt:** teknik düğmesi.
+- **Sağ alt:** eylem düğmesi (300).
+- **Alt orta:** Dede'nin ipucu çubuğu.
+- **Fotoğraf:** balık kartındaki ve ayarlardaki kamera düğmesi.
+
+### 10.8 Sonraya kalanlar
+
+- **Kıyı süsleri ve tarifler:** kıyının 4–6 süs yuvası; süs + hava + saat bir türü çağırır, bulunan tarif o türü garanti eder.
+- **Gerçek parayla satış (Faz 3):** kostümler, reklam, sezon kartı.
+- **Yeni sular:** göl → nehir → deniz → buzlu göl → mağara gölü.
+- **Sonar.**
+- **Fotoğraflar uygulamasına doğrudan kayıt** (yerel eklenti).
+- **Çevrimiçi:** arkadaşın akvaryumunu gezme, hediye, köyün ortak hedefi. Açık sohbet ve sık yarışma yok.
 
 ## 11. Gelir
 
@@ -226,11 +401,20 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
 - **Satılacaklar:** kostümler ve görünüş süsleri (doğrudan satış, gerçek fiyat görünür), reklamsız / destekçi paketi, süresi dolmayan sezon kartı.
 - **Ödüllü reklam** (isteğe bağlı): çift ödül, kopan misinayı kurtarma.
 - **Parayla satılmayacaklar:** şans (nadir yem, ek atış, hava olayı).
+- **Oyun parası:** yalnızca oynayarak kazanılır, gerçek parayla asla satılmaz. Bu yüzden oranı değiştiren yem ve yapay yem oyun parasıyla satılabilir.
+- **Boşta gelir üst sınırlı:** tuzak en çok 4 şey toplar, akvaryum kutusu en çok 2 saatlik birikimde durur.
+- **Kıyafetler:** H2'de oynayarak kazanılır; gerçek parayla satış Faz 3'te başlar ve fiyatı her zaman gerçek parayla yazar.
 
 ## 12. Teknik özet
 
 - **Motor:** Godot 4.7, statik tipli GDScript, Compatibility renderer.
 - **Oyun mantığı** `scripts/core/` altında, saf ve testli: `FishingSession`, `ShadowSim`, `BiteRules`, `ReelModel`, `FishTable`, `LakeShape`, `Records`.
+  - H2'de eklenecekler 🔜:
+    - takım ve para: `Loadout`, `GearStats`, `Economy`, `Bucket`, `Rank`, `CatchOdds` (oranlar ve şans garantisi);
+    - teknikler: `Technique` stratejileri (`FloatTechnique`, `LureTechnique`, `BottomTechnique`, `FlyTechnique`), `TrapSim`;
+    - göl: `ShorePath`;
+    - canlı dünya: `DayClock`, `Weather`, `LakeLove`, `Requests`, `Story`.
+  - Denge botu (`SessionSim`, `tools/economy_report.gd`) ile korkuluk testleri; oran kataloğu (`tools/fish_catalog.gd`).
   - Çekişme sayıları `tools/reel_report.gd` ile denetlenir; `tests/test_reel_model.gd` sınırları korur.
   - İç adım sabit 1/60 sn; sonuç fps'e ve video kaydına bağlı değil.
 - **Sunum** yalnızca olayları dinler.
@@ -241,6 +425,9 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
 
 - Gölgeler ve şamandıranın dürtmesi telefonda okunuyor mu?
 - VUR penceresi ve çekişme her yaşa adil mi? Kolay çekme varsayılan mı olmalı?
+- Büyük göl iPhone 14'te 60 fps'te akıyor mu? Yürüme ve harita yeterince hızlı mı?
+- Spin ve sinek dokunmatik ekranda anlaşılıyor mu?
+- Dükkânda seçenek kalabalığı var mı?
+- 24 dakikalık oyun günü doğru hızda mı?
+- Nine, erkek balıkçı ve kedi için hangi modeller?
 - Kazı'ya benzerlik hissediliyor mu?
-- Erkek balıkçı için hangi model?
-- Uzun vadede tarif sistemi tek başına yeterli merakı veriyor mu (H2 testinde)?
