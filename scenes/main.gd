@@ -100,6 +100,7 @@ func _ready() -> void:
 	_build_ui()
 	_build_input()
 	_start_session()
+	_refresh_status()
 	GameState.changed.connect(_on_state_changed)
 	GameState.focus_lost.connect(_on_focus_lost)
 	GameState.focus_gained.connect(func() -> void: _paused = false)
@@ -156,8 +157,9 @@ func _on_focus_lost() -> void:
 
 
 func _process(delta: float) -> void:
-	# Odak kaybında ve ayarlar açıkken oyun donar (çekişmedeki balık kaçmasın).
-	if _paused or settings_panel.visible:
+	# Odak kaybında ve bir panel (ayarlar, dükkân, defter...) açıkken oyun donar (çekişmedeki
+	# balık kaçmasın). Balık kartı panel değildir: kart açıkken balık gösterimi sürer.
+	if _paused or _panel_open():
 		return
 	if session.state == FishingSession.State.IDLE:
 		session.angler = angler.pos2()
@@ -396,11 +398,28 @@ func _on_catch() -> void:
 	var fish_id := str(info["fish"])
 	var rarity := int(info["rarity"])
 	var save := GameState.save
-	var outcome := Records.add(save.records, fish_id, int(info["size_cm"]), int(info["stars"]), GameState.clock.now_unix())
+	var db := GameState.db
+	var size_cm := int(info["size_cm"])
+	var stars := int(info["stars"])
+	var outcome := Records.add(save.records, fish_id, size_cm, stars, GameState.clock.now_unix())
 	save.catches += 1
-	CatchOdds.note_catch(GameState.db, save, rarity)
-	session.set_pity_floor(CatchOdds.pity_floor(GameState.db, save))
+	CatchOdds.note_catch(db, save, rarity)
+	session.set_pity_floor(CatchOdds.pity_floor(db, save))
+	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
+	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir).
+	var kept := Bucket.add(db, save, fish_id, size_cm, stars)
+	if not kept:
+		_release(fish_id, rarity)
 	GameState.save_game()
+	_refresh_status()
+	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
+		var rank := int(ranked["new_rank"])
+		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT)
+	if not kept:
+		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT)
+		if not bool(save.flags.get("bucket_full_told", false)):
+			save.flags["bucket_full_told"] = true
+			_dede_say("UI_DEDE_BUCKET")
 	bobber.hide_bobber()
 	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)
 	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
@@ -469,6 +488,7 @@ func _present(delta: float) -> void:
 	hud.set_action("" if card.visible else session.action_kind())
 	hud.tension_bar.visible = fighting
 	hud.set_fighting(fighting)
+	hud.set_line_out(session.line_out())
 	if fighting:
 		hud.tension_bar.tension = reel.tension
 		hud.tension_bar.limit = session.rules.limit
@@ -572,6 +592,37 @@ func _seat_elder() -> void:
 	var edge := Vector2(dock.end.x, dock.position.y + ELDER_ALONG)
 	elder.seat(edge, Vector2(1.0, 0.0).rotated(ELDER_TURN), LakeScene.DOCK_HEIGHT + 0.04)
 	angler.blockers = [elder.blocker()]
+
+
+## Balık göle bırakıldı: defterde bırakılan sayısı, göl sevgisi ve sayaç.
+func _release(fish_id: String, rarity: int) -> void:
+	var save := GameState.save
+	Records.release(save.records, fish_id)
+	save.love += int(GameState.db.rarity_def(rarity).get("love", 0))
+	save.stats["released"] = int(save.stats.get("released", 0)) + 1
+
+
+## Sol üstteki para, kova ve rütbe.
+func _refresh_status() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	hud.set_status(save.coins, save.bucket.size(), Bucket.capacity(db, save), Rank.rank(db, save),
+			Rank.progress(db, save))
+
+
+## Açık bir panel (Dialog) var mı? Varken oyun donar.
+func _panel_open() -> bool:
+	for node in get_tree().get_nodes_in_group("modal"):
+		if node is Dialog and (node as Dialog).visible:
+			return true
+	return false
+
+
+## Dede bir söz söyler: ipucu çubuğunda (söz değişince _update_hint Dede'yi konuşturur).
+func _dede_say(key: String) -> void:
+	_dede_line = key
+	_dede_time = DEDE_LINE_TIME
+	Sounds.play("hint")
 
 
 ## Dede'ye dokunuldu: sıradaki öğüdü ipucu çubuğunda söyler (balon, baş sallama).

@@ -3,7 +3,8 @@ extends Control
 ## Oyun arayüzü (HUD). Dokunuşları engellemez (MOUSE_FILTER_IGNORE); parmağı yalnızca
 ## TouchButton'lar yakalar. Çentik ve yuvarlak köşeler için güvenli alan payı her kenara eklenir
 ## (UiKit.safe_insets).
-## - Sol üst: oyunun adı ve sürüm. Sağ üst: ayarlar.
+## - Sol üst: para, kova (dolu/kapasite) ve rütbe (çekişmede gizli; oyunun adı ve sürüm
+##   ayarlarda). Sağ üst: ayarlar.
 ## - Sağ alt: büyük eylem düğmesi (AT / GERİ SAR / BEKLE / VUR! / SAR); ekranın her yeri de
 ##   aynı işi yapar, düğme ne olacağını yazar.
 ## - Üst orta: çekişmede gerilim çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü
@@ -29,12 +30,17 @@ const TOAST_TIME := 1.7
 var settings_button: TouchButton
 var action_button: TouchButton
 var tension_bar: TensionBar
+## Olta sudayken gizlenen düğmeler (eylem ve ayarlar dışındakiler): VUR dokunuşu onlara gitmesin.
+var line_out_hidden: Array[Control] = []
 
 var _frames: Array[MarginContainer] = []
 ## İpucu çubuğunun çerçevesi: iki yanda eylem düğmesi kadar boşluk (düğmenin altına girmesin).
 var _hint_frame: MarginContainer
-var _title: Label
-var _version: Label
+var _status: HBoxContainer
+var _coins: Label
+var _bucket: Label
+var _rank: Label
+var _rank_bar: RankBar
 var _fps: Label
 var _hint: PanelContainer
 var _hint_label: Label
@@ -44,6 +50,8 @@ var _face_icon: Control
 var _hint_key: String = ""
 var _toast: Label
 var _toast_age: float = -1.0
+## Sırası gelince gösterilecek bildirimler: [metin, renk] (ör. rütbe atlama, kova dolu).
+var _toast_queue: Array[Array] = []
 var _action_kind: String = "-"
 var _clock: float = 0.0
 var _fps_clock: float = 0.0
@@ -79,6 +87,9 @@ func _process(delta: float) -> void:
 		if t >= 1.0:
 			_toast_age = -1.0
 			_toast.visible = false
+			if not _toast_queue.is_empty():
+				var next: Array = _toast_queue.pop_front()
+				toast(str(next[0]), next[1])
 	# VUR! anında eylem düğmesi nabız gibi atar.
 	if _action_kind == "hook":
 		action_button.pivot_offset = action_button.size * 0.5
@@ -89,8 +100,6 @@ func _process(delta: float) -> void:
 
 ## Dil değişince metinleri yeniden yazar.
 func refresh() -> void:
-	_title.text = UiKit.upper(tr("UI_GAME_TITLE"))
-	_version.text = tr("UI_VERSION") % str(ProjectSettings.get_setting("application/config/version", "0"))
 	if not _hint_key.is_empty():
 		_hint_label.text = tr(_hint_key)
 	var kind := _action_kind
@@ -115,6 +124,30 @@ func show_hint(key: String) -> void:
 		_hint_label.text = tr(key)
 
 
+## Sol üstteki durum: para, kova ve rütbe (progress: rütbe içindeki ilerleme 0..1).
+func set_status(coins: int, bucket: int, capacity: int, rank: int, progress: float) -> void:
+	_coins.text = UiKit.format_int(coins)
+	_bucket.text = tr("UI_BUCKET_COUNT") % [bucket, capacity]
+	_bucket.add_theme_color_override("font_color", UiKit.ACCENT if bucket >= capacity else UiKit.TEXT)
+	_rank.text = str(rank)
+	_rank_bar.progress = progress
+	_rank_bar.queue_redraw()
+
+
+## Bildirim: biri gösteriliyorsa sırasını bekler (rütbe atlama, kova dolu gibi ikincil haberler).
+func toast_later(text: String, color: Color = UiKit.TEXT) -> void:
+	if _toast_age < 0.0:
+		toast(text, color)
+	else:
+		_toast_queue.append([text, color])
+
+
+## Olta suda mı: eylem ve ayarlar dışındaki düğmeler gizlenir (ekranın her yeri eylem).
+func set_line_out(on: bool) -> void:
+	for c in line_out_hidden:
+		c.visible = not on
+
+
 ## Ortada kısa bir bildirim (metin hazır çevrilmiş gelir).
 func toast(text: String, color: Color = UiKit.TEXT) -> void:
 	_toast.text = UiKit.upper(text)
@@ -124,10 +157,9 @@ func toast(text: String, color: Color = UiKit.TEXT) -> void:
 	_toast.pivot_offset = _toast.size * 0.5
 
 
-## Çekişmede oyunun adı gizlenir (gerilim çubuğuna yer).
+## Çekişmede durum gizlenir (gerilim çubuğuna yer, dikkat balıkta).
 func set_fighting(on: bool) -> void:
-	_title.visible = not on
-	_version.visible = not on
+	_status.visible = not on
 
 
 ## Eylem düğmesinin işi: cast, retrieve, wait, hook, reel ya da "" (gizli).
@@ -188,16 +220,17 @@ func _frame() -> MarginContainer:
 
 
 func _build_top() -> void:
-	var left := VBoxContainer.new()
-	left.add_theme_constant_override("separation", 0)
-	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	left.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_frame().add_child(left)
-	_title = UiKit.title("", UiKit.SIZE_TITLE)
-	left.add_child(_title)
-	_version = UiKit.label("", UiKit.SIZE_SMALL, UiKit.MUTED)
-	left.add_child(_version)
+	_status = HBoxContainer.new()
+	_status.add_theme_constant_override("separation", 14)
+	_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_status.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_status.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_frame().add_child(_status)
+	_coins = _pill("coin")
+	_bucket = _pill("bucket")
+	_rank = _pill("star")
+	_rank_bar = RankBar.new()
+	_rank.get_parent().add_child(_rank_bar)
 	settings_button = TouchButton.make("", "settings", UiKit.NEUTRAL, Vector2(132, 132), UiKit.SIZE_BODY, 84.0)
 	settings_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	settings_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
@@ -208,6 +241,24 @@ func _build_top() -> void:
 	tension_bar.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	tension_bar.visible = false
 	_frame().add_child(tension_bar)
+
+
+## Durum hapı: ikon + sayı (Luckiest Guy). Etiketi döndürür.
+func _pill(icon_kind: String) -> Label:
+	var pill := PanelContainer.new()
+	pill.add_theme_stylebox_override("panel", UiKit.framed("pill", UiKit.pill_style(), 34.0))
+	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_status.add_child(pill)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pill.add_child(row)
+	row.add_child(GameIcon.make(icon_kind, 58))
+	var label := UiKit.title("0", UiKit.SIZE_BODY + 4)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	return label
 
 
 func _build_bottom() -> void:
@@ -279,6 +330,21 @@ func _apply_safe_area() -> void:
 	var side := int(MARGIN + maxf(inset.x, inset.z) + ACTION_SIZE.x + 24.0)
 	_hint_frame.add_theme_constant_override("margin_left", side)
 	_hint_frame.add_theme_constant_override("margin_right", side)
+
+
+## Rütbe içindeki ilerleme: ince bir çubuk (sayının yanında).
+class RankBar extends Control:
+	var progress: float = 0.0
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		custom_minimum_size = Vector2(96, 18)
+		size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+	func _draw() -> void:
+		var rect := Rect2(Vector2.ZERO, size)
+		draw_rect(rect, Color(0.0, 0.0, 0.0, 0.35))
+		draw_rect(Rect2(rect.position, Vector2(rect.size.x * clampf(progress, 0.0, 1.0), rect.size.y)), UiKit.ACCENT)
 
 
 ## Gerilim çubuğu: yeşil → sarı → kırmızı dolgu, sınırda çizgi, altında kopma sayacı; balık

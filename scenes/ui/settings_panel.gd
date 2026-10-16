@@ -35,6 +35,12 @@ func refresh() -> void:
 	var lang_button := UiKit.button(tr("UI_LANG_NAME"), UiKit.SECONDARY, UiKit.SIZE_BODY, ROW_BUTTON)
 	lang_button.pressed.connect(func() -> void: GameState.toggle_locale())
 	lang.add_child(lang_button)
+	# Oyunun adı ve sürüm (eskiden HUD'un sol üstündeydi; orada artık para, kova ve rütbe var).
+	var version := UiKit.ink("%s · %s" % [tr("UI_GAME_TITLE"),
+			tr("UI_VERSION") % str(ProjectSettings.get_setting("application/config/version", "0"))],
+			UiKit.SIZE_SMALL, UiKit.INK_SOFT)
+	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_rows.add_child(version)
 	if OS.is_debug_build():
 		var reset := _row(tr("UI_DEBUG_RESET"), "close")
 		var reset_button := UiKit.button(tr("UI_DEBUG_RESET"), UiKit.DANGER, UiKit.SIZE_SMALL, ROW_BUTTON)

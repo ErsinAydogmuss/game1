@@ -136,3 +136,7 @@ GEAR_keepnet_big,Big keepnet,Büyük file
 GEAR_keepnet_big_DESC,Holds 24 fish.,24 balık alır.
 GEAR_keepnet_huge,Huge keepnet,Dev file
 GEAR_keepnet_huge_DESC,Holds 36 fish.,36 balık alır.
+UI_BUCKET_COUNT,%d/%d,%d/%d
+UI_RANK_UP,Rank %d: %s!,Rütbe %d: %s!
+UI_BUCKET_FULL,Bucket full: the fish swam home,Kova dolu: balık göle döndü
+UI_DEDE_BUCKET,Your bucket is full! Sell your fish at Nine's shop.,Kovan doldu! Balıkları Nine'nin dükkânında satabilirsin.
