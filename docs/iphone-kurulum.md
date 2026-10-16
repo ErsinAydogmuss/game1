@@ -1,8 +1,12 @@
 # iPhone'da çalıştırma: Mac'teki Claude Code için görev
 
-> **Ersin için:** Mac'te Terminal'i aç, `claude` yaz ve şunu söyle:
-> "github.com/ErsinAydogmuss/game1 reposunun `claude/festive-shannon-yycmwu` dalındaki `docs/iphone-kurulum.md` dosyasını oku ve uygula. iPhone'um kabloyla bağlı."
-> Ya da bu dosyanın tamamını kopyalayıp Claude'a yapıştır.
+> **Ersin için:** iPhone'u Mac'e kabloyla bağla. Mac'te Terminal'i aç, `claude` yaz, sonra şu üç yoldan birini seç:
+>
+> 1. **En kolayı, indirmeden.** Şunu söyle: "github.com/ErsinAydogmuss/game1 reposunun `claude/festive-shannon-yycmwu` dalındaki `docs/iphone-kurulum.md` dosyasını oku ve uygula. iPhone'um kabloyla bağlı."
+> 2. **Dosyayı Mac'e indirdiysen.** Şunu söyle: "İndirilenler klasöründeki `iphone-kurulum.md` dosyasını oku ve uygula. iPhone'um kabloyla bağlı." Dosyayı Terminal penceresine sürüklersen yolu kendiliğinden yazılır. Telefona indirdiysen 1. yol daha kolay.
+> 3. **Ya da** bu dosyanın tamamını kopyalayıp Claude'a yapıştır.
+>
+> Claude gerisini kendisi yapar. Senden yalnızca telefonda dokunmaları, gerekirse Xcode'da Apple ID girişini ve Mac şifresini ister. Kazı bu Mac'e kurulduysa adımların çoğu hızlı geçer.
 
 ---
 
@@ -16,7 +20,7 @@
   - Paket kimliği (bundle id) `com.ersinaydogmuss.olta`.
   - Godot yalnızca Xcode projesi üretir: `export/olta.xcodeproj`.
   - `export/` klasörü git dışında ve `.gdignore`'lu, yani Godot onu taramaz.
-  - Team ID boş. Onu 6. adımda sen yazacaksın.
+  - Team ID boş. Onu sen yazacaksın: Kazı'dan kopyalayarak (aşağıdaki kısa yol) ya da 6. adımda.
 - Repodaki `CLAUDE.md` proje kurallarını anlatır; repo klasörüne geçince oku. Bu görevde kod yazmıyorsun: kodu bulut oturumundaki Claude yazıyor. Senin işin kurulum ve oyunu telefona yüklemek.
 
 ## Görev
@@ -30,6 +34,21 @@ Oyunu kullanıcının iPhone'unda aç. Yapabildiğin her şeyi komut satırında
 - `sudo` gereken komutları kullanıcıya **ayrı bir Terminal penceresinde** çalıştırt; şifreyi sen giremezsin.
 - Büyük indirmelerden önce kullanıcıya haber ver: Xcode birkaç GB, Godot şablonları 1,3 GB.
 - Her adımdan sonra kullanıcıya bir iki cümleyle ne olduğunu söyle.
+
+## Kazı bu Mac'e kurulduysa (kısa yol)
+
+Kullanıcı ilk oyunu Kazı'yı (`ErsinAydogmuss/game`) büyük olasılıkla bu Mac'ten telefonuna yükledi. O zaman o sırada kurulanlar duruyordur:
+
+- **1, 3, 4 ve 7. adımlar:** yalnızca baştaki denetim komutlarını çalıştır. Hazır çıkarsa adımı atla.
+- **Team ID:** Kazı'nın yerel ayarında yazılı. Kazı klasörüne yalnızca bak, hiçbir şeyi değiştirme:
+
+  ```bash
+  grep app_store_team_id ~/game/export_presets.cfg   # klasör orada değilse: mdfind -name project.godot
+  ```
+
+  Tırnakların içinde 10 karakterlik bir değer varsa onu Olta'nın `export_presets.cfg`'sindeki aynı satıra yaz ve 6. adımı atla. Boşsa 6. adımı yap.
+- **Betik:** `~/kazi-iphone.sh` varsa Olta için `~/olta-iphone.sh`'ı ona bakarak yaz (bkz. "Sonraki güncellemeler"). Repo yolu ve paket kimliği farklı.
+- **Kazı telefonda kalabilir:** ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı ile Olta 2 eder.
 
 ## Adımlar
 
@@ -113,6 +132,8 @@ Bunları repo klasöründe çalıştır:
 
 ### 6. Team ID
 
+Kısa yoldan Team ID'yi Kazı'dan kopyaladıysan bu adımı atla.
+
 ```bash
 security find-certificate -c "Apple Development" -p | openssl x509 -noout -subject
 ```
@@ -190,6 +211,8 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (1. hafta prototipi, v
 6. Takılma ya da telefonun ısınması var mı?
 7. Dede: iskelede oturuyor; konuşunca başının üstünde balon çıkıyor mu, ona dokununca öğüt veriyor mu? Yüzü okunuyor mu?
 8. Ekranın çentiği (notch) bir yeri kapatıyor mu? Yazılar okunuyor mu?
+
+Kullanıcıya söyle: ana ekrandaki ikon geçici (kodla çizilmiş basit bir balık). Ersin'in uygulama ikonu gelince değişecek.
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
