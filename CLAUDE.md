@@ -68,14 +68,20 @@ godot --headless --path . --export-pack "iPhone" /mutlak/yol/olta.zip   # paket:
 godot --headless --path . -s res://tools/reel_report.gd  # balık ya da çekişme ayarı değiştiyse
 ```
 
-Görsel değişikliklerde ekran görüntüsü al ve incele (Linux'ta `xvfb-run` ile; yalnızca OpenGL var). Bot senaryoları 4. adımda gelir (`scripts/dev/autoplay.gd`):
+Bot senaryoları (`scripts/dev/autoplay.gd`; gerçek dokunma olayları gönderir). `--fixed-fps 30` oyun zamanını sabit akıtır (bu ortamda kare hızı düşük):
 
 ```bash
-xvfb-run -a -s "-screen 0 2560x1440x24" godot --path . --rendering-driver opengl3 --audio-driver Dummy \
-  --resolution 2532x1170 -- --autoplay --locale=tr --shots=/mutlak/yol --scenario=controls
+xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl3 --audio-driver Dummy \
+  --resolution 1280x720 --fixed-fps 30 -- --autoplay --scenario=controls --locale=tr --safe-inset=130 --shots=/mutlak/yol
+# senaryolar: controls (KONTROL satırlarının hepsi TAMAM olmalı), first (ilk açılış, senaryolu ilk balık)
+# --safe-inset: çentiği taklit eder (sol, sağ ve alt pay); düğmelerin güvenli alanda olduğu denetlenir
 ```
 
-Araçlar (`tools/`, sürüm paketine girmez): `reel_report.gd` (çekişme denge raporu: her balık, bot tarzı ve mod için tutma, kopma, kaçma oranı ve süre), `process_images.gd` (Ersin'in görsel sayfalarını keser, `data/art_sheets.json`), `art_sheet.gd` (kesme ve arka plan silme), `recolor_texture.gd` (KayKit dokularını boyar; iş listesi model gelince uyarlanacak).
+Görsel değişikliklerde ekran görüntüsüne bak (Linux'ta `xvfb-run`; yalnızca OpenGL var). Telefon boyutu için `--resolution 2532x1170` (iPhone 14). Movie Maker (`--write-movie`) pencere boyutunu `project.godot`'taki override'dan alır: telefon boyutunda kayıt için geçici bir `override.cfg` (`[display]` altında `window/size/window_width_override=2532`, `window_height_override=1170`) koy, sonra sil.
+
+Sesler kodla üretilir: `python3 -I tools/make_sounds.py` (numpy; .ogg için ffmpeg). Ses adları `Sounds.BANK` ve `LOOPS` ile aynı olmalı (`test_sounds.gd`).
+
+Araçlar (`tools/`, sürüm paketine girmez): `make_sounds.py` (bütün sesler), `reel_report.gd` (çekişme denge raporu: her balık, bot tarzı ve mod için tutma, kopma, kaçma oranı ve süre), `process_images.gd` (Ersin'in görsel sayfalarını keser, `data/art_sheets.json`), `art_sheet.gd` (kesme ve arka plan silme), `recolor_texture.gd` (KayKit dokularını boyar; iş listesi model gelince uyarlanacak).
 
 ## Mimari
 
@@ -93,15 +99,17 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
   - `game_state.gd` (`GameState`): içerik + kayıt, ayarlar, dil, ipucu adımı, bayraklar, klavye kontrolleri. Sinyaller: `changed`, `focus_lost`, `focus_gained`. Odak kaybında kaydeder.
   - `sounds.gd` (`Sounds`): efektler (`BANK`), döngüler (makara, gerilim), ortam sesi, müzik, titreşim. Dosya yoksa sessiz geçer.
 - `scenes/`: sunum (3D sahne ve arayüz kodla kurulur).
-  - ✅ `main.gd`: her şeyi bağlar; şimdilik yer tutucu göl ve iskele. 🔜 `InputRouter` (dokunuş → yürü / at / VUR / sar).
-  - ✅ `camera/follow_camera.gd`: sabit eğik açı, yumuşak takip, sarsıntı.
-  - ✅ `world/`: `Props` (kodla basit parçalar), `MeshKit` (kodla mesh), `ModelLibrary` (hazır modeller: ad → dosya, ölçek), `grass.gdshader`.
-  - ✅ `ui/`: `UiKit` (stil, fontlar, `upper()`, `safe_insets()`), `Dialog` (panellerin tabanı), `Hud`, `SettingsPanel`, `TouchButton`, `GameIcon` (kodla çizilen ikonlar), `ItemArt` (görsellere tek giriş).
-  - ✅ `player/aim_modifier.gd`, `fx/vignette`. 🔜 `AnglerBody`, `RodModel`, `FishingLine`, `Bobber`, `FishMesh`, kart.
+  - ✅ `main.gd`: her şeyi bağlar. Oturumun olaylarını ses + titreşim + görsele çevirir; kamera (olta sudayken eğilir, çekişmede yakınlaşır); Dede'nin ipuçları; yakalayışta kayıt; odak kaybında ve ayarlar açıkken oyun donar.
+  - ✅ `input_router.gd` (`InputRouter`): dokunma / fare / klavye. Olta suda değilken karaya dokun → yürü, suya dokun → at (menzil dışıysa main önce yaklaştırır); olta sudayken ekranın her yeri eylem (parmak değdiği an `press`, kalkınca `release`).
+  - ✅ `camera/follow_camera.gd`: sabit eğik açı, yumuşak takip, sarsıntı; `pitch` ve `zoom` main'den.
+  - ✅ `world/`: `LakeScene` (ortam ve ışık, zemin, su, iskele, basit süsler), `LakeTexture` (göl veri dokusu), `water` / `ground` / `shadow` shader'ları, `ShadowLayer` (gölgeler), `Bobber` (şamandıra), `FishingLine` (misina; `frame_pre_draw`'da kurulur), `Props`, `MeshKit`, `ModelLibrary`.
+  - ✅ `player/angler.gd` (`Angler`): gri kutu balıkçı (yürür, kıyıda durur, atar, sevinir). 🔜 6. adımda KayKit Rogue (`AnglerBody`), `RodModel`, `FishMesh`.
+  - ✅ `fx/`: `Ripples` (su halkaları), `Vignette`.
+  - ✅ `ui/`: `UiKit` (stil, fontlar, `upper()`, `safe_insets()`), `Dialog` (panellerin tabanı), `Hud` (eylem düğmesi, gerilim çubuğu `TensionBar`, bildirim, ipucu çubuğu), `FishCard` (balık kartı), `SettingsPanel`, `TouchButton`, `GameIcon` (kodla çizilen ikonlar), `ItemArt` (görsellere tek giriş).
 - `data/*.json`: içerik. `localization/strings.csv`: `keys,en,tr`.
-- `assets/`: `fonts/`, `icons/ui/` (Kazı'nın genel ikonları; Ersin'in görselleri gelince değişir), `incoming/` (Ersin'in ham görselleri; `.gdignore`'lu).
+- `assets/`: `fonts/`, `icons/ui/` (Kazı'nın genel ikonları; Ersin'in görselleri gelince değişir), `audio/` (`tools/make_sounds.py` üretir), `incoming/` (Ersin'in ham görselleri; `.gdignore`'lu).
 - `tests/`: `run_tests.gd` (koşucu), `base_test.gd`, `test_*.gd`. Test metotları `test_` ile başlar.
-- `scripts/dev/`: yalnızca debug (bot, video katmanı).
+- `scripts/dev/`: yalnızca debug: `autoplay.gd` (bot senaryoları, KONTROL satırları, ekran görüntüsü), `video_overlay.gd` (parmak izleri).
 
 ## Kurallar
 
@@ -149,4 +157,8 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - `Image.blend_rect` iki görüntünün aynı biçimde olmasını ister (RGBA8).
 - Bu bulut ortamında `kenney.nl`, `quaternius.com`, `godotengine.org` erişime kapalı; KayKit'in GitHub depoları açık (seyrek klonla).
 - Export: `data/*.json` pakete girmeli (`include_filter`); `tests/*`, `tools/*`, `scripts/dev/*` hariç.
+- Dokunuştan üretilen taklit fare olayı dokunuşun kendisinden **önce** işlenir. Basışta kapanan bir panel, aynı dokunuşu arkasındaki oyuna da geçirir (kart kapanır, olta atılır). Paneller parmak kalkınca kapanır (`FishCard`).
+- Botun `Input.parse_input_event` ile gönderdiği dokunuş bir sonraki karede işlenir: sonucu ölçmeden önce 1–2 kare bekle.
+- Bot çıkmadan önce `Sounds.stop_all()` çağırıp birkaç kare bekler; yoksa çalan ogg için çıkışta "resources still in use" hatası çıkar.
+- `FishingSession.advance` bir karede en fazla 0,5 sn işler: testlerde uzun süreyi parça parça ilerlet.
 - Luckiest Guy ve Baloo 2 Türkçe karakterleri destekler. Yeni font seçilirse ğ, ş, ı, İ kontrol edilmeli. Varsayılan fontta ★ ve ok işaretleri yok.

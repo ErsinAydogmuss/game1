@@ -157,11 +157,32 @@ func _build() -> void:
 	var to_land := _distance_field(inside, 0)
 	var to_water := _distance_field(inside, 1)
 	shore.resize(width * height)
-	for i in width * height:
-		if inside[i] == 1:
-			shore[i] = maxf(0.0, to_land[i] * CELL - CELL * 0.5)
-		else:
-			shore[i] = -maxf(0.0, to_water[i] * CELL - CELL * 0.5)
+	for y in height:
+		for x in width:
+			var i := y * width + x
+			var grid := maxf(0.0, to_land[i] * CELL - CELL * 0.5) if inside[i] == 1 \
+					else -maxf(0.0, to_water[i] * CELL - CELL * 0.5)
+			# Kıyıya yakın yerde elips formülü (pürüzsüz kıyı çizgisi), uzakta ızgara uzaklığı.
+			var exact := _ellipse_distance(cell_center(x, y))
+			shore[i] = lerpf(exact, grid, smoothstep(0.5, 1.0, absf(exact)))
+
+
+## Elipslerin birleşimine işaretli uzaklık tahmini; kıyının yakınında doğru, uzakta kaba.
+## Her elips için g / |∇g| (g = 1 − (lx² + ly²), lx ve ly elipsin kendi ekseninde
+## yarıçapa bölünmüş konum); birleşim için en büyüğü.
+func _ellipse_distance(p: Vector2) -> float:
+	var best := -INF
+	for e in ellipses:
+		var q: Vector2 = p - (e["center"] as Vector2)
+		var c: float = e["cos"]
+		var s: float = e["sin"]
+		var r: Vector2 = e["radius"]
+		var lx := (q.x * c + q.y * s) / r.x
+		var ly := (-q.x * s + q.y * c) / r.y
+		var g := 1.0 - (lx * lx + ly * ly)
+		var grad := 2.0 * sqrt((lx / r.x) * (lx / r.x) + (ly / r.y) * (ly / r.y))
+		best = maxf(best, g / maxf(grad, 0.0001))
+	return best
 
 
 ## Her hücreden mask değeri `seed_value` olan en yakın hücreye uzaklık (hücre biriminde).

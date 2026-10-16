@@ -393,9 +393,15 @@ static func format_percent(ppm: int) -> String:
 	return text + "%"
 
 
+## Geliştirici botu çentiği taklit etmek için verir (--safe-inset); sıfırsa cihazınki kullanılır.
+static var debug_insets := Vector4.ZERO
+
+
 ## Çentik / yuvarlak köşe için güvenli alan payları (viewport birimiyle):
 ## x = sol, y = üst, z = sağ, w = alt.
 static func safe_insets(node: CanvasItem) -> Vector4:
+	if debug_insets != Vector4.ZERO:
+		return debug_insets
 	if not OS.has_feature("mobile"):
 		return Vector4.ZERO
 	var window := Vector2(DisplayServer.window_get_size())

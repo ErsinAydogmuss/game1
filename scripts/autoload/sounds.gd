@@ -91,7 +91,17 @@ func _process(delta: float) -> void:
 
 
 func _exit_tree() -> void:
-	# Çıkışta çalan akışları bırak (yoksa motor çıkışta sızıntı uyarısı verir).
+	stop_all()
+
+
+## Bütün sesleri durdurur ve akışları bırakır. Çıkmadan bir iki kare önce çağrılırsa ses
+## sunucusu çalanları bırakmaya fırsat bulur (yoksa motor çıkışta sızıntı uyarısı verir).
+func stop_all() -> void:
+	for tween: Tween in [_music_tween, _ambience_tween]:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	_music_name = ""
+	_ambience_name = ""
 	for child in get_children():
 		if child is AudioStreamPlayer:
 			(child as AudioStreamPlayer).stop()

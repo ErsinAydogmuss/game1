@@ -12,7 +12,6 @@ UI_LANG_NAME,English,Türkçe
 UI_ON,On,Açık
 UI_OFF,Off,Kapalı
 UI_DEBUG_RESET,Reset save,Kaydı sıfırla
-UI_PLACEHOLDER_HINT,The lake is ready. Fishing comes in the next step!,Göl hazır. Balık tutmak bir sonraki adımda!
 RARITY_common,Common,Sıradan
 RARITY_fine,Fine,Güzel
 RARITY_rare,Rare,Nadir
@@ -30,3 +29,30 @@ FISH_wels,Wels Catfish,Yayın
 FISH_wels_DESC,The whiskered giant! Lives at the bottom and fights unpredictably.,"Bıyıklı dev! Gölün dibinde yaşar, çekişi düzensizdir."
 ROD_bamboo,Bamboo rod,Bambu olta
 SPOT_home_lake,Grandpa's Lake,Dede'nin Gölü
+UI_HINT_FIRST_SHADOW,See the shadow? Tap in front of it!,Gölgeyi gördün mü? Önüne dokun!
+UI_HINT_CAST,Tap the water to cast!,"Suya dokun, oltanı at!"
+UI_HINT_WAIT,Wait... fish come when they see it.,"Bekle, balık şamandırayı görünce gelir."
+UI_HINT_COMING,It's coming! Don't touch yet...,Geliyor! Sakın dokunma...
+UI_HINT_NIBBLE,Nibbling... Strike when it dives!,Dürtüyor... Dalınca VUR!
+UI_HINT_BITE,Now! Tap anywhere!,Şimdi! Ekranın her yerine dokun!
+UI_HINT_REEL,Hold to reel in. Let go when it thrashes!,"Basılı tut, sar. Çırpınınca bırak!"
+UI_EARLY,Too early!,Erken davrandın!
+UI_STARTLE,The fish flinched!,Balık irkildi!
+UI_MISSED,It got away!,Kaçtı!
+UI_RETRY,Missed! It will bite again.,Kaçırdın! Yine ısıracak.
+UI_SNAPPED,The line snapped!,Misina koptu!
+UI_ESCAPED,The fish escaped!,Balık kaçtı!
+UI_SCARED,You scared it! Cast in front of it.,Ürküttün! Önüne at.
+UI_NO_WATER,Tap the water to cast.,Atmak için suya dokun.
+UI_LET_GO,Let go!,Bırak!
+UI_ACT_CAST,Cast,At
+UI_ACT_RETRIEVE,Reel in,Geri sar
+UI_ACT_WAIT,Wait,Bekle
+UI_ACT_HOOK,Strike!,Vur!
+UI_ACT_REEL,Reel,Sar
+UI_NEW_SPECIES,New species!,Yeni tür!
+UI_NEW_RECORD,New record!,Yeni rekor!
+UI_SIZE_CM,%d cm,%d cm
+UI_CARD_OK,Great!,Harika!
+UI_CAUGHT_TOAST,%s · %d cm,%s · %d cm
+UI_DISTANCE,%.1f m,%.1f m

@@ -183,7 +183,7 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 Oyun açılınca kullanıcıdan şunlara bakmasını iste:
 
 - Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
-- **İskelet sürümü** (altta "Göl hazır. Balık tutmak bir sonraki adımda!" yazıyorsa): yalnızca oyunun açılıp açılmadığına, ekranın yatay ve tam olup olmadığına, çentiğin bir yeri kapatıp kapatmadığına, ayarların açılıp dilin değişip değişmediğine bak. Aşağıdaki balık tutma soruları sonraki sürümler için.
+- Bu sürüm **gri kutu**: balıkçı ve çevre şimdilik basit şekiller; amaç oynanışın hissini denemek.
 - Suya dokununca olta atılıyor mu? Karaya dokununca balıkçı yürüyor mu?
 - Sudaki balık gölgeleri görünüyor mu? Şamandıranın dürtmesi ve dalması fark ediliyor mu?
 - VUR anı adil mi? Çekişme zevkli mi, zor mu?

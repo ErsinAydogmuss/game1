@@ -1,173 +1,446 @@
 extends Node3D
-## Ana sahne: her şeyi bağlar. 2. adımda yer tutucu bir göl, iskele ve arayüz iskeleti kurar
-## (telefona ilk yüklemede imza ve ekran ayarları denensin diye).
-## Sonraki adımlar: balık tutma (FishingSession, 3–4. adım), göl görselleri (5. adım),
-## balıkçı, olta ve balık modelleri (6. adım).
+## Ana sahne: her şeyi bağlar. Göl (LakeScene), balıkçı (Angler), şamandıra, misina, gölgeler,
+## kamera, arayüz ve balık tutma oturumu (FishingSession). Oyun mantığı oturumdadır; burası
+## olayları dinleyip ses, titreşim, hareket ve yazıya çevirir. Her sesin bir görsel ve titreşim
+## karşılığı vardır (iPhone'un sessiz anahtarı açık olabilir).
+## Girdiyi InputRouter okur; --autoplay botu (yalnızca debug) gerçek dokunma olayları gönderir.
 
-## Gölün yarıçapları (metre): x ve z yönünde. Göl (0, 0, 0) merkezli bir elips.
-const LAKE_RADIUS := Vector2(9.0, 6.5)
-## İskele: kıyıdan (+z) göle doğru (-z) uzanır.
-const DOCK_WIDTH := 1.6
-const DOCK_FROM := 8.4
-const DOCK_TO := 4.0
-const DOCK_HEIGHT := 0.35
+const SPOT := "home_lake"
+## Olta sudayken kamera eğimi; çekişmede yakınlaşma.
+const LINE_PITCH := deg_to_rad(60.0)
+const FIGHT_ZOOM := 0.9
+## Kartsız yakalayışta (tekrar eden balık) bildirimden sonra bu kadar sn içinde yeni atış serbest.
+const QUICK_CATCH_TIME := 1.3
+## Space ya da AT düğmesiyle balıkçının önüne atış uzaklığı (m).
+const FORWARD_CAST := 6.0
+## Dede'nin ipuçları bu kadar balık tutulana kadar görünür.
+const HINT_CATCHES := 3
+const STEP_SOUND_EVERY := 0.36
+## İlk atıştan önce ilk av gölgesinin çevresinde halka aralığı (sn): "bu gölge!"
+const FIRST_CUE_EVERY := 1.6
 
-const SKY := Color("#a9d2ef")
-const GRASS := Color("#5a9a3a")
-const SAND := Color("#c9a865")
-const WATER := Color("#1f7f98")
-const WATER_DEEP := Color("#155a76")
-const WOOD := Color("#9b6a3c")
-const WOOD_DARK := Color("#6e4526")
-
+var session: FishingSession
+var lake: LakeShape
+var scene: LakeScene
+var angler: Angler
+var bobber: Bobber
+var line: FishingLine
+var shadows: ShadowLayer
+var ripples: Ripples
 var camera: FollowCamera
+var input: InputRouter
 var hud: Hud
+var card: FishCard
 var settings_panel: SettingsPanel
+
+var _save_ref: SaveData
+var _paused: bool = false
+var _pending_cast := Dice.NO_POINT
+var _quick_catch: float = -1.0
+var _step_clock: float = 0.0
+var _cue_clock: float = 0.0
 
 
 func _ready() -> void:
-	_build_environment()
-	_build_placeholder_lake()
-	_build_placeholder_dock()
-	_build_placeholder_angler()
+	lake = GameState.db.lake(SPOT)
+	scene = LakeScene.new()
+	add_child(scene)
+	scene.setup(lake)
+	shadows = ShadowLayer.new()
+	add_child(shadows)
+	ripples = Ripples.new()
+	add_child(ripples)
+	angler = Angler.new()
+	angler.lake = lake
+	angler.height_at = scene.stand_height
+	add_child(angler)
+	bobber = Bobber.new()
+	add_child(bobber)
 	camera = FollowCamera.new()
 	add_child(camera)
-	camera.snap(Vector3(0.0, 0.5, DOCK_TO - 0.6))
+	line = FishingLine.new()
+	line.camera = camera
+	line.visible = false
+	add_child(line)
 	_build_ui()
+	_build_input()
+	_start_session()
 	GameState.changed.connect(_on_state_changed)
+	GameState.focus_lost.connect(_on_focus_lost)
+	GameState.focus_gained.connect(func() -> void: _paused = false)
+	ItemArt.register_fish_colors(GameState.db.fish_colors())
 	Sounds.set_ambience("lake")
+	if OS.is_debug_build() and OS.get_cmdline_user_args().has("--autoplay"):
+		var bot: Node = load("res://scripts/dev/autoplay.gd").new()
+		bot.set("main", self)
+		add_child(bot)
+
+
+## Kayda göre yeni bir oturum (yeni gölgeler); ilk balık tutulmadıysa ilk av senaryolu.
+func _start_session() -> void:
+	var save := GameState.save
+	_save_ref = save
+	var rod := save.rod if not GameState.db.rod(save.rod).is_empty() else "bamboo"
+	session = FishingSession.new(GameState.db, SPOT, rod, Dice.derive(save.seed, save.session),
+			bool(GameState.setting("easy", false)), save.catches == 0)
+	angler.place(session.angler)
+	angler.face(Vector2(0, -1))
+	bobber.hide_bobber()
+	line.visible = false
+	_pending_cast = Dice.NO_POINT
+	_quick_catch = -1.0
+	camera.pitch = FollowCamera.PITCH
+	camera.zoom = 1.0
+	camera.snap(_focus())
 
 
 func _on_state_changed() -> void:
 	hud.refresh()
+	if GameState.save != _save_ref:
+		# Kayıt değişti (sıfırlama): göl baştan.
+		if card.visible:
+			card.close_card()
+		_start_session()
+		return
+	session.easy = bool(GameState.setting("easy", false))
 
 
-# --- Dünya (yer tutucu) ----------------------------------------------------------
-
-## Işık ve ortam: Kazı'nın telefonda denenmiş ayarları (5. adımda LakeScenery'ye taşınır).
-func _build_environment() -> void:
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = SKY
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("#d4e4f7")
-	env.ambient_light_energy = 0.5
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_white = 6.0
-	env.glow_enabled = true
-	env.glow_intensity = 0.7
-	env.glow_bloom = 0.03
-	env.glow_hdr_threshold = 0.95
-	env.fog_enabled = true
-	env.fog_mode = Environment.FOG_MODE_EXPONENTIAL
-	env.fog_light_color = SKY
-	env.fog_density = 0.006
-	env.fog_sky_affect = 0.0
-	env.adjustment_enabled = true
-	env.adjustment_contrast = 1.08
-	env.adjustment_saturation = 1.16
-	var world := WorldEnvironment.new()
-	world.environment = env
-	add_child(world)
-	var sun := DirectionalLight3D.new()
-	sun.light_color = Color("#fff1db")
-	sun.light_energy = 1.15
-	sun.shadow_enabled = true
-	sun.shadow_blur = 1.5
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	sun.directional_shadow_max_distance = 30.0
-	add_child(sun)
-	# Işık kameranın arkasından, biraz soldan gelsin: görünen yüzler aydınlık olsun.
-	sun.look_at_from_position(Vector3.ZERO, Vector3(-0.35, -1.0, -0.55), Vector3.UP)
-	var fill := DirectionalLight3D.new()
-	fill.light_color = Color("#b9d4ff")
-	fill.light_energy = 0.35
-	add_child(fill)
-	fill.look_at_from_position(Vector3.ZERO, Vector3(0.6, -0.5, 0.4), Vector3.UP)
+func _on_focus_lost() -> void:
+	# Arama, Denetim Merkezi, arka plan: çekişme donar, parmak bırakılmış sayılır.
+	_paused = true
+	input.release_all()
+	session.release()
+	Sounds.set_loop("reel", false)
+	Sounds.set_loop("strain", false)
 
 
-func _build_placeholder_lake() -> void:
-	var ground := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(90.0, 90.0)
-	ground.mesh = plane
-	ground.material_override = Props.material(GRASS, 0.95)
-	add_child(ground)
-	# Kumsal, su ve derin su: üst üste ince diskler (z-kavgası olmasın diye 2 cm arayla).
-	_disc(LAKE_RADIUS + Vector2(1.3, 1.3), 0.02, SAND, 0.95)
-	_disc(LAKE_RADIUS, 0.04, WATER, 0.45)
-	_disc(LAKE_RADIUS * 0.55, 0.06, WATER_DEEP, 0.45)
-	# Kıyıda birkaç saz ve taş; uzakta basit ağaçlar (görsel; rastgelelik sabit tohumlu).
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
-	for i in 26:
-		var a := rng.randf() * TAU
-		var edge := Vector3(cos(a) * LAKE_RADIUS.x, 0.0, sin(a) * LAKE_RADIUS.y) * rng.randf_range(0.97, 1.05)
-		if absf(edge.x) < DOCK_WIDTH * 1.5 and edge.z > 0.0:
-			continue
-		var h := rng.randf_range(0.6, 1.1)
-		Props.cylinder(self, 0.03, 0.04, h, edge + Vector3(0.0, h * 0.5, 0.0), Color("#5f9a3c"), 5)
-	for i in 6:
-		var a := rng.randf() * TAU
-		var rock := Vector3(cos(a) * (LAKE_RADIUS.x + 1.0), 0.1, sin(a) * (LAKE_RADIUS.y + 1.0))
-		Props.sphere(self, rng.randf_range(0.25, 0.45), rock, Color("#9aa3ad"), 8, 4, Vector3(1.3, 0.6, 1.0))
-	for i in 22:
-		var a := rng.randf() * TAU
-		var r := rng.randf_range(1.45, 2.1)
-		var spot := Vector3(cos(a) * LAKE_RADIUS.x * r, 0.0, sin(a) * LAKE_RADIUS.y * r)
-		# İskelenin önünü (kameraya yakın taraf) kapatmasın.
-		if spot.z > 0.0 and absf(spot.x) < 5.0:
-			continue
-		var size := rng.randf_range(0.8, 1.3)
-		Props.cylinder(self, 0.12 * size, 0.16 * size, 0.9 * size, spot + Vector3(0.0, 0.45 * size, 0.0), WOOD_DARK, 6)
-		Props.cylinder(self, 0.0, 0.9 * size, 2.2 * size, spot + Vector3(0.0, 1.9 * size, 0.0), Color("#3f8f4a"), 7)
+func _process(delta: float) -> void:
+	# Odak kaybında ve ayarlar açıkken oyun donar (çekişmedeki balık kaçmasın).
+	if _paused or settings_panel.visible:
+		return
+	if session.state == FishingSession.State.IDLE:
+		session.angler = angler.pos2()
+	_check_pending_cast()
+	session.advance(delta)
+	for e in session.poll_events():
+		_on_event(e)
+	if _quick_catch >= 0.0:
+		_quick_catch += delta
+		if _quick_catch >= QUICK_CATCH_TIME:
+			_quick_catch = -1.0
+			session.acknowledge()
+	_present(delta)
 
 
-func _disc(radius: Vector2, y: float, color: Color, roughness: float) -> void:
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = 1.0
-	mesh.bottom_radius = 1.0
-	mesh.height = 0.02
-	mesh.radial_segments = 64
-	mesh.rings = 1
-	var node := MeshInstance3D.new()
-	node.mesh = mesh
-	node.material_override = Props.material(color, roughness)
-	node.position = Vector3(0.0, y - 0.01, 0.0)
-	node.scale = Vector3(radius.x, 1.0, radius.y)
-	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(node)
+# --- Girdi -------------------------------------------------------------------------
+
+func _build_input() -> void:
+	input = InputRouter.new()
+	input.lake = lake
+	input.ground_point = ground_point
+	input.line_out = func() -> bool: return session.line_out()
+	add_child(input)
+	input.walk_requested.connect(_on_walk_requested)
+	input.cast_requested.connect(_on_cast_requested)
+	input.action_pressed.connect(_on_action_down)
+	input.action_released.connect(_on_action_up)
+	input.walk_step.connect(func(dir: Vector2) -> void:
+		_pending_cast = Dice.NO_POINT
+		angler.step_dir(dir, get_process_delta_time()))
 
 
-func _build_placeholder_dock() -> void:
-	var dock := Props.pivot(self, Vector3.ZERO, "Dock")
-	var length := DOCK_FROM - DOCK_TO
-	var plank := 0.3
-	var count := int(length / (plank + 0.04))
-	for i in count:
-		var z := DOCK_TO + (float(i) + 0.5) * length / float(count)
-		var shade := WOOD if i % 2 == 0 else WOOD.darkened(0.08)
-		Props.box(dock, Vector3(DOCK_WIDTH, 0.08, plank), Vector3(0.0, DOCK_HEIGHT, z), shade)
-	# Ayaklar.
-	var post_z := DOCK_TO + 0.2
-	while post_z < DOCK_FROM:
-		for side: float in [-1.0, 1.0]:
-			Props.cylinder(dock, 0.09, 0.09, 0.9, Vector3(side * (DOCK_WIDTH * 0.5 - 0.08), -0.05, post_z), WOOD_DARK, 6)
-		post_z += 1.4
+## Ekran noktasının göldeki karşılığı: önce iskele güvertesi, sonra su / zemin düzlemi.
+func ground_point(screen: Vector2) -> Vector2:
+	var origin := camera.project_ray_origin(screen)
+	var dir := camera.project_ray_normal(screen)
+	if absf(dir.y) < 0.0001:
+		return Dice.NO_POINT
+	var deck := (LakeScene.DOCK_HEIGHT + 0.04 - origin.y) / dir.y
+	if deck > 0.0:
+		var on_deck := origin + dir * deck
+		var q := Vector2(on_deck.x, on_deck.z)
+		if lake.on_dock(q):
+			return q
+	var t := -origin.y / dir.y
+	if t <= 0.0:
+		return Dice.NO_POINT
+	var p := origin + dir * t
+	return Vector2(p.x, p.z)
 
 
-## Şimdilik basit bir balıkçı yer tutucusu (6. adımda KayKit karakteri gelir).
-func _build_placeholder_angler() -> void:
-	var angler := Props.pivot(self, Vector3(0.0, DOCK_HEIGHT + 0.04, DOCK_TO + 0.5), "Angler")
-	Props.capsule(angler, 0.24, 0.95, Vector3(0.0, 0.48, 0.0), Color("#3d8bff"))
-	Props.sphere(angler, 0.21, Vector3(0.0, 1.16, 0.0), Color("#f2c7a5"))
-	Props.cylinder(angler, 0.16, 0.3, 0.16, Vector3(0.0, 1.36, 0.0), Color("#f4d35e"), 10)
-	# Olta: ileri ve yukarı eğik ince çubuk, ucunda kırmızı-beyaz şamandıra suda.
-	Props.cylinder(angler, 0.012, 0.025, 2.2, Vector3(0.25, 1.15, -0.85), WOOD_DARK, 5,
-			Vector3(deg_to_rad(-62.0), 0.0, 0.0))
-	var bobber := Vector3(0.25, 0.08, DOCK_TO - 3.2)
-	Props.sphere(self, 0.11, bobber, Color("#e63946"))
-	Props.sphere(self, 0.08, bobber + Vector3(0.0, 0.08, 0.0), Color.WHITE)
+func _on_walk_requested(target: Vector2) -> void:
+	if session.state != FishingSession.State.IDLE:
+		return
+	_pending_cast = Dice.NO_POINT
+	angler.walk_to(target)
+
+
+## Suya dokunuş: menzildeyse hemen atar; değilse önce yaklaşır (kıyıda durursa oradan atar).
+func _on_cast_requested(target: Vector2) -> void:
+	if session.state != FishingSession.State.IDLE:
+		return
+	if angler.pos2().distance_to(target) <= session.range_m() - 0.3:
+		angler.stop()
+		_try_cast(target)
+		return
+	_pending_cast = target
+	angler.walk_to(target)
+
+
+func _check_pending_cast() -> void:
+	if not Dice.is_point(_pending_cast) or session.state != FishingSession.State.IDLE:
+		return
+	var close := angler.pos2().distance_to(_pending_cast) <= session.range_m() - 0.5
+	if close or not angler.is_walking():
+		var target := _pending_cast
+		_pending_cast = Dice.NO_POINT
+		angler.stop()
+		_try_cast(target)
+
+
+func _try_cast(target: Vector2) -> void:
+	session.angler = angler.pos2()
+	angler.face(target - angler.pos2())
+	if not session.cast(target):
+		Sounds.play("error")
+		hud.toast(tr("UI_NO_WATER"), UiKit.MUTED)
+
+
+func _on_action_down() -> void:
+	if card.visible:
+		return
+	if session.state == FishingSession.State.IDLE:
+		# Space / AT: balıkçının önüne; önü kara ise gölün ortasına doğru.
+		var forward := angler.pos2() + angler.facing * FORWARD_CAST
+		var landing := lake.landing_point(angler.pos2(), forward, session.range_m(), session.rules.min_shore)
+		_try_cast(forward if Dice.is_point(landing) else lake.water_bounds.get_center())
+		return
+	session.press()
+
+
+func _on_action_up() -> void:
+	session.release()
+
+
+# --- Olaylar -------------------------------------------------------------------------
+
+func _on_event(e: Dictionary) -> void:
+	match str(e["type"]):
+		"cast":
+			GameState.save.casts += 1
+			angler.play_cast()
+			var to: Vector2 = e["to"]
+			var from: Vector2 = e["from"]
+			var seconds := float(int(e["steps"])) / FishingRules.HZ
+			bobber.fly(angler.rod_tip(), Vector3(to.x, 0.0, to.y), seconds, from.distance_to(to) * session.rules.arc)
+			Sounds.play("cast")
+			Sounds.haptic(8)
+		"land":
+			var p: Vector2 = e["pos"]
+			bobber.land(Vector3(p.x, 0.0, p.y))
+			ripples.spawn(p, 0.7, 0.9)
+			Sounds.play("plop")
+			Sounds.haptic(12)
+		"scare":
+			var s := session.sim.find(int(e["shadow"]))
+			if s != null:
+				ripples.spawn(s.pos, s.length, 0.6, Color(1, 1, 1, 0.6), 0.16)
+			Sounds.play("scare")
+			if GameState.save.catches < HINT_CATCHES:
+				hud.toast(tr("UI_SCARED"), UiKit.ACCENT)
+		"nibble":
+			bobber.nibble()
+			ripples.spawn(session.bobber, 0.45, 0.6, Color(1, 1, 1, 0.7), 0.12)
+			Sounds.play("nibble")
+			Sounds.haptic(15)
+		"bite":
+			bobber.go_under()
+			ripples.spawn(session.bobber, 1.0, 0.8, Color(1, 1, 1, 0.9), 0.14)
+			Sounds.play("bite")
+			Sounds.haptic(70)
+			camera.shake(0.06)
+		"early":
+			if bool(e["startle"]):
+				hud.toast(tr("UI_STARTLE"), UiKit.ACCENT)
+				Sounds.play("nibble")
+			else:
+				hud.toast(tr("UI_EARLY"), UiKit.BAD)
+				Sounds.play("escape")
+			Sounds.haptic(30)
+		"retry":
+			hud.toast(tr("UI_RETRY"), UiKit.ACCENT)
+			Sounds.play("hint")
+		"hook":
+			bobber.start_fight(bobber.global_position)
+			ripples.spawn(session.bobber, 1.2, 0.7, Color(1, 1, 1, 0.9), 0.18)
+			Sounds.play("hook")
+			Sounds.haptic(40)
+			camera.shake(0.09)
+		"warn":
+			Sounds.play("warn")
+			Sounds.haptic(35)
+		"burst":
+			ripples.spawn(session.fight_point(), 0.9, 0.5, Color(1, 1, 1, 0.8), 0.18)
+			Sounds.play("splash")
+			Sounds.haptic(20)
+		"strain":
+			Sounds.set_loop("strain", true)
+			Sounds.haptic(25)
+		"strain_end":
+			Sounds.set_loop("strain", false)
+		"lost":
+			_on_lost(str(e["reason"]))
+		"catch":
+			_on_catch()
+		"retrieve":
+			bobber.fly_back(angler.rod_tip(), float(session.rules.retrieve_steps) / FishingRules.HZ)
+			Sounds.play("reel_in")
+		"idle":
+			if bobber.look != Bobber.Look.RETURNING:
+				bobber.hide_bobber()
+
+
+func _on_lost(reason: String) -> void:
+	Sounds.set_loop("reel", false)
+	Sounds.set_loop("strain", false)
+	match reason:
+		"missed":
+			hud.toast(tr("UI_MISSED"), UiKit.BAD)
+			Sounds.play("escape")
+		"snapped":
+			hud.toast(tr("UI_SNAPPED"), UiKit.BAD)
+			Sounds.play("snap")
+			Sounds.haptic(90)
+			camera.shake(0.12)
+		"escaped":
+			hud.toast(tr("UI_ESCAPED"), UiKit.BAD)
+			Sounds.play("escape")
+	if reason == "snapped":
+		bobber.hide_bobber()
+	else:
+		bobber.fly_back(angler.rod_tip(), float(session.rules.lost_steps) / FishingRules.HZ)
+
+
+func _on_catch() -> void:
+	Sounds.set_loop("reel", false)
+	Sounds.set_loop("strain", false)
+	var info := session.last_catch
+	var fish_id := str(info["fish"])
+	var rarity := int(info["rarity"])
+	var save := GameState.save
+	var outcome := Records.add(save.records, fish_id, int(info["size_cm"]), int(info["stars"]), GameState.clock.now_unix())
+	save.catches += 1
+	GameState.save_game()
+	bobber.hide_bobber()
+	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)
+	angler.cheer()
+	Sounds.play("reel_in")
+	Sounds.find(rarity)
+	Sounds.haptic(50)
+	if bool(outcome["new_record"]):
+		Sounds.play("record")
+	if Records.wants_card(rarity, outcome):
+		card.show_catch(GameState.db, info, outcome)
+	else:
+		hud.toast(tr("UI_CAUGHT_TOAST") % [tr("FISH_" + fish_id), int(info["size_cm"])],
+				UiKit.rarity_color(GameState.db, rarity))
+		_quick_catch = 0.0
+
+
+# --- Sunum ---------------------------------------------------------------------------
+
+func _present(delta: float) -> void:
+	var reel := session.reel
+	var fighting := session.state == FishingSession.State.FIGHTING and reel != null
+	shadows.sync(session.sim, angler.pos2(), fighting and reel.thrashing(), delta)
+	if fighting:
+		var fp := session.fight_point()
+		bobber.fight_point = Vector3(fp.x, 0.0, fp.y)
+	var show_line := session.line_out() or bobber.look == Bobber.Look.RETURNING
+	line.visible = show_line and bobber.visible
+	if line.visible:
+		line.from = angler.rod_tip()
+		line.to = bobber.global_position + Vector3(0, Bobber.RADIUS * 1.4, 0)
+		match session.state:
+			FishingSession.State.CASTING:
+				line.sag = 0.08
+			FishingSession.State.FIGHTING:
+				line.sag = 0.03
+			_:
+				line.sag = 0.35
+		line.shake = 0.0
+		if fighting:
+			line.shake = clampf(reel.tension, 0.0, 1.3) * (1.6 if reel.thrashing() else 0.6)
+	angler.rod_raise = clampf(reel.tension, 0.0, 1.0) if fighting else 0.0
+	var tension := reel.tension if fighting else 0.0
+	Sounds.set_loop("reel", fighting and reel.holding, 0.0, 0.9 + 0.3 * tension)
+	# Arayüz.
+	hud.set_action("" if card.visible else session.action_kind())
+	hud.tension_bar.visible = fighting
+	hud.set_fighting(fighting)
+	if fighting:
+		hud.tension_bar.tension = reel.tension
+		hud.tension_bar.limit = session.rules.limit
+		hud.tension_bar.strain = reel.strain()
+		hud.tension_bar.warn = reel.thrashing()
+		hud.tension_bar.red = reel.in_red
+		hud.tension_bar.distance = reel.distance
+	_update_hint()
+	_first_cue(delta)
+	input.walking_allowed = session.state == FishingSession.State.IDLE and not card.visible
+	# Yürürken adım sesi.
+	if angler.is_walking():
+		_step_clock += delta
+		if _step_clock >= STEP_SOUND_EVERY:
+			_step_clock = 0.0
+			Sounds.play("step")
+	# Kamera: olta sudayken eğilir ve balıkçı ile şamandıranın ortasına bakar; çekişmede yakınlaşır.
+	camera.target = _focus()
+	var line_view := session.line_out() or session.state == FishingSession.State.LOST
+	camera.pitch = lerpf(camera.pitch, LINE_PITCH if line_view else FollowCamera.PITCH, minf(1.0, delta * 2.5))
+	camera.zoom = lerpf(camera.zoom, FIGHT_ZOOM if fighting else 1.0, minf(1.0, delta * 2.0))
+
+
+func _focus() -> Vector3:
+	var a := angler.position + Vector3(0, 0.6, 0)
+	if session.line_out() or session.state == FishingSession.State.LOST:
+		var p := session.fight_point() if session.state == FishingSession.State.FIGHTING else session.bobber
+		return a.lerp(Vector3(p.x, 0.0, p.y), 0.45)
+	return a
+
+
+## İlk av gölgesi, ilk atışa kadar arada bir halkayla gösterilir.
+func _first_cue(delta: float) -> void:
+	if GameState.save.catches > 0 or GameState.save.casts > 0 or session.state != FishingSession.State.IDLE:
+		return
+	_cue_clock += delta
+	if _cue_clock < FIRST_CUE_EVERY:
+		return
+	_cue_clock = 0.0
+	for s in session.sim.shadows:
+		if s.scripted:
+			ripples.spawn(s.pos, 1.0, 1.3, Color(1.0, 0.97, 0.75, 0.75), 0.08)
+
+
+func _update_hint() -> void:
+	if GameState.save.catches >= HINT_CATCHES or card.visible:
+		hud.show_hint("")
+		return
+	var key := ""
+	match session.state:
+		FishingSession.State.IDLE:
+			key = "UI_HINT_FIRST_SHADOW" if GameState.save.catches == 0 else "UI_HINT_CAST"
+		FishingSession.State.CASTING, FishingSession.State.WAITING:
+			key = "UI_HINT_COMING" if session.sim.approacher != null else "UI_HINT_WAIT"
+		FishingSession.State.NIBBLING:
+			key = "UI_HINT_NIBBLE"
+		FishingSession.State.BITING:
+			key = "UI_HINT_BITE"
+		FishingSession.State.FIGHTING:
+			key = "UI_HINT_REEL"
+		_:
+			return
+	hud.show_hint(key)
 
 
 # --- Arayüz ----------------------------------------------------------------------
@@ -178,7 +451,16 @@ func _build_ui() -> void:
 	add_child(layer)
 	hud = Hud.new()
 	layer.add_child(hud)
+	card = FishCard.new()
+	layer.add_child(card)
+	card.closed.connect(func() -> void: session.acknowledge())
 	settings_panel = SettingsPanel.new()
 	layer.add_child(settings_panel)
-	hud.settings_pressed.connect(settings_panel.open)
-	hud.show_hint("UI_PLACEHOLDER_HINT")
+	hud.settings_pressed.connect(func() -> void:
+		input.release_all()
+		session.release()
+		Sounds.set_loop("reel", false)
+		Sounds.set_loop("strain", false)
+		settings_panel.open())
+	hud.action_down.connect(_on_action_down)
+	hud.action_up.connect(_on_action_up)

@@ -101,7 +101,7 @@ func _process(delta: float) -> void:
 	for ripple in _ripples:
 		ripple["t"] = float(ripple["t"]) + delta
 	_ripples = _ripples.filter(func(r: Dictionary) -> bool: return float(r["t"]) < 0.45)
-	# Alt yazı kutusu alt ortada dursun (KAZ butonunun solunda).
+	# Alt yazı kutusu alt ortada dursun (eylem düğmesinin solunda).
 	_caption.position = Vector2((size.x - _caption.size.x) * 0.5, size.y - _caption.size.y - 150.0)
 	_fast.position = Vector2(size.x - 230.0, size.y * 0.36)
 	queue_redraw()

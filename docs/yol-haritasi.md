@@ -20,11 +20,11 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 - [x] Kısa tasarım belgesi ([`gdd.md`](gdd.md)), bu yol haritası, görsel istekleri ([`gorsel-istekleri.md`](gorsel-istekleri.md)).
 - [x] Proje iskeleti: Kazı'nın test koşucusu, kayıt, arayüz parçaları ve ses motoru; yer tutucu göl; iPhone ayarı. (Bot altyapısı 4. adımda.)
 - [x] Çekirdek mantık ve testler: `ContentDB`, `LakeShape`, `ShadowSim`, `BiteRules`, `ReelModel`, `FishTable`, `FishingSession`, `Records`, `SaveData`. Denge raporu: `tools/reel_report.gd`.
-- [ ] Gri kutu oynanış.
-  - Düz su, yer tutucu balıkçı ve şamandıra, misina ve gölgeler.
-  - Dokunma kontrolleri, HUD, gerilim çubuğu, Dede'nin ipucu çubuğu.
-  - Sesler ve titreşim; `controls` bot senaryosu.
-  - **1. telefon denemesi.**
+- [x] Gri kutu oynanış.
+  - [x] Göl şeklinden su ve kumsal, yer tutucu balıkçı ve şamandıra, misina ve gölgeler.
+  - [x] Dokunma kontrolleri, HUD, gerilim çubuğu, Dede'nin ipucu çubuğu, balık kartı.
+  - [x] Sesler (`tools/make_sounds.py`) ve titreşim; `controls` ve `first` bot senaryoları.
+  - [ ] **1. telefon denemesi** (Ersin).
 - [ ] Göl görselleri:
   - arazi ve kumsal;
   - su (derinlik rengi, dalga, köpük);
