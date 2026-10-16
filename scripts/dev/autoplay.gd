@@ -275,7 +275,8 @@ func _play_fish() -> void:
 		var info := {"fish": id, "size_cm": FishTable.size_cm(def, percentile),
 				"stars": FishTable.stars(percentile), "rarity": rarity}
 		catch_fx.show_catch(def, int(info["size_cm"]), tr("FISH_" + id), UiKit.rarity_color(db, rarity),
-				func() -> Vector3: return show, rarity >= Records.CARD_RARITY)
+				func() -> Vector3: return show, rarity >= Records.CARD_RARITY,
+				func() -> Vector3: return _angler().global_position)
 		# Oyundaki gösteri kamerası (main: SHOW_ZOOM, odak gösteri noktasının biraz altı).
 		_frame_on(show + Vector3(0.0, -0.2, 0.0), float(main.get("SHOW_ZOOM")))
 		await _wait(0.7)

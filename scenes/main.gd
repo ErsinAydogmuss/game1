@@ -387,7 +387,7 @@ func _on_catch() -> void:
 	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
 	var color := UiKit.rarity_color(GameState.db, rarity)
 	catch_fx.show_catch(GameState.db.fish_by_id(fish_id), int(info["size_cm"]), tr("FISH_" + fish_id), color,
-			_show_point, rarity >= Records.CARD_RARITY)
+			_show_point, rarity >= Records.CARD_RARITY, func() -> Vector3: return angler.global_position)
 	if bool(outcome["new_species"]) or bool(outcome["new_record"]) or rarity >= Records.CARD_RARITY:
 		angler.cheer()
 		elder.cheer()

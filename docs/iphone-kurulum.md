@@ -180,16 +180,18 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 
 ### 11. Geri bildirim
 
-Oyun açılınca kullanıcıdan şunlara bakmasını iste:
+Oyun açılınca kullanıcıdan şunlara bakmasını iste (1. hafta prototipi, v0.1):
 
-- Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
-- Bu sürüm **gri kutu**: balıkçı ve çevre şimdilik basit şekiller; amaç oynanışın hissini denemek.
-- Suya dokununca olta atılıyor mu? Karaya dokununca balıkçı yürüyor mu?
-- Sudaki balık gölgeleri görünüyor mu? Şamandıranın dürtmesi ve dalması fark ediliyor mu?
-- VUR anı adil mi? Çekişme zevkli mi, zor mu?
-- Takılma ya da telefonun ısınması var mı?
-- Ekranın çentiği (notch) bir yeri kapatıyor mu? Yazılar okunuyor mu?
-- Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
+1. Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
+2. Atış anlaşılıyor mu? Suya dokununca olta atılıyor, karaya dokununca balıkçı yürüyor mu?
+3. Sudaki balık gölgeleri görünüyor mu? Şamandıranın dürtmesi ve dalması fark ediliyor mu?
+4. VUR anı adil mi (şamandıra dalınca ekranın her yerine dokunmak)?
+5. Çekme zevkli mi, zor mu? Ayarlar'daki **Kolay çekme** gerekli mi, varsayılan mı olmalı?
+6. Takılma ya da telefonun ısınması var mı?
+7. Dede: iskelede oturuyor; konuşunca başının üstünde balon çıkıyor mu, ona dokununca öğüt veriyor mu? Yüzü okunuyor mu?
+8. Ekranın çentiği (notch) bir yeri kapatıyor mu? Yazılar okunuyor mu?
+
+Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 

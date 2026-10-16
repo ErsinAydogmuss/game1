@@ -1,7 +1,9 @@
 class_name CatchFx
 extends Node3D
-## Yakalanan balığın gösterisi: balık balıkçının önünde kıvrılır (FishMesh, logaritmik boy),
-## üstünde adı ve boyu yükselip söner; Nadir ve üstünde nadirlik renginde ışık sütunu yükselir.
+## Yakalanan balığın gösterisi: balık balıkçının önünde kıvrılır (FishMesh, küçültülmüş boy),
+## üstünde adı ve boyu yükselip söner; Nadir ve üstünde balıkçının çevresinde nadirlik renginde
+## ışık sütunu yükselir. Sütun balığın arkasında kalır (toplamalı ışık balığı ve yazıyı
+## soldurmasın): balık kameraya doğru uzatılmıştır, yazı sütundan sonra çizilir.
 ## Balık kameraya yan döner (profilinden görünsün). Süreler _process(delta) toplamıyla ölçülür.
 
 const HOLD_TIME := 2.2
@@ -12,15 +14,19 @@ var _label: Label3D
 var _beam: MeshInstance3D
 var _beam_material: StandardMaterial3D
 var _hand: Callable
+var _origin: Callable
 var _age: float = -1.0
 var _beam_age: float = -1.0
 
 
 ## def: balığın tanımı; size_cm: boyu; title: çevrilmiş adı; color: nadirlik rengi;
-## point: balığın gösterileceği yeri veren fonksiyon (her kare okunur); beam: ışık sütunu olsun mu.
-func show_catch(def: Dictionary, size_cm: int, title: String, color: Color, hand: Callable, beam: bool) -> void:
+## hand: balığın gösterileceği yeri veren fonksiyon (her kare okunur); beam: ışık sütunu olsun mu;
+## origin: sütunun ortası (balıkçının yeri; verilmezse balığın yeri).
+func show_catch(def: Dictionary, size_cm: int, title: String, color: Color, hand: Callable, beam: bool,
+		origin: Callable = Callable()) -> void:
 	clear()
 	_hand = hand
+	_origin = origin
 	var length := FishMesh.display_length(size_cm)
 	_fish = FishMesh.make(def, length)
 	_fish.set_wiggle(0.16, 11.0)
@@ -38,6 +44,9 @@ func show_catch(def: Dictionary, size_cm: int, title: String, color: Color, hand
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.no_depth_test = true
 	_label.fixed_size = false
+	# Işık sütunundan sonra çizilsin (toplamalı ışık yazıyı soldurmasın).
+	_label.render_priority = 12
+	_label.outline_render_priority = 11
 	add_child(_label)
 	_age = 0.0
 	if beam:
@@ -90,7 +99,8 @@ func _place() -> void:
 		_label.position = hand + Vector3(0.0, 1.45, 0.0)
 	if _beam != null:
 		# Sütunun dibi yerde kalsın (ölçek ortadan büyür).
-		_beam.position = Vector3(hand.x, 3.5 * _beam.scale.y, hand.z)
+		var base: Vector3 = _origin.call() if _origin.is_valid() else hand
+		_beam.position = Vector3(base.x, 3.5 * _beam.scale.y, base.z)
 
 
 func _make_beam(color: Color) -> void:
