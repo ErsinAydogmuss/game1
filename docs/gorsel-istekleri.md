@@ -18,11 +18,11 @@ Görseller partiler hâlinde geliyor; her parti bir dalgadan önce. **Hepsini bi
 |---|---|---|---|
 | 1. Arayüz | ✅ geldi, oyunda (v0.2.1) | 12 | paneller, düğmeler, nadirlik kartları, ikonlar, Dede ve Nine'nin yüzü, uygulama ikonu |
 | 2. Ekipman | ✅ geldi, oyunda (v0.2.1) | 7 | Nine'nin dükkânındaki 42 eşya (bugün satılan 33'ü görünüyor; kalanı Dalga 2–4'te) |
-| 3. Göl | Dalga 2 sırasında (promptlar aşağıda) | 5 | bölge rozetleri, harita kâğıdı, harita çıkartmaları ve ikonları, zemin dokuları |
-| 4. Teknikler | Dalga 3'ten önce | ~5 | yapay yemler, sinekler, sehpa ve zil, çöp ve kerevit |
+| 3. Göl | promptlar aşağıda; bekleniyor (oyun bugün kodla çizilen yedeklerle) | 5 | bölge rozetleri, harita kâğıdı, harita çıkartmaları ve ikonları, zemin dokuları |
+| 4. Teknikler | Dalga 3 sırasında (promptlar aşağıda) | 4 | yapay yemler, sinekler ve dip takımı, teknik ikonları, kerevit ve çöp |
 | 5. Hikâye ve yuva | Dalga 4'ten önce | ~8 | mektuplar, Gölün Bekçisi, hava ikonları, kedi, kıyafetler, tanıtım görseli |
 
-4 ve 5. partilerin promptlarını o dalgadan önce bu sayfaya eklerim.
+5. partinin promptlarını Dalga 4'ten önce bu sayfaya eklerim. **Önce hangisi?** Zamanın azsa Parti 4: Dalga 3'te hemen kullanılır (en önce `technique_icons` ve `gear_lures`; ilk teknik spin). Parti 3 bugünkü oyunu süsler; ikisi de acil değil.
 
 ## Nasıl teslim edersin?
 
@@ -445,6 +445,106 @@ Kesilen adlar: `grass` (çimen), `sand` (kıyı kumu), `path` (kıyı yolu), `mo
 
 ---
 
+## Parti 4 — Teknikler
+
+Dalga 3'te dört yeni teknik geliyor: spin (yapay yemle), dip (sehpa ve zille), sinek (dere ağzında) ve kerevit tuzağı. Kamışların, sehpanın ve tuzağın resimleri Parti 2'den hazır; bu dört sayfa gerisini tamamlar. Görseller gelene kadar oyun kodla çizilen yedekleri kullanır, yani **acele yok**.
+
+**1. `gear_lures.png`: yapay yemler (spin)**
+
+Parti 2'deki takım sayfalarıyla aynı stil cümleleri, yalnızca eşya listesi değişir. Yemler küçük ama hücreyi doldursun.
+
+```
+Sheet of 6 fishing gear icons for a cozy mobile game shop in a 3x2 grid, exactly matching the
+attached style reference: chunky shapes, soft gradients, thick dark outline, warm top-left light,
+3/4 view. Each item centered in its own cell with generous empty space, all at a similar size.
+Long items such as rods are drawn diagonally from bottom-left to top-right. No text, no labels,
+no shadows, no floor.
+Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
+Items, left to right, top row then bottom row: a simple silver spoon lure with a small hook;
+a spinner lure with a shiny spinning blade and a red bead; a soft green rubber worm lure on a
+round jig head; a small crankbait lure shaped like a little striped fish with a clear diving
+lip; a yellow topwater popper lure with a cupped face and a feather tail; a premium golden
+spoon lure with a small blue gem
+```
+
+| Kesilen ad | Yem |
+|---|---|
+| `lure_spoon` | kaşık |
+| `lure_spinner` | döner kaşık |
+| `lure_soft` | silikon yem |
+| `lure_crank` | maket balık |
+| `lure_popper` | su üstü yemi |
+| `lure_gold` | altın kaşık (en üst kademe) |
+
+**2. `gear_flies.png`: sinekler ve dip takımı**
+
+```
+(gear_lures ile aynı stil cümleleri.) Items, left to right, top row then bottom row: a small
+brown dry fly with upright wings and a fluffy collar; a dark nymph fly with a shiny gold bead
+head; a long white-and-olive streamer fly with flowing feathers; a teardrop-shaped lead fishing
+sinker with a small swivel; a small wire cage feeder filled with brown groundbait; a small brass
+fishing bell with a clip, the kind that rings on a rod tip
+```
+
+| Kesilen ad | Ne |
+|---|---|
+| `fly_dry` | kuru sinek |
+| `fly_nymph` | nimf |
+| `fly_streamer` | streamer (uzun tüylü sinek) |
+| `sinker` | kurşun (dip) |
+| `feeder` | yem sepeti (dip) |
+| `bell` | dip zili (zil çalınca ipucu ve bildirim) |
+
+**3. `technique_icons.png`: teknik ikonları**
+
+Sol alttaki teknik düğmesinde ve takım çantasında görünür. Arayüz ikonu oldukları için `ui_1` ile aynı stil cümleleri.
+
+```
+(ui_1 ile aynı stil cümleleri.) Icons, left to right, top row then bottom row: a red-and-white
+bobber floating on a small splash of teal water; a spinning reel with a silver spoon lure
+hanging from its line; a fishing rod resting on a small rod stand with a little brass bell;
+a feathered fly with a curly fly line looping around it; a small cylinder crayfish trap net
+with a little orange float; a green canvas tackle bag with a fishing rod sticking out
+```
+
+| Kesilen ad | Nerede |
+|---|---|
+| `tech_float` | teknik düğmesi: şamandıra |
+| `tech_spin` | teknik düğmesi: spin |
+| `tech_bottom` | teknik düğmesi: dip |
+| `tech_fly` | teknik düğmesi: sinek |
+| `tech_trap` | teknik düğmesi: tuzak |
+| `tackle_bag` | takım çantası (her tekniğin kuşanılmış takımı) |
+
+**4. `catch_items.png`: kerevit ve çöp**
+
+Tuzaktan ve dip avından çıkanlar. Çocuklar da oynayacak: çöpler de sevimli ve temiz görünsün.
+
+```
+Sheet of 6 cute cartoon items for a cozy fishing game in a 3x2 grid, exactly matching the
+attached style reference: chunky shapes, soft gradients, thick dark outline, warm top-left
+light, 3/4 view. Each item centered in its own cell with generous empty space, all at a similar
+size. No text, no labels, no shadows, no floor.
+Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
+Items, left to right, top row then bottom row: a small cute red-brown crayfish with big claws;
+an old green rubber boot with a few water drops; a dented rusty tin can; an empty plastic
+bottle; a corked glass bottle with a rolled paper message inside; an old rusty iron key with an
+ornate handle
+```
+
+| Kesilen ad | Ne |
+|---|---|
+| `crayfish` | kerevit (tuzak ve dip) |
+| `boot` | eski çizme |
+| `tin_can` | teneke |
+| `plastic_bottle` | plastik şişe |
+| `message_bottle` | mesajlı şişe (hikâye, Dalga 4) |
+| `rusty_key` | paslı anahtar (hikâye, Dalga 4) |
+
+Kerevit kırmızımsı: macentaya yakın görünüp soluyorsa bu sayfayı düz **yeşil (#00FF00)** arka planla iste.
+
+---
+
 ## Teknik not (Claude için)
 
 Görseller `assets/incoming/` altına gelince:
@@ -458,7 +558,7 @@ Sayfa adları, kesim şekli (`fit`) ve kesilen adlar `data/art_sheets.json`'da. 
 
 Mor ve pembe nesneli sayfalarda (`rarity_frames`, `rarity_badges`, `zone_badges`, `map_stickers`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru ve nilüferin pembesi solmaz. Zemin dokuları `"fit": "tile"`: kare örneğin içinden kesilir ve dikişsiz yapılır (`ArtSheet.make_tile`).
 
-Oyuna bağlama (v0.2.1'deki durum; Parti 3 Dalga 2'de):
+Oyuna bağlama (v0.3'teki durum; Parti 3 gelince, Parti 4 Dalga 3'te):
 
 | Görsel | Çıktı | Bağlantı |
 |---|---|---|
@@ -476,3 +576,6 @@ Oyuna bağlama (v0.2.1'deki durum; Parti 3 Dalga 2'de):
 | `map_paper`, `map_stickers` | `assets/ui/map/` | Harita panelinin zemini ve süsleri: görseller gelince bağlanacak (bugün harita gölün verisinden kodla çizilir). |
 | `map_icons` | `assets/icons/ui/` | `pin` ve `lock` bağlı (`GameIcon.ART_NAMES`); `compass`, `buoy`, `anchor`, `signpost` görseller gelince bağlanacak. |
 | `ground_tiles` | `assets/textures/ground/` | Dalga 2: zemin shader'ı (çimen, kum, kıyı yolu, kayalık). Dördü birden gelince zemin kendiliğinden onlarla çizilir (`LakeScene.GROUND_TILES`, bir karo 3 m); yoksa kodla. |
+| `gear_lures`, `gear_flies` | `assets/icons/gear/` | Dalga 3: `ItemArt.gear` (dükkânın yapay yem ve sinek kartları, dip takımı); `bell` dip zili çalınca ipucu ve bildirimde. Yoksa kodla çizilen ikon. |
+| `technique_icons` | `assets/icons/ui/` | Dalga 3: teknik düğmesi ve takım çantası (`GameIcon.ART_NAMES`'e eklenecek). Yoksa kodla çizilen ikon. |
+| `catch_items` | `assets/icons/items/` | Dalga 3: tuzaktan ve dip avından çıkan kerevit ve çöp; mesajlı şişe ve anahtar Dalga 4'ün hikâyesinde. |

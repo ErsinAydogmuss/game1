@@ -44,6 +44,14 @@
 		{ "file": "map_icons", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
 			"names": ["pin", "lock", "compass", "buoy", "anchor", "signpost"] },
 		{ "file": "ground_tiles", "out": "res://assets/textures/ground", "size": 512, "fit": "tile", "grid": [2, 2],
-			"names": ["grass", "sand", "path", "moss_stone"] }
+			"names": ["grass", "sand", "path", "moss_stone"] },
+		{ "file": "gear_lures", "out": "res://assets/icons/gear", "size": 256, "grid": [3, 2],
+			"names": ["lure_spoon", "lure_spinner", "lure_soft", "lure_crank", "lure_popper", "lure_gold"] },
+		{ "file": "gear_flies", "out": "res://assets/icons/gear", "size": 256, "grid": [3, 2],
+			"names": ["fly_dry", "fly_nymph", "fly_streamer", "sinker", "feeder", "bell"] },
+		{ "file": "technique_icons", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
+			"names": ["tech_float", "tech_spin", "tech_bottom", "tech_fly", "tech_trap", "tackle_bag"] },
+		{ "file": "catch_items", "out": "res://assets/icons/items", "size": 256, "grid": [3, 2],
+			"names": ["crayfish", "boot", "tin_can", "plastic_bottle", "message_bottle", "rusty_key"] }
 	]
 }
