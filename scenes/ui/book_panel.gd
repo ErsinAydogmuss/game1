@@ -174,7 +174,9 @@ func _fish_card(db: ContentDB, save: SaveData, f: Dictionary) -> Button:
 	var art := _art(id, 118, found)
 	art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(art)
-	var label := UiKit.ink(tr("FISH_" + id) if found else "???", 26, UiKit.INK, HORIZONTAL_ALIGNMENT_CENTER)
+	var name_text := tr("FISH_" + id) if found else "???"
+	var label := UiKit.ink(name_text, UiKit.fit_size(name_text, UiKit.body_font(), 26, CARD.x - 20.0, 20), UiKit.INK,
+			HORIZONTAL_ALIGNMENT_CENTER)
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	column.add_child(label)
 	var foot := HBoxContainer.new()
@@ -249,6 +251,12 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 	var title_color := UiKit.rarity_color(db, rarity).darkened(0.25) if found else UiKit.INK
 	text.add_child(UiKit.title(tr("FISH_" + id) if found else "???", 44, title_color, HORIZONTAL_ALIGNMENT_LEFT, 0))
 	text.add_child(UiKit.rarity_badge(db, rarity, 26))
+	# Koruma altındaki tür (mersin) satılmaz: tutulur, göle bırakılır.
+	if Bucket.release_only(db, id):
+		var protected := UiKit.ink(tr("UI_BOOK_PROTECTED"), 26, UiKit.INK)
+		protected.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		protected.custom_minimum_size = Vector2(420, 0)
+		_detail.add_child(protected)
 	if found:
 		var best := HBoxContainer.new()
 		best.add_theme_constant_override("separation", 10)

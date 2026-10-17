@@ -111,6 +111,13 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Levrek | ani | 9,5 sn | 10,5 sn | %55 tutar |
 | Turna | ani, güçlü | 13,7 sn | 15,2 sn | koparır |
 | Yayın | düzensiz, güçlü | 16,1 sn | 17,7 sn | koparır |
+| Gümüş balığı | hafif, çevik | 4,6 sn | 4,8 sn | tutar |
+| Çapak | ağır ama tembel | 7,1 sn | 7,4 sn | %72 tutar |
+| Tatlısu kefali | sert kaçışlı | 7,4 sn | 7,7 sn | %94 tutar |
+| Kadife | inatçı, ağır | 10,4 sn | 11,4 sn | koparır |
+| Sudak | başını sallar (sık patlama) | 13,9 sn | 15,6 sn | koparır |
+| Altın sazan | ağır, güçlü | 14,0 sn | 15,3 sn | koparır |
+| Mersin | çok güçlü, uzun koşular | 17,4 sn | 18,7 sn | koparır |
 
   İyi ve yavaş oyuncu her balığı tutar. Kolay modda hep basılı tutan da tutar.
 - **Takımla** (H2, `GearStats`): başlangıç takımı yukarıdaki bambu oltayla aynıdır. En iyi şamandıra takımıyla (`tools/reel_report.gd -- --gear=top`):
@@ -122,6 +129,13 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Levrek | 9,5 → 5,7 sn | tutar |
 | Turna | 13,7 → 8,0 sn | %38 tutar |
 | Yayın | 16,1 → 9,7 sn | koparır |
+| Gümüş balığı | 4,6 → 3,2 sn | tutar |
+| Çapak | 7,1 → 4,9 sn | tutar |
+| Tatlısu kefali | 7,4 → 4,8 sn | tutar |
+| Kadife | 10,4 → 6,7 sn | %18 tutar |
+| Sudak | 13,9 → 7,7 sn | %40 tutar |
+| Altın sazan | 14,0 → 8,5 sn | %2 tutar |
+| Mersin | 17,4 → 10,4 sn | koparır |
 
   Korkuluklar (`test_reel_model`): en iyi takımla yavaş oyuncu her balığı tutar; hep basılı tutan Nadir balığı en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar; çekişme en çok %40 kısalır. Misinanın kopma süresi bu yüzden en çok 0,95 sn.
 
@@ -153,29 +167,45 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - Uygulama odağı kaybedince (arama, Denetim Merkezi) ya da Ayarlar açıkken çekişme donar.
 - Her oturum yeni gölgelerle başlar (seed + oturum sayacı).
 
-## 6. Balıklar (prototip) ✅
+## 6. Balıklar ✅
 
-| Kimlik | TR | EN | Taban gölge | Nadirlik | Boy | Çekiş | Doğma | Görünüş |
-|---|---|---|---|---|---|---|---|---|
-| `rudd` | Kızılkanat | Rudd | 0,5 m | Sıradan | 15–30 cm | sakin | 35 | gümüş gövde, kırmızı yüzgeçler |
-| `carp` | Sazan | Carp | 0,75 m | Güzel (H2'de Sıradan'dan çıktı) | 30–80 cm | ağır | 25 | bronz-altın, koyu sırt, iri pullar |
-| `perch` | Levrek | Perch | 0,75 m | Güzel | 20–45 cm | ani | 17 | yeşil-sarı, koyu dikey çizgiler, turuncu yüzgeçler |
-| `pike` | Turna | Pike | 1,05 m | Nadir | 50–120 cm | ani, güçlü | 15 | uzun, zeytin yeşili, açık benekler |
-| `wels` | Yayın | Wels Catfish | 1,5 m | Destansı | 100–250 cm | düzensiz, güçlü | 8 | koyu gri-kahve, bıyıklı, yassı baş |
+İlk beşi prototipten, öbür yedisi Dalga 2'de (bölge balıkları). Kimlikler değişmez; görünüş kodla
+(`scenes/world/fish_mesh.gd`), oranlar bölgeden (§10.1; tam tablo [`balik-katalogu.md`](balik-katalogu.md)).
 
-**Nadirlikler:** Sıradan (gri), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın), Masalsı (turkuaz; H2'de eklendi, yalnızca Gölün Bekçisi). Efsanevi ve Masalsı balık henüz yok. Nadirlikler yalnızca sona eklenir; her kademenin bir simgesi, rütbe puanı ve göl sevgisi değeri var (§10.2, `data/rarities.json`).
+| Kimlik | TR | EN | Taban gölge | Nadirlik | Boy | Değer | Çekiş | Bölgeler | Görünüş |
+|---|---|---|---|---|---|---|---|---|---|
+| `rudd` | Kızılkanat | Rudd | 0,5 m | Sıradan | 15–30 cm | 5 | sakin | iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı | gümüş gövde, kırmızı yüzgeçler |
+| `silverside` | Gümüş Balığı | Silverside | 0,4 m | Sıradan | 8–18 cm | 4 | hafif, çevik | iskele koyu, sazlık | ince uzun, parlak gümüş yan şerit, iri göz, iki sırt yüzgeci |
+| `bream` | Çapak | Bream | 0,7 m | Sıradan | 25–60 cm | 6 | ağır ama tembel | iskele koyu, derin orta | yassı ve derin gövde, bronz, uzun anal yüzgeç |
+| `chub` | Tatlısu Kefali | Chub | 0,65 m | Sıradan | 20–50 cm | 7 | sert kaçışlı | kayalık burun, dere ağzı | iri başlı, gri-gümüş, turuncu alt yüzgeçler |
+| `carp` | Sazan | Carp | 0,75 m | Güzel (H2'de Sıradan'dan çıktı) | 30–80 cm | 12 | ağır | iskele koyu, sazlık, nilüferli koy, derin orta | bronz-altın, koyu sırt, iri pullar |
+| `perch` | Levrek | Perch | 0,75 m | Güzel | 20–45 cm | 12 | ani | her bölge | yeşil-sarı, koyu dikey çizgiler, turuncu yüzgeçler |
+| `tench` | Kadife | Tench | 0,7 m | Güzel | 25–55 cm | 14 | inatçı, ağır | sazlık | zeytin yeşili, kırmızı göz, kalın kuyruk sapı, düz kuyruk |
+| `pike` | Turna | Pike | 1,05 m | Nadir | 50–120 cm | 35 | ani, güçlü | her bölge | uzun, zeytin yeşili, açık benekler |
+| `zander` | Sudak | Zander | 0,95 m | Nadir | 40–90 cm | 40 | başını sallar (sık patlama) | kayalık burun, derin orta | uzun, gri-yeşil, soluk çizgiler, cam gibi parlak göz, iki sırt yüzgeci |
+| `wels` | Yayın | Wels Catfish | 1,5 m | Destansı | 100–250 cm | 120 | düzensiz, güçlü | iskele koyu (az), kayalık burun, dere ağzı, derin orta | koyu gri-kahve, bıyıklı, yassı baş |
+| `golden_carp` | Altın Sazan | Golden Carp | 0,9 m | Destansı | 40–85 cm | 110 | ağır, güçlü | nilüferli koy | koi gibi altın-turuncu, beyaz lekeli, bıyıklı |
+| `sturgeon` | Mersin Balığı | Sturgeon | 1,75 m | Efsanevi | 100–220 cm | satılmaz | çok güçlü, uzun koşular | derin orta (sandalla) | sivri burun, sırtta ve yanlarda kemik plakalar, burnun altında dört bıyık, üst lobu uzun kuyruk |
 
-**Değerler (para, orta boy):** Kızılkanat 5, Sazan 12, Levrek 12, Turna 35, Yayın 120. Doğma ağırlıkları Köy Gölü'nde 40/25/22/9/4 (testlerin gölünde 35/25/17/15/8).
+**Nadirlikler:** Sıradan (gri), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın), Masalsı (turkuaz; H2'de eklendi, yalnızca Gölün Bekçisi). İlk Efsanevi balık mersin; Masalsı balık henüz yok. Nadirlikler yalnızca sona eklenir; her kademenin bir simgesi, rütbe puanı ve göl sevgisi değeri var (§10.2, `data/rarities.json`).
 
-**H2 türleri 🔜** (18 tür; bugünkü 5 kimlik korunur, sazan Güzel'e çıkar). Bölge, teknik ve vakit ayrıntısı §10.1 ve §10.3'te.
+**Değerler (para, orta boy):** yukarıdaki tabloda; boy çarpanı 0,6–1,6.
+
+**Mersin koruma altında** (`release_only`): tutulur, kovaya girmez, satılmaz; kartta Dede "Mersin koruma altında evlat. Bir güzel bakalım, sonra bırakalım." der, düğme "Göle bırak" olur, bildirim "Mersin Balığı göle döndü". Rütbe puanı ve göl sevgisi verir; defterde "Koruma altında" yazar.
+
+**Doğma ağırlıkları** bölgenin (`data/spots.json`). İskele koyu: kızılkanat 26, gümüş balığı 14, çapak 10, sazan 20, levrek 18, turna 8, yayın 4 (Ersin'in seçimi: turna ve yayın kalsın ama az çıksın). Bölgelerin yıldız balıkları (sudak, altın sazan, mersin) başlangıç koylarında çıkmaz. Testlerin gölünde 35/25/17/15/8.
+
+**Sevdiği yem:** kurtçuk levrek ve gümüş balığı, ekmek hamuru sazan, levrek ve çapak, mısır sazan, kadife ve altın sazan, boili sazan, yayın, altın sazan ve çapak, karides yayın, turna, sudak ve tatlısu kefali. Mersin hiçbir yeme gelmez (dip tekniği Dalga 3'te).
+
+**H2 türleri** (18 tür; bugünkü 5 kimlik korunur, sazan Güzel'e çıkar). Dalga 2'de 12'si oyunda (✅); alabalıklar, aynalı sazan, gece ve fırtına balıkları teknik ve vakitle gelir. Bölge, teknik ve vakit ayrıntısı §10.1 ve §10.3'te.
 
 | Kademe | Türler |
 |---|---|
-| Sıradan | kızılkanat, gümüş balığı, çapak, tatlısu kefali |
-| Güzel | sazan, levrek, kadife |
-| Nadir | turna, sudak, alabalık, aynalı sazan |
-| Destansı | yayın, altın sazan, dere alabalığı |
-| Efsanevi | mersin (yalnızca bırakılır; koruma mesajı), ay turnası (gece), Kocabaş (dev yayın, fırtınalı gece) |
+| Sıradan | kızılkanat ✅, gümüş balığı ✅, çapak ✅, tatlısu kefali ✅ |
+| Güzel | sazan ✅, levrek ✅, kadife ✅ |
+| Nadir | turna ✅, sudak ✅, alabalık, aynalı sazan |
+| Destansı | yayın ✅, altın sazan ✅, dere alabalığı |
+| Efsanevi | mersin ✅ (yalnızca bırakılır; koruma mesajı), ay turnası (gece), Kocabaş (dev yayın, fırtınalı gece) |
 | Masalsı | Gölün Bekçisi (hikâyenin sonu) |
 
 - **Kerevit:** tuzakla ve dip avıyla çıkar.
@@ -274,6 +304,14 @@ Sıra ve adımlar [`yol-haritasi.md`](yol-haritasi.md)'de (Dalga 1–5). Sayıla
 | Dere ağzı (akıntılı) | 0,5–1,5 m | sinek, spin | alabalık, dere alabalığı, tatlısu kefali | rütbe 7 |
 | Derin orta | 4–10 m | dip (sandaldan) | yayın, aynalı sazan, mersin, Kocabaş, Gölün Bekçisi | rütbe 9 + sandal |
 
+- ✅ **Dalga 2'deki balıklar** (solucanla bir gölgenin o tür olma şansı; tam tablo [`balik-katalogu.md`](balik-katalogu.md)):
+  - iskele koyu: kızılkanat %26, sazan %20, levrek %18, gümüş balığı %14, çapak %10, turna %8, yayın %4;
+  - sazlık: kızılkanat %28, sazan %24, kadife %22, gümüş balığı %14, levrek %7, turna %5;
+  - nilüferli koy: levrek %26, sazan %24, turna %22, kızılkanat %22, altın sazan %6;
+  - kayalık burun: tatlısu kefali %30, levrek %28, sudak %16, turna %10, kızılkanat %10, yayın %6;
+  - dere ağzı: tatlısu kefali %40, levrek %25, kızılkanat %15, turna %14, yayın %6 (alabalıklar sinekle Dalga 3'te);
+  - derin orta: yayın %22, sazan %20, çapak %19, sudak %14, turna %12, levrek %11,5, mersin %1,5.
+
 - **Yürüme:** koyların çevresinden dolaşılır. Dokunulan yere sudan geçmeden varılamıyorsa balıkçı kıyı yolundan kısa yönü seçer.
 - **Harita:** bölgelerin atış noktalarına hızlı geçiş (ekran kararıp açılır). Kilitli noktalar rütbeyle açılır.
 - **Sandal:** dükkândan alınır. İskeleye bağlı sandala binilir; derin ortadaki 3 şamandıradan birine gidilir. Sandaldayken suya dokunmak yine atıştır.
@@ -364,6 +402,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 
 - ✅ **Denge botu** (`SessionSim`): oyunun kurallarını aynen kullanır (oranlar ve şans garantisi `CatchOdds`, boy `FishTable`, çekişme `ReelModel` + tepkili oyuncu botu, kova, rütbe, satış), yalnızca zamanı ve el becerisini taklit eder. Süreler `data/sim.json`'dan; atış, balığın gelişi, dürtmeler ve çekişme uzaklığı `tools/session_timing.gd` ile gerçek `FishingSession`'dan ölçülür (insan gibi şaşarak nişan alan bot). Ölçüm (başlangıç takımı): ısırmaya ortalama 9 sn (atış ve geri sarma dahil), dürtmeler 2,8 sn, çekişme 5,2 sn, takılma uzaklığı 4,5 m; saatte 225 av (satışsız). İnsan hatası tahmin: ısırmaların %15'i kaçırılır.
 - ✅ **Dalga 1 ölçümü** (`tools/economy_report.gd -- --hours=12`, 3 seed; bot solucanla avlanır, kova dolunca satar, rütbesi yeten en ucuz takımı alır): saatte yaklaşık 3.100 para ve 200 av. Korkuluklar `tests/test_session_sim.gd`'de (100 dk, 3 seed).
+- **Dalga 2 ara ölçüm** (yedi yeni tür; bot hâlâ yalnızca iskele koyunda avlanır): saatte yaklaşık 2.700 para ve 180 av; rütbe 3 / 5 / 7 / 9 yaklaşık 4 / 12 / 27 / 48. dakikada. Bölgeli denge (bölge değiştiren bot, sandal, hedefler yukarıda) Dalga 2'nin denge adımında.
 
 | Olay (ilk kez) | Dakika | Korkuluk |
 |---|---|---|
@@ -381,7 +420,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | büyük usta makara (15.000), dev file (15.000) | 12 saatte alınmadı | — |
 
 - **Değerlendirme:** ilk saat dolu: yaklaşık 7 dakikada bir yeni bir şey alınıyor (ilk saatte 8 alışveriş). Şamandıra takımının hepsi yaklaşık 62.700 para (bugünkü gölde ~20 saat); en üst kademe şimdilik uzak hedef. Dalga 2'de büyük gölün değerli türleri (Nadir ≈35, Destansı ≈120, Efsanevi ≈500) geliri artırır, Dalga 3'te tekniklerin takımı eklenir: fiyatlar ve rütbe puanı eğrisi o zaman "bütün kademeler 8–15 saat" hedefine göre yeniden ayarlanır. Rütbe 20'ye 5 saatte varılıyor; bölge ve teknik kilitleri (rütbe 3–9) geldiğinde eğri uzatılır.
-- ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (kurtçuk levrek %22 → %41, mısır sazan %25 → %50, karides yayın %4 → %9,9 ve turna %9 → %19). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
+- ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
 ### 10.5 Canlı dünya
 

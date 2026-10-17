@@ -25,13 +25,20 @@ func test_odds_sum_to_one_million() -> void:
 
 func test_bait_attracts_its_fish() -> void:
 	var db := content()
-	var plain := CatchOdds.species_ppm(db, _spot())
-	# İskele koyunun ağırlıkları 40/25/22/9/4 = 100.
-	assert_eq(int(plain["rudd"]), 400000, "kızılkanat %40")
-	var corn := CatchOdds.species_ppm(db, _spot(), { "attract": db.gear_item("bait_corn")["attract"] })
+	# Testlerin gölü değişmez: ağırlıklar 35/25/17/15/8 = 100 (mısırın çektiği kadife ve altın sazan
+	# orada yok).
+	var home := db.spot("home_lake")
+	var plain := CatchOdds.species_ppm(db, home)
+	assert_eq(int(plain["rudd"]), 350000, "kızılkanat %35")
+	var corn := CatchOdds.species_ppm(db, home, { "attract": db.gear_item("bait_corn")["attract"] })
 	# Sazan 25 × 3 = 75; toplam 75 + 75 = 150.
 	assert_eq(int(corn["carp"]), 500000, "mısırla sazan %50")
 	assert_true(int(corn["rudd"]) < int(plain["rudd"]), "öteki türlerin payı azalır")
+	# İskele koyunda da mısır sazanı çeker.
+	var dock := CatchOdds.species_ppm(db, _spot())
+	var dock_corn := CatchOdds.species_ppm(db, _spot(), { "attract": db.gear_item("bait_corn")["attract"] })
+	assert_true(int(dock_corn["carp"]) > 2 * int(dock["carp"]), "iskele koyunda mısırla sazan (%d → %d ppm)" % [
+			int(dock["carp"]), int(dock_corn["carp"])])
 
 
 func test_rolls_follow_the_shown_odds() -> void:

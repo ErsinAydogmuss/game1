@@ -8,6 +8,7 @@ extends Control
 ## İçerik: nadirlik (simgeli rozet), balığın resmi (Ersin'in görseli gelene kadar renkli madalyon),
 ## adı, boyu, yıldızları, kısa tanımı, "Yeni tür!" / "Yeni rekor!" şeritleri ve Dede'nin sözü (Nadir
 ## ve üstünde nadirliğe göre; yoksa yeni tür ya da rekor için). Destansı ve üstünde konfeti.
+## Koruma altındaki türde (mersin) Dede koruma sözünü söyler, düğme "Göle bırak" olur.
 ## Süreler _process(delta) toplamıyla ölçülür.
 
 signal closed
@@ -124,10 +125,11 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.custom_minimum_size = Vector2(900, 0)
 	column.add_child(desc)
-	var line := dede_line(db, rarity, outcome)
+	var line := dede_line(db, rarity, outcome, fish_id)
 	if not line.is_empty():
 		column.add_child(_dede_row(line))
-	ok_button = UiKit.button(tr("UI_CARD_OK"), UiKit.SUCCESS, UiKit.SIZE_TITLE, OK_SIZE)
+	var ok_text := tr("UI_CARD_RELEASE") if Bucket.release_only(db, fish_id) else tr("UI_CARD_OK")
+	ok_button = UiKit.button(ok_text, UiKit.SUCCESS, UiKit.SIZE_TITLE, OK_SIZE)
 	ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	# Kart görülmeden kapanmasın: düğme de en kısa açık kalma süresine uyar.
 	ok_button.pressed.connect(func() -> void:
@@ -162,9 +164,11 @@ func fit_scale() -> float:
 	return clampf(minf(room.x / need.x, room.y / need.y), 0.5, 1.0)
 
 
-## Dede'nin karttaki sözü: Nadir ve üstünde nadirliğe göre, yoksa yeni tür ya da rekor için
-## (çeviri anahtarı; "" = söz yok).
-static func dede_line(db: ContentDB, rarity: int, outcome: Dictionary) -> String:
+## Dede'nin karttaki sözü: koruma altındaki türde koruma sözü, Nadir ve üstünde nadirliğe göre,
+## yoksa yeni tür ya da rekor için (çeviri anahtarı; "" = söz yok).
+static func dede_line(db: ContentDB, rarity: int, outcome: Dictionary, fish_id: String = "") -> String:
+	if not fish_id.is_empty() and Bucket.release_only(db, fish_id):
+		return "UI_DEDE_CARD_RELEASE"
 	if rarity >= db.rarity_index("rare"):
 		return "UI_DEDE_CARD_%s" % db.rarity_id(rarity)
 	if bool(outcome.get("new_species", false)):

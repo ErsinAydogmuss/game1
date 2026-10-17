@@ -35,7 +35,8 @@ func _initialize() -> void:
 	lines.append("> işlevlerden (`CatchOdds`) okunur; Balık Defteri'nde yazan oranlar bunlardır.")
 	lines.append("")
 	lines.append("- **Değer** = türün değeri × boy çarpanı (türün en küçük boyu 0,6, en büyüğü 1,6; tamsayı para). Değeri")
-	lines.append("  0 olan (Masalsı) balık satılmaz.")
+	lines.append("  0 olan (Masalsı) balık satılmaz. Koruma altındaki tür (mersin) kovaya girmez: tutulur, göle bırakılır;")
+	lines.append("  rütbe puanı ve göl sevgisi verir.")
 	lines.append("- **Rütbe puanı** = nadirliğin puanı × (1 + yıldız başına 0,25). Bırakılan balık da puan verir.")
 	lines.append("- Bir gölgenin türü ve boyu doğduğu anda belirlenir (gizli ama değişmez); gölgenin boyu balığın")
 	lines.append("  boyunu ele verir, nadirlik ipucu (pırıltı, ışıltı, dalga izi) kademesini.")
@@ -155,9 +156,11 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 	for id in ids:
 		var f := db.fish_by_id(id)
 		var span: Vector2i = f["size_cm"]
-		var row := "| %s | %s | %s | %d–%d | %d–%d | %s |" % [_name("FISH_" + id), _name("FISH_" + id, "en"),
-				_name("RARITY_" + db.rarity_id(int(f["rarity"]))), span.x, span.y,
-				Economy.fish_value(db, id, span.x), Economy.fish_value(db, id, span.y), _number(float(f["shadow_m"]))]
+		var value := "%d–%d" % [Economy.fish_value(db, id, span.x), Economy.fish_value(db, id, span.y)]
+		if Bucket.release_only(db, id):
+			value = "satılmaz (bırakılır)"
+		var row := "| %s | %s | %s | %d–%d | %s | %s |" % [_name("FISH_" + id), _name("FISH_" + id, "en"),
+				_name("RARITY_" + db.rarity_id(int(f["rarity"]))), span.x, span.y, value, _number(float(f["shadow_m"]))]
 		for o in odds:
 			row += " %s |" % _percent(int(o.get(id, 0)))
 		lines.append(row)

@@ -1,5 +1,5 @@
 {
-	"_note": "Prototip balıkları (docs/gdd.md §6). Kimlikler değişmez. value: orta boydaki balığın satış değeri (para; boy çarpanı 0,6–1,6, Economy). shadow_m: taban gölge uzunluğu (m); size_cm: en küçük ve en büyük boy; weight: doğma ağırlığı (atış noktasında ayrıca yazılır). Renkler yer tutucu ve 3D model içindir: color gövde, back sırt, accent yüzgeç ya da vurgu. fight (çekişme): reel = sarma hızı çarpanı (olta hızıyla çarpılır), pull = sakin balıkta basılı tutunca gerilim (hep sınırın altında), burst_pull = patlamada basılı tutunca gerilim hedefi (sınırın üstünde), burst_every = bir patlamanın bitişinden sonrakinin başına kadar sn, burst_len = patlama süresi sn, run = patlamada bırakınca balığın kaçış hızı m/sn.",
+	"_note": "Balıklar (docs/gdd.md §6). Kimlikler değişmez. value: orta boydaki balığın satış değeri (para; boy çarpanı 0,6–1,6, Economy). shadow_m: taban gölge uzunluğu (m); size_cm: en küçük ve en büyük boy; weight: doğma ağırlığı (atış noktasında ayrıca yazılır). Renkler yer tutucu ve 3D model içindir: color gövde, back sırt, accent yüzgeç ya da vurgu. fight (çekişme): reel = sarma hızı çarpanı (olta hızıyla çarpılır), pull = sakin balıkta basılı tutunca gerilim (hep sınırın altında), burst_pull = patlamada basılı tutunca gerilim hedefi (sınırın üstünde), burst_every = bir patlamanın bitişinden sonrakinin başına kadar sn, burst_len = patlama süresi sn, run = patlamada bırakınca balığın kaçış hızı m/sn. release_only: koruma altındaki tür (mersin): kovaya girmez, satılmaz (value 0), tutulunca göle bırakılır; rütbe puanı ve göl sevgisi verir. Dalga 2 türleri sona eklendi (docs/gdd.md §6).",
 	"fish": [
 		{ "id": "rudd", "rarity": "common", "value": 5, "shadow_m": 0.5, "size_cm": [15, 30], "weight": 35,
 			"color": "#c9d1d6", "back": "#5b6b74", "accent": "#e2463a",
@@ -15,6 +15,27 @@
 			"fight": { "reel": 0.7, "pull": 0.6, "burst_pull": 1.25, "burst_every": [1.8, 2.6], "burst_len": [0.8, 1.1], "run": 0.7 } },
 		{ "id": "wels", "rarity": "epic", "value": 120, "shadow_m": 1.5, "size_cm": [100, 250], "weight": 8,
 			"color": "#6b625a", "back": "#3a3430", "accent": "#a89a8a",
-			"fight": { "reel": 0.6, "pull": 0.65, "burst_pull": 1.3, "burst_every": [1.8, 3.4], "burst_len": [0.9, 1.4], "run": 0.6 } }
+			"fight": { "reel": 0.6, "pull": 0.65, "burst_pull": 1.3, "burst_every": [1.8, 3.4], "burst_len": [0.9, 1.4], "run": 0.6 } },
+		{ "id": "silverside", "rarity": "common", "value": 4, "shadow_m": 0.4, "size_cm": [8, 18], "weight": 20,
+			"color": "#d9e3e8", "back": "#6f93a3", "accent": "#bcd0d8",
+			"fight": { "reel": 1.15, "pull": 0.35, "burst_pull": 1.08, "burst_every": [2.6, 3.8], "burst_len": [0.4, 0.6], "run": 0.9 } },
+		{ "id": "bream", "rarity": "common", "value": 6, "shadow_m": 0.7, "size_cm": [25, 60], "weight": 15,
+			"color": "#b39a62", "back": "#4e4532", "accent": "#6e6250",
+			"fight": { "reel": 0.8, "pull": 0.55, "burst_pull": 1.08, "burst_every": [3.0, 4.2], "burst_len": [0.6, 0.9], "run": 0.5 } },
+		{ "id": "chub", "rarity": "common", "value": 7, "shadow_m": 0.65, "size_cm": [20, 50], "weight": 15,
+			"color": "#c9c6ae", "back": "#4a5546", "accent": "#565c50",
+			"fight": { "reel": 0.9, "pull": 0.5, "burst_pull": 1.2, "burst_every": [2.0, 3.0], "burst_len": [0.5, 0.8], "run": 0.9 } },
+		{ "id": "tench", "rarity": "fine", "value": 14, "shadow_m": 0.7, "size_cm": [25, 55], "weight": 12,
+			"color": "#71823a", "back": "#36451c", "accent": "#4f6327",
+			"fight": { "reel": 0.75, "pull": 0.6, "burst_pull": 1.2, "burst_every": [2.2, 3.0], "burst_len": [0.9, 1.3], "run": 0.55 } },
+		{ "id": "zander", "rarity": "rare", "value": 40, "shadow_m": 0.95, "size_cm": [40, 90], "weight": 8,
+			"color": "#bec6b4", "back": "#465448", "accent": "#a7b0a0",
+			"fight": { "reel": 0.75, "pull": 0.55, "burst_pull": 1.3, "burst_every": [1.6, 2.4], "burst_len": [0.8, 1.05], "run": 0.75 } },
+		{ "id": "golden_carp", "rarity": "epic", "value": 110, "shadow_m": 0.9, "size_cm": [40, 85], "weight": 4,
+			"color": "#f39a1e", "back": "#e06a12", "accent": "#ffc04d",
+			"fight": { "reel": 0.65, "pull": 0.65, "burst_pull": 1.3, "burst_every": [2.0, 3.0], "burst_len": [0.9, 1.3], "run": 0.6 } },
+		{ "id": "sturgeon", "rarity": "legendary", "value": 0, "release_only": true, "shadow_m": 1.75, "size_cm": [100, 220], "weight": 1,
+			"color": "#8e9ba5", "back": "#46545f", "accent": "#a9b1b4",
+			"fight": { "reel": 0.56, "pull": 0.7, "burst_pull": 1.35, "burst_every": [2.2, 3.6], "burst_len": [1.0, 1.5], "run": 0.64 } }
 	]
 }

@@ -74,6 +74,25 @@ func test_unsellable_fish_stay_in_the_bucket() -> void:
 	assert_eq(int(s.stats["sold"]), 1, "sayaç değişmez")
 
 
+## Koruma altındaki tür (mersin) kovaya girmez ve satılmaz: tutulur, göle bırakılır (denge botu
+## da bırakır: göl sevgisi ve bırakılan sayısı).
+func test_protected_fish_is_always_released() -> void:
+	var db := content()
+	var s := _save()
+	assert_true(Bucket.release_only(db, "sturgeon"), "mersin koruma altında")
+	assert_true(not Bucket.release_only(db, "wels"), "yayın değil")
+	assert_true(not Bucket.add(db, s, "sturgeon", 160, 4), "mersin kovaya girmez")
+	assert_eq(s.bucket.size(), 0, "kova boş kalır")
+	assert_eq(Economy.fish_value(db, "sturgeon", 160), 0, "mersin satılmaz")
+	assert_true(Bucket.add(db, s, "bream", 40, 2), "çapak kovaya girer")
+	var sim := SessionSim.new(db, "big_lake", 1)
+	var def := db.fish_by_id("sturgeon")
+	sim.call("_on_catch", def, 500000)
+	assert_eq(sim.save.bucket.size(), 0, "bot da mersini kovaya koymaz")
+	assert_eq(int((sim.save.records["sturgeon"] as Dictionary)["released"]), 1, "bırakılan sayısı")
+	assert_eq(sim.save.love, int(db.rarity_def(int(def["rarity"]))["love"]), "göl sevgisi")
+
+
 func test_buying_needs_rank_and_coins() -> void:
 	var db := content()
 	var s := _save()

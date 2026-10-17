@@ -51,6 +51,9 @@ const TAB := Vector2(232, 122)
 ## Sekme görselinin köşe boyu (kemerli tabela).
 const TAB_CORNER := 30.0
 const ACTION := Vector2(236, 122)
+## Yem kartında oran satırının yazısına kalan genişlik (kartın iç payı, düğme ve balık simgesi
+## düşülünce): uzun adlı satır ("Gümüş Balığı %14 → %20") kartı büyütmesin diye küçük yazılır.
+const ODDS_TEXT := 204.0
 ## Satış satırları: iki sütun, en çok bu kadar tür (daha fazlası "+N tür").
 const SELL_ROWS := 8
 const BETTER := Color("#2f9e52")
@@ -346,8 +349,9 @@ func _bait_info(parent: VBoxContainer, item: Dictionary) -> void:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 8)
 		row.add_child(GameIcon.make("fish:" + fish_id, 40))
-		row.add_child(UiKit.ink("%s %s → %s" % [tr("FISH_" + fish_id), UiKit.format_percent(int(plain[fish_id])),
-				UiKit.format_percent(int(baited[fish_id]))], 24))
+		var odds := "%s %s → %s" % [tr("FISH_" + fish_id), UiKit.format_percent(int(plain[fish_id])),
+				UiKit.format_percent(int(baited[fish_id]))]
+		row.add_child(UiKit.ink(odds, UiKit.fit_size(odds, UiKit.body_font(), 24, ODDS_TEXT, 18)))
 		parent.add_child(row)
 	var pack := int(item["pack"])
 	var count := int(GameState.save.baits.get(str(item["id"]), 0))

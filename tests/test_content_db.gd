@@ -6,7 +6,7 @@ func test_loads_without_errors() -> void:
 	var db := content()
 	assert_eq(db.errors.size(), 0, "içerik hataları: " + ", ".join(db.errors))
 	assert_eq(db.rarities.size(), 6, "6 nadirlik (Masalsı eklendi)")
-	assert_eq(db.fish.size(), 5, "prototipte 5 balık")
+	assert_eq(db.fish.size(), 12, "12 balık (Dalga 2'de 7 tür eklendi)")
 	assert_true(not db.spot("home_lake").is_empty(), "testlerin gölü")
 	assert_eq(db.main_spot, "big_lake", "oyun Köy Gölü'nde açılır")
 	assert_true(db.gear.size() >= 30, "dükkân takımı okundu")
@@ -14,9 +14,12 @@ func test_loads_without_errors() -> void:
 	assert_true(db.rules != null, "kurallar okundu")
 
 
+## docs/gdd.md §6: türler, nadirlikleri ve bölgeleri.
 func test_fish_follow_the_design() -> void:
 	var db := content()
-	var expected := { "rudd": "common", "carp": "fine", "perch": "fine", "pike": "rare", "wels": "epic" }
+	var expected := { "rudd": "common", "carp": "fine", "perch": "fine", "pike": "rare", "wels": "epic",
+		"silverside": "common", "bream": "common", "chub": "common", "tench": "fine", "zander": "rare",
+		"golden_carp": "epic", "sturgeon": "legendary" }
 	for id: String in expected:
 		var f := db.fish_by_id(id)
 		assert_true(not f.is_empty(), "balık var: " + id)
@@ -24,6 +27,23 @@ func test_fish_follow_the_design() -> void:
 			assert_eq(db.rarity_id(int(f["rarity"])), expected[id], id + " nadirliği")
 	assert_eq(db.fish_by_id("rudd")["size_cm"], Vector2i(15, 30), "Kızılkanat 15–30 cm")
 	assert_eq(db.fish_by_id("wels")["size_cm"], Vector2i(100, 250), "Yayın 100–250 cm")
+	# Mersin koruma altında: satılmaz, yalnızca bırakılır; ötekiler satılır.
+	for f in db.fish:
+		assert_eq(bool(f["release_only"]), str(f["id"]) == "sturgeon", "%s: yalnızca mersin bırakılır" % f["id"])
+	assert_eq(int(db.fish_by_id("sturgeon")["value"]), 0, "mersin satılmaz")
+	# Bölgeler: yeni türler kendi yerlerinde; yıldızlar (sudak, altın sazan, mersin) başlangıç
+	# koylarında çıkmaz; iskele koyunda turna ve yayın az (Ersin'in seçimi).
+	var homes := { "silverside": ["dock_cove", "reeds"], "bream": ["dock_cove", "deep_water"],
+		"chub": ["rocky_point", "stream_mouth"], "tench": ["reeds"], "zander": ["rocky_point", "deep_water"],
+		"golden_carp": ["lily_cove"], "sturgeon": ["deep_water"] }
+	for id: String in homes:
+		var found := []
+		for z in db.zones_of("big_lake"):
+			if id in (z["fish_ids"] as PackedStringArray):
+				found.append(str(z["id"]))
+		assert_eq(found, homes[id], "%s yaşadığı bölgeler" % id)
+	var dock := CatchOdds.species_ppm(db, db.zone("big_lake", "dock_cove"))
+	assert_true(int(dock["pike"]) <= 100_000 and int(dock["wels"]) <= 50_000, "iskele koyunda turna ve yayın az: %s" % str(dock))
 	var spot := db.spot("home_lake")
 	assert_eq(int(spot["max_shadows"]), 4, "gölde 4 gölge")
 	assert_eq(str(spot["first_fish"]), "rudd", "ilk av Kızılkanat")
@@ -38,6 +58,8 @@ func test_validation_catches_bad_data() -> void:
 		FileAccess.open(dir.path_join(file), FileAccess.WRITE).store_string(text)
 	var fish := JSON.parse_string(FileAccess.get_file_as_string("res://data/fish.json")) as Dictionary
 	(fish["fish"][0]["fight"] as Dictionary)["pull"] = 0.95
+	# Satılan bir balığın değeri 0 olamaz (yalnızca Masalsı ve koruma altındaki tür).
+	(fish["fish"][1] as Dictionary)["value"] = 0
 	FileAccess.open(dir.path_join("fish.json"), FileAccess.WRITE).store_string(JSON.stringify(fish))
 	var spots := JSON.parse_string(FileAccess.get_file_as_string("res://data/spots.json")) as Dictionary
 	var spot: Dictionary = spots["spots"][0]
@@ -57,6 +79,7 @@ func test_validation_catches_bad_data() -> void:
 	assert_true("bait_corn" in all, "yemin bilinmeyen balığı yakalanır")
 	assert_true("reel_master" in all, "aşırı fren yakalanır")
 	assert_true("pull" in all, "sakin çekişi sınırı aşan balık yakalanır: " + all)
+	assert_true("carp: value" in all, "satılan balığın değeri 0 olamaz")
 	assert_true("shark" in all, "bilinmeyen balık yakalanır")
 	assert_true("başlangıç" in all, "suyun içindeki başlangıç yakalanır")
 	for file in DirAccess.get_files_at(dir):
@@ -155,10 +178,14 @@ func test_every_content_id_has_translations() -> void:
 		keys.append(Elder.TIP_KEY % i)
 	for i in range(1, Nine.LINE_COUNT + 1):
 		keys.append(Nine.LINE_KEY % i)
-	# Dede'nin karttaki sözleri: Nadir ve üstü her nadirlik için.
+	# Dede'nin karttaki sözleri: Nadir ve üstü her nadirlik için; koruma altındaki türde koruma sözü.
 	for r in db.rarities:
 		var line := FishCard.dede_line(db, db.rarity_index(str(r["id"])), {})
 		if not line.is_empty():
+			keys.append(line)
+	for f in db.fish:
+		var line := FishCard.dede_line(db, int(f["rarity"]), {}, str(f["id"]))
+		if not line.is_empty() and not line in keys:
 			keys.append(line)
 	for key in keys:
 		assert_true(table.has(key), "çeviri anahtarı eksik: " + key)

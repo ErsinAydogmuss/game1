@@ -12,9 +12,9 @@ const PPM := 1_000_000
 ## Nadirlikler, sırayla (0 Sıradan .. 5 Masalsı): id, color, shape, shadow_fx, xp, love, pity.
 ## Kayıtlar sıra numarasını tutar: yalnızca sona eklenir.
 var rarities: Array[Dictionary] = []
-## Balıklar: id, rarity (sıra), value (para), shadow_m, size_cm (Vector2i), weight, color, back,
-## accent, fight { reel, pull, burst_pull, burst_every, burst_len (sn, Vector2), *_steps (Vector2i),
-## run }.
+## Balıklar: id, rarity (sıra), value (para), release_only (koruma altında: yalnızca bırakılır),
+## shadow_m, size_cm (Vector2i), weight, color, back, accent, fight { reel, pull, burst_pull,
+## burst_every, burst_len (sn, Vector2), *_steps (Vector2i), run }.
 var fish: Array[Dictionary] = []
 ## Takım (gear.json): id, category, price, rank, icon, kind ve kategoriye göre değerler
 ## (rod: technique, range_m, power; reel: reel_speed, drag; line: snap_after, stealth;
@@ -230,6 +230,7 @@ func _load_fish(raw: Dictionary) -> void:
 			"id": id,
 			"rarity": maxi(0, rarity_index(rarity_name)),
 			"value": int(d.get("value", 0)),
+			"release_only": bool(d.get("release_only", false)),
 			"shadow_m": float(d.get("shadow_m", 0.5)),
 			"size_cm": Vector2i(int(size.x), int(size.y)),
 			"weight": int(d.get("weight", 0)),
@@ -512,10 +513,10 @@ func _validate_progression() -> void:
 
 func _validate_fish(f: Dictionary) -> void:
 	var id := str(f["id"])
-	# Masalsı balık satılmaz (değeri 0); ötekiler pozitif.
-	var mythic := rarity_id(int(f["rarity"])) == "mythic"
-	if int(f["value"]) < 0 or (int(f["value"]) == 0) != mythic:
-		errors.append("fish.json: %s: value pozitif olmalı (yalnızca Masalsı balıkta 0)" % id)
+	# Masalsı ve koruma altındaki (yalnızca bırakılan) balık satılmaz: değeri 0; ötekiler pozitif.
+	var unsold := rarity_id(int(f["rarity"])) == "mythic" or bool(f["release_only"])
+	if int(f["value"]) < 0 or (int(f["value"]) == 0) != unsold:
+		errors.append("fish.json: %s: value pozitif olmalı (yalnızca Masalsı ve yalnızca bırakılan balıkta 0)" % id)
 	var size: Vector2i = f["size_cm"]
 	if size.x <= 0 or size.y < size.x:
 		errors.append("fish.json: %s: boy aralığı geçersiz" % id)

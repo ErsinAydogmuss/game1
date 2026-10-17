@@ -532,7 +532,9 @@ func _on_catch() -> void:
 	CatchOdds.note_catch(db, save, rarity, Zones.place(db, spot_id, str(info.get("zone", ""))))
 	session.set_pity_floor(CatchOdds.pity_floor(db, save, Zones.place(db, spot_id, zone_id)))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
-	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir).
+	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir). Koruma
+	# altındaki tür (mersin) hep göle döner.
+	var protected := Bucket.release_only(db, fish_id)
 	var was_full := Bucket.is_full(db, save)
 	var kept := Bucket.add(db, save, fish_id, size_cm, stars)
 	if not kept:
@@ -546,7 +548,9 @@ func _on_catch() -> void:
 		_update_gates()
 		var rank := int(ranked["new_rank"])
 		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up", "star")
-	if not kept:
+	if protected:
+		hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
+	elif not kept:
 		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT, "", "release")
 	elif Bucket.is_full(db, save) and not was_full:
 		# Kova bu balıkla doldu: Dede hatırlatır (Nine'ye sat ki yenileri de sığsın).

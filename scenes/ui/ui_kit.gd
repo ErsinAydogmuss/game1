@@ -160,6 +160,15 @@ static func label(text: String, size: int = SIZE_BODY, color: Color = TEXT,
 	return l
 
 
+## Yazının bu genişliğe tek satırda sığdığı en büyük boy (en çok size, en az min_size): uzun
+## balık adları ("Tatlısu Kefali") kesilmesin diye küçülür.
+static func fit_size(text: String, font: Font, size: int, width: float, min_size: int = 16) -> int:
+	var fitted := size
+	while fitted > min_size and font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fitted).x > width:
+		fitted -= 1
+	return fitted
+
+
 ## Krem zemin üstündeki koyu yazı (gölgesiz).
 static func ink(text: String, size: int = SIZE_BODY, color: Color = INK,
 		align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:

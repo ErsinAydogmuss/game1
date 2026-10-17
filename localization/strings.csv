@@ -28,6 +28,20 @@ FISH_pike,Pike,Turna
 FISH_pike_DESC,"A long, olive-green, spotted hunter. Strong and quick.","Uzun, zeytin yeşili, benekli bir avcı. Güçlü ve hızlıdır."
 FISH_wels,Wels Catfish,Yayın
 FISH_wels_DESC,The whiskered giant! Lives at the bottom and fights unpredictably.,"Bıyıklı dev! Gölün dibinde yaşar, çekişi düzensizdir."
+FISH_silverside,Silverside,Gümüş Balığı
+FISH_silverside_DESC,"A tiny, slender fish with a shiny silver stripe. Swims in schools.","Parlak gümüş şeritli, ince ve minik bir balık. Sürüyle gezer."
+FISH_bream,Bream,Çapak
+FISH_bream_DESC,"Flat, deep-bodied and bronze. It turns sideways and feels heavy on the line.","Yassı, derin gövdeli, bronz renkli. Çekerken yan yatar, ağırlaşır."
+FISH_chub,Chub,Tatlısu Kefali
+FISH_chub_DESC,"Big head, wide mouth, orange fins. Its first dash is a strong one!","İri başlı, geniş ağızlı, turuncu yüzgeçli. İlk kaçışı serttir!"
+FISH_tench,Tench,Kadife
+FISH_tench_DESC,Olive-green with red eyes and velvet-smooth skin. Loves the reeds.,"Zeytin yeşili, kırmızı gözlü, kadife gibi pürüzsüz. Sazlıkları sever."
+FISH_zander,Zander,Sudak
+FISH_zander_DESC,"A hunter of deep water with glassy, glowing eyes. Shakes its head!",Cam gibi parlayan gözleriyle derin suların avcısı. Başını sallar!
+FISH_golden_carp,Golden Carp,Altın Sazan
+FISH_golden_carp_DESC,A golden carp that shines among the lilies. The jewel of the lake!,Nilüferlerin arasında parlayan altın bir sazan. Gölün süsü!
+FISH_sturgeon,Sturgeon,Mersin Balığı
+FISH_sturgeon_DESC,An ancient giant with armoured plates and a pointed snout. Protected: always let it go.,"Sırtı zırhlı, burnu sivri, çok eski bir dev. Koruma altında: hep göle bırakılır."
 SPOT_home_lake,Grandpa's Lake,Dede'nin Gölü
 UI_HINT_FIRST_SHADOW,See the shadow? Tap in front of it!,Gölgeyi gördün mü? Önüne dokun!
 UI_HINT_CAST,Tap the water to cast!,"Suya dokun, oltanı at!"
@@ -60,6 +74,7 @@ UI_NEW_SPECIES,New species!,Yeni tür!
 UI_NEW_RECORD,New record!,Yeni rekor!
 UI_SIZE_CM,%d cm,%d cm
 UI_CARD_OK,Great!,Harika!
+UI_CARD_RELEASE,Let it go,Göle bırak
 UI_DISTANCE,%s m,%s m
 RARITY_mythic,Mythic,Masalsı
 SPOT_big_lake,Village Lake,Köy Gölü
@@ -122,15 +137,15 @@ GEAR_bobber_bright_DESC,Easy to see even far away: more time to strike.,Uzakta b
 GEAR_bait_worm,Worm,Solucan
 GEAR_bait_worm_DESC,Every fish likes it. From Dede's garden: free and unlimited.,Her balık sever. Dede'nin bahçesinden: bedava ve sınırsız.
 GEAR_bait_maggot,Grubs,Kurtçuk
-GEAR_bait_maggot_DESC,Perch love them.,Levrek bayılır.
+GEAR_bait_maggot_DESC,Perch and silversides love them.,Levrek ve gümüş balığı bayılır.
 GEAR_bait_dough,Bread dough,Ekmek hamuru
-GEAR_bait_dough_DESC,Nana's recipe. Carp and perch like it.,Nine'nin tarifi. Sazan ve levrek sever.
+GEAR_bait_dough_DESC,"Nana's recipe. Carp, perch and bream like it.","Nine'nin tarifi. Sazan, levrek ve çapak sever."
 GEAR_bait_corn,Sweet corn,Mısır
-GEAR_bait_corn_DESC,A carp's favourite.,Sazanın en sevdiği.
+GEAR_bait_corn_DESC,A favourite of carp and tench.,Sazanın ve kadifenin en sevdiği.
 GEAR_bait_boilie,Boilies,Boili
-GEAR_bait_boilie_DESC,Round bait balls that draw big carp and catfish.,Yuvarlak yem topları: iri sazanı ve yayını çeker.
+GEAR_bait_boilie_DESC,"Round bait balls that draw big carp, golden carp and catfish.","Yuvarlak yem topları: iri sazanı, altın sazanı ve yayını çeker."
 GEAR_bait_shrimp,Shrimp,Karides
-GEAR_bait_shrimp_DESC,Catfish and pike can't resist.,Yayın ve turna dayanamaz.
+GEAR_bait_shrimp_DESC,"Catfish, pike and zander can't resist.","Yayın, turna ve sudak dayanamaz."
 GEAR_net,Landing net,Kepçe
 GEAR_net_DESC,Land fish from a little farther away: shorter fights.,Balığı biraz daha uzaktan alırsın: çekişme kısalır.
 GEAR_bucket,Bucket,Kova
@@ -146,6 +161,7 @@ GEAR_keepnet_huge_DESC,Holds 36 fish.,36 balık alır.
 UI_BUCKET_COUNT,%d/%d,%d/%d
 UI_RANK_UP,Rank %d: %s!,Rütbe %d: %s!
 UI_BUCKET_FULL,Bucket full: the fish swam home,Kova dolu: balık göle döndü
+UI_RELEASED,The %s swam back home,%s göle döndü
 UI_DEDE_BUCKET,Your bucket is full! Sell your fish at Nana's shop.,Kovan doldu! Balıkları Nine'nin dükkânında satabilirsin.
 UI_DEDE_BAIT_OUT,"Your bait's all gone, kiddo. Back to worms; Nana sells more.","Yemin bitti evlat. Solucanla devam; yenisi Nine'de."
 UI_DEDE_BOAT,"That boat's for deep water, kid. Your time will come!","Sandalla derin sulara açılınır. Zamanı gelecek evlat!"
@@ -197,11 +213,13 @@ UI_DEDE_CARD_rare,"Wow, a rare one! Sharp eyes, kid.","Vay be, nadir bir balık!
 UI_DEDE_CARD_epic,Even I've rarely seen one of these! An epic catch.,"Bunu ben bile az gördüm! Destansı bir av."
 UI_DEDE_CARD_legendary,Legendary! The whole village will hear of this!,"Efsane! Bunu bütün köy duyacak!"
 UI_DEDE_CARD_mythic,"The Lake Keeper... So it's real.","Gölün Bekçisi... Demek gerçekmiş."
+UI_DEDE_CARD_RELEASE,"Sturgeon are protected, kid. Let's admire it and let it go.","Mersin koruma altında evlat. Bir güzel bakalım, sonra bırakalım."
 UI_DEDE_LEGEND_NEAR,"Shh! See that glowing shadow? Could be legendary!","Şşş! Şu parlayan gölgeyi gördün mü? Efsanevi olabilir!"
 UI_BOOK,Fish Book,Balık Defteri
 UI_BOOK_NOT_CAUGHT,Not caught yet.,Henüz tutulmadı.
 UI_BOOK_BEST,Biggest: %d cm,En büyük: %d cm
 UI_BOOK_COUNT,Caught: %d · Released: %d,Tutulan: %d · Bırakılan: %d
+UI_BOOK_PROTECTED,"Protected: caught, admired and let go.","Koruma altında: tutulur, sevilir, göle bırakılır."
 UI_BOOK_BAIT_HINT,Favourite bait: %s,Sevdiği yem: %s
 UI_BOOK_HINT_ZONE,Lives in: %s,Yaşadığı yer: %s
 UI_BOOK_HINT_OFTEN,Often seen in this lake.,Bu gölde sık görülür.

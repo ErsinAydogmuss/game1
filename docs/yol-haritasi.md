@@ -87,7 +87,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Göl sahnesi ve bölge süsleri: büyük göl oyunun gölü; her bölgenin kendi süsleri (sık kamış, nilüfer tarlası, iri kayalar, dere), çitler ve tabelalar, şamandıralar; bölgeye girince adı; su rengi metreye göre; çizim iskelede 164 → 142.
 - [ ] Harita ve hızlı geçiş.
 - [ ] Sandal.
-- [ ] Bölge balıkları (7 yeni tür).
+- [x] Bölge balıkları: 7 yeni tür (gümüş balığı, çapak, tatlısu kefali, kadife, sudak, altın sazan, mersin), her biri kendi bölgesinde ve kodla kendi görünüşünde (mersinde sivri burun, plakalar, bıyık; altın sazanda koi lekeleri; kadifede kırmızı göz); kendi çekişi ve sevdiği yem; mersin koruma altında: kovaya girmez, kartta Dede'nin sözüyle göle bırakılır. Defter 12 tür, tek sayfa.
 - [ ] 3D görsel geçişi: su ve zemin dokuları (doğa modelleri v0.2.1'de geldi); telefonda hız ölçümü.
 
 **Dalga 3 — Teknikler → v0.4**
