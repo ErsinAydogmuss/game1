@@ -2,13 +2,13 @@
 
 **"Kıyını süsle, havayı bekle: bu gece oltana ne takılacak?"** Her yaşa hitap eden, rahat bir 3D mobil balıkçılık oyunu (iOS + Android, yatay ekran). Kendi balıkçınla yazı Dede'nin göl köyünde geçiriyorsun. Suda balık gölgeleri dolaşıyor; gölgenin önüne atıyorsun, gölge yaklaşıp dürtüyor, ısırınca VUR ve çek. Ersin'in Kazı'dan sonraki oyunu; kodu Claude yazıyor.
 
-> **Durum (Ekim 2026): v0.3 (H2 "Büyük Göl", Dalga 2 bitti).** Göl büyüdü: altı bölge (iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı, derin orta), her birinin kendi balıkları ve süsleri. Bölgeler rütbeyle açılır; haritadan hızlı geçilir, koyların çevresinden kıyı yolu dolaşır. Nine'den alınan sandalla derin ortaya açılınır. 7 yeni tür (toplam 12): gümüş balığı, çapak, tatlısu kefali, kadife, sudak, altın sazan ve koruma altındaki mersin (kartıyla göle bırakılır). Su ve zemin yenilendi; telefonda hız ölçümü ayarlarda. Sırada Dalga 3: teknikler ([yol haritası](docs/yol-haritasi.md)).
+> **Durum (Ekim 2026): v0.3 (H2 "Büyük Göl", Dalga 2 bitti).** Göl büyüdü: altı bölge (iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı, derin orta), her birinin kendi balıkları ve süsleri. Bölgeler rütbeyle açılır; haritadan hızlı geçilir, koyların çevresinden kıyı yolu dolaşır. Nine'den alınan sandalla derin ortaya açılınır. 7 yeni tür (toplam 12): gümüş balığı, çapak, tatlısu kefali, kadife, sudak, altın sazan ve koruma altındaki mersin (kartıyla göle bırakılır). Su ve zemin yenilendi; zemin, bölge rozetleri ve parşömen harita Ersin'in görselleriyle (Parti 3). Telefonda hız ölçümü ayarlarda. Sırada Dalga 3: teknikler ([yol haritası](docs/yol-haritasi.md)).
 
 ![İskele koyu: balıkçı, Dede, Nine'nin dükkânı ve bağlı sandal; kıyı yolu gölü dolaşıyor](docs/ekran/01_iskele.jpg)
 
 | | |
 |---|---|
-| ![Harita: altı bölge, kilitler, Yeni!, Buradasın](docs/ekran/02_harita.jpg) | ![Rütbe 3: nilüferli koy açıldı, Dede haritayı gösteriyor](docs/ekran/03_bolge_acildi.jpg) |
+| ![Harita: parşömen kâğıt ve çıkartmalar, bölge rozetleri, kilitler ve çit tabelaları, Buradasın](docs/ekran/02_harita.jpg) | ![Rütbe 3: nilüferli koy açıldı, Dede haritayı gösteriyor](docs/ekran/03_bolge_acildi.jpg) |
 | ![Sazlık: sık kamışlar](docs/ekran/04_sazlik.jpg) | ![Nilüferli koy: Destansı altın sazanın mor ışıltılı gölgesi](docs/ekran/05_nilufer.jpg) |
 | ![Kayalık burun: iri kayalar ve yosunlu taş](docs/ekran/06_kayalik.jpg) | ![Dere ağzı: akıntı çizgileri](docs/ekran/07_dere.jpg) |
 | ![Sandalla derin orta: Efsanevi mersinin gölgesi](docs/ekran/08_sandal.jpg) | ![Mersin koruma altında: kartında Göle bırak](docs/ekran/09_mersin.jpg) |
