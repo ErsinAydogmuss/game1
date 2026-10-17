@@ -36,7 +36,10 @@ var background := Color.MAGENTA
 
 ## Arka planı siler. Dönen görüntü RGBA8; arka plan saydam, kenarlar yumuşak.
 ## Görsel zaten saydamsa olduğu gibi döner. Arka plan düz değilse errors'a yazar.
-func remove_background(source: Image) -> Image:
+## despill: renk sızıntısı temizliği nerede yapılsın: "all" (her opak piksel: cam ve ağ
+## deliklerinden görünen macenta da temizlenir), "edge" (yalnızca arka plana değen yumuşak kenar
+## bandı: mor ve pembe nesnelerin içi solmaz) ya da "none".
+func remove_background(source: Image, despill: String = "all") -> Image:
 	var img: Image = source.duplicate()
 	img.convert(Image.FORMAT_RGBA8)
 	var w := img.get_width()
@@ -118,7 +121,11 @@ func remove_background(source: Image) -> Image:
 		fixed[o + 2] = clampi(roundi(fg.z), 0, 255)
 		fixed[o + 3] = roundi(t * data[o + 3])
 	data = fixed
-	_despill(data, n)
+	match despill:
+		"all":
+			_despill(data, n)
+		"edge":
+			_despill(data, n, near)
 	img.set_data(w, h, false, Image.FORMAT_RGBA8, data)
 	return img
 
@@ -249,15 +256,16 @@ static func fit_box(img: Image, max_size: int, trim: bool, margin: float) -> Ima
 
 ## Nesnenin saydam yerlerinden (cam, zincir arası) görünen arka plan rengini nötrleştirir.
 ## Macenta arka planda R ve B birlikte G'den çok yüksekse (ve birbirine yakınsa) fazlası
-## kırpılır; yeşil arka planda G'nin fazlası. Gerçek mor/pembe renkler (R ile B farklı) korunur.
-func _despill(data: PackedByteArray, n: int) -> void:
+## kırpılır; yeşil arka planda G'nin fazlası. R ile B'si çok farklı mor/pembe korunur; R ile B'si
+## yakın parlak mor (Destansı) da kırpılacağı için o sayfalarda only (kenar bandı) verilir.
+func _despill(data: PackedByteArray, n: int, only: PackedByteArray = PackedByteArray()) -> void:
 	var magenta := background.r > 0.7 and background.b > 0.7 and background.g < 0.3
 	var green := background.g > 0.7 and background.r < 0.3 and background.b < 0.3
 	if not (magenta or green):
 		return
 	for i in n:
 		var o := i << 2
-		if data[o + 3] == 0:
+		if data[o + 3] == 0 or (not only.is_empty() and only[i] == 0):
 			continue
 		var r := data[o]
 		var g := data[o + 1]

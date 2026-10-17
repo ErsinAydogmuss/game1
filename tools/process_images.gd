@@ -5,6 +5,7 @@ extends SceneTree
 ## Hangi görselin nasıl kesileceği data/art_sheets.json'da, promptlar docs/gorsel-istekleri.md'de.
 ## fit: "square" (varsayılan; ikon kareye ortalanır), "box" (tek görsel, oran korunur),
 ## "trim" (ızgaradaki her parça kırpılır, oran korunur: 9 dilimli çerçeveler ve düğmeler).
+## despill: "all" (varsayılan), "edge" (mor nesneli sayfalar: içi solmasın), "none" (ArtSheet).
 ## --keep: işlenen orijinali silme (varsayılan: silinir, depo şişmesin).
 ## --preview=KLASÖR: kesilen ikonları dama desenli bir önizleme sayfasına da çizer.
 ## Sonra yeni PNG'ler için: godot --headless --path . --import
@@ -79,7 +80,7 @@ func _process_file(path: String, def: Dictionary, margin: float, outputs: Array[
 	var sheet := ArtSheet.new()
 	var keyed := img
 	if bool(def.get("key", true)):
-		keyed = sheet.remove_background(img)
+		keyed = sheet.remove_background(img, str(def.get("despill", "all")))
 	else:
 		keyed.convert(Image.FORMAT_RGBA8)
 	if not sheet.errors.is_empty():

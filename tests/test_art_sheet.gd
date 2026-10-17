@@ -60,6 +60,30 @@ func test_background_is_removed() -> void:
 	assert_true(soft > 20, "kenar yumuşak (yarı saydam piksel: %d)" % soft)
 
 
+## Parlak mor (R ile B yakın; Destansı rozet ve çerçeve) "all" temizlikte solar; "edge" yalnızca
+## arka plana değen kenarı temizler, içi korunur. Kenardaki macenta sızıntısı "edge"de de gider.
+func test_edge_despill_keeps_purple() -> void:
+	var purple := Color8(241, 119, 250)
+	var img := Image.create_empty(160, 120, false, Image.FORMAT_RGBA8)
+	img.fill(MAGENTA)
+	_disc(img, Vector2(50, 60), 30, purple)
+	_disc(img, Vector2(115, 60), 30, Color8(240, 140, 40))
+	var all := ArtSheet.new().remove_background(img, "all")
+	var edge := ArtSheet.new().remove_background(img, "edge")
+	var none := ArtSheet.new().remove_background(img, "none")
+	assert_true(all.get_pixel(50, 60).r < 0.75, "all: morun içi solar (bu yüzden edge var)")
+	assert_true(edge.get_pixel(50, 60).is_equal_approx(purple), "edge: morun içi korunur")
+	assert_true(none.get_pixel(50, 60).is_equal_approx(purple), "none: dokunulmaz")
+	var soft := 0
+	for y in range(25, 96):
+		for x in range(80, 150):
+			var c := edge.get_pixel(x, y)
+			if c.a > 0.1 and c.a < 0.95:
+				soft += 1
+				assert_true(c.b < 0.4, "edge: turuncunun kenarında macenta sızıntısı var: %s" % c)
+	assert_true(soft > 10, "kenar yumuşak (yarı saydam piksel: %d)" % soft)
+
+
 func test_sheet_splits_into_objects() -> void:
 	var sheet := ArtSheet.new()
 	var pieces := sheet.split(sheet.remove_background(_sheet()), 3, 2)

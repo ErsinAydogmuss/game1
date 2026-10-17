@@ -1,5 +1,5 @@
 {
-	"_note": "Kullanıcının ChatGPT görsel sayfaları (docs/gorsel-istekleri.md). Adlar soldan sağa, üst satırdan başlayarak. tools/process_images.gd okur. fit: square (ikon, kareye ortalanır), box (tek görsel), trim (9 dilimli çerçeve ve düğme; oran korunur, payları UiKit.FRAME_SLICES'ta).",
+	"_note": "Kullanıcının ChatGPT görsel sayfaları (docs/gorsel-istekleri.md). Adlar soldan sağa, üst satırdan başlayarak. tools/process_images.gd okur. fit: square (ikon, kareye ortalanır), box (tek görsel), trim (9 dilimli çerçeve ve düğme; oran korunur, payları UiKit.FRAME_SLICES'ta). despill: renk sızıntısı temizliği all (varsayılan; cam ve ağ deliklerindeki macenta da), edge (yalnızca kenar: Destansı moru solmasın), none.",
 	"sheets": [
 		{ "file": "style_sheet", "reference": true, "out": "res://docs/img/stil_sayfasi.jpg" },
 		{ "file": "concept_screen", "reference": true, "out": "res://docs/img/hedef_ekran.jpg" },
@@ -7,9 +7,9 @@
 			"names": ["panel", "card", "tab", "ribbon", "pill", "bubble"] },
 		{ "file": "ui_buttons", "out": "res://assets/ui/frames", "size": 384, "fit": "trim", "grid": [3, 2],
 			"names": ["button_green", "button_orange", "button_blue", "button_gray", "button_red", "button_round"] },
-		{ "file": "rarity_frames", "out": "res://assets/ui/frames", "size": 512, "fit": "trim", "grid": [3, 2],
+		{ "file": "rarity_frames", "out": "res://assets/ui/frames", "size": 512, "fit": "trim", "grid": [3, 2], "despill": "edge",
 			"names": ["frame_common", "frame_fine", "frame_rare", "frame_epic", "frame_legendary", "frame_mythic"] },
-		{ "file": "rarity_badges", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
+		{ "file": "rarity_badges", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2], "despill": "edge",
 			"names": ["rarity_common", "rarity_fine", "rarity_rare", "rarity_epic", "rarity_legendary", "rarity_mythic"] },
 		{ "file": "ui_1", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
 			"names": ["rod", "reel", "hook", "hand", "bucket", "aquarium"] },
