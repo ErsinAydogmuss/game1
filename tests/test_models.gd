@@ -6,9 +6,13 @@ extends BaseTest
 ## dükkânı az çizimle kurulur; Nine tezgâhın arkasında durur, tezgâhın önü serbesttir.
 ## Göl süsleri bir paketin modellerini tek ağda birleştirir; dükkânın ve kampın yerini boş bırakır.
 
-## Göl sahnesinin en çok çizimi (her ağ bir, gölgesi bir daha; ekranda olmayan bölgeler de sayılır:
-## oyunda kameranın gördüğü bölgeler çizilir).
-const SCENE_DRAWS := 56
+## Göl sahnesinin bir bakıştaki en çok çizimi (oyun kamerasının görüş alanına giren her ağ bir,
+## gölgesi bir daha): başlangıçta iskelede ve her bölgenin atış noktasında. Ekranın dışındaki
+## bölge parçaları çizilmez (büyük gölde süslerin hepsi aynı anda görünmez).
+const START_DRAWS := 32
+const VIEW_DRAWS := 36
+## Ölçüm ekranı (telefon oranı).
+const VIEW_ASPECT := 2532.0 / 1170.0
 
 
 func test_angler_model_has_parts_and_animations() -> void:
@@ -161,12 +165,69 @@ func test_lake_scenery_keeps_clear_and_cheap() -> void:
 			if p.distance_to(Vector2(zone.x, zone.y)) < zone.z + c.z - 0.001:
 				bad += 1
 	assert_eq(bad, 0, "iskeleye ve boş kalacak yerlere süs düşmez")
-	var draws := 0
-	for node in scene.find_children("*", "GeometryInstance3D", true, false):
-		var geometry := node as GeometryInstance3D
-		draws += 2 if geometry.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF else 1
-	assert_true(draws <= SCENE_DRAWS, "göl sahnesi az çizimle kurulur (%d, gölgeler dahil)" % draws)
+	var start: Vector2 = db.spot(db.main_spot)["start"]
+	var draws := view_draws(scene, start)
+	assert_true(draws <= START_DRAWS, "iskeleden bakınca göl sahnesi az çizimle (%d, gölgeler dahil)" % draws)
+	for z in db.zones_of(db.main_spot):
+		for p: Vector2 in z["stands"]:
+			var here := view_draws(scene, p)
+			assert_true(here <= VIEW_DRAWS, "%s atış noktasından az çizim (%d)" % [z["id"], here])
 	scene.free()
+
+
+## Oyun kamerasının (FollowCamera; balıkçı p'de) görüş alanına giren ağların çizimi: her ağ bir,
+## gölgesi bir daha. Testte düğümler ağaçta değil: dünya dönüşümü ebeveynlerden hesaplanır.
+static func view_draws(root: Node3D, p: Vector2) -> int:
+	var back := Vector3(sin(FollowCamera.YAW) * cos(FollowCamera.PITCH), sin(FollowCamera.PITCH),
+			cos(FollowCamera.YAW) * cos(FollowCamera.PITCH))
+	var focus := Vector3(p.x, 0.4, p.y)
+	var eye := Transform3D(Basis.from_euler(Vector3(-FollowCamera.PITCH, FollowCamera.YAW, 0.0)),
+			focus + back * FollowCamera.SURFACE_DISTANCE)
+	var planes := frustum(eye, 40.0, VIEW_ASPECT, 0.3, 220.0)
+	var draws := 0
+	for node in root.find_children("*", "GeometryInstance3D", true, false):
+		var geometry := node as GeometryInstance3D
+		var xform := Transform3D.IDENTITY
+		var shown := true
+		var n: Node = geometry
+		while n != null and n != root.get_parent():
+			if n is Node3D:
+				xform = (n as Node3D).transform * xform
+				shown = shown and (n as Node3D).visible
+			n = n.get_parent()
+		if not shown:
+			continue
+		var box := xform * geometry.get_aabb()
+		var inside := true
+		for plane: Plane in planes:
+			var e := box.size * 0.5
+			var r := absf(plane.normal.x) * e.x + absf(plane.normal.y) * e.y + absf(plane.normal.z) * e.z
+			if plane.distance_to(box.get_center()) > r:
+				inside = false
+				break
+		if inside:
+			draws += 2 if geometry.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF else 1
+	return draws
+
+
+## Perspektif kameranın altı düzlemi (normaller dışa bakar; içerideki noktada distance_to <= 0).
+## Kamera -Z'ye bakar; fov dikey açı (derece).
+static func frustum(eye: Transform3D, fov: float, aspect: float, near: float, far: float) -> Array[Plane]:
+	var f := -eye.basis.z.normalized()
+	var u := eye.basis.y.normalized()
+	var r := eye.basis.x.normalized()
+	var tv := tan(deg_to_rad(fov) * 0.5)
+	var th := tv * aspect
+	var o := eye.origin
+	var out: Array[Plane] = [
+		Plane(-f, o + f * near),
+		Plane(f, o + f * far),
+		Plane((u - f * tv).normalized(), o),
+		Plane((-u - f * tv).normalized(), o),
+		Plane((r - f * th).normalized(), o),
+		Plane((-r - f * th).normalized(), o),
+	]
+	return out
 
 
 func test_every_fish_builds_a_mesh() -> void:

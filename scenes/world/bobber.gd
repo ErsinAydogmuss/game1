@@ -29,6 +29,8 @@ func _ready() -> void:
 	Props.sphere(self, RADIUS, Vector3.ZERO, Color("#e63946"), 14, 7)
 	Props.sphere(self, RADIUS * 0.8, Vector3(0, RADIUS * 0.55, 0), Color("#fbfbf6"), 14, 7)
 	Props.cylinder(self, 0.018, 0.018, 0.16, Vector3(0, RADIUS * 1.35 + 0.06, 0), Color("#e63946"), 6)
+	# Üç parça tek ağ (tek çizim).
+	MeshBatch.merge(self)
 	visible = false
 
 

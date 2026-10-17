@@ -63,7 +63,6 @@ UI_CARD_OK,Great!,Harika!
 UI_DISTANCE,%s m,%s m
 RARITY_mythic,Mythic,Masalsı
 SPOT_big_lake,Village Lake,Köy Gölü
-SPOT_lake_v2,Big Lake (draft),Büyük Göl (taslak)
 ZONE_dock_cove,Dock Cove,İskele Koyu
 ZONE_reeds,Reed Bed,Sazlık
 ZONE_lily_cove,Lily Cove,Nilüferli Koy
@@ -210,6 +209,7 @@ UI_BOOK_HINT_SOMETIMES,Sometimes seen in this lake.,Bu gölde ara sıra görül�
 UI_BOOK_HINT_RARELY,Rarely seen in this lake.,Bu gölde nadiren görülür.
 UI_BOOK_CHANCE,"Chance a shadow is this fish (with your gear): %s","Takımınla bir gölgenin bu balık olma şansı: %s"
 UI_BOOK_ODDS,Odds in this lake (with your gear),Bu göldeki oranlar (takımınla)
+UI_BOOK_ZONE_ODDS,Odds at %s (with your gear),%s oranları (takımınla)
 UI_BOOK_PITY_TITLE,Lucky guarantee,Şans garantisi
 UI_BOOK_PITY,Guaranteed within %d catches,%d av içinde garanti
 UI_BOOK_PITY_NOW,The next shadow is guaranteed!,Sıradaki gölge garanti!

@@ -95,6 +95,7 @@ func _ready() -> void:
 	lake = GameState.db.lake(spot_id)
 	scene = LakeScene.new()
 	scene.keep_clear.append(ShopStall.clear_zone(lake.dock))
+	scene.zones = GameState.db.zones_of(spot_id)
 	add_child(scene)
 	scene.setup(lake)
 	shadows = ShadowLayer.new()
@@ -321,6 +322,7 @@ func _update_gates() -> void:
 	for z in db.zones_of(spot_id):
 		var gates: Array = z["gates"]
 		var closed := not Zones.unlocked(db, GameState.save, z)
+		scene.set_gate_open(str(z["id"]), not closed)
 		for i in gates.size():
 			var g: PackedVector2Array = gates[i]
 			path.set_gate("%s_%d" % [z["id"], i], g[0], g[1], closed)
@@ -584,6 +586,9 @@ func _follow_zone() -> void:
 	var now := session.zone_id()
 	if now == zone_id:
 		return
+	# Başka bir bölgeye girildi (oturumun başı sayılmaz): adı kısa bir bildirimle.
+	if not zone_id.is_empty() and not now.is_empty() and GameState.db.zones_of(spot_id).size() > 1:
+		hud.toast(tr("ZONE_" + now), UiKit.TEXT, "map")
 	zone_id = now
 	shop_panel.zone_id = now
 	book_panel.zone_id = now

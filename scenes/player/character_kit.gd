@@ -12,7 +12,9 @@ const LOWER_BODY: Array[String] = ["root", "hips", "upperleg.l", "lowerleg.l", "
 
 
 ## Modeli giydirir: her görünen parçaya doku ve dış çizgi; hidden'daki parçalar gizlenir.
-static func dress(model: Node3D, texture: Texture2D, hidden: Array[String]) -> void:
+## shadowless: gölgesi görünmeyen parçalar (gövdenin gölgesine karışan kollar, şapkanın örttüğü baş,
+## suya sarkan bacaklar); gölgeleri kapatılır (her biri bir gölge çizimi).
+static func dress(model: Node3D, texture: Texture2D, hidden: Array[String], shadowless: Array[String] = []) -> void:
 	var material := StandardMaterial3D.new()
 	material.albedo_texture = texture
 	material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
@@ -27,6 +29,8 @@ static func dress(model: Node3D, texture: Texture2D, hidden: Array[String]) -> v
 			mesh.visible = false
 			continue
 		mesh.material_override = material
+		if shadowless.has(str(mesh.name)):
+			mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 ## Ters kabuk dış çizgi malzemesi: karakter suyun ve çimenin önünde seçilsin.

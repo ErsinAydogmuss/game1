@@ -309,7 +309,9 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, 
 
 ## Gölün nadirlik oranları (kuşanılan yemle) ve şans garantisi sayaçları.
 func _add_lake_odds(db: ContentDB, save: SaveData, species_odds: Dictionary) -> void:
-	_detail.add_child(UiKit.ink(tr("UI_BOOK_ODDS"), 26, UiKit.INK_SOFT))
+	var zoned := not zone_id.is_empty() and db.zones_of(spot_id).size() > 1
+	var title := tr("UI_BOOK_ZONE_ODDS") % tr("ZONE_" + zone_id) if zoned else tr("UI_BOOK_ODDS")
+	_detail.add_child(UiKit.ink(title, 26, UiKit.INK_SOFT))
 	var by_rarity := CatchOdds.rarity_ppm(db, species_odds)
 	var grid := GridContainer.new()
 	grid.columns = 4

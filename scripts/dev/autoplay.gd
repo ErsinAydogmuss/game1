@@ -159,6 +159,19 @@ func _play_controls() -> void:
 	# İskeleye kara ucundan dön (düz yol kıyıya çıkar).
 	await _tap_world(land)
 	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
+	# 2d) Kilitli bölgeye (nilüferli koy, rütbe 3) yürü: balıkçı çitin önünde durur, Dede söyler.
+	# Doğudaki hedef ekranda AT düğmesinin altına düşmesin diye balıkçı önce çitin yakınına konur.
+	var gate_ok := (main.get("path") as ShorePath).gate_closed("lily_cove_0")
+	angler.place(Vector2(7.0, 6.0))
+	(main.get("camera") as FollowCamera).snap(main.call("_focus"))
+	await _wait_frames(4)
+	await _tap_world(Vector2(11.5, 3.0))
+	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
+	_check("kilitli bölgenin çitinde durur, Dede söyler (%s, %s)" % [angler.pos2(), main.get("_hint_shown")],
+			gate_ok and angler.pos2().x < 9.6 and str(main.get("_hint_shown")) == "UI_DEDE_GATE")
+	angler.place(land)
+	(main.get("camera") as FollowCamera).snap(main.call("_focus"))
+	await _wait_frames(4)
 	await _tap_world(Vector2(0.0, 4.0))
 	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
 	# 3) Suya dokun: atmalı.

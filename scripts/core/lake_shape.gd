@@ -214,6 +214,13 @@ func zone_at(p: Vector2) -> int:
 	return -1 if z == NO_ZONE else z
 
 
+## Noktanın bölgesi, ızgaranın dışında da (en yakın ızgara hücresininki; uzak orman ve tepeler).
+func zone_of(p: Vector2) -> int:
+	var low := origin + Vector2(CELL, CELL) * 0.5
+	var high := origin + Vector2(width - 0.5, height - 0.5) * CELL
+	return zone_at(p.clamp(low, high))
+
+
 ## Bölge kimliğinin sırası (yoksa -1).
 func zone_index(id: String) -> int:
 	return zone_ids.find(id)

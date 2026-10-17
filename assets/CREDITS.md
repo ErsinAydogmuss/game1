@@ -35,11 +35,11 @@ Kaynak: https://kenney.nl (paketler Ersin'in Mac'inde indirildi; lisansları kla
 
 | Klasör | Paket | Kullanılanlar |
 |---|---|---|
-| `assets/models/kenney_survival/` | Kenney Survival Kit 2.0 | kamp ateşi ocağı, kütük oturak, tabela |
-| `assets/models/kenney_watercraft/` | Kenney Watercraft Kit 2.1 | kürekli sandal (iskeleye bağlı) |
+| `assets/models/kenney_survival/` | Kenney Survival Kit 2.0 | kamp ateşi ocağı, kütük oturak, tabela, kilitli bölgelerin çiti ve küçük tabelası |
+| `assets/models/kenney_watercraft/` | Kenney Watercraft Kit 2.1 | kürekli sandal (iskeleye bağlı), derin ortanın bayraklı şamandıraları |
 
-Renk paletleri (`Textures/colormap.png`) `tools/recolor_texture.gd` ile iskelenin ahşap tonuna boyandı;
-orijinaller `Textures/source/` altında. Kullanılmayan modeller `assets/incoming/models/` altında bekler.
+Renk paletleri (`Textures/colormap.png`) `tools/recolor_texture.gd` ile iskelenin ahşap tonuna boyandı
+(şamandıra kırmızı-beyaz); orijinaller `Textures/source/` altında. Kullanılmayan modeller `assets/incoming/models/` altında bekler.
 
 ## Yazı tipleri — SIL Open Font License 1.1 / Apache 2.0
 

@@ -84,7 +84,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Göl verisi v2: havzalar (her birinin derinliği ve kıyı eğimi) ve bölgeler, yürünebilen dünya; testler için sabit küçük göl (bit bit eskisi gibi, altın test); kıyı ızgarası 3,5 kat hızlı ve önbellekli; kuşbakışı önizleme aracı.
 - [x] Gölgeler bölgelere göre doğar: balıkçının çevresinde ve açık bölgelerde; türü bölgeden; yürüyünce peşinden gelir; şans garantisi bulunulan bölgede; defter ve dükkân bulunulan bölgenin oranını gösterir.
 - [x] Kıyı yolu ve dünya sınırı: dokunulan yere sudan geçmeden, kısa yönden; kilitli bölgenin çitinde durur, Dede söyler; ormanın kenarı yürünmez (büyük gölde U biçimi).
-- [ ] Göl sahnesi ve bölge süsleri.
+- [x] Göl sahnesi ve bölge süsleri: büyük göl oyunun gölü; her bölgenin kendi süsleri (sık kamış, nilüfer tarlası, iri kayalar, dere), çitler ve tabelalar, şamandıralar; bölgeye girince adı; su rengi metreye göre; çizim iskelede 164 → 142.
 - [ ] Harita ve hızlı geçiş.
 - [ ] Sandal.
 - [ ] Bölge balıkları (7 yeni tür).

@@ -1,9 +1,9 @@
 extends BaseTest
-## Bölgeli gölde gölgeler (Dalga 2; data/spots.json lake_v2): balıkçının çevresinde, açık
+## Bölgeli gölde gölgeler (Dalga 2; data/spots.json big_lake): balıkçının çevresinde, açık
 ## bölgelerde doğar; türü doğduğu bölgeden; dolaşırken bölgesinde kalır; balıkçı yürüyünce ya da
 ## başka yere geçince gölgeler de gelir; şans garantisi balıkçının bölgesinde doğar.
 
-const SPOT := "lake_v2"
+const SPOT := "big_lake"
 const DOCK := Vector2(0, 4)
 const REEDS := Vector2(-17.5, 2.0)
 const LILY := Vector2(14.0, 4.2)

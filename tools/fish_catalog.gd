@@ -118,7 +118,26 @@ func _spot(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
 	lines.append("")
 	lines.append("- Aynı anda en çok %d gölge; tutulan ya da kaçanın yerine birkaç saniyede yenisi doğar." % int(spot.get("max_shadows", 4)))
 	lines.append("- Hiç balık tutmamış oyuncunun ilk balığı senaryoludur: %s, dürtmesiz, kaçmaz." % _name("FISH_" + str(spot.get("first_fish", ""))))
+	var zones := db.zones_of(spot_id)
+	if zones.size() <= 1:
+		lines.append("")
+		_tables(db, spot, lines)
+		return
+	lines.append("- Göl bölgelere ayrılır: gölge balıkçının çevresinde doğar, türü doğduğu yerin bölgesinden gelir.")
+	lines.append("  Oranlar bölgenindir (Balık Defteri ve dükkân bulunulan bölgeninkini gösterir). Şans garantisi")
+	lines.append("  balıkçının bölgesinde doğar; sayaç yalnızca o bölgede gelebilen kademeler için ilerler.")
 	lines.append("")
+	for z in zones:
+		var opens := "başta açık" if int(z["rank"]) <= 1 else "rütbe %d" % int(z["rank"])
+		if bool(z["boat"]):
+			opens += ", yalnızca sandalla"
+		lines.append("### %s (`%s`; %s)" % [_name("ZONE_" + str(z["id"])), z["id"], opens])
+		lines.append("")
+		_tables(db, z, lines)
+
+
+## Bir yerin (göl ya da bölge: fish_ids, fish_weights) tür ve nadirlik tabloları, yeme göre.
+func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 	var baits: Array[Dictionary] = db.gear_in("bait")
 	var odds: Array[Dictionary] = []
 	for bait in baits:

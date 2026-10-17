@@ -75,7 +75,7 @@ func test_zone_validation_catches_bad_data() -> void:
 	var spots := JSON.parse_string(FileAccess.get_file_as_string("res://data/spots.json")) as Dictionary
 	for raw: Variant in spots["spots"]:
 		var spot: Dictionary = raw
-		if str(spot["id"]) != "lake_v2":
+		if str(spot["id"]) != "big_lake":
 			continue
 		var zones: Array = spot["zones"]
 		(zones[1] as Dictionary)["stands"] = [[-17.5, -3.5]]

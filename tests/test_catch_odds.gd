@@ -3,8 +3,9 @@ extends BaseTest
 ## sonucu gösterilen orana uyar, şans garantisi doğru kademede ve tek bir gölgeyle işler.
 
 
+## Oyunun başladığı bölge (büyük gölün iskele koyu): oranlar bölgeden gelir.
 func _spot() -> Dictionary:
-	return content().spot("big_lake")
+	return Zones.place(content(), "big_lake", "dock_cove")
 
 
 func test_odds_sum_to_one_million() -> void:
@@ -25,7 +26,7 @@ func test_odds_sum_to_one_million() -> void:
 func test_bait_attracts_its_fish() -> void:
 	var db := content()
 	var plain := CatchOdds.species_ppm(db, _spot())
-	# Köy Gölü ağırlıkları 40/25/22/9/4 = 100.
+	# İskele koyunun ağırlıkları 40/25/22/9/4 = 100.
 	assert_eq(int(plain["rudd"]), 400000, "kızılkanat %40")
 	var corn := CatchOdds.species_ppm(db, _spot(), { "attract": db.gear_item("bait_corn")["attract"] })
 	# Sazan 25 × 3 = 75; toplam 75 + 75 = 150.
@@ -81,11 +82,11 @@ func test_pity_counters() -> void:
 	assert_eq(CatchOdds.pity_floor(db, s), -1, "garanti kullanıldı")
 
 
-## Gölde tutulamayan kademenin dolu sayacı garantiyi kilitlemez: Köy Gölü'nde Efsanevi yok.
+## Gölde tutulamayan kademenin dolu sayacı garantiyi kilitlemez: iskele koyunda Efsanevi yok.
 func test_pity_ignores_tiers_missing_from_the_lake() -> void:
 	var db := content()
 	var s := SaveData.create_new(1)
-	var spot := db.spot("big_lake")
+	var spot := _spot()
 	s.pity["legendary"] = 999
 	s.pity["epic"] = 3
 	s.pity["rare"] = 40
@@ -96,12 +97,12 @@ func test_pity_ignores_tiers_missing_from_the_lake() -> void:
 	assert_eq(CatchOdds.pity_floor(db, s, spot), -1, "gölde olmayan Efsanevi garanti vermez")
 
 
-## Gölde tutulamayan kademenin sayacı ilerlemez: Köy Gölü'nde Efsanevi yok; Efsanevi bir gün göle
+## Gölde tutulamayan kademenin sayacı ilerlemez: iskele koyunda Efsanevi yok; Efsanevi bir gün oraya
 ## gelince eski avlar yüzünden anında garanti çıkmasın.
 func test_pity_counter_waits_for_tiers_in_the_lake() -> void:
 	var db := content()
 	var s := SaveData.create_new(1)
-	var spot := db.spot("big_lake")
+	var spot := _spot()
 	for i in 10:
 		CatchOdds.note_catch(db, s, db.rarity_index("common"), spot)
 	assert_eq(int(s.pity.get("rare", 0)), 10, "Nadir sayacı sayar")
@@ -117,10 +118,10 @@ func test_pity_counter_waits_for_tiers_in_the_lake() -> void:
 ## Eski (daha düşük) bir garantiyle doğmuş gölge göldeyken dolan yüksek garanti beklemez.
 func test_old_pity_shadow_does_not_block_a_higher_guarantee() -> void:
 	var db := content()
-	var spot := _spot()
+	var spot := db.spot("home_lake")
 	var rare := db.rarity_index("rare")
 	var epic := db.rarity_index("epic")
-	var sim := ShadowSim.new(db, spot, db.lake("big_lake"), 777, false, Vector2(0, 4), { "pity_floor": rare })
+	var sim := ShadowSim.new(db, spot, db.lake("home_lake"), 777, false, Vector2(0, 4), { "pity_floor": rare })
 	var old: FishShadow = null
 	for s in sim.shadows:
 		if s.pity:
@@ -153,8 +154,8 @@ func test_old_pity_shadow_does_not_block_a_higher_guarantee() -> void:
 ## değişse de boy aynı tuzlu zardan gelir.
 func test_pity_shapes_the_next_shadow_only() -> void:
 	var db := content()
-	var spot := _spot()
-	var lake := db.lake("big_lake")
+	var spot := db.spot("home_lake")
+	var lake := db.lake("home_lake")
 	var rare := db.rarity_index("rare")
 	var plain := ShadowSim.new(db, spot, lake, 777, false, Vector2(0, 4))
 	var forced := ShadowSim.new(db, spot, lake, 777, false, Vector2(0, 4), { "pity_floor": rare })

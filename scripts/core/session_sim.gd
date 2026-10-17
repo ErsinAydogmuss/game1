@@ -33,13 +33,16 @@ var earned: int = 0
 ## "rarity_<id>".
 var milestones: Dictionary = {}
 
+## Oranların geldiği yer: gölün başlangıç bölgesi (bölgeli gölde iskele koyu; bölgeler arası
+## gezinti Dalga 2'nin denge adımında).
 var _spot: Dictionary
 
 
 func _init(content: ContentDB, spot: String, seed_value: int, sim_timing: Dictionary = {}) -> void:
 	db = content
 	spot_id = spot
-	_spot = db.spot(spot)
+	var start: Dictionary = Zones.at(db, spot, db.spot(spot)["start"])
+	_spot = start if not start.is_empty() else db.spot(spot)
 	save = SaveData.create_new(0)
 	save.seed = seed_value
 	save.catches = 1

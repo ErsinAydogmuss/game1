@@ -44,8 +44,12 @@ const MODELS := {
 	"campfire": ["kenney_survival/campfire-pit.glb", 3.4],
 	"log_seat": ["kenney_survival/tree-log-small.glb", 1.8],
 	"signpost": ["kenney_survival/signpost.glb", 2.8],
-	# İskeleye bağlı sandal (Kenney deniz taşıtları)
+	# Kilitli bölgenin çiti ve tabelası (Kenney hayatta kalma paketi)
+	"fence": ["kenney_survival/fence.glb", 2.2],
+	"gate_sign": ["kenney_survival/signpost-single.glb", 3.0],
+	# İskeleye bağlı sandal ve derin ortanın şamandıraları (Kenney deniz taşıtları)
 	"boat": ["kenney_watercraft/boat-row-large.glb", 0.8],
+	"buoy": ["kenney_watercraft/buoy-flag.glb", 0.5],
 	# Cadılar Bayramı paketi (fenerli direk)
 	"lantern_post": ["halloween/post_lantern.gltf", 0.62],
 }

@@ -18,6 +18,8 @@ const TEXTURE_PATH := "res://assets/models/characters/angler_texture.png"
 ## Modelin boyu ~2,2 birim; balıkçı ~1,45 m.
 const MODEL_SCALE := 0.66
 const HIDDEN: Array[String] = ["Rogue_Cape", "Knife", "Knife_Offhand", "1H_Crossbow", "2H_Crossbow", "Throwable"]
+## Gölgesi görünmeyen parçalar: kollar gövdenin gölgesine, baş şapkanınkine karışır (CharacterKit.dress).
+const SHADOWLESS: Array[String] = ["Rogue_ArmLeft", "Rogue_ArmRight", "Rogue_Head"]
 const IDLE_ANIM := "Idle"
 const WALK_ANIM := "Walking_A"
 const HOLD_ANIM := "1H_Ranged_Aiming"
@@ -78,7 +80,7 @@ func _ready() -> void:
 
 ## Kıyafet: boyanmış doku, dış çizgi, gizlenen parçalar. Karakter sayfası aracı da kullanır.
 static func dress(model: Node3D) -> void:
-	CharacterKit.dress(model, load(TEXTURE_PATH), HIDDEN)
+	CharacterKit.dress(model, load(TEXTURE_PATH), HIDDEN, SHADOWLESS)
 
 
 ## Her kare. speed: yatay hız (m/sn). pose: free, hold ya da reel. tension: çekişmede gerilim (0..1+).

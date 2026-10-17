@@ -97,12 +97,15 @@ const JOBS: Array[Dictionary] = [
 	},
 	{
 		# Kenney deniz taşıtları (sandal): somon gövde → koyu ahşap, beyaz iç → açık ahşap.
+		# Şamandıra (derin orta): somon → şamandıra kırmızısı, gri-mavi → beyaz.
 		"source": "res://assets/models/kenney_watercraft/Textures/source/colormap.png",
 		"output": "res://assets/models/kenney_watercraft/Textures/colormap.png",
 		"grid": Vector2i(16, 4),
 		"swatches": {
 			Vector2i(13, 3): "#7d4f2c", # gövde ve kürekler
 			Vector2i(11, 3): "#c9a36e", # iç ve oturaklar
+			Vector2i(11, 2): "#d5382c", # şamandıranın kırmızısı
+			Vector2i(9, 3): "#f3efe6", # şamandıranın beyazı
 		},
 	},
 ]

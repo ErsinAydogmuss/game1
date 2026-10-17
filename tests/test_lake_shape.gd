@@ -83,7 +83,7 @@ func test_old_schema_is_one_zone() -> void:
 
 ## Büyük gölün havzaları: her bölgenin kendi derinliği, havzaların birleştiği yerde yumuşak geçiş.
 func test_basins_have_their_own_depth() -> void:
-	var lake := content().lake("lake_v2")
+	var lake := content().lake("big_lake")
 	assert_true(not lake.uniform, "havzalar farklı derin")
 	assert_between(lake.depth_at(Vector2(0, 0)), 3.0, 3.6, "iskele koyu bugünkü gibi ~3,5 m")
 	assert_between(lake.depth_at(Vector2(-3.5, -14.5)), 7.0, 10.0, "derin orta")
@@ -109,14 +109,14 @@ func test_basins_have_their_own_depth() -> void:
 ## derin orta kıyıya değmez (sandal bölgesi kıyıdan boat_from metre içeride başlar).
 func test_zones() -> void:
 	var db := content()
-	var lake := db.lake("lake_v2")
+	var lake := db.lake("big_lake")
 	assert_eq(_zone_name(lake, Vector2(0, 0)), "dock_cove", "iskele koyu")
 	assert_eq(_zone_name(lake, Vector2(0, 4)), "dock_cove", "iskelenin üstü")
 	assert_eq(_zone_name(lake, Vector2(-8, -3.5)), "dock_cove", "bugünkü yan göl iskele koyunda kalır")
 	assert_eq(_zone_name(lake, Vector2(-17.5, -3.5)), "reeds", "sazlık")
 	assert_eq(_zone_name(lake, Vector2(14, -1.5)), "lily_cove", "nilüferli koy")
 	assert_eq(_zone_name(lake, Vector2(-3.5, -14.5)), "deep_water", "derin orta")
-	for z in db.zones_of("lake_v2"):
+	for z in db.zones_of("big_lake"):
 		for p: Vector2 in z["stands"]:
 			assert_eq(_zone_name(lake, p), z["id"], "atış noktası kendi bölgesinde: %s" % z["id"])
 		for p: Vector2 in z["buoys"]:
@@ -134,7 +134,7 @@ func test_zones() -> void:
 
 ## Yürünebilen dünya: köy ve kıyılar; gölün kuzeyi ve ormanın derini değil (U biçimi).
 func test_world_boundary() -> void:
-	var lake := content().lake("lake_v2")
+	var lake := content().lake("big_lake")
 	assert_true(lake.is_walkable(Vector2(0, 4)), "iskele")
 	assert_true(lake.is_walkable(Vector2(0, 10)), "köy")
 	assert_true(not lake.is_walkable(Vector2(-3.5, -26.0)), "gölün kuzeyi orman")
@@ -146,7 +146,7 @@ func test_world_boundary() -> void:
 ## Kıyı ızgarası önbelleği: önbellekten gelen ızgara yeni kurulanla bit bit aynı; gölün tanımı
 ## değişince yeniden kurulur ve eski önbellek silinir.
 func test_cache_matches_fresh_build() -> void:
-	var spot := content().spot("lake_v2").duplicate(true)
+	var spot := content().spot("big_lake").duplicate(true)
 	spot["id"] = "cache_test"
 	var fresh := LakeShape.from_spot(spot, false)
 	assert_true(not fresh.from_cache, "önbelleksiz kurulum")

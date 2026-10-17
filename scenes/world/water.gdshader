@@ -1,6 +1,7 @@
 shader_type spatial;
 // Göl suyu: opak ve düz (yüzey y = 0). Renk göl veri dokusundan (LakeTexture) gelir:
-// R = derinlik, G = kıyıya uzaklık. Derinde koyu mavi, kıyıda açık turkuaz; kayan dalga
+// R = derinlik (× depth_scale = metre), G = kıyıya uzaklık. Renk metreye göre: 1,2 m'ye kadar
+// açık turkuaz, 3,3 m'de koyu mavi, 4–9 m'de (derin orta) daha koyu. Kayan dalga
 // bantları ve güneş parıltıları; gerçek kıyı çizgisinde kıpırdayan köpük. Karada (kıyı uzaklığı
 // < 0) çizilmez. Compatibility renderer'da derinlik dokusu yok: her şey veri dokusundan.
 render_mode cull_back, diffuse_burley, specular_schlick_ggx;
@@ -11,6 +12,9 @@ uniform vec2 lake_size = vec2(1.0);
 uniform vec4 shallow_color : source_color = vec4(0.40, 0.80, 0.80, 1.0);
 uniform vec4 mid_color : source_color = vec4(0.15, 0.55, 0.68, 1.0);
 uniform vec4 deep_color : source_color = vec4(0.06, 0.29, 0.46, 1.0);
+uniform vec4 abyss_color : source_color = vec4(0.03, 0.17, 0.32, 1.0);
+// Veri dokusundaki derinliğin metresi (gölün en derini; LakeTexture verir).
+uniform float depth_scale = 3.5;
 uniform vec4 foam_color : source_color = vec4(0.95, 0.98, 1.0, 1.0);
 uniform float wave_speed = 0.05;
 
@@ -43,9 +47,11 @@ void fragment() {
 	if (shore < 0.0) {
 		discard;
 	}
-	float depth = d.r;
-	vec3 water = mix(shallow_color.rgb, mid_color.rgb, smoothstep(0.0, 0.35, depth));
-	water = mix(water, deep_color.rgb, smoothstep(0.35, 0.95, depth));
+	float meters = d.r * depth_scale;
+	float depth = clamp(meters / 3.5, 0.0, 1.0);
+	vec3 water = mix(shallow_color.rgb, mid_color.rgb, smoothstep(0.0, 1.225, meters));
+	water = mix(water, deep_color.rgb, smoothstep(1.225, 3.325, meters));
+	water = mix(water, abyss_color.rgb, smoothstep(4.0, 9.0, meters));
 	vec2 p = world_xz;
 	float t = TIME * wave_speed;
 	// Kayan dalga bantları: iki yönde akan gürültü; tepeler biraz açık.

@@ -17,6 +17,10 @@ const TEXTURE_PATH := "res://assets/models/characters/dede_texture.png"
 const MODEL_SCALE := 0.66
 const HIDDEN: Array[String] = ["Barbarian_Hat", "Barbarian_Cape", "1H_Axe_Offhand",
 		"Barbarian_Round_Shield", "1H_Axe", "2H_Axe", "Mug"]
+## Gölgesi görünmeyen parçalar: kollar gövdeye, baş kaskete karışır; bacaklar suya sarkar (su gölge
+## almaz). Çizim bütçesi (CharacterKit.dress).
+const SHADOWLESS: Array[String] = ["Barbarian_ArmLeft", "Barbarian_ArmRight", "Barbarian_Head",
+		"Barbarian_LegLeft", "Barbarian_LegRight"]
 const SIT_ANIM := "Sit_Chair_Idle"
 const CHEER_ANIM := "Cheer"
 const REQUIRED_ANIMS: Array[String] = [SIT_ANIM, CHEER_ANIM]
@@ -60,7 +64,7 @@ func _ready() -> void:
 
 ## Kıyafet: boyanmış doku, dış çizgi, gizlenen parçalar. Karakter sayfası aracı da kullanır.
 static func dress(model: Node3D) -> void:
-	CharacterKit.dress(model, load(TEXTURE_PATH), HIDDEN)
+	CharacterKit.dress(model, load(TEXTURE_PATH), HIDDEN, SHADOWLESS)
 
 
 ## İpucu çubuğu için yüz resmi: oturan Dede'nin başı, hafif yandan (Ersin'in portresi gelene

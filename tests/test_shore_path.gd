@@ -84,16 +84,16 @@ func test_obstacles_are_avoided() -> void:
 ## Büyük gölde çitler: kapalıyken kilitli bölgenin atış noktasına varılmaz, açılınca varılır.
 func test_gates_close_locked_zones() -> void:
 	var db := content()
-	var lake := db.lake("lake_v2")
+	var lake := db.lake("big_lake")
 	var path := ShorePath.new(lake, lake.world_rect)
 	var start := Vector2(0, 9.0)
 	for closed: bool in [true, false]:
-		for z in db.zones_of("lake_v2"):
+		for z in db.zones_of("big_lake"):
 			var gates: Array = z["gates"]
 			for i in gates.size():
 				var g: PackedVector2Array = gates[i]
 				path.set_gate("%s_%d" % [z["id"], i], g[0], g[1], closed)
-		for z in db.zones_of("lake_v2"):
+		for z in db.zones_of("big_lake"):
 			var gated := not (z["gates"] as Array).is_empty()
 			for stand: Vector2 in z["stands"]:
 				var route := path.route(start, stand)

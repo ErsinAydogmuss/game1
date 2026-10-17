@@ -1,7 +1,8 @@
 class_name LakeTexture
 extends RefCounted
 ## LakeShape ızgarasından su ve zemin shader'larının okuduğu veri dokusu:
-## R = derinlik / max_depth, G = işaretli kıyı uzaklığı ((m + 4) / 12; −4..8 m), B = 0, A = 1.
+## R = derinlik / max_depth (shader'da depth_scale ile metreye döner), G = işaretli kıyı uzaklığı
+## ((m + 4) / 12; −4..8 m), B = 0, A = 1.
 ## Doku pikselleri ızgara hücrelerinin merkezleridir: uv = (dünya xz − origin) / (hücre × boyut).
 
 ## G kanalının kapsadığı aralık (m): SHORE_MIN altı 0, SHORE_MIN + SHORE_SPAN üstü 1.
@@ -25,3 +26,4 @@ static func apply(material: ShaderMaterial, lake: LakeShape, texture: Texture2D)
 	material.set_shader_parameter("lake_data", texture)
 	material.set_shader_parameter("lake_origin", lake.origin)
 	material.set_shader_parameter("lake_size", Vector2(lake.width, lake.height) * LakeShape.CELL)
+	material.set_shader_parameter("depth_scale", lake.max_depth)
