@@ -24,9 +24,10 @@ static func open_ids(db: ContentDB, save: SaveData, spot_id: String, in_boat: bo
 	return out
 
 
-## Kilitli bölgenin nedeni: { "key": çeviri anahtarı, "rank": gereken rütbe } (açıksa boş).
+## Kilitli bölgenin nedeni: { "key": çeviri anahtarı, "rank": gereken rütbe } (açıksa ya da
+## bölge yoksa boş).
 static func lock_reason(db: ContentDB, save: SaveData, zone: Dictionary) -> Dictionary:
-	if unlocked(db, save, zone):
+	if zone.is_empty() or unlocked(db, save, zone):
 		return {}
 	if Rank.rank(db, save) < int(zone["rank"]):
 		return { "key": "UI_ZONE_LOCKED_RANK", "rank": int(zone["rank"]) }
@@ -50,8 +51,9 @@ static func place(db: ContentDB, spot_id: String, zone_id: String) -> Dictionary
 	return z if not z.is_empty() else db.spot(spot_id)
 
 
-## Noktanın bölgesi (sözlük; bölgesiz yerde boş).
+## Noktanın bölgesi (sözlük; bölgesiz yerde boş). Izgaranın dışındaki kara (dükkânın arkasındaki
+## çayır) en yakın ızgara hücresinin bölgesini alır.
 static func at(db: ContentDB, spot_id: String, p: Vector2) -> Dictionary:
-	var k := db.lake(spot_id).zone_at(p)
+	var k := db.lake(spot_id).zone_of(p)
 	var zones := db.zones_of(spot_id)
 	return zones[k] if k >= 0 and k < zones.size() else {}

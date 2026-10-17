@@ -7,12 +7,14 @@ extends RefCounted
 ## ya da iskelenin dibine sokulan balık (oyuncu geri sarınca) yeniden derine yüzer.
 ##
 ## Bölgeli göl (Dalga 2, birden çok bölge): gölgeler balıkçının yakınında (menzil + reach_extra)
-## doğar; türü doğduğu yerin bölgesinin oranından gelir (zarlar aynı: tür ve boy ayrı tuzlu
-## zarlardan). Kapalı bölgede (rütbe, sandal) gölge doğmaz; gölge dolaşırken kendi bölgesinde
-## kalır, şamandıraya yaklaşırken sınırı geçebilir. Balıkçıdan çok uzakta kalan gölge çekilir ve
-## yenisi yakında doğar. Şans garantisi balıkçının bölgesinde doğar. Balıkçı sandaldaysa (suyun
-## üstünde) gölgeler sandaldan BOAT_CLEAR uzakta dolaşır: sandalın altına girmez (şamandıraya
-## yaklaşan ve kaçan gölge girebilir). Tek bölgeli göl (eski şema) bugünkü gibi çalışır (altın test).
+## ve yalnızca balıkçının avlandığı bölgede (player_zone) doğar: defter ve dükkânın gösterdiği oran
+## gelen balığın gerçek oranıdır (gelir kuralı 10). Zarlar aynı: tür ve boy ayrı tuzlu zarlardan.
+## Kapalı bölgede (rütbe, sandal) gölge doğmaz; gölge dolaşırken kendi bölgesinde kalır,
+## şamandıraya yaklaşırken sınırı geçebilir. Balıkçıdan çok uzakta kalan ya da balıkçı başka
+## bölgeye geçince öteki bölgede kalan gölge çekilir, yenisi yakında doğar. Şans garantisi de
+## avlanılan bölgede doğar. Balıkçı sandaldaysa (suyun üstünde) gölgeler sandaldan BOAT_CLEAR
+## uzakta dolaşır: sandalın altına girmez (şamandıraya yaklaşan ve kaçan gölge girebilir). Tek
+## bölgeli göl (eski şema) bugünkü gibi çalışır (altın test).
 
 const STEP := 1.0 / FishingRules.HZ
 ## Yolu kapalı (kıyı arada) bir balık bu kadar adım sonra vazgeçer (ilk av vazgeçmez).
@@ -23,6 +25,9 @@ const DETOURS := [0.5, -0.5, 1.0, -1.0, 1.5, -1.5]
 const STRANDED_DOCK := 0.3
 ## Sandaldaki balıkçıdan dolaşan gölgenin uzak kaldığı mesafe (m).
 const BOAT_CLEAR := 2.0
+## Balıkçının durduğu yerin bölgesi kapalıysa (kilitli bölgenin çitinin önü) açık bölge bu
+## yarıçaplarda (m) halka halka aranır.
+const FISHING_SEARCH: Array[float] = [1.0, 2.0, 3.0, 4.5, 6.0, 8.0]
 
 var shadows: Array[FishShadow] = []
 ## Şamandıraya yaklaşan (ya da dürten) gölge.
@@ -44,7 +49,9 @@ var _pending := PackedInt32Array()
 var _first_pending: bool = false
 ## Türlerin oranları (CatchOdds.species_ppm).
 var _species: Dictionary = {}
-## Balıkçının bölgesi (sıra; şans garantisi burada doğar).
+## Balıkçının avlandığı bölge (sıra): durduğu yerin bölgesi (ızgaranın dışında en yakın hücreninki;
+## sandalda altındaki suyunki); o bölge kapalıysa en yakın açık bölge (_fishing_zone). Bölgeli
+## gölde gölgeler ve şans garantisi yalnızca burada doğar; yoksa -1 (bütün açık bölgeler).
 var player_zone: int = -1
 ## Bölgeli göl mü (birden çok bölge)?
 var _zoned: bool = false
@@ -78,7 +85,6 @@ func _init(db: ContentDB, spot: Dictionary, lake: LakeShape, seed: int, first_ca
 	_zoned = _zones.size() > 1
 	_angler = angler
 	_afloat = _zoned and _in_boat(angler)
-	player_zone = lake.zone_at(angler)
 	set_reach(float(odds.get("reach", 8.0)))
 	if odds.has("open"):
 		set_access(odds["open"])
@@ -88,6 +94,7 @@ func _init(db: ContentDB, spot: Dictionary, lake: LakeShape, seed: int, first_ca
 			if not bool(z["boat"]):
 				open.append(str(z["id"]))
 		set_access(open)
+	player_zone = _fishing_zone(angler) if _zoned else lake.zone_at(angler)
 	set_odds(odds)
 	for i in _max:
 		# Yer bulunamazsa bir sn sonra yeniden denenir (küçük göllerde).
@@ -212,7 +219,7 @@ func relocate(angler: Vector2) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	_angler = angler
 	_afloat = _zoned and _in_boat(angler)
-	player_zone = _lake.zone_at(angler)
+	player_zone = _fishing_zone(angler) if _zoned else _lake.zone_at(angler)
 	for s: FishShadow in shadows.duplicate():
 		if s.scripted or s.mode == FishShadow.Mode.HOOKED:
 			continue
@@ -237,11 +244,13 @@ func set_reach(range_m: float) -> void:
 	_reach = range_m + _rules.reach_extra
 
 
-## Gölge doğabilen bölgeler (rütbe ve sandal; main hesaplar).
+## Gölge doğabilen bölgeler (rütbe ve sandal; main hesaplar). Avlanılan bölge de yenilenir.
 func set_access(open: PackedStringArray) -> void:
 	_open.resize(_zones.size())
 	for k in _zones.size():
 		_open[k] = 1 if str(_zones[k]["id"]) in open else 0
+	if _zoned:
+		player_zone = _fishing_zone(_angler)
 
 
 ## Bölgede gölge doğabilir mi?
@@ -288,13 +297,14 @@ func _has_scripted() -> bool:
 	return false
 
 
-## Bölgeli göl: balıkçının yeri ve bölgesi; çok uzakta kalan dolaşan gölge çekilir (kaçar ve
-## kaybolur, yerine yakında yenisi doğar).
+## Bölgeli göl: balıkçının yeri ve avlandığı bölge; çok uzakta kalan ya da avlanılan bölgeden
+## olmayan (balıkçı başka bölgeye yürüdü) dolaşan gölge çekilir (kaçar ve kaybolur, yerine yakında
+## yenisi doğar).
 func _follow(angler: Vector2) -> void:
 	if angler != _angler:
 		_afloat = _in_boat(angler)
-	_angler = angler
-	player_zone = _lake.zone_at(angler)
+		_angler = angler
+		player_zone = _fishing_zone(angler)
 	_check -= 1
 	if _check > 0:
 		return
@@ -303,9 +313,24 @@ func _follow(angler: Vector2) -> void:
 	for s in shadows:
 		if s.scripted or s == approacher or (s.mode != FishShadow.Mode.WANDER and s.mode != FishShadow.Mode.PAUSE):
 			continue
-		if s.pos.distance_to(angler) > far:
+		if s.pos.distance_to(angler) > far or (player_zone >= 0 and s.zone != player_zone):
 			s.recycled = true
 			flee(s, angler)
+
+
+## Avlanılan bölge: noktanın bölgesi açıksa o (ızgaranın dışında en yakın hücreninki); değilse
+## (kapalı bölgenin çitinin önü, bölgesiz şerit) çevrede halka halka aranan en yakın açık bölge;
+## yoksa -1.
+func _fishing_zone(p: Vector2) -> int:
+	var here := _lake.zone_of(p)
+	if is_open(here):
+		return here
+	for r in FISHING_SEARCH:
+		for k in 16:
+			var zone := _lake.zone_at(p + Vector2.from_angle(TAU * k / 16.0) * r)
+			if is_open(zone):
+				return zone
+	return -1
 
 
 ## Balıkçı sandalda mı (suyun üstünde, iskelede değil)?
@@ -313,12 +338,15 @@ func _in_boat(p: Vector2) -> bool:
 	return _lake.is_water(p) and not _lake.on_dock(p)
 
 
-## Sandaldaki balıkçının çevresi: dolaşan gölgenin hedefi ve yolu buraya girmez.
+## Sandaldaki balıkçının çevresi: dolaşan gölgenin hedefi ve yolu buraya girmez. Sandala zaten
+## yakın olan gölge (kaçarken ya da ilgisini kaybedince) sandala yaklaşmayan bir yol seçebilir:
+## orada takılı kalmaz.
 func _clear_of_boat(from: Vector2, to: Vector2) -> bool:
 	if not _afloat:
 		return true
+	var side := minf(BOAT_CLEAR * 0.7, from.distance_to(_angler) - 0.001)
 	return to.distance_to(_angler) >= BOAT_CLEAR \
-			and Geometry2D.get_closest_point_to_segment(_angler, from, to).distance_to(_angler) >= BOAT_CLEAR * 0.7
+			and Geometry2D.get_closest_point_to_segment(_angler, from, to).distance_to(_angler) >= side
 
 
 ## Gölgenin dolaşabileceği en sığ su: bölgesinin min_depth'i (eski şemada kuraldaki).
@@ -394,8 +422,10 @@ func _spawn(angler: Vector2, bobber: Vector2, bobber_active: bool) -> FishShadow
 func _spawn_point(rng: RandomNumberGenerator, angler: Vector2, bobber: Vector2, bobber_active: bool) -> Vector2:
 	var bounds := _lake.water_bounds
 	if _zoned:
-		# Balıkçının çevresi (gölün dışı kırpılır).
+		# Balıkçının çevresi, avlanılan bölgenin kutusunda (gölün dışı kırpılır).
 		bounds = Rect2(angler - Vector2(_reach, _reach), Vector2(_reach, _reach) * 2.0).intersection(_lake.water_bounds)
+		if player_zone >= 0 and player_zone < _lake.zone_bounds.size():
+			bounds = bounds.intersection(_lake.zone_bounds[player_zone])
 		if bounds.size.x <= 0.0 or bounds.size.y <= 0.0:
 			return Dice.NO_POINT
 	for strict: bool in [true, false]:
@@ -404,7 +434,8 @@ func _spawn_point(rng: RandomNumberGenerator, angler: Vector2, bobber: Vector2, 
 					rng.randf_range(bounds.position.y, bounds.end.y))
 			if _zoned:
 				var zone := _lake.zone_at(p)
-				if not is_open(zone) or p.distance_to(angler) > _reach or not _lake.is_deep(p, _zone_depth(zone)):
+				if not is_open(zone) or (player_zone >= 0 and zone != player_zone) or p.distance_to(angler) > _reach \
+						or not _lake.is_deep(p, _zone_depth(zone)):
 					continue
 			elif not _lake.is_deep(p, _rules.min_depth):
 				continue
@@ -464,14 +495,15 @@ func _wander(s: FishShadow) -> void:
 		s.mode = FishShadow.Mode.PAUSE
 		s.timer = Dice.between(s.rng, _rules.pause_steps)
 		return
-	if _stranded(s):
-		# Sığda kalmış balık yerinde hedefe döner: eski yönündeki adım reddedilip hep duraklamasın.
+	if _stranded(s) or (_afloat and s.pos.distance_to(_angler) < BOAT_CLEAR * 0.7):
+		# Sığda kalmış ya da sandalın dibindeki balık yerinde hedefe döner: eski yönündeki adım
+		# reddedilip hep duraklamasın (hedefin yolu sandala yaklaşmaz: _clear_of_boat).
 		s.heading = to / d
 	else:
 		_turn(s, to / d, _rules.turn)
 	var next := s.pos + s.heading * s.speed * STEP
 	var boat_ok := not _afloat or next.distance_to(_angler) >= BOAT_CLEAR * 0.6 \
-			or next.distance_to(_angler) > s.pos.distance_to(_angler)
+			or next.distance_to(_angler) >= s.pos.distance_to(_angler) - 0.0005
 	if boat_ok and (_lake.is_deep(next, _min_depth(s) * 0.75) or _escapes_shallows(s, next)):
 		s.pos = next
 	else:

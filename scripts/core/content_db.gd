@@ -584,13 +584,19 @@ func _validate_spot(s: Dictionary, geometry: bool = true) -> void:
 		for p: Vector2 in z["buoys"]:
 			if not shape.is_water(p) or shape.zone_at(p) != k:
 				errors.append("spots.json: %s: %s şamandırası kendi bölgesinin suyunda olmalı: %s" % [id, z["id"], p])
-	# Her su hücresinin bölgesi var: sandal bölgesi kıyıya değiyorsa oradaki kıyı suyu bölgesiz kalır.
+	# Bölgesiz su yalnızca sandal havzasının öteki havzalardan uzak kıyı şeridinde olabilir (kıyıdan
+	# en çok boat_from metre; LakeShape.RIM_REACH). Daha içerideki bölgesiz su, bir havzanın
+	# bölgesinin tanımsız olduğunu gösterir.
+	var rim := 0.0
+	for z in zones:
+		if bool(z["boat"]):
+			rim = maxf(rim, float(z["boat_from"]))
 	var orphans := 0
 	for i in shape.shore.size():
-		if shape.shore[i] > 0.0 and shape.zone_grid[i] == LakeShape.NO_ZONE:
+		if shape.shore[i] > rim and shape.zone_grid[i] == LakeShape.NO_ZONE:
 			orphans += 1
 	if orphans > 0:
-		errors.append("spots.json: %s: %d su hücresinin bölgesi yok (sandal bölgesi kıyıya değiyor olabilir)" % [id, orphans])
+		errors.append("spots.json: %s: %d su hücresinin bölgesi yok" % [id, orphans])
 
 
 func _validate_zone(spot_id: String, z: Dictionary, known: Dictionary) -> void:

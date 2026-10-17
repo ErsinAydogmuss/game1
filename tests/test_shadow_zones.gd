@@ -1,7 +1,8 @@
 extends BaseTest
-## Bölgeli gölde gölgeler (Dalga 2; data/spots.json big_lake): balıkçının çevresinde, açık
-## bölgelerde doğar; türü doğduğu bölgeden; dolaşırken bölgesinde kalır; balıkçı yürüyünce ya da
-## başka yere geçince gölgeler de gelir; şans garantisi balıkçının bölgesinde doğar.
+## Bölgeli gölde gölgeler (Dalga 2; data/spots.json big_lake): balıkçının çevresinde ve yalnızca
+## avlandığı bölgede doğar (defterin gösterdiği oran gelen balığın oranı); türü o bölgeden;
+## dolaşırken bölgesinde kalır; balıkçı yürüyünce ya da başka yere geçince gölgeler de gelir; şans
+## garantisi avlanılan bölgede doğar.
 
 const SPOT := "big_lake"
 const DOCK := Vector2(0, 4)
@@ -24,34 +25,39 @@ func _zone_of(s: FishShadow) -> Dictionary:
 	return content().zones_of(SPOT)[s.zone]
 
 
-## Doğan her gölge balıkçının çevresinde (menzil + reach_extra), açık bir bölgenin derin suyunda.
-func test_spawns_near_the_angler_in_open_zones() -> void:
+## Doğan her gölge balıkçının çevresinde (menzil + reach_extra), avlandığı bölgenin derin suyunda:
+## başka bölgelerin suyu menzildeyken de (dere ağzında sazlık ve iskele koyu, kayalık burunda
+## nilüferli koy).
+func test_spawns_near_the_angler_in_the_fishing_zone() -> void:
 	var lake := content().lake(SPOT)
 	var reach := REACH + content().rules.reach_extra
-	var bad := 0
-	var born := 0
-	for seed_value in 12:
-		var sim := _sim(seed_value, REEDS, OPEN_START)
-		# Doğduğu andaki yer (sonra dolaşır).
-		var fresh: Array[Array] = []
-		for s in sim.shadows:
-			fresh.append([s, s.pos])
-		for step in 900:
-			for e in sim.step(REEDS, Vector2.ZERO, false, 0):
-				if str(e["type"]) == "spawn":
-					var s := sim.find(int(e["shadow"]))
-					fresh.append([s, s.pos])
-		for pair in fresh:
-			born += 1
-			var s: FishShadow = pair[0]
-			var pos: Vector2 = pair[1]
-			var zone := _zone_of(s)
-			var ok: bool = str(zone["id"]) in OPEN_START and pos.distance_to(REEDS) <= reach + 0.01 \
-					and lake.is_deep(pos, float(zone["min_depth"]))
-			if not ok:
-				bad += 1
-	assert_true(born >= 48, "gölgeler doğdu (%d)" % born)
-	assert_eq(bad, 0, "hepsi balıkçının çevresinde, açık bölgenin derin suyunda")
+	for place: Array in [[REEDS, "reeds"], [STREAM, "stream_mouth"], [LILY, "lily_cove"],
+			[Vector2(14.0, -8.5), "rocky_point"], [DOCK, "dock_cove"]]:
+		var at: Vector2 = place[0]
+		var bad := 0
+		var born := 0
+		for seed_value in 8:
+			var sim := _sim(seed_value, at, OPEN_ALL)
+			# Doğduğu andaki yer (sonra dolaşır).
+			var fresh: Array[Array] = []
+			for s in sim.shadows:
+				fresh.append([s, s.pos])
+			for step in 900:
+				for e in sim.step(at, Vector2.ZERO, false, 0):
+					if str(e["type"]) == "spawn":
+						var s := sim.find(int(e["shadow"]))
+						fresh.append([s, s.pos])
+			for pair in fresh:
+				born += 1
+				var s: FishShadow = pair[0]
+				var pos: Vector2 = pair[1]
+				var zone := _zone_of(s)
+				var ok: bool = str(zone["id"]) == place[1] and pos.distance_to(at) <= reach + 0.01 \
+						and lake.is_deep(pos, float(zone["min_depth"]))
+				if not ok:
+					bad += 1
+		assert_true(born >= 32, "%s: gölgeler doğdu (%d)" % [place[1], born])
+		assert_eq(bad, 0, "%s: hepsi balıkçının çevresinde, avlandığı bölgenin derin suyunda" % place[1])
 
 
 ## Gölgenin türü doğduğu bölgenin listesinden; sazlıkta derin ortanın yayını yok.
@@ -64,7 +70,7 @@ func test_species_come_from_the_zone() -> void:
 			var ids: PackedStringArray = zone["fish_ids"]
 			assert_true(s.fish_id in ids, "%s %s bölgesinin türü" % [s.fish_id, zone["id"]])
 			counts[zone["id"]] = int(counts.get(zone["id"], 0)) + 1
-	assert_true(int(counts.get("dock_cove", 0)) > 100, "iskelede çoğu gölge iskele koyunda (%s)" % str(counts))
+	assert_true(int(counts.get("dock_cove", 0)) > 100 and counts.size() == 1, "iskelede bütün gölgeler iskele koyunda (%s)" % str(counts))
 
 
 ## Dolaşan gölge kendi bölgesinde kalır (kaçarken ve şamandıraya giderken sınırı geçebilir).
@@ -101,6 +107,50 @@ func test_walking_brings_shadows_along() -> void:
 		if s.pos.distance_to(LILY) <= reach and s.mode != FishShadow.Mode.FLEE:
 			near += 1
 	assert_true(near >= 3, "8 sn içinde yeni yerin çevresinde en az 3 gölge (%d)" % near)
+
+
+## Balıkçı komşu bölgeye yürüyünce eski bölgenin dolaşan gölgeleri çekilir, yenileri yeni bölgede
+## doğar (defterin oranı yeni bölgenin).
+func test_shadows_follow_the_angler_into_a_new_zone() -> void:
+	var reeds := content().lake(SPOT).zone_index("reeds")
+	var sim := _sim(9, DOCK, OPEN_ALL)
+	for step in 300:
+		sim.step(DOCK, Vector2.ZERO, false, 0)
+	for step in 12 * FishingRules.HZ:
+		sim.step(REEDS, Vector2.ZERO, false, 0)
+	assert_eq(sim.player_zone, reeds, "balıkçı sazlıkta avlanıyor")
+	var here := 0
+	for s in sim.shadows:
+		if s.mode == FishShadow.Mode.FLEE:
+			continue
+		assert_eq(s.zone, reeds, "dolaşan gölge sazlığın")
+		here += 1
+	assert_true(here >= 3, "12 sn içinde sazlıkta en az 3 gölge (%d)" % here)
+
+
+## Kilitli bölgenin çitinin önünde (en yakın su kilitli bölgenin): açık komşu bölgede avlanılır.
+func test_locked_neighbour_falls_back_to_an_open_zone() -> void:
+	var lake := content().lake(SPOT)
+	var dock := lake.zone_index("dock_cove")
+	var near_gate := Vector2(9.9, 3.6)
+	assert_eq(lake.zone_of(near_gate), lake.zone_index("lily_cove"), "en yakın su nilüferli koyun")
+	var sim := _sim(4, near_gate, OPEN_START)
+	assert_eq(sim.player_zone, dock, "kilitli nilüferli koy yerine iskele koyunda avlanılır")
+	for s in sim.shadows:
+		assert_eq(s.zone, dock, "gölgeler açık bölgede")
+
+
+## Izgaranın dışındaki çayır (dükkânın arkası): bölge en yakın hücreninki; kilit nedeni boş bölgede
+## hata vermez.
+func test_zone_beyond_the_grid() -> void:
+	var db := content()
+	var behind := Vector2(0.0, 11.5)
+	assert_eq(db.lake(SPOT).zone_at(behind), -1, "ızgaranın dışı")
+	assert_eq(str(Zones.at(db, SPOT, behind).get("id", "")), "dock_cove", "en yakın hücrenin bölgesi")
+	var session := FishingSession.new(db, SPOT, GearStats.starter(db), 3, false, false, -1, PackedStringArray(OPEN_START))
+	session.relocate(behind)
+	assert_eq(session.zone_id(), "dock_cove", "dükkânın arkasında da iskele koyunda avlanılır")
+	assert_eq(Zones.lock_reason(db, SaveData.new(), {}), {}, "bölge yoksa neden de yok")
 
 
 ## Hızlı geçiş: gölgeler hemen yeni yerin çevresinde.

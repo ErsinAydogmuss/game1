@@ -8,7 +8,7 @@
 
 Yazı Dede ile Nine'nin göl köyünde geçiren bir çocuk ya da genç balıkçısın. Gölde balık gölgeleri dolaşıyor. Gölgenin önüne oltanı atıyorsun; gölge fark edip yaklaşıyor, şamandırayı dürtüyor ve sonunda ısırıyor: VUR! Sonra gerilim çubuğunu kırmızıya kaçırmadan çekiyorsun.
 
-Göl büyük ve bölgelere ayrılmış: sazlık, nilüferli koy, kayalık burun, dere ağzı, derin orta 🔜. Her bölgenin kendi balıkları var; her balığın sevdiği bir teknik, yem, saat ve hava var. Nine'nin dükkânından aldığın takımla yeni tekniklere (spin, dip, sinek, tuzak) ve yeni sulara açılırsın. Tuttuğun balıkların kopyalarını Nine'ye satarsın; her türün en iyisi akvaryumda yaşar. İstersen balığı göle geri bırakırsın; bıraktıkça göl güzelleşir. Dede'nin anlattıkları ve şişelerden çıkan mektuplar seni gölün sırrına, Gölün Bekçisi'ne götürür.
+Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı ve sandalla açılınan derin orta. Her bölgenin kendi balıkları var; her balığın sevdiği bir teknik, yem, saat ve hava var. Nine'nin dükkânından aldığın takımla yeni tekniklere (spin, dip, sinek, tuzak) ve yeni sulara açılırsın. Tuttuğun balıkların kopyalarını Nine'ye satarsın; her türün en iyisi akvaryumda yaşar. İstersen balığı göle geri bırakırsın; bıraktıkça göl güzelleşir. Dede'nin anlattıkları ve şişelerden çıkan mektuplar seni gölün sırrına, Gölün Bekçisi'ne götürür.
 
 - **Platform:** iOS + Android, yatay ekran, low-poly 3D.
 - **Model:** ücretsiz oyun; gelir kuralları [`CLAUDE.md`](../CLAUDE.md)'de.
@@ -35,13 +35,16 @@ Göl büyük ve bölgelere ayrılmış: sazlık, nilüferli koy, kayalık burun,
 
 **Telefon (yatay):**
 
-- **Karaya ya da iskeleye dokun:** balıkçı oraya düz yürür; kıyıya gelince durur.
+- **Karaya ya da iskeleye dokun:** balıkçı oraya yürür. Önü su ise kıyı yolundan dolaşır (kısa yandan); kilitli bölgenin çitinde durur, Dede ne zaman geçileceğini söyler. Yürünebilen dünyanın dışına (orman) dokunulursa en yakın yere gider.
 - **Suya dokun:** balıkçı oraya atar. Menzil dışındaysa önce yaklaşır. Hedef karaya denk geliyorsa şamandıra yine suya düşer.
 - **Olta suyadayken ekranın her yeri bir düğmedir:**
   - **değdiği an:** ısırmada VUR; ısırmadan önce oltayı geri sarar;
   - **çekişmede basılı tutunca:** sarar.
   Sağ altta büyük bir eylem düğmesi de aynı işi yapar ve ne olacağını yazar: GERİ SAR / VUR! / SAR.
 - **Joystick yok,** çünkü soldaki dokunuşları yutuyordu (Kazı deneyimi).
+
+- ✅ **Harita** (sağ üst, ilk balıktan sonra): açık bir bölgenin rozetine dokun → ekran kararır, o bölgenin atış noktasındasın. Kilitli bölgede nedeni yazar.
+- ✅ **Sandal:** sandalı aldıysan iskeledeki sandala (ya da haritada Derin Orta'ya) dokun → ilk şamandıranın yanında sandaldasın; haritada Derin Orta'ya yeniden dokununca sıradaki şamandıraya geçilir. Sandalda suya dokunmak atıştır; sol alttaki "Kıyıya dön" iskeleye getirir.
 
 **Mac:** tıkla (yürü, at), WASD (yürü), Space (VUR; basılı tutunca sar).
 
@@ -52,7 +55,6 @@ Göl büyük ve bölgelere ayrılmış: sazlık, nilüferli koy, kayalık burun,
 - **Dip:** at, olta sehpaya konur; zil sürekli öterken ekranın her yerine dokun.
 - **Sinek:** halka çıkınca dokun.
 - **Tuzak:** kıyıdaki tuzak şamandırasına dokun → bırak ya da topla.
-- **Harita** (sağ üst): bir atış noktasına dokun → oraya geçilir. **Sandal:** iskeledeki sandala dokun → derin ortadaki şamandıralardan birini seç.
 - **Dünyada dokunulanlar:** Nine → dükkân; Dede → öğüt ve istekler; kedi → sev.
 
 ## 5. Kurallar ve başlangıç sayıları ✅
@@ -67,7 +69,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 **Gölgeler**
 
 - Gölde aynı anda 4 gölge var.
-- Hız 0,3–0,5 m/sn; aralarda 1–3 sn duraklar. Yalnızca 0,8 m'den derin yerlerde dolaşırlar.
+- Hız 0,3–0,5 m/sn; aralarda 1–3 sn duraklar. Yalnızca derin yerlerde dolaşırlar: bölgenin en sığ sınırı 0,5 m (sazlık, dere ağzı) ya da 0,8 m (öteki bölgeler).
+- Büyük gölde gölgeler balıkçının çevresinde ve yalnızca avlandığı bölgede doğar (durduğu yerin bölgesi; kilitliyse yakındaki açık bölge). Defterin ve dükkânın gösterdiği oran, gelen balığın gerçek oranıdır. Başka bölgeye yürüyünce eski bölgenin gölgeleri çekilir, yenileri doğar.
 - Gölgenin balığı ve boyu doğduğu anda belli (Kazı'daki çamurlu eşya gibi): gizli ama değişmez.
 - Gölge uzunluğu türün taban gölgesi × (0,85 + 0,30 × boy yüzdeliği).
 - Şamandıra 6 sn'den uzun süredir suda bekliyorsa gölgeler yarı yarıya onun çevresine yönelir (bekleme uzamasın).
@@ -273,7 +276,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - **Nadirlik efektleri:** gölgede pırıltı, ışıltı, iz.
   - **Arayüz:** Ersin'in arayüz kiti (çerçeveler, düğmeler, nadirlik çerçeveleri).
   - **Ölçüt:** iPhone 14'te 60 fps.
-    - ✅ Ölçüm: ayarlarda sürüm yazısına 5 dokunuş sol üstte FPS, çizim ve üçgen sayısını açar (her sürümde); adımlar `iphone-kurulum.md` 12. adımda. Bulutta (`tour` botu; arayüz dahil) bir bakışta en çok 139 çizim.
+    - ✅ Ölçüm: ayarlarda sürüm yazısına 5 dokunuş sol üstte FPS, çizim ve üçgen sayısını açar (her sürümde); adımlar `iphone-kurulum.md` 12. adımda. Bulutta (`tour` botu; arayüz dahil) bir bakışta en çok 140 çizim.
 
 ## 9. Ses
 
@@ -294,7 +297,7 @@ Sıra ve adımlar [`yol-haritasi.md`](yol-haritasi.md)'de (Dalga 1–5). Sayıla
 
 ### 10.1 Göl ve bölgeler
 
-- **Boyut:** su alanı bugünün yaklaşık 3 katı (≈700 m²; sınırları yaklaşık 60×36 m).
+- **Boyut:** su alanı eski gölün (testlerin gölü, ≈227 m²) yaklaşık 3,7 katı: ≈846 m²; suyun kutusu yaklaşık 46×30 m (`tools/lake_map.gd`).
 - **İskele koyu bugünkü gibi kalır:** iskele, başlangıç noktası ve Dede aynı yerde.
 - **Derinlik:** her havzanın kendi derinliği ve kıyı eğimi var.
 
@@ -343,7 +346,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - Efsanevi bir gölge balıkçıya 9 m yaklaşınca Dede bir kez uyarır ("Şşş! Şu parlayan gölgeyi gördün mü?"), kısa gizemli bir ezgi çalar, telefon titrer, Dede o gölgeye bakar.
   - Tutunca balığın üstünde 2B etiket: simge ve ad kademe renginde, altında boy (kartsız yakalamadaki eski bildirim kalktı; rütbe ve kova bildirimleri etiket sönünce gelir).
   - Kartta Dede'nin yüzü ve sözü: Nadir ve üstünde kademeye göre ("Vay be, nadir bir balık!", "Bunu ben bile az gördüm!", "Efsane! Bunu bütün köy duyacak!"), yoksa yeni tür ya da rekor için.
-- **Değer:** her türün bir taban değeri var (Sıradan ≈5, Güzel ≈12, Nadir ≈35, Destansı ≈120, Efsanevi ≈500 para) × boy çarpanı (0,6–1,6). Masalsı satılmaz.
+- **Değer:** her türün bir taban değeri var (Sıradan ≈5, Güzel ≈12, Nadir ≈35, Destansı ≈120 para) × boy çarpanı (0,6–1,6). Dalga 2'nin tek Efsanevi türü mersin koruma altında: satılmaz, göle bırakılır (rütbe puanı ve göl sevgisi verir). Masalsı da satılmaz.
 - **Şans garantisi:**
   - Nadir+ balık gelmeden geçen 40 avdan sonra, bulunduğun bölgede Nadir+ bir gölge doğar. Destansı+ için 150, Efsanevi için 400 av.
   - Sayaçlar defterde görünür.
@@ -411,31 +414,31 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | sinek | 60–120 dk |
 | bütün kademeler | 8–15 saat |
 
-- ✅ **Denge botu** (`SessionSim`): oyunun kurallarını aynen kullanır (oranlar ve şans garantisi `CatchOdds`, boy `FishTable`, çekişme `ReelModel` + tepkili oyuncu botu, kova, rütbe, satış), yalnızca zamanı ve el becerisini taklit eder. Süreler `data/sim.json`'dan; atış, balığın gelişi, dürtmeler ve çekişme uzaklığı `tools/session_timing.gd` ile gerçek `FishingSession`'dan ölçülür (insan gibi şaşarak nişan alan bot). Ölçüm (başlangıç takımı): ısırmaya ortalama 9 sn (atış ve geri sarma dahil), dürtmeler 2,8 sn, çekişme 5,2 sn, takılma uzaklığı 4,5 m; saatte 225 av (satışsız). İnsan hatası tahmin: ısırmaların %15'i kaçırılır.
+- ✅ **Denge botu** (`SessionSim`): oyunun kurallarını aynen kullanır (oranlar ve şans garantisi `CatchOdds`, boy `FishTable`, çekişme `ReelModel` + tepkili oyuncu botu, kova, rütbe, satış), yalnızca zamanı ve el becerisini taklit eder. Süreler `data/sim.json`'dan; atış, balığın gelişi, dürtmeler ve çekişme uzaklığı `tools/session_timing.gd` ile gerçek `FishingSession`'dan ölçülür (insan gibi şaşarak nişan alan bot). Dalga 1'deki ölçüm (eski göl, başlangıç takımı): ısırmaya ortalama 9 sn (atış ve geri sarma dahil), dürtmeler 2,8 sn, çekişme 5,2 sn, takılma uzaklığı 4,5 m; saatte 225 av (satışsız). Büyük gölde bölge başına: saatte 204–251 av (sazlık ve dere ağzında en çok, derin ortada en az). İnsan hatası tahmin: ısırmaların %15'i kaçırılır.
 - ✅ **Dalga 1 ölçümü** (iskele koyu, 3 seed): saatte yaklaşık 3.100 para ve 200 av; rütbe 20'ye 5 saatte varılıyordu.
 - ✅ **Bölgeli denge botu** (Dalga 2): kıyı bölgesini oyuncu gibi seçer. Önce gidilmemiş açık bölgeye gider (yeni bölge açılınca hemen), sonra defterde tutulmamış türü en çok olana, sonra balık başına en çok kazandırana. Sandalı rütbesi yetince öncelikle alır, parası yetene kadar başka şey almaz; sonra kovaların yarısını derin ortada doldurur (`boat_share`, tahmin). Bölge değiştirmek ve satmak için iskeleye dönmek 6 sn sürer (`travel_s`: harita, dokunuş, kararma). Bölge başına süreler `session_timing.gd --zone=` ile ölçülür (`sim.json` "zones").
 - ✅ **Rütbe eğrisi uzadı:** bölgeler rütbe 3–9'da açıldığı için eşikler 0, 60, 300, 600, 950, 1.400, 2.050, 2.900, 4.000, 5.000 … 26.000 (rütbe 20). Eski kayıtta rütbe ve rütbedeki ilerleme korunur: kayıt sürümü 3, puan yeni eğriye taşınır (`SaveData.remap_xp`). Sandal 3.500 para.
-- ✅ **Dalga 2 ölçümü** (`tools/economy_report.gd -- --hours=12 --seeds=6`): saatte yaklaşık 5.400 para ve 176 av. Zamanın ~%52'si dere ağzında, ~%42'si derin ortada geçiyor (en çok kazandıran iki yer); öteki kıyı bölgelerine yeni türleri tutmak için gidiliyor. Korkuluklar `tests/test_session_sim.gd`'de (200 dk, 3 seed); "yeni bölge öncekilerden az kazandırmaz" `test_economy.gd`'de.
+- ✅ **Dalga 2 ölçümü** (`tools/economy_report.gd -- --hours=12 --seeds=6`; gölgeler yalnızca avlanılan bölgede doğar, derin ortanın uzak kıyı şeridi bölgesiz): saatte yaklaşık 6.000 para ve 190 av. Zamanın ~%47'si dere ağzında, ~%47'si derin ortada geçiyor (en çok kazandıran iki yer); öteki kıyı bölgelerine yeni türleri tutmak için gidiliyor. Rütbe 9 hedefin (80–110 dk) biraz önünde: dere ağzında balık çabuk geliyor; eğri Dalga 3'te teknik kilitleriyle yeniden ayarlanır. Korkuluklar `tests/test_session_sim.gd`'de (200 dk, 3 seed); "yeni bölge öncekilerden az kazandırmaz" `test_economy.gd`'de.
 
 | Olay (ilk kez) | Dakika | Korkuluk |
 |---|---|---|
 | ilk satış | 2–3 | ≤ 5 |
 | ilk alışveriş (misina) | 3–7 | ≤ 10 |
-| rütbe 2 / 3 / 5 / 7 / 9 | 1–3 / 6–13 / 19–28 / 44–51 / 75–89 | ≤ 5 / 5–15 / 15–35 / 38–65 / 70–120 |
-| rütbe 10 / 15 / 20 | 92–110 / 200–237 / 360–390 | — |
-| ilk gidiş: sazlık / nilüferli koy / kayalık burun / dere ağzı | 2–3 / 6–13 / 19–28 / 44–51 | — / 5–15 / 15–35 / — |
-| gölün 5 türü / 11 kıyı türü / mersin (12.) | 2–4 / 21–34 / 132–176 | ≤ 30 / — / 100–200 |
+| rütbe 2 / 3 / 5 / 7 / 9 | 1–3 / 6–13 / 19–28 / 41–49 / 69–81 | ≤ 5 / 5–15 / 15–35 / 38–65 / 60–120 |
+| rütbe 10 / 15 / 20 | 84–100 / 183–216 / 333–359 | — |
+| ilk gidiş: sazlık / nilüferli koy / kayalık burun / dere ağzı | 2–3 / 6–13 / 19–28 / 41–49 | — / 5–15 / 15–35 / — |
+| gölün 5 türü / 11 kıyı türü / mersin (12.) | 2–4 / 21–33 / 119–159 | ≤ 30 / — / 100–200 |
 | makara, iğne, şamandıra (ilk kademe) | 3–25 | — |
 | cam kamış | 20–30 | 10–45 |
-| büyük kova | 23–37 | 15–60 |
-| floro misina, hızlı makara, kepçe, büyük iğne | 38–82 | kepçe 40–100 |
-| sandal (3.500) ve derin orta | 115–147 | 90–180 |
-| güçlü makara, parlak şamandıra, balık filesi | 126–195 | — |
-| örgü misina, karbon kamış, usta florokarbon | 185–263 | — |
-| usta makarası, büyük file, altın örgü | 269–444 | — |
-| altın makara (15.000) / dev file (15.000) | 546–590 / 2 seed'de ~690 | — |
+| büyük kova | 23–36 | 15–60 |
+| floro misina, hızlı makara, kepçe, büyük iğne | 37–76 | kepçe 40–100 |
+| sandal (3.500) ve derin orta | 104–132 | 90–180 |
+| güçlü makara, parlak şamandıra, balık filesi | 114–177 | — |
+| örgü misina, karbon kamış, usta florokarbon | 169–240 | — |
+| usta makarası, büyük file, altın örgü | 249–409 | — |
+| altın makara (15.000) / dev file (15.000) | 507–546 / 638–689 | — |
 
-- **Değerlendirme:** ilk saat dolu: yeni bölge yaklaşık 10, 25 ve 48. dakikada, araya alışverişler giriyor. Sandal rütbe 9'dan sonra 30–60 dakikalık bir birikim hedefi; alınınca balık başına kazanç ~1,7 katına çıkıyor (derin ortada ~40 para, dere ağzında ~24). Rütbe 20'ye ~6 saatte varılıyor (Dalga 1'de 5). Şamandıra takımının neredeyse hepsi 12 saatte alınıyor (dev file 6 seed'in 2'sinde); Dalga 3'te tekniklerin takımı gelince fiyatlar "bütün kademeler 8–15 saat" hedefine göre yeniden ayarlanır.
+- **Değerlendirme:** ilk saat dolu: yeni bölge yaklaşık 10, 24 ve 46. dakikada, araya alışverişler giriyor. Sandal rütbe 9'dan sonra 35–50 dakikalık bir birikim hedefi; alınınca balık başına kazanç ~1,7 katına çıkıyor (derin ortada ~40 para, dere ağzında ~24). Rütbe 20'ye ~5,7 saatte varılıyor (Dalga 1'de 5). Şamandıra takımının hepsi 12 saatte alınıyor (dev file ~11. saatte); Dalga 3'te tekniklerin takımı gelince fiyatlar "bütün kademeler 8–15 saat" hedefine göre yeniden ayarlanır.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
 ### 10.5 Canlı dünya
@@ -511,10 +514,9 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
 
 - **Motor:** Godot 4.7, statik tipli GDScript, Compatibility renderer.
 - **Oyun mantığı** `scripts/core/` altında, saf ve testli: `FishingSession`, `ShadowSim`, `BiteRules`, `ReelModel`, `FishTable`, `LakeShape`, `Records`.
+  - ✅ H2'de gelenler: takım ve para (`GearStats`, `Economy`, `Bucket`, `Rank`, `CatchOdds`: oranlar ve şans garantisi); göl (`LakeShape` havzaları ve bölgeleri, `Zones`, `ShorePath`).
   - H2'de eklenecekler 🔜:
-    - takım ve para: `Loadout`, `GearStats`, `Economy`, `Bucket`, `Rank`, `CatchOdds` (oranlar ve şans garantisi);
-    - teknikler: `Technique` stratejileri (`FloatTechnique`, `LureTechnique`, `BottomTechnique`, `FlyTechnique`), `TrapSim`;
-    - göl: `ShorePath`;
+    - teknikler: `Technique` stratejileri (`FloatTechnique`, `LureTechnique`, `BottomTechnique`, `FlyTechnique`), teknik başına takım seti, `TrapSim`;
     - canlı dünya: `DayClock`, `Weather`, `LakeLove`, `Requests`, `Story`.
   - ✅ Denge botu (`SessionSim`, `tools/economy_report.gd`, süreler `tools/session_timing.gd`) ile korkuluk testleri; oran kataloğu (`tools/fish_catalog.gd` → `balik-katalogu.md`).
   - Çekişme sayıları `tools/reel_report.gd` ile denetlenir; `tests/test_reel_model.gd` sınırları korur.

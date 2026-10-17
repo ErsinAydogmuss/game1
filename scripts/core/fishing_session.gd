@@ -234,9 +234,10 @@ func relocate(p: Vector2) -> void:
 		_emit(e)
 
 
-## Balıkçının bölgesi (sıra; karada en yakın suyunki, sandalda altındaki suyun).
+## Balıkçının avlandığı bölge (sıra): bölgeli gölde gölgelerin doğduğu bölge (ShadowSim.player_zone:
+## durduğu yerin bölgesi, kapalıysa yakındaki açık bölge); tek bölgeli gölde durduğu yerinki.
 func zone() -> int:
-	return lake.zone_at(angler)
+	return sim.player_zone if lake.zone_ids.size() > 1 else lake.zone_at(angler)
 
 
 ## Balıkçının bölgesinin kimliği (bölgesiz yerde boş).

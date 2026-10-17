@@ -222,9 +222,9 @@ Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Clau
 Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte yap ve değerleri tabloya yaz.
 
 1. Telefonu prize tak ya da şarjı yüksek tut. **Düşük Güç Modu** kapalı olsun: açıkken telefon kendini yavaşlatır.
-2. Oyunda **Ayarlar**'ı (dişli) aç. En alttaki sürüm yazısına ("Olta: Gölün Sırrı · v…") arka arkaya **5 kez** dokun. Yazının sonuna "ölçüm açık" eklenir. Sol üstte "60 FPS · 139 çizim · 222k üçgen" gibi bir yazı belirir. Kapatmak için yine 5 dokunuş.
-3. Bütün bölgeleri görmek için (debug derlemede): Ayarlar → **Bütün bölgeleri aç** → **AÇ**. Rütbe 9 olur, sandal verilir, para ve defter değişmez. Bu kaydı değiştirir: istersen denemeden sonra **Kaydı sıfırla** ile baştan başla.
-4. Haritadan sırayla her bölgeye geç: iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı. Sonra iskeledeki sandala dokun (derin orta). Her yerde 10 saniye bekle ve sol üstteki üç sayıyı yaz.
+2. Oyunda **Ayarlar**'ı (dişli) aç. Dil satırının altındaki sürüm yazısına ("Olta: Gölün Sırrı · v…") arka arkaya **5 kez** dokun. Yazının sonuna "ölçüm açık" eklenir. Sol üstte "60 FPS · 140 çizim · 244k üçgen" gibi bir yazı belirir. Kapatmak için yine 5 dokunuş.
+3. Ölçüm açıkken debug derlemede iki geliştirici satırı da görünür: **Bütün bölgeleri aç** ve **Kaydı sıfırla**. Bütün bölgeleri görmek için **Bütün bölgeleri aç** → **AÇ**: rütbe 9 olur, sandal verilir, para ve defter değişmez. Bu kaydı değiştirir: istersen denemeden sonra **Kaydı sıfırla** ile baştan başla.
+4. Haritadan sırayla her bölgeye geç: iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı. Sonra haritada **Derin Orta**'ya dokun: sandalla derin ortaya açılırsın. Her yerde 10 saniye bekle ve sol üstteki üç sayıyı yaz.
 5. Bir balık tut. Çekişme sırasında FPS'e bak: en çok iş o anda yapılır.
 
 | Yer | FPS | Çizim | Üçgen (k) |
@@ -238,7 +238,7 @@ Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte
 | Çekişme anında | | | |
 
 - **Hedef:** her yerde 60 FPS, en az 50.
-- **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken): iskelede 139, öteki yerlerde 87–113, sandalda 103. Telefondaki sayı bundan çok farklıysa not et.
+- **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken): iskelede 140, öteki yerlerde 88–114, sandalda 98. Telefondaki sayı bundan çok farklıysa not et.
 - FPS 50'nin altındaysa şunları da yaz: hangi yerde düştüğü, telefonun ısınıp ısınmadığı, ilk açılışta mı yoksa sürekli mi olduğu.
 
 İstersen bir de `--export-release` ile kur (8. adım) ve açık bölgelerde ölç. Release derlemede "Bütün bölgeleri aç" düğmesi yoktur; sayılar debug'dan biraz daha iyi çıkar.

@@ -68,10 +68,30 @@ func set_obstacles(circles: Array[Vector3]) -> void:
 	_apply()
 
 
-## Çit: a'dan b'ye; kapalıyken geçilmez.
-func set_gate(id: String, a: Vector2, b: Vector2, closed: bool) -> void:
-	_gates[id] = [a, b, closed]
+## Çit: a'dan b'ye; kapalıyken geçilmez. Döner: çit değişti mi. Birden çok çit değişecekse
+## refresh_now = false verip en sonda refresh() çağır (ızgara bir kez kurulsun).
+func set_gate(id: String, a: Vector2, b: Vector2, closed: bool, refresh_now: bool = true) -> bool:
+	var gate := [a, b, closed]
+	if _gates.has(id) and _gates[id] == gate:
+		return false
+	_gates[id] = gate
+	if refresh_now:
+		_apply()
+	return true
+
+
+## Engeller ve çitlerle ızgarayı yeniden kurar (set_gate(..., false) sonrası).
+func refresh() -> void:
 	_apply()
+
+
+## a'dan b'ye adım kapalı bir çiti kesiyor mu (düz yürüyüş ve klavye de çitten geçmesin)?
+func crosses_closed_gate(a: Vector2, b: Vector2) -> bool:
+	for id: String in _gates:
+		var g: Array = _gates[id]
+		if bool(g[2]) and Geometry2D.segment_intersects_segment(a, b, g[0], g[1]) != null:
+			return true
+	return false
 
 
 func gate_closed(id: String) -> bool:

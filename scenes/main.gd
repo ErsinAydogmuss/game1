@@ -316,44 +316,51 @@ func _on_cast_requested(target: Vector2) -> void:
 		_try_cast(target)
 		return
 	_pending_cast = target
-	# Düz yürüyünce (kıyıda durur) menzile giriyorsa düz yürür; girmiyorsa (koyun öbür yakası) kıyı
-	# yolundan hedefe en yakın kıyıya gider. Menzile girince atar.
+	# Düz yürüyünce (kıyıda ya da kapalı çitte durur) menzile giriyorsa düz yürür; girmiyorsa (koyun
+	# öbür yakası) kıyı yolundan hedefe en yakın kıyıya gider. Menzile girince atar.
 	if _straight_reach(target) <= session.range_m() - 0.5:
 		angler.walk_to(target)
 	else:
 		_walk_route(target)
 
 
-## Kıyı yolundan yürür (yol bulunamazsa düz: eski göller ızgaranın dışında da yürünür). Hedef
-## kilitli bir bölgedeyse balıkçı çitin önünde durur, Dede ne zaman gidileceğini söyler.
+## Kıyı yolundan yürür (yol bulunamazsa eski göllerde düz: ızgaranın dışında da yürünür;
+## sınırlı dünyada yürünmez). Hedef kilitli bir bölgedeyse balıkçı çitin önünde durur, Dede ne
+## zaman gidileceğini söyler; bekleyen atış iptal olur (kilitli suya atılmaz).
 func _walk_route(target: Vector2) -> void:
 	var points := path.route(angler.pos2(), target)
 	if points.is_empty():
-		angler.walk_to(target)
+		if lake.world_band == INF:
+			angler.walk_to(target)
 		return
 	angler.walk_path(points)
 	var goal := path.nearest_open(target)
 	if Dice.is_point(goal) and points[points.size() - 1].distance_to(goal) > 1.0:
 		var reason := Zones.lock_reason(GameState.db, GameState.save, Zones.at(GameState.db, spot_id, target))
 		if not reason.is_empty():
+			_pending_cast = Dice.NO_POINT
 			var key := str(reason["key"])
 			_say("UI_DEDE_GATE")
 			hud.toast(tr(key) % int(reason["rank"]) if key == "UI_ZONE_LOCKED_RANK" else tr(key), UiKit.ACCENT, "lock")
 
 
-## Kilitli bölgelerin çitleri kıyı yolunu keser; bölge açılınca (rütbe) çit açılır.
+## Kilitli bölgelerin çitleri kıyı yolunu keser; bölge açılınca (rütbe) çit açılır. Yolun ızgarası
+## yalnızca bir çit değiştiyse ve bir kez kurulur.
 func _update_gates() -> void:
 	var db := GameState.db
+	var changed := false
 	for z in db.zones_of(spot_id):
 		var gates: Array = z["gates"]
 		var closed := not Zones.unlocked(db, GameState.save, z)
 		scene.set_gate_open(str(z["id"]), not closed)
 		for i in gates.size():
 			var g: PackedVector2Array = gates[i]
-			path.set_gate("%s_%d" % [z["id"], i], g[0], g[1], closed)
+			changed = path.set_gate("%s_%d" % [z["id"], i], g[0], g[1], closed, false) or changed
+	if changed:
+		path.refresh()
 
 
-## Hedefe düz yürüyünce (kıyıda ya da dünyanın sınırında durur) hedefe kalan uzaklık.
+## Hedefe düz yürüyünce (kıyıda, dünyanın sınırında ya da kapalı çitte durur) hedefe kalan uzaklık.
 func _straight_reach(target: Vector2) -> float:
 	var from := angler.pos2()
 	var dir := (target - from).normalized()
@@ -362,7 +369,7 @@ func _straight_reach(target: Vector2) -> float:
 	var d := 0.2
 	while d <= length:
 		var p := from + dir * d
-		if not lake.is_walkable(p):
+		if not lake.is_walkable(p) or path.crosses_closed_gate(from, p + dir * Angler.BODY):
 			break
 		stop = p
 		d += 0.2
@@ -557,6 +564,7 @@ func _on_catch() -> void:
 	CatchOdds.note_catch(db, save, rarity, Zones.place(db, spot_id, str(info.get("zone", ""))))
 	session.set_pity_floor(CatchOdds.pity_floor(db, save, Zones.place(db, spot_id, zone_id)))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
+	var zone_news := false
 	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir). Koruma
 	# altındaki tür (mersin) hep göle döner.
 	var protected := Bucket.release_only(db, fish_id)
@@ -579,14 +587,16 @@ func _on_catch() -> void:
 		for z in opened:
 			hud.toast_later(tr("UI_ZONE_OPENED") % tr("ZONE_" + str(z["id"])), UiKit.ACCENT, "", "zone:" + str(z["id"]))
 		if not opened.is_empty():
+			zone_news = true
 			_say("UI_DEDE_ZONE_OPEN")
 			hud.pulse_map()
 	if protected:
 		hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
 	elif not kept:
 		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT, "", "release")
-	elif Bucket.is_full(db, save) and not was_full:
-		# Kova bu balıkla doldu: Dede hatırlatır (Nine'ye sat ki yenileri de sığsın).
+	elif Bucket.is_full(db, save) and not was_full and not zone_news:
+		# Kova bu balıkla doldu: Dede hatırlatır (Nine'ye sat ki yenileri de sığsın). Aynı balıkla
+		# yeni bölge açıldıysa Dede onu söyler; kova, sonraki balıkta "Kova dolu" bildirimiyle hatırlanır.
 		_say("UI_DEDE_BUCKET")
 	bobber.hide_bobber()
 	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)
@@ -838,6 +848,7 @@ func _place_shop() -> void:
 	var obstacles := blockers.duplicate()
 	obstacles.append_array(scene.blockers())
 	path.set_obstacles(obstacles)
+	angler.can_step = func(a: Vector2, b: Vector2) -> bool: return not path.crosses_closed_gate(a, b)
 	_update_gates()
 
 
@@ -881,6 +892,8 @@ func _travel(target: String) -> void:
 		angler.place(stand)
 		var k := lake.zone_index(target)
 		angler.face_now(MapView.badge_anchor(lake, k) - stand)
+		# Yeni yerin gölgeleri o bölgenin şans garantisiyle doğsun.
+		session.set_pity_floor(CatchOdds.pity_floor(db, GameState.save, Zones.place(db, spot_id, target)))
 		session.relocate(stand)
 		_follow_zone()
 		_snap_camera())
@@ -988,6 +1001,8 @@ func _go_boat(buoy: int) -> void:
 		angler.place(at)
 		angler.face_now(buoys[index] - at)
 		session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id, true))
+		session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save,
+				Zones.place(GameState.db, spot_id, str(zone["id"]))))
 		session.relocate(at)
 		hud.set_boat(true)
 		_follow_zone()

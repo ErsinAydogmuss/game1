@@ -103,3 +103,20 @@ func test_gates_close_locked_zones() -> void:
 				if reached:
 					assert_true(_walkable(lake, start, route), "%s yolu sudan geçmez" % z["id"])
 	assert_true(path.gate_closed("lily_cove_0") == false, "çit açıldı")
+
+
+## Kapalı çiti kesen adım (düz yürüyüş, klavye) geçilmez; açık çit ya da çiti kesmeyen adım serbest.
+## Değişmeyen çit ızgarayı yeniden kurmaz.
+func test_steps_do_not_cross_closed_gates() -> void:
+	var db := content()
+	var lake := db.lake("big_lake")
+	var path := ShorePath.new(lake, lake.world_rect)
+	var gate: PackedVector2Array = (db.zone("big_lake", "lily_cove")["gates"] as Array)[0]
+	var mid := (gate[0] + gate[1]) * 0.5
+	var across := (gate[1] - gate[0]).orthogonal().normalized()
+	assert_true(path.set_gate("lily_cove_0", gate[0], gate[1], true), "çit kuruldu")
+	assert_true(not path.set_gate("lily_cove_0", gate[0], gate[1], true), "değişmeyen çit: yeniden kurulmaz")
+	assert_true(path.crosses_closed_gate(mid - across * 0.5, mid + across * 0.5), "kapalı çiti kesen adım")
+	assert_true(not path.crosses_closed_gate(mid - across * 1.5, mid - across * 0.5), "çiti kesmeyen adım")
+	path.set_gate("lily_cove_0", gate[0], gate[1], false)
+	assert_true(not path.crosses_closed_gate(mid - across * 0.5, mid + across * 0.5), "açık çitten geçilir")

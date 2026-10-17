@@ -21,10 +21,15 @@ const BLEND := 1.5
 ## Kıyıya bu kadar yakın hücrelerde uzaklık elips formülünden (pürüzsüz kıyı), uzakta ızgaradan.
 const EXACT_BAND := 1.25
 ## Izgara kurulumunun sürümü: kurulum (kıyı, derinlik, bölge) değişince artır, önbellek yenilensin.
-const BUILD_VERSION := 1
+## 2: sandal havzasının uzak kıyı şeridi bölgesiz (RIM_REACH).
+const BUILD_VERSION := 2
 const CACHE_DIR := "user://cache"
 ## Bölgesi olmayan hücre (ızgarada; zone_at -1 döner).
 const NO_ZONE := 255
+## Sandal havzasının kıyıya yakın şeridi (sandal bölgesi kıyıya değmez) en yakın sandalsız havzaya
+## en çok bu kadar uzaksa (m) onun bölgesidir; daha uzak şerit bölgesiz kalır (gölge doğmaz,
+## dolaşmaz): bir bölgenin suyu kendi havzasından kopup uzak bir kıyıya yayılmasın.
+const RIM_REACH := 3.0
 ## Akıntının, akıntılı havzanın kenarından dışarıda söndüğü uzaklık (m) ve tam güçte aktığı
 ## havza genişliği (en kısa yarıçap, m): geniş havzada akıntı yavaşlar (aynı su geniş yerde yayılır).
 const FLOW_FADE := 2.0
@@ -386,10 +391,10 @@ func _build_depth_and_zones(inside: PackedByteArray, water_x: PackedInt32Array, 
 			if weight[i] > 0.0:
 				depth[i] /= weight[i]
 			# Hiçbir havzanın bandına düşmeyen su (sandal havzasının kıyıya yakın yeri): sandalsız
-			# havzalardan kenarı en yakın olanın bölgesi.
+			# havzalardan kenarı en yakın olanın bölgesi; hepsine RIM_REACH'ten uzaksa bölgesiz.
 			if zone_grid[i] == NO_ZONE:
 				var p := cell_center(x, y)
-				var near := -INF
+				var near := -RIM_REACH
 				for b in basins.size():
 					var zone: int = basins[b]["zone"]
 					if float(basins[b]["boat_from"]) >= 0.0 or zone == NO_ZONE:

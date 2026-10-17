@@ -156,7 +156,9 @@ func _process(delta: float) -> void:
 			if not _toast_queue.is_empty():
 				_show_queued()
 	if _map_pulse > 0.0:
-		_map_pulse = maxf(0.0, _map_pulse - delta)
+		# Kart açıkken (bildirimler beklerken) nabız sayılmaz: kart kapanınca görülsün.
+		if _toast_hold <= 0.0:
+			_map_pulse = maxf(0.0, _map_pulse - delta)
 		map_button.pivot_offset = map_button.size * 0.5
 		map_button.scale = Vector2.ONE * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _map_pulse))
 	# VUR! anında eylem düğmesi nabız gibi atar.

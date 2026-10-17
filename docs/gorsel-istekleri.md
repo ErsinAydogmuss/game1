@@ -39,7 +39,7 @@ Görseller partiler hâlinde geliyor; her parti bir dalgadan önce. **Hepsini bi
 - **Boyut:** yatay **1536×1024** (logo ve uygulama ikonu 1024×1024).
 - **Arka plan:** düz, saf **macenta (#FF00FF)**.
   - "Şeffaf arka plan" isteme; ChatGPT sahte dama deseni çiziyor.
-  - Pembe ya da mor bir nesne varsa o sayfada düz **yeşil (#00FF00)** iste.
+  - Pembe ya da mor nesneli sayfalarda da macenta kalabilir: kesim aracı o sayfalarda yalnızca kenar bandını temizler (`"despill": "edge"`; nadirlik çerçeveleri, nilüferli sayfalar). Nesnenin rengi yine soluyorsa o sayfayı düz **yeşil (#00FF00)** arka planla iste.
 - **6'lı sayfa (3×2 ızgara):** nesneler birbirine değmesin, aralarında boşluk olsun.
 - **Yazı yok:** yazı, gölge ve zemin olmasın (logo hariç).
 - **Stil sabit kalsın:** ilk ürettiğin **stil sayfasını** sonraki her isteğe referans görsel olarak ekle. Prompttaki stil cümlelerini değiştirme, yalnızca nesne listesini değiştir.
@@ -419,10 +419,10 @@ small flag; a dark iron anchor with a rope; a wooden signpost with an arrow.
 |---|---|
 | `pin` | haritada "buradasın" |
 | `lock` | kilitli bölge (dükkândaki rütbe kilidi de bunu kullanır) |
-| `compass` | harita süsü |
-| `buoy` | sandalla gidilen şamandıralar |
-| `anchor` | sandaldayken "kıyıya dön" düğmesi |
-| `signpost` | kilitli bölgenin tabelası (bildirim) |
+| `compass` | harita süsü (görsel gelince bağlanacak) |
+| `buoy` | sandalla gidilen şamandıralar (görsel gelince bağlanacak; bugün haritada kodla çizilir) |
+| `anchor` | sandaldayken "kıyıya dön" düğmesi (görsel gelince bağlanacak; bugün sandal ikonu) |
+| `signpost` | kilitli bölgenin tabelası (görsel gelince bağlanacak; bugün kilit ikonu) |
 
 **5. `ground_tiles.png`: zemin dokuları**
 
@@ -473,6 +473,6 @@ Oyuna bağlama (v0.2.1'deki durum; Parti 3 Dalga 2'de):
 | `logo` | `assets/ui/art/logo.png` | Açılış ekranı (`boot_splash/image`; iOS açılış ekranı da bundan) ve ayarlar panelinin başlığı. |
 | `style_sheet`, `concept_screen` | `docs/img/` | Yalnızca referans. |
 | `zone_badges` | `assets/icons/zones/zone_<bölge>.png` | Dalga 2: haritada bölgelerin rozeti, "yeni bölge açıldı" bildirimi. Yoksa kodla çizilen rozet. |
-| `map_paper`, `map_stickers` | `assets/ui/map/` | Dalga 2: harita panelinin zemini ve süsleri. Göl, gölün verisinden çizilir. |
-| `map_icons` | `assets/icons/ui/` | Dalga 2: `GameIcon.ART_NAMES` (`pin`, `lock`, `compass`, `buoy`, `anchor`, `signpost`). |
+| `map_paper`, `map_stickers` | `assets/ui/map/` | Harita panelinin zemini ve süsleri: görseller gelince bağlanacak (bugün harita gölün verisinden kodla çizilir). |
+| `map_icons` | `assets/icons/ui/` | `pin` ve `lock` bağlı (`GameIcon.ART_NAMES`); `compass`, `buoy`, `anchor`, `signpost` görseller gelince bağlanacak. |
 | `ground_tiles` | `assets/textures/ground/` | Dalga 2: zemin shader'ı (çimen, kum, kıyı yolu, kayalık). Dördü birden gelince zemin kendiliğinden onlarla çizilir (`LakeScene.GROUND_TILES`, bir karo 3 m); yoksa kodla. |

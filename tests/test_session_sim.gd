@@ -16,7 +16,7 @@ const PACING := [
 	["rank_3", 5.0, 15.0],         # nilüferli koy açılır (hedef 8–12)
 	["rank_5", 15.0, 35.0],        # kayalık burun (20–30)
 	["rank_7", 38.0, 65.0],        # dere ağzı (45–60)
-	["rank_9", 70.0, 120.0],       # sandal Nine'de (80–110)
+	["rank_9", 60.0, 120.0],       # sandal Nine'de (hedef 80–110; dere ağzında balık çabuk geldiğinden ~70–80)
 	["zone:lily_cove", 5.0, 15.0], # bölge açılınca bot hemen gider
 	["zone:rocky_point", 15.0, 35.0],
 	["species_5", 0.0, 30.0],

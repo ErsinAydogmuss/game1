@@ -189,7 +189,7 @@ static func view_draws(root: Node3D, p: Vector2) -> int:
 	var focus := Vector3(p.x, 0.4, p.y)
 	var eye := Transform3D(Basis.from_euler(Vector3(-FollowCamera.PITCH, FollowCamera.YAW, 0.0)),
 			focus + back * FollowCamera.SURFACE_DISTANCE)
-	var planes := frustum(eye, 40.0, VIEW_ASPECT, 0.3, 220.0)
+	var planes := frustum(eye, FollowCamera.FOV, VIEW_ASPECT, FollowCamera.NEAR, FollowCamera.FAR)
 	var draws := 0
 	for node in root.find_children("*", "GeometryInstance3D", true, false):
 		var geometry := node as GeometryInstance3D

@@ -7,7 +7,7 @@ extends Node
 ##     [--shots=/mutlak/yol] [--locale=tr] [--safe-inset=130]
 ## Senaryolar:
 ##   controls: kontrollerin denemesi; KONTROL satırları TAMAM olmalı (Dede'ye dokun konuşsun,
-##     Nine'ye dokun selam versin, sandala dokun Dede konuşsun (atış yok), yürü, kıyıda dur,
+##     Nine'ye dokun selam versin, sandala dokun Dede konuşsun (atış yok), yürü, kıyı yolundan dolaş,
 ##     Dede'nin yanından ve dükkânın önünden geç,
 ##     at, geri sar, gölgeyi korkut, gölgeyi çek, erken
 ##     dokunuş, ekranın her yeri VUR, basılı tut tut, kart açıkken atış yok, patlamada bırakmazsa
@@ -15,7 +15,7 @@ extends Node
 ##   first: ilk açılış; senaryolu ilk balık (ekran görüntüleri; 45 sn denetimi).
 ##   hero: balıkçı, Dede ve Nine yakın çekim (kamerayı bot sürer): Dede konuşur, ikisi, dükkân,
 ##     Nine selam verir, atış, bekleme, çekme, balığı gösterme, Dede sevinir.
-##   fish: beş balık elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez).
+##   fish: on iki balık elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez).
 ##   shop: Nine'nin dükkânı (KONTROL satırları): dokununca açılır, para yetmezse ve rütbe tutmazsa
 ##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, doluyken balık göle döner,
 ##     hepsini sat, son yem bitince solucana döner; sekme görüntüleri.
@@ -647,6 +647,10 @@ func _play_map() -> void:
 	await _tap_control(hud.map_button)
 	await _wait_until(func() -> bool: return panel.visible, 2.0)
 	_check("harita düğmesine dokun → harita açılır", panel.visible)
+	await _wait(0.3)
+	_check("harita paneli küçülmeden sığar (%.2f; kapatma düğmesi %.0f)" % [panel.fit_scale(),
+			panel.close_button.get_global_rect().size.y], panel.fit_scale() > 0.999
+			and panel.close_button.get_global_rect().size.y >= 121.5)
 	await _wait(0.5)
 	await _shot("02_harita")
 	_check_map_badges(panel)
@@ -681,8 +685,10 @@ func _play_map() -> void:
 	var before := _angler().pos2()
 	await _tap_control(panel.view.badge("deep_water"))
 	await _wait(0.6)
+	var note: Label = panel.get("_note")
 	_check("kilitli bölgeye geçilmez, nedeni yazılır", panel.visible and not fade.busy()
-			and _angler().pos2() == before and str(main.get("zone_id")) == "dock_cove")
+			and _angler().pos2() == before and str(main.get("zone_id")) == "dock_cove"
+			and note.text.begins_with(tr("ZONE_deep_water")))
 	await _shot("%02d_kilitli" % index)
 	panel.close_panel()
 	await _wait(0.3)
@@ -804,9 +810,23 @@ func _play_tour() -> void:
 	await _wait(1.0)
 	var hud := _hud()
 	var settings: SettingsPanel = main.get("settings_panel")
+	# Ölçüm kapalı başlar (yüklenen kayıtta açık kalmış olabilir: 5 dokunuş onu kapatırdı).
+	save.settings["perf"] = false
+	GameState.changed.emit()
 	await _tap_control(hud.settings_button)
 	await _wait_until(func() -> bool: return settings.visible, 2.0)
 	await _wait(0.4)
+	_check("ayarlar paneli küçülmeden sığar (%.2f)" % settings.fit_scale(), settings.fit_scale() > 0.999)
+	# Sürüm yazısına arka arkaya 5 dokunuş: ölçüm açılır; geliştirme satırları görünür.
+	var version: Label = null
+	for node in settings.find_children("*", "Label", true, false):
+		if (node as Label).text.begins_with(tr("UI_GAME_TITLE")):
+			version = node as Label
+	if version != null:
+		for i in SettingsPanel.PERF_TAPS:
+			await _tap_control(version)
+			await _wait(0.15)
+	await _wait(0.3)
 	# Geliştirme düğmesi: rütbe en yüksek bölgeninki, sandal (çitler açılır, erişim yenilenir).
 	var unlock := _button_with_text(settings, UiKit.upper(tr("UI_DEBUG_UNLOCK_GO")))
 	# Dokunuştan sonra panel satırlarını yeniden kurar (düğme silinir): bulunduğu önceden yazılır.
@@ -817,18 +837,8 @@ func _play_tour() -> void:
 	var all_open := true
 	for z in db.zones_of(spot):
 		all_open = all_open and Zones.unlocked(db, save, z)
-	_check("ayarlarda \"Bütün bölgeleri aç\" → rütbe %d ve sandal, bütün bölgeler açık" % Rank.rank(db, save),
+	_check("ölçüm açıkken \"Bütün bölgeleri aç\" → rütbe %d ve sandal, bütün bölgeler açık" % Rank.rank(db, save),
 			found and all_open and Economy.owns(db, save, Zones.BOAT) and int(main.get("_access_rank")) == Rank.rank(db, save))
-	# Sürüm yazısına arka arkaya 5 dokunuş: ölçüm açılır.
-	var version: Label = null
-	for node in settings.find_children("*", "Label", true, false):
-		if (node as Label).text.begins_with(tr("UI_GAME_TITLE")):
-			version = node as Label
-	if version != null:
-		for i in SettingsPanel.PERF_TAPS:
-			await _tap_control(version)
-			await _wait(0.15)
-	await _wait(0.3)
 	await _shot("00_ayarlar")
 	settings.close_panel()
 	await _wait(1.0)
@@ -843,7 +853,10 @@ func _play_tour() -> void:
 		var id := str(z["id"])
 		main.call("_travel", id)
 		await _wait_until(func() -> bool: return fade.busy(), 1.0)
-		await _wait_until(func() -> bool: return not fade.busy() and str(main.get("zone_id")) == id, 5.0)
+		var arrived := await _wait_until(func() -> bool: return not fade.busy() and str(main.get("zone_id")) == id, 5.0)
+		if not arrived:
+			_check("%s bölgesine geçilir" % id, false)
+			continue
 		await _wait(1.5)
 		var info := await _measure_draws()
 		print("ÇİZİM %-13s %3d çizim, %6d üçgen%s" % [id, info["draws"], info["primitives"],
@@ -917,7 +930,7 @@ func _tap_card(shop: ShopPanel, id: String, which: int) -> void:
 	await _tap_control(buttons[which] as Control)
 
 
-## Beş balık: elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları işlemez.
+## Gölün bütün balıkları (12): elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları işlemez.
 func _play_fish() -> void:
 	_use_save(1)
 	main.set("bot_camera", true)
@@ -951,7 +964,7 @@ func _play_fish() -> void:
 	# Ayarlar paneli (düğme boyları, sığma).
 	(main.get("settings_panel") as SettingsPanel).open()
 	await _wait(0.5)
-	await _shot("6_ayarlar")
+	await _shot("13_ayarlar")
 	_quit()
 
 
@@ -1252,7 +1265,15 @@ func _wait_until(condition: Callable, timeout: float) -> bool:
 
 
 func _shot(shot_name: String) -> void:
+	# Geliştirme sürümünün FPS yazısı ekran görüntüsüne girmez (ölçüm açıkken girer: gezi).
+	var hud := _hud()
+	var fps: Label = hud.get("_fps")
+	var hide := fps != null and fps.visible and not hud.perf
+	if hide:
+		fps.visible = false
 	await RenderingServer.frame_post_draw
+	if hide:
+		fps.visible = true
 	if _shots_dir.is_empty():
 		return
 	var path := _shots_dir.path_join(shot_name + ".png")

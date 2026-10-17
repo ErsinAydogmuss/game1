@@ -6,6 +6,10 @@ extends Camera3D
 const YAW := deg_to_rad(32.0)
 const PITCH := deg_to_rad(50.0)
 const SURFACE_DISTANCE := 12.0
+## Görüş açısı (dikey, derece) ve kesme uzaklıkları (çizim sayısı testi de bunları kullanır).
+const FOV := 40.0
+const NEAR := 0.3
+const FAR := 220.0
 
 var target := Vector3.ZERO
 var distance: float = SURFACE_DISTANCE
@@ -19,9 +23,9 @@ var _shake: float = 0.0
 
 
 func _init() -> void:
-	fov = 40.0
-	near = 0.3
-	far = 220.0
+	fov = FOV
+	near = NEAR
+	far = FAR
 
 
 ## Hedefe anında geç (sahne açılışında).

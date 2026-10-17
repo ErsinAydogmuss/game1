@@ -8,8 +8,9 @@ extends Dialog
 
 signal travel_requested(zone_id: String)
 
-## Haritanın en büyük boyu (gölün oranıyla küçülür) ve panelin en dar genişliği.
-const MAP := Vector2(1500, 740)
+## Haritanın en büyük boyu (gölün oranıyla küçülür) ve panelin en dar genişliği. Yükseklik telefonda
+## (iPhone 14, alt güvenli payla) panel küçülmeden sığacak kadar: kapatma düğmesi 122 birim kalır.
+const MAP := Vector2(1500, 660)
 const MIN_WIDTH := 1000.0
 ## Panelin iç payları ve haritanın çerçevesi (genişliğe eklenir).
 const FRAME_PAD := 110.0

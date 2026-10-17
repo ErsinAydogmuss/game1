@@ -145,6 +145,30 @@ func test_world_boundary() -> void:
 
 ## Kıyı ızgarası önbelleği: önbellekten gelen ızgara yeni kurulanla bit bit aynı; gölün tanımı
 ## değişince yeniden kurulur ve eski önbellek silinir.
+## Sandal havzasının öteki havzalardan uzak kıyı şeridi bölgesizdir (orada gölge doğmaz,
+## dolaşmaz); bölgelerin suyu kendi havzalarının çevresinde kalır.
+func test_far_rim_of_the_boat_basin_has_no_zone() -> void:
+	var db := content()
+	var lake := db.lake("big_lake")
+	for p: Vector2 in [Vector2(-8.0, -21.6), Vector2(-3.5, -22.0), Vector2(2.0, -20.8)]:
+		assert_true(lake.is_water(p) and lake.zone_at(p) == -1, "%s: derin ortanın orman kıyısı bölgesiz" % p)
+	var stream := lake.zone_centers[lake.zone_index("stream_mouth")]
+	assert_true(stream.distance_to(Vector2(-16.0, -13.5)) < 3.0, "dere ağzının suyu derenin çevresinde (%s)" % stream)
+	var rocky := lake.zone_centers[lake.zone_index("rocky_point")]
+	assert_true(rocky.distance_to(Vector2(10.0, -13.0)) < 3.0, "kayalık burnun suyu burnun çevresinde (%s)" % rocky)
+
+
+## Önbellekteki ızgara (testler ve oyun önbellekten okur) yeni kurulumla aynı: kurulum değişip
+## BUILD_VERSION artırılmazsa önbelleği olan makinede eski ızgara okunur; bu test onu yakalar.
+func test_cached_lakes_match_fresh_build() -> void:
+	var db := content()
+	for id: String in ["home_lake", "big_lake"]:
+		var cached := db.lake(id)
+		var fresh := LakeShape.from_spot(db.spot(id), false)
+		assert_true(cached.shore == fresh.shore and cached.depth == fresh.depth and cached.zone_grid == fresh.zone_grid,
+				"%s: önbellekteki ızgara yeni kurulumla aynı (BUILD_VERSION artırıldı mı?)" % id)
+
+
 ## Akıntı (dere ağzı, görsel; Dalga 3'te sinek): dar derede bölgenin akıntısı tam güçte, derenin
 ## açıldığı geniş havuzda zayıf, uzakta yok; eski şemadaki gölde hiç yok.
 func test_flow() -> void:

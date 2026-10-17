@@ -29,6 +29,9 @@ var lake: LakeShape
 var height_at: Callable
 ## Girilemeyen daireler (iskelede oturan Dede): Vector3(x, z, yarıçap). Balıkçı çevresinden kayar.
 var blockers: Array[Vector3] = []
+## Adım atılabilir mi (from, to) -> bool: kapalı çitler (main verir: ShorePath.crosses_closed_gate).
+## Verilmezse her yürünebilir adım serbest.
+var can_step: Callable
 var facing := Vector2(0.0, -1.0)
 ## Duruş: free (serbest), hold (olta suda), reel (çekişme).
 var pose: String = "free"
@@ -252,6 +255,8 @@ func _move(dir: Vector2, length: float) -> bool:
 	var next := pos2() + step
 	var ahead := next + step.normalized() * BODY
 	if not lake.is_walkable(next) or not lake.is_walkable(ahead):
+		return false
+	if can_step.is_valid() and not bool(can_step.call(pos2(), ahead)):
 		return false
 	position.x = next.x
 	position.z = next.y

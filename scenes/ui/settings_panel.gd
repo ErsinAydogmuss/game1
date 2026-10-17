@@ -2,8 +2,8 @@ class_name SettingsPanel
 extends Dialog
 ## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil. (Kazı'dan uyarlandı.)
 ## Sürüm yazısına arka arkaya 5 kez dokununca ölçüm açılır ya da kapanır (HUD'da FPS, çizim ve
-## üçgen sayısı; telefonda hız ölçümü: docs/iphone-kurulum.md). Geliştirme sürümünde kaydı
-## sıfırlama ve bütün bölgeleri açma (ölçüm ve deneme için) da burada.
+## üçgen sayısı; telefonda hız ölçümü: docs/iphone-kurulum.md). Ölçüm açıkken geliştirme sürümünde
+## bütün bölgeleri açma ve kaydı sıfırlama satırları da görünür (normalde panel küçülmeden sığsın).
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
@@ -68,12 +68,11 @@ func refresh() -> void:
 	version.mouse_filter = Control.MOUSE_FILTER_STOP
 	version.gui_input.connect(_on_version_input)
 	_rows.add_child(version)
-	if OS.is_debug_build():
+	if OS.is_debug_build() and bool(settings.get("perf", false)):
 		var unlock := _row(tr("UI_DEBUG_UNLOCK"), "map")
 		var unlock_button := UiKit.button(tr("UI_DEBUG_UNLOCK_GO"), UiKit.SECONDARY, UiKit.SIZE_SMALL, ROW_BUTTON)
 		unlock_button.pressed.connect(_unlock_zones)
 		unlock.add_child(unlock_button)
-	if OS.is_debug_build():
 		var reset := _row(tr("UI_DEBUG_RESET"), "close")
 		var reset_button := UiKit.button(tr("UI_DEBUG_RESET"), UiKit.DANGER, UiKit.SIZE_SMALL, ROW_BUTTON)
 		# Tek dokunuş kaydı silmesin: ilk dokunuş sorar, 3 sn içinde ikincisi siler.

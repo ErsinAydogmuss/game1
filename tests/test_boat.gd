@@ -104,6 +104,26 @@ func test_shadows_keep_clear_of_the_boat() -> void:
 	assert_true(closest >= ShadowSim.BOAT_CLEAR * 0.55, "gölge sandala en çok %.2f m yaklaştı" % closest)
 
 
+## Sandala çok yaklaşmış (kaçarken ya da ilgisini kaybedince) dolaşan gölge orada takılı kalmaz:
+## sandaldan uzaklaşan bir hedef seçer.
+func test_shadow_next_to_the_boat_swims_away() -> void:
+	var db := content()
+	var at := _moor(db.zone(SPOT, "deep_water")["buoys"][1])
+	for seed_value in 6:
+		var session := _boat_session(at, 40 + seed_value)
+		var s := session.sim.shadows[0]
+		s.pos = at + Vector2(1.2, 0.0)
+		s.mode = FishShadow.Mode.PAUSE
+		s.timer = 1
+		var moved := false
+		for i in 5 * HZ:
+			session.sim.step(at, Vector2.ZERO, false, 0)
+			if s.pos.distance_to(at) >= ShadowSim.BOAT_CLEAR * 0.7:
+				moved = true
+				break
+		assert_true(moved, "seed %d: gölge sandalın dibinden uzaklaşır (%.2f m)" % [seed_value, s.pos.distance_to(at)])
+
+
 ## Sandal bölgesi sandal ister; sandalla açılır, karadan avlanılmaz.
 func test_boat_zone_needs_the_boat() -> void:
 	var db := content()

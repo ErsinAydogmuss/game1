@@ -5,8 +5,8 @@
 > işlevlerden (`CatchOdds`) okunur; Balık Defteri'nde yazan oranlar bunlardır.
 
 - **Değer** = türün değeri × boy çarpanı (türün en küçük boyu 0,6, en büyüğü 1,6; tamsayı para). Değeri
-  0 olan (Masalsı) balık satılmaz. Koruma altındaki tür (mersin) kovaya girmez: tutulur, göle bırakılır;
-  rütbe puanı ve göl sevgisi verir.
+  0 olan balık satılmaz: Masalsı hikâye balığı (sonraki dalgalarda) ve koruma altındaki tür (mersin). Mersin
+  kovaya girmez: tutulur, göle bırakılır; rütbe puanı ve göl sevgisi verir.
 - **Rütbe puanı** = nadirliğin puanı × (1 + yıldız başına 0,25). Bırakılan balık da puan verir.
 - Bir gölgenin türü ve boyu doğduğu anda belirlenir (gizli ama değişmez); gölgenin boyu balığın
   boyunu ele verir, nadirlik ipucu (pırıltı, ışıltı, dalga izi) kademesini.
