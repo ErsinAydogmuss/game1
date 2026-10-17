@@ -28,6 +28,8 @@ const ACTIONS := {
 	"hook": ["UI_ACT_HOOK", "hook"], "reel": ["UI_ACT_REEL", "reel"],
 }
 const TOAST_TIME := 1.7
+## Bildirimin yanındaki ikonun boyu.
+const TOAST_ICON := 104.0
 ## Defter düğmesinin rengi (deri kapak).
 ## Defter düğmesi turuncu (arayüz kitindeki düğme görseli; palet dışı renk kodla çizilirdi).
 const BOOK_COLOR := UiKit.PRIMARY
@@ -58,8 +60,11 @@ var _faces: Dictionary = {}
 var _hint_key: String = ""
 var _speaker: String = "dede"
 var _toast: Label
+## Bildirimin ikonu (ör. kova dolu: göle dönen balık) ve ikonla yazının kutusu (canlandırılan).
+var _toast_icon: GameIcon
+var _toast_box: HBoxContainer
 var _toast_age: float = -1.0
-## Sırası gelince gösterilecek bildirimler: [metin, renk] (ör. rütbe atlama, kova dolu).
+## Sırası gelince gösterilecek bildirimler: [metin, renk, ses, ikon] (ör. rütbe atlama, kova dolu).
 var _toast_queue: Array[Array] = []
 ## Açılıştan sonra kare başına bir tane çizilecek düğme dokuları (panellerin renkleri: dükkân,
 ## ayarlar). Hepsi açılışta çizilse açılış uzar; ilk açılan panelde çizilse panel takılır.
@@ -107,13 +112,13 @@ func _process(delta: float) -> void:
 	if _toast_age >= 0.0:
 		_toast_age += delta
 		var t := _toast_age / TOAST_TIME
-		_toast.modulate.a = clampf((1.0 - t) * 4.0, 0.0, 1.0)
+		_toast_box.modulate.a = clampf((1.0 - t) * 4.0, 0.0, 1.0)
 		# Boyut yeni yazıya göre ancak yerleşimden sonra belli: merkez her kare güncellenir.
-		_toast.pivot_offset = _toast.size * 0.5
-		_toast.scale = Vector2.ONE * (1.0 + 0.25 * maxf(0.0, 1.0 - _toast_age / 0.15))
+		_toast_box.pivot_offset = _toast_box.size * 0.5
+		_toast_box.scale = Vector2.ONE * (1.0 + 0.25 * maxf(0.0, 1.0 - _toast_age / 0.15))
 		if t >= 1.0:
 			_toast_age = -1.0
-			_toast.visible = false
+			_toast_box.visible = false
 			if not _toast_queue.is_empty():
 				_show_queued()
 	# VUR! anında eylem düğmesi nabız gibi atar.
@@ -176,16 +181,17 @@ func set_status(coins: int, bucket: int, capacity: int, rank: int, progress: flo
 
 
 ## Bildirim: biri gösteriliyorsa ya da bekletiliyorsa (hold_toasts) sırasını bekler (rütbe atlama,
-## kova dolu gibi ikincil haberler). sound: göründüğü an çalan ses (titreşimiyle; "" = yok).
-func toast_later(text: String, color: Color = UiKit.TEXT, sound: String = "") -> void:
-	_toast_queue.append([text, color, sound])
+## kova dolu gibi ikincil haberler). sound: göründüğü an çalan ses (titreşimiyle; "" = yok);
+## icon: yazının yanındaki GameIcon ("" = yok).
+func toast_later(text: String, color: Color = UiKit.TEXT, sound: String = "", icon: String = "") -> void:
+	_toast_queue.append([text, color, sound, icon])
 	if _toast_age < 0.0 and _toast_hold <= 0.0:
 		_show_queued()
 
 
 func _show_queued() -> void:
 	var next: Array = _toast_queue.pop_front()
-	toast(str(next[0]), next[1])
+	toast(str(next[0]), next[1], str(next[3]))
 	var sound := str(next[2])
 	if not sound.is_empty():
 		Sounds.play(sound)
@@ -198,13 +204,16 @@ func set_line_out(on: bool) -> void:
 		c.visible = not on
 
 
-## Ortada kısa bir bildirim (metin hazır çevrilmiş gelir).
-func toast(text: String, color: Color = UiKit.TEXT) -> void:
+## Ortada kısa bir bildirim (metin hazır çevrilmiş gelir). icon: yanında GameIcon ("" = yok).
+func toast(text: String, color: Color = UiKit.TEXT, icon: String = "") -> void:
 	_toast.text = UiKit.upper(text)
 	_toast.add_theme_color_override("font_color", color)
-	_toast.visible = true
+	_toast_icon.visible = not icon.is_empty()
+	if not icon.is_empty():
+		_toast_icon.kind = icon
+	_toast_box.visible = true
 	_toast_age = 0.0
-	_toast.pivot_offset = _toast.size * 0.5
+	_toast_box.pivot_offset = _toast_box.size * 0.5
 
 
 ## Sıradaki bildirimleri bir süre bekletir (toast_later ile gelenler).
@@ -369,10 +378,19 @@ func _build_bottom() -> void:
 
 
 func _build_center() -> void:
+	_toast_box = HBoxContainer.new()
+	_toast_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_toast_box.add_theme_constant_override("separation", 16)
+	_toast_box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_toast_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_toast_box.visible = false
+	_toast_icon = GameIcon.make("question", TOAST_ICON)
+	_toast_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_toast_icon.visible = false
+	_toast_box.add_child(_toast_icon)
 	_toast = UiKit.title("", 64, UiKit.TEXT, HORIZONTAL_ALIGNMENT_CENTER, 14)
-	_toast.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_toast.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_toast.visible = false
+	_toast_box.add_child(_toast)
 	var frame := _frame()
 	# Bildirim ortanın biraz üstünde: şamandırayı ve balıkçıyı kapatmasın.
 	var box := VBoxContainer.new()
@@ -383,7 +401,7 @@ func _build_center() -> void:
 	spacer.custom_minimum_size = Vector2(0, 230)
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(spacer)
-	box.add_child(_toast)
+	box.add_child(_toast_box)
 	frame.add_child(box)
 
 

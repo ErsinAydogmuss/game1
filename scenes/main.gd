@@ -467,9 +467,9 @@ func _on_catch() -> void:
 	hud.hold_toasts(CatchFx.HOLD_TIME)
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
 		var rank := int(ranked["new_rank"])
-		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up")
+		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up", "star")
 	if not kept:
-		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT)
+		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT, "", "release")
 	elif Bucket.is_full(db, save) and not was_full:
 		# Kova bu balıkla doldu: Dede hatırlatır (Nine'ye sat ki yenileri de sığsın).
 		_say("UI_DEDE_BUCKET")

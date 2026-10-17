@@ -16,8 +16,8 @@ extends Node
 ##     Nine selam verir, atış, bekleme, çekme, balığı gösterme, Dede sevinir.
 ##   fish: beş balık elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez).
 ##   shop: Nine'nin dükkânı (KONTROL satırları): dokununca açılır, para yetmezse ve rütbe tutmazsa
-##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, hepsini sat, son yem bitince
-##     solucana döner; sekme görüntüleri.
+##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, doluyken balık göle döner,
+##     hepsini sat, son yem bitince solucana döner; sekme görüntüleri.
 ##   rarity: nadirlik ipuçları (görsel denetim): her nadirlikten bir gölge yan yana (pırıltı, ışıltı,
 ##     kabarcık), sonra her nadirliğin rozeti; gri tonlamalı kopyayla renk körü denetimi yapılır.
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~70 sn): dönen bir oyuncu; Dede'ye dokun,
@@ -400,6 +400,25 @@ func _play_shop() -> void:
 	_check("kova dolunca Dede uyarır", Bucket.is_full(db, save) and str(main.get("_hint_shown")) == "UI_DEDE_BUCKET")
 	await _wait(0.3)
 	await _shot("07a_kova_doldu")
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	# 7b) Kova doluyken bir balık daha: kovaya girmez, göle döner; bildirimi göle dönen balıkla.
+	var held := save.bucket.size()
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "rudd")
+	await _tap_world(Vector2(1.0, -1.0))
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait_state(FishingSession.State.CAUGHT, 25.0)
+	_touch(1, Vector2(260, 520), false)
+	var toast: Label = _hud().get("_toast")
+	var toast_icon: GameIcon = _hud().get("_toast_icon")
+	for i in 200:
+		if toast.is_visible_in_tree() and toast.text == UiKit.upper(tr("UI_BUCKET_FULL")):
+			break
+		await _wait_frames(1)
+	_check("kova doluyken balık göle döner (bildirim ikonlu)", save.bucket.size() == held
+			and toast.is_visible_in_tree() and toast_icon.visible and toast_icon.kind == "release")
+	await _wait(0.2)
+	await _shot("07b_kova_dolu_birak")
 	await _wait_state(FishingSession.State.IDLE, 5.0)
 	# 8) Nine'ye dokun: kova dolu, Kova sekmesi açılır; hepsini sat → para.
 	await _tap(_screen(nine.head_point()))

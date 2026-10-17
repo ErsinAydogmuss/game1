@@ -431,6 +431,8 @@ func _build_sell() -> void:
 	foot.add_child(UiKit.title(UiKit.format_int(Economy.bucket_value(db, save)), UiKit.SIZE_TITLE, UiKit.ACCENT))
 	var sell := _button(tr("UI_SHOP_SELL_ALL"), UiKit.SUCCESS, _sell, Vector2(380, ACTION.y))
 	sell.name = "SellAll"
+	sell.icon = ItemArt.ui("sell")
+	sell.add_theme_constant_override("icon_max_width", 64)
 	foot.add_child(sell)
 
 

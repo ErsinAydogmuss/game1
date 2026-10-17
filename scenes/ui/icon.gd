@@ -4,22 +4,27 @@ extends Control
 ## yoksa 100×100'lük bir tasarım alanında kodla çizer ve boyuta ölçekler. (Kazı'dan uyarlandı.)
 ## kind: coin, star, star_empty, close, book, settings, lock, question, hand, burst, trophy,
 ## sound, music, vibration, easy, globe, up, down, rod, reel, line, bait, net, bucket, aquarium,
-## bobber, hook, fish, shop, gem. "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini
+## bobber, hook, fish, shop, gem, map, sell (para kesesi), release (göle dönen balık). "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini
 ## (circle, triangle, diamond, star, sparkle, medallion; görseli yoksa şekil tint renginde) çizer.
 
 ## Kodla çizilebilen ikonlar (görseli yoksa). Bilinmeyen ad soru işareti çizer (boş kalmasın);
 ## takımın "kind"ı bunlardan biri olmalı (test_content_db denetler).
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
-		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock"]
+		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
+		"release"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
 	"coin": "coin", "close": "close", "star": "star", "star_empty": "star_empty", "book": "book",
 	"settings": "settings", "lock": "lock", "question": "question", "hand": "hand", "burst": "burst",
 	"trophy": "trophy", "rod": "rod", "reel": "reel", "bait": "bait", "bucket": "bucket",
-	"aquarium": "aquarium", "hook": "hook", "shop": "shop",
+	"aquarium": "aquarium", "hook": "hook", "shop": "shop", "map": "map", "sell": "sell",
+	"release": "release",
 }
+## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
+## Misina, Yem ve Ekstra sekmeleri.
+const GEAR_ART := {"line": "line_braid", "bait": "bait_worm", "net": "net"}
 
 ## Nadirlik şekli (rarities.json "shape") → arayüz kitindeki rozet görseli (assets/icons/ui).
 ## Görsel varsa renk tint'ten değil görselden gelir; test_art_sheet her nadirliği denetler.
@@ -71,7 +76,10 @@ static func texture_for(icon_kind: String) -> Texture2D:
 	if icon_kind.begins_with("rarity:"):
 		var art: String = RARITY_ART.get(icon_kind.substr(7), "")
 		return ItemArt.ui(art) if not art.is_empty() else null
-	return ItemArt.ui(str(ART_NAMES[icon_kind])) if ART_NAMES.has(icon_kind) else null
+	var art: Texture2D = ItemArt.ui(str(ART_NAMES[icon_kind])) if ART_NAMES.has(icon_kind) else null
+	if art == null and GEAR_ART.has(icon_kind):
+		art = ItemArt.gear(str(GEAR_ART[icon_kind]))
+	return art
 
 
 func _draw() -> void:
@@ -87,7 +95,7 @@ func _draw() -> void:
 		draw_set_transform(Vector2.ZERO)
 		return
 	match kind:
-		"coin":
+		"coin", "sell":
 			_coin()
 		"star":
 			_star(tint)
@@ -108,7 +116,7 @@ func _draw() -> void:
 			_vibration()
 		"easy":
 			_easy()
-		"globe", "book":
+		"globe", "book", "map":
 			_globe()
 		"settings":
 			_gear()
@@ -130,7 +138,7 @@ func _draw() -> void:
 			_bobber()
 		"hook":
 			_hook()
-		"fish":
+		"fish", "release":
 			_fish(tint if tint != Color.WHITE else Color("#f2a541"))
 		"bucket":
 			_bucket()

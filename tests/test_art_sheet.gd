@@ -147,6 +147,25 @@ func test_art_sheets_are_consistent() -> void:
 		assert_true(files.has(needed), "sayfa var: " + needed)
 
 
+## Takımın resim adı (gear.json "icon" ya da kimlik) bir takım sayfasında var; yoksa (kovalar)
+## türünün arayüz görseli var. Addaki bir yazım hatası sessizce kodla çizilen ikona düşmesin.
+func test_gear_items_have_art_names() -> void:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/art_sheets.json"))
+	var names := {}
+	for raw: Variant in (parsed as Dictionary)["sheets"]:
+		var def: Dictionary = raw
+		if str(def.get("out", "")) == "res://assets/icons/gear":
+			for n: Variant in def.get("names", []):
+				names[str(n)] = true
+	for item in content().gear:
+		var art := str(item.get("icon", item["id"]))
+		assert_true(names.has(art) or GameIcon.ART_NAMES.has(str(item["kind"])),
+				"takım resmi: %s (%s)" % [item["id"], art])
+	# Dükkân sekmelerinin takım resimleri de sayfalarda (GameIcon.GEAR_ART).
+	for kind: String in GameIcon.GEAR_ART:
+		assert_true(names.has(str(GameIcon.GEAR_ART[kind])), "sekme resmi: " + kind)
+
+
 ## Her nadirliğin şekli için rozet görseli adı var ve "rarity_<id>" (GameIcon.RARITY_ART).
 func test_rarity_shapes_have_badge_art() -> void:
 	var db := content()
