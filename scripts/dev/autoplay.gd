@@ -31,7 +31,7 @@ extends Node
 ##     dokunuş (ölçüm açılır: sol üstte FPS, çizim, üçgen); sonra her bölgenin atış noktasına ve
 ##     sandalla derin ortaya geçer; her yerde ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü;
 ##     KONTROL: her yerde en çok TOUR_DRAWS çizim.
-##   video: kısa tanıtım (--write-movie ile kaydedilir, ~100 sn): dönen bir oyuncu; Dede'ye dokun,
+##   video: kısa tanıtım (--write-movie ile kaydedilir, ~90 sn): dönen bir oyuncu; Dede'ye dokun,
 ##     pırıltılı gölgeden nadir bir turna (VUR, çekişme, ışık sütunu, kart), rütbe 3: nilüferli koy
 ##     açılır; Nine'de hepsini sat, cam kamışı al; haritadan nilüferli koya geç, Destansı altın sazan;
 ##     iskeleye dön (rütbe 9, sandal), sandalla derin orta ve Efsanevi mersin (göle bırakılır).
