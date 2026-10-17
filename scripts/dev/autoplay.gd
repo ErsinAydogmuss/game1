@@ -31,9 +31,10 @@ extends Node
 ##     dokunuş (ölçüm açılır: sol üstte FPS, çizim, üçgen); sonra her bölgenin atış noktasına ve
 ##     sandalla derin ortaya geçer; her yerde ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü;
 ##     KONTROL: her yerde en çok TOUR_DRAWS çizim.
-##   video: kısa tanıtım (--write-movie ile kaydedilir, ~70 sn): dönen bir oyuncu; Dede'ye dokun,
-##     pırıltılı gölgeden nadir bir turna (VUR, çekişme, ışık sütunu, kart), kova dolar; Nine'ye git,
-##     hepsini sat, cam kamışı al; Balık Defteri; mor ışıltılı Destansı bir yayın.
+##   video: kısa tanıtım (--write-movie ile kaydedilir, ~100 sn): dönen bir oyuncu; Dede'ye dokun,
+##     pırıltılı gölgeden nadir bir turna (VUR, çekişme, ışık sütunu, kart), rütbe 3: nilüferli koy
+##     açılır; Nine'de hepsini sat, cam kamışı al; haritadan nilüferli koya geç, Destansı altın sazan;
+##     iskeleye dön (rütbe 9, sandal), sandalla derin orta ve Efsanevi mersin (göle bırakılır).
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -968,95 +969,145 @@ func _play_fish() -> void:
 	_quit()
 
 
-## Tanıtım videosu. Oyun zamanı --fixed-fps ile kare kare akar; bekleyişler oyun zamanıyla.
+## Tanıtım videosu (Dalga 2). Oyun zamanı --fixed-fps ile kare kare akar; bekleyişler oyun zamanıyla.
+## İskelede nadir turna (rütbe 3: nilüferli koy açılır), Nine'de satış ve cam kamış; haritadan
+## nilüferli koy ve Destansı altın sazan; haritadan iskeleye dönüş (kararma sırasında zaman ilerler:
+## rütbe 9, sandal, daha iyi takım); sandalla derin orta ve Efsanevi mersin: kartında "Göle bırak".
 func _play_video() -> void:
-	# Dönen bir oyuncu: üç tür defterde, kovada bir yer kalmış, rütbe 2, biraz para.
+	# Dönen bir oyuncu: üç tür defterde, kovada bir yer kalmış, rütbe 3'e az kalmış, biraz para.
 	_use_save(4)
 	var db := GameState.db
 	var save := GameState.save
 	save.coins = 260
-	save.xp = db.rank_xp[1] + 20
+	save.xp = db.rank_xp[2] - 4
 	for f: Array in [["rudd", 26, 4], ["carp", 52, 3], ["perch", 31, 2]]:
 		Records.add(save.records, f[0], f[1], f[2], 0)
 	var fill: Array[String] = ["rudd", "carp", "perch", "rudd", "rudd"]
 	for i in Bucket.capacity(db, save) - 1:
 		Bucket.add(db, save, fill[i % fill.size()], 20 + i * 4, 2)
 	GameState.changed.emit()
-	var session := _session()
+	var spot := str(main.get("spot_id"))
 	var elder := _elder()
 	var nine := _nine()
 	var angler := _angler()
+	var hud := _hud()
 	var card: FishCard = main.get("card")
 	var shop: ShopPanel = main.get("shop_panel")
-	var book: BookPanel = main.get("book_panel")
+	var panel: MapPanel = main.get("map_panel")
+	var fade: Fade = main.get("fade")
+	var scene: LakeScene = main.get("scene")
 	await _wait(1.4)
 	# Dede'ye dokun: öğüdünü söyler.
 	await _tap(_screen(elder.head_point()))
 	await _wait(2.0)
-	# Nadir bir turna: gölgesinde pırıltı; önüne at, dürtmeler, VUR, çekişme, ışık sütunu, kart.
-	# Kovanın son yeri dolar: Dede uyarır.
+	# Nadir bir turna (pırıltılı gölge): VUR, çekişme, ışık sütunu, kart. Rütbe 3: nilüferli koy
+	# açılır (bildirim, Dede, harita düğmesi atar); kovanın son yeri dolar.
 	_shadow_at(Vector2(-1.2, -3.0), Vector2(0.2, 1.0), "pike", 860000)
 	await _wait(1.6)
 	await _tap_world(Vector2(-1.0, -0.8))
 	await _wait_state(FishingSession.State.BITING, 30.0)
 	await _wait(0.2)
 	await _reel_like_player(7, 40.0)
+	_check("video: turna tutulur", _state() == FishingSession.State.CAUGHT)
 	await _wait(3.4)
 	await _shot("v1_turna_kart")
-	if card.visible and card.ok_button != null:
-		await _tap(card.ok_button.get_global_rect().get_center())
+	await _close_card(card)
 	await _wait_state(FishingSession.State.IDLE, 3.0)
-	await _wait(1.0)
-	# İskelenin kara ucuna yürü, Nine'ye dokun: kova dolu, Kova sekmesi; hepsini sat.
+	await _wait(2.4)
+	await _shot("v2_bolge_acildi")
+	_check("video: rütbe 3, nilüferli koy açık", Zones.unlocked(db, save, db.zone(spot, "lily_cove")))
+	# İskelenin kara ucuna yürü, Nine'ye dokun: kova dolu; hepsini sat, cam kamışı al.
 	await _tap_world(Vector2(0.0, 7.8))
 	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
 	await _wait(0.3)
 	await _tap(_screen(nine.head_point()))
-	await _wait(1.6)
-	await _shot("v2_kova")
-	await _tap_control(shop.find_child("SellAll", true, false))
-	await _wait(1.6)
-	await _shot("v3_satildi")
-	# Kamış sekmesi: cam kamışı al (kuşanılır).
-	await _tap_control(shop.find_child("Tab_rod", true, false))
-	await _wait(1.0)
-	await _tap_card(shop, "rod_float_glass", -1)
-	await _wait(1.8)
-	await _shot("v4_cam_kamis")
-	await _tap(shop.close_button.get_global_rect().get_center())
 	await _wait(1.4)
-	# Balık Defteri: turna artık defterde; yayın bir siluet (ipuçları ve şansı).
-	await _tap(_hud().book_button.get_global_rect().get_center())
-	await _wait(1.2)
-	await _tap_control(book.find_child("Fish_pike", true, false))
-	await _wait(1.6)
-	await _tap_control(book.find_child("Fish_wels", true, false))
-	await _wait(2.2)
-	await _shot("v5_defter_yayin")
-	await _tap(book.close_button.get_global_rect().get_center())
+	await _tap_control(shop.find_child("SellAll", true, false))
+	await _wait(1.4)
+	await _shot("v3_satildi")
+	await _tap_control(shop.find_child("Tab_rod", true, false))
 	await _wait(0.8)
-	# İskelenin ucuna dön (Dede'nin önünden değil, sol kenardan: dokunuş Dede'ye denk gelmesin);
-	# Destansı bir yayın: mor ışıltılı gölge, uzun çekişme, kart.
-	await _tap_world(Vector2(-0.4, 3.9))
-	await _wait_frames(3)
-	if not angler.is_walking():
-		print("video: iskelenin ucuna yürümedi")
-	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
-	_shadow_at(Vector2(1.6, -2.6), Vector2(-0.2, 1.0), "wels", 720000)
+	await _tap_card(shop, "rod_float_glass", -1)
+	await _wait(1.4)
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait(1.0)
+	# Harita: nilüferli koy açık ("Yeni!"), kilitliler taralı; dokun → ekran kararır, oradasın.
+	await _tap_control(hud.map_button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	await _wait(1.6)
+	await _shot("v4_harita")
+	await _tap_control(panel.view.badge("lily_cove"))
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(1.2)
+	# Nilüferli koyda Destansı altın sazan: mor ışıltılı gölge, uzun çekişme, kart.
+	var lily: Vector2 = (db.zone(spot, "lily_cove")["stands"] as Array)[0]
+	_shadow_at(lily + Vector2(-0.2, -6.0), Vector2(0.05, 1.0), "golden_carp", 700000)
 	await _wait(1.8)
-	await _shot("v6_yayin_golge")
-	await _tap_world(Vector2(1.3, -0.4))
+	await _shot("v5_nilufer")
+	await _tap_world(lily + Vector2(0.0, -3.8))
 	await _wait_state(FishingSession.State.BITING, 30.0)
 	await _wait(0.2)
 	await _reel_like_player(7, 50.0)
+	_check("video: altın sazan tutulur", _state() == FishingSession.State.CAUGHT
+			and str(_session().last_catch.get("fish", "")) == "golden_carp")
 	await _wait(3.4)
-	await _shot("v7_yayin_kart")
+	await _shot("v6_altin_sazan")
+	await _close_card(card)
+	await _wait_state(FishingSession.State.IDLE, 3.0)
+	await _wait(0.8)
+	# Haritadan iskele koyuna dön. Ekran kararınca zaman ilerler: rütbe 9, sandal, daha iyi takım.
+	await _tap_control(hud.map_button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	await _wait(0.8)
+	await _tap_control(panel.view.badge("dock_cove"))
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait(Fade.TIME + 0.02)
+	save.xp = maxi(save.xp, db.rank_xp[8])
+	save.coins += 1200
+	for id: String in [Zones.BOAT, "reel_quick", "line_fluoro", "hook_large", "net"]:
+		if not id in save.owned:
+			save.owned.append(id)
+		Economy.equip(db, save, id)
+	GameState.changed.emit()
+	main.call("_on_gear_changed")
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(1.0)
+	# İskeledeki sandala dokun: ekran kararır, derin ortada sandaldasın (Dede: "Derin sular!").
+	await _tap(_screen(scene.boat_point()))
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return bool(main.get("in_boat")) and not fade.busy(), 4.0)
+	await _wait(1.6)
+	# Efsanevi mersin: parlayan kenarlı gölge, dalga izi; uzun çekişme; kartında koruma sözü ve
+	# "Göle bırak".
+	var at := angler.pos2()
+	_shadow_at(at + Vector2(0.0, -7.0), Vector2(0.0, 1.0), "sturgeon", 650000)
+	await _wait(2.2)
+	await _shot("v7_mersin_golge")
+	await _tap_world(at + Vector2(0.0, -5.0))
+	await _wait_state(FishingSession.State.BITING, 30.0)
+	await _wait(0.2)
+	await _reel_like_player(7, 60.0)
+	_check("video: sandaldan mersin tutulur", bool(main.get("in_boat")) and _state() == FishingSession.State.CAUGHT
+			and str(_session().last_catch.get("fish", "")) == "sturgeon")
+	await _wait(3.6)
+	await _shot("v8_mersin_kart")
+	await _close_card(card)
+	await _wait(2.4)
+	_check("video: mersin göle bırakılır (kovada yok)", save.bucket.filter(
+			func(b: Dictionary) -> bool: return str(b["fish"]) == "sturgeon").is_empty()
+			and int(save.records.get("sturgeon", {}).get("released", 0)) == 1)
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Açılan balık kartını düğmesiyle kapatır (kart açılana kadar bekler; en kısa açık kalma süresi).
+func _close_card(card: FishCard) -> void:
+	await _wait_until(func() -> bool: return card.visible, 3.0)
+	await _wait(FishCard.MIN_OPEN + 0.2)
 	if card.visible and card.ok_button != null:
 		await _tap(card.ok_button.get_global_rect().get_center())
-	await _wait(1.2)
-	if session.state != FishingSession.State.IDLE:
-		print("video: oturum %s durumunda bitti" % session.state_name())
-	_quit()
 
 
 ## Çekişmeyi bir oyuncu gibi oynar: eylem düğmesine basar (VUR), sakinken basılı tutar, balık
