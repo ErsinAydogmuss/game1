@@ -18,11 +18,11 @@ Görseller partiler hâlinde geliyor; her parti bir dalgadan önce. **Hepsini bi
 |---|---|---|---|
 | 1. Arayüz | ✅ geldi, oyunda (v0.2.1) | 12 | paneller, düğmeler, nadirlik kartları, ikonlar, Dede ve Nine'nin yüzü, uygulama ikonu |
 | 2. Ekipman | ✅ geldi, oyunda (v0.2.1) | 7 | Nine'nin dükkânındaki 42 eşya (bugün satılan 33'ü görünüyor; kalanı Dalga 2–4'te) |
-| 3. Göl | promptlar aşağıda; bekleniyor (oyun bugün kodla çizilen yedeklerle) | 5 | bölge rozetleri, harita kâğıdı, harita çıkartmaları ve ikonları, zemin dokuları |
-| 4. Teknikler | Dalga 3 sırasında (promptlar aşağıda) | 4 | yapay yemler, sinekler ve dip takımı, teknik ikonları, kerevit ve çöp |
+| 3. Göl | ✅ geldi, oyunda | 5 | bölge rozetleri, harita kâğıdı, harita çıkartmaları ve ikonları, zemin dokuları |
+| 4. Teknikler | ✅ geldi, kesildi; Dalga 3'te oyuna girer | 4 | yapay yemler, sinekler ve dip takımı, teknik ikonları, kerevit ve çöp |
 | 5. Hikâye ve yuva | Dalga 4'ten önce | ~8 | mektuplar, Gölün Bekçisi, hava ikonları, kedi, kıyafetler, tanıtım görseli |
 
-5. partinin promptlarını Dalga 4'ten önce bu sayfaya eklerim. **Önce hangisi?** Zamanın azsa Parti 4: Dalga 3'te hemen kullanılır (en önce `technique_icons` ve `gear_lures`; ilk teknik spin). Parti 3 bugünkü oyunu süsler; ikisi de acil değil.
+5. partinin promptlarını Dalga 4'ten önce bu sayfaya eklerim.
 
 ## Nasıl teslim edersin?
 
@@ -347,7 +347,7 @@ Adlar: `net` (kepçe), `rod_stand` (sehpa ve zil), `boat` (sandal), `trap` (kere
 
 ## Parti 3 — Göl (bölgeler ve harita)
 
-Büyük gölde altı bölge var: İskele koyu, Sazlık, Nilüferli koy, Kayalık burun, Dere ağzı ve Derin orta. Harita gölün gerçek şeklinden kodla çizilir; bu sayfalar onu süsler. Görseller gelene kadar oyun kodla çizilen yedekleri kullanır, yani **acele yok**: hazır oldukça yükle.
+✅ Beş sayfa da geldi ve oyunda. Büyük gölde altı bölge var: İskele koyu, Sazlık, Nilüferli koy, Kayalık burun, Dere ağzı ve Derin orta. Harita gölün gerçek şeklinden kodla çizilir; bu sayfalar onu süsler.
 
 **1. `zone_badges.png`: bölge rozetleri**
 
@@ -419,10 +419,10 @@ small flag; a dark iron anchor with a rope; a wooden signpost with an arrow.
 |---|---|
 | `pin` | haritada "buradasın" |
 | `lock` | kilitli bölge (dükkândaki rütbe kilidi de bunu kullanır) |
-| `compass` | harita süsü (görsel gelince bağlanacak) |
-| `buoy` | sandalla gidilen şamandıralar (görsel gelince bağlanacak; bugün haritada kodla çizilir) |
-| `anchor` | sandaldayken "kıyıya dön" düğmesi (görsel gelince bağlanacak; bugün sandal ikonu) |
-| `signpost` | kilitli bölgenin tabelası (görsel gelince bağlanacak; bugün kilit ikonu) |
+| `compass` | harita süsü (sol alt köşe) |
+| `buoy` | haritada sandalla gidilen şamandıralar |
+| `anchor` | sandaldayken "Kıyıya dön" düğmesi |
+| `signpost` | haritada kilitli bölgenin çitindeki tabela |
 
 **5. `ground_tiles.png`: zemin dokuları**
 
@@ -447,7 +447,7 @@ Kesilen adlar: `grass` (çimen), `sand` (kıyı kumu), `path` (kıyı yolu), `mo
 
 ## Parti 4 — Teknikler
 
-Dalga 3'te dört yeni teknik geliyor: spin (yapay yemle), dip (sehpa ve zille), sinek (dere ağzında) ve kerevit tuzağı. Kamışların, sehpanın ve tuzağın resimleri Parti 2'den hazır; bu dört sayfa gerisini tamamlar. Görseller gelene kadar oyun kodla çizilen yedekleri kullanır, yani **acele yok**.
+✅ Dört sayfa da geldi ve kesildi; teknikler Dalga 3'te geldikçe oyuna girer. Dalga 3'te dört yeni teknik geliyor: spin (yapay yemle), dip (sehpa ve zille), sinek (dere ağzında) ve kerevit tuzağı. Kamışların, sehpanın ve tuzağın resimleri Parti 2'den hazır; bu dört sayfa gerisini tamamlar.
 
 **1. `gear_lures.png`: yapay yemler (spin)**
 
@@ -556,9 +556,9 @@ godot --headless --path . --import
 
 Sayfa adları, kesim şekli (`fit`) ve kesilen adlar `data/art_sheets.json`'da. Oyuna bağlama:
 
-Mor ve pembe nesneli sayfalarda (`rarity_frames`, `rarity_badges`, `zone_badges`, `map_stickers`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru ve nilüferin pembesi solmaz. Zemin dokuları `"fit": "tile"`: kare örneğin içinden kesilir ve dikişsiz yapılır (`ArtSheet.make_tile`).
+Mor ve pembe nesneli sayfalarda (`rarity_frames`, `rarity_badges`, `zone_badges`, `map_stickers`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru ve nilüferin pembesi solmaz. Zemin dokuları `"fit": "tile"`: kare örneğin içinden kesilir ve dikişsiz yapılır (`ArtSheet.make_tile`). Harita kâğıdı `"fit": "trim"`: saydam payı kırpılır, 9 dilimli çerçeve olarak `assets/ui/frames/`'e gider.
 
-Oyuna bağlama (v0.3'teki durum; Parti 3 gelince, Parti 4 Dalga 3'te):
+Oyuna bağlama (v0.3'ten sonraki durum; Parti 4 Dalga 3'te):
 
 | Görsel | Çıktı | Bağlantı |
 |---|---|---|
@@ -572,10 +572,11 @@ Oyuna bağlama (v0.3'teki durum; Parti 3 gelince, Parti 4 Dalga 3'te):
 | `app_icon` | `assets/ui/art/app_icon.png` | `project.godot` `config/icon`; iOS ikonları bundan üretilir (Godot 4.7: iOS ikon alanları boşsa proje ikonu). Saydamlık kanalsız kaydedilir (`"key": false`). |
 | `logo` | `assets/ui/art/logo.png` | Açılış ekranı (`boot_splash/image`; iOS açılış ekranı da bundan) ve ayarlar panelinin başlığı. |
 | `style_sheet`, `concept_screen` | `docs/img/` | Yalnızca referans. |
-| `zone_badges` | `assets/icons/zones/zone_<bölge>.png` | Dalga 2: haritada bölgelerin rozeti, "yeni bölge açıldı" bildirimi. Yoksa kodla çizilen rozet. |
-| `map_paper`, `map_stickers` | `assets/ui/map/` | Harita panelinin zemini ve süsleri: görseller gelince bağlanacak (bugün harita gölün verisinden kodla çizilir). |
-| `map_icons` | `assets/icons/ui/` | `pin` ve `lock` bağlı (`GameIcon.ART_NAMES`); `compass`, `buoy`, `anchor`, `signpost` görseller gelince bağlanacak. |
-| `ground_tiles` | `assets/textures/ground/` | Dalga 2: zemin shader'ı (çimen, kum, kıyı yolu, kayalık). Dördü birden gelince zemin kendiliğinden onlarla çizilir (`LakeScene.GROUND_TILES`, bir karo 3 m); yoksa kodla. |
+| `zone_badges` | `assets/icons/zones/zone_<bölge>.png` | ✅ `ItemArt.zone`: haritada bölgelerin rozeti, "yeni bölge açıldı" ve bölgeye girince adının bildirimi. Yoksa kodla çizilen rozet. |
+| `map_paper` | `assets/ui/frames/map_paper.png` (`fit: trim`) | ✅ Harita panelinin çerçevesi (`UiKit.framed`, 9 dilim payları `FRAME_SLICES`); haritanın kenarı kâğıda karışır (`map.gdshader` `fade_m`). Yoksa kodla çizilen çerçeve. |
+| `map_stickers` | `assets/ui/map/` | ✅ `MapView` çıkartmaları (`ItemArt.map_art`): sazlık, nilüfer ve kayalar kendi bölgesinin yanında, ağaç öbekleri ormanda, sandal iskelede (sandaldayken yok), dükkân Nine'nin yerinde; rozetlere, iğneye ve birbirine binmeyecek yere kayar, yer yoksa gizlenir. |
+| `map_icons` | `assets/icons/ui/` | ✅ `GameIcon.ART_NAMES`: `pin` "Buradasın", `lock` kilitli bölge ve dükkânın rütbe kilidi, `compass` haritanın sol alt köşesi, `buoy` haritada derin ortanın şamandıraları, `anchor` "Kıyıya dön" düğmesi, `signpost` haritada kapalı çitin tabelası. |
+| `ground_tiles` | `assets/textures/ground/` | ✅ Zemin shader'ı (çimen, kum, kıyı yolu, kayalık): dördü birden olunca zemin onlarla çizilir (`LakeScene.GROUND_TILES`, bir karo 3 m); yoksa kodla. |
 | `gear_lures`, `gear_flies` | `assets/icons/gear/` | Dalga 3: `ItemArt.gear` (dükkânın yapay yem ve sinek kartları, dip takımı); `bell` dip zili çalınca ipucu ve bildirimde. Yoksa kodla çizilen ikon. |
 | `technique_icons` | `assets/icons/ui/` | Dalga 3: teknik düğmesi ve takım çantası (`GameIcon.ART_NAMES`'e eklenecek). Yoksa kodla çizilen ikon. |
 | `catch_items` | `assets/icons/items/` | Dalga 3: tuzaktan ve dip avından çıkan kerevit ve çöp; mesajlı şişe ve anahtar Dalga 4'ün hikâyesinde. |

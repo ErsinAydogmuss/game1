@@ -1,10 +1,12 @@
 class_name MapView
 extends Control
 ## Haritanın kendisi (MapPanel'in içinde): gölün harita dokusu (build_image) map.gdshader ile
-## çizilir; üstünde iskele, kapalı çitler ve şamandıralar (_draw_overlay), bölge rozetleri,
-## Nine'nin dükkânı, Dede ve "Buradasın" iğnesi (çocuk düğümler). Dünya → harita: gölün ve
-## dünyanın kapladığı yer (region) haritanın alanına oranı korunarak sığdırılır ve ortalanır.
-## Harita kâğıdı ve çıkartmalar Ersin'in Parti 3 görselleri gelince (docs/gorsel-istekleri.md).
+## çizilir; üstünde iskele, kapalı çitler ve tabelaları, şamandıralar (_draw_overlay), Ersin'in
+## çıkartmaları (bölgelerin süsü, ormanda ağaçlar, sandal, pusula; rozetlere binmeyecek yere
+## kayar), bölge rozetleri, Nine'nin dükkânı, Dede ve "Buradasın" iğnesi (çocuk düğümler). Dünya →
+## harita: gölün ve dünyanın kapladığı yer (region) haritanın alanına oranı korunarak sığdırılır ve
+## ortalanır. Harita kâğıdı (MapPanel'in çerçevesi) varsa haritanın kenarı kâğıda karışır.
+## Görseller docs/gorsel-istekleri.md Parti 3; yoksa harita süssüz, ikonlar kodla.
 
 signal zone_pressed(zone_id: String)
 
@@ -18,6 +20,28 @@ const BADGE_ICON := 58.0
 const BADGE_MIN := Vector2(150, 132)
 const PIN := 66.0
 const MARK := 58.0
+## Çıkartmaların boyu: bölge süsü ve ağaç öbeği, dükkân, sandal, pusula; şamandıra ve çit tabelası.
+const STICKER := 92.0
+const SHOP_STICKER := 84.0
+const BOAT_STICKER := 76.0
+const COMPASS := 80.0
+const BUOY_ICON := 44.0
+const SIGN_ICON := 46.0
+## Bölge -> [çıkartması, bölgenin suyunun ortasına göre yeri (m)]: kıyısının dışa bakan yanında.
+const ZONE_STICKERS := {
+	"reeds": ["map_reeds", Vector2(-6.8, 0.5)],
+	"lily_cove": ["map_lilies", Vector2(6.5, 4.5)],
+	"rocky_point": ["map_rocks", Vector2(7.5, 1.5)],
+}
+## Ormana konan ağaç öbeği (yer yoksa daha az): kıyıdan en az FOREST_SHORE metre, birbirinden en az
+## TREE_GAP metre uzakta.
+const TREES := 5
+const FOREST_SHORE := 2.0
+const TREE_GAP := 7.0
+## Çıkartma yerinden en çok bu kadar halka uzağa kayar (halka arası boyunun 0,35'i).
+const RINGS := 6
+## Kâğıtlı haritada kenarın kâğıda karıştığı bant (m; map.gdshader fade_m).
+const PAPER_FADE := 1.8
 const WOOD := Color("#b07a3b")
 const WOOD_DARK := Color("#6e4520")
 const BUOY := Color("#e63946")
@@ -28,6 +52,8 @@ const LOCKED_TINT := Color(1, 1, 1, 0.55)
 ## Aynı görüntüden iki doku: veri yumuşak (doğrusal), bölge keskin (en yakın) okunur; GLES3'te bir
 ## dokunun tek süzgeci olur.
 static var _built: Dictionary = {}
+## Gölün ağaç çıkartması yerleri (spot id -> [göl, noktalar]).
+static var _forest: Dictionary = {}
 
 var lake: LakeShape
 ## Haritanın dünyadaki yeri (m).
@@ -43,6 +69,9 @@ var _pin: Control
 var _here := Vector2.ZERO
 ## İşaretler: [düğüm, dünya noktası].
 var _marks: Array[Array] = []
+## Çıkartmalar: [düğüm, dünya noktası]; yerleşirken rozetlere, iğneye, işaretlere ve birbirine
+## binmeyen en yakın yere kayar (_place_stickers).
+var _stickers: Array[Array] = []
 ## Kapalı çitler ve şamandıralar (dünya).
 var _gates: Array[PackedVector2Array] = []
 var _buoys: PackedVector2Array = PackedVector2Array()
@@ -63,13 +92,15 @@ func _init() -> void:
 	add_child(_map)
 	_overlay = Control.new()
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_overlay.draw.connect(_draw_overlay)
 	add_child(_overlay)
 	resized.connect(_layout)
 
 
 ## Haritayı kurar: göl ve bölgeleri, kilitler (kayda göre), balıkçının yeri (here), bulunulan
-## bölge ve işaretler ([{ "kind": "shop" | "dede", "pos": Vector2 }]).
+## bölge ve işaretler ([{ "kind": "shop" | "dede" | "boat", "pos": Vector2 }]; sandal çıkartmadır,
+## görseli yoksa çizilmez).
 func show_lake(db: ContentDB, save: SaveData, spot_id: String, here: Vector2, current: String,
 		marks: Array[Dictionary]) -> void:
 	lake = db.lake(spot_id)
@@ -94,6 +125,10 @@ func show_lake(db: ContentDB, save: SaveData, spot_id: String, here: Vector2, cu
 	_tags.clear()
 	_anchors.clear()
 	_marks.clear()
+	_stickers.clear()
+	_material.set_shader_parameter("fade_m", PAPER_FADE if ItemArt.frame("map_paper") != null else 0.0)
+	# Çıkartmalar önce eklenir: rozetlerin, işaretlerin ve iğnenin altında kalır.
+	_add_stickers(spot_id, zones, marks)
 	for k in zones.size():
 		var z := zones[k]
 		var id := str(z["id"])
@@ -241,31 +276,43 @@ func _layout() -> void:
 	_overlay.size = size
 	_overlay.queue_redraw()
 	var pin_rect := Rect2()
+	# Çıkartmaların binmeyeceği yerler: iğne, rozetler (sallanmadan), "Yeni!" etiketleri, işaretler.
+	var blocked: Array[Rect2] = []
 	if _pin != null:
 		_pin.reset_size()
 		_pin.position = _pin_position()
 		pin_rect = pin_box()
+		blocked.append(pin_rect)
 	for id: String in _badges:
 		var b: Control = _badges[id]
 		b.reset_size()
-		var at := to_view(_anchors[id]) - b.size * 0.5
+		var rest := _badge_spot(id, b.size, pin_rect)
+		b.position = rest
 		if id == _shake_id and _shake > 0.0:
-			at.x += sin(_shake * 60.0) * 10.0 * (_shake / 0.4)
-		at = at.clamp(Vector2.ZERO, (size - b.size).max(Vector2.ZERO))
-		# "Buradasın" iğnesinin üstüne binen rozet (sandaldayken derin orta) iğnenin üstüne, yer
-		# yoksa altına kayar.
-		if pin_rect.size.x > 0.0 and Rect2(at, b.size).intersects(pin_rect):
-			var up := pin_rect.position.y - b.size.y
-			at.y = up if up >= 0.0 else minf(pin_rect.end.y, size.y - b.size.y)
-		b.position = at
+			b.position.x += sin(_shake * 60.0) * 10.0 * (_shake / 0.4)
+		blocked.append(Rect2(rest, b.size))
 		if _tags.has(id):
 			var tag: Control = _tags[id]
 			tag.reset_size()
-			tag.position = b.position + Vector2(b.size.x - tag.size.x * 0.75, -tag.size.y * 0.4)
+			var offset := Vector2(b.size.x - tag.size.x * 0.75, -tag.size.y * 0.4)
+			tag.position = b.position + offset
+			blocked.append(Rect2(rest + offset, tag.size))
 	for m in _marks:
 		var node: Control = m[0]
 		node.reset_size()
 		node.position = to_view(m[1]) - node.size * 0.5
+		blocked.append(Rect2(node.position, node.size))
+	_place_stickers(blocked)
+
+
+## Rozetin yeri (sallanmadan): bölgenin noktasında, haritanın içinde. "Buradasın" iğnesinin
+## üstüne binen rozet (sandaldayken derin orta) iğnenin üstüne, yer yoksa altına kayar.
+func _badge_spot(id: String, badge_size: Vector2, pin_rect: Rect2) -> Vector2:
+	var at := (to_view(_anchors[id]) - badge_size * 0.5).clamp(Vector2.ZERO, (size - badge_size).max(Vector2.ZERO))
+	if pin_rect.size.x > 0.0 and Rect2(at, badge_size).intersects(pin_rect):
+		var up := pin_rect.position.y - badge_size.y
+		at.y = up if up >= 0.0 else minf(pin_rect.end.y, size.y - badge_size.y)
+	return at
 
 
 ## "Buradasın" iğnesinin kapladığı yer (zıplaması ve biraz payla; rozetler buna binmez).
@@ -281,7 +328,8 @@ func _pin_position() -> Vector2:
 	return to_view(_here) - Vector2(_pin.size.x * 0.5, PIN)
 
 
-## Haritanın üstündekiler: iskele, kapalı çitler (kazık ve çapraz), şamandıralar.
+## Haritanın üstündekiler: iskele, kapalı çitler (kazık ve çapraz; ortasında tabela), şamandıralar.
+## Tabela ve şamandıra Ersin'in ikonlarıyla; yoksa çitte tabela yok, şamandıra kodla.
 func _draw_overlay() -> void:
 	if lake == null:
 		return
@@ -296,6 +344,7 @@ func _draw_overlay() -> void:
 		for i in range(1, planks):
 			var y := lerpf(rect.position.y, rect.end.y, float(i) / planks)
 			_overlay.draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), WOOD_DARK, maxf(1.0, px * 0.05))
+	var signpost := GameIcon.texture_for("signpost")
 	for g in _gates:
 		var from := to_view(g[0])
 		var to := to_view(g[1])
@@ -306,8 +355,18 @@ func _draw_overlay() -> void:
 		for i in posts + 1:
 			var p := from.lerp(to, float(i) / posts)
 			_overlay.draw_circle(p, maxf(3.0, px * 0.2), WOOD_DARK)
+		if signpost != null:
+			var mid := from.lerp(to, 0.5)
+			_overlay.draw_texture_rect(signpost, Rect2(mid - Vector2(SIGN_ICON * 0.5, SIGN_ICON * 0.9),
+					Vector2(SIGN_ICON, SIGN_ICON)), false)
+	var buoy := GameIcon.texture_for("buoy")
 	for p in _buoys:
 		var c := to_view(p)
+		if buoy != null:
+			# Şamandıranın alt ucu suyun üstündeki noktada.
+			_overlay.draw_texture_rect(buoy, Rect2(c - Vector2(BUOY_ICON * 0.5, BUOY_ICON * 0.8),
+					Vector2(BUOY_ICON, BUOY_ICON)), false)
+			continue
 		var r := maxf(6.0, px * 0.45)
 		_overlay.draw_circle(c, r + 2.0, Color("#2b1a10"))
 		_overlay.draw_circle(c, r, Color.WHITE)
@@ -368,24 +427,129 @@ func _new_tag() -> Control:
 	return pill
 
 
-## Dükkân ya da Dede işareti (resmi yoksa yok).
+## Dükkân ya da Dede işareti: dükkân Ersin'in çıkartması (yoksa dükkân ikonu), Dede portresi (yoksa
+## yok). Sandal çıkartmadır (_add_stickers).
 func _mark(kind: String) -> Control:
 	match kind:
 		"shop":
-			return GameIcon.make("shop", MARK)
+			var stall := ItemArt.map_art("map_shop")
+			return _art_rect(stall, SHOP_STICKER) if stall != null else GameIcon.make("shop", MARK)
 		"dede":
 			var face := ItemArt.portrait("dede_smile")
-			if face == null:
-				return null
-			var t := TextureRect.new()
-			t.texture = face
-			t.custom_minimum_size = Vector2(MARK, MARK)
-			t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			t.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			t.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-			return t
+			return _art_rect(face, MARK) if face != null else null
 	return null
+
+
+## Görseli side boyunda, oranı korunarak çizen düğüm.
+static func _art_rect(texture: Texture2D, side: float) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = texture
+	t.custom_minimum_size = Vector2(side, side)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	t.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	return t
+
+
+## Çıkartmalar (yerleşme sırasıyla): iskeledeki sandal, bölgelerin süsü, ormanda ağaç öbekleri, sol
+## alt köşede pusula. Görseli olmayan çıkartma eklenmez.
+func _add_stickers(spot_id: String, zones: Array[Dictionary], marks: Array[Dictionary]) -> void:
+	for m in marks:
+		if str(m["kind"]) == "boat":
+			_add_sticker(ItemArt.map_art("map_boat"), BOAT_STICKER, m["pos"])
+	for k in zones.size():
+		var entry: Array = ZONE_STICKERS.get(str(zones[k]["id"]), [])
+		if not entry.is_empty():
+			var offset: Vector2 = entry[1]
+			_add_sticker(ItemArt.map_art(str(entry[0])), STICKER, badge_anchor(lake, k, zones[k]) + offset)
+	var trees := ItemArt.map_art("map_trees")
+	if trees != null:
+		for p in forest_points(spot_id, lake, region):
+			_add_sticker(trees, STICKER, p)
+	_add_sticker(GameIcon.texture_for("compass"), COMPASS, Vector2(region.position.x + 3.0, region.end.y - 3.0))
+
+
+func _add_sticker(texture: Texture2D, side: float, at: Vector2) -> void:
+	if texture == null:
+		return
+	var node := _art_rect(texture, side)
+	add_child(node)
+	_stickers.append([node, at])
+
+
+## Ağaç çıkartmalarının yeri: haritanın ormanında (yürünmeyen kara, kıyıdan en az FOREST_SHORE
+## metre) birbirine en uzak en çok TREES nokta, aralarında en az TREE_GAP metre. İlki haritanın sol
+## üst köşesine en yakın aday. Göl değişmedikçe aynı.
+static func forest_points(spot_id: String, shape: LakeShape, r: Rect2) -> PackedVector2Array:
+	var cached: Array = _forest.get(spot_id, [])
+	if not cached.is_empty() and cached[0] == shape:
+		return cached[1]
+	var candidates := PackedVector2Array()
+	var step := 2.0
+	for y in range(1, floori(r.size.y / step)):
+		for x in range(1, floori(r.size.x / step)):
+			var p := r.position + Vector2(x, y) * step
+			if not shape.on_dock(p) and shape.land_distance(p) < -FOREST_SHORE and not shape.in_world(p):
+				candidates.append(p)
+	var picked := PackedVector2Array()
+	if not candidates.is_empty():
+		var first := 0
+		for i in candidates.size():
+			if candidates[i].distance_squared_to(r.position) < candidates[first].distance_squared_to(r.position):
+				first = i
+		picked.append(candidates[first])
+		while picked.size() < TREES:
+			var best := -1
+			var best_d := TREE_GAP * TREE_GAP
+			for i in candidates.size():
+				var d := INF
+				for q in picked:
+					d = minf(d, candidates[i].distance_squared_to(q))
+				if d >= best_d:
+					best_d = d
+					best = i
+			if best < 0:
+				break
+			picked.append(candidates[best])
+	_forest[spot_id] = [shape, picked]
+	return picked
+
+
+## Çıkartmalar rozetlere, "Yeni!" etiketlerine, iğneye, işaretlere ve birbirine binmez: yerinden
+## başlayıp çevresindeki halkalarda harita alanının içindeki ilk boş yere kayar; yer yoksa gizlenir.
+func _place_stickers(blocked: Array[Rect2]) -> void:
+	var area := map_area()
+	for s in _stickers:
+		var node: Control = s[0]
+		node.reset_size()
+		var home := Rect2(to_view(s[1]) - node.size * 0.5, node.size)
+		var spot := free_spot(home, blocked, area)
+		node.visible = Dice.is_point(spot)
+		if node.visible:
+			node.position = spot
+			blocked.append(Rect2(spot, node.size))
+
+
+## r'nin yerine ya da çevresindeki halkalarda (halka arası r'nin 0,35'i, en çok RINGS halka) area'nın
+## içinde blocked'a binmeyen ilk yer; yoksa Dice.NO_POINT. Görselin saydam payı (%8) binmeye sayılmaz.
+static func free_spot(r: Rect2, blocked: Array[Rect2], area: Rect2) -> Vector2:
+	var step := r.size.x * 0.35
+	for ring in RINGS + 1:
+		var count := 1 if ring == 0 else 8 + ring * 4
+		for k in count:
+			var c := Rect2(r.position + Vector2.from_angle(TAU * k / count) * step * ring, r.size)
+			if not area.encloses(c):
+				continue
+			var core := c.grow(-c.size.x * 0.08)
+			var fits := true
+			for b in blocked:
+				if core.intersects(b):
+					fits = false
+					break
+			if fits:
+				return c.position
+	return Dice.NO_POINT
 
 
 ## "Buradasın": iğne ve altında yazısı; iğnenin ucu balıkçının yerinde.

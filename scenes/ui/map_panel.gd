@@ -2,7 +2,8 @@ class_name MapPanel
 extends Dialog
 ## Göl haritası (docs/gdd.md §10.1): HUD'daki harita düğmesiyle açılır (ilk balıktan sonra; olta
 ## sudayken gizli). Göl gerçek verisinden çizilir (MapView): bölgelerin rozeti ve adı, kilitli
-## bölgede kilit ve neden, "Buradasın", Nine'nin dükkânı, kapalı çitler ve şamandıralar. Açık bir
+## bölgede kilit ve neden, "Buradasın", Nine'nin dükkânı, kapalı çitler ve şamandıralar, Ersin'in
+## çıkartmaları; çerçevesi Ersin'in harita kâğıdı (yoksa kodla çizilen çerçeve). Açık bir
 ## bölgenin rozetine dokununca oraya hızlı geçilir: panel kapanır, travel_requested (main ekranı
 ## karartıp balıkçıyı bölgenin atış noktasına geçirir). Kilitli bölgede neden yazılır, rozet sallanır.
 
@@ -14,6 +15,10 @@ const MAP := Vector2(1500, 660)
 const MIN_WIDTH := 1000.0
 ## Panelin iç payları ve haritanın çerçevesi (genişliğe eklenir).
 const FRAME_PAD := 110.0
+## Kodla çizilen çerçevenin iç payı (MAP ve FRAME_PAD bununla ölçüldü) ve harita kâğıdının köşe
+## payının ekrandaki boyu. Kâğıdın payı daha kalın: harita o kadar küçülür, panelin boyu aynı kalır.
+const FRAME_MARGIN := 6.0
+const PAPER_CORNER := 70.0
 
 ## Haritanın gölü (main verir), balıkçının yeri ve bölgesi, işaretler (dükkân, Dede).
 var spot_id: String = ""
@@ -23,14 +28,16 @@ var marks: Array[Dictionary] = []
 
 var view: MapView
 var _note: Label
+var _frame_style: StyleBox
 
 
 func _build() -> void:
 	set_header(tr("UI_MAP"), "map", MIN_WIDTH)
 	var frame := PanelContainer.new()
 	var sb := UiKit.card_style(Color("#8a6136"), 20, Color("#e9dcb8"), 6)
-	sb.set_content_margin_all(6)
-	frame.add_theme_stylebox_override("panel", sb)
+	sb.set_content_margin_all(FRAME_MARGIN)
+	_frame_style = UiKit.framed("map_paper", sb, PAPER_CORNER)
+	frame.add_theme_stylebox_override("panel", _frame_style)
 	frame.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	body.add_child(frame)
 	view = MapView.new()
@@ -54,8 +61,16 @@ func refresh() -> void:
 	_note.add_theme_color_override("font_color", UiKit.INK_SOFT)
 	view.show_lake(GameState.db, GameState.save, spot_id, here, zone_id, marks)
 	# Harita gölün oranında: boş kâğıt payı kalmasın.
-	view.custom_minimum_size = view.fitted_size(MAP)
-	set_header(tr("UI_MAP"), "map", maxf(MIN_WIDTH, view.custom_minimum_size.x + FRAME_PAD))
+	var extra := _frame_extra()
+	view.custom_minimum_size = view.fitted_size(MAP - extra)
+	set_header(tr("UI_MAP"), "map", maxf(MIN_WIDTH, view.custom_minimum_size.x + FRAME_PAD + extra.x))
+
+
+## Çerçevenin (kâğıdın) payının kodla çizilen çerçevenin payından fazlası (iki yan toplam).
+func _frame_extra() -> Vector2:
+	var pad := Vector2(_frame_style.get_margin(SIDE_LEFT) + _frame_style.get_margin(SIDE_RIGHT),
+			_frame_style.get_margin(SIDE_TOP) + _frame_style.get_margin(SIDE_BOTTOM))
+	return (pad - Vector2.ONE * FRAME_MARGIN * 2.0).max(Vector2.ZERO)
 
 
 func _on_zone(id: String) -> void:

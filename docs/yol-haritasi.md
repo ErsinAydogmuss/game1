@@ -93,6 +93,12 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Telefonda hız ölçümü: ayarlarda sürüm yazısına 5 dokunuş (sol üstte FPS, çizim, üçgen), geliştirme sürümünde "Bütün bölgeleri aç", `tour` bot senaryosu, kurulum belgesinde ölçüm adımları (`iphone-kurulum.md` 12. adım). Telefondaki sayılar Ersin'den gelecek.
 - [x] Kapanış: üç inceleme ajanı (çekirdek, sunum, araçlar ve belgeler). Düzeltilen bulgular: gölgeler gösterilen oranın bölgesinde doğmuyordu, kapalı çitten düz yürüyüşle geçilebiliyordu, dükkânın arkasındaki çayırın bölgesi yoktu, derin ortanın uzak kıyı şeridi başka bölgelere sayılıyordu, sandalın dibindeki gölge takılıyordu, harita ve ayarlar telefonda küçülüyordu; küçük öneriler de yapıldı. Tanıtım videosu (turna, yeni bölge, Nine, harita, altın sazan, sandal, mersin), telefonda dene listesi. **v0.3.**
 
+**Ara sürüm v0.3.1 — Parti 3–4 görselleri ve telefondaki geri bildirim**
+
+- [x] Parti 3 görselleri oyunda: zemin dokuları (çimen, kum, toprak yol, yosunlu taş), bölge rozetleri (harita ve bildirimler), harita kâğıdı ve çıkartmaları (sazlık, nilüfer, kayalar, ağaçlar, sandal, dükkân), harita ikonları (iğne, kilit, pusula, şamandıra, çit tabelası) ve "Kıyıya dön" düğmesinde çapa.
+- [x] Parti 4 görselleri (teknikler) kesildi; teknikler Dalga 3'te geldikçe oyuna girer.
+- [ ] Telefonda deneme ve hız ölçümü: Ersin'in sorun listesi.
+
 **Dalga 3 — Teknikler → v0.4**
 
 - [ ] Teknik soyutlaması (önce bugünkü şamandıra için altın test).

@@ -83,6 +83,75 @@ func test_badges_avoid_the_pin() -> void:
 		view.free()
 
 
+## Ersin'in çıkartmaları (Parti 3) haritanın içinde; rozetlere, "Yeni!" etiketlerine, iğneye,
+## işaretlere ve birbirine binmez (görselin saydam payı sayılmaz). Bölgelerin süsü ve ağaçlar
+## görünür. Balıkçı her atış noktasında ve sandalda.
+func test_stickers_stay_clear() -> void:
+	if ItemArt.map_art("map_trees") == null:
+		return
+	var db := content()
+	var lake := db.lake(SPOT)
+	var save := SaveData.create_new(0)
+	save.xp = db.rank_xp[8]
+	save.owned.append(Zones.BOAT)
+	var front := ShopStall.front_for(lake.dock)
+	var boat := Vector2(lake.dock.position.x - LakeScene.BOAT_SIDE, lake.dock.position.y + LakeScene.BOAT_ALONG)
+	var places: Array[Vector2] = []
+	for z in db.zones_of(SPOT):
+		for p: Vector2 in z["stands"]:
+			places.append(p)
+	var buoys: Array = db.zone(SPOT, "deep_water")["buoys"]
+	var afloat: Vector2 = buoys[0] + LakeScene.BUOY_MOOR
+	places.append(afloat)
+	var art := [GameIcon.texture_for("compass")]
+	for n: String in ["map_trees", "map_reeds", "map_lilies", "map_rocks", "map_boat"]:
+		art.append(ItemArt.map_art(n))
+	for here in places:
+		var marks: Array[Dictionary] = [
+			{ "kind": "shop", "pos": front - ShopStall.facing_dir() * ShopStall.DEPTH * 0.5 },
+			{ "kind": "dede", "pos": lake.dock.get_center() },
+		]
+		# Sandaldayken sandal iğnenin yerinde: işareti yok (main._map_marks).
+		if here != afloat:
+			marks.append({ "kind": "boat", "pos": boat })
+		var view := MapView.new()
+		view.size = MapPanel.MAP
+		view.show_lake(db, save, SPOT, here, Zones.at(db, SPOT, here).get("id", ""), marks)
+		var taken: Array[Rect2] = [view.pin_box()]
+		var stickers: Array[Rect2] = []
+		for child in view.get_children():
+			var r := Rect2(child.position, child.size)
+			if child is TextureRect and (child as TextureRect).texture in art:
+				if child.visible:
+					stickers.append(r)
+			elif child is TextureRect or child is PanelContainer:
+				# Dükkân ve Dede işaretleri, rozetler ve "Yeni!" etiketleri.
+				taken.append(r)
+		assert_true(stickers.size() >= 5, "%s: en az beş çıkartma görünür (%d)" % [here, stickers.size()])
+		for i in stickers.size():
+			var s := stickers[i]
+			assert_true(Rect2(Vector2.ZERO, view.size).encloses(s), "%s: çıkartma haritanın içinde %s" % [here, s])
+			var core := s.grow(-s.size.x * 0.08)
+			for t in taken:
+				assert_true(not core.intersects(t), "%s: çıkartma %s rozete ya da iğneye binmez %s" % [here, s, t])
+			for j in range(i + 1, stickers.size()):
+				assert_true(not core.intersects(stickers[j]), "%s: çıkartmalar birbirine binmez" % here)
+		view.free()
+
+
+## Ağaç çıkartmaları ormanda (yürünmeyen kara, kıyıdan uzak) ve birbirinden uzak.
+func test_forest_points_are_in_the_forest() -> void:
+	var db := content()
+	var lake := db.lake(SPOT)
+	var points := MapView.forest_points(SPOT, lake, MapView.map_region(lake))
+	assert_true(points.size() >= 3, "en az üç ağaç öbeği (%d)" % points.size())
+	for i in points.size():
+		var p := points[i]
+		assert_true(not lake.in_world(p) and lake.land_distance(p) < -MapView.FOREST_SHORE, "%s ormanda" % p)
+		for j in range(i + 1, points.size()):
+			assert_true(p.distance_to(points[j]) >= MapView.TREE_GAP - 0.01, "ağaçlar arası %.1f m" % p.distance_to(points[j]))
+
+
 ## Harita düğmesi: izin yokken (ilk balıktan önce) ve olta sudayken gizli.
 func test_map_button_visibility() -> void:
 	var hud := Hud.new()

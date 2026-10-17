@@ -5,7 +5,8 @@ extends Control
 ## kind: coin, star, star_empty, close, book, settings, lock, question, hand, burst, trophy,
 ## sound, music, vibration, easy, globe, up, down, rod, reel, line, bait, net, bucket, aquarium,
 ## bobber, hook, fish, shop, gem, map, sell (para kesesi), release (göle dönen balık), pin (haritada
-## "buradasın"). "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini (circle, triangle,
+## "buradasın"). Yalnızca görselle çizilenler (görseli yoksa çağıran başka ikon seçer): anchor
+## ("Kıyıya dön"), compass, buoy, signpost (harita). "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini (circle, triangle,
 ## diamond, star, sparkle, medallion; görseli yoksa şekil tint renginde), "zone:<bölge>" bölge
 ## rozetini (görseli yoksa kodla: iskele, kamış, nilüfer, kaya, dere, şamandıra) çizer.
 
@@ -22,7 +23,8 @@ const ART_NAMES := {
 	"settings": "settings", "lock": "lock", "question": "question", "hand": "hand", "burst": "burst",
 	"trophy": "trophy", "rod": "rod", "reel": "reel", "bait": "bait", "bucket": "bucket",
 	"aquarium": "aquarium", "hook": "hook", "shop": "shop", "map": "map", "sell": "sell",
-	"release": "release", "pin": "pin",
+	"release": "release", "pin": "pin", "anchor": "anchor", "compass": "compass", "buoy": "buoy",
+	"signpost": "signpost",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem ve Ekstra sekmeleri.

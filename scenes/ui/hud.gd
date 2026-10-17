@@ -429,7 +429,9 @@ func _build_bottom() -> void:
 	action_button.released.connect(func() -> void: action_up.emit())
 	_frame().add_child(action_button)
 	set_action("cast")
-	shore_button = TouchButton.make(tr("UI_BOAT_RETURN"), "boat", UiKit.SECONDARY, SHORE_SIZE, UiKit.SIZE_BODY, 64.0)
+	# "Kıyıya dön": Ersin'in çapası (Parti 3), yoksa sandal.
+	var shore_icon := "anchor" if GameIcon.texture_for("anchor") != null else "boat"
+	shore_button = TouchButton.make(tr("UI_BOAT_RETURN"), shore_icon, UiKit.SECONDARY, SHORE_SIZE, UiKit.SIZE_BODY, 64.0)
 	shore_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	shore_button.size_flags_vertical = Control.SIZE_SHRINK_END
 	shore_button.pressed.connect(func() -> void: shore_pressed.emit())

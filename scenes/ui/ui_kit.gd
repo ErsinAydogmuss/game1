@@ -54,6 +54,8 @@ const FRAME_SLICES := {
 	"pill": [0.52, 0.3, 0.52, 0.3],
 	"bubble": [0.3, 0.3, 0.3, 0.42],
 	"button_round": [0.5, 0.5, 0.5, 0.5],
+	# Harita kâğıdı (Parti 3): kıvrık köşeler ve yırtık kenar payın içinde.
+	"map_paper": [0.13, 0.13, 0.13, 0.13],
 }
 ## İçerik çerçevenin süsüne binmesin: süslü kenarın kalınlığı (düz kremin başladığı yer),
 ## kısa kenara oranla. framed() içerik payını en az bu kadar (+ CONTENT_PAD) yapar.
@@ -64,6 +66,9 @@ const FRAME_CONTENT := {
 	"ribbon": [0.44, 0.15, 0.45, 0.34],
 	"pill": [0.36, 0.17, 0.36, 0.15],
 	"bubble": [0.27, 0.12, 0.26, 0.27],
+	# Harita kâğıdın yırtık kenarının hemen içinden başlar; haritanın kenarı kâğıda karışır
+	# (map.gdshader fade_m), kâğıdın iç çizgisi altından görünür.
+	"map_paper": [0.035, 0.035, 0.035, 0.035],
 }
 const CONTENT_PAD := 6.0
 ## "button_<renk>" düğmeleri (altta kalınlık payı) ve "frame_<nadirlik>" kart çerçeveleri.

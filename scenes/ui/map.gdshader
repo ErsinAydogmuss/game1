@@ -2,7 +2,8 @@ shader_type canvas_item;
 // Göl haritası (MapView): harita veri dokusundan çizilir, masa oyunu haritası gibi.
 // Veri: R kıyıya işaretli uzaklık (m; suda +), G derinlik (m), B bölge sırası + 1 (0 = yok),
 // A yürünebilir (dünyanın içi ya da iskele). Ağaçlar ve tarama dünya metresinde: harita büyüse de
-// aynı görünür. Kilitli bölgenin suyu gri ve taralı.
+// aynı görünür. Kilitli bölgenin suyu gri ve taralı. Kâğıtlı haritada (MapPanel) kenarlar kâğıda
+// karışır (fade_m).
 
 uniform sampler2D map_data : filter_linear, repeat_disable;
 uniform sampler2D map_zone : filter_nearest, repeat_disable;
@@ -12,6 +13,8 @@ uniform vec2 region_size = vec2(1.0);
 uniform vec2 texel = vec2(0.01);
 // Bölge sırası -> kilitli (1) ya da açık (0).
 uniform float locked[8];
+// Haritanın kenarından bu kadar metre içeriye kadar saydamlaşır, altındaki kâğıt görünür (0: kapalı).
+uniform float fade_m = 0.0;
 
 const vec3 MEADOW = vec3(0.72, 0.80, 0.50);
 const vec3 SAND = vec3(0.91, 0.83, 0.60);
@@ -65,5 +68,10 @@ void fragment() {
 	col = mix(col, vec3(0.93, 0.98, 1.0), ripple * 0.45);
 	float ink = 1.0 - smoothstep(0.07, 0.07 + aa * 1.6, abs(sd));
 	col = mix(col, INK, ink * 0.85);
-	COLOR = vec4(col, 1.0);
+	float alpha = 1.0;
+	if (fade_m > 0.0) {
+		vec2 edge = min(world - region_origin, region_origin + region_size - world);
+		alpha = smoothstep(0.0, fade_m, min(edge.x, edge.y));
+	}
+	COLOR = vec4(col, alpha);
 }

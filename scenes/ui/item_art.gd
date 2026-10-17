@@ -17,6 +17,9 @@ const FRAMES := "res://assets/ui/frames/%s.png"
 const GEAR := "res://assets/icons/gear/%s.png"
 ## Bölge rozetleri (docs/gorsel-istekleri.md Parti 3; yoksa GameIcon kodla çizer).
 const ZONES := "res://assets/icons/zones/zone_%s.png"
+## Harita çıkartmaları (Parti 3; yoksa harita süssüz). Harita kâğıdı 9 dilimli bir çerçevedir
+## (FRAMES, "map_paper").
+const MAP := "res://assets/ui/map/%s.png"
 
 ## Yer tutucunun boyu (piksel).
 const PLACEHOLDER_SIZE := 128
@@ -57,6 +60,11 @@ static func gear(icon_name: String) -> Texture2D:
 ## Bölgenin rozeti (yoksa null).
 static func zone(zone_id: String) -> Texture2D:
 	return _load(ZONES % zone_id)
+
+
+## Harita çıkartması (ör. "map_trees"; yoksa null).
+static func map_art(art_name: String) -> Texture2D:
+	return _load(MAP % art_name)
 
 
 ## Arayüz kitinden 9 dilimli bir çerçeve ya da düğme görseli (yoksa null; UiKit.framed kullanır).

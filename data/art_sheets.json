@@ -37,7 +37,7 @@
 			"names": ["net", "rod_stand", "boat", "trap", "lantern", "keepnet"] },
 		{ "file": "zone_badges", "out": "res://assets/icons/zones", "size": 192, "grid": [3, 2], "despill": "edge",
 			"names": ["zone_dock_cove", "zone_reeds", "zone_lily_cove", "zone_rocky_point", "zone_stream_mouth", "zone_deep_water"] },
-		{ "file": "map_paper", "out": "res://assets/ui/map", "size": 1536, "fit": "box",
+		{ "file": "map_paper", "out": "res://assets/ui/frames", "size": 1536, "fit": "trim", "grid": [1, 1],
 			"names": ["map_paper"] },
 		{ "file": "map_stickers", "out": "res://assets/ui/map", "size": 192, "grid": [3, 2], "despill": "edge",
 			"names": ["map_trees", "map_reeds", "map_lilies", "map_rocks", "map_shop", "map_boat"] },

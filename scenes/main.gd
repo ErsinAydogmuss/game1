@@ -915,14 +915,19 @@ func _snap_camera() -> void:
 	camera.snap(_focus())
 
 
-## Haritadaki işaretler: Nine'nin dükkânı ve Dede.
+## Haritadaki işaretler: Nine'nin dükkânı, Dede ve iskeledeki sandal (sandaldayken sandal iğnenin
+## yerinde, işareti yok).
 func _map_marks() -> Array[Dictionary]:
 	var front := ShopStall.front_for(lake.dock)
 	var stall := front - ShopStall.facing_dir() * ShopStall.DEPTH * 0.5
-	return [
+	var marks: Array[Dictionary] = [
 		{ "kind": "shop", "pos": stall },
 		{ "kind": "dede", "pos": Vector2(elder.global_position.x, elder.global_position.z) },
 	]
+	if not in_boat:
+		var boat := scene.boat_point()
+		marks.append({ "kind": "boat", "pos": Vector2(boat.x, boat.z) })
+	return marks
 
 
 ## Balık kartı açık mı ya da açılmak üzere mi?

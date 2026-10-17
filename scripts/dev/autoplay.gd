@@ -638,11 +638,7 @@ func _play_map() -> void:
 	await _wait(1.0)
 	await _shot("01_bolge_acildi")
 	await _wait_state(FishingSession.State.IDLE, 4.0)
-	# Rütbe 7: kayalık burun ve dere ağzı da açık (oturumun erişimi ve çitler).
-	save.xp = db.rank_xp[6]
-	_session().set_access(Zones.open_ids(db, save, spot))
-	main.call("_update_gates")
-	GameState.changed.emit()
+	# Rütbe 3'te harita: kayalık burun, dere ağzı ve derin orta kilitli (çitleri ve tabelaları).
 	var panel: MapPanel = main.get("map_panel")
 	var fade: Fade = main.get("fade")
 	await _tap_control(hud.map_button)
@@ -655,6 +651,13 @@ func _play_map() -> void:
 	await _wait(0.5)
 	await _shot("02_harita")
 	_check_map_badges(panel)
+	panel.close_panel()
+	await _wait(0.3)
+	# Rütbe 7: kayalık burun ve dere ağzı da açık (oturumun erişimi ve çitler).
+	save.xp = db.rank_xp[6]
+	_session().set_access(Zones.open_ids(db, save, spot))
+	main.call("_update_gates")
+	GameState.changed.emit()
 	var index := 3
 	var reach := _session().range_m() + db.rules.reach_extra
 	for zone_id: String in ["reeds", "lily_cove", "rocky_point", "stream_mouth", "dock_cove"]:
