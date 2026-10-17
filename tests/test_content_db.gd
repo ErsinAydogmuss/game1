@@ -136,7 +136,8 @@ func test_every_content_id_has_translations() -> void:
 ## Kodda geçen "UI_..." anahtarlarının hepsi CSV'de olmalı (yazım hatalarını yakalar).
 func test_ui_keys_used_in_code_exist() -> void:
 	var table := _read_translations()
-	var regex := RegEx.create_from_string("\"(UI_[A-Z0-9_]+)\"")
+	# "_" ile biten dizgi anahtar değil ön ektir (Moods.BY_PREFIX; test_moods denetler).
+	var regex := RegEx.create_from_string("\"(UI_[A-Z0-9_]*[A-Z0-9])\"")
 	var paths := _gd_files("res://scenes")
 	paths.append_array(_gd_files("res://scripts"))
 	assert_true(paths.size() > 0, "taranacak script bulunamadı")

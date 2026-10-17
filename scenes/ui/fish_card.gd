@@ -22,7 +22,7 @@ const FRAMED_ART := 240.0
 const CONFETTI_COLORS: Array[Color] = [Color("#ffcf3c"), Color("#ff5a7a"), Color("#4fd2ff"), Color("#7cf06a"), Color("#c47bff"), Color.WHITE]
 
 var ok_button: Button
-## Dede'nin sözünün yanındaki yüzü (main verir; yoksa yer tutucu ikon).
+## Ersin'in portresi yokken Dede'nin modelden çekilen yedek yüzü (main verir; o da yoksa yüzsüz).
 var dede_face: Texture2D
 
 ## Kartın en dıştaki düğümü (resimli kartta nadirlik renginde halka, yoksa kartın kendisi).
@@ -121,7 +121,7 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	column.add_child(desc)
 	var line := dede_line(db, rarity, outcome)
 	if not line.is_empty():
-		column.add_child(_dede_row(tr(line)))
+		column.add_child(_dede_row(line))
 	ok_button = UiKit.button(tr("UI_CARD_OK"), UiKit.SUCCESS, UiKit.SIZE_TITLE, Vector2(420, 130))
 	ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	# Kart görülmeden kapanmasın: düğme de en kısa açık kalma süresine uyar.
@@ -171,8 +171,8 @@ static func dede_line(db: ContentDB, rarity: int, outcome: Dictionary) -> String
 	return ""
 
 
-## Dede'nin yüzü ve sözü (açık bir hap içinde).
-func _dede_row(text: String) -> Control:
+## Dede'nin sözü (çeviri anahtarı) ve sözün ifadesiyle yüzü (Moods), açık bir hap içinde.
+func _dede_row(key: String) -> Control:
 	var pill := PanelContainer.new()
 	var sb := UiKit.card_style(UiKit.CREAM_EDGE, 40, UiKit.CREAM_CARD, 3)
 	sb.content_margin_left = 14
@@ -186,16 +186,19 @@ func _dede_row(text: String) -> Control:
 	row.add_theme_constant_override("separation", 14)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pill.add_child(row)
-	if dede_face != null:
+	var texture := Moods.face("dede", key)
+	if texture == null:
+		texture = dede_face
+	if texture != null:
 		var face := TextureRect.new()
-		face.texture = dede_face
+		face.texture = texture
 		face.custom_minimum_size = Vector2(76, 76)
 		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		row.add_child(face)
-	var label := UiKit.ink(text, UiKit.SIZE_BODY, UiKit.INK)
+	var label := UiKit.ink(tr(key), UiKit.SIZE_BODY, UiKit.INK)
 	row.add_child(label)
 	return pill
 

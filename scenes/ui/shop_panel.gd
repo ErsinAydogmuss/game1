@@ -57,6 +57,8 @@ var _last_gear_tab: String = "rod"
 var _tab_buttons: Dictionary = {}
 var _content: VBoxContainer
 var _face: TextureRect
+## Ersin'in portresi yokken Nine'nin modelden çekilen yedek yüzü (main verir).
+var _fallback_face: Texture2D
 var _line: Label
 var _coins: HBoxContainer
 var _line_key: String = "UI_NINE_SHOP_HELLO"
@@ -102,8 +104,18 @@ func _build() -> void:
 	body.add_child(_content)
 
 
-## Nine'nin ipucu çubuğundaki yüzü (modelden çekilen ya da Ersin'in portresi).
+## Nine'nin yedek yüzü (Ersin'in portresi yokken modelden çekilen; main verir).
 func set_face(texture: Texture2D) -> void:
+	_fallback_face = texture
+	_show_line()
+
+
+## Nine'nin sözü ve sözün ifadesiyle yüzü (Moods: satın almada paketi uzatır, satışta sevinir).
+func _show_line() -> void:
+	_line.text = tr(_line_key) % _line_args if not _line_args.is_empty() else tr(_line_key)
+	var texture := Moods.face("nine", _line_key)
+	if texture == null:
+		texture = _fallback_face
 	_face.texture = texture
 	_face.visible = texture != null
 	_icon.visible = texture == null
@@ -124,7 +136,7 @@ func open_shop(tab: String = "") -> void:
 func refresh() -> void:
 	set_header(tr("UI_SHOP_TITLE"), "shop", WIDTH)
 	_title.visible = false
-	_line.text = tr(_line_key) % _line_args if not _line_args.is_empty() else tr(_line_key)
+	_show_line()
 	Dialog.clear(_coins)
 	_coins.add_child(Dialog.coin_pill(GameState.save.coins))
 	for id: String in _tab_buttons:
@@ -527,7 +539,7 @@ func _sell() -> void:
 func _refuse(key: String, args: Array = []) -> void:
 	Sounds.play("error")
 	_say(key, args)
-	_line.text = tr(_line_key) % _line_args if not _line_args.is_empty() else tr(_line_key)
+	_show_line()
 
 
 func _say(key: String, args: Array = []) -> void:

@@ -790,21 +790,19 @@ func _on_sold(_coins: int) -> void:
 	nine.cheer()
 
 
-## İpucu çubuğundaki Dede ve Nine yüzleri: Ersin'in portresi yoksa modelden çekilir (birkaç kare
-## sürer).
+## Dede ve Nine'nin yüzleri (ipucu çubuğu, kart, dükkân) Ersin'in portrelerinden, sözün ifadesiyle
+## (Moods). Portre yoksa yedek yüz modelden çekilir (birkaç kare sürer).
 func _load_faces() -> void:
-	var dede_face := ItemArt.portrait("dede_smile")
-	if dede_face == null:
-		dede_face = await ElderBody.portrait(self, 192)
+	if ItemArt.portrait("dede_smile") == null:
+		var dede_face := await ElderBody.portrait(self, 192)
 		if dede_face != null:
 			hud.set_portrait(dede_face)
-	card.dede_face = dede_face
-	var nine_face := ItemArt.portrait("nine_smile")
-	if nine_face == null:
-		nine_face = await NineBody.portrait(self, 192)
+			card.dede_face = dede_face
+	if ItemArt.portrait("nine_smile") == null:
+		var nine_face := await NineBody.portrait(self, 192)
 		if nine_face != null:
 			hud.set_portrait(nine_face, "nine")
-	shop_panel.set_face(nine_face)
+			shop_panel.set_face(nine_face)
 
 
 # --- Arayüz ----------------------------------------------------------------------

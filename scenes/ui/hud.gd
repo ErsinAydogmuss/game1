@@ -55,7 +55,7 @@ var _hint_label: Label
 ## İpucu çubuğundaki konuşanın yüzü; resim yoksa yer tutucu ikon.
 var _face: TextureRect
 var _face_icon: Control
-## Konuşanların yüzleri: "dede", "nine" -> Texture2D (yoksa yer tutucu).
+## Ersin'in portresi yokken konuşanların modelden çekilen yedek yüzleri: "dede", "nine" -> Texture2D.
 var _faces: Dictionary = {}
 var _hint_key: String = ""
 var _speaker: String = "dede"
@@ -138,8 +138,8 @@ func refresh() -> void:
 	set_action(kind)
 
 
-## İpucu çubuğunda bir konuşanın yüzü (Ersin'in portresi ya da modelden çekilen); null ise yer
-## tutucu ikon.
+## İpucu çubuğunda bir konuşanın yedek yüzü (Ersin'in portresi yokken modelden çekilen). Portre
+## varsa yüz sözün ifadesiyle portreden gelir (Moods); ikisi de yoksa yer tutucu ikon.
 func set_portrait(texture: Texture2D, speaker: String = "dede") -> void:
 	_faces[speaker] = texture
 	if speaker == _speaker:
@@ -164,7 +164,9 @@ func hint_speaker() -> String:
 
 
 func _show_face() -> void:
-	var texture := _faces.get(_speaker) as Texture2D
+	var texture := Moods.face(_speaker, _hint_key)
+	if texture == null:
+		texture = _faces.get(_speaker) as Texture2D
 	_face.texture = texture
 	_face.visible = texture != null
 	_face_icon.visible = texture == null
@@ -356,8 +358,7 @@ func _build_bottom() -> void:
 	row.add_child(_face)
 	_face_icon = GameIcon.make("bobber", 64)
 	row.add_child(_face_icon)
-	set_portrait(ItemArt.portrait("dede_smile"))
-	set_portrait(ItemArt.portrait("nine_smile"), "nine")
+	_show_face()
 	# Hap görseli krem: üstünde koyu mürekkep; görsel yoksa koyu hap üstünde açık yazı.
 	_hint_label = UiKit.ink("", UiKit.SIZE_BODY) if ItemArt.frame("pill") != null else UiKit.label("", UiKit.SIZE_BODY)
 	row.add_child(_hint_label)
