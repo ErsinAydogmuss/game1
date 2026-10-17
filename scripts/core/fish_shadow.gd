@@ -37,6 +37,10 @@ var startles: int = 0
 var bored: bool = false
 ## Şans garantisiyle doğdu (aynı anda yalnızca bir tane).
 var pity: bool = false
+## Doğduğu bölge (LakeShape.zone_grid sırası; -1 bilinmiyor). Türü bu bölgenin oranından gelir.
+var zone: int = -1
+## Balıkçıdan çok uzakta kaldığı için gölden çekildi: yerine kısa sürede yenisi doğar.
+var recycled: bool = false
 
 
 func mode_name() -> String:

@@ -1,9 +1,10 @@
 {
-	"_note": "Balık tutma kuralları (docs/gdd.md §5). Süreler sn, uzaklıklar m. Çekirdek mantık 1/60 sn'lik sabit adımla çalışır; süreler adıma yuvarlanır. Telefonda denendikçe ayarlanır; sınırları testler denetler.",
+	"_note": "Balık tutma kuralları (docs/gdd.md §5). Süreler sn, uzaklıklar m. Çekirdek mantık 1/60 sn'lik sabit adımla çalışır; süreler adıma yuvarlanır. Telefonda denendikçe ayarlanır; sınırları testler denetler. shadows.reach_extra / leash_extra / recycle: bölgeli gölde gölgeler balıkçının çevresinde doğar (menzil + reach_extra), çok uzakta kalan çekilir ve yenisi doğar.",
 	"cast": { "flight_base": 0.45, "flight_per_m": 0.05, "arc": 0.25, "min_shore_m": 0.3, "min_m": 1.0, "retrieve": 0.35, "lost": 0.8 },
 	"shadows": { "speed": [0.3, 0.5], "pause": [1.0, 3.0], "min_depth": 0.8, "respawn": [3.0, 8.0],
 		"approach_speed": 0.45, "flee_speed": 2.2, "flee": 1.6, "turn": 2.5,
-		"lure_after": 6.0, "lure_chance": 0.5, "lure_radius": 2.5, "spacing": 1.2, "spawn_from_angler": 3.0 },
+		"lure_after": 6.0, "lure_chance": 0.5, "lure_radius": 2.5, "spacing": 1.2, "spawn_from_angler": 3.0,
+		"reach_extra": 2.0, "leash_extra": 8.0, "recycle": [0.4, 1.2], "recycle_check": 0.25 },
 	"scare": { "extra_m": 0.3 },
 	"notice": { "cone_deg": 70.0, "front_m": 3.0, "side_m": 1.8 },
 	"bite": { "nibbles": [15, 30, 35, 20], "gap": [0.8, 1.4], "window": 1.0, "window_easy": 1.6 },

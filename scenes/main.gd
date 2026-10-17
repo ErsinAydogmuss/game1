@@ -67,8 +67,9 @@ var _cue_clock: float = 0.0
 ## Açılacak kart (balık elde gösterilirken bekler) ve kalan süre.
 var _card_info: Dictionary = {}
 var _card_outcome: Dictionary = {}
-## Oyunun gölü (spots.json "main").
+## Oyunun gölü (spots.json "main") ve balıkçının bölgesi (değişince oranlar ve garanti yenilenir).
 var spot_id: String = ""
+var zone_id: String = ""
 var _card_wait: float = -1.0
 ## İpucu çubuğunda şu an gösterilen anahtar (değişince Dede konuşur).
 var _hint_shown: String = ""
@@ -147,9 +148,12 @@ func _ready() -> void:
 func _start_session() -> void:
 	var save := GameState.save
 	_save_ref = save
+	var start: Dictionary = Zones.at(GameState.db, spot_id, GameState.db.spot(spot_id)["start"])
 	session = FishingSession.new(GameState.db, spot_id, Economy.gear_for(GameState.db, save), Dice.derive(save.seed, save.session),
-			bool(GameState.setting("easy", false)), save.catches == 0,
-			CatchOdds.pity_floor(GameState.db, save, GameState.db.spot(spot_id)))
+			bool(GameState.setting("easy", false)), save.catches == 0, CatchOdds.pity_floor(GameState.db, save, start),
+			Zones.open_ids(GameState.db, save, spot_id))
+	zone_id = ""
+	_follow_zone()
 	angler.place(session.angler)
 	angler.face(Vector2(0, -1))
 	bobber.hide_bobber()
@@ -452,8 +456,8 @@ func _on_catch() -> void:
 	var stars := int(info["stars"])
 	var outcome := Records.add(save.records, fish_id, size_cm, stars, GameState.clock.now_unix())
 	save.catches += 1
-	CatchOdds.note_catch(db, save, rarity, db.spot(spot_id))
-	session.set_pity_floor(CatchOdds.pity_floor(db, save, db.spot(spot_id)))
+	CatchOdds.note_catch(db, save, rarity, Zones.place(db, spot_id, str(info.get("zone", ""))))
+	session.set_pity_floor(CatchOdds.pity_floor(db, save, Zones.place(db, spot_id, zone_id)))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir).
 	var was_full := Bucket.is_full(db, save)
@@ -465,6 +469,7 @@ func _on_catch() -> void:
 	# Rütbe atlama, kova dolu gibi bildirimler balığın etiketi sönünce (üst üste binmesin).
 	hud.hold_toasts(CatchFx.HOLD_TIME)
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
+		session.set_access(Zones.open_ids(db, save, spot_id))
 		var rank := int(ranked["new_rank"])
 		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up", "star")
 	if not kept:
@@ -501,7 +506,20 @@ func _on_catch() -> void:
 
 # --- Sunum ---------------------------------------------------------------------------
 
+## Balıkçının bölgesi değişti mi (yürüdü, geçti): oranlar, defter ve dükkân o bölgenin; şans
+## garantisi o bölgede gelebilen kademeler için.
+func _follow_zone() -> void:
+	var now := session.zone_id()
+	if now == zone_id:
+		return
+	zone_id = now
+	shop_panel.zone_id = now
+	book_panel.zone_id = now
+	session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save, Zones.place(GameState.db, spot_id, now)))
+
+
 func _present(delta: float) -> void:
+	_follow_zone()
 	var reel := session.reel
 	var fighting := session.state == FishingSession.State.FIGHTING and reel != null
 	shadows.sync(session.sim, angler.pos2(), fighting and reel.thrashing(), delta)

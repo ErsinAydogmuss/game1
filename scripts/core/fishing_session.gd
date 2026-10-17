@@ -18,8 +18,11 @@ extends RefCounted
 ## nibble {shadow, index} · bite {shadow} · early {shadow, startle} · retry {shadow} (ilk av
 ## kaçırılınca yeniden ısıracak) · hook {shadow, fish, distance} · warn · burst · burst_end ·
 ## strain · strain_end · lost {reason: early | missed | snapped | escaped} ·
-## catch {fish, fish_index, size_cm, stars, rarity, percentile, shadow} · retrieve · idle ·
+## catch {fish, fish_index, size_cm, stars, rarity, percentile, shadow, zone} · retrieve · idle ·
 ## spawn {shadow} · despawn {shadow}
+##
+## Bölgeli gölde gölgeler balıkçının çevresinde doğar (ShadowSim); balıkçının bölgesi zone().
+## access: gölge doğabilen bölgeler (Zones.open_ids; boşsa sandalsız bütün bölgeler).
 
 enum State { IDLE, CASTING, WAITING, NIBBLING, BITING, FIGHTING, RETRIEVING, CAUGHT, LOST }
 
@@ -69,7 +72,7 @@ var _events: Array[Dictionary] = []
 ## (Dice.derive(kayıt seed'i, oturum sayısı)). first_catch: ilk av senaryolu olsun (oyuncu
 ## henüz balık tutmadı). pity_floor: şans garantisi (CatchOdds.pity_floor; -1 = yok).
 func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, easy_mode: bool,
-		first_catch: bool, pity_floor: int = -1) -> void:
+		first_catch: bool, pity_floor: int = -1, access: PackedStringArray = PackedStringArray()) -> void:
 	_db = db
 	rules = db.rules
 	gear = gear_stats if gear_stats != null else GearStats.starter(db)
@@ -77,8 +80,10 @@ func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, eas
 	lake = db.lake(spot_id)
 	angler = spot.get("start", Vector2.ZERO)
 	easy = easy_mode
-	sim = ShadowSim.new(db, spot, lake, seed, first_catch, angler,
-			{ "attract": gear.attract, "pity_floor": pity_floor })
+	var odds := { "attract": gear.attract, "pity_floor": pity_floor, "reach": gear.range_m }
+	if not access.is_empty():
+		odds["open"] = access
+	sim = ShadowSim.new(db, spot, lake, seed, first_catch, angler, odds)
 
 
 ## Gerçek zamanı sabit adımlara çevirir.
@@ -213,7 +218,31 @@ func range_m() -> float:
 ## Takım değişti (dükkân): menzil ve sarma sonraki atıştan, yemin çekimi sonraki gölgeden geçerli.
 func set_gear(gear_stats: GearStats) -> void:
 	gear = gear_stats
+	sim.set_reach(gear.range_m)
 	sim.set_odds({ "attract": gear.attract, "pity_floor": sim.pity_floor })
+
+
+## Gölge doğabilen bölgeler değişti (rütbe atladı, sandala binildi ya da inildi).
+func set_access(open: PackedStringArray) -> void:
+	sim.set_access(open)
+
+
+## Balıkçı başka yere geçti (harita, sandal): yalnızca boştayken; gölgeler yeni yerin çevresinde.
+func relocate(p: Vector2) -> void:
+	angler = p
+	for e in sim.relocate(p):
+		_emit(e)
+
+
+## Balıkçının bölgesi (sıra; karada en yakın suyunki, sandalda altındaki suyun).
+func zone() -> int:
+	return lake.zone_at(angler)
+
+
+## Balıkçının bölgesinin kimliği (bölgesiz yerde boş).
+func zone_id() -> String:
+	var k := zone()
+	return lake.zone_ids[k] if k >= 0 and k < lake.zone_ids.size() else ""
 
 
 ## Şans garantisi değişti (bir balık tutuldu).
@@ -355,6 +384,7 @@ func _caught() -> void:
 	last_catch = {
 		"fish": s.fish_id, "fish_index": s.fish_index, "size_cm": s.size_cm, "stars": s.stars,
 		"rarity": s.rarity, "percentile": s.percentile, "shadow": s.id,
+		"zone": lake.zone_ids[s.zone] if s.zone >= 0 and s.zone < lake.zone_ids.size() else "",
 	}
 	sim.remove(s)
 	hooked = null

@@ -70,6 +70,8 @@ var _line_key: String = "UI_NINE_SHOP_HELLO"
 var _line_args: Array = []
 ## Yem kartındaki oranların atış noktası (main verir; boşsa oyunun gölü).
 var spot_id: String = ""
+## Balıkçının bölgesi: yem kartındaki oranlar o bölgenin (Balık Defteri'yle aynı).
+var zone_id: String = ""
 
 
 func _build() -> void:
@@ -333,7 +335,7 @@ func _stat_row(item: Dictionary, stat: Array) -> Control:
 ## ("Levrek %22 → %41"; Balık Defteri'yle aynı işlev, CatchOdds). Altında elindeki sayı.
 func _bait_info(parent: VBoxContainer, item: Dictionary) -> void:
 	var db := GameState.db
-	var spot := db.spot(spot_id if not spot_id.is_empty() else db.main_spot)
+	var spot := Zones.place(db, spot_id if not spot_id.is_empty() else db.main_spot, zone_id)
 	var attract: Dictionary = item["attract"]
 	var plain := CatchOdds.species_ppm(db, spot)
 	var baited := CatchOdds.species_ppm(db, spot, { "attract": attract })

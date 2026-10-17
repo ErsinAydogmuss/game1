@@ -36,6 +36,13 @@ var lure_radius: float = 2.5
 ## Doğan gölgeler birbirine bundan yakın olmaz.
 var spacing: float = 1.2
 var spawn_from_angler: float = 3.0
+## Bölgeli gölde gölgeler balıkçıya menzil + reach_extra metre içinde doğar; menzil + reach_extra +
+## leash_extra'dan uzakta kalan gölge gölden çekilir (recycle_check adımda bir bakılır) ve yerine
+## recycle_steps içinde yenisi doğar.
+var reach_extra: float = 2.0
+var leash_extra: float = 8.0
+var recycle_steps := Vector2i(24, 72)
+var recycle_check_steps: int = 15
 
 # --- Korkutma ve fark etme -------------------------------------------------------------
 var scare_extra: float = 0.3
@@ -102,6 +109,10 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 	r.lure_radius = float(shadows.get("lure_radius", r.lure_radius))
 	r.spacing = float(shadows.get("spacing", r.spacing))
 	r.spawn_from_angler = float(shadows.get("spawn_from_angler", r.spawn_from_angler))
+	r.reach_extra = float(shadows.get("reach_extra", r.reach_extra))
+	r.leash_extra = float(shadows.get("leash_extra", r.leash_extra))
+	r.recycle_steps = _steps2(shadows.get("recycle"), r.recycle_steps)
+	r.recycle_check_steps = maxi(1, to_steps(float(shadows.get("recycle_check", 0.25))))
 	var scare: Dictionary = d.get("scare", {})
 	r.scare_extra = float(scare.get("extra_m", r.scare_extra))
 	var notice: Dictionary = d.get("notice", {})
@@ -138,6 +149,8 @@ func _validate(errors: PackedStringArray) -> void:
 		"gölge hızı aralığı": shadow_speed.x > 0.0 and shadow_speed.y >= shadow_speed.x,
 		"duraklama aralığı": pause_steps.x > 0 and pause_steps.y >= pause_steps.x,
 		"yeniden doğma aralığı": respawn_steps.x > 0 and respawn_steps.y >= respawn_steps.x,
+		"geri dönüşüm (pozitif, aralık)": recycle_steps.x > 0 and recycle_steps.y >= recycle_steps.x \
+				and reach_extra >= 0.0 and leash_extra > 0.0,
 		"dürtme ağırlıkları (4 değer, toplam > 0)": nibble_weights.size() == 4 and _sum(nibble_weights) > 0,
 		"dürtme arası": gap_steps.x > 0 and gap_steps.y >= gap_steps.x,
 		"vuruş penceresi (Kolay >= normal)": window_steps > 0 and window_easy_steps >= window_steps,

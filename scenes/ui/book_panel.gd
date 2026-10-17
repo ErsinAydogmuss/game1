@@ -23,8 +23,9 @@ const UNFOUND_MARK := Color(0.42, 0.33, 0.24, 0.7)
 const DETAIL_ART := 110.0
 const DETAIL_FRAME_CORNER := 50.0
 
-## Defterin gölü (main verir; spots.json kimliği).
+## Defterin gölü (main verir; spots.json kimliği) ve balıkçının bölgesi (oranlar o bölgenin).
 var spot_id: String = ""
+var zone_id: String = ""
 
 var _grid: GridContainer
 var _pager: HBoxContainer
@@ -100,8 +101,9 @@ static func species(db: ContentDB, spot: String) -> Array[Dictionary]:
 
 
 ## Bu göldeki tür oranları kuşanılan takımla (doğan gölgeler de bunu kullanır).
-static func odds(db: ContentDB, save: SaveData, spot: String) -> Dictionary:
-	return CatchOdds.species_ppm(db, db.spot(spot), {"attract": Economy.gear_for(db, save).attract})
+static func odds(db: ContentDB, save: SaveData, spot: String, zone: String = "") -> Dictionary:
+	return CatchOdds.species_ppm(db, Zones.place(db, spot, zone), {"attract": Economy.gear_for(db, save).attract})
+
 
 
 ## Bot ve testler: seçili tür.
@@ -260,19 +262,20 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 		_detail.add_child(desc)
 	else:
 		_detail.add_child(UiKit.ink(tr("UI_BOOK_NOT_CAUGHT"), 28, UiKit.INK))
-		for hint in hints(db, save, spot_id, id):
+		for hint in hints(db, save, spot_id, id, zone_id):
 			var line := UiKit.ink(hint, 26, UiKit.INK_SOFT)
 			line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			line.custom_minimum_size = Vector2(420, 0)
 			_detail.add_child(line)
-	var species_odds := odds(db, save, spot_id)
+	var species_odds := odds(db, save, spot_id, zone_id)
 	_detail.add_child(UiKit.ink(tr("UI_BOOK_CHANCE") % UiKit.format_percent(int(species_odds.get(id, 0))), 28, UiKit.INK))
 	_detail.add_child(UiKit.spacer(true))
 	_add_lake_odds(db, save, species_odds)
 
 
-## Tutulmamış bir balığın ipuçları: sevdiği yem (en çok çeken) ve ne sıklıkla görüldüğü.
-static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String) -> PackedStringArray:
+## Tutulmamış bir balığın ipuçları: sevdiği yem (en çok çeken), bölgeli gölde yaşadığı yerler ve ne
+## sıklıkla görüldüğü (en sık görüldüğü bölgede).
+static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, zone: String = "") -> PackedStringArray:
 	var out := PackedStringArray()
 	var best_bait := ""
 	var best := 1.0
@@ -284,7 +287,17 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String) 
 			best_bait = str(g["id"])
 	if not best_bait.is_empty():
 		out.append(UiKit.translate("UI_BOOK_BAIT_HINT") % UiKit.translate("GEAR_" + best_bait))
-	var ppm := int(CatchOdds.species_ppm(db, db.spot(spot)).get(fish_id, 0))
+	var ppm := int(CatchOdds.species_ppm(db, Zones.place(db, spot, zone)).get(fish_id, 0))
+	var zones := db.zones_of(spot)
+	if zones.size() > 1:
+		var names := PackedStringArray()
+		for z in zones:
+			var here := int(CatchOdds.species_ppm(db, z).get(fish_id, 0))
+			if here > 0:
+				names.append(UiKit.translate("ZONE_" + str(z["id"])))
+			ppm = maxi(ppm, here)
+		if not names.is_empty():
+			out.append(UiKit.translate("UI_BOOK_HINT_ZONE") % ", ".join(names))
 	if ppm >= OFTEN_PPM:
 		out.append(UiKit.translate("UI_BOOK_HINT_OFTEN"))
 	elif ppm >= SOMETIMES_PPM:
