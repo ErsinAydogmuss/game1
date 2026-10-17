@@ -67,6 +67,10 @@ const BOAT_ALONG := 1.5
 const BOAT_Y := -0.12
 const BOAT_YAW := 0.0
 const BOAT_HALF := 1.1
+## Sandalda duran balıkçının ayaklarının sandalın ortasına göre yüksekliği ve şamandıraya göre
+## sandalın yeri (şamandıra balıkçının önünde, kameranın karşı yanında görünsün).
+const BOAT_FLOOR := 0.1
+const BUOY_MOOR := Vector2(0.7, 2.2)
 const SCENERY_SEED := 7
 ## Bölgenin süs takımı: küme ve kopya sayıları, sazların ve nilüferlerin kıyı bandı (m; suda +),
 ## büyük kaya payı. Eski şemadaki göl ("main") ve iskele koyu bugünkü göl gibi.
@@ -122,6 +126,8 @@ var _buoys: Array[Node3D] = []
 var _buoy_base: Array[Vector3] = []
 var _boat: Node3D
 var _boat_base := Vector3.ZERO
+## Sandal iskeleden ayrıldı mı (balıkçı içinde, bir şamandıranın yanında)?
+var _boat_away: bool = false
 var _clock := 0.0
 
 
@@ -147,6 +153,8 @@ func ground_height(p: Vector2) -> float:
 
 ## Balıkçının duracağı yükseklik: iskelede güverte, karada zemin.
 func stand_height(p: Vector2) -> float:
+	if _boat_away and _boat != null and p.distance_to(Vector2(_boat_base.x, _boat_base.z)) < BOAT_HALF:
+		return _boat.position.y + BOAT_FLOOR
 	return DOCK_HEIGHT + 0.04 if lake.on_dock(p) else maxf(ground_height(p), 0.0)
 
 
@@ -811,6 +819,29 @@ func _build_boat() -> void:
 	add_child(_boat)
 	for node in ModelLibrary.merge(_boat, "BoatMesh", [["boat", Transform3D(Basis(Vector3.UP, BOAT_YAW), Vector3.ZERO)]]):
 		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+
+
+## Sandal bir şamandıranın yanına gider (balıkçı biner): sandalın ortası (dünya xz) döner. Sandal
+## modeli yoksa da yer aynıdır (balıkçı suyun üstünde durur).
+func moor_boat(buoy: Vector2) -> Vector2:
+	var at := buoy + BUOY_MOOR
+	_boat_away = true
+	_boat_base = Vector3(at.x, BOAT_Y, at.y)
+	if _boat != null:
+		_boat.position = _boat_base
+	return at
+
+
+## Sandal iskeledeki yerine döner (balıkçı indi).
+func dock_boat() -> void:
+	_boat_away = false
+	_boat_base = _boat_spot()
+	if _boat != null:
+		_boat.position = _boat_base
+
+
+func boat_away() -> bool:
+	return _boat_away
 
 
 ## Sandalın ortası (dünya; botun dokunuşu için). Sandal yoksa yerinin su yüzeyindeki noktası.

@@ -93,6 +93,7 @@ UI_MAP_HERE,You are here,Buradasın
 UI_MAP_NEW,New!,Yeni!
 UI_MAP_RANK,Rank %d,Rütbe %d
 UI_MAP_BOAT,By boat,Sandalla
+UI_BOAT_RETURN,Back to shore,Kıyıya dön
 RANK_novice,Novice,Acemi
 RANK_apprentice,Apprentice,Çırak
 RANK_angler,Angler,Balıkçı
@@ -155,6 +156,8 @@ GEAR_bait_shrimp,Shrimp,Karides
 GEAR_bait_shrimp_DESC,"Catfish, pike and zander can't resist.","Yayın, turna ve sudak dayanamaz."
 GEAR_net,Landing net,Kepçe
 GEAR_net_DESC,Land fish from a little farther away: shorter fights.,Balığı biraz daha uzaktan alırsın: çekişme kısalır.
+GEAR_boat,Rowboat,Sandal
+GEAR_boat_DESC,Row out to deep water: big catfish and sturgeon!,Derin ortaya açıl: iri yayın ve mersin orada!
 GEAR_bucket,Bucket,Kova
 GEAR_bucket_DESC,Holds 6 fish.,6 balık alır.
 GEAR_bucket_big,Big bucket,Büyük kova
@@ -172,6 +175,8 @@ UI_RELEASED,The %s swam back home,%s göle döndü
 UI_DEDE_BUCKET,Your bucket is full! Sell your fish at Nana's shop.,Kovan doldu! Balıkları Nine'nin dükkânında satabilirsin.
 UI_DEDE_BAIT_OUT,"Your bait's all gone, kiddo. Back to worms; Nana sells more.","Yemin bitti evlat. Solucanla devam; yenisi Nine'de."
 UI_DEDE_BOAT,"That boat's for deep water, kid. Your time will come!","Sandalla derin sulara açılınır. Zamanı gelecek evlat!"
+UI_DEDE_BOAT_SHOP,"You're ready for deep water, kid! Nana sells a boat.",Derin sulara hazırsın evlat! Nine sandal satıyor.
+UI_DEDE_BOAT_DEEP,"Deep water! Big fish live here, kid. Hold tight!",Derin sular! Burada iri balıklar yaşar evlat. Sıkı tut!
 UI_DEDE_GATE,"We'll go there later, kid. Let's fish here first!","Oraya sonra gideriz evlat. Önce burada balık tutalım!"
 UI_DEDE_ZONE_OPEN,"A new spot is open, kid! Take a look at the map.",Yeni bir yer açıldı evlat! Haritaya bir bak.
 UI_SHOP_SIGN,Nana's shop,Nine'nin dükkânı

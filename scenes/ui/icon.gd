@@ -14,7 +14,7 @@ extends Control
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release", "pin"]
+		"release", "pin", "boat"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -26,7 +26,7 @@ const ART_NAMES := {
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem ve Ekstra sekmeleri.
-const GEAR_ART := {"line": "line_braid", "bait": "bait_worm", "net": "net"}
+const GEAR_ART := {"line": "line_braid", "bait": "bait_worm", "net": "net", "boat": "boat"}
 
 ## Nadirlik şekli (rarities.json "shape") → arayüz kitindeki rozet görseli (assets/icons/ui).
 ## Görsel varsa renk tint'ten değil görselden gelir; test_art_sheet her nadirliği denetler.
@@ -161,6 +161,8 @@ func _draw() -> void:
 			draw_arc(Vector2(50, 44), 16, PI, TAU, 18, STEEL_DARK, 8.0, true)
 		"pin":
 			_pin()
+		"boat":
+			_boat()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -439,6 +441,15 @@ func _pin() -> void:
 	draw_circle(Vector2(50, 37), 25, RED)
 	draw_circle(Vector2(50, 37), 10, Color.WHITE)
 	draw_circle(Vector2(41, 27), 5, Color(1, 1, 1, 0.55))
+
+
+## Kürekli sandal (yandan): ahşap gövde, oturak ve kürek.
+func _boat() -> void:
+	draw_line(Vector2(22, 30), Vector2(64, 72), WOOD_DARK, 6.0, true)
+	draw_colored_polygon(PackedVector2Array([Vector2(8, 50), Vector2(92, 50), Vector2(80, 74), Vector2(22, 74)]), WOOD_DARK)
+	draw_colored_polygon(PackedVector2Array([Vector2(12, 52), Vector2(88, 52), Vector2(78, 70), Vector2(24, 70)]), WOOD)
+	draw_line(Vector2(16, 58), Vector2(84, 58), WOOD.lightened(0.25), 4.0, true)
+	draw_line(Vector2(12, 80), Vector2(88, 80), WATER, 5.0, true)
 
 
 ## Bölge rozeti (Ersin'in görseli yoksa): yuvarlak su zemininde bölgenin simgesi.

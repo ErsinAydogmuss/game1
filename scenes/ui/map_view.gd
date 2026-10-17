@@ -114,7 +114,7 @@ func show_lake(db: ContentDB, save: SaveData, spot_id: String, here: Vector2, cu
 		var badge := _badge(id, open, note, id == current)
 		add_child(badge)
 		_badges[id] = badge
-		_anchors[id] = badge_anchor(lake, k)
+		_anchors[id] = badge_anchor(lake, k, z)
 		if open and not save.flags.has("visited_" + id):
 			var tag := _new_tag()
 			add_child(tag)
@@ -169,8 +169,12 @@ func fitted_size(max_size: Vector2) -> Vector2:
 	return (region.size * s).round()
 
 
-## Rozetin dünyadaki yeri: bölgenin suyunun ortası (su hücrelerinin ağırlık merkezi).
-static func badge_anchor(shape: LakeShape, zone_index: int) -> Vector2:
+## Rozetin dünyadaki yeri: bölgenin verisindeki "map" noktası (verilmişse), yoksa bölgenin suyunun
+## ortası (su hücrelerinin ağırlık merkezi). "Buradasın" iğnesine binen rozet yerleşirken kayar.
+static func badge_anchor(shape: LakeShape, zone_index: int, zone: Dictionary = {}) -> Vector2:
+	var at: Vector2 = zone.get("map", Dice.NO_POINT)
+	if Dice.is_point(at):
+		return at
 	if zone_index >= 0 and zone_index < shape.zone_centers.size():
 		return shape.zone_centers[zone_index]
 	return shape.water_bounds.get_center()
@@ -236,13 +240,24 @@ func _layout() -> void:
 	_overlay.position = Vector2.ZERO
 	_overlay.size = size
 	_overlay.queue_redraw()
+	var pin_rect := Rect2()
+	if _pin != null:
+		_pin.reset_size()
+		_pin.position = _pin_position()
+		pin_rect = pin_box()
 	for id: String in _badges:
 		var b: Control = _badges[id]
 		b.reset_size()
 		var at := to_view(_anchors[id]) - b.size * 0.5
 		if id == _shake_id and _shake > 0.0:
 			at.x += sin(_shake * 60.0) * 10.0 * (_shake / 0.4)
-		b.position = at.clamp(Vector2.ZERO, (size - b.size).max(Vector2.ZERO))
+		at = at.clamp(Vector2.ZERO, (size - b.size).max(Vector2.ZERO))
+		# "Buradasın" iğnesinin üstüne binen rozet (sandaldayken derin orta) iğnenin üstüne, yer
+		# yoksa altına kayar.
+		if pin_rect.size.x > 0.0 and Rect2(at, b.size).intersects(pin_rect):
+			var up := pin_rect.position.y - b.size.y
+			at.y = up if up >= 0.0 else minf(pin_rect.end.y, size.y - b.size.y)
+		b.position = at
 		if _tags.has(id):
 			var tag: Control = _tags[id]
 			tag.reset_size()
@@ -251,9 +266,13 @@ func _layout() -> void:
 		var node: Control = m[0]
 		node.reset_size()
 		node.position = to_view(m[1]) - node.size * 0.5
-	if _pin != null:
-		_pin.reset_size()
-		_pin.position = _pin_position()
+
+
+## "Buradasın" iğnesinin kapladığı yer (zıplaması ve biraz payla; rozetler buna binmez).
+func pin_box() -> Rect2:
+	if _pin == null:
+		return Rect2()
+	return Rect2(_pin_position(), _pin.size).grow(8.0)
 
 
 ## İğnenin ucu balıkçının yerinde; yazısı iğnenin altında (atış noktaları suya ekranın yukarısına

@@ -7,16 +7,18 @@ extends Control
 ##   ayarlarda). Sağ üst: harita (ilk balıktan sonra), Balık Defteri (ikisi de olta sudayken gizli)
 ##   ve ayarlar. Yeni bir bölge açılınca harita düğmesi bir süre nabız gibi atar.
 ## - Sağ alt: büyük eylem düğmesi (AT / GERİ SAR / BEKLE / VUR! / SAR); ekranın her yeri de
-##   aynı işi yapar, düğme ne olacağını yazar.
+##   aynı işi yapar, düğme ne olacağını yazar. Sol alt: sandaldayken "Kıyıya dön" (olta sudayken
+##   gizli).
 ## - Üst orta: çekişmede gerilim çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü
 ##   oyuncu da okusun).
 ## - Orta: kısa bildirimler ("Erken davrandın!"). Alt orta: ipucu çubuğu (konuşanın yüzü ve sözü:
 ##   Dede ya da Nine).
-## - Sol alt: geliştirme sürümünde FPS.
+## - Sol üstte durumun altında: geliştirme sürümünde FPS.
 
 signal settings_pressed
 signal book_pressed
 signal map_pressed
+signal shore_pressed
 signal action_down
 signal action_up
 
@@ -41,10 +43,12 @@ const BOOK_COLOR := UiKit.PRIMARY
 const MAP_COLOR := UiKit.SECONDARY
 ## Yeni bölge açılınca harita düğmesinin nabzı (sn).
 const MAP_PULSE := 4.0
+const SHORE_SIZE := Vector2(280, 132)
 
 var settings_button: TouchButton
 var book_button: TouchButton
 var map_button: TouchButton
+var shore_button: TouchButton
 ## Harita düğmesi gösterilsin mi (ilk balıktan sonra ve bölgeli gölde; olta sudayken yine gizli).
 var map_allowed: bool = false:
 	set(value):
@@ -89,6 +93,7 @@ var _warm_later: Array[Array] = []
 var _toast_hold: float = 0.0
 var _action_kind: String = "-"
 var _line_out: bool = false
+var _in_boat: bool = false
 var _map_pulse: float = 0.0
 var _clock: float = 0.0
 var _fps_clock: float = 0.0
@@ -154,6 +159,8 @@ func _process(delta: float) -> void:
 func refresh() -> void:
 	if not _hint_key.is_empty():
 		_hint_label.text = tr(_hint_key)
+	if shore_button != null:
+		shore_button.set_text(tr("UI_BOAT_RETURN"))
 	var kind := _action_kind
 	_action_kind = "-"
 	set_action(kind)
@@ -225,7 +232,13 @@ func _show_queued() -> void:
 func set_line_out(on: bool) -> void:
 	_line_out = on
 	for c in line_out_hidden:
-		c.visible = not on and (c != map_button or map_allowed)
+		c.visible = not on and (c != map_button or map_allowed) and (c != shore_button or _in_boat)
+
+
+## Sandalda mı: "Kıyıya dön" düğmesi görünür.
+func set_boat(on: bool) -> void:
+	_in_boat = on
+	shore_button.visible = on and not _line_out
 
 
 ## Yeni bölge açıldı: harita düğmesi bir süre nabız gibi atar.
@@ -298,7 +311,7 @@ func _set_button(text: String, icon_kind: String, color: Color) -> void:
 
 ## Ekrandaki düğmeler (bot denetimi: boyut ve güvenli alan).
 func buttons() -> Array[TouchButton]:
-	return [map_button, book_button, settings_button, action_button]
+	return [map_button, book_button, settings_button, action_button, shore_button]
 
 
 # --- Kurulum ---------------------------------------------------------------------
@@ -402,9 +415,19 @@ func _build_bottom() -> void:
 	action_button.released.connect(func() -> void: action_up.emit())
 	_frame().add_child(action_button)
 	set_action("cast")
+	shore_button = TouchButton.make(tr("UI_BOAT_RETURN"), "boat", UiKit.SECONDARY, SHORE_SIZE, UiKit.SIZE_BODY, 64.0)
+	shore_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	shore_button.size_flags_vertical = Control.SIZE_SHRINK_END
+	shore_button.pressed.connect(func() -> void: shore_pressed.emit())
+	shore_button.visible = false
+	_frame().add_child(shore_button)
+	line_out_hidden.append(shore_button)
+	# FPS sol üstte, durum haplarının altında (sol alt "Kıyıya dön"ün yeri).
 	_fps = UiKit.label("", UiKit.SIZE_SMALL, UiKit.MUTED)
 	_fps.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	_fps.size_flags_vertical = Control.SIZE_SHRINK_END
+	_fps.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_fps.custom_minimum_size = Vector2(0, 230)
+	_fps.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	# Hata ayıklama FPS etiketi; video kaydında (Movie Maker, "movie" özelliği) gizli.
 	_fps.visible = OS.is_debug_build() and not OS.has_feature("movie")
 	_frame().add_child(_fps)

@@ -14,6 +14,20 @@ static func capacity(db: ContentDB, save: SaveData) -> int:
 	return maxi(1, best)
 
 
+## Dükkânda gösterilen kova: kapasiteyi büyüten en ucuz kova; hepsi alındıysa en büyüğü (kovalar
+## tek kartta: sahip olunanın bir üstü).
+static func next_bucket(db: ContentDB, save: SaveData) -> Dictionary:
+	var have := capacity(db, save)
+	var next: Dictionary = {}
+	var biggest: Dictionary = {}
+	for g in db.gear_in("bucket"):
+		if biggest.is_empty() or int(g["capacity"]) > int(biggest["capacity"]):
+			biggest = g
+		if int(g["capacity"]) > have and (next.is_empty() or int(g["price"]) < int(next["price"])):
+			next = g
+	return next if not next.is_empty() else biggest
+
+
 ## Koruma altındaki tür mü (tutulur, kovaya girmez, göle bırakılır)?
 static func release_only(db: ContentDB, fish_id: String) -> bool:
 	return bool(db.fish_by_id(fish_id).get("release_only", false))

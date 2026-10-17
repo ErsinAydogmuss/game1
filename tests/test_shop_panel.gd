@@ -1,6 +1,7 @@
 extends BaseTest
 ## Dükkân paneli: her sekmede en çok 6 kart (kaydırma yok, parmakla aranmaz) ve satılan her takım
-## bir sekmede (şimdilik yalnızca şamandıra kamışları; öteki teknikler Dalga 3'te).
+## bir sekmede (şimdilik yalnızca şamandıra kamışları; öteki teknikler Dalga 3'te). Kovalar tek
+## kartta: sırası gelen (sahip olunanın bir üstü).
 
 
 func test_every_tab_fits_one_page() -> void:
@@ -18,7 +19,39 @@ func test_every_gear_item_has_a_tab() -> void:
 	for g in content().gear:
 		if str(g["category"]) == "rod" and str(g["technique"]) != "float":
 			continue
+		# Kovalar sırası gelince (aşağıda).
+		if str(g["category"]) == "bucket":
+			continue
 		assert_true(shown.has(str(g["id"])), "dükkânda yok: " + str(g["id"]))
+
+
+## Ekstra sekmesinde kovalardan yalnızca sıradaki: alındıkça bir üstü gelir; hepsi alınınca en büyüğü.
+func test_buckets_show_one_at_a_time() -> void:
+	var db := content()
+	var save := SaveData.create_new(0)
+	var seen: Array[String] = []
+	for i in 10:
+		var buckets: Array[String] = []
+		for g in ShopPanel.items_for(db, "extra", save):
+			if str(g["category"]) == "bucket":
+				buckets.append(str(g["id"]))
+		assert_eq(buckets.size(), 1, "tek kova kartı")
+		if buckets.is_empty() or buckets[0] in seen:
+			break
+		seen.append(buckets[0])
+		save.owned.append(buckets[0])
+	var paid := 0
+	for g in db.gear_in("bucket"):
+		if int(g["price"]) > 0:
+			paid += 1
+	assert_eq(seen.size(), paid, "satılık her kova sırayla gelir: %s" % str(seen))
+	var last := Bucket.next_bucket(db, save)
+	assert_eq(int(last["capacity"]), Bucket.capacity(db, save), "hepsi alınınca en büyüğü (sende)")
+	var extra := ShopPanel.items_for(db, "extra", SaveData.create_new(0))
+	var ids: Array[String] = []
+	for g in extra:
+		ids.append(str(g["id"]))
+	assert_true("net" in ids and "boat" in ids, "Ekstra: kepçe ve sandal (%s)" % str(ids))
 
 
 func test_stats_exist_on_items() -> void:

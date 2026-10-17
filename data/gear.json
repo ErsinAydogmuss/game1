@@ -1,6 +1,6 @@
 {
 	"_note": "Nine'nin dükkânındaki takım (docs/gdd.md §10.4). Kimlikler değişmez; kayıt takımı kimlikle tutar. price: para (0 = baştan var), rank: açıldığı rütbe. icon: görsel adı (assets/icons/gear/<icon>.png; yoksa kimlik), kind: görsel yoksa çizilen GameIcon. Sayılar taslak; denge botuyla ayarlanır (tools/economy_report.gd). Takımın gücü test_reel_model korkuluklarıyla sınırlı: en iyi takımla bile hep basılı tutan Nadir balığı en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar, çekişme en çok %40 kısalır (tools/reel_report.gd -- --gear=top).",
-	"_stats": "rod: technique (float, spin, bottom, fly), range_m (atış menzili), power (0-0,3: sarma x (1 + power), patlamada kaçış x (1 - power)). reel: reel_speed (m/sn, balığın reel çarpanıyla), drag (0-0,25: patlamada gerilim x (1 - drag); en güçlü frende bile her balığın patlaması sınırın en az 0,1 üstünde kalmalı, ContentDB denetler). line: snap_after (sınırın üstünde kopmadan önce sn), stealth (0-0,5: gölgeyi korkutma yarıçapı x (1 - stealth)). hook: escape_extra (balığın kaçma payına eklenen m). bobber: window_add (VUR süresine eklenen sn). bait: attract (tür -> ağırlık çarpanı), pack (bir alımda kaç tane; 0 = sınırsız). extra: net (catch_m: balık bu uzaklıkta tutulur). bucket: capacity (kova kaç balık alır).",
+	"_stats": "rod: technique (float, spin, bottom, fly), range_m (atış menzili), power (0-0,3: sarma x (1 + power), patlamada kaçış x (1 - power)). reel: reel_speed (m/sn, balığın reel çarpanıyla), drag (0-0,25: patlamada gerilim x (1 - drag); en güçlü frende bile her balığın patlaması sınırın en az 0,1 üstünde kalmalı, ContentDB denetler). line: snap_after (sınırın üstünde kopmadan önce sn), stealth (0-0,5: gölgeyi korkutma yarıçapı x (1 - stealth)). hook: escape_extra (balığın kaçma payına eklenen m). bobber: window_add (VUR süresine eklenen sn). bait: attract (tür -> ağırlık çarpanı), pack (bir alımda kaç tane; 0 = sınırsız). extra: net (catch_m: balık bu uzaklıkta tutulur). bucket: capacity (kova kaç balık alır). boat: sandal (derin ortaya açılır; Zones.BOAT, fiyatı denge adımında).",
 	"start": { "rod": "rod_bamboo", "reel": "reel_basic", "line": "line_mono_thin", "hook": "hook_small",
 		"bobber": "bobber_basic", "bait": "bait_worm", "bucket": "bucket" },
 	"gear": [
@@ -38,6 +38,7 @@
 		{ "id": "bait_shrimp", "category": "bait", "price": 100, "rank": 5, "pack": 10, "attract": { "wels": 3.0, "pike": 2.5, "zander": 2.5, "chub": 1.8 } },
 
 		{ "id": "net", "category": "extra", "kind": "net", "price": 700, "rank": 3, "catch_m": 0.85 },
+		{ "id": "boat", "category": "boat", "kind": "boat", "price": 5000, "rank": 9 },
 
 		{ "id": "bucket", "category": "bucket", "icon": "bucket", "kind": "bucket", "price": 0, "rank": 1, "capacity": 6 },
 		{ "id": "bucket_big", "category": "bucket", "icon": "bucket", "kind": "bucket", "price": 300, "rank": 2, "capacity": 10 },

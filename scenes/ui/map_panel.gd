@@ -72,7 +72,8 @@ func _on_zone(id: String) -> void:
 		_note.add_theme_color_override("font_color", Color("#a2471d"))
 		view.shake(id)
 		return
-	if (z["stands"] as Array).is_empty():
+	# Gidilecek yer: bölgenin atış noktası ya da (sandal bölgesinde) şamandırası.
+	if (z["stands"] as Array).is_empty() and (z["buoys"] as Array).is_empty():
 		return
 	Sounds.play("ui_tap")
 	close_panel()

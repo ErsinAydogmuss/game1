@@ -31,7 +31,7 @@ func test_map_data() -> void:
 	assert_eq(image.get_width(), ceili(region.size.x / MapView.STEP), "genişlik")
 	var zones := db.zones_of(SPOT)
 	for k in zones.size():
-		var c := MapView.badge_anchor(lake, k)
+		var c := MapView.badge_anchor(lake, k, zones[k])
 		var px := _pixel(image, region, c)
 		assert_true(px.r > 0.0, "%s rozeti suyun üstünde (kıyı %.2f m)" % [zones[k]["id"], px.r])
 		assert_eq(int(px.b), k + 1, "%s bölgesi" % zones[k]["id"])
@@ -46,15 +46,41 @@ func test_map_data() -> void:
 	assert_true(dock.a > 0.5, "iskele yürünebilir")
 
 
-## Rozetler (bölgenin suyunun ortasında) birbirinden uzak: haritada üst üste binmez.
+## Rozetler birbirinden uzak: haritada üst üste binmez.
 func test_badges_do_not_overlap() -> void:
 	var db := content()
 	var lake := db.lake(SPOT)
 	var zones := db.zones_of(SPOT)
 	for a in zones.size():
 		for b in range(a + 1, zones.size()):
-			var d := MapView.badge_anchor(lake, a).distance_to(MapView.badge_anchor(lake, b))
+			var d := MapView.badge_anchor(lake, a, zones[a]).distance_to(MapView.badge_anchor(lake, b, zones[b]))
 			assert_true(d >= 9.0, "%s ile %s rozeti arası %.1f m" % [zones[a]["id"], zones[b]["id"], d])
+
+
+
+## Rozetler "Buradasın" iğnesine binmez: balıkçı her atış noktasında ve her şamandıradaki sandalda.
+func test_badges_avoid_the_pin() -> void:
+	var db := content()
+	var save := SaveData.create_new(0)
+	save.xp = db.rank_xp[8]
+	save.owned.append(Zones.BOAT)
+	var places: Array[Vector2] = []
+	for z in db.zones_of(SPOT):
+		for p: Vector2 in z["stands"]:
+			places.append(p)
+		for p: Vector2 in z["buoys"]:
+			places.append(p + LakeScene.BUOY_MOOR)
+	var marks: Array[Dictionary] = []
+	for here in places:
+		var view := MapView.new()
+		view.size = MapPanel.MAP
+		view.show_lake(db, save, SPOT, here, Zones.at(db, SPOT, here).get("id", ""), marks)
+		var pin := view.pin_box()
+		for z in db.zones_of(SPOT):
+			var badge := view.badge(str(z["id"]))
+			var r := Rect2(badge.position, badge.size)
+			assert_true(not r.intersects(pin), "%s rozeti %s'teki iğneye binmez" % [z["id"], here])
+		view.free()
 
 
 ## Harita düğmesi: izin yokken (ilk balıktan önce) ve olta sudayken gizli.

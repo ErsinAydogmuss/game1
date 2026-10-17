@@ -37,9 +37,9 @@ var main_spot: String = ""
 var rules: FishingRules
 var errors: PackedStringArray = []
 
-## Takım kategorileri ve kuşanılan yuvalar (bucket ve extra kuşanılmaz: sahip olunan en iyisi
-## ya da hepsi işler).
-const GEAR_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bait", "extra", "bucket"]
+## Takım kategorileri ve kuşanılan yuvalar (bucket, extra ve boat kuşanılmaz: sahip olunan en iyisi
+## ya da hepsi işler; sandal derin ortayı açar, Zones.BOAT).
+const GEAR_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bait", "extra", "bucket", "boat"]
 const GEAR_SLOTS: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bait"]
 const TECHNIQUES: Array[String] = ["float", "spin", "bottom", "fly"]
 const RARITY_SHAPES: Array[String] = ["circle", "triangle", "diamond", "star", "sparkle", "medallion"]
@@ -380,7 +380,8 @@ func _basin_def(raw: Variant, zone: String, deepest: float, shelf_m: float) -> D
 ## içeride başlar), min_depth (gölgelerin girdiği en sığ su), fish_ids ve fish_weights (CatchOdds
 ## bölge sözlüğünü atış noktası gibi okur), stands (hızlı geçişte balıkçının durduğu yerler),
 ## gates (bölge kilitliyken kıyı yolunu kesen çitler: iki uç), buoys (sandalın gittiği
-## şamandıralar), current (akıntı yönü; görsel).
+## şamandıralar), current (akıntı yönü; görsel), map (haritada rozetin yeri; yoksa Dice.NO_POINT:
+## bölgenin suyunun ortası).
 func _zone_def(raw: Variant) -> Dictionary:
 	var z: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
 	var ids := PackedStringArray()
@@ -414,6 +415,7 @@ func _zone_def(raw: Variant) -> Dictionary:
 		"gates": gates,
 		"buoys": buoys,
 		"current": _vec2(z.get("current"), Vector2.ZERO),
+		"map": _vec2(z.get("map"), Dice.NO_POINT),
 	}
 
 

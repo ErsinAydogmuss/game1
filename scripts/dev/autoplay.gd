@@ -24,6 +24,9 @@ extends Node
 ##   map: harita ve hızlı geçiş (KONTROL satırları): ilk balıktan önce harita düğmesi yok; rütbe
 ##     atlayınca yeni bölge açılır (bildirim, Dede, nabız); haritaya dokun → açılır; her açık bölgenin
 ##     rozetine dokun → ekran kararır, balıkçı oraya geçer, gölgeler gelir; kilitli bölgeye geçilmez.
+##   boat: sandal (KONTROL satırları): sandal yokken Dede Nine'yi söyler; Nine'den sandalı al; iskeledeki
+##     sandala dokun → ekran kararır, derin ortada sandaldasın; yürünmez, dokunuş atıştır; yayını tut;
+##     haritadan sıradaki şamandıra; "Kıyıya dön" → iskele.
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~70 sn): dönen bir oyuncu; Dede'ye dokun,
 ##     pırıltılı gölgeden nadir bir turna (VUR, çekişme, ışık sütunu, kart), kova dolar; Nine'ye git,
 ##     hepsini sat, cam kamışı al; Balık Defteri; mor ışıltılı Destansı bir yayın.
@@ -79,6 +82,8 @@ func _ready() -> void:
 			_play_rarity.call_deferred()
 		"map":
 			_play_map.call_deferred()
+		"boat":
+			_play_boat.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -674,6 +679,105 @@ func _play_map() -> void:
 	panel.close_panel()
 	await _wait(0.3)
 	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Sandal: rütbe 9, parası var ama sandalı yok.
+func _play_boat() -> void:
+	_use_save(3)
+	var db := GameState.db
+	var save := GameState.save
+	var spot := str(main.get("spot_id"))
+	save.xp = db.rank_xp[8]
+	save.coins = 6000
+	Records.add(save.records, "wels", 999, 3, 0)
+	_session().set_access(Zones.open_ids(db, save, spot))
+	main.call("_update_gates")
+	GameState.changed.emit()
+	await _wait(1.0)
+	var scene: LakeScene = main.get("scene")
+	var fade: Fade = main.get("fade")
+	var hud := _hud()
+	# 1) Sandal yokken sandala dokun: Dede, Nine'nin sandal sattığını söyler; binilmez.
+	await _tap(_screen(scene.boat_point()))
+	await _wait_frames(3)
+	_check("sandal yokken sandala dokun → Dede Nine'yi söyler", str(main.get("_hint_shown")) == "UI_DEDE_BOAT_SHOP"
+			and not bool(main.get("in_boat")))
+	# 2) Nine'den sandalı al (Ekstra sekmesi: kepçe, sandal, sıradaki kova).
+	var shop: ShopPanel = main.get("shop_panel")
+	await _tap(_screen(_nine().head_point()))
+	await _wait_until(func() -> bool: return shop.visible, 2.0)
+	await _tap_control(shop.find_child("Tab_extra", true, false))
+	await _wait(0.4)
+	await _shot("01_ekstra")
+	await _tap_card(shop, "boat", -1)
+	await _wait_frames(2)
+	_check("Nine'den sandal alınır", Economy.owns(db, save, Zones.BOAT) and save.coins == 6000 - int(db.gear_item("boat")["price"]))
+	shop.close_panel()
+	await _wait(0.8)
+	# 3) Sandala dokun: ekran kararır, balıkçı derin ortada, ilk şamandıranın yanında sandalda.
+	await _tap(_screen(scene.boat_point()))
+	var dark := await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return bool(main.get("in_boat")) and not fade.busy(), 4.0)
+	var buoys: Array = db.zone(spot, "deep_water")["buoys"]
+	var at := _angler().pos2()
+	_check("sandala dokun → ekran kararır, derin ortada sandaldasın", dark and bool(main.get("in_boat"))
+			and str(main.get("zone_id")) == "deep_water" and at.distance_to(buoys[0]) < 3.5 and hud.shore_button.visible
+			and scene.boat_away())
+	await _wait(0.8)
+	await _shot("02_sandalda")
+	var deep := _session().lake.zone_index("deep_water")
+	var only_deep := true
+	for sh in _session().sim.shadows:
+		only_deep = only_deep and sh.zone == deep
+	_check("sandaldayken gölgeler derin ortada", only_deep and _session().sim.shadows.size() > 0)
+	# 4) Sandalda yürünmez: suya dokunmak atıştır, balıkçı yerinden oynamaz.
+	_shadow_at(at + Vector2(0.0, -7.0), Vector2(0, 1), "wels")
+	await _tap_world(at + Vector2(0.0, -5.0))
+	await _wait_frames(3)
+	_check("sandalda suya dokun → atış (yürüme yok)", _state() in [FishingSession.State.CASTING, FishingSession.State.WAITING]
+			and _angler().pos2().distance_to(at) < 0.05)
+	# 5) Yayını tut (bırakmayı bilen oyuncu gibi).
+	await _wait_state(FishingSession.State.BITING, 25.0)
+	await _shot("03_isirdi")
+	await _reel_like_player(8, 60.0)
+	_check("sandaldan yayın tutulur", _state() == FishingSession.State.CAUGHT
+			and str(_session().last_catch.get("fish", "")) == "wels")
+	await _wait(1.2)
+	await _shot("04_tuttu")
+	# Destansı balığın kartı: düğmeyle kapanır.
+	var card: FishCard = main.get("card")
+	await _wait_until(func() -> bool: return card.visible, 3.0)
+	await _wait(FishCard.MIN_OPEN + 0.2)
+	if card.visible and card.ok_button != null:
+		await _tap(card.ok_button.get_global_rect().get_center())
+	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE, 6.0)
+	await _wait(0.5)
+	# 6) Haritadan derin ortaya dokun: sıradaki şamandıra.
+	var panel: MapPanel = main.get("map_panel")
+	await _tap_control(hud.map_button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	await _wait(0.4)
+	await _shot("05_harita")
+	await _tap_control(panel.view.badge("deep_water"))
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	_check("haritadan derin ortaya dokun → sıradaki şamandıra", bool(main.get("in_boat"))
+			and _angler().pos2().distance_to(buoys[1]) < 3.5)
+	await _wait(0.5)
+	await _shot("06_ikinci_samandira")
+	_check_buttons()
+	# 7) Kıyıya dön: iskele koyunun atış noktası, sandal iskelede.
+	await _tap_control(hud.shore_button)
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy() and not bool(main.get("in_boat")), 4.0)
+	var stand: Vector2 = (db.zone(spot, "dock_cove")["stands"] as Array)[0]
+	_check("Kıyıya dön → iskele, sandal yerinde", not bool(main.get("in_boat")) and _angler().pos2().distance_to(stand) < 0.3
+			and not scene.boat_away() and not hud.shore_button.visible and str(main.get("zone_id")) == "dock_cove")
+	await _wait(0.5)
+	await _shot("07_kiyida")
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()

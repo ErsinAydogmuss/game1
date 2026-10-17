@@ -3,7 +3,8 @@ extends Dialog
 ## Nine'nin dükkânı (docs/gdd.md §10.4). Nine'ye ya da dükkânına dokununca açılır.
 ## - Üstte Nine'nin yüzü ve sözü (selam, "güle güle kullan", "biraz daha balık getir"...), para.
 ## - Sekmeler: Kova (balıkları sat), Kamış, Makara, Misina, İğne ve şamandıra, Yem, Ekstra (kepçe,
-##   kovalar). Her sekmede en çok 6 kart (3×2): kaydırma yok, parmakla aranmaz.
+##   sandal, sıradaki kova: kovalar tek kartta). Her sekmede en çok 6 kart (3×2): kaydırma yok,
+##   parmakla aranmaz.
 ## - Kart: ikon, ad, kısa açıklama, en çok iki değer çubuğu (kuşanılanla karşılaştırma: işaret
 ##   kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf) ve tek düğme: fiyat (al ve tak), TAK,
 ##   TAKILI, SENDE ya da rütbe kilidi. Yem kartında hangi balığı çektiği ve elindeki sayı; takılı
@@ -25,7 +26,7 @@ const TABS: Array[Array] = [
 	["line", "line", "UI_SHOP_TAB_LINE", ["line"]],
 	["tackle", "hook", "UI_SHOP_TAB_TACKLE", ["hook", "bobber"]],
 	["bait", "bait", "UI_SHOP_TAB_BAIT", ["bait"]],
-	["extra", "net", "UI_SHOP_TAB_EXTRA", ["extra", "bucket"]],
+	["extra", "net", "UI_SHOP_TAB_EXTRA", ["extra", "boat", "bucket"]],
 ]
 ## Kategori başına gösterilen değerler: [gear.json alanı, çeviri anahtarı, birim ("" = sayı yok)].
 const STATS := {
@@ -160,13 +161,17 @@ func refresh() -> void:
 		_build_gear()
 
 
-## Bir sekmenin kartları (gear.json'daki sıra). Sekme başına en çok CARDS (test denetler).
-static func items_for(db: ContentDB, tab: String) -> Array[Dictionary]:
+## Bir sekmenin kartları (gear.json'daki sıra). Kovalardan yalnızca sıradaki (Bucket.next_bucket;
+## kayıt verilmezse yeni oyuncununki). Sekme başına en çok CARDS (test denetler).
+static func items_for(db: ContentDB, tab: String, save: SaveData = null) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for t: Array in TABS:
 		if str(t[0]) != tab:
 			continue
 		for category: String in t[3]:
+			if category == "bucket":
+				out.append(Bucket.next_bucket(db, save if save != null else SaveData.create_new(0)))
+				continue
 			for g in db.gear_in(category):
 				# Kamış sekmesinde şimdilik yalnızca şamandıra kamışları (teknikler Dalga 3'te).
 				if category == "rod" and str(g["technique"]) != "float":
@@ -195,7 +200,7 @@ func _build_gear() -> void:
 	grid.add_theme_constant_override("h_separation", 16)
 	grid.add_theme_constant_override("v_separation", 16)
 	_content.add_child(grid)
-	for item in items_for(GameState.db, _tab):
+	for item in items_for(GameState.db, _tab, GameState.save):
 		grid.add_child(_gear_card(item))
 
 

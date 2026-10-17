@@ -75,6 +75,9 @@ var path: ShorePath
 ## Oyunun gölü (spots.json "main") ve balıkçının bölgesi (değişince oranlar ve garanti yenilenir).
 var spot_id: String = ""
 var zone_id: String = ""
+## Balıkçı sandalda mı (derin ortada, bir şamandıranın yanında) ve hangi şamandırada.
+var in_boat: bool = false
+var _buoy: int = -1
 var _card_wait: float = -1.0
 ## İpucu çubuğunda şu an gösterilen anahtar (değişince Dede konuşur).
 var _hint_shown: String = ""
@@ -159,6 +162,10 @@ func _start_session() -> void:
 			bool(GameState.setting("easy", false)), save.catches == 0, CatchOdds.pity_floor(GameState.db, save, start),
 			Zones.open_ids(GameState.db, save, spot_id))
 	zone_id = ""
+	in_boat = false
+	_buoy = -1
+	scene.dock_boat()
+	hud.set_boat(false)
 	_follow_zone()
 	angler.place(session.angler)
 	angler.face(Vector2(0, -1))
@@ -238,7 +245,7 @@ func _build_input() -> void:
 	input.hit_targets = [
 		["dede", func(screen: Vector2) -> bool: return elder.hit(camera, screen)],
 		["shop", func(screen: Vector2) -> bool: return nine.hit(camera, screen) or shop.hit(camera, screen)],
-		["boat", func(screen: Vector2) -> bool: return scene.boat_hit(camera, screen)],
+		["boat", func(screen: Vector2) -> bool: return not in_boat and scene.boat_hit(camera, screen)],
 	]
 	input.targets_active = func() -> bool: return session.state == FishingSession.State.IDLE and not card.visible
 	add_child(input)
@@ -248,6 +255,8 @@ func _build_input() -> void:
 	input.action_pressed.connect(_on_action_down)
 	input.action_released.connect(_on_action_up)
 	input.walk_step.connect(func(dir: Vector2) -> void:
+		if in_boat:
+			return
 		_pending_cast = Dice.NO_POINT
 		angler.step_dir(dir, get_process_delta_time()))
 
@@ -272,7 +281,7 @@ func ground_point(screen: Vector2) -> Vector2:
 
 
 func _on_walk_requested(target: Vector2) -> void:
-	if session.state != FishingSession.State.IDLE:
+	if session.state != FishingSession.State.IDLE or in_boat:
 		return
 	_pending_cast = Dice.NO_POINT
 	_walk_route(target)
@@ -289,7 +298,8 @@ func _on_cast_requested(target: Vector2) -> void:
 		return
 	if session.state != FishingSession.State.IDLE:
 		return
-	if angler.pos2().distance_to(target) <= session.range_m() - 0.3:
+	# Sandalda yürünmez: dokunulan yöne atılır (şamandıra menzilin içine düşer).
+	if in_boat or angler.pos2().distance_to(target) <= session.range_m() - 0.3:
 		angler.stop()
 		_try_cast(target)
 		return
@@ -547,7 +557,7 @@ func _on_catch() -> void:
 	# Rütbe atlama, kova dolu gibi bildirimler balığın etiketi sönünce (üst üste binmesin).
 	hud.hold_toasts(CatchFx.HOLD_TIME)
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
-		session.set_access(Zones.open_ids(db, save, spot_id))
+		session.set_access(Zones.open_ids(db, save, spot_id, in_boat))
 		_update_gates()
 		var rank := int(ranked["new_rank"])
 		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up", "star")
@@ -675,7 +685,7 @@ func _present(delta: float) -> void:
 		hud.tension_bar.distance = reel.distance
 	_update_hint()
 	_first_cue(delta)
-	input.walking_allowed = session.state == FishingSession.State.IDLE and not card.visible
+	input.walking_allowed = session.state == FishingSession.State.IDLE and not card.visible and not in_boat
 	# Yürürken adım sesi.
 	if angler.is_walking():
 		_step_clock += delta
@@ -842,26 +852,41 @@ func _travel(target: String) -> void:
 	var z := db.zone(spot_id, target)
 	if z.is_empty() or not Zones.unlocked(db, GameState.save, z) or session.state != FishingSession.State.IDLE:
 		return
+	# Sandal bölgesi: sandalla şamandıraya (sandaldaysa sıradaki şamandıraya).
+	if bool(z["boat"]):
+		_go_boat(_buoy + 1 if in_boat else 0)
+		return
 	var stands: Array[Vector2] = z["stands"]
 	if stands.is_empty() or fade.busy():
 		return
 	var stand := stands[0]
-	angler.stop()
-	_pending_cast = Dice.NO_POINT
-	input.release_all()
-	if angler.pos2().distance_to(stand) < 0.5:
+	if not in_boat and angler.pos2().distance_to(stand) < 0.5:
 		return
-	Sounds.play("travel")
-	Sounds.haptic(15)
+	_stop_for_travel()
 	fade.play(func() -> void:
+		_leave_boat()
 		angler.place(stand)
 		var k := lake.zone_index(target)
 		angler.face_now(MapView.badge_anchor(lake, k) - stand)
 		session.relocate(stand)
 		_follow_zone()
-		camera.pitch = FollowCamera.PITCH
-		camera.zoom = 1.0
-		camera.snap(_focus()))
+		_snap_camera())
+
+
+## Geçişten önce: yürüme ve bekleyen atış biter, parmaklar bırakılır; geçiş sesi ve titreşim.
+func _stop_for_travel() -> void:
+	angler.stop()
+	_pending_cast = Dice.NO_POINT
+	input.release_all()
+	Sounds.play("travel")
+	Sounds.haptic(15)
+
+
+## Kamera yeni yere hemen gelir (geçişte ekran karanlıkken).
+func _snap_camera() -> void:
+	camera.pitch = FollowCamera.PITCH
+	camera.zoom = 1.0
+	camera.snap(_focus())
 
 
 ## Haritadaki işaretler: Nine'nin dükkânı ve Dede.
@@ -907,12 +932,72 @@ func _on_target(id: String) -> void:
 			_on_boat()
 
 
-## Sandala dokunuldu: Dede sandalla derin sulara açılmaktan söz eder (Dalga 2'de binilir).
+## Sandala dokunuldu: sandal alındıysa binilir (derin ortanın ilk şamandırası); yoksa Dede söyler
+## (rütbe yetiyorsa Nine'nin sandal sattığını).
 func _on_boat() -> void:
-	if session.state != FishingSession.State.IDLE or card.visible:
+	if session.state != FishingSession.State.IDLE or card.visible or in_boat:
 		return
-	_say("UI_DEDE_BOAT")
+	var db := GameState.db
+	var deep := _boat_zone()
+	if not deep.is_empty() and Zones.unlocked(db, GameState.save, deep):
+		_go_boat(0)
+		return
+	var ready := not deep.is_empty() and Rank.rank(db, GameState.save) >= int(deep["rank"])
+	_say("UI_DEDE_BOAT_SHOP" if ready else "UI_DEDE_BOAT")
 	Sounds.haptic(10)
+
+
+## Gölün sandal bölgesi (derin orta; yoksa boş).
+func _boat_zone() -> Dictionary:
+	for z in GameState.db.zones_of(spot_id):
+		if bool(z["boat"]):
+			return z
+	return {}
+
+
+## Sandalla bir şamandıraya (ekran kararır): sandal şamandıranın yanına gider, balıkçı içinde
+## (yürünmez), gölgeler yalnızca derin ortada doğar; "Kıyıya dön" düğmesi çıkar. İlk açılışta Dede
+## uyarır.
+func _go_boat(buoy: int) -> void:
+	var zone := _boat_zone()
+	if zone.is_empty() or fade.busy() or session.state != FishingSession.State.IDLE:
+		return
+	var buoys: Array[Vector2] = zone["buoys"]
+	if buoys.is_empty():
+		return
+	var index := posmod(buoy, buoys.size())
+	var first := not GameState.save.flags.has("visited_" + str(zone["id"]))
+	_stop_for_travel()
+	fade.play(func() -> void:
+		var at := scene.moor_boat(buoys[index])
+		in_boat = true
+		_buoy = index
+		angler.place(at)
+		angler.face_now(buoys[index] - at)
+		session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id, true))
+		session.relocate(at)
+		hud.set_boat(true)
+		_follow_zone()
+		_snap_camera()
+		if first:
+			_say("UI_DEDE_BOAT_DEEP"))
+
+
+## Sandaldan iner (sandal iskeleye döner, gölgeler yine kıyı bölgelerinde doğar). Kararmanın içinde.
+func _leave_boat() -> void:
+	if not in_boat:
+		return
+	in_boat = false
+	_buoy = -1
+	scene.dock_boat()
+	session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id))
+	hud.set_boat(false)
+
+
+## "Kıyıya dön": iskele koyunun atış noktasına (ekran kararır).
+func _return_to_shore() -> void:
+	var start: Dictionary = Zones.at(GameState.db, spot_id, GameState.db.spot(spot_id)["start"])
+	_travel(str(start.get("id", "")))
 
 
 ## Dede'ye dokunuldu: sıradaki öğüdü ipucu çubuğunda söyler (balon, baş sallama).
@@ -1004,6 +1089,9 @@ func _build_ui() -> void:
 	hud.book_pressed.connect(func() -> void:
 		input.release_all()
 		book_panel.open_book())
+	hud.shore_pressed.connect(func() -> void:
+		if session.state == FishingSession.State.IDLE and not card.visible:
+			_return_to_shore())
 	hud.map_pressed.connect(func() -> void:
 		if session.state != FishingSession.State.IDLE or card.visible:
 			return
