@@ -34,3 +34,16 @@ static func _is_hint(key: String) -> bool:
 		if key.begins_with(prefix):
 			return true
 	return false
+
+
+## Ölçüm (ayarlarda sürüm yazısına 5 dokunuş): sol üstteki yazı her sürümde görünür; kapanınca
+## yalnızca geliştirme sürümünde (FPS).
+func test_perf_label() -> void:
+	var hud := Hud.new()
+	hud.call("_build_bottom")
+	var fps: Label = hud.get("_fps")
+	hud.perf = true
+	assert_true(fps != null and fps.visible, "ölçüm açıkken görünür")
+	hud.perf = false
+	assert_eq(fps.visible, OS.is_debug_build() and not OS.has_feature("movie"), "kapalıyken yalnızca geliştirme sürümünde")
+	hud.free()

@@ -77,6 +77,8 @@ var spot_id: String = ""
 var zone_id: String = ""
 ## Balıkçı sandalda mı (derin ortada, bir şamandıranın yanında) ve hangi şamandırada.
 var in_boat: bool = false
+## Oturumun bölge erişiminin ve çitlerin kurulduğu rütbe (rütbe dışarıdan değişirse yenilenir).
+var _access_rank: int = 0
 var _buoy: int = -1
 var _card_wait: float = -1.0
 ## İpucu çubuğunda şu an gösterilen anahtar (değişince Dede konuşur).
@@ -164,6 +166,9 @@ func _start_session() -> void:
 	zone_id = ""
 	in_boat = false
 	_buoy = -1
+	_access_rank = Rank.rank(GameState.db, save)
+	if path != null:
+		_update_gates()
 	scene.dock_boat()
 	hud.set_boat(false)
 	_follow_zone()
@@ -193,6 +198,13 @@ func _on_state_changed() -> void:
 		catch_fx.clear()
 		_start_session()
 		return
+	hud.perf = bool(GameState.setting("perf", false))
+	# Rütbe dışarıdan değiştiyse (geliştirme sürümünde "Bütün bölgeleri aç"): erişim ve çitler.
+	var rank := Rank.rank(GameState.db, GameState.save)
+	if rank != _access_rank:
+		_access_rank = rank
+		session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id, in_boat))
+		_update_gates()
 	session.easy = bool(GameState.setting("easy", false))
 	# Ayar çekişmenin ortasında değişirse (Ayarlar açıkken oyun donuk) süren çekişmeye de geçer.
 	if session.reel != null and session.hooked != null:
@@ -560,6 +572,7 @@ func _on_catch() -> void:
 		session.set_access(Zones.open_ids(db, save, spot_id, in_boat))
 		_update_gates()
 		var rank := int(ranked["new_rank"])
+		_access_rank = rank
 		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up", "star")
 		# Yeni bölge açıldı: adı rozetiyle, Dede söyler, harita düğmesi nabız gibi atar.
 		var opened := Zones.unlocked_between(db, spot_id, int(ranked["old_rank"]), rank)
@@ -1063,6 +1076,7 @@ func _build_ui() -> void:
 	add_child(layer)
 	hud = Hud.new()
 	layer.add_child(hud)
+	hud.perf = bool(GameState.setting("perf", false))
 	card = FishCard.new()
 	layer.add_child(card)
 	card.closed.connect(func() -> void: session.acknowledge())

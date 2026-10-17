@@ -1,14 +1,21 @@
 class_name SettingsPanel
 extends Dialog
 ## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil. (Kazı'dan uyarlandı.)
-## Geliştirme sürümünde kaydı sıfırlama da burada.
+## Sürüm yazısına arka arkaya 5 kez dokununca ölçüm açılır ya da kapanır (HUD'da FPS, çizim ve
+## üçgen sayısı; telefonda hız ölçümü: docs/iphone-kurulum.md). Geliştirme sürümünde kaydı
+## sıfırlama ve bütün bölgeleri açma (ölçüm ve deneme için) da burada.
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
 ## Başlıktaki oyun logosunun kutusu (kapat düğmesinin boyunda: başlık uzamasın).
 const LOGO := Vector2(170, 122)
+## Ölçümü açan dokunuş sayısı ve iki dokunuş arasındaki en uzun süre (sn).
+const PERF_TAPS := 5
+const TAP_GAP := 0.8
 
 var _rows: VBoxContainer
+var _taps: int = 0
+var _since_tap: float = 0.0
 
 
 func _build() -> void:
@@ -51,11 +58,21 @@ func refresh() -> void:
 	lang_button.pressed.connect(func() -> void: GameState.toggle_locale())
 	lang.add_child(lang_button)
 	# Oyunun adı ve sürüm (eskiden HUD'un sol üstündeydi; orada artık para, kova ve rütbe var).
-	var version := UiKit.ink("%s · %s" % [tr("UI_GAME_TITLE"),
-			tr("UI_VERSION") % str(ProjectSettings.get_setting("application/config/version", "0"))],
-			UiKit.SIZE_SMALL, UiKit.INK_SOFT)
+	# Arka arkaya 5 dokunuş ölçümü açar ya da kapatır.
+	var text := "%s · %s" % [tr("UI_GAME_TITLE"),
+			tr("UI_VERSION") % str(ProjectSettings.get_setting("application/config/version", "0"))]
+	if bool(settings.get("perf", false)):
+		text += " · " + tr("UI_PERF_ON")
+	var version := UiKit.ink(text, UiKit.SIZE_SMALL, UiKit.INK_SOFT)
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	version.mouse_filter = Control.MOUSE_FILTER_STOP
+	version.gui_input.connect(_on_version_input)
 	_rows.add_child(version)
+	if OS.is_debug_build():
+		var unlock := _row(tr("UI_DEBUG_UNLOCK"), "map")
+		var unlock_button := UiKit.button(tr("UI_DEBUG_UNLOCK_GO"), UiKit.SECONDARY, UiKit.SIZE_SMALL, ROW_BUTTON)
+		unlock_button.pressed.connect(_unlock_zones)
+		unlock.add_child(unlock_button)
 	if OS.is_debug_build():
 		var reset := _row(tr("UI_DEBUG_RESET"), "close")
 		var reset_button := UiKit.button(tr("UI_DEBUG_RESET"), UiKit.DANGER, UiKit.SIZE_SMALL, ROW_BUTTON)
@@ -73,6 +90,41 @@ func refresh() -> void:
 			close_panel()
 			GameState.reset_save())
 		reset.add_child(reset_button)
+
+
+func _process(delta: float) -> void:
+	_since_tap += delta
+
+
+## Sürüm yazısına dokunuş (parmak kalkınca): arka arkaya PERF_TAPS dokunuşta ölçüm açılır ya da kapanır.
+func _on_version_input(event: InputEvent) -> void:
+	var mb := event as InputEventMouseButton
+	if mb == null or mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
+		return
+	_taps = _taps + 1 if _since_tap <= TAP_GAP else 1
+	_since_tap = 0.0
+	if _taps < PERF_TAPS:
+		return
+	_taps = 0
+	Sounds.play("ui_tap")
+	Sounds.haptic(20)
+	GameState.set_setting("perf", not bool(GameState.setting("perf", false)))
+
+
+## Geliştirme sürümü: rütbe en yüksek bölgenin rütbesine çıkar ve sandal verilir (bütün bölgeler
+## açılır; telefonda her bölgede ölçüm ve deneme için). Para ve defter değişmez.
+func _unlock_zones() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var top := 1
+	for z in db.zones_of(db.main_spot):
+		top = maxi(top, int(z["rank"]))
+	save.xp = maxi(save.xp, db.rank_xp[top - 1])
+	if not Zones.BOAT in save.owned:
+		save.owned.append(Zones.BOAT)
+	Sounds.play("ui_tap")
+	GameState.save_game()
+	GameState.changed.emit()
 
 
 func _row(text: String, icon_kind: String) -> HBoxContainer:

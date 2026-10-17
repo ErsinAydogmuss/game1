@@ -27,8 +27,10 @@ extends Node
 ##   boat: sandal (KONTROL satırları): sandal yokken Dede Nine'yi söyler; Nine'den sandalı al; iskeledeki
 ##     sandala dokun → ekran kararır, derin ortada sandaldasın; yürünmez, dokunuş atıştır; yayını tut;
 ##     haritadan sıradaki şamandıra; "Kıyıya dön" → iskele.
-##   tour: gezi (hız ölçümü): her bölgenin atış noktasına ve sandalla derin ortaya geçer; her yerde
-##     ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü; KONTROL: her yerde en çok TOUR_DRAWS çizim.
+##   tour: gezi (hız ölçümü): ayarlarda "Bütün bölgeleri aç" (geliştirme düğmesi) ve sürüm yazısına 5
+##     dokunuş (ölçüm açılır: sol üstte FPS, çizim, üçgen); sonra her bölgenin atış noktasına ve
+##     sandalla derin ortaya geçer; her yerde ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü;
+##     KONTROL: her yerde en çok TOUR_DRAWS çizim.
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~70 sn): dönen bir oyuncu; Dede'ye dokun,
 ##     pırıltılı gölgeden nadir bir turna (VUR, çekişme, ışık sütunu, kart), kova dolar; Nine'ye git,
 ##     hepsini sat, cam kamışı al; Balık Defteri; mor ışıltılı Destansı bir yayın.
@@ -789,20 +791,50 @@ func _play_boat() -> void:
 	_quit()
 
 
-## Gezi: rütbe 9 ve sandal; her bölgenin atış noktası, sonra sandalla derin orta. Her yerde
-## çizim ve üçgen sayısı (ÇİZİM satırları) ve ekran görüntüsü.
+## Gezi: ayarlardan bütün bölgeler açılır ve ölçüm açılır (gerçek dokunuşlarla); her bölgenin atış
+## noktası, sonra sandalla derin orta. Her yerde çizim ve üçgen sayısı (ÇİZİM satırları) ve ekran
+## görüntüsü.
 func _play_tour() -> void:
 	_use_save(3)
 	var db := GameState.db
 	var save := GameState.save
 	var spot := str(main.get("spot_id"))
-	save.xp = db.rank_xp[8]
-	save.owned.append(Zones.BOAT)
 	Records.add(save.records, "rudd", 999, 3, 0)
-	_session().set_access(Zones.open_ids(db, save, spot))
-	main.call("_update_gates")
 	GameState.changed.emit()
 	await _wait(1.0)
+	var hud := _hud()
+	var settings: SettingsPanel = main.get("settings_panel")
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	await _wait(0.4)
+	# Geliştirme düğmesi: rütbe en yüksek bölgeninki, sandal (çitler açılır, erişim yenilenir).
+	var unlock := _button_with_text(settings, UiKit.upper(tr("UI_DEBUG_UNLOCK_GO")))
+	# Dokunuştan sonra panel satırlarını yeniden kurar (düğme silinir): bulunduğu önceden yazılır.
+	var found := unlock != null
+	if found:
+		await _tap_control(unlock)
+		await _wait_frames(3)
+	var all_open := true
+	for z in db.zones_of(spot):
+		all_open = all_open and Zones.unlocked(db, save, z)
+	_check("ayarlarda \"Bütün bölgeleri aç\" → rütbe %d ve sandal, bütün bölgeler açık" % Rank.rank(db, save),
+			found and all_open and Economy.owns(db, save, Zones.BOAT) and int(main.get("_access_rank")) == Rank.rank(db, save))
+	# Sürüm yazısına arka arkaya 5 dokunuş: ölçüm açılır.
+	var version: Label = null
+	for node in settings.find_children("*", "Label", true, false):
+		if (node as Label).text.begins_with(tr("UI_GAME_TITLE")):
+			version = node as Label
+	if version != null:
+		for i in SettingsPanel.PERF_TAPS:
+			await _tap_control(version)
+			await _wait(0.15)
+	await _wait(0.3)
+	await _shot("00_ayarlar")
+	settings.close_panel()
+	await _wait(1.0)
+	var fps: Label = hud.get("_fps")
+	_check("sürüm yazısına 5 dokunuş → ölçüm açık (sol üstte FPS, çizim, üçgen)", bool(GameState.setting("perf", false))
+			and fps.visible and fps.text.count("·") == 2)
 	var fade: Fade = main.get("fade")
 	var worst := 0
 	var where := ""
@@ -827,7 +859,15 @@ func _play_tour() -> void:
 	_quit()
 
 
-## Son karelerin en yüksek çizim ve üçgen sayısı (3B sahne; arayüz sayılmaz).
+## Bir düğümün altında yazısı bu olan düğme (yoksa null).
+static func _button_with_text(root: Node, text: String) -> Button:
+	for node in root.find_children("*", "Button", true, false):
+		if (node as Button).text == text:
+			return node as Button
+	return null
+
+
+## Son karelerin en yüksek çizim ve üçgen sayısı (karenin bütün çizimleri: 3B sahne ve arayüz).
 func _measure_draws(frames: int = 10) -> Dictionary:
 	var draws := 0
 	var primitives := 0

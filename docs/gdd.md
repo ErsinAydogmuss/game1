@@ -273,6 +273,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - **Nadirlik efektleri:** gölgede pırıltı, ışıltı, iz.
   - **Arayüz:** Ersin'in arayüz kiti (çerçeveler, düğmeler, nadirlik çerçeveleri).
   - **Ölçüt:** iPhone 14'te 60 fps.
+    - ✅ Ölçüm: ayarlarda sürüm yazısına 5 dokunuş sol üstte FPS, çizim ve üçgen sayısını açar (her sürümde); adımlar `iphone-kurulum.md` 12. adımda. Bulutta (`tour` botu; arayüz dahil) bir bakışta en çok 139 çizim.
 
 ## 9. Ses
 

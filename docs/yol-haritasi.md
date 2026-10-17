@@ -90,7 +90,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Bölge balıkları: 7 yeni tür (gümüş balığı, çapak, tatlısu kefali, kadife, sudak, altın sazan, mersin), her biri kendi bölgesinde ve kodla kendi görünüşünde (mersinde sivri burun, plakalar, bıyık; altın sazanda koi lekeleri; kadifede kırmızı göz); kendi çekişi ve sevdiği yem; mersin koruma altında: kovaya girmez, kartta Dede'nin sözüyle göle bırakılır. Defter 12 tür, tek sayfa.
 - [x] Denge: denge botu bölge bölge oynar (yeni bölgeyi merak eder, sonra tutmadığı türü, sonra kazancı arar; sandala biriktirir); rütbe eğrisi uzadı (rütbe 3 / 5 / 7 / 9 ≈ 10 / 25 / 48 / 83. dakika; eski kayıtta rütbe korunur, kayıt v3), sandal 3.500 para (≈ 2 saatte); dere ağzı kayalık burundan az kazandırmasın diye turna ve yayın arttı.
 - [x] Su ve zemin: kıyıya gelen dalga çizgileri, derede akıntı; çimen öbekleri, orman zemini, gölü dolaşan toprak yol, ıslak kum, kayalık burunda yosunlu taş (kodla; Ersin'in zemin karoları gelince onlarla).
-- [ ] Telefonda hız ölçümü: ayarlarda sürüme 5 dokunuş (FPS, çizim), `tour` bot senaryosu, kurulum belgesinde ölçüm adımları.
+- [x] Telefonda hız ölçümü: ayarlarda sürüm yazısına 5 dokunuş (sol üstte FPS, çizim, üçgen), geliştirme sürümünde "Bütün bölgeleri aç", `tour` bot senaryosu, kurulum belgesinde ölçüm adımları (`iphone-kurulum.md` 12. adım). Telefondaki sayılar Ersin'den gelecek.
 
 **Dalga 3 — Teknikler → v0.4**
 

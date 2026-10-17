@@ -2,6 +2,8 @@ keys,en,tr
 UI_GAME_TITLE,Olta: Secret of the Lake,Olta: Gölün Sırrı
 UI_VERSION,v%s,v%s
 UI_FPS,%d FPS,%d FPS
+UI_PERF,%d FPS · %d draws · %dk tris,%d FPS · %d çizim · %dk üçgen
+UI_PERF_ON,stats on,ölçüm açık
 UI_SETTINGS,Settings,Ayarlar
 UI_SET_SFX,Sound effects,Ses efektleri
 UI_SET_MUSIC,Music,Müzik
@@ -13,6 +15,8 @@ UI_ON,On,Açık
 UI_OFF,Off,Kapalı
 UI_DEBUG_RESET,Reset save,Kaydı sıfırla
 UI_DEBUG_RESET_SURE,Sure? Tap again,Emin misin? Yine dokun
+UI_DEBUG_UNLOCK,Unlock all zones,Bütün bölgeleri aç
+UI_DEBUG_UNLOCK_GO,Unlock,Aç
 RARITY_common,Common,Sıradan
 RARITY_fine,Fine,Güzel
 RARITY_rare,Rare,Nadir

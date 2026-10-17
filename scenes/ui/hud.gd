@@ -13,7 +13,8 @@ extends Control
 ##   oyuncu da okusun).
 ## - Orta: kısa bildirimler ("Erken davrandın!"). Alt orta: ipucu çubuğu (konuşanın yüzü ve sözü:
 ##   Dede ya da Nine).
-## - Sol üstte durumun altında: geliştirme sürümünde FPS.
+## - Sol üstte durumun altında: geliştirme sürümünde FPS; ölçüm açıkken (ayarlarda sürüm yazısına
+##   5 dokunuş, her sürümde) FPS, çizim ve üçgen sayısı.
 
 signal settings_pressed
 signal book_pressed
@@ -55,6 +56,11 @@ var map_allowed: bool = false:
 		map_allowed = value
 		if map_button != null:
 			map_button.visible = value and not _line_out
+## Ölçüm (telefonda hız: docs/iphone-kurulum.md): sol üstte FPS, çizim ve üçgen sayısı.
+var perf: bool = false:
+	set(value):
+		perf = value
+		_show_fps()
 var action_button: TouchButton
 var tension_bar: TensionBar
 ## Olta sudayken gizlenen düğmeler (eylem ve ayarlar dışındakiler): VUR dokunuşu onlara gitmesin.
@@ -130,7 +136,13 @@ func _process(delta: float) -> void:
 		_fps_clock += delta
 		if _fps_clock >= FPS_INTERVAL:
 			_fps_clock = 0.0
-			_fps.text = tr("UI_FPS") % int(round(Engine.get_frames_per_second()))
+			var fps := int(round(Engine.get_frames_per_second()))
+			if perf:
+				var draws := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
+				var triangles := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)
+				_fps.text = tr("UI_PERF") % [fps, draws, int(round(triangles / 1000.0))]
+			else:
+				_fps.text = tr("UI_FPS") % fps
 	if _toast_age >= 0.0:
 		_toast_age += delta
 		var t := _toast_age / TOAST_TIME
@@ -428,9 +440,21 @@ func _build_bottom() -> void:
 	_fps.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_fps.custom_minimum_size = Vector2(0, 230)
 	_fps.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	# Hata ayıklama FPS etiketi; video kaydında (Movie Maker, "movie" özelliği) gizli.
-	_fps.visible = OS.is_debug_build() and not OS.has_feature("movie")
+	_show_fps()
 	_frame().add_child(_fps)
+
+
+## FPS etiketi: geliştirme sürümünde (video kaydında, Movie Maker'ın "movie" özelliğinde değil) ya
+## da ölçüm açıkken; ölçümde okunaklı renkte.
+func _show_fps() -> void:
+	if _fps == null:
+		return
+	_fps.visible = perf or (OS.is_debug_build() and not OS.has_feature("movie"))
+	_fps.add_theme_color_override("font_color", UiKit.TEXT if perf else UiKit.MUTED)
+	# Ölçümde açık zeminde (kum, su) de okunsun: koyu dış çizgi.
+	_fps.add_theme_color_override("font_outline_color", Color(0.05, 0.1, 0.15, 0.85))
+	_fps.add_theme_constant_override("outline_size", 8 if perf else 0)
+	_fps_clock = FPS_INTERVAL
 
 
 func _build_center() -> void:
