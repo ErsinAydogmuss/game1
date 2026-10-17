@@ -4,15 +4,17 @@ extends Control
 ## yoksa 100×100'lük bir tasarım alanında kodla çizer ve boyuta ölçekler. (Kazı'dan uyarlandı.)
 ## kind: coin, star, star_empty, close, book, settings, lock, question, hand, burst, trophy,
 ## sound, music, vibration, easy, globe, up, down, rod, reel, line, bait, net, bucket, aquarium,
-## bobber, hook, fish, shop, gem, map, sell (para kesesi), release (göle dönen balık). "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini
-## (circle, triangle, diamond, star, sparkle, medallion; görseli yoksa şekil tint renginde) çizer.
+## bobber, hook, fish, shop, gem, map, sell (para kesesi), release (göle dönen balık), pin (haritada
+## "buradasın"). "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini (circle, triangle,
+## diamond, star, sparkle, medallion; görseli yoksa şekil tint renginde), "zone:<bölge>" bölge
+## rozetini (görseli yoksa kodla: iskele, kamış, nilüfer, kaya, dere, şamandıra) çizer.
 
 ## Kodla çizilebilen ikonlar (görseli yoksa). Bilinmeyen ad soru işareti çizer (boş kalmasın);
 ## takımın "kind"ı bunlardan biri olmalı (test_content_db denetler).
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release"]
+		"release", "pin"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -20,7 +22,7 @@ const ART_NAMES := {
 	"settings": "settings", "lock": "lock", "question": "question", "hand": "hand", "burst": "burst",
 	"trophy": "trophy", "rod": "rod", "reel": "reel", "bait": "bait", "bucket": "bucket",
 	"aquarium": "aquarium", "hook": "hook", "shop": "shop", "map": "map", "sell": "sell",
-	"release": "release",
+	"release": "release", "pin": "pin",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem ve Ekstra sekmeleri.
@@ -76,6 +78,8 @@ static func texture_for(icon_kind: String) -> Texture2D:
 	if icon_kind.begins_with("rarity:"):
 		var art: String = RARITY_ART.get(icon_kind.substr(7), "")
 		return ItemArt.ui(art) if not art.is_empty() else null
+	if icon_kind.begins_with("zone:"):
+		return ItemArt.zone(icon_kind.substr(5))
 	var art: Texture2D = ItemArt.ui(str(ART_NAMES[icon_kind])) if ART_NAMES.has(icon_kind) else null
 	if art == null and GEAR_ART.has(icon_kind):
 		art = ItemArt.gear(str(GEAR_ART[icon_kind]))
@@ -92,6 +96,10 @@ func _draw() -> void:
 	draw_set_transform((size - Vector2(100, 100) * s) * 0.5, 0.0, Vector2(s, s))
 	if kind.begins_with("rarity:"):
 		_rarity(kind.substr(7))
+		draw_set_transform(Vector2.ZERO)
+		return
+	if kind.begins_with("zone:"):
+		_zone(kind.substr(5))
 		draw_set_transform(Vector2.ZERO)
 		return
 	match kind:
@@ -151,6 +159,8 @@ func _draw() -> void:
 		"lock":
 			_round_rect(Rect2(24, 44, 52, 42), STEEL_DARK, 8)
 			draw_arc(Vector2(50, 44), 16, PI, TAU, 18, STEEL_DARK, 8.0, true)
+		"pin":
+			_pin()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -418,6 +428,63 @@ func _star(color: Color) -> void:
 		var a := -PI * 0.5 + i * PI / 5.0
 		poly.append(Vector2(50, 54) + Vector2(cos(a), sin(a)) * r)
 	draw_colored_polygon(poly, color)
+
+
+## Harita iğnesi: ucu aşağıda (noktayı gösterir), kırmızı baş, beyaz göz.
+func _pin() -> void:
+	var dark := RED.darkened(0.35)
+	draw_colored_polygon(PackedVector2Array([Vector2(30, 46), Vector2(70, 46), Vector2(50, 96)]), dark)
+	draw_circle(Vector2(50, 38), 28, dark)
+	draw_colored_polygon(PackedVector2Array([Vector2(33, 46), Vector2(67, 46), Vector2(50, 90)]), RED)
+	draw_circle(Vector2(50, 37), 25, RED)
+	draw_circle(Vector2(50, 37), 10, Color.WHITE)
+	draw_circle(Vector2(41, 27), 5, Color(1, 1, 1, 0.55))
+
+
+## Bölge rozeti (Ersin'in görseli yoksa): yuvarlak su zemininde bölgenin simgesi.
+func _zone(id: String) -> void:
+	var water := Color("#5cc4dc") if id != "deep_water" else Color("#2f6fa8")
+	draw_circle(Vector2(50, 50), 46, Color("#2b4a5c"))
+	draw_circle(Vector2(50, 50), 41, water)
+	match id:
+		"dock_cove":
+			for i in 4:
+				_round_rect(Rect2(34, 18 + i * 16, 32, 12), WOOD if i % 2 == 0 else WOOD.lightened(0.12), 3)
+			_round_rect(Rect2(30, 14, 6, 66), WOOD_DARK, 2)
+			_round_rect(Rect2(64, 14, 6, 66), WOOD_DARK, 2)
+		"reeds":
+			for k in 3:
+				var x := 34.0 + k * 15.0
+				draw_line(Vector2(x, 82), Vector2(x + 2, 34 + k * 5), Color("#3f7a35"), 4.0, true)
+				_round_rect(Rect2(x - 3, 30 + k * 5, 9, 20), Color("#7a4f22"), 4)
+			draw_colored_polygon(PackedVector2Array([Vector2(26, 82), Vector2(36, 52), Vector2(40, 82)]), Color("#5aa548"))
+			draw_colored_polygon(PackedVector2Array([Vector2(60, 82), Vector2(72, 56), Vector2(74, 82)]), Color("#5aa548"))
+		"lily_cove":
+			_ellipse(Vector2(48, 58), 28, 18, Color("#3f9a45"))
+			draw_colored_polygon(PackedVector2Array([Vector2(48, 58), Vector2(76, 50), Vector2(76, 64)]), water)
+			for k in 6:
+				var a := TAU * k / 6.0
+				_ellipse(Vector2(44, 42) + Vector2(cos(a), sin(a)) * 8.0, 7, 7, Color("#f6a6c8"))
+			draw_circle(Vector2(44, 42), 6, Color("#ffd23f"))
+		"rocky_point":
+			_ellipse(Vector2(40, 60), 22, 16, Color("#7d838a"))
+			_ellipse(Vector2(62, 54), 16, 13, Color("#9aa1a8"))
+			_ellipse(Vector2(36, 54), 9, 6, Color("#b4bac0"))
+			_ellipse(Vector2(60, 48), 6, 4, Color("#c4cad0"))
+		"stream_mouth":
+			for k in 3:
+				var y := 36.0 + k * 14.0
+				var pts := PackedVector2Array()
+				for i in 9:
+					pts.append(Vector2(22 + i * 7.0, y + sin(i * 1.2 + k) * 4.0))
+				draw_polyline(pts, Color.WHITE, 5.0, true)
+			_ellipse(Vector2(30, 76), 8, 5, Color("#9aa1a8"))
+			_ellipse(Vector2(70, 74), 7, 4, Color("#9aa1a8"))
+		"deep_water":
+			_bobber_at(Vector2(50, 56), 20.0)
+			draw_arc(Vector2(50, 76), 20, 0.2, PI - 0.2, 12, Color(1, 1, 1, 0.7), 4.0, true)
+		_:
+			_fish(Color("#f2a541"))
 
 
 func _ellipse(center: Vector2, rx: float, ry: float, color: Color) -> void:

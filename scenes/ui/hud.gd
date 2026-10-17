@@ -4,7 +4,8 @@ extends Control
 ## TouchButton'lar yakalar. Çentik ve yuvarlak köşeler için güvenli alan payı her kenara eklenir
 ## (UiKit.safe_insets).
 ## - Sol üst: para, kova (dolu/kapasite) ve rütbe (çekişmede gizli; oyunun adı ve sürüm
-##   ayarlarda). Sağ üst: Balık Defteri (olta sudayken gizli) ve ayarlar.
+##   ayarlarda). Sağ üst: harita (ilk balıktan sonra), Balık Defteri (ikisi de olta sudayken gizli)
+##   ve ayarlar. Yeni bir bölge açılınca harita düğmesi bir süre nabız gibi atar.
 ## - Sağ alt: büyük eylem düğmesi (AT / GERİ SAR / BEKLE / VUR! / SAR); ekranın her yeri de
 ##   aynı işi yapar, düğme ne olacağını yazar.
 ## - Üst orta: çekişmede gerilim çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü
@@ -15,6 +16,7 @@ extends Control
 
 signal settings_pressed
 signal book_pressed
+signal map_pressed
 signal action_down
 signal action_up
 
@@ -33,11 +35,22 @@ const TOAST_ICON := 104.0
 ## İpucu çubuğunda konuşanın yüzü ve yüzle yazı arasındaki boşluk.
 const FACE := 84.0
 const HINT_GAP := 18
-## Defter düğmesi turuncu (arayüz kitindeki düğme görseli; palet dışı renk kodla çizilirdi).
+## Defter düğmesi turuncu, harita düğmesi mavi (arayüz kitindeki düğme görselleri; palet dışı renk
+## kodla çizilirdi).
 const BOOK_COLOR := UiKit.PRIMARY
+const MAP_COLOR := UiKit.SECONDARY
+## Yeni bölge açılınca harita düğmesinin nabzı (sn).
+const MAP_PULSE := 4.0
 
 var settings_button: TouchButton
 var book_button: TouchButton
+var map_button: TouchButton
+## Harita düğmesi gösterilsin mi (ilk balıktan sonra ve bölgeli gölde; olta sudayken yine gizli).
+var map_allowed: bool = false:
+	set(value):
+		map_allowed = value
+		if map_button != null:
+			map_button.visible = value and not _line_out
 var action_button: TouchButton
 var tension_bar: TensionBar
 ## Olta sudayken gizlenen düğmeler (eylem ve ayarlar dışındakiler): VUR dokunuşu onlara gitmesin.
@@ -75,6 +88,8 @@ var _warm_later: Array[Array] = []
 ## Sıradaki bildirimler bu kadar sn bekler (yakalanan balığın etiketi ekrandayken).
 var _toast_hold: float = 0.0
 var _action_kind: String = "-"
+var _line_out: bool = false
+var _map_pulse: float = 0.0
 var _clock: float = 0.0
 var _fps_clock: float = 0.0
 
@@ -123,6 +138,10 @@ func _process(delta: float) -> void:
 			_toast_box.visible = false
 			if not _toast_queue.is_empty():
 				_show_queued()
+	if _map_pulse > 0.0:
+		_map_pulse = maxf(0.0, _map_pulse - delta)
+		map_button.pivot_offset = map_button.size * 0.5
+		map_button.scale = Vector2.ONE * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _map_pulse))
 	# VUR! anında eylem düğmesi nabız gibi atar.
 	if _action_kind == "hook":
 		action_button.pivot_offset = action_button.size * 0.5
@@ -204,8 +223,14 @@ func _show_queued() -> void:
 
 ## Olta suda mı: eylem ve ayarlar dışındaki düğmeler gizlenir (ekranın her yeri eylem).
 func set_line_out(on: bool) -> void:
+	_line_out = on
 	for c in line_out_hidden:
-		c.visible = not on
+		c.visible = not on and (c != map_button or map_allowed)
+
+
+## Yeni bölge açıldı: harita düğmesi bir süre nabız gibi atar.
+func pulse_map() -> void:
+	_map_pulse = MAP_PULSE
 
 
 ## Ortada kısa bir bildirim (metin hazır çevrilmiş gelir). icon: yanında GameIcon ("" = yok).
@@ -273,7 +298,7 @@ func _set_button(text: String, icon_kind: String, color: Color) -> void:
 
 ## Ekrandaki düğmeler (bot denetimi: boyut ve güvenli alan).
 func buttons() -> Array[TouchButton]:
-	return [book_button, settings_button, action_button]
+	return [map_button, book_button, settings_button, action_button]
 
 
 # --- Kurulum ---------------------------------------------------------------------
@@ -305,6 +330,11 @@ func _build_top() -> void:
 	top_right.size_flags_horizontal = Control.SIZE_SHRINK_END
 	top_right.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_frame().add_child(top_right)
+	map_button = TouchButton.make("", "map", MAP_COLOR, Vector2(132, 132), UiKit.SIZE_BODY, 84.0)
+	map_button.pressed.connect(func() -> void: map_pressed.emit())
+	map_button.visible = map_allowed
+	top_right.add_child(map_button)
+	line_out_hidden.append(map_button)
 	book_button = TouchButton.make("", "book", BOOK_COLOR, Vector2(132, 132), UiKit.SIZE_BODY, 84.0)
 	book_button.pressed.connect(func() -> void: book_pressed.emit())
 	top_right.add_child(book_button)

@@ -86,6 +86,13 @@ ZONE_stream_mouth,Stream Mouth,Dere Ağzı
 ZONE_deep_water,Deep Water,Derin Orta
 UI_ZONE_LOCKED_RANK,Opens at rank %d,Rütbe %d olunca açılır
 UI_ZONE_LOCKED_BOAT,You need the boat to get there,Oraya sandalla gidilir
+UI_ZONE_OPENED,%s is open!,%s açıldı!
+UI_MAP,Map,Harita
+UI_MAP_HINT,Tap a place to go there.,"Bir yere dokun, oraya geçelim."
+UI_MAP_HERE,You are here,Buradasın
+UI_MAP_NEW,New!,Yeni!
+UI_MAP_RANK,Rank %d,Rütbe %d
+UI_MAP_BOAT,By boat,Sandalla
 RANK_novice,Novice,Acemi
 RANK_apprentice,Apprentice,Çırak
 RANK_angler,Angler,Balıkçı
@@ -166,6 +173,7 @@ UI_DEDE_BUCKET,Your bucket is full! Sell your fish at Nana's shop.,Kovan doldu! 
 UI_DEDE_BAIT_OUT,"Your bait's all gone, kiddo. Back to worms; Nana sells more.","Yemin bitti evlat. Solucanla devam; yenisi Nine'de."
 UI_DEDE_BOAT,"That boat's for deep water, kid. Your time will come!","Sandalla derin sulara açılınır. Zamanı gelecek evlat!"
 UI_DEDE_GATE,"We'll go there later, kid. Let's fish here first!","Oraya sonra gideriz evlat. Önce burada balık tutalım!"
+UI_DEDE_ZONE_OPEN,"A new spot is open, kid! Take a look at the map.",Yeni bir yer açıldı evlat! Haritaya bir bak.
 UI_SHOP_SIGN,Nana's shop,Nine'nin dükkânı
 UI_NINE_LINE_1,"Come again, dear!",Yine bekleriz evladım!
 UI_NINE_LINE_2,"Caught something? Bring it to me, I pay well.","Balık mı tuttun? Getir bana, iyi fiyat veririm."

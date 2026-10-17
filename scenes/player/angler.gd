@@ -142,6 +142,12 @@ func face(dir: Vector2) -> void:
 		facing = dir.normalized()
 
 
+## O yöne hemen döner (hızlı geçişte ekran karanlıkken; dönüş görünmesin).
+func face_now(dir: Vector2) -> void:
+	face(dir)
+	rotation.y = atan2(-facing.x, -facing.y)
+
+
 func rod_tip() -> Vector3:
 	return rod.tip.global_position
 

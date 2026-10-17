@@ -85,7 +85,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Gölgeler bölgelere göre doğar: balıkçının çevresinde ve açık bölgelerde; türü bölgeden; yürüyünce peşinden gelir; şans garantisi bulunulan bölgede; defter ve dükkân bulunulan bölgenin oranını gösterir.
 - [x] Kıyı yolu ve dünya sınırı: dokunulan yere sudan geçmeden, kısa yönden; kilitli bölgenin çitinde durur, Dede söyler; ormanın kenarı yürünmez (büyük gölde U biçimi).
 - [x] Göl sahnesi ve bölge süsleri: büyük göl oyunun gölü; her bölgenin kendi süsleri (sık kamış, nilüfer tarlası, iri kayalar, dere), çitler ve tabelalar, şamandıralar; bölgeye girince adı; su rengi metreye göre; çizim iskelede 164 → 142.
-- [ ] Harita ve hızlı geçiş.
+- [x] Harita ve hızlı geçiş: gölün verisinden kodla çizilen harita (bölge rozetleri, kilitler, "Yeni!", Buradasın, çitler, şamandıralar); açık bölgeye dokun → ekran kararır, oraya geçilir; yeni bölge açılınca bildirim, Dede ve nabız; `map` bot senaryosu.
 - [ ] Sandal.
 - [x] Bölge balıkları: 7 yeni tür (gümüş balığı, çapak, tatlısu kefali, kadife, sudak, altın sazan, mersin), her biri kendi bölgesinde ve kodla kendi görünüşünde (mersinde sivri burun, plakalar, bıyık; altın sazanda koi lekeleri; kadifede kırmızı göz); kendi çekişi ve sevdiği yem; mersin koruma altında: kovaya girmez, kartta Dede'nin sözüyle göle bırakılır. Defter 12 tür, tek sayfa.
 - [ ] 3D görsel geçişi: su ve zemin dokuları (doğa modelleri v0.2.1'de geldi); telefonda hız ölçümü.

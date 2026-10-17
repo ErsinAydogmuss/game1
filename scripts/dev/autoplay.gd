@@ -21,6 +21,9 @@ extends Node
 ##     hepsini sat, son yem bitince solucana döner; sekme görüntüleri.
 ##   rarity: nadirlik ipuçları (görsel denetim): her nadirlikten bir gölge yan yana (pırıltı, ışıltı,
 ##     kabarcık), sonra her nadirliğin rozeti; gri tonlamalı kopyayla renk körü denetimi yapılır.
+##   map: harita ve hızlı geçiş (KONTROL satırları): ilk balıktan önce harita düğmesi yok; rütbe
+##     atlayınca yeni bölge açılır (bildirim, Dede, nabız); haritaya dokun → açılır; her açık bölgenin
+##     rozetine dokun → ekran kararır, balıkçı oraya geçer, gölgeler gelir; kilitli bölgeye geçilmez.
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~70 sn): dönen bir oyuncu; Dede'ye dokun,
 ##     pırıltılı gölgeden nadir bir turna (VUR, çekişme, ışık sütunu, kart), kova dolar; Nine'ye git,
 ##     hepsini sat, cam kamışı al; Balık Defteri; mor ışıltılı Destansı bir yayın.
@@ -74,6 +77,8 @@ func _ready() -> void:
 			_play_shop.call_deferred()
 		"rarity":
 			_play_rarity.call_deferred()
+		"map":
+			_play_map.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -585,6 +590,114 @@ func _play_rarity() -> void:
 	await _shot("21_defter_yayin_siluet")
 	book.close_panel()
 	_quit()
+
+
+## Harita ve hızlı geçiş. Kayıt rütbe 3'ün bir puan altında başlar: tutulan balık rütbe atlatır,
+## nilüferli koy açılır. Sonra rütbe 7: beş bölgeye geçilir; derin orta sandal ister.
+func _play_map() -> void:
+	_use_save(0)
+	await _wait(1.0)
+	var hud := _hud()
+	_check("ilk balıktan önce harita düğmesi yok", not hud.map_button.visible)
+	_use_save(3)
+	var db := GameState.db
+	var save := GameState.save
+	var spot := str(main.get("spot_id"))
+	save.xp = db.rank_xp[2] - 1
+	Records.add(save.records, "rudd", 999, 3, 0)
+	GameState.changed.emit()
+	await _wait(1.0)
+	_check("ilk balıktan sonra harita düğmesi var", hud.map_button.visible)
+	# Rütbe atlatan balık: nilüferli koy açılır.
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "rudd")
+	await _tap_world(Vector2(1.0, -1.0))
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait_state(FishingSession.State.CAUGHT, 25.0)
+	_touch(1, Vector2(260, 520), false)
+	await _wait_frames(2)
+	var pulsing := float(hud.get("_map_pulse")) > 0.0
+	await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_ZONE_OPEN", 6.0)
+	var lily := Zones.unlocked(db, save, db.zone(spot, "lily_cove"))
+	_check("rütbe 3: nilüferli koy açılır, Dede söyler, harita düğmesi atar", lily and pulsing
+			and str(main.get("_hint_shown")) == "UI_DEDE_ZONE_OPEN")
+	await _wait(1.0)
+	await _shot("01_bolge_acildi")
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	# Rütbe 7: kayalık burun ve dere ağzı da açık (oturumun erişimi ve çitler).
+	save.xp = db.rank_xp[6]
+	_session().set_access(Zones.open_ids(db, save, spot))
+	main.call("_update_gates")
+	GameState.changed.emit()
+	var panel: MapPanel = main.get("map_panel")
+	var fade: Fade = main.get("fade")
+	await _tap_control(hud.map_button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	_check("harita düğmesine dokun → harita açılır", panel.visible)
+	await _wait(0.5)
+	await _shot("02_harita")
+	_check_map_badges(panel)
+	var index := 3
+	var reach := _session().range_m() + db.rules.reach_extra
+	for zone_id: String in ["reeds", "lily_cove", "rocky_point", "stream_mouth", "dock_cove"]:
+		if not panel.visible:
+			await _tap_control(hud.map_button)
+			await _wait_until(func() -> bool: return panel.visible, 2.0)
+			await _wait(0.3)
+		var badge := panel.view.badge(zone_id)
+		if badge == null:
+			_results.append("rozet yok: " + zone_id)
+			continue
+		await _tap_control(badge)
+		var dark := await _wait_until(func() -> bool: return fade.busy(), 1.0)
+		var arrived := await _wait_until(func() -> bool: return str(main.get("zone_id")) == zone_id and not fade.busy(), 4.0)
+		var stand: Vector2 = (db.zone(spot, zone_id)["stands"] as Array)[0]
+		var near := 0
+		for sh in _session().sim.shadows:
+			if sh.mode != FishShadow.Mode.FLEE and sh.pos.distance_to(stand) <= reach + 0.5:
+				near += 1
+		_check("%s rozetine dokun → ekran kararır, oraya geçilir (%d gölge yakında)" % [zone_id, near],
+				dark and arrived and _angler().pos2().distance_to(stand) < 0.3 and near >= 2)
+		await _wait(0.6)
+		await _shot("%02d_%s" % [index, zone_id])
+		index += 1
+	# Kilitli: derin orta sandal ister; geçilmez, nedeni yazılır.
+	await _tap_control(hud.map_button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	await _wait(0.3)
+	var before := _angler().pos2()
+	await _tap_control(panel.view.badge("deep_water"))
+	await _wait(0.6)
+	_check("kilitli bölgeye geçilmez, nedeni yazılır", panel.visible and not fade.busy()
+			and _angler().pos2() == before and str(main.get("zone_id")) == "dock_cove")
+	await _shot("%02d_kilitli" % index)
+	panel.close_panel()
+	await _wait(0.3)
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Haritanın rozetleri büyük (en az 122 birim) ve güvenli alanda mı?
+func _check_map_badges(panel: MapPanel) -> void:
+	var view := get_viewport().get_visible_rect()
+	var inset := UiKit.safe_insets(panel)
+	var safe := Rect2(view.position + Vector2(inset.x, inset.y), view.size - Vector2(inset.x + inset.z, inset.y + inset.w))
+	var notes := PackedStringArray()
+	var count := 0
+	for zone in GameState.db.zones_of(str(main.get("spot_id"))):
+		var badge := panel.view.badge(str(zone["id"]))
+		if badge == null:
+			continue
+		count += 1
+		var r := badge.get_global_rect()
+		if minf(r.size.x, r.size.y) < 121.5:
+			notes.append("%s küçük %s" % [zone["id"], str(r.size)])
+		if not safe.encloses(r):
+			notes.append("%s güvenli alan dışında" % zone["id"])
+	_check("harita rozetleri büyük ve güvenli alanda (%d)%s" % [count, "" if notes.is_empty() else ": " + ", ".join(notes)],
+			notes.is_empty() and count > 0)
 
 
 ## Bir kontrolün ortasına dokunur.

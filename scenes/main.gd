@@ -55,6 +55,9 @@ var card: FishCard
 var settings_panel: SettingsPanel
 var shop_panel: ShopPanel
 var book_panel: BookPanel
+var map_panel: MapPanel
+## Haritadan hızlı geçişte ekran kararır (en üstte).
+var fade: Fade
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
 var bot_camera: bool = false
 
@@ -548,6 +551,13 @@ func _on_catch() -> void:
 		_update_gates()
 		var rank := int(ranked["new_rank"])
 		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up", "star")
+		# Yeni bölge açıldı: adı rozetiyle, Dede söyler, harita düğmesi nabız gibi atar.
+		var opened := Zones.unlocked_between(db, spot_id, int(ranked["old_rank"]), rank)
+		for z in opened:
+			hud.toast_later(tr("UI_ZONE_OPENED") % tr("ZONE_" + str(z["id"])), UiKit.ACCENT, "", "zone:" + str(z["id"]))
+		if not opened.is_empty():
+			_say("UI_DEDE_ZONE_OPEN")
+			hud.pulse_map()
 	if protected:
 		hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
 	elif not kept:
@@ -590,9 +600,12 @@ func _follow_zone() -> void:
 	var now := session.zone_id()
 	if now == zone_id:
 		return
-	# Başka bir bölgeye girildi (oturumun başı sayılmaz): adı kısa bir bildirimle.
+	# Başka bir bölgeye girildi (oturumun başı sayılmaz): adı kısa bir bildirimle. Gidilen bölge
+	# haritada artık "Yeni!" değil.
 	if not zone_id.is_empty() and not now.is_empty() and GameState.db.zones_of(spot_id).size() > 1:
-		hud.toast(tr("ZONE_" + now), UiKit.TEXT, "map")
+		hud.toast(tr("ZONE_" + now), UiKit.TEXT, "zone:" + now)
+	if not now.is_empty():
+		GameState.save.flags["visited_" + now] = true
 	zone_id = now
 	shop_panel.zone_id = now
 	book_panel.zone_id = now
@@ -813,12 +826,52 @@ func _release(fish_id: String, rarity: int) -> void:
 	save.stats["released"] = int(save.stats.get("released", 0)) + 1
 
 
-## Sol üstteki para, kova ve rütbe.
+## Sol üstteki para, kova ve rütbe; harita düğmesi ilk balıktan sonra (bölgeli gölde).
 func _refresh_status() -> void:
 	var db := GameState.db
 	var save := GameState.save
 	hud.set_status(save.coins, save.bucket.size(), Bucket.capacity(db, save), Rank.rank(db, save),
 			Rank.progress(db, save))
+	hud.map_allowed = save.catches > 0 and db.zones_of(spot_id).size() > 1
+
+
+## Haritadan hızlı geçiş (docs/gdd.md §10.1): ekran kararır, balıkçı bölgenin atış noktasına geçer
+## (kamera hemen gelir, gölgeler yeni yerin çevresinde doğar, bölgenin adı çıkar), ekran açılır.
+func _travel(target: String) -> void:
+	var db := GameState.db
+	var z := db.zone(spot_id, target)
+	if z.is_empty() or not Zones.unlocked(db, GameState.save, z) or session.state != FishingSession.State.IDLE:
+		return
+	var stands: Array[Vector2] = z["stands"]
+	if stands.is_empty() or fade.busy():
+		return
+	var stand := stands[0]
+	angler.stop()
+	_pending_cast = Dice.NO_POINT
+	input.release_all()
+	if angler.pos2().distance_to(stand) < 0.5:
+		return
+	Sounds.play("travel")
+	Sounds.haptic(15)
+	fade.play(func() -> void:
+		angler.place(stand)
+		var k := lake.zone_index(target)
+		angler.face_now(MapView.badge_anchor(lake, k) - stand)
+		session.relocate(stand)
+		_follow_zone()
+		camera.pitch = FollowCamera.PITCH
+		camera.zoom = 1.0
+		camera.snap(_focus()))
+
+
+## Haritadaki işaretler: Nine'nin dükkânı ve Dede.
+func _map_marks() -> Array[Dictionary]:
+	var front := ShopStall.front_for(lake.dock)
+	var stall := front - ShopStall.facing_dir() * ShopStall.DEPTH * 0.5
+	return [
+		{ "kind": "shop", "pos": stall },
+		{ "kind": "dede", "pos": Vector2(elder.global_position.x, elder.global_position.z) },
+	]
 
 
 ## Balık kartı açık mı ya da açılmak üzere mi?
@@ -939,9 +992,25 @@ func _build_ui() -> void:
 	book_panel = BookPanel.new()
 	book_panel.spot_id = spot_id
 	layer.add_child(book_panel)
+	map_panel = MapPanel.new()
+	map_panel.spot_id = spot_id
+	layer.add_child(map_panel)
+	map_panel.travel_requested.connect(_travel)
+	var top := CanvasLayer.new()
+	top.layer = 20
+	add_child(top)
+	fade = Fade.new()
+	top.add_child(fade)
 	hud.book_pressed.connect(func() -> void:
 		input.release_all()
 		book_panel.open_book())
+	hud.map_pressed.connect(func() -> void:
+		if session.state != FishingSession.State.IDLE or card.visible:
+			return
+		input.release_all()
+		angler.stop()
+		_pending_cast = Dice.NO_POINT
+		map_panel.open_map(angler.pos2(), zone_id, _map_marks()))
 	hud.settings_pressed.connect(func() -> void:
 		input.release_all()
 		session.release()

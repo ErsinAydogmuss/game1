@@ -374,6 +374,16 @@ def card():
     return finish(x, -1.0, 0.02)
 
 
+def travel():
+    """Haritadan geçiş: ekran kararırken yumuşak bir hışırtı, varışta hafif bir çan."""
+    n = frames(0.8)
+    swoosh = unit(sweep_band(noise(n, 17), 280, 1700, 1.8)) * fit(env_ar(frames(0.48), 0.2, 0.28), n)
+    bell = np.zeros(n)
+    place(bell, chime(midi(84), frames(0.45), 0.6, 0.3), frames(0.32))
+    place(bell, 0.6 * chime(midi(91), frames(0.4), 0.5, 0.25), frames(0.4))
+    return finish(0.55 * swoosh + 0.4 * bell, -3.0, 0.05)
+
+
 def record():
     n = frames(1.0)
     x = arpeggio([79, 84, 88, 91], 0.07, n, 0.9, 0.45)
@@ -666,7 +676,7 @@ def registry():
         "scare_1": scare, "reel_in_1": reel_in, "record_1": record, "error_1": lambda: buzz([50], 0.16),
         "panel_open_1": lambda: panel(True), "panel_close_1": lambda: panel(False), "card_1": card,
         "hint_1": tutorial, "coins_1": coins, "buy_1": buy, "equip_1": equip,
-        "sting_1": sting, "rank_up_1": rank_up,
+        "sting_1": sting, "rank_up_1": rank_up, "travel_1": travel,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

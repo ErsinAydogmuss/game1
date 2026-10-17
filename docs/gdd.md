@@ -314,6 +314,9 @@ Sıra ve adımlar [`yol-haritasi.md`](yol-haritasi.md)'de (Dalga 1–5). Sayıla
 
 - **Yürüme:** koyların çevresinden dolaşılır. Dokunulan yere sudan geçmeden varılamıyorsa balıkçı kıyı yolundan kısa yönü seçer.
 - **Harita:** bölgelerin atış noktalarına hızlı geçiş (ekran kararıp açılır). Kilitli noktalar rütbeyle açılır.
+  - ✅ Dalga 2'deki hâli: sağ üstte, defterin solunda harita düğmesi (ilk balıktan sonra; olta sudayken gizli). Göl gerçek verisinden kodla çizilir: masa oyunu haritası gibi çayır, kum, kıyıda mürekkep çizgisi, derinliğe göre su, ağaç tepeleriyle orman (dünyanın kenarı). Üstünde her bölgenin rozeti ve adı; açılmış ama gidilmemiş bölgede köşede "Yeni!"; kilitli bölgenin suyu gri ve taralı, rozetinde kilit ve "Rütbe 5" ya da "Sandalla"; kapalı çitler, şamandıralar, iskele, Nine'nin dükkânı, Dede ve "Buradasın" iğnesi. Açık bir bölgeye dokununca ekran 0,25 sn'de kararır, balıkçı o bölgenin atış noktasına suya dönük geçer, gölgeler çevresinde doğar, ekran açılır ve bölgenin adı çıkar (hışırtı ve çan sesi, kısa titreşim). Kilitli bölgeye dokununca rozet sallanır, nedeni yazar.
+  - ✅ Yeni bölge açılınca (rütbe atlayınca): "Nilüferli Koy açıldı!" bildirimi bölgenin rozetiyle, Dede "Yeni bir yer açıldı evlat! Haritaya bir bak." der, harita düğmesi 4 sn nabız gibi atar.
+  - Ersin'in Parti 3 görselleri (harita kâğıdı, çıkartmalar, bölge rozetleri) gelince harita onlarla süslenir; rozetlerin yedeği kodla çizilir.
 - **Sandal:** dükkândan alınır. İskeleye bağlı sandala binilir; derin ortadaki 3 şamandıradan birine gidilir. Sandaldayken suya dokunmak yine atıştır.
 
 ### 10.2 Nadirlik ve şans garantisi
