@@ -7,7 +7,7 @@ Ersin'in Kazı'dan sonraki yeni oyun projesi: her yaşa hitap eden, rahat bir 3D
 - Saha araştırması bitti: `docs/saha-arastirmasi.md`.
 - Fikir seçildi: **Olta: Gölün Sırrı** (`docs/fikirler.md`, Karar bölümü). Görünüm eğik üstten, suda balık gölgeleri. Kahraman kendi balıkçın + köyde Dede.
 - 1. hafta prototipi (v0.1) bitti. Ersin'in geri bildirimiyle H2 "Büyük Göl" planı onaylandı: 5 dalga (`docs/yol-haritasi.md`), tasarım `docs/gdd.md` §10. Dalga 1 (dükkân, takım, para, nadirlik, defter) bitti: v0.2. Sırada Dalga 2 (büyük göl). Telefona kurulum: `docs/iphone-kurulum.md`. Sürüm: v0.2.
-- Görseller Ersin'de: `docs/gorsel-istekleri.md` (partiler, öncelik, oyuna bağlama). CC0 3D paketleri Mac'te indirilir (`docs/mac-indirme.md`; bulut bu sitelere erişemiyor), `assets/incoming/models/`'e gelir. Geçici uygulama ikonu `icon.svg`.
+- Görseller Ersin'de: `docs/gorsel-istekleri.md` (partiler, öncelik, oyuna bağlama). CC0 3D paketleri Mac'te indirilir (`docs/mac-indirme.md`; bulut bu sitelere erişemiyor), `assets/incoming/models/`'e gelir. Uygulama ikonu ve açılış logosu Ersin'in (`assets/ui/art/app_icon.png`, `logo.png`).
 
 ## Ersin ve çalışma şartları
 

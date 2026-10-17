@@ -5,12 +5,27 @@ extends Dialog
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
+## Başlıktaki oyun logosunun kutusu (kapat düğmesinin boyunda: başlık uzamasın).
+const LOGO := Vector2(170, 122)
 
 var _rows: VBoxContainer
 
 
 func _build() -> void:
 	set_header(tr("UI_SETTINGS"), "settings", 1100.0)
+	# Başlıkta ayar ikonu yerine oyunun logosu (Ersin'in; yoksa ikon kalır).
+	var logo := ItemArt.art("logo.png")
+	if logo != null:
+		var rect := TextureRect.new()
+		rect.texture = logo
+		rect.custom_minimum_size = LOGO
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		_icon.get_parent().add_child(rect)
+		_icon.get_parent().move_child(rect, _icon.get_index())
+		_icon.visible = false
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 12)
 	body.add_child(_rows)

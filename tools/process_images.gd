@@ -6,6 +6,7 @@ extends SceneTree
 ## fit: "square" (varsayılan; ikon kareye ortalanır), "box" (tek görsel, oran korunur),
 ## "trim" (ızgaradaki her parça kırpılır, oran korunur: 9 dilimli çerçeveler ve düğmeler).
 ## despill: "all" (varsayılan), "edge" (mor nesneli sayfalar: içi solmasın), "none" (ArtSheet).
+## key: false: arka plan silinmez, görsel saydamlık kanalsız kaydedilir (uygulama ikonu).
 ## --keep: işlenen orijinali silme (varsayılan: silinir, depo şişmesin).
 ## --preview=KLASÖR: kesilen ikonları dama desenli bir önizleme sayfasına da çizer.
 ## Sonra yeni PNG'ler için: godot --headless --path . --import
@@ -105,6 +106,11 @@ func _process_file(path: String, def: Dictionary, margin: float, outputs: Array[
 			return sheet.errors
 	if pieces.size() != names.size():
 		return PackedStringArray(["%d nesne bekleniyordu, %d bulundu" % [names.size(), pieces.size()]])
+	# Arka planı silinmeyen görsel (uygulama ikonu) saydamlık kanalsız kaydedilir: Apple uygulama
+	# ikonunda saydam kanal istemez.
+	if not bool(def.get("key", true)):
+		for piece in pieces:
+			piece.convert(Image.FORMAT_RGB8)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out))
 	var errors := PackedStringArray()
 	var jpg := str(def.get("format", "png")) == "jpg"

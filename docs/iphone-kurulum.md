@@ -213,7 +213,7 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.2: Nine'nin dükk�
 8. Para ve rütbe hızı: ilk yarım saatte sık sık yeni bir şey alabiliyor musun, sıkıcı bekleme var mı?
 9. Takılma ya da telefonun ısınması var mı? Ekranın çentiği (notch) bir yeri kapatıyor mu?
 
-Kullanıcıya söyle: ana ekrandaki ikon geçici (kodla çizilmiş basit bir balık). Ersin'in uygulama ikonu gelince değişecek.
+Ana ekrandaki ikon Ersin'in zıplayan koisi olmalı; oyun açılırken göl renginde OLTA logosu görünmeli. Eski geçici balık ikonu görünüyorsa uygulamayı silip yeniden yükle (iOS ikonu önbellekte tutabilir).
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
