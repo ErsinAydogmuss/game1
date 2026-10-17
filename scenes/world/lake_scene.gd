@@ -43,6 +43,11 @@ const GROUND_TILES := {
 ## Dört köşesi kıyıdan bu kadar içeride (suyun altında) olan arazi kareleri kurulmaz (su opak).
 const HIDDEN_UNDER_WATER := 0.3
 const SKY := Color("#a9d2ef")
+## Derinlik sisi (m): kamera oyun alanını ~20 m'ye kadar görür; sis onun ötesinde başlar, en
+## uzakta FOG_MAX kadar örter (yakın çekimde görünen uzak kıyı ve tepeler).
+const FOG_BEGIN := 35.0
+const FOG_END := 140.0
+const FOG_MAX := 0.45
 const WOOD := Color("#9b6a3c")
 const WOOD_DARK := Color("#6e4526")
 ## Hazır modeller var mı diye bakılan ağaç (yoksa kodla basit ağaçlar).
@@ -186,18 +191,21 @@ func _build_environment() -> void:
 	environment.ambient_light_energy = 0.5
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	environment.tonemap_white = 6.0
+	# Parlama yalnızca gerçekten parlak yerlerde (ışık sütunu, su parıltısı); bloom yok.
 	environment.glow_enabled = true
 	environment.glow_intensity = 0.7
-	environment.glow_bloom = 0.03
 	environment.glow_hdr_threshold = 0.95
+	# Üstel sis doğrusal renk uzayında karışır: kameranın 12 m'sinde %7'lik sis bile koyuları açıp
+	# bütün görüntüyü puslu yapıyordu (telefonda "sisli"). Derinlik sisi oyun alanının dışında başlar.
 	environment.fog_enabled = true
-	environment.fog_mode = Environment.FOG_MODE_EXPONENTIAL
+	environment.fog_mode = Environment.FOG_MODE_DEPTH
 	environment.fog_light_color = SKY
-	environment.fog_density = 0.006
+	environment.fog_depth_begin = FOG_BEGIN
+	environment.fog_depth_end = FOG_END
+	environment.fog_density = FOG_MAX
 	environment.fog_sky_affect = 0.0
 	environment.adjustment_enabled = true
 	environment.adjustment_contrast = 1.08
-	environment.adjustment_saturation = 1.16
 	var world := WorldEnvironment.new()
 	world.environment = environment
 	add_child(world)

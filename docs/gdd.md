@@ -264,6 +264,10 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - Kartın balık resmi aynı modelden açılışta çizilir (Ersin'in balık görselleri gelince onlar kullanılır).
 - **Olta:** 2,3 m, üç eklemli; çekişmede gerilimle bükülür, gerilim yüksekken titrer. Serbestken dik taşınır.
 - **Çevre:** iskele (tahta), sazlık, KayKit ağaç, kaya, çadır, fıçı ve fenerleri; Kazı'nın çimeni, ışığı ve ortamı.
+- **Işık ve pus:**
+  - Sıcak güneş, serin dolgu ışığı, Filmic ton eşleme ve hafif kontrast.
+  - Sis yalnızca uzakta. Kamera oyun alanını ~20 m'ye kadar görür; derinlik sisi 35 m'de başlar, 140 m'de en çok %45 örter (yakın çekimde uzak kıyı ve tepeler). Parlama yalnızca gerçekten parlak yerlerde (ışık sütunu, su parıltısı).
+  - v0.3.1'den önce üstel sis bütün görüntüyü puslu yapıyordu (Ersin telefonda "sisli" dedi). Telefon boyutunda ölçüm: doygunluk %22–24, kontrast %26–29 düşüktü; en koyu tonlar açılmıştı.
 - **Dış çizgi** yalnızca karakterlerde ve balıklarda.
 - **Erişilebilirlik:** gerilim çubuğu renk + ikon + sarsıntı + "BIRAK!" yazısı. Her sesin bir görsel ve titreşim karşılığı var.
 - **H2 görsel hedefleri 🔜:**

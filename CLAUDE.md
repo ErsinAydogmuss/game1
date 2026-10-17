@@ -196,7 +196,11 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
 - KayKit Rogue'da baş yuvası yok (yalnızca `handslot_r` / `handslot_l`): şapka, `head` kemiğine bağlanan bir `BoneAttachment3D`'ye takılır. El yuvasında nişan duruşlarında +X ileri, +Y yukarı bakar; olta bu yüzden +X'e göre kurulur (`AnglerBody.ROD_TILT`).
 - `-s` ile çalışan araçlarda eklenen düğümlerin `_ready()`'si ilk karede çalışır: `_ready`'de kurulan parçalara (ör. `rod_mount`) `_initialize`'da değil, ilk `_process` karesinde dokun. Animasyonu `seek` ile ölçmek de ancak kareler ilerledikten sonra doğru sonuç verir.
 - Headless çalışmada (testler, `--headless`) `SubViewport` çizilmez: `PortraitStudio` null döner, kartta yer tutucu madalyon, ipucu çubuğunda yer tutucu ikon kalır.
-- Sahne ton eşlemesi (Filmic, `tonemap_white` 6) ve sis 3B'deki ışıksız beyazı da griye çeker: arayüz gibi görünmesi gereken parçalar (konuşma balonu) 2B çizilir ve her kare `unproject_position` ile 3B noktaya taşınır.
+- Sahne ton eşlemesi (Filmic, `tonemap_white` 6) 3B'deki ışıksız beyazı da griye çeker: arayüz gibi görünmesi gereken parçalar (konuşma balonu) 2B çizilir ve her kare `unproject_position` ile 3B noktaya taşınır.
+- Üstel sis doğrusal renk uzayında karışır. Kameranın 12 m'sinde %7'lik sis bile koyuları açar ve bütün görüntüyü puslu yapar (Ersin telefonda "sisli" dedi).
+  - Göl sahnesinde derinlik sisi (`FOG_MODE_DEPTH`; Compatibility'de çalışır) oyun alanının dışında başlar (`LakeScene.FOG_BEGIN`).
+  - Doygunluk ayarı yok.
+  - Işıkla oynarken telefon boyutundaki ekran görüntülerini karşılaştır: doygunluğu ve en koyu %5'in parlaklığını ölç.
 - Kamera +x +z tarafında ve yukarıdan bakar: bir karakterin yüzü yalnızca kameraya dönükken görünür. Dede bu yüzden kameraya üçte bir dönük oturur ve konuşurken başını kameraya kaldırır (`LookModifier` yukarı bakış).
 - Balıkçı düz çizgide yürür: yoldaki engeller (Dede) `Angler.avoid` ile çevreden kayılarak geçilir; durdurmak yerine kaydırmak, "karaya dokun" yürüyüşünün takılmamasını sağlar.
 - Video kaydında (Movie Maker) oyun zamanı gerçek saatten yavaş akar; bot döngülerinde kare sayısı kullan. Kayıtta `OS.has_feature("movie")` true: hata ayıklama FPS etiketi gizlenir.

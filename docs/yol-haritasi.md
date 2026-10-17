@@ -97,6 +97,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 
 - [x] Parti 3 görselleri oyunda: zemin dokuları (çimen, kum, toprak yol, yosunlu taş), bölge rozetleri (harita ve bildirimler), harita kâğıdı ve çıkartmaları (sazlık, nilüfer, kayalar, ağaçlar, sandal, dükkân), harita ikonları (iğne, kilit, pusula, şamandıra, çit tabelası) ve "Kıyıya dön" düğmesinde çapa.
 - [x] Parti 4 görselleri (teknikler) kesildi; teknikler Dalga 3'te geldikçe oyuna girer.
+- [x] Sis: oyun alanı berrak. Üstel sis yerine 35 m'de başlayan derinlik sisi, bloom yok, doygunluk ayarı kalktı (Ersin: "telefonda sisli").
 - [ ] Telefonda deneme ve hız ölçümü: Ersin'in sorun listesi.
 
 **Dalga 3 — Teknikler → v0.4**
