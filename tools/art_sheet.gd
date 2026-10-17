@@ -237,6 +237,54 @@ static func fit_square(img: Image, size: int, margin: float) -> Image:
 	return canvas
 
 
+## Zemin dokusu karosu: nesnenin (kare doku örneği) içinden, yumuşak kenarını atarak (inset) en
+## büyük kareyi keser, size x size yapar ve dikişsiz hâle getirir (seamless). Saydamlıksız döner.
+static func make_tile(img: Image, size: int, inset: float = 0.06) -> Image:
+	var used := img.get_used_rect()
+	var side := mini(used.size.x, used.size.y)
+	var cut := roundi(side * inset)
+	var corner := used.position + Vector2i((used.size.x - side) >> 1, (used.size.y - side) >> 1) + Vector2i(cut, cut)
+	var square := img.get_region(Rect2i(corner, Vector2i(maxi(1, side - cut * 2), maxi(1, side - cut * 2))))
+	square.convert(Image.FORMAT_RGBA8)
+	square.resize(size, size, Image.INTERPOLATE_LANCZOS)
+	return seamless(square)
+
+
+## Kare görüntüyü yan yana dizilince dikiş göstermez hâle getirir. Görüntünün dört kopyası (aslı,
+## yatayda, dikeyde ve iki yönde yarım kaydırılmışı) eksen başına ağırlıkla karışır: kenarlarda
+## kaydırılmış kopya (kenarı ortasından geldiği için kesintisiz), ortada aslı (kaydırılmış
+## kopyanın dikişi ortada). Ağırlıklar eksen başına ayrı: köşede ve kenar ortasında da dikiş kalmaz.
+static func seamless(img: Image) -> Image:
+	var src: Image = img.duplicate()
+	src.convert(Image.FORMAT_RGBA8)
+	var n := mini(src.get_width(), src.get_height())
+	var h := n >> 1
+	var data := src.get_data()
+	var w := src.get_width()
+	var weights := PackedFloat32Array()
+	weights.resize(n)
+	for i in n:
+		weights[i] = smoothstep(0.0, 0.25, minf(i + 0.5, n - i - 0.5) / n)
+	var out := PackedByteArray()
+	out.resize(n * n * 3)
+	for y in n:
+		var ay := weights[y]
+		var y2 := (y + h) % n
+		for x in n:
+			var ax := weights[x]
+			var x2 := (x + h) % n
+			var i00 := (y * w + x) << 2
+			var i10 := (y * w + x2) << 2
+			var i01 := (y2 * w + x) << 2
+			var i11 := (y2 * w + x2) << 2
+			var o := (y * n + x) * 3
+			for c in 3:
+				var v := data[i00 + c] * ax * ay + data[i10 + c] * (1.0 - ax) * ay \
+						+ data[i01 + c] * ax * (1.0 - ay) + data[i11 + c] * (1.0 - ax) * (1.0 - ay)
+				out[o + c] = clampi(roundi(v), 0, 255)
+	return Image.create_from_data(n, n, false, Image.FORMAT_RGB8, out)
+
+
 ## En boy oranını koruyarak uzun kenarı max_size yapar. trim: saydam kenarları kırpıp margin ekler.
 static func fit_box(img: Image, max_size: int, trim: bool, margin: float) -> Image:
 	var src := img

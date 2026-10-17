@@ -1,5 +1,5 @@
 {
-	"_note": "Kullanıcının ChatGPT görsel sayfaları (docs/gorsel-istekleri.md). Adlar soldan sağa, üst satırdan başlayarak. tools/process_images.gd okur. fit: square (ikon, kareye ortalanır), box (tek görsel), trim (9 dilimli çerçeve ve düğme; oran korunur, payları UiKit.FRAME_SLICES'ta). despill: renk sızıntısı temizliği all (varsayılan; cam ve ağ deliklerindeki macenta da), edge (yalnızca kenar: Destansı moru solmasın), none.",
+	"_note": "Kullanıcının ChatGPT görsel sayfaları (docs/gorsel-istekleri.md). Adlar soldan sağa, üst satırdan başlayarak. tools/process_images.gd okur. fit: square (ikon, kareye ortalanır), box (tek görsel), trim (9 dilimli çerçeve ve düğme; oran korunur, payları UiKit.FRAME_SLICES'ta), tile (zemin dokusu: kare doku örneğinin içinden kesilir, dikişsiz yapılır, saydamlıksız). despill: renk sızıntısı temizliği all (varsayılan; cam ve ağ deliklerindeki macenta da), edge (yalnızca kenar: Destansı moru solmasın), none.",
 	"sheets": [
 		{ "file": "style_sheet", "reference": true, "out": "res://docs/img/stil_sayfasi.jpg" },
 		{ "file": "concept_screen", "reference": true, "out": "res://docs/img/hedef_ekran.jpg" },
@@ -34,6 +34,16 @@
 		{ "file": "gear_baits", "out": "res://assets/icons/gear", "size": 256, "grid": [3, 2],
 			"names": ["bait_worm", "bait_corn", "bait_dough", "bait_maggot", "bait_boilie", "bait_shrimp"] },
 		{ "file": "gear_extras", "out": "res://assets/icons/gear", "size": 256, "grid": [3, 2],
-			"names": ["net", "rod_stand", "boat", "trap", "lantern", "keepnet"] }
+			"names": ["net", "rod_stand", "boat", "trap", "lantern", "keepnet"] },
+		{ "file": "zone_badges", "out": "res://assets/icons/zones", "size": 192, "grid": [3, 2], "despill": "edge",
+			"names": ["zone_dock_cove", "zone_reeds", "zone_lily_cove", "zone_rocky_point", "zone_stream_mouth", "zone_deep_water"] },
+		{ "file": "map_paper", "out": "res://assets/ui/map", "size": 1536, "fit": "box",
+			"names": ["map_paper"] },
+		{ "file": "map_stickers", "out": "res://assets/ui/map", "size": 192, "grid": [3, 2], "despill": "edge",
+			"names": ["map_trees", "map_reeds", "map_lilies", "map_rocks", "map_shop", "map_boat"] },
+		{ "file": "map_icons", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
+			"names": ["pin", "lock", "compass", "buoy", "anchor", "signpost"] },
+		{ "file": "ground_tiles", "out": "res://assets/textures/ground", "size": 512, "fit": "tile", "grid": [2, 2],
+			"names": ["grass", "sand", "path", "moss_stone"] }
 	]
 }

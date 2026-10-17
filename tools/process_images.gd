@@ -98,8 +98,11 @@ func _process_file(path: String, def: Dictionary, margin: float, outputs: Array[
 			if piece == null:
 				continue
 			# "trim": 9 dilimli çerçeveler ve düğmeler; en boy oranı korunur, kenar payı eklenmez.
+			# "tile": zemin dokuları; içinden kare kesilir, dikişsiz yapılır.
 			if fit == "trim":
 				pieces.append(ArtSheet.fit_box(piece, size, true, 0.0))
+			elif fit == "tile":
+				pieces.append(ArtSheet.make_tile(piece, size))
 			else:
 				pieces.append(ArtSheet.fit_square(piece, size, margin))
 		if not sheet.errors.is_empty():

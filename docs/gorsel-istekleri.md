@@ -18,11 +18,11 @@ Görseller partiler hâlinde geliyor; her parti bir dalgadan önce. **Hepsini bi
 |---|---|---|---|
 | 1. Arayüz | ✅ geldi, oyunda (v0.2.1) | 12 | paneller, düğmeler, nadirlik kartları, ikonlar, Dede ve Nine'nin yüzü, uygulama ikonu |
 | 2. Ekipman | ✅ geldi, oyunda (v0.2.1) | 7 | Nine'nin dükkânındaki 42 eşya (bugün satılan 33'ü görünüyor; kalanı Dalga 2–4'te) |
-| 3. Göl | Dalga 2'den önce | ~5 | bölge rozetleri, harita, zemin dokuları (nilüfer ve çiçekler kodla yapıldı) |
+| 3. Göl | Dalga 2 sırasında (promptlar aşağıda) | 5 | bölge rozetleri, harita kâğıdı, harita çıkartmaları ve ikonları, zemin dokuları |
 | 4. Teknikler | Dalga 3'ten önce | ~5 | yapay yemler, sinekler, sehpa ve zil, çöp ve kerevit |
 | 5. Hikâye ve yuva | Dalga 4'ten önce | ~8 | mektuplar, Gölün Bekçisi, hava ikonları, kedi, kıyafetler, tanıtım görseli |
 
-3, 4 ve 5. partilerin promptlarını o dalgadan önce bu sayfaya eklerim.
+4 ve 5. partilerin promptlarını o dalgadan önce bu sayfaya eklerim.
 
 ## Nasıl teslim edersin?
 
@@ -345,6 +345,106 @@ Adlar: `net` (kepçe), `rod_stand` (sehpa ve zil), `boat` (sandal), `trap` (kere
 
 ---
 
+## Parti 3 — Göl (bölgeler ve harita)
+
+Büyük gölde altı bölge var: İskele koyu, Sazlık, Nilüferli koy, Kayalık burun, Dere ağzı ve Derin orta. Harita gölün gerçek şeklinden kodla çizilir; bu sayfalar onu süsler. Görseller gelene kadar oyun kodla çizilen yedekleri kullanır, yani **acele yok**: hazır oldukça yükle.
+
+**1. `zone_badges.png`: bölge rozetleri**
+
+Haritada ve "yeni bölge açıldı" bildiriminde görünür.
+
+```
+Sheet of 6 round cozy mobile game badges in a 3x2 grid, exactly matching the attached style
+reference: chunky shapes, soft gradients, thick dark outline, warm top-left light, flat front
+view. Each badge is a round wooden medallion with a small scene inside, centered in its own cell
+with generous empty space, all the same size. No text, no labels, no shadows.
+Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
+Badges, left to right, top row then bottom row: a small wooden fishing dock over teal water;
+tall green reeds and cattails; a green lily pad with a pink lotus flower; mossy gray rocks with
+a splash of water; a little stream flowing over stones between two grassy banks; a
+red-and-white buoy floating on deep dark-blue water.
+```
+
+| Kesilen ad | Bölge |
+|---|---|
+| `zone_dock_cove` | İskele koyu |
+| `zone_reeds` | Sazlık |
+| `zone_lily_cove` | Nilüferli koy |
+| `zone_rocky_point` | Kayalık burun |
+| `zone_stream_mouth` | Dere ağzı |
+| `zone_deep_water` | Derin orta |
+
+**2. `map_paper.png`: harita kâğıdı**
+
+Tek parça. Gölü oyun bunun üstüne çizer; ortası boş kalmalı.
+
+```
+A single blank old parchment map paper for a cozy mobile game, flat front view, exactly
+matching the attached style reference: warm cream paper with soft darker edges, slightly curled
+corners and a thin hand-drawn brown border line. The middle is plain, empty and evenly lit, with
+nothing drawn on it, so the game can draw the lake on top. Wide landscape shape filling most of
+the image. No text, no drawings, no shadows.
+Solid flat pure magenta background (#FF00FF) everywhere around the paper.
+```
+
+Ortasına bir şey çizilmişse: "Keep the paper exactly the same but make the middle completely empty".
+
+**3. `map_stickers.png`: harita çıkartmaları**
+
+Haritada bölgelerin ve yerlerin üstüne konur (masa oyunu haritası gibi).
+
+```
+Sheet of 6 small cute map stickers for a cozy fishing game map in a 3x2 grid, exactly matching
+the attached style reference: chunky shapes, soft gradients, thick dark outline, warm top-left
+light, seen from above at a slight 3/4 angle like a board game map. Each sticker centered in its
+own cell with generous empty space, all at a similar size. No text, no labels, no shadows,
+no floor.
+Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
+Stickers, left to right, top row then bottom row: a cluster of three round green trees; a patch
+of reeds and cattails; three lily pads with one pink flower; a pile of mossy gray rocks; a small
+wooden fishing shop with a striped awning; a small wooden rowing boat.
+```
+
+Kesilen adlar: `map_trees`, `map_reeds`, `map_lilies`, `map_rocks`, `map_shop`, `map_boat`.
+
+**4. `map_icons.png`: harita ikonları**
+
+```
+(ui_1 ile aynı stil cümleleri.) Icons, left to right, top row then bottom row: a round red map
+pin with a white dot; a small golden padlock; a wooden compass rose; a red-and-white buoy with a
+small flag; a dark iron anchor with a rope; a wooden signpost with an arrow.
+```
+
+| Kesilen ad | Nerede |
+|---|---|
+| `pin` | haritada "buradasın" |
+| `lock` | kilitli bölge (dükkândaki rütbe kilidi de bunu kullanır) |
+| `compass` | harita süsü |
+| `buoy` | sandalla gidilen şamandıralar |
+| `anchor` | sandaldayken "kıyıya dön" düğmesi |
+| `signpost` | kilitli bölgenin tabelası (bildirim) |
+
+**5. `ground_tiles.png`: zemin dokuları**
+
+Bu sayfa ötekilerden farklı: nesne değil, **kare doku örnekleri** (2×2). Oyun her karenin içinden keser ve kenarlarını kendisi dikişsiz yapar.
+
+```
+Four square seamless tileable ground textures for a cozy stylized low-poly lakeside game, in a
+2x2 grid, seen straight from above, matching the colors of the attached style reference: soft
+painterly shapes, gentle color variation, no strong highlights or shadows, no objects, no
+perspective. Each texture is a perfect square swatch filling most of its cell, with a gap of
+solid flat pure magenta (#FF00FF) between the swatches and around them.
+Textures, left to right, top row then bottom row: short soft green grass; light sand with a few
+small pebbles; a brown dirt footpath of packed earth; mossy gray stone.
+```
+
+Kesilen adlar: `grass` (çimen), `sand` (kıyı kumu), `path` (kıyı yolu), `moss_stone` (kayalık burun).
+
+- Dokular yakından değil uzaktan görünür: ayrıntı az, renk geçişi yumuşak olsun.
+- Çok parlak ya da çok desenli çıkarsa: "Make it softer and less detailed, gentle color variation only".
+
+---
+
 ## Teknik not (Claude için)
 
 Görseller `assets/incoming/` altına gelince:
@@ -356,9 +456,9 @@ godot --headless --path . --import
 
 Sayfa adları, kesim şekli (`fit`) ve kesilen adlar `data/art_sheets.json`'da. Oyuna bağlama:
 
-Mor nesneli sayfalarda (`rarity_frames`, `rarity_badges`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru solmaz.
+Mor ve pembe nesneli sayfalarda (`rarity_frames`, `rarity_badges`, `zone_badges`, `map_stickers`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru ve nilüferin pembesi solmaz. Zemin dokuları `"fit": "tile"`: kare örneğin içinden kesilir ve dikişsiz yapılır (`ArtSheet.make_tile`).
 
-Oyuna bağlama (v0.2.1'deki durum):
+Oyuna bağlama (v0.2.1'deki durum; Parti 3 Dalga 2'de):
 
 | Görsel | Çıktı | Bağlantı |
 |---|---|---|
@@ -372,3 +472,7 @@ Oyuna bağlama (v0.2.1'deki durum):
 | `app_icon` | `assets/ui/art/app_icon.png` | `project.godot` `config/icon`; iOS ikonları bundan üretilir (Godot 4.7: iOS ikon alanları boşsa proje ikonu). Saydamlık kanalsız kaydedilir (`"key": false`). |
 | `logo` | `assets/ui/art/logo.png` | Açılış ekranı (`boot_splash/image`; iOS açılış ekranı da bundan) ve ayarlar panelinin başlığı. |
 | `style_sheet`, `concept_screen` | `docs/img/` | Yalnızca referans. |
+| `zone_badges` | `assets/icons/zones/zone_<bölge>.png` | Dalga 2: haritada bölgelerin rozeti, "yeni bölge açıldı" bildirimi. Yoksa kodla çizilen rozet. |
+| `map_paper`, `map_stickers` | `assets/ui/map/` | Dalga 2: harita panelinin zemini ve süsleri. Göl, gölün verisinden çizilir. |
+| `map_icons` | `assets/icons/ui/` | Dalga 2: `GameIcon.ART_NAMES` (`pin`, `lock`, `compass`, `buoy`, `anchor`, `signpost`). |
+| `ground_tiles` | `assets/textures/ground/` | Dalga 2: zemin shader'ı (çimen, kum, kıyı yolu, kayalık). Yoksa kodla renk. |

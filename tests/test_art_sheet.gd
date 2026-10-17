@@ -119,6 +119,31 @@ func test_transparent_input_is_kept() -> void:
 	assert_eq(box.get_size(), Vector2i(20, 20), "kırpılır, küçültülmez")
 
 
+## Zemin dokusu karosu (fit "tile"): yan yana dizilince dikiş yok. Kesilen karede komşu iki piksel
+## (kenardan öbür kenara geçenler dahil) birbirine yakın; düz bir renk geçişi gibi tekrar etmeyen
+## bir örnekte bile (kenarları arasında bütün geçiş kadar fark var).
+func test_tile_is_seamless() -> void:
+	var img := Image.create_empty(80, 80, false, Image.FORMAT_RGBA8)
+	for y in range(8, 72):
+		for x in range(8, 72):
+			img.set_pixel(x, y, Color8((x - 8) * 4, (y - 8) * 4, 120))
+	var tile := ArtSheet.make_tile(img, 64)
+	assert_eq(tile.get_size(), Vector2i(64, 64), "karo boyu")
+	assert_eq(tile.get_format(), Image.FORMAT_RGB8, "karo saydamlıksız")
+	var worst := 0.0
+	for y in 64:
+		for x in 64:
+			worst = maxf(worst, _gap(tile.get_pixel(x, y), tile.get_pixel((x + 1) % 64, y)))
+			worst = maxf(worst, _gap(tile.get_pixel(x, y), tile.get_pixel(x, (y + 1) % 64)))
+	assert_true(worst < 0.1, "dikiş yok (en büyük komşu farkı %.3f)" % worst)
+	var raw := _gap(img.get_pixel(8, 40), img.get_pixel(71, 40))
+	assert_true(raw > 0.8, "örneğin kendisi tekrar etmiyordu (%.2f)" % raw)
+
+
+static func _gap(a: Color, b: Color) -> float:
+	return maxf(absf(a.r - b.r), maxf(absf(a.g - b.g), absf(a.b - b.b)))
+
+
 ## art_sheets.json: her ızgaralı sayfada ad sayısı ızgarayla aynı ve adlar tekrarsız.
 func test_art_sheets_are_consistent() -> void:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/art_sheets.json"))
@@ -136,6 +161,8 @@ func test_art_sheets_are_consistent() -> void:
 			continue
 		# Bilinmeyen değer sessizce "none" sayılırdı (ArtSheet.remove_background).
 		assert_true(str(def.get("despill", "all")) in ["all", "edge", "none"], "%s: despill all, edge ya da none" % file)
+		# Bilinmeyen kesim sessizce "square" sayılırdı (tools/process_images.gd).
+		assert_true(str(def.get("fit", "square")) in ["square", "box", "trim", "tile"], "%s: fit bilinen bir kesim" % file)
 		var names: Array = def["names"]
 		if def.has("grid"):
 			var grid: Array = def["grid"]
