@@ -309,7 +309,7 @@ Sıra ve adımlar [`yol-haritasi.md`](yol-haritasi.md)'de (Dalga 1–5). Sayıla
   - sazlık: kızılkanat %28, sazan %24, kadife %22, gümüş balığı %14, levrek %7, turna %5;
   - nilüferli koy: levrek %26, sazan %24, turna %22, kızılkanat %22, altın sazan %6;
   - kayalık burun: tatlısu kefali %30, levrek %28, sudak %16, turna %10, kızılkanat %10, yayın %6;
-  - dere ağzı: tatlısu kefali %40, levrek %25, kızılkanat %15, turna %14, yayın %6 (alabalıklar sinekle Dalga 3'te);
+  - dere ağzı: tatlısu kefali %36, turna %26, levrek %20, kızılkanat %10, yayın %8 (dereden inen yemi bekleyen yırtıcılar; alabalıklar sinekle Dalga 3'te). Her yeni bölge öncekilerden az kazandırmaz: solucanla balık başına ortalama değer iskele koyu 14, sazlık 10, nilüferli koy 21, kayalık burun 23, dere ağzı 24, derin orta 40 para (`test_economy.gd` denetler);
   - derin orta: yayın %22, sazan %20, çapak %19, sudak %14, turna %12, levrek %11,5, mersin %1,5.
 
 - **Yürüme:** koyların çevresinden dolaşılır. Dokunulan yere sudan geçmeden varılamıyorsa balıkçı kıyı yolundan kısa yönü seçer.
@@ -318,7 +318,7 @@ Sıra ve adımlar [`yol-haritasi.md`](yol-haritasi.md)'de (Dalga 1–5). Sayıla
   - ✅ Yeni bölge açılınca (rütbe atlayınca): "Nilüferli Koy açıldı!" bildirimi bölgenin rozetiyle, Dede "Yeni bir yer açıldı evlat! Haritaya bir bak." der, harita düğmesi 4 sn nabız gibi atar.
   - Ersin'in Parti 3 görselleri (harita kâğıdı, çıkartmalar, bölge rozetleri) gelince harita onlarla süslenir; rozetlerin yedeği kodla çizilir.
 - **Sandal:** dükkândan alınır. İskeleye bağlı sandala binilir; derin ortadaki 3 şamandıradan birine gidilir. Sandaldayken suya dokunmak yine atıştır.
-  - ✅ Dalga 2'deki hâli: Nine'nin dükkânında Ekstra sekmesinde (rütbe 9; fiyatı denge adımında). Sandal yokken iskeledeki sandala dokununca Dede "Sandalla derin sulara açılınır. Zamanı gelecek evlat!", rütbe yetiyorsa "Derin sulara hazırsın evlat! Nine sandal satıyor." der. Sandal alındıysa sandala ya da haritada Derin Orta'ya dokununca ekran kararır; sandal ilk şamandıranın yanına gider, balıkçı içinde ayakta, şamandıra önünde (sandal suyla iner kalkar). Sandaldayken yürünmez, dokunulan yöne atılır; gölgeler yalnızca derin ortada doğar ve sandalın altına girmez. İlk açılışta Dede "Derin sular! Burada iri balıklar yaşar evlat. Sıkı tut!" der. Haritada Derin Orta'ya yeniden dokununca sıradaki şamandıraya geçilir; sol alttaki "Kıyıya dön" ya da haritada bir kıyı bölgesi balıkçıyı karaya, sandalı iskeleye götürür. Oturum hep iskelede başlar.
+  - ✅ Dalga 2'deki hâli: Nine'nin dükkânında Ekstra sekmesinde (rütbe 9, 3.500 para). Sandal yokken iskeledeki sandala dokununca Dede "Sandalla derin sulara açılınır. Zamanı gelecek evlat!", rütbe yetiyorsa "Derin sulara hazırsın evlat! Nine sandal satıyor." der. Sandal alındıysa sandala ya da haritada Derin Orta'ya dokununca ekran kararır; sandal ilk şamandıranın yanına gider, balıkçı içinde ayakta, şamandıra önünde (sandal suyla iner kalkar). Sandaldayken yürünmez, dokunulan yöne atılır; gölgeler yalnızca derin ortada doğar ve sandalın altına girmez. İlk açılışta Dede "Derin sular! Burada iri balıklar yaşar evlat. Sıkı tut!" der. Haritada Derin Orta'ya yeniden dokununca sıradaki şamandıraya geçilir; sol alttaki "Kıyıya dön" ya da haritada bir kıyı bölgesi balıkçıyı karaya, sandalı iskeleye götürür. Oturum hep iskelede başlar.
 
 ### 10.2 Nadirlik ve şans garantisi
 
@@ -397,33 +397,42 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 
 | Hedef | Süre |
 |---|---|
+| nilüferli koy (rütbe 3) | 8–12 dk |
+| kayalık burun (rütbe 5) | 20–30 dk |
+| dere ağzı (rütbe 7) | 45–60 dk |
+| rütbe 9 (sandal Nine'de) | 80–110 dk |
+| sandal | 90–180 dk |
 | spin takımı | 4–10 dk |
 | tuzak | 10–20 dk |
 | dip takımı | 15–35 dk |
 | sinek | 60–120 dk |
-| sandal | 90–180 dk |
 | bütün kademeler | 8–15 saat |
 
 - ✅ **Denge botu** (`SessionSim`): oyunun kurallarını aynen kullanır (oranlar ve şans garantisi `CatchOdds`, boy `FishTable`, çekişme `ReelModel` + tepkili oyuncu botu, kova, rütbe, satış), yalnızca zamanı ve el becerisini taklit eder. Süreler `data/sim.json`'dan; atış, balığın gelişi, dürtmeler ve çekişme uzaklığı `tools/session_timing.gd` ile gerçek `FishingSession`'dan ölçülür (insan gibi şaşarak nişan alan bot). Ölçüm (başlangıç takımı): ısırmaya ortalama 9 sn (atış ve geri sarma dahil), dürtmeler 2,8 sn, çekişme 5,2 sn, takılma uzaklığı 4,5 m; saatte 225 av (satışsız). İnsan hatası tahmin: ısırmaların %15'i kaçırılır.
-- ✅ **Dalga 1 ölçümü** (`tools/economy_report.gd -- --hours=12`, 3 seed; bot solucanla avlanır, kova dolunca satar, rütbesi yeten en ucuz takımı alır): saatte yaklaşık 3.100 para ve 200 av. Korkuluklar `tests/test_session_sim.gd`'de (100 dk, 3 seed).
-- **Dalga 2 ara ölçüm** (yedi yeni tür; bot hâlâ yalnızca iskele koyunda avlanır): saatte yaklaşık 2.700 para ve 180 av; rütbe 3 / 5 / 7 / 9 yaklaşık 4 / 12 / 27 / 48. dakikada. Bölgeli denge (bölge değiştiren bot, sandal, hedefler yukarıda) Dalga 2'nin denge adımında.
+- ✅ **Dalga 1 ölçümü** (iskele koyu, 3 seed): saatte yaklaşık 3.100 para ve 200 av; rütbe 20'ye 5 saatte varılıyordu.
+- ✅ **Bölgeli denge botu** (Dalga 2): kıyı bölgesini oyuncu gibi seçer. Önce gidilmemiş açık bölgeye gider (yeni bölge açılınca hemen), sonra defterde tutulmamış türü en çok olana, sonra balık başına en çok kazandırana. Sandalı rütbesi yetince öncelikle alır, parası yetene kadar başka şey almaz; sonra kovaların yarısını derin ortada doldurur (`boat_share`, tahmin). Bölge değiştirmek ve satmak için iskeleye dönmek 6 sn sürer (`travel_s`: harita, dokunuş, kararma). Bölge başına süreler `session_timing.gd --zone=` ile ölçülür (`sim.json` "zones").
+- ✅ **Rütbe eğrisi uzadı:** bölgeler rütbe 3–9'da açıldığı için eşikler 0, 60, 300, 600, 950, 1.400, 2.050, 2.900, 4.000, 5.000 … 26.000 (rütbe 20). Eski kayıtta rütbe ve rütbedeki ilerleme korunur: kayıt sürümü 3, puan yeni eğriye taşınır (`SaveData.remap_xp`). Sandal 3.500 para.
+- ✅ **Dalga 2 ölçümü** (`tools/economy_report.gd -- --hours=12 --seeds=6`): saatte yaklaşık 5.400 para ve 176 av. Zamanın ~%52'si dere ağzında, ~%42'si derin ortada geçiyor (en çok kazandıran iki yer); öteki kıyı bölgelerine yeni türleri tutmak için gidiliyor. Korkuluklar `tests/test_session_sim.gd`'de (200 dk, 3 seed); "yeni bölge öncekilerden az kazandırmaz" `test_economy.gd`'de.
 
 | Olay (ilk kez) | Dakika | Korkuluk |
 |---|---|---|
 | ilk satış | 2–3 | ≤ 5 |
-| ilk alışveriş (misina) | 4–5 | ≤ 10 |
-| rütbe 2 / 5 / 10 / 20 | 1–2 / 9–12 / 51–54 / 275–292 | ≤ 5 / 6–20 / 35–90 / — |
-| gölün 5 türü | 4–16 | ≤ 30 |
-| makara, iğne, şamandıra (ilk kademe) | 7–23 | — |
-| cam kamış | 23–29 | 10–45 |
-| büyük kova | 28–38 | 15–60 |
-| floro misina, hızlı makara, kepçe | 41–67 | kepçe 40–100 |
-| güçlü makara, parlak şamandıra, file | 102–165 | — |
-| örgü misina, karbon kamış, usta floro | 185–285 | — |
-| usta makara, büyük file, usta örgü | 343–646 | — |
-| büyük usta makara (15.000), dev file (15.000) | 12 saatte alınmadı | — |
+| ilk alışveriş (misina) | 3–7 | ≤ 10 |
+| rütbe 2 / 3 / 5 / 7 / 9 | 1–3 / 6–13 / 19–28 / 44–51 / 75–89 | ≤ 5 / 5–15 / 15–35 / 38–65 / 70–120 |
+| rütbe 10 / 15 / 20 | 92–110 / 200–237 / 360–390 | — |
+| ilk gidiş: sazlık / nilüferli koy / kayalık burun / dere ağzı | 2–3 / 6–13 / 19–28 / 44–51 | — / 5–15 / 15–35 / — |
+| gölün 5 türü / 11 kıyı türü / mersin (12.) | 2–4 / 21–34 / 132–176 | ≤ 30 / — / 100–200 |
+| makara, iğne, şamandıra (ilk kademe) | 3–25 | — |
+| cam kamış | 20–30 | 10–45 |
+| büyük kova | 23–37 | 15–60 |
+| floro misina, hızlı makara, kepçe, büyük iğne | 38–82 | kepçe 40–100 |
+| sandal (3.500) ve derin orta | 115–147 | 90–180 |
+| güçlü makara, parlak şamandıra, balık filesi | 126–195 | — |
+| örgü misina, karbon kamış, usta florokarbon | 185–263 | — |
+| usta makarası, büyük file, altın örgü | 269–444 | — |
+| altın makara (15.000) / dev file (15.000) | 546–590 / 2 seed'de ~690 | — |
 
-- **Değerlendirme:** ilk saat dolu: yaklaşık 7 dakikada bir yeni bir şey alınıyor (ilk saatte 8 alışveriş). Şamandıra takımının hepsi yaklaşık 62.700 para (bugünkü gölde ~20 saat); en üst kademe şimdilik uzak hedef. Dalga 2'de büyük gölün değerli türleri (Nadir ≈35, Destansı ≈120, Efsanevi ≈500) geliri artırır, Dalga 3'te tekniklerin takımı eklenir: fiyatlar ve rütbe puanı eğrisi o zaman "bütün kademeler 8–15 saat" hedefine göre yeniden ayarlanır. Rütbe 20'ye 5 saatte varılıyor; bölge ve teknik kilitleri (rütbe 3–9) geldiğinde eğri uzatılır.
+- **Değerlendirme:** ilk saat dolu: yeni bölge yaklaşık 10, 25 ve 48. dakikada, araya alışverişler giriyor. Sandal rütbe 9'dan sonra 30–60 dakikalık bir birikim hedefi; alınınca balık başına kazanç ~1,7 katına çıkıyor (derin ortada ~40 para, dere ağzında ~24). Rütbe 20'ye ~6 saatte varılıyor (Dalga 1'de 5). Şamandıra takımının neredeyse hepsi 12 saatte alınıyor (dev file 6 seed'in 2'sinde); Dalga 3'te tekniklerin takımı gelince fiyatlar "bütün kademeler 8–15 saat" hedefine göre yeniden ayarlanır.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
 ### 10.5 Canlı dünya

@@ -1,0 +1,172 @@
+{
+	"baits": {},
+	"bucket": [
+		{
+			"fish": "bream",
+			"size_cm": 41,
+			"stars": 2
+		},
+		{
+			"fish": "wels",
+			"size_cm": 144,
+			"stars": 2
+		},
+		{
+			"fish": "wels",
+			"size_cm": 242,
+			"stars": 5
+		},
+		{
+			"fish": "zander",
+			"size_cm": 87,
+			"stars": 5
+		}
+	],
+	"casts": 449,
+	"catches": 384,
+	"character": "rogue",
+	"coins": 969,
+	"created_unix": 1760200000,
+	"flags": {
+		"seen_card": true,
+		"visited_deep_water": true,
+		"visited_dock_cove": true,
+		"visited_lily_cove": true,
+		"visited_reeds": true,
+		"visited_rocky_point": true,
+		"visited_stream_mouth": true
+	},
+	"hint_step": 0,
+	"last_seen_unix": 1760209118,
+	"loadouts": {
+		"float": {
+			"bobber": "bobber_sensitive",
+			"hook": "hook_large",
+			"line": "line_fluoro",
+			"reel": "reel_quick",
+			"rod": "rod_float_glass"
+		}
+	},
+	"love": 40,
+	"owned": [
+		"line_mono",
+		"reel_smooth",
+		"hook_medium",
+		"bobber_sensitive",
+		"rod_float_glass",
+		"bucket_big",
+		"line_fluoro",
+		"reel_quick",
+		"net",
+		"hook_large",
+		"boat"
+	],
+	"pity": {
+		"epic": 1,
+		"legendary": 4,
+		"rare": 0
+	},
+	"player_id": "0123456789abcdef0123456789abcdef",
+	"records": {
+		"bream": {
+			"best_cm": 44,
+			"best_stars": 3,
+			"count": 3,
+			"first_unix": 1760200029,
+			"released": 0
+		},
+		"carp": {
+			"best_cm": 77,
+			"best_stars": 5,
+			"count": 27,
+			"first_unix": 1760200058,
+			"released": 0
+		},
+		"chub": {
+			"best_cm": 50,
+			"best_stars": 5,
+			"count": 75,
+			"first_unix": 1760201536,
+			"released": 0
+		},
+		"golden_carp": {
+			"best_cm": 53,
+			"best_stars": 2,
+			"count": 1,
+			"first_unix": 1760201233,
+			"released": 0
+		},
+		"perch": {
+			"best_cm": 45,
+			"best_stars": 5,
+			"count": 118,
+			"first_unix": 1760200043,
+			"released": 0
+		},
+		"pike": {
+			"best_cm": 119,
+			"best_stars": 5,
+			"count": 44,
+			"first_unix": 1760200482,
+			"released": 0
+		},
+		"rudd": {
+			"best_cm": 30,
+			"best_stars": 5,
+			"count": 40,
+			"first_unix": 1760200012,
+			"released": 0
+		},
+		"silverside": {
+			"best_cm": 17,
+			"best_stars": 5,
+			"count": 5,
+			"first_unix": 1760200199,
+			"released": 0
+		},
+		"sturgeon": {
+			"best_cm": 112,
+			"best_stars": 1,
+			"count": 1,
+			"first_unix": 1760209050,
+			"released": 1
+		},
+		"tench": {
+			"best_cm": 30,
+			"best_stars": 1,
+			"count": 2,
+			"first_unix": 1760202875,
+			"released": 0
+		},
+		"wels": {
+			"best_cm": 245,
+			"best_stars": 5,
+			"count": 24,
+			"first_unix": 1760202683,
+			"released": 0
+		},
+		"zander": {
+			"best_cm": 88,
+			"best_stars": 5,
+			"count": 43,
+			"first_unix": 1760201747,
+			"released": 0
+		}
+	},
+	"seed": 4242,
+	"session": 31,
+	"settings": {
+		"easy": false,
+		"locale": "tr",
+		"music": true,
+		"sfx": true,
+		"vibration": true
+	},
+	"stats": {
+		"earned": 8439,
+		"sold": 378,
+		"spent": 7470
+	},
+	"version": 3,
+	"xp": 7802
+}

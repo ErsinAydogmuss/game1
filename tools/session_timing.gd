@@ -2,7 +2,9 @@ extends SceneTree
 ## Gerçek oturum süreleri: FishingSession'ı oyuncu gibi oynayan bir botla oynar, süreleri ölçer ve
 ## data/sim.json için önerilen değerleri yazar. Denge botu (SessionSim) zamanı bu dosyadan alır;
 ## kurallar (gölge, fark etme, dürtme) değişince bu araç yeniden çalıştırılır.
-##   godot --headless --path . -s res://tools/session_timing.gd [-- --casts=600 --seeds=3 --gear=top]
+##   godot --headless --path . -s res://tools/session_timing.gd [-- --casts=600 --seeds=3 --gear=top --zone=reeds]
+## --zone: balıkçı o bölgenin atış noktasında (sandal bölgesinde ilk şamandıranın yanında, sandalda)
+## durur; gölgeler yalnızca o bölgede doğar (denge botu bölge başına süre kullanır: sim.json "zones").
 ## Bot:
 ## - Nişan (AIM_S) alır; menzildeki en yakın gölgenin önüne (LEAD_M) atar, insan gibi şaşarak
 ##   (AIM_NOISE_M yarıçaplı daire içinde); gölge yoksa rastgele suya.
@@ -22,6 +24,7 @@ const SHOW_S := 1.3
 var _casts: int = 600
 var _seeds: int = 3
 var _top: bool = false
+var _zone: String = ""
 
 # Ölçümler (sn): uçuş, şamandıra suya düştükten balık gelene kadar, dürtmeler, hazır olmaktan
 # ısırmaya (nişan, atış, geri sarıp yeniden atış dahil), çekişme; takılan balığın uzaklığı (m).
@@ -43,6 +46,8 @@ func _initialize() -> void:
 			_seeds = int(arg.substr(8))
 		elif arg == "--gear=top":
 			_top = true
+		elif arg.begins_with("--zone="):
+			_zone = arg.substr(7)
 	var db := ContentDB.load_default()
 	for e in db.errors:
 		printerr("İçerik hatası: " + e)
@@ -50,8 +55,9 @@ func _initialize() -> void:
 	var started := Time.get_ticks_msec()
 	for s in _seeds:
 		_play(db, gear, 5000 + s * 31)
-	print("Oturum süreleri: %s, %d seed × %d atış, takım: %s (hesap %.1f sn)" % [db.main_spot, _seeds, _casts,
-			"en iyi" if _top else "başlangıç", (Time.get_ticks_msec() - started) / 1000.0])
+	print("Oturum süreleri: %s%s, %d seed × %d atış, takım: %s (hesap %.1f sn)" % [db.main_spot,
+			"" if _zone.is_empty() else " / " + _zone, _seeds, _casts, "en iyi" if _top else "başlangıç",
+			(Time.get_ticks_msec() - started) / 1000.0])
 	print("  %-34s %6s %6s %6s %6s %6s" % ["", "adet", "ort", "p10", "p50", "p90"])
 	_row("atış uçuşu", _flight)
 	_row("suya düşüşten balığın gelişine", _wait)
@@ -85,6 +91,14 @@ func _initialize() -> void:
 
 func _play(db: ContentDB, gear: GearStats, seed_value: int) -> void:
 	var session := FishingSession.new(db, db.main_spot, gear, seed_value, false, false)
+	if not _zone.is_empty():
+		var z := db.zone(db.main_spot, _zone)
+		var stands: Array[Vector2] = z["stands"]
+		var buoys: Array[Vector2] = z["buoys"]
+		var at: Vector2 = stands[0] if not stands.is_empty() else buoys[0] + LakeScene.BUOY_MOOR
+		session.set_access(PackedStringArray([_zone]))
+		session.relocate(at)
+		session.poll_events()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var aim := FishingRules.to_steps(AIM_S)

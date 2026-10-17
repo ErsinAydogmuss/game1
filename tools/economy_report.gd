@@ -35,6 +35,8 @@ func _initialize() -> void:
 	var keys: Array[String] = []
 	for r in range(2, db.max_rank() + 1):
 		keys.append("rank_%d" % r)
+	for z in db.zones_of(db.main_spot):
+		keys.append("zone:" + str(z["id"]))
 	keys.append("buy")
 	for g in db.gear:
 		if int(g["price"]) > 0 and str(g["category"]) != "bait":
@@ -49,4 +51,17 @@ func _initialize() -> void:
 		for sim in sims:
 			cells.append("%5.1f" % float(sim.milestones[key]) if sim.milestones.has(key) else "    -")
 		print("%-28s %s" % [key, "  ".join(cells)])
+	# Bölgeli göl: zamanın bölgelere dağılımı (atış ve çekişme; satış ve yol hariç).
+	if db.zones_of(db.main_spot).size() > 1:
+		print("")
+		print("bölgelerde geçen zaman (%):")
+		for z in db.zones_of(db.main_spot):
+			var id := str(z["id"])
+			var cells := PackedStringArray()
+			for sim in sims:
+				var total := 0.0
+				for k: String in sim.zone_time:
+					total += float(sim.zone_time[k])
+				cells.append("%5.1f" % (100.0 * float(sim.zone_time.get(id, 0.0)) / maxf(total, 1.0)))
+			print("  %-26s %s" % [id, "  ".join(cells)])
 	quit()

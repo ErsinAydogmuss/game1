@@ -867,7 +867,7 @@ func _play_video() -> void:
 	var db := GameState.db
 	var save := GameState.save
 	save.coins = 260
-	save.xp = 60
+	save.xp = db.rank_xp[1] + 20
 	for f: Array in [["rudd", 26, 4], ["carp", 52, 3], ["perch", 31, 2]]:
 		Records.add(save.records, f[0], f[1], f[2], 0)
 	var fill: Array[String] = ["rudd", "carp", "perch", "rudd", "rudd"]

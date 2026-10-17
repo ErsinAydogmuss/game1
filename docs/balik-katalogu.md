@@ -159,22 +159,22 @@ Bir gölgenin o tür olma şansı, kuşanılan yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | Solucan | Kurtçuk | Ekmek hamuru | Mısır | Boili | Karides |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 | %40 | %29,1 | %33,3 | %40 | %36,7 | %43,6 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 | %25 | %45,5 | %37,5 | %25 | %22,9 | %15,2 |
-| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 | %15 | %10,9 | %12,5 | %15 | %13,8 | %9,1 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | %14 | %10,2 | %11,7 | %14 | %12,8 | %21,2 |
-| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | %6 | %4,4 | %5 | %6 | %13,8 | %10,9 |
+| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 | %36 | %27,7 | %31 | %36 | %32,1 | %35,3 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | %26 | %20 | %22,4 | %26 | %23,2 | %35,4 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 | %20 | %38,5 | %31 | %20 | %17,9 | %10,9 |
+| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 | %10 | %7,7 | %8,6 | %10 | %8,9 | %5,4 |
+| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | %8 | %6,2 | %6,9 | %8 | %17,9 | %13,1 |
 
 Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı (yem bedeli düşülmeden):
 
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
-| Solucan | bedava, sınırsız | %55 | %25 | %14 | %6 | 18,34 | 16,11 |
-| Kurtçuk | 30 / 20 | %40 | %45,5 | %10,2 | %4,4 | 16,57 | 15,27 |
-| Ekmek hamuru | 30 / 20 | %45,8 | %37,5 | %11,7 | %5 | 17,26 | 15,6 |
-| Mısır | 40 / 20 | %55 | %25 | %14 | %6 | 18,34 | 16,11 |
-| Boili | 60 / 10 | %50,5 | %22,9 | %12,8 | %13,8 | 26,59 | 21,34 |
-| Karides | 100 / 10 | %52,7 | %15,2 | %21,2 | %10,9 | 25,41 | 20,95 |
+| Solucan | bedava, sınırsız | %46 | %20 | %26 | %8 | 23,71 | 20,41 |
+| Kurtçuk | 30 / 20 | %35,4 | %38,5 | %20 | %6,2 | 20,97 | 18,71 |
+| Ekmek hamuru | 30 / 20 | %39,7 | %31 | %22,4 | %6,9 | 22,07 | 19,4 |
+| Mısır | 40 / 20 | %46 | %20 | %26 | %8 | 23,71 | 20,41 |
+| Boili | 60 / 10 | %41,1 | %17,9 | %23,2 | %17,9 | 33,84 | 26,73 |
+| Karides | 100 / 10 | %40,7 | %10,9 | %35,4 | %13,1 | 31,55 | 25,97 |
 
 ### Derin Orta (`deep_water`; rütbe 9, yalnızca sandalla)
 

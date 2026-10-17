@@ -4,7 +4,14 @@ extends RefCounted
 ## taşınabilir. Alan eklerken VERSION'ı artır, migrate()'e adım ekle ve test_save_data.gd'ye
 ## göç testi yaz.
 
-const VERSION := 2
+const VERSION := 3
+## Rütbe eğrileri (progression.json "xp"): kaydın sürümüyle değişen eğri, göçte rütbe puanı yeni
+## eğriye taşınır (rütbe düşmesin). Bunlar o sürümün eğrisidir, değiştirilmez; eğri yeniden
+## değişirse yeni sürüm ve yeni sabit eklenir (test_save_data denetler).
+const XP_CURVE_V2: Array[int] = [0, 40, 110, 220, 380, 600, 900, 1300, 1800, 2400, 3100, 3900, 4800,
+		5800, 6900, 8100, 9400, 10800, 12300, 13900]
+const XP_CURVE_V3: Array[int] = [0, 60, 300, 600, 950, 1400, 2050, 2900, 4000, 5000, 6200, 7600, 9200,
+		11000, 13000, 15200, 17600, 20200, 23000, 26000]
 
 var player_id: String = ""
 var created_unix: int = 0
@@ -149,8 +156,27 @@ static func migrate(raw: Dictionary) -> Dictionary:
 			if not d.has(key):
 				d[key] = {}
 		v = 2
+	if v < 3:
+		# v3 (Dalga 2, büyük göl): rütbeler bölgeleri açtığı için rütbe eğrisi uzadı. Puan yeni
+		# eğriye taşınır: oyuncunun rütbesi ve rütbesindeki ilerlemesi aynı kalır.
+		d["xp"] = remap_xp(_int(d, "xp", 0), XP_CURVE_V2, XP_CURVE_V3)
+		v = 3
 	d["version"] = v
 	return d
+
+
+## Rütbe puanını bir eğriden ötekine taşır: rütbe ve rütbedeki ilerleme oranı korunur; en yüksek
+## rütbenin ötesindeki puan son aralığın oranıyla büyür.
+static func remap_xp(xp: int, from: Array[int], to: Array[int]) -> int:
+	if xp <= 0:
+		return xp
+	var last := from.size() - 1
+	for r in last:
+		if xp < from[r + 1]:
+			var part := float(xp - from[r]) / float(from[r + 1] - from[r])
+			return to[r] + floori(part * float(to[r + 1] - to[r]))
+	var scale := float(to[last] - to[last - 1]) / float(from[last] - from[last - 1])
+	return to[last] + floori(float(xp - from[last]) * scale)
 
 
 ## Bozuk ya da eksik kayıt satırlarını ayıklar.

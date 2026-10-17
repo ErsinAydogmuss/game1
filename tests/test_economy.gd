@@ -148,10 +148,40 @@ func test_rank_points() -> void:
 	assert_eq(Rank.catch_xp(db, db.rarity_index("common"), 1), 5, "1 yıldızlı sıradan: 5 puan")
 	assert_eq(Rank.catch_xp(db, db.rarity_index("common"), 5), 10, "5 yıldız: 2 katı")
 	assert_eq(Rank.catch_xp(db, db.rarity_index("epic"), 1), 60, "destansı: 60")
-	var up := Rank.add_xp(db, s, 45)
+	var up := Rank.add_xp(db, s, db.rank_xp[1] + 6)
 	assert_eq(int(up["old_rank"]), 1, "1. rütbeden")
 	assert_eq(int(up["new_rank"]), 2, "2. rütbeye")
-	assert_between(Rank.progress(db, s), 0.06, 0.08, "2. rütbede biraz ilerlemiş (45 / 40–110)")
+	var part := 6.0 / float(db.rank_xp[2] - db.rank_xp[1])
+	assert_between(Rank.progress(db, s), part - 0.001, part + 0.001, "2. rütbede biraz ilerlemiş (eşiğin 6 puan üstü)")
 	s.xp = 999999
 	assert_eq(Rank.rank(db, s), db.max_rank(), "en yüksek rütbe")
 	assert_eq(Rank.progress(db, s), 1.0, "en yüksek rütbede dolu")
+
+
+## Bölgeli gölde yeni açılan bölge öncekilerden az kazandırmaz: her bölgede solucanla balık başına
+## ortalama değer, rütbesi daha düşük bölgelerin hepsinden en az onlar kadardır (docs/gdd.md §10.1).
+func test_newer_zones_pay_at_least_as_much() -> void:
+	var db := content()
+	var zones := db.zones_of(db.main_spot)
+	for z in zones:
+		var value := _mean_value(db, z)
+		for older in zones:
+			if int(older["rank"]) < int(z["rank"]):
+				var before := _mean_value(db, older)
+				assert_true(value >= before, "%s (rütbe %d, %.1f para) %s'dan (rütbe %d, %.1f) az kazandırmaz" % [
+						z["id"], int(z["rank"]), value, older["id"], int(older["rank"]), before])
+
+
+## Bölgede solucanla balık başına ortalama değer (boy zarının eşit aralıklı örnekleriyle).
+static func _mean_value(db: ContentDB, place: Dictionary) -> float:
+	const SAMPLES := 200
+	var odds := CatchOdds.species_ppm(db, place)
+	var value := 0.0
+	for id: String in odds:
+		var def := db.fish_by_id(id)
+		var total := 0
+		for i in SAMPLES:
+			var u := int((float(i) + 0.5) / SAMPLES * Dice.PPM)
+			total += Economy.fish_value(db, id, FishTable.size_cm(def, FishTable.percentile_for(u)))
+		value += float(odds[id]) / Dice.PPM * float(total) / SAMPLES
+	return value

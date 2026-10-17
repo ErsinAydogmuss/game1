@@ -131,9 +131,9 @@ func test_v1_save_migrates_to_v2() -> void:
 	assert_eq(SaveData.from_dict(out).to_dict(), out, "göçten sonraki kayıt gidiş-dönüşte aynı")
 
 
-## v0.2'nin gerçek bir kaydı (oyunun mantığıyla üretildi; değiştirilmez): olduğu gibi okunur.
-## Sonraki sürümde (v3) göç testi bu örnekten yapılır.
-func test_v2_save_loads_as_is() -> void:
+## v0.2'nin gerçek bir kaydı (oyunun mantığıyla üretildi; değiştirilmez): v3'e göçer. Rütbe
+## eğrisi uzadı; rütbe puanı yeni eğriye taşınır, rütbe (7) ve rütbedeki ilerleme aynı kalır.
+func test_v2_save_migrates_to_v3() -> void:
 	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v2.json"))
 	assert_eq(typeof(raw), TYPE_DICTIONARY, "v2 kaydı okunur")
 	if typeof(raw) != TYPE_DICTIONARY:
@@ -149,11 +149,74 @@ func test_v2_save_loads_as_is() -> void:
 	assert_eq(Economy.equipped(db, s, "reel"), "reel_smooth", "kuşanılan makara")
 	assert_eq(Economy.equipped(db, s, "bait"), "bait_maggot", "kuşanılan yem")
 	assert_eq(int(s.baits["bait_maggot"]), 17, "yem sayısı")
-	assert_eq(Rank.rank(db, s), 7, "rütbe")
+	assert_eq(_rank_in(SaveData.XP_CURVE_V2, 902), 7, "v2'de rütbe 7 (902 puan)")
+	assert_eq(Rank.rank(db, s), 7, "göçten sonra da rütbe 7")
+	assert_eq(s.xp, 2054, "puan yeni eğride rütbe 7'nin aynı yerinde (900 + 2 → 2050 + 4)")
 	assert_eq(int(s.pity["epic"]), 18, "Destansı sayacı")
 	assert_eq(int(s.records["rudd"]["released"]), 1, "bırakılan balık")
 	assert_eq(s.love, 1, "göl sevgisi")
 	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
+
+
+## v0.3'ün gerçek bir kaydı (denge botu büyük gölde sandalı alıp mersini bırakana kadar oynadı;
+## değiştirilmez): olduğu gibi okunur. Sonraki sürümde göç testi bu örnekten yapılır.
+func test_v3_save_loads_as_is() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v3.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v3 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var db := content()
+	var s := SaveData.from_dict(raw)
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "güncel sürüm")
+	assert_eq(s.xp, 7802, "rütbe puanı aynen")
+	assert_eq(Rank.rank(db, s), 12, "rütbe")
+	assert_true(Zones.BOAT in s.owned, "sandal alınmış")
+	assert_true(Zones.unlocked(db, s, db.zone(db.main_spot, "deep_water")), "derin orta açık")
+	assert_true(bool(s.flags.get("visited_deep_water", false)), "gidilen bölgeler bayrakta")
+	assert_eq(s.bucket.size(), 4, "kovadaki balıklar")
+	assert_eq(str(s.bucket[0]["fish"]), "bream", "kovadaki ilk balık")
+	assert_eq(Economy.equipped(db, s, "rod"), "rod_float_glass", "kuşanılan olta")
+	assert_eq(int(s.records["sturgeon"]["released"]), 1, "mersin göle bırakıldı")
+	assert_eq(s.love, 40, "göl sevgisi")
+	assert_eq(int(s.pity["legendary"]), 4, "Efsanevi sayacı")
+	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
+
+
+## Rütbe puanı eğriden eğriye taşınınca her eşikte ve aralığın içinde rütbe aynı kalır,
+## rütbedeki ilerleme oranı korunur.
+func test_xp_remap_keeps_rank_and_progress() -> void:
+	var old := SaveData.XP_CURVE_V2
+	var cur := SaveData.XP_CURVE_V3
+	assert_eq(old.size(), cur.size(), "iki eğride rütbe sayısı aynı")
+	var points: Array[int] = [0, 1, old[old.size() - 1] + 777]
+	for r in old.size() - 1:
+		points.append_array([old[r], old[r] + 1, (old[r] + old[r + 1]) >> 1, old[r + 1] - 1])
+	for xp in points:
+		var moved := SaveData.remap_xp(xp, old, cur)
+		var rank := _rank_in(old, xp)
+		assert_eq(_rank_in(cur, moved), rank, "%d puan (rütbe %d) → %d" % [xp, rank, moved])
+		if rank < old.size():
+			var before := float(xp - old[rank - 1]) / float(old[rank] - old[rank - 1])
+			var after := float(moved - cur[rank - 1]) / float(cur[rank] - cur[rank - 1])
+			assert_between(after, before - 0.02, before + 0.001, "%d puanda ilerleme korunur" % xp)
+	assert_eq(SaveData.remap_xp(-5, old, cur), -5, "eksi puana dokunulmaz (okurken sıfırlanır)")
+
+
+## progression.json'un eğrisi son kayıt sürümünün eğrisi: eğri değişirse eski kayıtların rütbesi
+## düşer. Değiştirince SaveData'ya yeni sürüm, yeni eğri sabiti ve göç adımı ekle.
+func test_rank_curve_is_the_latest() -> void:
+	var curve: Array[int] = []
+	for xp in content().rank_xp:
+		curve.append(xp)
+	assert_eq(curve, SaveData.XP_CURVE_V3, "progression.json xp = SaveData.XP_CURVE_V3")
+
+
+static func _rank_in(curve: Array[int], xp: int) -> int:
+	var rank := 1
+	for i in range(1, curve.size()):
+		if xp >= curve[i]:
+			rank = i + 1
+	return rank
 
 
 func test_store_writes_atomically() -> void:
