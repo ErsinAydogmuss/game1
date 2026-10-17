@@ -475,4 +475,4 @@ Oyuna bağlama (v0.2.1'deki durum; Parti 3 Dalga 2'de):
 | `zone_badges` | `assets/icons/zones/zone_<bölge>.png` | Dalga 2: haritada bölgelerin rozeti, "yeni bölge açıldı" bildirimi. Yoksa kodla çizilen rozet. |
 | `map_paper`, `map_stickers` | `assets/ui/map/` | Dalga 2: harita panelinin zemini ve süsleri. Göl, gölün verisinden çizilir. |
 | `map_icons` | `assets/icons/ui/` | Dalga 2: `GameIcon.ART_NAMES` (`pin`, `lock`, `compass`, `buoy`, `anchor`, `signpost`). |
-| `ground_tiles` | `assets/textures/ground/` | Dalga 2: zemin shader'ı (çimen, kum, kıyı yolu, kayalık). Yoksa kodla renk. |
+| `ground_tiles` | `assets/textures/ground/` | Dalga 2: zemin shader'ı (çimen, kum, kıyı yolu, kayalık). Dördü birden gelince zemin kendiliğinden onlarla çizilir (`LakeScene.GROUND_TILES`, bir karo 3 m); yoksa kodla. |

@@ -27,6 +27,8 @@ extends Node
 ##   boat: sandal (KONTROL satırları): sandal yokken Dede Nine'yi söyler; Nine'den sandalı al; iskeledeki
 ##     sandala dokun → ekran kararır, derin ortada sandaldasın; yürünmez, dokunuş atıştır; yayını tut;
 ##     haritadan sıradaki şamandıra; "Kıyıya dön" → iskele.
+##   tour: gezi (hız ölçümü): her bölgenin atış noktasına ve sandalla derin ortaya geçer; her yerde
+##     ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü; KONTROL: her yerde en çok TOUR_DRAWS çizim.
 ##   video: kısa tanıtım (--write-movie ile kaydedilir, ~70 sn): dönen bir oyuncu; Dede'ye dokun,
 ##     pırıltılı gölgeden nadir bir turna (VUR, çekişme, ışık sütunu, kart), kova dolar; Nine'ye git,
 ##     hepsini sat, cam kamışı al; Balık Defteri; mor ışıltılı Destansı bir yayın.
@@ -34,6 +36,8 @@ extends Node
 
 const WORLD_SEED := 4242
 const HZ := FishingRules.HZ
+## Gezide bir bakıştaki çizim sınırı (telefon hedefi; CLAUDE.md "Çizim sayısı").
+const TOUR_DRAWS := 150
 
 var main: Node
 var _shots_dir: String = ""
@@ -84,6 +88,8 @@ func _ready() -> void:
 			_play_map.call_deferred()
 		"boat":
 			_play_boat.call_deferred()
+		"tour":
+			_play_tour.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -781,6 +787,55 @@ func _play_boat() -> void:
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Gezi: rütbe 9 ve sandal; her bölgenin atış noktası, sonra sandalla derin orta. Her yerde
+## çizim ve üçgen sayısı (ÇİZİM satırları) ve ekran görüntüsü.
+func _play_tour() -> void:
+	_use_save(3)
+	var db := GameState.db
+	var save := GameState.save
+	var spot := str(main.get("spot_id"))
+	save.xp = db.rank_xp[8]
+	save.owned.append(Zones.BOAT)
+	Records.add(save.records, "rudd", 999, 3, 0)
+	_session().set_access(Zones.open_ids(db, save, spot))
+	main.call("_update_gates")
+	GameState.changed.emit()
+	await _wait(1.0)
+	var fade: Fade = main.get("fade")
+	var worst := 0
+	var where := ""
+	var index := 1
+	for z in db.zones_of(spot):
+		var id := str(z["id"])
+		main.call("_travel", id)
+		await _wait_until(func() -> bool: return fade.busy(), 1.0)
+		await _wait_until(func() -> bool: return not fade.busy() and str(main.get("zone_id")) == id, 5.0)
+		await _wait(1.5)
+		var info := await _measure_draws()
+		print("ÇİZİM %-13s %3d çizim, %6d üçgen%s" % [id, info["draws"], info["primitives"],
+				" (sandalda)" if bool(main.get("in_boat")) else ""])
+		if int(info["draws"]) > worst:
+			worst = int(info["draws"])
+			where = id
+		await _shot("%02d_%s" % [index, id])
+		index += 1
+	_check("her yerde en çok %d çizim (en çok %d: %s)" % [TOUR_DRAWS, worst, where], worst <= TOUR_DRAWS and worst > 0)
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Son karelerin en yüksek çizim ve üçgen sayısı (3B sahne; arayüz sayılmaz).
+func _measure_draws(frames: int = 10) -> Dictionary:
+	var draws := 0
+	var primitives := 0
+	for i in frames:
+		await get_tree().process_frame
+		draws = maxi(draws, RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME))
+		primitives = maxi(primitives, RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME))
+	return { "draws": draws, "primitives": primitives }
 
 
 ## Haritanın rozetleri büyük (en az 122 birim) ve güvenli alanda mı?

@@ -5,7 +5,10 @@ extends Node3D
 ## Kenney kamp eşyaları, iskeleye bağlı sandal, kilitli bölgelerin çitleri, derin ortanın
 ## şamandıraları; uzakta tepeler). Süsler bölge bölge kurulur (her bölgenin takımı ZONE_KITS, kendi
 ## seed'i): bir bölgede sayı değişince ötekilerin süsleri kaymaz.
-## Su ve zemin, göl şeklinden (LakeShape) üretilen tek bir veri dokusunu paylaşır (LakeTexture).
+## Su ve zemin, göl şeklinden (LakeShape) üretilen tek bir veri dokusunu paylaşır (LakeTexture);
+## zeminin ayrıca yürünebilen dünya ve taşlık dokusu var (çimen, orman zemini, yosunlu taş, kıyı
+## yolu, kum; Ersin'in zemin karoları gelince onlarla). Çalı, çimen öbeği, çiçek ve yakın ağaçlar
+## kıyı yoluna düşmez (yolun kıvrımı shader'la aynı formül: path_wobble).
 ## Hazır modeller yoksa (ModelLibrary.has) kodla kurulan basit parçalar (Props) kullanılır.
 ## Gölge ağaçlardan, kayalardan, iskeleden, kamp eşyalarından, sandaldan ve karakterlerden düşer.
 ## Çizim sayısı az tutulur: iskele tek ağ (köşe renkli), bir paketin modelleri bölge parçalarında
@@ -24,6 +27,19 @@ const TERRAIN_STEP := 0.5
 const TERRAIN_MARGIN := 6.0
 ## Ağın dışındaki düz zeminin genişliği (m).
 const OUTER_SIZE := 70.0
+## Zemin dokusunun arazi ağının dışına taşan payı (m; yürünebilen dünyanın kenarı içinde kalsın).
+const GROUND_PAD := 4.0
+## Kıyı yolu: ortasının kıyıdan uzaklığı ve yarı genişliği (m; ground.gdshader path_at, path_half).
+## Genişlik shader'da 0,8–1,2 katı arasında değişir; süsler en genişine göre uzak durur.
+const PATH_AT := 2.6
+const PATH_HALF := 0.42
+## Ersin'in zemin karoları (Parti 3, tools/process_images.gd keser): hepsi varsa zemin onlarla çizilir.
+const GROUND_TILES := {
+	"grass_tex": "res://assets/textures/ground/grass.png",
+	"sand_tex": "res://assets/textures/ground/sand.png",
+	"path_tex": "res://assets/textures/ground/path.png",
+	"stone_tex": "res://assets/textures/ground/moss_stone.png",
+}
 ## Dört köşesi kıyıdan bu kadar içeride (suyun altında) olan arazi kareleri kurulmaz (su opak).
 const HIDDEN_UNDER_WATER := 0.3
 const SKY := Color("#a9d2ef")
@@ -88,9 +104,10 @@ const ZONE_KITS := {
 	# Nilüferli koy: koyun yarısını kaplayan nilüfer tarlası, bol çiçek.
 	"lily_cove": { "reeds": 8, "reed_band": Vector2(-0.35, 0.45), "lilies": 24, "lily_band": Vector2(0.5, 3.2), "lotus": 0.6,
 		"rocks": 4, "big_rocks": 0.3, "near": 6, "groves": 5, "far": 6, "bushes": 8, "bushes_far": 6, "grass": 22, "flowers": 14 },
-	# Kayalık burun: iri yosunlu kayalar, dik kıyı.
+	# Kayalık burun: iri yosunlu kayalar, dik kıyı, karası yer yer taşlık (stone).
 	"rocky_point": { "reeds": 3, "reed_band": Vector2(-0.35, 0.3), "lilies": 0, "lily_band": Vector2(0.7, 1.5), "lotus": 0.0,
-		"rocks": 18, "big_rocks": 0.8, "near": 5, "groves": 5, "far": 6, "bushes": 6, "bushes_far": 6, "grass": 12, "flowers": 4 },
+		"rocks": 18, "big_rocks": 0.8, "near": 5, "groves": 5, "far": 6, "bushes": 6, "bushes_far": 6, "grass": 12, "flowers": 4,
+		"stone": true },
 	# Dere ağzı: derenin iki yanında saz, taşlar.
 	"stream_mouth": { "reeds": 14, "reed_band": Vector2(-0.35, 0.5), "lilies": 2, "lily_band": Vector2(0.6, 1.2), "lotus": 0.2,
 		"rocks": 9, "big_rocks": 0.3, "near": 6, "groves": 6, "far": 8, "bushes": 8, "bushes_far": 6, "grass": 16, "flowers": 6 },
@@ -207,6 +224,7 @@ func _build_environment() -> void:
 func _build_terrain() -> void:
 	var material := _shader_material("res://scenes/world/ground.gdshader")
 	var area := lake.water_bounds.grow(TERRAIN_MARGIN)
+	_apply_ground(material, area.grow(GROUND_PAD))
 	var cols := ceili(area.size.x / TERRAIN_STEP)
 	var rows := ceili(area.size.y / TERRAIN_STEP)
 	var st := SurfaceTool.new()
@@ -259,6 +277,38 @@ func _build_terrain() -> void:
 		strip.material_override = material
 		strip.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(strip)
+
+
+## Zemin dokusu (yürünebilen dünya, taşlık), kıyı yolu ve Ersin'in zemin karoları (hepsi varsa).
+func _apply_ground(material: ShaderMaterial, area: Rect2) -> void:
+	var stony := PackedInt32Array()
+	for k in lake.zone_ids.size():
+		var kit: Dictionary = ZONE_KITS.get(lake.zone_ids[k], {})
+		if bool(kit.get("stone", false)):
+			stony.append(k)
+	LakeTexture.apply_ground(material, area, LakeTexture.build_ground(lake, area, stony))
+	material.set_shader_parameter("path_at", PATH_AT)
+	material.set_shader_parameter("path_half", PATH_HALF)
+	var tiles := true
+	for key: String in GROUND_TILES:
+		tiles = tiles and ResourceLoader.exists(str(GROUND_TILES[key]))
+	material.set_shader_parameter("use_tiles", tiles)
+	if tiles:
+		for key: String in GROUND_TILES:
+			material.set_shader_parameter(key, load(str(GROUND_TILES[key])))
+
+
+## Kıyı yolunun ortasının kıvrımı (m; ground.gdshader'daki path_wobble ile aynı formül).
+static func path_wobble(p: Vector2) -> float:
+	return 0.35 * sin(p.x * 0.31 + sin(p.y * 0.23) * 1.7) + 0.2 * sin(p.y * 0.57 + p.x * 0.11)
+
+
+## Nokta kıyı yolunun üstünde mi (margin: yolun en geniş kenarından öte pay)? Yol yürünebilen
+## dünyada çizilir. Uzaklık land_distance'tan: ızgaranın dışında da doğru (shore_distance orada
+## −MARGIN'de durur).
+func on_path(p: Vector2, margin: float = 0.0) -> bool:
+	var lane := absf(lake.land_distance(p) + PATH_AT + path_wobble(p))
+	return lane < PATH_HALF * 1.2 + margin and lake.in_world(p)
 
 
 func _build_water() -> void:
@@ -580,7 +630,7 @@ func _scatter_band(out: Array[Array], count: int, band: Vector2, kinds: Array[St
 			continue
 		if not _mine(p):
 			continue
-		if not _free_spot(p, radius):
+		if not _free_spot(p, radius) or on_path(p, radius * 0.5):
 			continue
 		_occupied.append(Vector3(p.x, p.y, radius))
 		var id := kinds[_rng.randi_range(0, kinds.size() - 1)]
@@ -760,7 +810,7 @@ func _build_flowers(batch: MeshBatch) -> void:
 		tries += 1
 		var c := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
 		var shore := lake.land_distance(c)
-		if shore < -7.5 or shore > -1.8 or lake.on_dock(c, 1.5) or not _free_spot(c, 0.4) or not _mine(c):
+		if shore < -7.5 or shore > -1.8 or lake.on_dock(c, 1.5) or not _free_spot(c, 0.4) or not _mine(c) or on_path(c, 0.6):
 			continue
 		clusters += 1
 		var color := DAISY_COLORS[_rng.randi_range(0, DAISY_COLORS.size() - 1)]

@@ -265,7 +265,9 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - **Erişilebilirlik:** gerilim çubuğu renk + ikon + sarsıntı + "BIRAK!" yazısı. Her sesin bir görsel ve titreşim karşılığı var.
 - **H2 görsel hedefleri 🔜:**
   - **Su:** normal haritası, gök rengine göre fresnel, sığda kostik, derede akış, yağmur halkaları.
+    - ✅ Dalga 2'deki hâli: renk derinliğin metresine göre; iki katlı dalgacık ve güneş parıltısı; kıyıda kıpırdayan köpük ve kıyıya doğru gelip sönen, parça parça ince dalga çizgileri; dere ağzında akıntı yönünde kayan kısa, kıvrımlı akıntı çizgileri (dar derede güçlü, derenin açıldığı havuzda zayıf; dalgalar da akıntıyla kayar). Fresnel, kostik ve yağmur sonraki dalgalarda.
   - **Zemin:** dokulu (çimen, kum, çamur, patika; Ersin'in dikişsiz dokuları ya da kodla).
+    - ✅ Dalga 2'deki hâli (kodla; Ersin'in zemin karoları gelince onlarla): açık ve koyu çimen öbekleri; yürünmeyen yerde (orman, dünyanın kenarı) koyu orman zemini; kıyıdan ~2,6 m'de gölü dolaşan, kıvrılan toprak kıyı yolu (çalı, çimen öbeği ve çiçek yola düşmez); kenarı dalgalı kumsal, suya değen yeri ıslak; kayalık burnun karasında öbek öbek yosunlu taş.
   - **Doğa:** Forest Nature ve Quaternius doğa modelleri, nilüferler.
   - **Işık:** vakte göre ışık, gök ve sis; gece ay, fenerler ve ateş böcekleri.
   - **Nadirlik efektleri:** gölgede pırıltı, ışıltı, iz.

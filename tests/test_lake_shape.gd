@@ -145,6 +145,24 @@ func test_world_boundary() -> void:
 
 ## Kıyı ızgarası önbelleği: önbellekten gelen ızgara yeni kurulanla bit bit aynı; gölün tanımı
 ## değişince yeniden kurulur ve eski önbellek silinir.
+## Akıntı (dere ağzı, görsel; Dalga 3'te sinek): dar derede bölgenin akıntısı tam güçte, derenin
+## açıldığı geniş havuzda zayıf, uzakta yok; eski şemadaki gölde hiç yok.
+func test_flow() -> void:
+	var db := content()
+	assert_eq(_lake().flow_at(Vector2.ZERO), Vector2.ZERO, "testlerin gölünde akıntı yok")
+	var big := db.lake("big_lake")
+	var current: Vector2 = db.zone("big_lake", "stream_mouth")["current"]
+	var channel := big.flow_at(Vector2(-20.5, -16.0))
+	assert_true(channel.distance_to(current) < 0.01, "derede akıntı tam güçte (%s)" % channel)
+	# Havuzun dereden uzak yanı (derenin ağzında akıntı havuza da taşar).
+	var pool := big.flow_at(Vector2(-13.0, -14.5))
+	assert_true(pool.length() > 0.0 and pool.length() < current.length() * 0.5, "geniş havuzda zayıf (%.2f)" % pool.length())
+	assert_eq(big.flow_at(Vector2(0.0, -3.0)), Vector2.ZERO, "iskele koyunda akıntı yok")
+	assert_true(big.strongest_flow() == current, "gölün en güçlü akıntısı derenin")
+	assert_true(big.flow_bounds().has_point(Vector2(-20.5, -16.0)) and not big.flow_bounds().has_point(Vector2(0.0, -3.0)),
+			"akıntının kutusu derenin çevresinde")
+
+
 func test_cache_matches_fresh_build() -> void:
 	var spot := content().spot("big_lake").duplicate(true)
 	spot["id"] = "cache_test"

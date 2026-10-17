@@ -25,10 +25,17 @@ const BUILD_VERSION := 1
 const CACHE_DIR := "user://cache"
 ## Bölgesi olmayan hücre (ızgarada; zone_at -1 döner).
 const NO_ZONE := 255
+## Akıntının, akıntılı havzanın kenarından dışarıda söndüğü uzaklık (m) ve tam güçte aktığı
+## havza genişliği (en kısa yarıçap, m): geniş havzada akıntı yavaşlar (aynı su geniş yerde yayılır).
+const FLOW_FADE := 2.0
+const FLOW_NARROW := 1.6
 
 ## Havzalar: { center, radius, cos, sin, max_depth, shelf, zone (sıra), boat_from (sandal
 ## bölgesi değilse -1) }.
 var basins: Array[Dictionary] = []
+## Havza başına akıntı (bölgesinin "current"i: yön ve güç; akıntısız havzada sıfır). Izgaraya
+## girmez (önbelleğin özetinde yok).
+var flows: PackedVector2Array = PackedVector2Array()
 var dock := Rect2()
 ## Yürünebilen dünya: bu kutunun içi ve suya en çok world_band metre uzaklık (ormanın kenarı).
 ## Tanımsızsa (eski şema) sınırsız.
@@ -94,6 +101,8 @@ static func from_spot(spot: Dictionary, use_cache: bool = true) -> LakeShape:
 			lake.uniform = false
 		lake.max_depth = maxf(lake.max_depth, basin["max_depth"])
 		lake.basins.append(basin)
+		var current: Variant = zd.get("current", Vector2.ZERO)
+		lake.flows.append(current if current is Vector2 else Vector2.ZERO)
 		first = false
 	lake.dock = spot.get("dock", Rect2())
 	var world: Rect2 = spot.get("world_rect", Rect2())
@@ -224,6 +233,43 @@ func zone_of(p: Vector2) -> int:
 ## Bölge kimliğinin sırası (yoksa -1).
 func zone_index(id: String) -> int:
 	return zone_ids.find(id)
+
+
+## Akıntı (yön ve güç): akıntılı bölgenin havzasında bölgenin akıntısı; dar havzada tam güç,
+## geniş havzada (en kısa yarıçapı FLOW_NARROW'dan büyük) zayıf; havzanın dışında FLOW_FADE
+## metrede söner. Akıntısız yerde sıfır. Şimdilik görsel (suyun akışı); Dalga 3'te sinek
+## akıntıyla sürüklenir.
+func flow_at(p: Vector2) -> Vector2:
+	var best := Vector2.ZERO
+	for b in flows.size():
+		var flow := flows[b]
+		if flow == Vector2.ZERO:
+			continue
+		var narrow := minf(1.0, FLOW_NARROW / minf(_radii[b].x, _radii[b].y))
+		var k := smoothstep(-FLOW_FADE, 0.5, _basin_distance(b, p)) * narrow * narrow * narrow
+		if k * flow.length() > best.length():
+			best = flow * k
+	return best
+
+
+## Göldeki en güçlü akıntı (yoksa sıfır).
+func strongest_flow() -> Vector2:
+	var best := Vector2.ZERO
+	for flow in flows:
+		if flow.length() > best.length():
+			best = flow
+	return best
+
+
+## Akıntılı havzaların kutusu, sönme payıyla (akıntının olabileceği yer; akıntı yoksa boş).
+func flow_bounds() -> Rect2:
+	var out := Rect2()
+	for b in flows.size():
+		if flows[b] == Vector2.ZERO:
+			continue
+		var box := _basin_box(b).grow(FLOW_FADE)
+		out = box if out.size == Vector2.ZERO else out.merge(box)
+	return out
 
 
 ## Izgaradaki bir hücrenin merkezi (dünya).

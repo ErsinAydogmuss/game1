@@ -165,6 +165,12 @@ func test_lake_scenery_keeps_clear_and_cheap() -> void:
 			if p.distance_to(Vector2(zone.x, zone.y)) < zone.z + c.z - 0.001:
 				bad += 1
 	assert_eq(bad, 0, "iskeleye ve boş kalacak yerlere süs düşmez")
+	# Kıyı yolu (zeminde çizilen toprak yol) boş kalır: çalı, çimen öbeği, ağaç gövdesi düşmez.
+	var on_path := 0
+	for c in occupied:
+		if scene.on_path(Vector2(c.x, c.y), c.z * 0.5 - 0.01):
+			on_path += 1
+	assert_eq(on_path, 0, "kıyı yoluna süs düşmez")
 	var start: Vector2 = db.spot(db.main_spot)["start"]
 	var draws := view_draws(scene, start)
 	assert_true(draws <= START_DRAWS, "iskeleden bakınca göl sahnesi az çizimle (%d, gölgeler dahil)" % draws)
