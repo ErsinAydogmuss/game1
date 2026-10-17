@@ -16,9 +16,9 @@ Görseller partiler hâlinde geliyor; her parti bir dalgadan önce. **Hepsini bi
 
 | Parti | Ne zaman | Sayfa | Oyunda nerede |
 |---|---|---|---|
-| 1. Arayüz | şimdi | 12 | paneller, düğmeler, nadirlik kartları, ikonlar, Dede ve Nine'nin yüzü, uygulama ikonu |
-| 2. Ekipman | Dalga 1 ortasına kadar | 7 | Nine'nin dükkânındaki 42 eşya |
-| 3. Göl | Dalga 2'den önce | ~5 | bölge rozetleri, zemin dokuları, nilüfer ve çiçekler |
+| 1. Arayüz | ✅ geldi, oyunda (v0.2.1) | 12 | paneller, düğmeler, nadirlik kartları, ikonlar, Dede ve Nine'nin yüzü, uygulama ikonu |
+| 2. Ekipman | ✅ geldi, oyunda (v0.2.1) | 7 | Nine'nin dükkânındaki 42 eşya (bugün satılan 33'ü görünüyor; kalanı Dalga 2–4'te) |
+| 3. Göl | Dalga 2'den önce | ~5 | bölge rozetleri, harita, zemin dokuları (nilüfer ve çiçekler kodla yapıldı) |
 | 4. Teknikler | Dalga 3'ten önce | ~5 | yapay yemler, sinekler, sehpa ve zil, çöp ve kerevit |
 | 5. Hikâye ve yuva | Dalga 4'ten önce | ~8 | mektuplar, Gölün Bekçisi, hava ikonları, kedi, kıyafetler, tanıtım görseli |
 
@@ -356,13 +356,19 @@ godot --headless --path . --import
 
 Sayfa adları, kesim şekli (`fit`) ve kesilen adlar `data/art_sheets.json`'da. Oyuna bağlama:
 
+Mor nesneli sayfalarda (`rarity_frames`, `rarity_badges`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru solmaz.
+
+Oyuna bağlama (v0.2.1'deki durum):
+
 | Görsel | Çıktı | Bağlantı |
 |---|---|---|
-| `ui_frames`, `ui_buttons`, `rarity_frames` | `assets/ui/frames/` (`fit: trim`, oran korunur) | `UiKit.framed` (kenar payları `UiKit.FRAME_SLICES`). Şu an bağlı olanlar: diyalog paneli, ipucu hapı, balık kartı (`frame_<nadirlik>`), paletin düğme renkleri (`UiKit.BUTTON_ART`). Görsel gelince paylar ekran görüntüsüne bakılarak ayarlanır. |
-| `rarity_badges` | `assets/icons/ui/rarity_<id>.png` | Dalga 1'de `UiKit.rarity_badge`. |
-| `ui_1`, `ui_2` | `assets/icons/ui/` | `GameIcon.ART_NAMES`; `hand` ve `coin`, `book` Kazı'nınkilerin yerini alır. |
-| `portraits`, `portraits_nine` | `assets/ui/portraits/` | `dede_smile` ipucu çubuğunda hemen görünür (`Hud.set_portrait`); varsa 3D yüz çekilmez. Öteki duygular ve Nine Dalga 1'de bağlanır. |
-| `gear_*` | `assets/icons/gear/<takım kimliği>.png` | Dalga 1'de `ItemArt.gear`; kimlikler `data/gear.json` ile aynı. |
-| `app_icon` | `assets/ui/art/app_icon.png` | `project.godot`'ta `config/icon="res://assets/ui/art/app_icon.png"` (Kazı'daki gibi). iOS ikonları bundan üretilir; opak ve 1024×1024 olmalı. |
-| `logo` | `assets/ui/art/logo.png` | açılış ekranı (Kazı'da `boot_splash/image`). |
+| `ui_frames` | `assets/ui/frames/` (`fit: trim`, oran korunur) | `UiKit.framed` (9 dilim payları `FRAME_SLICES`, yazının süse binmemesi için içerik payları `FRAME_CONTENT`): panel (bütün paneller), kart (dükkân kartları, satış satırları, defter ayrıntısı, balık kartının içi), kemerli sekme (dükkân sekmeleri), kurdele (balık kartında adın arkası), hap (HUD hapları, ipucu çubuğu, karttaki Dede satırı), balon (köylülerin konuşma balonu). |
+| `ui_buttons` | `assets/ui/frames/button_*` | `UiKit.BUTTON_ART`: yeşil, turuncu, mavi, gri, kırmızı; basılı hâl aynı resmin koyusu, pasif hâl gri; palet dışı renkler en yakın resme bağlı. Yuvarlak turuncu ileride. |
+| `rarity_frames` | `assets/ui/frames/frame_<nadirlik>.png` | Balık kartında ve defter ayrıntısında balık resminin çerçevesi (≈1:1; süsler kenarların ortasında olduğu için 9 dilim değil). |
+| `rarity_badges` | `assets/icons/ui/rarity_<nadirlik>.png` | `GameIcon.RARITY_ART`: rozetler, defter, yakalama etiketi, oranlar. |
+| `ui_1`, `ui_2` | `assets/icons/ui/` | `GameIcon.ART_NAMES`: HUD (para, kova, rütbe), dükkân sekmeleri (kamış, makara, iğne), defter, dükkân; `sell` HEPSİNİ SAT düğmesinde, `release` "kova dolu, balık göle döndü" bildiriminde. `map` Dalga 2'de (harita), `aquarium` Dalga 5'te (yuva). |
+| `portraits`, `portraits_nine` | `assets/ui/portraits/` | `Moods`: yüz sözün ifadesinden (smile, story, wow); ipucu çubuğu, karttaki Dede satırı, dükkânın başlığı. Portre yoksa 3D modelden çekilen yüz. |
+| `gear_*` | `assets/icons/gear/<takım kimliği>.png` | `ItemArt.gear`: dükkân kartları; Misina, Yem ve Ekstra sekmelerinin ikonu `GameIcon.GEAR_ART`. Spin, dip ve sinek kamışları, sehpa, sandal, tuzak ve fener Dalga 2–4'te. |
+| `app_icon` | `assets/ui/art/app_icon.png` | `project.godot` `config/icon`; iOS ikonları bundan üretilir (Godot 4.7: iOS ikon alanları boşsa proje ikonu). Saydamlık kanalsız kaydedilir (`"key": false`). |
+| `logo` | `assets/ui/art/logo.png` | Açılış ekranı (`boot_splash/image`; iOS açılış ekranı da bundan) ve ayarlar panelinin başlığı. |
 | `style_sheet`, `concept_screen` | `docs/img/` | Yalnızca referans. |

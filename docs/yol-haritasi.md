@@ -66,6 +66,19 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 - [x] Denge botu (`SessionSim`; süreler gerçek oturumdan `tools/session_timing.gd` ile) ve korkuluk testleri (`test_session_sim.gd`); ekonomi raporu (gdd §10.4); oran kataloğu ([`balik-katalogu.md`](balik-katalogu.md)); yemler kendi türünü belirgin çağırır, kartta gerçek şans; `shop` senaryosu.
 - [x] Kapanış: inceleme (10 bulgu düzeltildi), tanıtım videosu (Nine, dükkân, defter, nadir ve destansı balık), telefonda dene listesi. **v0.2.**
 
+**Ara sürüm v0.2.1 — Ersin'in görselleri ve 3D paketler**
+
+Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri yükledi; hepsi Dalga 2'den önce bağlandı.
+
+- [x] Görseller kesildi: arayüz, takım, portreler, uygulama ikonu ve logo (`process_images.gd`; mor nesneli sayfalarda yalnızca kenar temizliği).
+- [x] Çerçeveler ve düğmeler: panel, kart, sekme, kurdele, hap, balon; basılı ve pasif düğmeler; yazı süse binmez.
+- [x] Nadirlik rozetleri (görselden) ve çerçeveleri (balık kartı, defter ayrıntısı); gri tonlamada şekliyle ayrılır.
+- [x] İkonlar ve takım resimleri: dükkân sekmeleri, HEPSİNİ SAT kesesi, "kova dolu" bildirimi göle dönen balıkla.
+- [x] Dede ve Nine'nin yüzleri sözle değişir (gülümser, anlatır, şaşırır).
+- [x] Uygulama ikonu (zıplayan koi), açılış ekranında logo, ayarlarda logo.
+- [x] Göl kenarı hedef ekrana yaklaştı: KayKit orman paketinden ağaçlar, korular, çalılar, çimen ve yosunlu kayalar; kodla nilüfer ve çiçekler; Kenney kampı ve iskeleye bağlı sandal (dokununca Dede konuşur). Çizim 180 → 160.
+- [ ] Kapanış: inceleme, video, telefonda dene. **v0.2.1.**
+
 **Dalga 2 — Büyük göl → v0.3**
 
 - [ ] Göl verisi v2: havzalar ve bölgeler; testler için sabit küçük göl; kıyı alanı önbelleği.
@@ -75,7 +88,7 @@ Plan: suya dokun ve at → gölge yaklaşır, dürter, ısırır → VUR → ger
 - [ ] Harita ve hızlı geçiş.
 - [ ] Sandal.
 - [ ] Bölge balıkları (7 yeni tür).
-- [ ] 3D görsel geçişi: su, zemin dokuları, doğa modelleri; telefonda hız ölçümü.
+- [ ] 3D görsel geçişi: su ve zemin dokuları (doğa modelleri v0.2.1'de geldi); telefonda hız ölçümü.
 
 **Dalga 3 — Teknikler → v0.4**
 

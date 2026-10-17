@@ -201,19 +201,17 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 
 ### 11. Geri bildirim
 
-Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.2: Nine'nin dükkânı, takım, para, nadirlik, Balık Defteri). Eski kaydı (v0.1) varsa kendiliğinden yeni biçime geçer; tuttuğu balıklar defterde kalır.
+Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.2.1: Ersin'in görselleri ve yeni göl kenarı; oyun kuralları v0.2 ile aynı). Kayıt aynen kalır; eski kaydı (v0.1) varsa kendiliğinden yeni biçime geçer.
 
 1. Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
-2. Birkaç balık tut. Balık elde gösterilirken üstünde adı, boyu ve nadirlik simgesi (● ▲ ◆ ★) okunuyor mu?
-3. Sudaki gölgeler: bazıları arada pırıldıyor (Nadir), bazıları mor ışıldıyor (Destansı). Tutmadan önce fark ediliyor mu?
-4. Kova: sol üstteki kova sayısı artıyor mu? Kova dolunca Dede uyarıyor mu?
-5. Nine: iskelenin başındaki dükkâna ya da Nine'ye dokun. Kovayı sat, bir şey al ve tak. Kartlar ve yazılar okunuyor mu, düğmeler kolay basılıyor mu? Seçenek kalabalığı var mı?
-6. Aldığın takımın farkı hissediliyor mu (ör. cam kamışla daha uzağa atış, yeni makarayla hızlı sarma, yemle istediğin balık)?
-7. Balık Defteri (sağ üstteki kitap): tutmadığın balıkların ipuçları ve oranları anlaşılıyor mu?
-8. Para ve rütbe hızı: ilk yarım saatte sık sık yeni bir şey alabiliyor musun, sıkıcı bekleme var mı?
-9. Takılma ya da telefonun ısınması var mı? Ekranın çentiği (notch) bir yeri kapatıyor mu?
-
-Ana ekrandaki ikon Ersin'in zıplayan koisi olmalı; oyun açılırken göl renginde OLTA logosu görünmeli. Eski geçici balık ikonu görünüyorsa uygulamayı silip yeniden yükle (iOS ikonu önbellekte tutabilir).
+2. Ana ekrandaki ikon Ersin'in zıplayan koisi mi? Oyun açılırken göl renginde OLTA logosu görünüyor mu? (Eski geçici balık ikonu görünüyorsa uygulamayı silip yeniden yükle: iOS ikonu önbellekte tutabilir.)
+3. Arayüz Ersin'in görselleriyle: paneller, kartlar, sekmeler, düğmeler. Yazılar çerçevelerin süslerine biniyor mu, okunuyor mu? Düğmeye basınca koyulaşıyor mu?
+4. Nadirlik: rozetler (gri taş, yaprak, mavi taş, mor yıldız...) ve kartta balığı saran nadirlik çerçevesi güzel görünüyor mu? Gölgelerdeki ipuçlarıyla (Nadir pırıltı, Destansı mor ışıltı) uyuşuyor mu?
+5. Dede ve Nine'nin yüzleri sözle değişiyor mu? Dede öğüt verirken parmağını kaldırır, "Geliyor!" ve VUR anında şaşırır; Nine satın alınca paketi uzatır, satınca sevinir.
+6. Nine'nin dükkânı: takım resimleri, sekme ikonları, HEPSİNİ SAT düğmesindeki kese. Kova doluyken bir balık daha tut: "Kova dolu: balık göle döndü" bildirimi sevinen balıkla çıkıyor mu?
+7. Göl kenarı: yuvarlak ağaçlar, korular, çalılar, yosunlu kayalar, nilüferler ve pembe nilüfer çiçekleri, çiçekler, kamp. İskelenin yanında sandal suyla sallanıyor mu? Sandala dokun: Dede ne diyor?
+8. Ayarlar (dişli): başlıkta oyunun logosu.
+9. Göl kenarı kalabalıklaştı: takılma, ısınma ya da pil çabuk bitmesi var mı? Ekranın çentiği (notch) bir yeri kapatıyor mu?
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 

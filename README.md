@@ -2,7 +2,7 @@
 
 **"Kıyını süsle, havayı bekle: bu gece oltana ne takılacak?"** Her yaşa hitap eden, rahat bir 3D mobil balıkçılık oyunu (iOS + Android, yatay ekran). Kendi balıkçınla yazı Dede'nin göl köyünde geçiriyorsun. Suda balık gölgeleri dolaşıyor; gölgenin önüne atıyorsun, gölge yaklaşıp dürtüyor, ısırınca VUR ve çek. Ersin'in Kazı'dan sonraki oyunu; kodu Claude yazıyor.
 
-> **Durum (Ekim 2026): v0.2 (H2 "Büyük Göl", Dalga 1 bitti).** Nine'nin dükkânı, olta takımı (kamış, makara, misina, iğne, şamandıra, yem, kepçe, kova), para, kova ve satış, rütbe, 6 nadirlik kademesi (gölgede ipucu, simgeli rozet) ve Balık Defteri. Sırada Dalga 2: büyük göl ([yol haritası](docs/yol-haritasi.md)).
+> **Durum (Ekim 2026): v0.2.1 (H2 "Büyük Göl", Dalga 1 bitti + ara sürüm).** Nine'nin dükkânı, olta takımı (kamış, makara, misina, iğne, şamandıra, yem, kepçe, kova), para, kova ve satış, rütbe, 6 nadirlik kademesi (gölgede ipucu, simgeli rozet) ve Balık Defteri. v0.2.1'de arayüz Ersin'in görselleriyle (çerçeveler, düğmeler, rozetler, takım resimleri, Dede ve Nine'nin ifadeli portreleri, uygulama ikonu, logo), göl kenarı orman, yosunlu kayalar, nilüferler, kamp ve iskeleye bağlı sandalla. Sırada Dalga 2: büyük göl ([yol haritası](docs/yol-haritasi.md)).
 
 ![İskelede balıkçı ve Dede](docs/ekran/01_iskele.jpg)
 
@@ -21,11 +21,11 @@
 4. **Çek:** parmağını basılı tut, balık gelsin. Balık çırpınınca ("!", titreşim, gıcırtı) **bırak**; gerilim kırmızıda kalırsa misina kopar.
 5. Tutulan balık elde gösterilir; yeni tür, rekor ya da Nadir ve üstünde kart açılır.
 6. **Kova ve dükkân:** tutulan balık kovaya girer. Nine'ye (iskelenin başındaki dükkân) dokun: kovayı sat, parayla yeni takım al. Bazı takımlar rütbe ister; rütbe balık tuttukça artar.
-7. **Nadirlik:** Sıradan ●, Güzel ▲, Nadir ◆, Destansı ★, Efsanevi ✦. Nadir balığın gölgesi arada pırıldar, Destansınınki mor ışıldar. Uzun süre gelmezse şans garantisi devreye girer.
+7. **Nadirlik:** Sıradan ●, Güzel ▲, Nadir ◆, Destansı ★, Efsanevi ✦ (oyunda Ersin'in rozetleri; şekilleri renk körü oyuncu için de ayrılır). Nadir balığın gölgesi arada pırıldar, Destansınınki mor ışıldar. Uzun süre gelmezse şans garantisi devreye girer.
 8. **Balık Defteri** (sağ üst): tuttuğun türler ve rekorlar; tutmadıklarının ipuçları; takımınla gerçek oranlar ve şans garantisi sayaçları. Bütün oranlar: [balık kataloğu](docs/balik-katalogu.md).
 
 - **Yürü:** karaya ya da iskeleye dokun. Balıkçı kıyıda durur, Dede'nin yanından kayarak geçer.
-- **Dede:** ilk 3 balığa kadar ipucu verir. Ona dokununca her zaman bir öğüt söyler.
+- **Dede:** ilk 3 balığa kadar ipucu verir. Ona dokununca her zaman bir öğüt söyler. İskelenin yanındaki sandala dokununca derin sulardan söz eder (sandala Dalga 2'de binilecek).
 - **Ayarlar** (sağ üst): ses, titreşim, dil, **Kolay çekme** (misina kopmaz, balık kaçmaz).
 - **Mac:** tıkla (yürü, at), WASD ya da oklar (yürü), Space (eylem; basılı tutunca sar).
 
@@ -45,13 +45,13 @@ Kısa tanıtım videosu bot ile çekilir (`video` senaryosu, bkz. [CLAUDE.md](CL
 - [Görsel istekleri](docs/gorsel-istekleri.md): Ersin'in ChatGPT ile üreteceği görseller.
 - [iPhone kurulumu](docs/iphone-kurulum.md): Mac'teki Claude Code için adım adım görev.
 - [Saha araştırması](docs/saha-arastirmasi.md) ve [fikirler ve karar](docs/fikirler.md).
-- [Kaynaklar ve lisanslar](assets/CREDITS.md): KayKit modelleri (CC0), yazı tipleri; sesler kodla üretildi.
+- [Kaynaklar ve lisanslar](assets/CREDITS.md): KayKit ve Kenney modelleri (CC0), yazı tipleri, Ersin'in görselleri; sesler kodla üretildi.
 - [CLAUDE.md](CLAUDE.md): Claude'un bu projede nasıl çalıştığı (komutlar, mimari, kurallar, tuzaklar).
 
 ## Nasıl çalışıyoruz
 
 - Claude seçenekler hazırlar ve birini önerir; Ersin seçer.
 - Seçilenler sıralı bir plana dökülür. Her adım ayrı commit olur; adım bitince Ersin iPhone'da dener ve geri bildirim verir.
-- Görselleri Ersin ChatGPT ile üretir. 3D modeller hazır ücretsiz (CC0) paketlerden (KayKit) gelir; sesler kodla üretilir.
+- Görselleri Ersin ChatGPT ile üretir. 3D modeller hazır ücretsiz (CC0) paketlerden (KayKit, Kenney) gelir; sesler kodla üretilir.
 
 Kardeş proje: [Kazı](https://github.com/ErsinAydogmuss/game).
