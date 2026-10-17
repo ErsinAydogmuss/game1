@@ -4,7 +4,7 @@
 
 > **Durum (Ekim 2026): v0.2.1 (H2 "Büyük Göl", Dalga 1 bitti + ara sürüm).** Nine'nin dükkânı, olta takımı (kamış, makara, misina, iğne, şamandıra, yem, kepçe, kova), para, kova ve satış, rütbe, 6 nadirlik kademesi (gölgede ipucu, simgeli rozet) ve Balık Defteri. v0.2.1'de arayüz Ersin'in görselleriyle (çerçeveler, düğmeler, rozetler, takım resimleri, Dede ve Nine'nin ifadeli portreleri, uygulama ikonu, logo), göl kenarı orman, yosunlu kayalar, nilüferler, kamp ve iskeleye bağlı sandalla. Sırada Dalga 2: büyük göl ([yol haritası](docs/yol-haritasi.md)).
 
-![İskelede balıkçı ve Dede](docs/ekran/01_iskele.jpg)
+![Göl kenarı: Nine'nin dükkânı, iskelede balıkçı ve Dede, bağlı sandal, ağaçlar, yosunlu kayalar, nilüferler](docs/ekran/01_iskele.jpg)
 
 | | |
 |---|---|
