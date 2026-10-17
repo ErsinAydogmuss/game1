@@ -147,6 +147,14 @@ func test_art_sheets_are_consistent() -> void:
 		assert_true(files.has(needed), "sayfa var: " + needed)
 
 
+## Her nadirliğin şekli için rozet görseli adı var ve "rarity_<id>" (GameIcon.RARITY_ART).
+func test_rarity_shapes_have_badge_art() -> void:
+	var db := content()
+	for i in db.rarities.size():
+		var shape := str(db.rarity_def(i)["shape"])
+		assert_eq(str(GameIcon.RARITY_ART.get(shape, "")), "rarity_" + db.rarity_id(i), "rozet görseli: " + shape)
+
+
 ## Kesilen her 9 dilimli çerçevenin ve düğmenin (fit "trim") UiKit'te kenar payları var.
 func test_frame_sheets_have_slices() -> void:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/art_sheets.json"))

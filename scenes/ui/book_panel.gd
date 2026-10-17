@@ -17,6 +17,11 @@ const OFTEN_PPM := 200_000
 const SOMETIMES_PPM := 80_000
 const UNKNOWN_BORDER := Color("#cdb48a")
 const SILHOUETTE := Color(0.16, 0.1, 0.06, 0.6)
+## Tutulmamış türün görselli nadirlik simgesi: şekli belli, rengi soluk.
+const UNFOUND_MARK := Color(0.42, 0.33, 0.24, 0.7)
+## Ayrıntıdaki balık resmi ve onu saran nadirlik çerçevesinin köşe boyu (balık kartı gibi).
+const DETAIL_ART := 110.0
+const DETAIL_FRAME_CORNER := 50.0
 
 ## Defterin gölü (main verir; spots.json kimliği).
 var spot_id: String = ""
@@ -175,8 +180,12 @@ func _fish_card(db: ContentDB, save: SaveData, f: Dictionary) -> Button:
 	foot.add_theme_constant_override("separation", 6)
 	foot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	column.add_child(foot)
-	# Nadirlik simgesi tutulmadan da görünür (ipucu); rengi tutulunca gelir.
-	foot.add_child(GameIcon.make(UiKit.rarity_icon(db, rarity), 30, border if found else Color("#b9a27c")))
+	# Nadirlik simgesi tutulmadan da görünür (ipucu); rengi tutulunca gelir (görselli simge
+	# tutulmadıysa koyu gölge).
+	var mark := GameIcon.make(UiKit.rarity_icon(db, rarity), 30, border if found else Color("#b9a27c"))
+	if not found:
+		mark.modulate_art = UNFOUND_MARK
+	foot.add_child(mark)
 	if found:
 		foot.add_child(UiKit.ink(tr("UI_SIZE_CM") % int(entry["best_cm"]), 24, UiKit.INK_SOFT))
 	b.pressed.connect(func() -> void:
@@ -186,6 +195,19 @@ func _fish_card(db: ContentDB, save: SaveData, f: Dictionary) -> Button:
 		_build_grid(GameState.db, GameState.save, species(GameState.db, spot_id))
 		_build_detail(GameState.db, GameState.save))
 	return b
+
+
+## Ayrıntıdaki balık: tutulduysa nadirliğin çerçevesinde (arayüz kiti), yoksa koyu siluet.
+func _framed_art(db: ContentDB, id: String, rarity: int, found: bool) -> Control:
+	var frame := UiKit.framed("frame_" + db.rarity_id(rarity), StyleBoxEmpty.new(), DETAIL_FRAME_CORNER)
+	if not found or not frame is StyleBoxTexture:
+		return _art(id, 140, found)
+	var box := PanelContainer.new()
+	box.add_theme_stylebox_override("panel", frame)
+	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(_art(id, DETAIL_ART, true))
+	return box
 
 
 ## Balığın resmi; tutulmadıysa koyu siluet.
@@ -216,7 +238,7 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 14)
 	_detail.add_child(head)
-	head.add_child(_art(id, 140, found))
+	head.add_child(_framed_art(db, id, rarity, found))
 	var text := VBoxContainer.new()
 	text.add_theme_constant_override("separation", 4)
 	text.alignment = BoxContainer.ALIGNMENT_CENTER

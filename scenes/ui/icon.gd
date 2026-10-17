@@ -5,7 +5,7 @@ extends Control
 ## kind: coin, star, star_empty, close, book, settings, lock, question, hand, burst, trophy,
 ## sound, music, vibration, easy, globe, up, down, rod, reel, line, bait, net, bucket, aquarium,
 ## bobber, hook, fish, shop, gem. "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini
-## (circle, triangle, diamond, star, sparkle, medallion; rengi tint) çizer.
+## (circle, triangle, diamond, star, sparkle, medallion; görseli yoksa şekil tint renginde) çizer.
 
 ## Kodla çizilebilen ikonlar (görseli yoksa). Bilinmeyen ad soru işareti çizer (boş kalmasın);
 ## takımın "kind"ı bunlardan biri olmalı (test_content_db denetler).
@@ -19,6 +19,13 @@ const ART_NAMES := {
 	"settings": "settings", "lock": "lock", "question": "question", "hand": "hand", "burst": "burst",
 	"trophy": "trophy", "rod": "rod", "reel": "reel", "bait": "bait", "bucket": "bucket",
 	"aquarium": "aquarium", "hook": "hook", "shop": "shop",
+}
+
+## Nadirlik şekli (rarities.json "shape") → arayüz kitindeki rozet görseli (assets/icons/ui).
+## Görsel varsa renk tint'ten değil görselden gelir; test_art_sheet her nadirliği denetler.
+const RARITY_ART := {
+	"circle": "rarity_common", "triangle": "rarity_fine", "diamond": "rarity_rare",
+	"star": "rarity_epic", "sparkle": "rarity_legendary", "medallion": "rarity_mythic",
 }
 
 const WOOD := Color("#b07a3b")
@@ -61,6 +68,9 @@ static func make(icon_kind: String, side: float, color: Color = Color.WHITE) -> 
 static func texture_for(icon_kind: String) -> Texture2D:
 	if icon_kind.begins_with("fish:"):
 		return ItemArt.fish(icon_kind.substr(5))
+	if icon_kind.begins_with("rarity:"):
+		var art: String = RARITY_ART.get(icon_kind.substr(7), "")
+		return ItemArt.ui(art) if not art.is_empty() else null
 	return ItemArt.ui(str(ART_NAMES[icon_kind])) if ART_NAMES.has(icon_kind) else null
 
 
