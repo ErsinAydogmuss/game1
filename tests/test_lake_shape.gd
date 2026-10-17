@@ -32,6 +32,12 @@ func test_shore_distance_and_depth() -> void:
 	assert_true(near < content().rules.min_depth, "kıyı dibi sığ: gölgeler girmez")
 	assert_between(lake.depth_at(Vector2(0, 0)), 3.4, 3.5, "en derin yer max_depth")
 	assert_eq(lake.shore.size(), lake.width * lake.height, "ızgara dolu")
+	# Izgaranın dışında da gerçek uzaklık: içeride shore_distance ile aynı, dışarıda uzaklaştıkça artar.
+	assert_eq(lake.land_distance(Vector2(0, 0)), lake.shore_distance(Vector2(0, 0)), "ızgarada aynı")
+	var far := lake.land_distance(Vector2(0, 30))
+	var farther := lake.land_distance(Vector2(0, 40))
+	assert_true(far < -LakeShape.MARGIN - 10.0, "ızgaranın 20 m ötesi kıyıdan da uzak (%.1f)" % far)
+	assert_between(far - farther, 9.9, 10.1, "10 m daha uzak, 10 m daha eksi")
 
 
 func test_landing_point() -> void:

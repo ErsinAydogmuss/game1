@@ -17,8 +17,11 @@ const MIN_OPEN := 0.6
 ## Resimli kartın köşe boyu; nadirlik çerçevesinin köşe boyu (resim aşağı yukarı kendi boyunda,
 ## süsleri gerilmeden çizilsin) ve çerçevenin içindeki balığın boyu.
 const CARD_CORNER := 44.0
-const FRAME_CORNER := 96.0
-const FRAMED_ART := 240.0
+const FRAME_CORNER := 80.0
+const FRAMED_ART := 200.0
+## Düğmenin boyu: kart ekrana sığmak için küçülse de (fit_scale) en az 122 birim kalsın
+## (controls botu denetler; en kötü durum 16:9 ekran ve her yanda 130 birim çentik payı).
+const OK_SIZE := Vector2(420, 136)
 const CONFETTI_COLORS: Array[Color] = [Color("#ffcf3c"), Color("#ff5a7a"), Color("#4fd2ff"), Color("#7cf06a"), Color("#c47bff"), Color.WHITE]
 
 var ok_button: Button
@@ -28,6 +31,8 @@ var dede_face: Texture2D
 ## Kartın en dıştaki düğümü (resimli kartta nadirlik renginde halka, yoksa kartın kendisi).
 var _card: PanelContainer
 var _age: float = 0.0
+## Açılışta büyüme (0,4 → 1; tween): kartın ölçeği fit_scale ile bunun çarpımı.
+var _grow: float = 1.0
 ## Kart açıkken (MIN_OPEN'dan sonra) bir basış oldu: parmak kalkınca kapanır.
 var _armed: bool = false
 
@@ -69,7 +74,7 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 		_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_card.add_child(panel)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
+	column.add_theme_constant_override("separation", 8)
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(column)
@@ -107,7 +112,7 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	ribbon.add_theme_stylebox_override("panel", UiKit.framed("ribbon", StyleBoxEmpty.new(), 44.0))
 	ribbon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ribbon.add_child(UiKit.title(tr("FISH_" + fish_id), 84, color.lightened(0.05), HORIZONTAL_ALIGNMENT_CENTER, 14))
+	ribbon.add_child(UiKit.title(tr("FISH_" + fish_id), 72, color.lightened(0.05), HORIZONTAL_ALIGNMENT_CENTER, 14))
 	column.add_child(ribbon)
 	var size_row := HBoxContainer.new()
 	size_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -115,14 +120,14 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	size_row.add_child(UiKit.title(tr("UI_SIZE_CM") % int(info["size_cm"]), 60, UiKit.INK, HORIZONTAL_ALIGNMENT_CENTER, 0))
 	size_row.add_child(UiKit.stars(int(info["stars"]), 52.0))
 	column.add_child(size_row)
-	var desc := UiKit.ink(tr("FISH_%s_DESC" % fish_id), UiKit.SIZE_BODY, UiKit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+	var desc := UiKit.ink(tr("FISH_%s_DESC" % fish_id), 32, UiKit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.custom_minimum_size = Vector2(900, 0)
 	column.add_child(desc)
 	var line := dede_line(db, rarity, outcome)
 	if not line.is_empty():
 		column.add_child(_dede_row(line))
-	ok_button = UiKit.button(tr("UI_CARD_OK"), UiKit.SUCCESS, UiKit.SIZE_TITLE, Vector2(420, 130))
+	ok_button = UiKit.button(tr("UI_CARD_OK"), UiKit.SUCCESS, UiKit.SIZE_TITLE, OK_SIZE)
 	ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	# Kart görülmeden kapanmasın: düğme de en kısa açık kalma süresine uyar.
 	ok_button.pressed.connect(func() -> void:
@@ -133,13 +138,11 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	show()
 	_age = 0.0
 	_armed = false
-	_card.reset_size()
-	_card.position = (size - _card.size) * 0.5
-	_card.pivot_offset = _card.size * 0.5
-	_card.scale = Vector2(0.4, 0.4)
+	_grow = 0.4
 	_card.modulate.a = 0.0
+	_fit_card()
 	var tween := _card.create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_card, "scale", Vector2.ONE * fit_scale(), 0.35)
+	tween.tween_property(self, "_grow", 1.0, 0.35)
 	tween.tween_property(_card, "modulate:a", 1.0, 0.15)
 	Sounds.play("card")
 	if rarity >= db.rarity_index("epic"):
@@ -192,7 +195,7 @@ func _dede_row(key: String) -> Control:
 	if texture != null:
 		var face := TextureRect.new()
 		face.texture = texture
-		face.custom_minimum_size = Vector2(76, 76)
+		face.custom_minimum_size = Vector2(66, 66)
 		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -217,7 +220,16 @@ func _process(delta: float) -> void:
 	if visible:
 		_age += delta
 		if _card != null:
-			_card.position = (size - _card.size) * 0.5
+			_fit_card()
+
+
+## Kartı ortalar ve ekrana sığdırır, her kare: açıklamanın satırlara bölünmesi ilk yerleşimden sonra
+## belli olur (kart açılışta olduğundan uzun ölçülür, sonra kısalır); ekran da dönebilir.
+func _fit_card() -> void:
+	_card.reset_size()
+	_card.pivot_offset = _card.size * 0.5
+	_card.position = (size - _card.size) * 0.5
+	_card.scale = Vector2.ONE * fit_scale() * _grow
 
 
 func _gui_input(event: InputEvent) -> void:

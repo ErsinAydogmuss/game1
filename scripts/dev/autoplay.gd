@@ -212,6 +212,12 @@ func _play_controls() -> void:
 	_check("kart açıkken atış olmaz", _state() != FishingSession.State.CASTING and _state() != FishingSession.State.WAITING)
 	# Kart en kısa açık kalma süresinden önce düğmeyle de kapanmaz (görülmeden kapanmasın).
 	await _wait(FishCard.MIN_OPEN)
+	# Kart ekrana sığmak için küçülür (fit_scale): açıldıktan sonra HARİKA düğmesi yine en az 122 birim.
+	var ok_side := 0.0
+	if card.visible and card.ok_button != null:
+		var ok_rect := card.ok_button.get_global_rect()
+		ok_side = minf(ok_rect.size.x, ok_rect.size.y)
+	_check("kartın düğmesi büyük (%.0f birim)" % ok_side, ok_side >= 121.5)
 	if card.visible and card.ok_button != null:
 		await _tap(card.ok_button.get_global_rect().get_center())
 	await _wait_state(FishingSession.State.IDLE, 2.0)
@@ -388,6 +394,19 @@ func _play_shop() -> void:
 		await _tap_control(shop.find_child("Tab_" + tab, true, false))
 		await _wait(0.3)
 		await _shot("06_%s" % tab)
+	# Kartlar ShopPanel.CARD boyunu aşmaz; panel sekmeden sekmeye büyüyüp küçülmez.
+	var biggest := Vector2.ZERO
+	var heights: Array[float] = []
+	var dialog: Control = shop.get("_panel")
+	for tab in ["rod", "reel", "line", "tackle", "bait", "extra", "sell"]:
+		await _tap_control(shop.find_child("Tab_" + tab, true, false))
+		await _wait_frames(3)
+		for node in shop.find_children("Card_*", "PanelContainer", true, false):
+			biggest = biggest.max((node as Control).get_combined_minimum_size())
+		heights.append(dialog.size.y)
+	_check("kartlar CARD boyunda (en büyüğü %dx%d), panel boyu sabit (%d-%d)" % [int(biggest.x), int(biggest.y),
+			int(heights.min()), int(heights.max())], biggest.x <= ShopPanel.CARD.x + 0.5
+			and biggest.y <= ShopPanel.CARD.y + 0.5 and float(heights.max()) - float(heights.min()) < 1.0)
 	await _tap(shop.close_button.get_global_rect().get_center())
 	await _wait_frames(3)
 	_check("kapanınca Nine uğurlar", not shop.visible and _hud().hint_speaker() == "nine")

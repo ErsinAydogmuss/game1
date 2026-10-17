@@ -91,6 +91,17 @@ func shore_distance(p: Vector2) -> float:
 	return lerpf(top, bottom, fy)
 
 
+## İşaretli kıyı uzaklığı, ızgaranın dışında da (karada −): dışarıdaki noktaya ızgaranın en yakın
+## noktasının uzaklığı ile ızgaraya olan uzaklığı birlikte verilir. shore_distance ızgaranın dışında
+## (kıyıdan MARGIN metre öte) hep −MARGIN verir; kıyıdan uzaklık bantları (ağaçlar, korular) gerçek
+## uzaklık ister.
+func land_distance(p: Vector2) -> float:
+	var low := origin + Vector2(CELL, CELL) * 0.5
+	var high := origin + Vector2(width - 0.5, height - 0.5) * CELL
+	var q := p.clamp(low, high)
+	return shore_distance(q) - p.distance_to(q)
+
+
 ## Derinlik (m): karada 0; kıyıdan uzaklaştıkça yumuşakça max_depth'e iner.
 func depth_at(p: Vector2) -> float:
 	return depth_for(shore_distance(p))

@@ -39,10 +39,31 @@ const SIGN_TEXT := Color("#ffe6a3")
 const SIGN_INK := Color("#3a2414")
 ## Dokunma: ekranda dükkânın çevresine eklenen pay (viewport yüksekliği 1080'e göre piksel).
 const TOUCH_PX := 24.0
+## Gölde yeri: iskelenin kara ucunun solunda (-x); ön kenarın ortası kara ucuna göre (m), önü
+## iskeleye ve biraz kameraya (+z) döner; çevresinde göl süslerinin konmadığı dairenin yarıçapı (m).
+const OFFSET := Vector2(-1.85, 0.4)
+const TURN := deg_to_rad(30.0)
+const CLEAR := 2.4
 
 var _sign: Label3D
 ## Dokunma için dükkânın köşe noktaları (yerel).
 var _outline: Array[Vector3] = []
+
+
+## İskelenin yanındaki dükkânın ön kenarının ortası (dünya xz; main yerleştirir).
+static func front_for(dock: Rect2) -> Vector2:
+	return Vector2(dock.get_center().x, dock.end.y) + OFFSET
+
+
+## Dükkânın önünün yönü (xz).
+static func facing_dir() -> Vector2:
+	return Vector2(1.0, 0.0).rotated(TURN)
+
+
+## Dükkânın kapladığı yer (x, z, yarıçap): göl süsleri oraya konmaz (LakeScene.keep_clear).
+static func clear_zone(dock: Rect2) -> Vector3:
+	var center := front_for(dock) - facing_dir() * DEPTH * 0.5
+	return Vector3(center.x, center.y, CLEAR)
 
 
 ## Dükkânı kurar: front_center ön kenarın ortası (dünya; döşemenin altı), facing önün yönü (xz),

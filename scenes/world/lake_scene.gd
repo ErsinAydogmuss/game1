@@ -60,8 +60,8 @@ const DAISY_COLORS: Array[Color] = [Color("#fbf7ee"), Color("#fff4dc"), Color("#
 const CAMP := Vector2(4.2, 1.9)
 ## Sandal: iskelenin -x kenarından uzaklığı, suya uzanan ucundan kıyıya doğru yeri, su
 ## yüzeyine göre yüksekliği, dönüşü ve boyunun yarısı (m).
-const BOAT_SIDE := 0.75
-const BOAT_ALONG := 2.0
+const BOAT_SIDE := 1.3
+const BOAT_ALONG := 1.5
 const BOAT_Y := -0.12
 const BOAT_YAW := 0.0
 const BOAT_HALF := 1.1
@@ -414,7 +414,8 @@ func _build_scenery() -> void:
 	_flush_batches()
 
 
-## Kıyı uzaklığı band (x: en uzak, y: en yakın; karada negatif) aralığına count kopya serper.
+## Kıyı uzaklığı band (x: en uzak, y: en yakın; karada negatif; ızgaranın dışında da gerçek
+## uzaklık: LakeShape.land_distance) aralığına count kopya serper.
 ## Kopyalar birbirine, dükkâna ve kampa radius'tan yakın düşmez; camera_ok değilse kameranın önüne
 ## (iskelenin arkası) de düşmez. area_grow: gölün kutusunun ne kadar dışına kadar aranacağı.
 func _scatter_band(out: Array[Array], count: int, band: Vector2, kinds: Array[String], radius: float,
@@ -425,7 +426,7 @@ func _scatter_band(out: Array[Array], count: int, band: Vector2, kinds: Array[St
 	while placed < count and tries < count * 400:
 		tries += 1
 		var p := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
-		var shore := lake.shore_distance(p)
+		var shore := lake.land_distance(p)
 		if shore < band.x or shore > band.y or lake.on_dock(p, 1.2) or (not camera_ok and _near_camera_side(p)):
 			continue
 		if not _free_spot(p, radius):
@@ -445,12 +446,12 @@ func _build_groves(out: Array[Array]) -> void:
 	while groves < GROVES and tries < 4000:
 		tries += 1
 		var c := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
-		if lake.shore_distance(c) > -6.5 or _near_camera_side(c):
+		if lake.land_distance(c) > -6.5 or _near_camera_side(c):
 			continue
 		groves += 1
-		for k in _rng.randi_range(4, 7):
+		for k in _rng.randi_range(3, 6):
 			var p := c + Dice.in_disc(_rng, GROVE_RADIUS)
-			if lake.shore_distance(p) > -4.8 or _near_camera_side(p) or not _free_spot(p, 1.2):
+			if lake.land_distance(p) > -4.8 or _near_camera_side(p) or not _free_spot(p, 1.2):
 				continue
 			_occupied.append(Vector3(p.x, p.y, 1.2))
 			var id := FAR_TREES[_rng.randi_range(0, FAR_TREES.size() - 1)]
@@ -593,7 +594,7 @@ func _build_flowers(batch: MeshBatch) -> void:
 	while clusters < FLOWER_CLUSTERS and tries < 4000:
 		tries += 1
 		var c := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
-		var shore := lake.shore_distance(c)
+		var shore := lake.land_distance(c)
 		if shore < -7.5 or shore > -1.8 or lake.on_dock(c, 1.5) or not _free_spot(c, 0.4):
 			continue
 		clusters += 1

@@ -28,12 +28,6 @@ const ELDER_ALONG := 2.4
 const ELDER_TURN := deg_to_rad(25.0)
 ## Dede'nin ya da Nine'nin sözü ipucu çubuğunda bu kadar kalır (sn).
 const LINE_TIME := 4.0
-## Nine'nin dükkânı iskelenin kara ucunun solunda (-x): ön kenarının ortası kara ucundan bu kadar
-## ötede (m); önü iskeleye ve biraz kameraya (+z) döner.
-const SHOP_OFFSET := Vector2(-1.85, 0.4)
-const SHOP_TURN := deg_to_rad(30.0)
-## Dükkânın çevresinde göl süslerinin (çalı, kaya, çiçek) konmadığı dairenin yarıçapı (m).
-const SHOP_CLEAR := 2.4
 const STEP_SOUND_EVERY := 0.36
 ## İlk atıştan önce ilk av gölgesinin çevresinde halka aralığı (sn): "bu gölge!"
 const FIRST_CUE_EVERY := 1.6
@@ -97,7 +91,7 @@ func _ready() -> void:
 	spot_id = GameState.db.main_spot
 	lake = GameState.db.lake(spot_id)
 	scene = LakeScene.new()
-	scene.keep_clear.append(_shop_zone())
+	scene.keep_clear.append(ShopStall.clear_zone(lake.dock))
 	add_child(scene)
 	scene.setup(lake)
 	shadows = ShadowLayer.new()
@@ -236,6 +230,7 @@ func _build_input() -> void:
 		["shop", func(screen: Vector2) -> bool: return nine.hit(camera, screen) or shop.hit(camera, screen)],
 		["boat", func(screen: Vector2) -> bool: return scene.boat_hit(camera, screen)],
 	]
+	input.targets_active = func() -> bool: return session.state == FishingSession.State.IDLE and not card.visible
 	add_child(input)
 	input.target_tapped.connect(_on_target)
 	input.walk_requested.connect(_on_walk_requested)
@@ -690,8 +685,8 @@ func _seat_elder() -> void:
 ## zeminin en yüksek yerine oturur (eğimli kıyıda etek boşluğu örter). Balıkçı Dede'nin,
 ## dükkânın ve Nine'nin içinden geçmez.
 func _place_shop() -> void:
-	var front := _shop_front()
-	var facing := _shop_facing()
+	var front := ShopStall.front_for(lake.dock)
+	var facing := ShopStall.facing_dir()
 	var side := Vector2(facing.y, -facing.x)
 	var floor_y := 0.0
 	for u: float in [-0.5, 0.0, 0.5]:
@@ -703,21 +698,6 @@ func _place_shop() -> void:
 	var blockers: Array[Vector3] = [elder.blocker()]
 	blockers.append_array(shop.blockers())
 	angler.blockers = blockers
-
-
-## Dükkânın ön kenarının ortası ve önünün yönü (xz).
-func _shop_front() -> Vector2:
-	return Vector2(lake.dock.get_center().x, lake.dock.end.y) + SHOP_OFFSET
-
-
-func _shop_facing() -> Vector2:
-	return Vector2(1.0, 0.0).rotated(SHOP_TURN)
-
-
-## Dükkânın kapladığı yer (x, z, yarıçap): göl süsleri oraya konmaz (LakeScene.keep_clear).
-func _shop_zone() -> Vector3:
-	var center := _shop_front() - _shop_facing() * ShopStall.DEPTH * 0.5
-	return Vector3(center.x, center.y, SHOP_CLEAR)
 
 
 ## Balık göle bırakıldı: defterde bırakılan sayısı, göl sevgisi ve sayaç.

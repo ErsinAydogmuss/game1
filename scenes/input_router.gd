@@ -30,8 +30,11 @@ var ground_point: Callable
 ## Olta suda mı (FishingSession.line_out)?
 var line_out: Callable
 ## Dokunulabilen hedefler, sırayla denenir: [kimlik, Callable(ekran noktası) -> bool]. İlk tutan
-## hedef dokunuşu alır (main: Dede, Nine ve dükkânı).
+## hedef dokunuşu alır (main: Dede, Nine ve dükkânı, sandal).
 var hit_targets: Array[Array] = []
+## Hedefler yalnızca bu true iken dokunulur (main: olta boşta). Değilken dokunuş atışa ya da yürümeye
+## düşer: dönen oltaya verilen atış dokunuşu bir hedefe (ör. iskelenin yanındaki sandal) yutulmasın.
+var targets_active: Callable = func() -> bool: return true
 var lake: LakeShape
 ## Kameranın yatay açısı (WASD yönleri buna göre).
 var view_yaw: float = FollowCamera.YAW
@@ -104,11 +107,12 @@ func _pointer(index: int, pos: Vector2, pressed: bool) -> void:
 		action_pressed.emit()
 		get_viewport().set_input_as_handled()
 		return
-	for target in hit_targets:
-		if bool((target[1] as Callable).call(pos)):
-			target_tapped.emit(str(target[0]))
-			get_viewport().set_input_as_handled()
-			return
+	if bool(targets_active.call()):
+		for target in hit_targets:
+			if bool((target[1] as Callable).call(pos)):
+				target_tapped.emit(str(target[0]))
+				get_viewport().set_input_as_handled()
+				return
 	var p: Vector2 = ground_point.call(pos)
 	if not Dice.is_point(p):
 		return

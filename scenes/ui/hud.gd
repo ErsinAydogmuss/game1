@@ -30,7 +30,9 @@ const ACTIONS := {
 const TOAST_TIME := 1.7
 ## Bildirimin yanındaki ikonun boyu.
 const TOAST_ICON := 104.0
-## Defter düğmesinin rengi (deri kapak).
+## İpucu çubuğunda konuşanın yüzü ve yüzle yazı arasındaki boşluk.
+const FACE := 84.0
+const HINT_GAP := 18
 ## Defter düğmesi turuncu (arayüz kitindeki düğme görseli; palet dışı renk kodla çizilirdi).
 const BOOK_COLOR := UiKit.PRIMARY
 
@@ -66,8 +68,9 @@ var _toast_box: HBoxContainer
 var _toast_age: float = -1.0
 ## Sırası gelince gösterilecek bildirimler: [metin, renk, ses, ikon] (ör. rütbe atlama, kova dolu).
 var _toast_queue: Array[Array] = []
-## Açılıştan sonra kare başına bir tane çizilecek düğme dokuları (panellerin renkleri: dükkân,
-## ayarlar). Hepsi açılışta çizilse açılış uzar; ilk açılan panelde çizilse panel takılır.
+## Açılıştan sonra kare başına bir tane hazırlanacak düğme hâlleri ([renk, hâl]; panellerin renkleri:
+## dükkân, ayarlar). Görsel yoksa kodla çizilir: hepsi açılışta çizilse açılış uzar, ilk açılan
+## panelde çizilse panel takılır.
 var _warm_later: Array[Array] = []
 ## Sıradaki bildirimler bu kadar sn bekler (yakalanan balığın etiketi ekrandayken).
 var _toast_hold: float = 0.0
@@ -81,12 +84,11 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	warm_styles()
-	# Paneldeki düğme renkleri (UiKit.style_button'ın dört hâli): sonraki karelerde birer birer.
+	# Paneldeki düğme renklerinin hâlleri (UiKit.button_state): sonraki karelerde birer birer.
+	# Düğme görseli varsa hepsi önbellekten gelir, çizim olmaz.
 	for color: Color in [UiKit.SECONDARY, UiKit.NEUTRAL]:
-		_warm_later.append([color, false])
-		_warm_later.append([color.lightened(0.06), false])
-		_warm_later.append([color, true])
-		_warm_later.append([color.lerp(Color("#8c8f9e"), 0.7), false])
+		for state: String in UiKit.BUTTON_STATES:
+			_warm_later.append([color, state])
 	_build_top()
 	_build_bottom()
 	_build_center()
@@ -103,7 +105,7 @@ func _process(delta: float) -> void:
 			_show_queued()
 	if not _warm_later.is_empty():
 		var job: Array = _warm_later.pop_front()
-		UiKit.glossy(job[0], bool(job[1]))
+		UiKit.button_state(job[0], str(job[1]))
 	if _fps.visible:
 		_fps_clock += delta
 		if _fps_clock >= FPS_INTERVAL:
@@ -338,7 +340,7 @@ func _pill(icon_kind: String) -> Label:
 
 func _build_bottom() -> void:
 	_hint = PanelContainer.new()
-	_hint.add_theme_stylebox_override("panel", UiKit.framed("pill", UiKit.pill_style(), 46.0))
+	_hint.add_theme_stylebox_override("panel", hint_style())
 	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hint.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_hint.size_flags_vertical = Control.SIZE_SHRINK_END
@@ -346,11 +348,11 @@ func _build_bottom() -> void:
 	_hint_frame = _frame()
 	_hint_frame.add_child(_hint)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 18)
+	row.add_theme_constant_override("separation", HINT_GAP)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hint.add_child(row)
 	_face = TextureRect.new()
-	_face.custom_minimum_size = Vector2(84, 84)
+	_face.custom_minimum_size = Vector2(FACE, FACE)
 	_face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -404,6 +406,20 @@ func _build_center() -> void:
 	box.add_child(spacer)
 	box.add_child(_toast_box)
 	frame.add_child(box)
+
+
+## İpucu çubuğunun hapı (arayüz kitinin hap görseli; yoksa koyu hap).
+static func hint_style() -> StyleBox:
+	return UiKit.framed("pill", UiKit.pill_style(), 46.0)
+
+
+## İpucu çubuğunda yazıya kalan en geniş yer (tek satır): çubuk iki yandaki eylem düğmesi payının
+## arasında (16:9 ekranda viewport 1920 genişlik; telefonda daha geniş); içinde yüz, boşluk ve hapın
+## payları var. Her söz buna sığmalı (test_hud).
+static func hint_text_room(viewport_width: float = 1920.0, inset: float = 0.0) -> float:
+	var side := MARGIN + inset + ACTION_SIZE.x + 24.0
+	var pill := hint_style()
+	return viewport_width - 2.0 * side - FACE - HINT_GAP - pill.get_margin(SIDE_LEFT) - pill.get_margin(SIDE_RIGHT)
 
 
 func _apply_safe_area() -> void:

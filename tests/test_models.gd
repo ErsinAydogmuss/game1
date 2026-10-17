@@ -6,8 +6,9 @@ extends BaseTest
 ## dükkânı az çizimle kurulur; Nine tezgâhın arkasında durur, tezgâhın önü serbesttir.
 ## Göl süsleri bir paketin modellerini tek ağda birleştirir; dükkânın ve kampın yerini boş bırakır.
 
-## Göl sahnesinin en çok çizimi (her ağ bir, gölgesi bir daha; ekranda olmayan bölgeler sayılır).
-const SCENE_DRAWS := 50
+## Göl sahnesinin en çok çizimi (her ağ bir, gölgesi bir daha; ekranda olmayan bölgeler de sayılır:
+## oyunda kameranın gördüğü bölgeler çizilir).
+const SCENE_DRAWS := 56
 
 
 func test_angler_model_has_parts_and_animations() -> void:
@@ -145,10 +146,12 @@ func test_lake_scenery_keeps_clear_and_cheap() -> void:
 	var db := content()
 	var lake := db.lake(db.main_spot)
 	var scene := LakeScene.new()
-	scene.keep_clear.append(Vector3(-2.7, 8.4, 2.4))
+	scene.keep_clear.append(ShopStall.clear_zone(lake.dock))
 	scene.setup(lake)
 	var occupied: Array[Vector3] = scene.get("_occupied")
-	assert_true(occupied.size() > 50, "süsler yerleşti (%d)" % occupied.size())
+	# Kıyıdan uzaklık bantları ızgaranın dışında da gerçek uzaklıkla çalışır (korular, arkadaki
+	# orman): eskiden −4 m'de kalan uzaklıkla ağaçların çoğu yerleşmiyordu (~110 süs).
+	assert_true(occupied.size() > 130, "süsler yerleşti (%d)" % occupied.size())
 	var bad := 0
 	for c in occupied:
 		var p := Vector2(c.x, c.y)

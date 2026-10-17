@@ -78,6 +78,8 @@ const BUTTON_ART := {
 	"ff9f1c": ["button_orange", 1.0], "3d8bff": ["button_blue", 1.0], "25b864": ["button_green", 1.0],
 	"59617f": ["button_gray", 1.0], "e5484d": ["button_red", 1.0], "43495f": ["button_gray", 0.78],
 }
+## Düğmenin tema hâlleri (style_button, button_state).
+const BUTTON_STATES: Array[String] = ["normal", "hover", "pressed", "hover_pressed", "disabled"]
 
 static var _theme: Theme
 static var _body: Font
@@ -191,11 +193,21 @@ static func button(text: String, color: Color = PRIMARY, size: int = SIZE_BODY,
 
 
 static func style_button(b: Button, color: Color) -> void:
-	b.add_theme_stylebox_override("normal", glossy(color, false))
-	b.add_theme_stylebox_override("hover", _hover_style(color))
-	b.add_theme_stylebox_override("pressed", glossy(color, true))
-	b.add_theme_stylebox_override("hover_pressed", glossy(color, true))
-	b.add_theme_stylebox_override("disabled", _disabled_style(color))
+	for state: String in BUTTON_STATES:
+		b.add_theme_stylebox_override(state, button_state(color, state))
+
+
+## Düğmenin bir hâlinin stili (BUTTON_STATES; style_button bunları kullanır). Görsel varsa ucuz
+## (önbellekten); yoksa kodla piksel piksel çizilir (Hud açılıştan sonra kare kare ısıtır).
+static func button_state(color: Color, state: String) -> StyleBox:
+	match state:
+		"hover":
+			return _hover_style(color)
+		"pressed", "hover_pressed":
+			return glossy(color, true)
+		"disabled":
+			return _disabled_style(color)
+	return glossy(color, false)
 
 
 ## Üzerine gelme: düğme görseli varsa normal hâlin aynısı (telefonda dokunuştan sonra "üzerinde"

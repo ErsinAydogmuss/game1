@@ -134,6 +134,8 @@ func test_art_sheets_are_consistent() -> void:
 		files[file] = true
 		if bool(def.get("reference", false)):
 			continue
+		# Bilinmeyen değer sessizce "none" sayılırdı (ArtSheet.remove_background).
+		assert_true(str(def.get("despill", "all")) in ["all", "edge", "none"], "%s: despill all, edge ya da none" % file)
 		var names: Array = def["names"]
 		if def.has("grid"):
 			var grid: Array = def["grid"]

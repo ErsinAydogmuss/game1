@@ -21,6 +21,8 @@ const ART_SIZE := Vector2(126, 95)
 ## Görselde kuyruğun ucu (genişliğe oranla) ve gövdenin ortası (yüksekliğe oranla).
 const ART_TIP_X := 0.49
 const ART_BODY_Y := 0.37
+## Görselli balonda işaretin boy çarpanı.
+const ART_MARK := 0.82
 
 ## Kuyruğun ucunun ekrandaki yeri (viewport birimi); Elder her kare verir.
 var anchor := Vector2.ZERO
@@ -81,7 +83,8 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if _art != null:
 		draw_texture_rect(_art, Rect2(Vector2.ZERO, ART_SIZE), false)
-		_draw_mark(Vector2(ART_SIZE.x * 0.5, ART_SIZE.y * ART_BODY_Y))
+		# Görselin ahşap kenarı kalın: işaret biraz küçük ve aşağıda (ünlem üst kenara değmesin).
+		_draw_mark(Vector2(ART_SIZE.x * 0.5, ART_SIZE.y * ART_BODY_Y + 3.0), ART_MARK)
 		return
 	var body := Rect2(Vector2.ZERO, BODY)
 	var tail := PackedVector2Array([Vector2(BODY.x * 0.2, BODY.y - 10.0), Vector2(BODY.x * 0.48, BODY.y - 10.0), _tip()])
@@ -95,17 +98,18 @@ func _draw() -> void:
 
 
 ## Balonun içi: üç zıplayan nokta ya da ünlem (c: gövdenin ortası).
-func _draw_mark(c: Vector2) -> void:
+## Balonun işareti: üç nokta ya da ünlem; k: boy çarpanı.
+func _draw_mark(c: Vector2, k: float = 1.0) -> void:
 	if kind == Kind.DOTS:
 		for i in 3:
 			var hop := 6.0 * maxf(0.0, sin(_time * 7.0 - float(i) * 1.1))
-			draw_circle(c + Vector2((float(i) - 1.0) * 25.0, -hop), 7.5, INK)
+			draw_circle(c + Vector2((float(i) - 1.0) * 25.0, -hop) * k, 7.5 * k, INK)
 	else:
-		var bar := Rect2(c + Vector2(-5.5, -24.0), Vector2(11.0, 30.0))
+		var bar := Rect2(c + Vector2(-5.5, -24.0) * k, Vector2(11.0, 30.0) * k)
 		draw_rect(bar, INK)
-		draw_circle(bar.position + Vector2(5.5, 0.0), 5.5, INK)
-		draw_circle(bar.end - Vector2(5.5, 0.0), 5.5, INK)
-		draw_circle(c + Vector2(0.0, 19.0), 6.5, INK)
+		draw_circle(bar.position + Vector2(5.5, 0.0) * k, 5.5 * k, INK)
+		draw_circle(bar.end - Vector2(5.5, 0.0) * k, 5.5 * k, INK)
+		draw_circle(c + Vector2(0.0, 19.0) * k, 6.5 * k, INK)
 
 
 ## Kuyruğun ucu (balonun kendi uzayında).

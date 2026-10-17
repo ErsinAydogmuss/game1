@@ -37,11 +37,16 @@ const STATS := {
 	"extra": [["catch_m", "UI_STAT_REACH", ""]],
 	"bucket": [["capacity", "UI_STAT_CAPACITY", "#"]],
 }
-const WIDTH := 1760.0
+## Panelin genişliği: 3 kart ve aralarındaki boşluklar, panel görselinin kenar paylarıyla.
+const WIDTH := 1880.0
 const COLUMNS := 3
 ## Sekme başına en çok kart (3×2; kaydırma yok).
 const CARDS := 6
-const CARD := Vector2(548, 292)
+## Kartın boyu: kart görselinin kenar payları içeriğin çevresinde (bot her sekmede denetler; aşan
+## kart paneli sekmeden sekmeye büyütürdü).
+const CARD := Vector2(572, 312)
+## Satış satırının boyu (iki sütun).
+const SELL_ROW := Vector2(820, 96)
 const TAB := Vector2(232, 122)
 ## Sekme görselinin köşe boyu (kemerli tabela).
 const TAB_CORNER := 30.0
@@ -222,10 +227,10 @@ func _gear_card(item: Dictionary) -> Control:
 	var desc := UiKit.ink(tr("GEAR_" + id + "_DESC"), 26, UiKit.INK_SOFT)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.max_lines_visible = 2
-	desc.custom_minimum_size = Vector2(380, 0)
+	desc.custom_minimum_size = Vector2(378, 0)
 	info.add_child(desc)
 	var bottom := HBoxContainer.new()
-	bottom.add_theme_constant_override("separation", 14)
+	bottom.add_theme_constant_override("separation", 10)
 	bottom.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	bottom.alignment = BoxContainer.ALIGNMENT_END
 	column.add_child(bottom)
@@ -471,7 +476,7 @@ func _sell_row(row: Array) -> Control:
 	var db := GameState.db
 	var fish_id := str(row[0])
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(WIDTH * 0.5 - 60, 96)
+	panel.custom_minimum_size = SELL_ROW
 	panel.add_theme_stylebox_override("panel", UiKit.framed("card", UiKit.card_style(UiKit.rarity_color(db, int(row[3])), 22),
 			UiKit.CARD_CORNER * 0.8))
 	var line := HBoxContainer.new()
