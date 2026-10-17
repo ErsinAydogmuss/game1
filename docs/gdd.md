@@ -468,7 +468,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - Saatte ~5.850 para (−%3) ve 190 av.
   - Rütbe 9: 76–92 dk (önce 69–81). Sandal: 111–150 dk (önce 104–132).
   - Bot Dede'nin öğüdüne uymaz, takımı yine en ucuzdan alır. Cam elyafı kamış ~22–35. dakikada, karbon kamış ve örgü misina ~3. saatte geliyor. O zamana dek iri türlerin 5★'ları (~%6) kaçıyor; öğüde uyan oyuncu daha erken alır.
-  - Mersinin ilk tutuluşu şansa çok bağlı (20 seed: 125–276 dk; eski kodda da bir seed 288). Korkuluk 100–240 dk, 250 dakikada ölçülür.
+  - Mersinin ilk tutuluşu şansa çok bağlı (20 seed: 125–276 dk; eski kodda da bir seed 288). Korkuluk 100–300 dk, 310 dakikada ölçülür.
 
 | Olay (ilk kez) | Dakika | Korkuluk |
 |---|---|---|
@@ -477,7 +477,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | rütbe 2 / 3 / 5 / 7 / 9 | 1–3 / 10–14 / 21–31 / 45–56 / 76–92 | ≤ 5 / 5–15 / 15–35 / 38–65 / 60–120 |
 | rütbe 10 / 15 / 20 | 90–112 / 193–225 / 334–375 | — |
 | ilk gidiş: sazlık / nilüferli koy / kayalık burun / dere ağzı | 2–3 / 10–14 / 22–31 / 45–56 | — / 5–15 / 15–35 / — |
-| gölün 5 türü / 11 kıyı türü / mersin (12.) | 2–4 / 25–37 / 135–276 | ≤ 30 / — / 100–240 |
+| gölün 5 türü / 11 kıyı türü / mersin (12.) | 2–4 / 25–37 / 135–276 | ≤ 30 / — / 100–300 |
 | makara, iğne, şamandıra (ilk kademe) | 10–26 | — |
 | cam kamış | 22–35 | 10–45 |
 | büyük kova | 30–42 | 15–60 |
