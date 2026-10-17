@@ -201,17 +201,18 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 
 ### 11. Geri bildirim
 
-Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.2.1: Ersin'in görselleri ve yeni göl kenarı; oyun kuralları v0.2 ile aynı). Kayıt aynen kalır; eski kaydı (v0.1) varsa kendiliğinden yeni biçime geçer.
+Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl). Eski kayıt kendiliğinden yeni biçime (v3) geçer: rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır. Para, kova, takım ve defter aynen kalır.
 
 1. Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
-2. Ana ekrandaki ikon Ersin'in zıplayan koisi mi? Oyun açılırken göl renginde OLTA logosu görünüyor mu? (Eski geçici balık ikonu görünüyorsa uygulamayı silip yeniden yükle: iOS ikonu önbellekte tutabilir.)
-3. Arayüz Ersin'in görselleriyle: paneller, kartlar, sekmeler, düğmeler. Yazılar çerçevelerin süslerine biniyor mu, okunuyor mu? Düğmeye basınca koyulaşıyor mu?
-4. Nadirlik: rozetler (gri taş, yaprak, mavi taş, mor yıldız...) ve kartta balığı saran nadirlik çerçevesi güzel görünüyor mu? Gölgelerdeki ipuçlarıyla (Nadir pırıltı, Destansı mor ışıltı) uyuşuyor mu?
-5. Dede ve Nine'nin yüzleri sözle değişiyor mu? Dede öğüt verirken parmağını kaldırır, "Geliyor!" ve VUR anında şaşırır; Nine satın alınca paketi uzatır, satınca sevinir.
-6. Nine'nin dükkânı: takım resimleri, sekme ikonları, HEPSİNİ SAT düğmesindeki kese. Kova doluyken bir balık daha tut: "Kova dolu: balık göle döndü" bildirimi sevinen balıkla çıkıyor mu?
-7. Göl kenarı: yuvarlak ağaçlar, korular, çalılar, yosunlu kayalar, nilüferler ve pembe nilüfer çiçekleri, çiçekler, kamp. İskelenin yanında sandal suyla sallanıyor mu? Sandala dokun: Dede ne diyor?
-8. Ayarlar (dişli): başlıkta oyunun logosu.
-9. Göl kenarı kalabalıklaştı: takılma, ısınma ya da pil çabuk bitmesi var mı? Ekranın çentiği (notch) bir yeri kapatıyor mu?
+2. Rütben güncellemeden önceki gibi mi? (Sayı değişebilir; rütbe ve çubuk aynı kalmalı.)
+3. **Göl büyüdü** (eskisinin ~3,7 katı). İskeleden karaya in, kıyı boyunca bir yere dokun: balıkçı sudan geçmeden kıyı yolundan dolaşıyor mu? Kilitli bir bölgenin çitine gelince duruyor ve Dede ne zaman geçileceğini söylüyor mu?
+4. **Harita:** ilk balıktan sonra sağ üstte harita düğmesi çıkar. Haritada bölge rozetleri, kilitler, "Yeni!" ve "Buradasın" iğnesi var mı? Açık bir bölgeye dokun: ekran kararıp oraya geçiyor mu? Harita çentiğe takılmadan ekrana sığıyor mu?
+5. **Yeni bölge:** rütbe 3'te nilüferli koy açılır (5'te kayalık burun, 7'de dere ağzı). Bildirim çıkıyor, Dede söylüyor, harita düğmesi atıyor mu?
+6. **Bölgelerin görünüşü:** sazlıkta sık kamış, nilüferli koyda nilüfer tarlası, kayalık burunda iri kayalar ve yosunlu taş, dere ağzında akan su, derin ortada şamandıralar. Kıyıya gelen dalga çizgileri, toprak yol ve ıslak kum güzel mi?
+7. **Yeni türler** (7 tür, toplam 12): gümüş balığı iskele koyunda ve sazlıkta, çapak iskele koyunda ve derin ortada, kadife sazlıkta, altın sazan nilüferli koyda, tatlısu kefali kayalık burunda ve dere ağzında, sudak kayalık burunda ve derin ortada, mersin derin ortada. Defter bulunduğun bölgenin oranlarını gösteriyor mu?
+8. **Sandal:** rütbe 9'da Nine'nin Ekstra sekmesinde (3.500 para). İskeledeki sandala dokun: derin ortada sandaldasın; sol alttaki "Kıyıya dön" iskeleye getirir. Mersin tutulunca kartında "Göle bırak" çıkıyor mu? "Kıyıya dön" düğmesi çentiğe takılmadan tam görünüyor mu?
+9. **Hepsini hızlıca görmek için** 12. adımdaki **Bütün bölgeleri aç**'ı kullan (kaydı değiştirir; istersen sonra **Kaydı sıfırla**). Normal oyunda nilüferli koy ≈ 10. dakikada açılır; derin ortaya (rütbe 9 ve sandal) ≈ 2 saatte varılır.
+10. Takılma, ısınma ya da pil çabuk bitmesi var mı? Sonra 12. adımdaki ölçümü yap.
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
