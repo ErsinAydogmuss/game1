@@ -3,7 +3,7 @@ extends Node3D
 ## Nine'nin dükkânı: iskelenin kara ucunun yanında, kodla kurulan ahşap bir tezgâh. Alçak bir
 ## döşeme, arkada raflı duvar (yem kavanozları, kutular), önde tezgâh (solucan kovası, kavanozlar,
 ## mısır kasası, pirinç zil), yanda olta sehpası, üstte turkuaz-krem çizgili tente ve tabela.
-## Nine tezgâhın arkasında durur (keeper_spot). Yanında KayKit fıçı ve kasa.
+## Nine tezgâhın arkasında durur (keeper_spot). Yanında KayKit fıçı ve kasa (tek ağ).
 ## Parçalar köşe renkli tek ağda birleşir (MeshBatch): ~120 parça tek çizim (gölgesiyle iki).
 ## Yerel eksen: +z dükkânın önü (müşteri tarafı); kök döşemenin ön kenarının ortası, zemin hizası.
 ## Yerleşim noktaları (keeper_spot, blockers) üst düğümün uzayındadır (main: dünya); ağaçta olmadan
@@ -266,15 +266,16 @@ func _build_sign(batch: MeshBatch) -> void:
 	add_child(_sign)
 
 
-## Yanında KayKit fıçı ve kasa (göl tarafında; kameraya bakan yan açık kalır). Her biri bir çizim
-## ve bir gölge: az tutulur.
+## Yanında KayKit fıçı ve kasa (göl tarafında; kameraya bakan yan açık kalır). Aynı paketten:
+## ikisi tek ağ (ModelLibrary.merge), bir çizim ve bir gölge.
 func _add_props(ground_at: Callable) -> void:
 	var half := WIDTH * 0.5
+	var placements: Array[Array] = []
 	for spec: Array in [["barrel", Vector3(half + 0.35, 0, -0.35), 0.4], ["crate", Vector3(half + 0.3, 0, -1.25), 1.2]]:
 		var local: Vector3 = spec[1]
 		if ground_at.is_valid():
 			var world := transform * local
 			local.y = float(ground_at.call(Vector2(world.x, world.z))) - position.y
-		var node := ModelLibrary.spawn(self, str(spec[0]), local, float(spec[2]))
-		if node != null:
-			LakeScene.set_shadows(node, true)
+		placements.append([str(spec[0]), Transform3D(Basis(Vector3.UP, float(spec[2])), local)])
+	for node in ModelLibrary.merge(self, "Props", placements):
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON

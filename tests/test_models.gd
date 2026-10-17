@@ -4,6 +4,10 @@ extends BaseTest
 ## değişirse burada yakalanır). Göl çevresinin modelleri listede ve dosyaları var. Balık ağı her tür
 ## için kurulur. Balıkçı Dede'nin içinden geçmez ama içinde kalırsa dışarı çıkabilir. Nine'nin
 ## dükkânı az çizimle kurulur; Nine tezgâhın arkasında durur, tezgâhın önü serbesttir.
+## Göl süsleri bir paketin modellerini tek ağda birleştirir; dükkânın ve kampın yerini boş bırakır.
+
+## Göl sahnesinin en çok çizimi (her ağ bir, gölgesi bir daha; ekranda olmayan bölgeler sayılır).
+const SCENE_DRAWS := 50
 
 
 func test_angler_model_has_parts_and_animations() -> void:
@@ -114,6 +118,52 @@ func test_angler_slides_around_blockers() -> void:
 func test_scenery_models_exist() -> void:
 	for id: String in ModelLibrary.MODELS:
 		assert_true(ModelLibrary.has(id), "model dosyası yok: " + id)
+
+
+## Bir paketin farklı modelleri tek ağda birleşir (üçgenleri toplanır); uzak bölgeler ayrı ağ olur.
+func test_merge_combines_models_by_chunk() -> void:
+	var root := Node3D.new()
+	var tree_only: Array[Array] = [["tree_1a", Transform3D.IDENTITY]]
+	var rock_only: Array[Array] = [["rock_3a", Transform3D.IDENTITY]]
+	var both: Array[Array] = [["tree_1a", Transform3D.IDENTITY], ["rock_3a", Transform3D(Basis.IDENTITY, Vector3(2, 0, 1))]]
+	var merged := ModelLibrary.merge(root, "Both", both, 20.0)
+	assert_eq(merged.size(), 1, "aynı bölgedeki iki model tek ağ")
+	if merged.size() == 1:
+		var faces := merged[0].mesh.get_faces().size()
+		var tree_faces := ModelLibrary.merge(root, "Tree", tree_only)[0].mesh.get_faces().size()
+		var rock_faces := ModelLibrary.merge(root, "Rock", rock_only)[0].mesh.get_faces().size()
+		assert_eq(faces, tree_faces + rock_faces, "birleşik ağ iki modelin üçgenlerini taşır")
+	var far: Array[Array] = [["tree_1a", Transform3D.IDENTITY], ["tree_1a", Transform3D(Basis.IDENTITY, Vector3(45, 0, 0))]]
+	assert_eq(ModelLibrary.merge(root, "Far", far, 20.0).size(), 2, "uzak bölgeler ayrı ağ")
+	assert_between(ModelLibrary.bounds("rock_3g").size.y, 0.8, 3.0, "büyük kaya ölçekle ~1-2 m")
+	assert_between(ModelLibrary.bounds("boat").size.z, 1.6, 3.2, "sandal ~2-3 m")
+	root.free()
+
+
+## Göl süsleri dükkânın ve kampın yerine, iskelenin üstüne düşmez; sahne az çizimle kurulur.
+func test_lake_scenery_keeps_clear_and_cheap() -> void:
+	var db := content()
+	var lake := db.lake(db.main_spot)
+	var scene := LakeScene.new()
+	scene.keep_clear.append(Vector3(-2.7, 8.4, 2.4))
+	scene.setup(lake)
+	var occupied: Array[Vector3] = scene.get("_occupied")
+	assert_true(occupied.size() > 50, "süsler yerleşti (%d)" % occupied.size())
+	var bad := 0
+	for c in occupied:
+		var p := Vector2(c.x, c.y)
+		if lake.on_dock(p, 1.0):
+			bad += 1
+		for zone in scene.keep_clear:
+			if p.distance_to(Vector2(zone.x, zone.y)) < zone.z + c.z - 0.001:
+				bad += 1
+	assert_eq(bad, 0, "iskeleye ve boş kalacak yerlere süs düşmez")
+	var draws := 0
+	for node in scene.find_children("*", "GeometryInstance3D", true, false):
+		var geometry := node as GeometryInstance3D
+		draws += 2 if geometry.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF else 1
+	assert_true(draws <= SCENE_DRAWS, "göl sahnesi az çizimle kurulur (%d, gölgeler dahil)" % draws)
+	scene.free()
 
 
 func test_every_fish_builds_a_mesh() -> void:

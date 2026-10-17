@@ -9,6 +9,8 @@ extends SceneTree
 ##
 ## Çalıştırma: godot --headless --path . -s res://tools/recolor_texture.gd
 ## Girdiler paketlerdeki orijinal dokular (source/ klasörleri, Godot içe aktarmaz).
+## Kenney dokuları 16×4 ızgaralı renk paletidir (işte "grid"); hangi modelin hangi kutuyu
+## kullandığı yine UV'lerden çıkarıldı.
 
 const GRID := Vector2i(8, 4)
 const JOBS: Array[Dictionary] = [
@@ -71,6 +73,38 @@ const JOBS: Array[Dictionary] = [
 			Vector2i(0, 2): "#86b84e", # dağlardaki çimen
 		},
 	},
+	{
+		# KayKit orman paketi (ağaç, çalı, çimen, kaya; sütun 0): yapraklar biraz koyu (yukarıdan
+		# bakınca açık uçları soluk görünüyordu), turuncu kabuk iskelenin ahşabına yakın kahverengi,
+		# mavimsi kaya sıcak gri (üstüne yosunu moss.gdshader çizer).
+		"source": "res://assets/models/kaykit_forest/source/forest_texture.png",
+		"output": "res://assets/models/kaykit_forest/forest_texture.png",
+		"swatches": {
+			Vector2i(0, 0): "#33782b", # yaprak, çalı, çimen
+			Vector2i(0, 1): "#8f5d34", # ağaç kabuğu
+			Vector2i(0, 2): "#a09b90", # kaya
+		},
+	},
+	{
+		# Kenney hayatta kalma paketi (kamp ateşi, kütük, tabela): somon tahta → iskele ahşabı.
+		"source": "res://assets/models/kenney_survival/Textures/source/colormap.png",
+		"output": "res://assets/models/kenney_survival/Textures/colormap.png",
+		"grid": Vector2i(16, 4),
+		"swatches": {
+			Vector2i(9, 3): "#9a653d", # tahta
+			Vector2i(13, 3): "#c4a27a", # açık tahta (kütük ucu), ocak taşları
+		},
+	},
+	{
+		# Kenney deniz taşıtları (sandal): somon gövde → koyu ahşap, beyaz iç → açık ahşap.
+		"source": "res://assets/models/kenney_watercraft/Textures/source/colormap.png",
+		"output": "res://assets/models/kenney_watercraft/Textures/colormap.png",
+		"grid": Vector2i(16, 4),
+		"swatches": {
+			Vector2i(13, 3): "#7d4f2c", # gövde ve kürekler
+			Vector2i(11, 3): "#c9a36e", # iç ve oturaklar
+		},
+	},
 ]
 
 
@@ -89,7 +123,8 @@ static func _run(job: Dictionary) -> bool:
 		push_error("Kaynak doku okunamadı: " + source)
 		return false
 	image.convert(Image.FORMAT_RGBA8)
-	var cell := Vector2i(image.get_width() / GRID.x, image.get_height() / GRID.y)
+	var grid: Vector2i = job.get("grid", GRID)
+	var cell := Vector2i(image.get_width() / grid.x, image.get_height() / grid.y)
 	var swatches: Dictionary = job["swatches"]
 	for key: Vector2i in swatches:
 		_recolor(image, Rect2i(key * cell, cell), Color(str(swatches[key])))

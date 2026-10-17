@@ -3,7 +3,7 @@ extends RefCounted
 ## Kodla kurulan durağan parçaları (dükkân, şapka, yazma, çay bardağı) tek ağda birleştirir: her
 ## parçanın rengi köşe rengi olur, hepsi tek malzemeyle tek çizimde çizilir (çizim bütçesi:
 ## dükkânın ~120 parçası tek çizim). Parçalar dönebilir ve ölçeklenebilir.
-## Kullanım: parçaları ekle (box, cylinder, sphere, add) ve build(); ya da Props ile bir pivotun
+## Kullanım: parçaları ekle (box, cylinder, sphere, add, triangles) ve build(); ya da Props ile bir pivotun
 ## altına kurulmuş parçaları merge() ile birleştir.
 
 ## Paylaşılan köşe rengi malzemesi (Props.material ile aynı mat görünüm).
@@ -64,6 +64,22 @@ func add(mesh: PrimitiveMesh, xform: Transform3D, color: Color) -> void:
 	else:
 		for index in (indices as PackedInt32Array):
 			_indices.append(base + index)
+
+
+## Kodla hesaplanan üçgenler (art arda üçer köşe; dışarıdan bakınca saat yönünde: Godot'nun ön
+## yüzü). Normaller düz (üçgen başına); hepsine color verilir (nilüfer yaprağı, çiçek).
+func triangles(points: PackedVector3Array, color: Color) -> void:
+	for i in range(0, points.size() - 2, 3):
+		var a := points[i]
+		var b := points[i + 1]
+		var c := points[i + 2]
+		var n := (c - a).cross(b - a).normalized()
+		for p: Vector3 in [a, b, c]:
+			_indices.append(_verts.size())
+			_verts.append(p)
+			_normals.append(n)
+			_uvs.append(Vector2.ZERO)
+			_colors.append(color)
 
 
 func is_empty() -> bool:

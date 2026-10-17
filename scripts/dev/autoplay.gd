@@ -7,7 +7,8 @@ extends Node
 ##     [--shots=/mutlak/yol] [--locale=tr] [--safe-inset=130]
 ## Senaryolar:
 ##   controls: kontrollerin denemesi; KONTROL satırları TAMAM olmalı (Dede'ye dokun konuşsun,
-##     Nine'ye dokun selam versin, yürü, kıyıda dur, Dede'nin yanından ve dükkânın önünden geç,
+##     Nine'ye dokun selam versin, sandala dokun Dede konuşsun (atış yok), yürü, kıyıda dur,
+##     Dede'nin yanından ve dükkânın önünden geç,
 ##     at, geri sar, gölgeyi korkut, gölgeyi çek, erken
 ##     dokunuş, ekranın her yeri VUR, basılı tut tut, kart açıkken atış yok, patlamada bırakmazsa
 ##     kopar, 8 sn'de yeni balık, düğme boyu ve güvenli alan).
@@ -110,6 +111,12 @@ func _play_controls() -> void:
 	await _tap(book.close_button.get_global_rect().get_center())
 	await _wait_frames(3)
 	_check("defter düğmesi → defter açılır", book_open and not book.visible and not angler.is_walking())
+	# 0d) Sandala dokun: Dede sandaldan söz eder; olta atılmaz, balıkçı yürümez.
+	var scene: LakeScene = main.get("scene")
+	await _tap(_screen(scene.boat_point()))
+	await _wait_frames(3)
+	_check("sandala dokun → Dede konuşur, atış yok", str(main.get("_hint_shown")) == "UI_DEDE_BOAT"
+			and _session().state == FishingSession.State.IDLE and not angler.is_walking())
 	# 1) Suyun öbür yanındaki karaya dokun: iskelenin kenarında (kıyıda) durmalı.
 	var across := Vector2(5.0, 7.0)
 	await _tap_world(across)

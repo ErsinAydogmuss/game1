@@ -1,12 +1,14 @@
 class_name LakeScene
 extends Node3D
 ## Gölün sahnesi: ışık ve ortam, kıyıya doğru hafifçe yükselen arazi, su, iskele, sazlar ve
-## çevre (KayKit ağaçları, kayalar, tepeler, iskelenin yanında küçük bir kamp).
+## çevre (KayKit orman paketi: ağaçlar, çalılar, çimen, yosunlu kayalar; kodla nilüfer ve çiçekler;
+## Kenney kamp eşyaları ve iskeleye bağlı sandal; uzakta tepeler).
 ## Su ve zemin, göl şeklinden (LakeShape) üretilen tek bir veri dokusunu paylaşır (LakeTexture).
 ## Hazır modeller yoksa (ModelLibrary.has) kodla kurulan basit parçalar (Props) kullanılır.
-## Gölge yalnızca ağaçlardan, iskeleden, kamp eşyalarından ve karakterlerden düşer.
-## Çizim sayısı az tutulur: iskele renk başına tek ağ, aynı modelin kopyaları tek MultiMesh
-## (ModelLibrary.scatter), arazinin opak suyun altında kalan kareleri hiç kurulmaz.
+## Gölge ağaçlardan, kayalardan, iskeleden, kamp eşyalarından, sandaldan ve karakterlerden düşer.
+## Çizim sayısı az tutulur: iskele renk başına tek ağ, bir paketin modelleri bölge parçalarında
+## tek ağ (ModelLibrary.merge), nilüfer ve çiçekler tek ağ (MeshBatch), arazinin opak suyun
+## altında kalan kareleri hiç kurulmaz.
 
 ## İskele güvertesinin su üstündeki yüksekliği (m).
 const DOCK_HEIGHT := 0.35
@@ -25,14 +27,60 @@ const HIDDEN_UNDER_WATER := 0.3
 const SKY := Color("#a9d2ef")
 const WOOD := Color("#9b6a3c")
 const WOOD_DARK := Color("#6e4526")
+## Hazır modeller var mı diye bakılan ağaç (yoksa kodla basit ağaçlar).
+const FOREST_CHECK := "tree_1a"
+const FOREST_TEXTURE := "res://assets/models/kaykit_forest/forest_texture.png"
+## Orman parçalarının bölge boyu (m): her bölge tek ağ, ekranın dışındaki bölge çizilmez. Izgara
+## gölün ortasına göre: kıyıdaki kayalar ve çalılar ortadaki tek bölgeye düşer.
+const CHUNK := 30.0
+const NEAR_TREES: Array[String] = ["tree_1a", "tree_1b", "tree_3a", "tree_3b"]
+const FAR_TREES: Array[String] = ["tree_1a", "tree_1b", "tree_1c", "tree_3b", "tree_4a", "tree_4b"]
+const BUSHES: Array[String] = ["bush_1c", "bush_1e", "bush_1f", "bush_3b"]
+const GRASSES: Array[String] = ["grass_1c", "grass_2c"]
+const SMALL_ROCKS: Array[String] = ["rock_3a", "rock_3c", "rock_3e"]
+const BIG_ROCKS: Array[String] = ["rock_3g", "rock_3j", "rock_3l"]
+const ROCK_CLUSTERS := 12
+## Arkadaki orman: koru sayısı ve bir korunun yarıçapı (m).
+const GROVES := 16
+const GROVE_RADIUS := 3.2
+## Kayanın boyunun gömülen payı (kumda ya da suda oturur, havada durmaz).
+const ROCK_SINK := 0.28
+const LILY_CLUSTERS := 7
+## Nilüfer yaprağının çentiğinin yarı açısı.
+const LILY_NOTCH := 0.3
+const LOTUS_CHANCE := 0.35
+const FLOWER_CLUSTERS := 18
+const LILY := Color("#4f9a3c")
+const LILY_LIGHT := Color("#68b04a")
+const LOTUS := Color("#f48fb6")
+const LOTUS_LIGHT := Color("#ffc6da")
+const POLLEN := Color("#ffd23f")
+const DAISY_COLORS: Array[Color] = [Color("#fbf7ee"), Color("#fff4dc"), Color("#ffd54a"), Color("#f7a8c8")]
+## Kampın ocağı, iskelenin kara ucuna göre (m).
+const CAMP := Vector2(4.2, 1.9)
+## Sandal: iskelenin -x kenarından uzaklığı, suya uzanan ucundan kıyıya doğru yeri, su
+## yüzeyine göre yüksekliği, dönüşü ve boyunun yarısı (m).
+const BOAT_SIDE := 0.75
+const BOAT_ALONG := 2.0
+const BOAT_Y := -0.12
+const BOAT_YAW := 0.0
+const BOAT_HALF := 1.1
 
 var lake: LakeShape
 var data_texture: ImageTexture
 var environment: Environment
 
+## Süslerin girmeyeceği daireler (x, z, yarıçap): main dükkânın yerini setup'tan önce verir.
+var keep_clear: Array[Vector3] = []
+
 var _rng := RandomNumberGenerator.new()
 ## Toplu çizilecek modeller: "id|gölge" -> yerleşimler (_flush_batches).
 var _batches: Dictionary = {}
+## Yerleşmiş ağaç, kaya ve çalıların yerleri (x, z, yarıçap): üst üste binmesinler.
+var _occupied: Array[Vector3] = []
+var _boat: Node3D
+var _boat_base := Vector3.ZERO
+var _clock := 0.0
 
 
 func setup(shape: LakeShape) -> void:
@@ -319,8 +367,22 @@ func _multimesh(mesh: Mesh, transforms: Array[Transform3D], rigid: bool) -> void
 
 # --- Çevre -------------------------------------------------------------------------------
 
+## Kıyı boyunca ve ötesinde (hedef ekran: docs/img/hedef_ekran.jpg): yosunlu kayalar, kıyıya yakın
+## yuvarlak ağaçlar, arkada karışık orman, çalılar, çimen öbekleri, çiçekler; suda nilüferler;
+## iskelenin yanında kamp ve bağlı sandal; uzakta tepeler. Orman parçaları (tek doku) bölge
+## parçalarında tek ağda birleşir (ModelLibrary.merge), nilüfer ve çiçekler kodla tek ağ (MeshBatch).
 func _build_scenery() -> void:
-	if not ModelLibrary.has("trees_a_large"):
+	var dock := lake.dock
+	var land := Vector2(dock.get_center().x, dock.end.y)
+	# Kampın yeri boş kalsın (çalı, çimen, kaya oraya düşmesin).
+	keep_clear.append(Vector3(land.x + CAMP.x, land.y + CAMP.y, 2.1))
+	var plants := MeshBatch.new()
+	_build_lilies(plants)
+	_build_flowers(plants)
+	if not plants.is_empty():
+		var node := plants.build(self, "Plants")
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if not ModelLibrary.has(FOREST_CHECK):
 		_build_fallback_trees()
 		return
 	var center := lake.water_bounds.get_center()
@@ -332,62 +394,303 @@ func _build_scenery() -> void:
 	for f in far:
 		var p: Vector2 = center + (f[1] as Vector2)
 		_spawn(f[0], p, f[2], 1.0, false)
-	# Ağaç kümeleri: kumsalın dışında; iskelenin önünü (kameraya yakın taraf) boş bırak.
-	var groups := ["trees_a_large", "trees_a_medium", "trees_b_large", "trees_b_medium", "trees_a_small", "trees_b_small"]
-	var placed := 0
-	var tries := 0
-	var area := lake.water_bounds.grow(12.0)
-	while placed < 18 and tries < 3000:
-		tries += 1
-		var p := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
-		var shore := lake.shore_distance(p)
-		if shore > -3.2 or _near_camera_side(p):
-			continue
-		_spawn(groups[placed % groups.size()], p, _rng.randf() * TAU, _rng.randf_range(0.85, 1.15), true)
-		placed += 1
-	# Tek ağaçlar kıyıya biraz daha yakın.
-	placed = 0
-	tries = 0
-	while placed < 7 and tries < 3000:
-		tries += 1
-		var p := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
-		var shore := lake.shore_distance(p)
-		if shore > -2.4 or shore < -4.5 or _near_camera_side(p):
-			continue
-		_spawn("tree_a" if placed % 2 == 0 else "tree_b", p, _rng.randf() * TAU, _rng.randf_range(0.8, 1.1), true)
-		placed += 1
-	# Kayalar: kumsalda ve kıyının hemen içinde.
-	placed = 0
-	tries = 0
-	var rocks := ["rock_a", "rock_b", "rock_c", "rock_d", "rock_e"]
-	var near := lake.water_bounds.grow(2.0)
-	while placed < 12 and tries < 3000:
-		tries += 1
-		var p := Vector2(_rng.randf_range(near.position.x, near.end.x), _rng.randf_range(near.position.y, near.end.y))
-		var shore := lake.shore_distance(p)
-		if shore < -1.4 or shore > 0.35 or lake.on_dock(p, 1.5):
-			continue
-		_spawn(rocks[placed % rocks.size()], p, _rng.randf() * TAU, _rng.randf_range(0.6, 1.1), true)
-		placed += 1
-	_build_camp()
+	_build_rocks()
+	var trees: Array[Array] = []
+	var low: Array[Array] = []
+	# Kıyıya yakın yuvarlak ağaçlar, arkada korular (çamlar da). Kameranın önü boş kalır.
+	_scatter_band(trees, 14, Vector2(-5.0, -2.7), NEAR_TREES, 1.4, false, 9.0)
+	_build_groves(trees)
+	_scatter_band(trees, 16, Vector2(-40.0, -5.0), FAR_TREES, 1.5, false, 16.0)
+	# Çalılar kumsalın bittiği yerde ve ağaçların dibinde; çimen öbekleri kıyı boyunca.
+	_scatter_band(low, 14, Vector2(-3.2, -1.3), BUSHES, 0.7, false, 4.0, Vector2(0.8, 1.2))
+	_scatter_band(low, 10, Vector2(-8.0, -3.2), BUSHES, 0.8, false, 9.0, Vector2(0.9, 1.3))
+	_scatter_band(low, 46, Vector2(-5.0, -0.9), GRASSES, 0.3, true, 6.0, Vector2(0.7, 1.2))
+	for node in ModelLibrary.merge(self, "Trees", trees, CHUNK, null, center):
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	for node in ModelLibrary.merge(self, "Undergrowth", low, CHUNK, null, center):
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_build_camp(land)
+	_build_boat()
 	_flush_batches()
 
 
-## İskelenin kara ucunun yanında küçük bir balıkçı kampı (ileride Dede'nin yeri).
-func _build_camp() -> void:
-	var dock := lake.dock
-	var land := Vector2(dock.get_center().x, dock.end.y)
-	_spawn("tent", land + Vector2(4.2, 1.6), deg_to_rad(-120.0), 1.0, true)
-	_spawn("barrel", land + Vector2(1.6, 0.2), 0.3, 1.0, true)
-	_spawn("crate", land + Vector2(2.3, 0.7), 0.9, 1.0, true)
-	_spawn("sack", land + Vector2(1.9, 1.1), 0.0, 1.0, true)
-	_spawn("lumber", land + Vector2(5.6, -0.4), 1.2, 0.9, true)
-	_spawn("lantern_post", land + Vector2(-1.15, -1.6), 0.0, 1.0, true)
-	# İskelenin solu Nine'nin dükkânı (main kurar): bank kampın yanında, göle bakar.
-	_spawn("bench", land + Vector2(2.9, -1.0), deg_to_rad(15.0), 1.0, true)
-	var bucket := ModelLibrary.spawn(self, "bucket", Vector3(dock.get_center().x - 0.45, DOCK_HEIGHT + 0.04, dock.position.y + 0.55), 0.4)
+## Kıyı uzaklığı band (x: en uzak, y: en yakın; karada negatif) aralığına count kopya serper.
+## Kopyalar birbirine, dükkâna ve kampa radius'tan yakın düşmez; camera_ok değilse kameranın önüne
+## (iskelenin arkası) de düşmez. area_grow: gölün kutusunun ne kadar dışına kadar aranacağı.
+func _scatter_band(out: Array[Array], count: int, band: Vector2, kinds: Array[String], radius: float,
+		camera_ok: bool, area_grow: float, size: Vector2 = Vector2(0.85, 1.15)) -> void:
+	var area := lake.water_bounds.grow(area_grow)
+	var placed := 0
+	var tries := 0
+	while placed < count and tries < count * 400:
+		tries += 1
+		var p := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
+		var shore := lake.shore_distance(p)
+		if shore < band.x or shore > band.y or lake.on_dock(p, 1.2) or (not camera_ok and _near_camera_side(p)):
+			continue
+		if not _free_spot(p, radius):
+			continue
+		_occupied.append(Vector3(p.x, p.y, radius))
+		var id := kinds[_rng.randi_range(0, kinds.size() - 1)]
+		var basis := Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3.ONE * _rng.randf_range(size.x, size.y))
+		out.append([id, Transform3D(basis, Vector3(p.x, ground_height(p), p.y))])
+		placed += 1
+
+
+## Arkadaki orman: korular (birkaç ağaç bir arada; aralarında açıklık kalır).
+func _build_groves(out: Array[Array]) -> void:
+	var area := lake.water_bounds.grow(15.0)
+	var groves := 0
+	var tries := 0
+	while groves < GROVES and tries < 4000:
+		tries += 1
+		var c := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
+		if lake.shore_distance(c) > -6.5 or _near_camera_side(c):
+			continue
+		groves += 1
+		for k in _rng.randi_range(4, 7):
+			var p := c + Dice.in_disc(_rng, GROVE_RADIUS)
+			if lake.shore_distance(p) > -4.8 or _near_camera_side(p) or not _free_spot(p, 1.2):
+				continue
+			_occupied.append(Vector3(p.x, p.y, 1.2))
+			var id := FAR_TREES[_rng.randi_range(0, FAR_TREES.size() - 1)]
+			var basis := Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3.ONE * _rng.randf_range(0.8, 1.2))
+			out.append([id, Transform3D(basis, Vector3(p.x, ground_height(p), p.y))])
+
+
+## Bu noktada radius'luk yer boş mu (dükkân, kamp ve yerleşmiş ağaç, kaya, çalı)?
+func _free_spot(p: Vector2, radius: float) -> bool:
+	for c in keep_clear:
+		if p.distance_to(Vector2(c.x, c.y)) < c.z + radius:
+			return false
+	for c in _occupied:
+		if p.distance_to(Vector2(c.x, c.y)) < c.z + radius:
+			return false
+	return true
+
+
+## Yosunlu kayalar: kıyı çizgisinde öbek öbek (biri büyük, yanında küçükler), bir kısmı suyun
+## içinde; tabanları gömülü. Hepsi tek ağ, yosun malzemesiyle.
+func _build_rocks() -> void:
+	var rocks: Array[Array] = []
+	var near := lake.water_bounds.grow(2.0)
+	var clusters := 0
+	var tries := 0
+	while clusters < ROCK_CLUSTERS and tries < 4000:
+		tries += 1
+		var c := Vector2(_rng.randf_range(near.position.x, near.end.x), _rng.randf_range(near.position.y, near.end.y))
+		var shore := lake.shore_distance(c)
+		if shore < -1.0 or shore > 0.3 or lake.on_dock(c, 1.8) or not _free_spot(c, 0.9):
+			continue
+		clusters += 1
+		var kinds := BIG_ROCKS if clusters % 2 == 0 else SMALL_ROCKS
+		_rock(rocks, c, kinds[_rng.randi_range(0, kinds.size() - 1)], 0.9)
+		for k in _rng.randi_range(1, 3):
+			var p := c + Vector2(_rng.randf_range(0.7, 1.2), 0.0).rotated(_rng.randf() * TAU)
+			if lake.shore_distance(p) > 0.7 or lake.on_dock(p, 1.5) or not _free_spot(p, 0.35):
+				continue
+			_rock(rocks, p, SMALL_ROCKS[_rng.randi_range(0, SMALL_ROCKS.size() - 1)], 0.4)
+	var material := ShaderMaterial.new()
+	material.shader = load("res://scenes/world/moss.gdshader")
+	material.set_shader_parameter("albedo_texture", load(FOREST_TEXTURE))
+	for node in ModelLibrary.merge(self, "Rocks", rocks, CHUNK, material, lake.water_bounds.get_center()):
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+
+
+func _rock(out: Array[Array], p: Vector2, id: String, radius: float) -> void:
+	_occupied.append(Vector3(p.x, p.y, radius))
+	var size := _rng.randf_range(0.8, 1.2)
+	var height := ModelLibrary.bounds(id).size.y * size
+	var basis := Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3.ONE * size)
+	out.append([id, Transform3D(basis, Vector3(p.x, ground_height(p) - height * ROCK_SINK, p.y))])
+
+
+## Kıyıya yakın sığda nilüfer öbekleri: çentikli yapraklar, bazılarında pembe nilüfer çiçeği.
+## İskelenin, sandalın ve oltanın sık düştüğü açıklığın dışında.
+func _build_lilies(batch: MeshBatch) -> void:
+	var bounds := lake.water_bounds
+	var clusters := 0
+	var tries := 0
+	while clusters < LILY_CLUSTERS and tries < 4000:
+		tries += 1
+		var c := Vector2(_rng.randf_range(bounds.position.x, bounds.end.x), _rng.randf_range(bounds.position.y, bounds.end.y))
+		var shore := lake.shore_distance(c)
+		if shore < 0.7 or shore > 1.9 or lake.on_dock(c, 3.0) or _near_boat(c):
+			continue
+		clusters += 1
+		for k in _rng.randi_range(3, 6):
+			var p := c + Dice.in_disc(_rng, 0.8)
+			if lake.shore_distance(p) < 0.4 or lake.on_dock(p, 2.6):
+				continue
+			var radius := _rng.randf_range(0.17, 0.3)
+			var y := 0.012 + 0.003 * k
+			_lily_pad(batch, Vector3(p.x, y, p.y), radius, _rng.randf() * TAU, LILY if k % 2 == 0 else LILY_LIGHT)
+			if _rng.randf() < LOTUS_CHANCE:
+				_lotus(batch, Vector3(p.x, y + 0.004, p.y), _rng.randf_range(1.1, 1.5), _rng.randf() * TAU)
+
+
+## Nilüfer yaprağı: ortası hafif kabarık, çentikli disk (yukarı bakan yelpaze).
+func _lily_pad(batch: MeshBatch, center: Vector3, radius: float, yaw: float, color: Color) -> void:
+	var points := PackedVector3Array()
+	var hub := center + Vector3(0, 0.012, 0)
+	var steps := 12
+	for i in steps:
+		var a0 := yaw + LILY_NOTCH + (TAU - 2.0 * LILY_NOTCH) * float(i) / steps
+		var a1 := yaw + LILY_NOTCH + (TAU - 2.0 * LILY_NOTCH) * float(i + 1) / steps
+		points.append_array(PackedVector3Array([hub, center + Vector3(cos(a0), 0, sin(a0)) * radius,
+				center + Vector3(cos(a1), 0, sin(a1)) * radius]))
+	batch.triangles(points, color)
+
+
+## Nilüfer çiçeği: dışta 6 pembe, içte 5 açık pembe yaprak, ortada sarı göbek.
+func _lotus(batch: MeshBatch, base: Vector3, size: float, yaw: float) -> void:
+	var outer := PackedVector3Array()
+	var inner := PackedVector3Array()
+	for i in 6:
+		_petal(outer, base, yaw + TAU * i / 6.0, 0.12 * size, 0.07 * size, 0.035 * size)
+	for i in 5:
+		_petal(inner, base + Vector3(0, 0.01, 0), yaw + 0.3 + TAU * i / 5.0, 0.08 * size, 0.1 * size, 0.026 * size)
+	batch.triangles(outer, LOTUS)
+	batch.triangles(inner, LOTUS_LIGHT)
+	batch.triangles(_disc(base + Vector3(0, 0.05 * size, 0), 0.028 * size, 6), POLLEN)
+
+
+## Çiçek yaprağı: tabandan dışa ve yukarı uzanan baklava (iki üçgen, yukarı bakar).
+static func _petal(out: PackedVector3Array, base: Vector3, angle: float, length: float, lift: float, half: float) -> void:
+	var dir := Vector3(cos(angle), 0, sin(angle))
+	var side := Vector3(-dir.z, 0, dir.x)
+	var root := base + dir * length * 0.12
+	var mid := base + dir * length * 0.55 + Vector3(0, lift * 0.5, 0)
+	var tip := base + dir * length + Vector3(0, lift, 0)
+	_tri_up(out, root, mid + side * half, tip)
+	_tri_up(out, root, tip, mid - side * half)
+
+
+## Yukarı bakan düz çokgen (göbek).
+static func _disc(center: Vector3, radius: float, steps: int) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	for i in steps:
+		var a0 := TAU * i / steps
+		var a1 := TAU * (i + 1) / steps
+		out.append_array(PackedVector3Array([center, center + Vector3(cos(a0), 0, sin(a0)) * radius,
+				center + Vector3(cos(a1), 0, sin(a1)) * radius]))
+	return out
+
+
+## Üçgeni yukarı bakacak sırayla ekler (kamera hep yukarıdan bakar; tek yüz yeter).
+static func _tri_up(out: PackedVector3Array, a: Vector3, b: Vector3, c: Vector3) -> void:
+	if (c - a).cross(b - a).y >= 0.0:
+		out.append_array(PackedVector3Array([a, b, c]))
+	else:
+		out.append_array(PackedVector3Array([a, c, b]))
+
+
+## Çimende küçük çiçek öbekleri (papatya, düğün çiçeği, pembe): beş yapraklı yıldız ve göbek.
+func _build_flowers(batch: MeshBatch) -> void:
+	var area := lake.water_bounds.grow(8.0)
+	var clusters := 0
+	var tries := 0
+	while clusters < FLOWER_CLUSTERS and tries < 4000:
+		tries += 1
+		var c := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
+		var shore := lake.shore_distance(c)
+		if shore < -7.5 or shore > -1.8 or lake.on_dock(c, 1.5) or not _free_spot(c, 0.4):
+			continue
+		clusters += 1
+		var color := DAISY_COLORS[_rng.randi_range(0, DAISY_COLORS.size() - 1)]
+		var petals := PackedVector3Array()
+		var hearts := PackedVector3Array()
+		for k in _rng.randi_range(4, 8):
+			var p := c + Dice.in_disc(_rng, 0.55)
+			var size := _rng.randf_range(0.09, 0.13)
+			var base := Vector3(p.x, ground_height(p) + 0.04, p.y)
+			var yaw := _rng.randf() * TAU
+			for i in 5:
+				_petal(petals, base, yaw + TAU * i / 5.0, size, 0.012, size * 0.3)
+			hearts.append_array(_disc(base + Vector3(0, 0.008, 0), size * 0.3, 6))
+		batch.triangles(petals, color)
+		batch.triangles(hearts, POLLEN if color != DAISY_COLORS[2] else Color("#e07b1f"))
+
+
+## İskelenin kara ucunun sağında küçük kamp (Dalga 4'te Dede'yle çay): ocak, iki kütük oturak,
+## iskelenin başında tabela; iskeleye yakın fıçı, kasa ve çuval. Her paketin eşyaları tek ağ.
+func _build_camp(land: Vector2) -> void:
+	var kenney: Array[Array] = []
+	var medieval: Array[Array] = []
+	var camp := land + CAMP
+	_prop(kenney, "campfire", camp, 0.0)
+	_prop(kenney, "log_seat", camp + Vector2(-1.0, -0.15), deg_to_rad(80.0))
+	_prop(kenney, "log_seat", camp + Vector2(0.6, 0.9), deg_to_rad(-25.0))
+	_prop(kenney, "signpost", land + Vector2(1.05, -0.4), deg_to_rad(-35.0))
+	_prop(medieval, "barrel", land + Vector2(1.6, 0.2), 0.3)
+	_prop(medieval, "crate", land + Vector2(2.3, 0.75), 0.9)
+	_prop(medieval, "sack", land + Vector2(1.85, 1.2), 0.0)
+	var lantern: Array[Array] = []
+	_prop(lantern, "lantern_post", land + Vector2(-1.15, -1.6), 0.0)
+	for group: Array in [["CampKenney", kenney], ["CampMedieval", medieval], ["Lantern", lantern]]:
+		for node in ModelLibrary.merge(self, str(group[0]), group[1]):
+			node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	var bucket := ModelLibrary.spawn(self, "bucket", Vector3(lake.dock.get_center().x - 0.45, DOCK_HEIGHT + 0.04, lake.dock.position.y + 0.55), 0.4)
 	if bucket != null:
 		set_shadows(bucket, true)
+
+
+func _prop(out: Array[Array], id: String, p: Vector2, yaw: float) -> void:
+	out.append([id, Transform3D(Basis(Vector3.UP, yaw), Vector3(p.x, ground_height(p), p.y))])
+
+
+## İskelenin -x yanına bağlı sandal (Dalga 2'de binilir; şimdilik süs ve Dede'nin sözü). Suyla
+## hafifçe iner kalkar (_process).
+func _build_boat() -> void:
+	if not ModelLibrary.has("boat"):
+		return
+	_boat = Node3D.new()
+	_boat.name = "Boat"
+	_boat_base = _boat_spot()
+	_boat.position = _boat_base
+	add_child(_boat)
+	for node in ModelLibrary.merge(_boat, "BoatMesh", [["boat", Transform3D(Basis(Vector3.UP, BOAT_YAW), Vector3.ZERO)]]):
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+
+
+## Sandalın ortası (dünya; botun dokunuşu için). Sandal yoksa yerinin su yüzeyindeki noktası.
+func boat_point() -> Vector3:
+	return _boat.global_position + Vector3(0, 0.2, 0) if _boat != null else _boat_spot()
+
+
+## Sandalın yeri (su yüzeyindeki orta noktası).
+func _boat_spot() -> Vector3:
+	var dock := lake.dock
+	return Vector3(dock.position.x - BOAT_SIDE, BOAT_Y, dock.position.y + BOAT_ALONG)
+
+
+func _near_boat(p: Vector2) -> bool:
+	var spot := _boat_spot()
+	return p.distance_to(Vector2(spot.x, spot.z)) < BOAT_HALF + 1.0
+
+
+func _process(delta: float) -> void:
+	if _boat == null:
+		return
+	_clock += delta
+	_boat.position = _boat_base + Vector3(0, sin(_clock * 1.3) * 0.025, 0)
+	_boat.rotation = Vector3(sin(_clock * 1.1 + 1.0) * 0.015, 0.0, sin(_clock * 0.9) * 0.03)
+
+
+## Ekrandaki bir nokta sandalın üstünde mi (sandalın boyunca bir çizgiye uzaklık)? main dokunma
+## hedefi yapar: sandala dokununca atış yerine Dede konuşur.
+func boat_hit(view: Camera3D, screen: Vector2) -> bool:
+	if _boat == null or view == null or not _boat.is_inside_tree():
+		return false
+	var center := _boat.global_position + Vector3(0, 0.2, 0)
+	var axis := _boat.global_transform.basis.z.normalized() * BOAT_HALF
+	if view.is_position_behind(center + axis) or view.is_position_behind(center - axis):
+		return false
+	var a := view.unproject_position(center + axis)
+	var b := view.unproject_position(center - axis)
+	var scale := view.get_viewport().get_visible_rect().size.y / 1080.0
+	var radius := maxf(24.0 * scale, a.distance_to(b) * 0.25)
+	return Geometry2D.get_closest_point_to_segment(screen, a, b).distance_to(screen) <= radius
 
 
 ## Kameraya yakın taraf: iskelenin arkası (kamera +x +z yönünde). Ağaçlar balıkçıyı örtmesin.
@@ -424,7 +727,7 @@ static func set_shadows(root: Node, on: bool) -> void:
 				else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
-## Modeller yoksa kodla basit ağaçlar ve kayalar.
+## Modeller yoksa kodla basit ağaçlar.
 func _build_fallback_trees() -> void:
 	var far := lake.water_bounds.grow(9.0)
 	var placed := 0
