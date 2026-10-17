@@ -77,7 +77,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Dede ve Nine'nin yüzleri sözle değişir (gülümser, anlatır, şaşırır).
 - [x] Uygulama ikonu (zıplayan koi), açılış ekranında logo, ayarlarda logo.
 - [x] Göl kenarı hedef ekrana yaklaştı: KayKit orman paketinden ağaçlar, korular, çalılar, çimen ve yosunlu kayalar; kodla nilüfer ve çiçekler; Kenney kampı ve iskeleye bağlı sandal (dokununca Dede konuşur). Çizim 180 → 160.
-- [ ] Kapanış: inceleme, video, telefonda dene. **v0.2.1.**
+- [x] Kapanış: inceleme (5 bulgu ve küçük öneriler düzeltildi: ipucu çubuğuna sığmayan söz, uzak koruların yerleşmemesi, dükkân panelinin sekmeden sekmeye büyümesi, sandala yutulan atış dokunuşu, balık kartının fazla küçülmesi), tanıtım videosu, telefonda dene listesi. **v0.2.1.**
 
 **Dalga 2 — Büyük göl → v0.3**
 
