@@ -39,6 +39,10 @@ var rod: RodModel
 var _body: Node3D
 var _target := Vector2.ZERO
 var _walking: bool = false
+## Kıyı yolu (ShorePath.route): sıradaki noktalar ve varılamayan nokta sayısı.
+var _path := PackedVector2Array()
+var _path_index: int = 0
+var _misses: int = 0
 ## 1 = olta dik taşınıyor, 0 = elde (atış, bekleme, çekme).
 var _carry: float = 1.0
 var _cast_time: float = -1.0
@@ -84,14 +88,32 @@ func place(p: Vector2) -> void:
 
 ## Düz bir çizgide yürür; önü su olursa kıyıda durur.
 func walk_to(p: Vector2) -> void:
-	_target = p
+	walk_path(PackedVector2Array([p]))
+
+
+## Yolu izler (ShorePath.route): noktalara sırayla düz yürür. Bir noktaya varamazsa (engel) bir
+## sonrakine geçer; üst üste iki kez varamazsa durur.
+func walk_path(points: PackedVector2Array) -> void:
+	_path = points
+	_path_index = 0
+	_misses = 0
+	if points.is_empty():
+		stop()
+		return
+	_target = points[0]
 	_walking = true
 
 
 func stop() -> void:
+	_path = PackedVector2Array()
 	if _walking:
 		_walking = false
 		arrived.emit()
+
+
+## Yolun kalan noktaları (bot ve testler).
+func path_left() -> PackedVector2Array:
+	return _path.slice(_path_index)
 
 
 func is_walking() -> bool:
@@ -154,12 +176,18 @@ func _process(delta: float) -> void:
 		left -= dt
 		var to := _target - pos2()
 		var d := to.length()
-		if d < 0.05:
-			stop()
+		var last := _path_index >= _path.size() - 1
+		if d < (0.05 if last else 0.15):
+			_next_point()
 		elif _move(to / d, minf(SPEED * dt, d)):
 			moved = true
+			_misses = 0
 		else:
-			stop()
+			_misses += 1
+			if last or _misses >= 2:
+				stop()
+			else:
+				_next_point()
 	_speed = move_toward(_speed, SPEED if moved else 0.0, delta * (30.0 if moved else 8.0))
 	var p := pos2()
 	_y = move_toward(_y, _height(p), delta * 2.5)
@@ -169,6 +197,15 @@ func _process(delta: float) -> void:
 	rod.bend = clampf(tension, 0.0, 1.2) if pose == "reel" else 0.0
 	_body.call("animate", delta, _speed, pose, tension)
 	_update_rod(delta)
+
+
+## Yolun sıradaki noktası; yol bittiyse durur.
+func _next_point() -> void:
+	_path_index += 1
+	if _path_index >= _path.size():
+		stop()
+	else:
+		_target = _path[_path_index]
 
 
 ## Oltanın duruşu: serbestken gövdeye göre dik (yumuşak geçişle), atışta ve olta sudayken elde.

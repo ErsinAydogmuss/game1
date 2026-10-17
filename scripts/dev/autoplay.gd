@@ -117,12 +117,15 @@ func _play_controls() -> void:
 	await _wait_frames(3)
 	_check("sandala dokun → Dede konuşur, atış yok", str(main.get("_hint_shown")) == "UI_DEDE_BOAT"
 			and _session().state == FishingSession.State.IDLE and not angler.is_walking())
-	# 1) Suyun öbür yanındaki karaya dokun: iskelenin kenarında (kıyıda) durmalı.
+	# 1) Suyun öbür yanındaki karaya dokun: düz yol suyun üstünden geçer; balıkçı kıyı yolundan
+	# dolaşıp varmalı, yolda hiç suya basmamalı.
 	var across := Vector2(5.0, 7.0)
+	var wet: Array[bool] = [false]
 	await _tap_world(across)
-	await _wait_until(func() -> bool: return not angler.is_walking(), 6.0)
-	var edge := angler.pos2()
-	_check("kıyıda durur", lake.is_walkable(edge) and edge.distance_to(across) > 2.0 and lake.on_dock(edge))
+	await _wait_until(func() -> bool:
+		wet[0] = wet[0] or not lake.is_walkable(angler.pos2())
+		return not angler.is_walking(), 12.0)
+	_check("karşı kıyıya dokun → kıyı yolundan dolaşır (suya basmaz)", not wet[0] and angler.pos2().distance_to(across) < 0.4)
 	# 2) Karaya (iskelenin kara ucuna) dokun: oraya yürümeli.
 	var land := Vector2(0.0, 7.8)
 	await _tap_world(land)

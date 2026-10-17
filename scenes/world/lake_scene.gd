@@ -78,6 +78,8 @@ var _rng := RandomNumberGenerator.new()
 var _batches: Dictionary = {}
 ## Yerleşmiş ağaç, kaya ve çalıların yerleri (x, z, yarıçap): üst üste binmesinler.
 var _occupied: Array[Vector3] = []
+## Kampın yeri (x, z, yarıçap).
+var _camp := Vector3.ZERO
 var _boat: Node3D
 var _boat_base := Vector3.ZERO
 var _clock := 0.0
@@ -375,7 +377,8 @@ func _build_scenery() -> void:
 	var dock := lake.dock
 	var land := Vector2(dock.get_center().x, dock.end.y)
 	# Kampın yeri boş kalsın (çalı, çimen, kaya oraya düşmesin).
-	keep_clear.append(Vector3(land.x + CAMP.x, land.y + CAMP.y, 2.1))
+	_camp = Vector3(land.x + CAMP.x, land.y + CAMP.y, 2.1)
+	keep_clear.append(_camp)
 	var plants := MeshBatch.new()
 	_build_lilies(plants)
 	_build_flowers(plants)
@@ -457,6 +460,18 @@ func _build_groves(out: Array[Array]) -> void:
 			var id := FAR_TREES[_rng.randi_range(0, FAR_TREES.size() - 1)]
 			var basis := Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3.ONE * _rng.randf_range(0.8, 1.2))
 			out.append([id, Transform3D(basis, Vector3(p.x, ground_height(p), p.y))])
+
+
+## Balıkçının içinden geçmediği yerler (kıyı yolu): kamp, ağaçlar, kayalar ve çalılar (çimen ve
+## çiçek değil). Daireler: x, z, yarıçap; süsün yarıçapı yerleşim payıdır (taç), gövde bunun yarısı.
+func blockers() -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	if _camp.z > 0.0:
+		out.append(_camp)
+	for c in _occupied:
+		if c.z >= 0.7:
+			out.append(Vector3(c.x, c.y, c.z * 0.5))
+	return out
 
 
 ## Bu noktada radius'luk yer boş mu (dükkân, kamp ve yerleşmiş ağaç, kaya, çalı)?

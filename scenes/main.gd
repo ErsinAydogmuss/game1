@@ -67,6 +67,8 @@ var _cue_clock: float = 0.0
 ## Açılacak kart (balık elde gösterilirken bekler) ve kalan süre.
 var _card_info: Dictionary = {}
 var _card_outcome: Dictionary = {}
+## Kıyı yolu: dokunulan yere sudan geçmeden yürünür (ShorePath).
+var path: ShorePath
 ## Oyunun gölü (spots.json "main") ve balıkçının bölgesi (değişince oranlar ve garanti yenilenir).
 var spot_id: String = ""
 var zone_id: String = ""
@@ -269,7 +271,7 @@ func _on_walk_requested(target: Vector2) -> void:
 	if session.state != FishingSession.State.IDLE:
 		return
 	_pending_cast = Dice.NO_POINT
-	angler.walk_to(target)
+	_walk_route(target)
 
 
 ## Suya dokunuş: menzildeyse hemen atar; değilse önce yaklaşır (kıyıda durursa oradan atar).
@@ -288,7 +290,56 @@ func _on_cast_requested(target: Vector2) -> void:
 		_try_cast(target)
 		return
 	_pending_cast = target
-	angler.walk_to(target)
+	# Düz yürüyünce (kıyıda durur) menzile giriyorsa düz yürür; girmiyorsa (koyun öbür yakası) kıyı
+	# yolundan hedefe en yakın kıyıya gider. Menzile girince atar.
+	if _straight_reach(target) <= session.range_m() - 0.5:
+		angler.walk_to(target)
+	else:
+		_walk_route(target)
+
+
+## Kıyı yolundan yürür (yol bulunamazsa düz: eski göller ızgaranın dışında da yürünür). Hedef
+## kilitli bir bölgedeyse balıkçı çitin önünde durur, Dede ne zaman gidileceğini söyler.
+func _walk_route(target: Vector2) -> void:
+	var points := path.route(angler.pos2(), target)
+	if points.is_empty():
+		angler.walk_to(target)
+		return
+	angler.walk_path(points)
+	var goal := path.nearest_open(target)
+	if Dice.is_point(goal) and points[points.size() - 1].distance_to(goal) > 1.0:
+		var reason := Zones.lock_reason(GameState.db, GameState.save, Zones.at(GameState.db, spot_id, target))
+		if not reason.is_empty():
+			var key := str(reason["key"])
+			_say("UI_DEDE_GATE")
+			hud.toast(tr(key) % int(reason["rank"]) if key == "UI_ZONE_LOCKED_RANK" else tr(key), UiKit.ACCENT, "lock")
+
+
+## Kilitli bölgelerin çitleri kıyı yolunu keser; bölge açılınca (rütbe) çit açılır.
+func _update_gates() -> void:
+	var db := GameState.db
+	for z in db.zones_of(spot_id):
+		var gates: Array = z["gates"]
+		var closed := not Zones.unlocked(db, GameState.save, z)
+		for i in gates.size():
+			var g: PackedVector2Array = gates[i]
+			path.set_gate("%s_%d" % [z["id"], i], g[0], g[1], closed)
+
+
+## Hedefe düz yürüyünce (kıyıda ya da dünyanın sınırında durur) hedefe kalan uzaklık.
+func _straight_reach(target: Vector2) -> float:
+	var from := angler.pos2()
+	var dir := (target - from).normalized()
+	var stop := from
+	var length := from.distance_to(target)
+	var d := 0.2
+	while d <= length:
+		var p := from + dir * d
+		if not lake.is_walkable(p):
+			break
+		stop = p
+		d += 0.2
+	return stop.distance_to(target)
 
 
 func _check_pending_cast() -> void:
@@ -323,12 +374,32 @@ func _on_action_down() -> void:
 	if card.visible:
 		return
 	if session.state == FishingSession.State.IDLE:
-		# Space / AT: balıkçının önüne; önü kara ise gölün ortasına doğru.
-		var forward := angler.pos2() + angler.facing * FORWARD_CAST
-		var landing := lake.landing_point(angler.pos2(), forward, session.range_m(), session.rules.min_shore)
-		_try_cast(forward if Dice.is_point(landing) else lake.water_bounds.get_center())
+		# Space / AT: balıkçının önüne; önü kara ise suyun olduğu en yakın yöne.
+		_try_cast(angler.pos2() + _cast_dir() * FORWARD_CAST)
 		return
 	session.press()
+
+
+## AT düğmesinin yönü: balıkçının baktığı yön; orada su yoksa 15° adımlarla iki yana (arkaya kadar)
+## bakılır, baktığı yöne yakın ve suya iyi düşen yön seçilir.
+func _cast_dir() -> Vector2:
+	var from := angler.pos2()
+	var best := angler.facing
+	var best_score := -INF
+	for k in 25:
+		var angle := deg_to_rad(15.0 * ((k + 1) >> 1)) * (1.0 if k % 2 == 1 else -1.0)
+		var dir := angler.facing.rotated(angle)
+		var landing := lake.landing_point(from, from + dir * FORWARD_CAST, session.range_m(), session.rules.min_shore)
+		if not Dice.is_point(landing):
+			continue
+		# Önce baktığı yöne yakın, sonra suya iyi düşen yön.
+		var score := lake.shore_distance(landing) - absf(angle)
+		if k == 0:
+			return dir
+		if score > best_score:
+			best_score = score
+			best = dir
+	return best
 
 
 func _on_action_up() -> void:
@@ -470,6 +541,7 @@ func _on_catch() -> void:
 	hud.hold_toasts(CatchFx.HOLD_TIME)
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
 		session.set_access(Zones.open_ids(db, save, spot_id))
+		_update_gates()
 		var rank := int(ranked["new_rank"])
 		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up", "star")
 	if not kept:
@@ -716,6 +788,12 @@ func _place_shop() -> void:
 	var blockers: Array[Vector3] = [elder.blocker()]
 	blockers.append_array(shop.blockers())
 	angler.blockers = blockers
+	# Kıyı yolu: Dede, dükkân, kamp ve büyük süsler geçilmez.
+	path = ShorePath.new(lake, lake.world_rect if lake.world_band != INF else Rect2())
+	var obstacles := blockers.duplicate()
+	obstacles.append_array(scene.blockers())
+	path.set_obstacles(obstacles)
+	_update_gates()
 
 
 ## Balık göle bırakıldı: defterde bırakılan sayısı, göl sevgisi ve sayaç.
