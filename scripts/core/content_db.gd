@@ -27,8 +27,10 @@ var gear_start: Dictionary = {}
 ## [{from, id}].
 var rank_xp: PackedInt32Array = []
 var rank_titles: Array[Dictionary] = []
-## Atış noktaları: id, ellipses [{center, radius, angle (radyan)}], dock (Rect2), start,
-## max_shadows, fish_ids, fish_weights, first_fish, first_shadow {pos, heading}, max_depth, shelf_m.
+## Atış noktaları (göller): id, basins [{center, radius, angle (radyan), zone, max_depth, shelf_m}],
+## zones [_zone_def], dock (Rect2), start, max_shadows, fish_ids ve fish_weights (gölün bütün
+## türleri; bölgelerin toplamı), first_fish, first_shadow {pos, heading}. Eski şemadaki göl
+## (ellipses + tek derinlik + fish) tek bölgeli ("main") sayılır.
 var spots: Array[Dictionary] = []
 ## Oyunun açıldığı atış noktası (spots.json "main").
 var main_spot: String = ""
@@ -49,14 +51,18 @@ var _gear_index: Dictionary = {}
 var _spot_index: Dictionary = {}
 ## Atış noktası id -> LakeShape (bir kez kurulur).
 var _lakes: Dictionary = {}
+var _all_lakes: bool = true
 
 
-static func load_default() -> ContentDB:
-	return load_from(DATA_DIR)
+## all_lakes: bütün göllerin şekli kurulup denetlensin (testler). Oyun yalnızca açıldığı gölü
+## kurar (her göl bir kıyı ızgarası demek; açılışı yavaşlatmasın).
+static func load_default(all_lakes: bool = true) -> ContentDB:
+	return load_from(DATA_DIR, all_lakes)
 
 
-static func load_from(dir: String) -> ContentDB:
+static func load_from(dir: String, all_lakes: bool = true) -> ContentDB:
 	var db := ContentDB.new()
+	db._all_lakes = all_lakes
 	db._load_rarities(db._read_json(dir.path_join("rarities.json")))
 	db.rules = FishingRules.from_dict(db._read_json(dir.path_join("rules.json")), db.errors)
 	db._load_fish(db._read_json(dir.path_join("fish.json")))
@@ -133,6 +139,22 @@ func rank_title(rank: int) -> String:
 
 func spot(id: String) -> Dictionary:
 	return spots[int(_spot_index[id])] if _spot_index.has(id) else {}
+
+
+## Atış noktasının bölgeleri (sıra = LakeShape.zone_grid'deki değer).
+func zones_of(spot_id: String) -> Array[Dictionary]:
+	var s := spot(spot_id)
+	if s.is_empty():
+		return []
+	return s["zones"]
+
+
+## Atış noktasının bir bölgesi (yoksa boş).
+func zone(spot_id: String, zone_id: String) -> Dictionary:
+	for z in zones_of(spot_id):
+		if str(z["id"]) == zone_id:
+			return z
+	return {}
 
 
 ## Atış noktasının göl şekli (önbellekli).
@@ -279,27 +301,51 @@ func _load_spots(raw: Dictionary) -> void:
 	for entry: Variant in raw.get("spots", []):
 		var d: Dictionary = entry
 		var id := str(d.get("id", ""))
-		var ellipses: Array[Dictionary] = []
-		for e: Variant in d.get("ellipses", []):
-			var ed: Dictionary = e
-			ellipses.append({
-				"center": _vec2(ed.get("center"), Vector2.ZERO),
-				"radius": _vec2(ed.get("radius"), Vector2.ONE),
-				"angle": deg_to_rad(float(ed.get("angle", 0.0))),
-			})
+		var basins: Array[Dictionary] = []
+		var zones: Array[Dictionary] = []
+		if d.has("basins"):
+			for z: Variant in d.get("zones", []):
+				zones.append(_zone_def(z))
+			for b: Variant in d.get("basins", []):
+				var bd: Dictionary = b
+				basins.append(_basin_def(bd.get("ellipse", {}), str(bd.get("zone", "")),
+						float(bd.get("max_depth", 3.5)), float(bd.get("shelf_m", 4.0))))
+		else:
+			# Eski şema (home_lake): elipsler tek profilli havzalar, göl tek bölge ("main").
+			zones.append(_zone_def({ "id": "main", "fish": d.get("fish", {}) }))
+			for e: Variant in d.get("ellipses", []):
+				basins.append(_basin_def(e, "main", float(d.get("max_depth", 3.5)), float(d.get("shelf_m", 4.0))))
 		var dock_raw: Dictionary = d.get("dock", {})
 		var dock_size := _vec2(dock_raw.get("size"), Vector2.ZERO)
 		var dock_center := _vec2(dock_raw.get("center"), Vector2.ZERO)
+		# Gölün bütün türleri (defter ve katalog), bölgelerdeki ilk görülüş sırasıyla.
 		var ids := PackedStringArray()
 		var weights := PackedInt32Array()
-		var raw_fish: Dictionary = d.get("fish", {})
-		for fid: Variant in raw_fish:
-			ids.append(str(fid))
-			weights.append(int(raw_fish[fid]))
+		for z in zones:
+			var zone_ids: PackedStringArray = z["fish_ids"]
+			var zone_weights: PackedInt32Array = z["fish_weights"]
+			for i in zone_ids.size():
+				var k := ids.find(zone_ids[i])
+				if k < 0:
+					ids.append(zone_ids[i])
+					weights.append(zone_weights[i])
+				else:
+					weights[k] += zone_weights[i]
 		var first_raw: Dictionary = d.get("first_shadow", {})
+		# Yürünebilen dünya (yoksa sınırsız): kutu [[x0, z0], [x1, z1]] ve suya en çok band_m metre.
+		var world_raw: Dictionary = d.get("world", {})
+		var corners: Array = world_raw.get("rect", [])
+		var world_rect := Rect2()
+		if corners.size() == 2:
+			var a := _vec2(corners[0], Vector2.ZERO)
+			var b := _vec2(corners[1], Vector2.ZERO)
+			world_rect = Rect2(a, Vector2.ZERO).expand(b)
 		var def := {
 			"id": id,
-			"ellipses": ellipses,
+			"basins": basins,
+			"zones": zones,
+			"world_rect": world_rect,
+			"world_band": float(world_raw.get("band_m", INF)),
 			"dock": Rect2(dock_center - dock_size * 0.5, dock_size),
 			"start": _vec2(d.get("start"), Vector2.ZERO),
 			"max_shadows": int(d.get("max_shadows", 4)),
@@ -310,13 +356,64 @@ func _load_spots(raw: Dictionary) -> void:
 				"pos": _vec2(first_raw.get("pos"), Vector2.ZERO),
 				"heading": _vec2(first_raw.get("heading"), Vector2(-1, 0)).normalized(),
 			},
-			"max_depth": float(d.get("max_depth", 3.5)),
-			"shelf_m": float(d.get("shelf_m", 4.0)),
 		}
 		_spot_index[id] = spots.size()
 		spots.append(def)
 	if main_spot.is_empty() and not spots.is_empty():
 		main_spot = str(spots[0]["id"])
+
+
+func _basin_def(raw: Variant, zone: String, deepest: float, shelf_m: float) -> Dictionary:
+	var e: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
+	return {
+		"center": _vec2(e.get("center"), Vector2.ZERO),
+		"radius": _vec2(e.get("radius"), Vector2.ONE),
+		"angle": deg_to_rad(float(e.get("angle", 0.0))),
+		"zone": zone,
+		"max_depth": deepest,
+		"shelf_m": shelf_m,
+	}
+
+
+## Bölge: id, rank (açıldığı rütbe), boat (yalnızca sandalla; boat_from: kıyıdan bu kadar metre
+## içeride başlar), min_depth (gölgelerin girdiği en sığ su), fish_ids ve fish_weights (CatchOdds
+## bölge sözlüğünü atış noktası gibi okur), stands (hızlı geçişte balıkçının durduğu yerler),
+## gates (bölge kilitliyken kıyı yolunu kesen çitler: iki uç), buoys (sandalın gittiği
+## şamandıralar), current (akıntı yönü; görsel).
+func _zone_def(raw: Variant) -> Dictionary:
+	var z: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
+	var ids := PackedStringArray()
+	var weights := PackedInt32Array()
+	var raw_fish: Dictionary = z.get("fish", {})
+	for fid: Variant in raw_fish:
+		ids.append(str(fid))
+		weights.append(int(raw_fish[fid]))
+	var stands: Array[Vector2] = []
+	for p: Variant in z.get("stands", []):
+		stands.append(_vec2(p, Vector2.ZERO))
+	var buoys: Array[Vector2] = []
+	for p: Variant in z.get("buoys", []):
+		buoys.append(_vec2(p, Vector2.ZERO))
+	var gates: Array[PackedVector2Array] = []
+	for g: Variant in z.get("gates", []):
+		var ends := PackedVector2Array()
+		if typeof(g) == TYPE_ARRAY:
+			for p: Variant in g:
+				ends.append(_vec2(p, Vector2.ZERO))
+		gates.append(ends)
+	return {
+		"id": str(z.get("id", "")),
+		"rank": int(z.get("rank", 1)),
+		"boat": bool(z.get("boat", false)),
+		"boat_from": float(z.get("boat_from", 5.0)),
+		"min_depth": float(z.get("min_depth", rules.min_depth if rules != null else 0.8)),
+		"fish_ids": ids,
+		"fish_weights": weights,
+		"stands": stands,
+		"gates": gates,
+		"buoys": buoys,
+		"current": _vec2(z.get("current"), Vector2.ZERO),
+	}
 
 
 # --- Doğrulama ----------------------------------------------------------------------
@@ -344,7 +441,7 @@ func _validate() -> void:
 	if spot(main_spot).is_empty():
 		errors.append("spots.json: main bilinmiyor: " + main_spot)
 	for s in spots:
-		_validate_spot(s)
+		_validate_spot(s, _all_lakes or str(s["id"]) == main_spot)
 
 
 func _validate_gear() -> void:
@@ -440,37 +537,92 @@ func _validate_fish(f: Dictionary) -> void:
 		errors.append("fish.json: %s: reel ya da run geçersiz" % id)
 
 
-func _validate_spot(s: Dictionary) -> void:
+## geometry: göl şekli kurulup başlangıç, atış noktaları, şamandıralar ve bölgeler de denetlensin.
+func _validate_spot(s: Dictionary, geometry: bool = true) -> void:
 	var id := str(s["id"])
-	var ellipses: Array[Dictionary] = s["ellipses"]
-	if ellipses.is_empty():
-		errors.append("spots.json: %s: elips yok" % id)
+	var basins: Array[Dictionary] = s["basins"]
+	var zones: Array[Dictionary] = s["zones"]
+	if basins.is_empty() or zones.is_empty():
+		errors.append("spots.json: %s: havza ya da bölge yok" % id)
 		return
-	for e in ellipses:
-		var r: Vector2 = e["radius"]
+	var known := {}
+	for z in zones:
+		_validate_zone(id, z, known)
+	for b in basins:
+		var r: Vector2 = b["radius"]
 		if r.x <= 0.5 or r.y <= 0.5:
 			errors.append("spots.json: %s: elips yarıçapı çok küçük" % id)
 			return
-	var ids: PackedStringArray = s["fish_ids"]
-	var weights: PackedInt32Array = s["fish_weights"]
-	if ids.is_empty():
-		errors.append("spots.json: %s: balık listesi boş" % id)
-	for i in ids.size():
-		if fish_index(ids[i]) < 0:
-			errors.append("spots.json: %s: bilinmeyen balık: %s" % [id, ids[i]])
-		if weights[i] <= 0:
-			errors.append("spots.json: %s: %s ağırlığı pozitif olmalı" % [id, ids[i]])
+		if not known.has(str(b["zone"])):
+			errors.append("spots.json: %s: havzanın bölgesi bilinmiyor: %s" % [id, b["zone"]])
 	if fish_index(str(s["first_fish"])) < 0:
 		errors.append("spots.json: %s: ilk av balığı bilinmiyor" % id)
 	if int(s["max_shadows"]) < 1:
 		errors.append("spots.json: %s: max_shadows en az 1" % id)
+	if not geometry:
+		return
 	var shape := lake(id)
 	var start: Vector2 = s["start"]
 	if not shape.is_walkable(start):
 		errors.append("spots.json: %s: başlangıç noktası suyun içinde" % id)
+	if not _open_at_start(zones, shape.zone_at(start)):
+		errors.append("spots.json: %s: başlangıç bölgesi baştan açık olmalı" % id)
 	var first: Dictionary = s["first_shadow"]
-	if not shape.is_deep(first["pos"], rules.min_depth):
-		errors.append("spots.json: %s: ilk gölge derin suda değil" % id)
+	var first_zone := shape.zone_at(first["pos"])
+	if not _open_at_start(zones, first_zone) or not shape.is_deep(first["pos"], float(zones[first_zone]["min_depth"])):
+		errors.append("spots.json: %s: ilk gölge baştan açık bir bölgenin derin suyunda olmalı" % id)
+	for k in zones.size():
+		var z := zones[k]
+		if shape.zone_bounds[k].size.x <= 0.0:
+			errors.append("spots.json: %s: %s bölgesinin suyu yok" % [id, z["id"]])
+		for p: Vector2 in z["stands"]:
+			if not shape.is_walkable(p) or shape.zone_at(p) != k or shape.shore_distance(p) < -3.0:
+				errors.append("spots.json: %s: %s atış noktası kendi bölgesinin suyuna bakmalı: %s" % [id, z["id"], p])
+		for p: Vector2 in z["buoys"]:
+			if not shape.is_water(p) or shape.zone_at(p) != k:
+				errors.append("spots.json: %s: %s şamandırası kendi bölgesinin suyunda olmalı: %s" % [id, z["id"], p])
+	# Her su hücresinin bölgesi var: sandal bölgesi kıyıya değiyorsa oradaki kıyı suyu bölgesiz kalır.
+	var orphans := 0
+	for i in shape.shore.size():
+		if shape.shore[i] > 0.0 and shape.zone_grid[i] == LakeShape.NO_ZONE:
+			orphans += 1
+	if orphans > 0:
+		errors.append("spots.json: %s: %d su hücresinin bölgesi yok (sandal bölgesi kıyıya değiyor olabilir)" % [id, orphans])
+
+
+func _validate_zone(spot_id: String, z: Dictionary, known: Dictionary) -> void:
+	var id := str(z["id"])
+	if id.is_empty() or known.has(id):
+		errors.append("spots.json: %s: bölge kimliği boş ya da iki kez: %s" % [spot_id, id])
+	known[id] = true
+	if int(z["rank"]) < 1 or int(z["rank"]) > maxi(1, rank_xp.size()):
+		errors.append("spots.json: %s: %s bölgesinin rütbesi geçersiz" % [spot_id, id])
+	if float(z["min_depth"]) <= 0.0:
+		errors.append("spots.json: %s: %s bölgesinin min_depth'i pozitif olmalı" % [spot_id, id])
+	var ids: PackedStringArray = z["fish_ids"]
+	var weights: PackedInt32Array = z["fish_weights"]
+	if ids.is_empty():
+		errors.append("spots.json: %s: %s bölgesinin balık listesi boş" % [spot_id, id])
+	for i in ids.size():
+		if fish_index(ids[i]) < 0:
+			errors.append("spots.json: %s: %s: bilinmeyen balık: %s" % [spot_id, id, ids[i]])
+		if weights[i] <= 0:
+			errors.append("spots.json: %s: %s: %s ağırlığı pozitif olmalı" % [spot_id, id, ids[i]])
+	var stands: Array[Vector2] = z["stands"]
+	var buoys: Array[Vector2] = z["buoys"]
+	if bool(z["boat"]):
+		if buoys.is_empty() or float(z["boat_from"]) < 1.0:
+			errors.append("spots.json: %s: %s sandal bölgesinin şamandırası ve kıyı payı (boat_from ≥ 1) olmalı" % [spot_id, id])
+	elif stands.is_empty() and id != "main":
+		errors.append("spots.json: %s: %s bölgesinin atış noktası (stands) yok" % [spot_id, id])
+	for g: PackedVector2Array in z["gates"]:
+		if g.size() != 2:
+			errors.append("spots.json: %s: %s: çitin iki ucu olmalı" % [spot_id, id])
+
+
+## Bölge oyunun başında açık mı (rütbe 1, sandalsız)?
+static func _open_at_start(zones: Array[Dictionary], k: int) -> bool:
+	return k >= 0 and k < zones.size() and int(zones[k]["rank"]) <= 1 and not bool(zones[k]["boat"])
 
 
 func _check_unique(label: String, list: Array[Dictionary]) -> void:

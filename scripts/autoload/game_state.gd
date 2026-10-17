@@ -21,7 +21,7 @@ var persist: bool = true
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_input()
-	db = ContentDB.load_default()
+	db = ContentDB.load_default(false)
 	for e in db.errors:
 		push_error("İçerik hatası: " + e)
 	load_game()

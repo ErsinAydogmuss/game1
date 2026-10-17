@@ -13,8 +13,9 @@ static func build(lake: LakeShape) -> ImageTexture:
 	var image := Image.create_empty(lake.width, lake.height, false, Image.FORMAT_RGBAH)
 	for y in lake.height:
 		for x in lake.width:
-			var shore: float = lake.shore[y * lake.width + x]
-			var depth := lake.depth_for(shore) / maxf(lake.max_depth, 0.01)
+			var i := y * lake.width + x
+			var shore: float = lake.shore[i]
+			var depth := (lake.depth_for(shore) if lake.uniform else lake.depth[i]) / maxf(lake.max_depth, 0.01)
 			image.set_pixel(x, y, Color(depth, clampf((shore - SHORE_MIN) / SHORE_SPAN, 0.0, 1.0), 0.0, 1.0))
 	return ImageTexture.create_from_image(image)
 

@@ -63,6 +63,13 @@ UI_CARD_OK,Great!,Harika!
 UI_DISTANCE,%s m,%s m
 RARITY_mythic,Mythic,Masalsı
 SPOT_big_lake,Village Lake,Köy Gölü
+SPOT_lake_v2,Big Lake (draft),Büyük Göl (taslak)
+ZONE_dock_cove,Dock Cove,İskele Koyu
+ZONE_reeds,Reed Bed,Sazlık
+ZONE_lily_cove,Lily Cove,Nilüferli Koy
+ZONE_rocky_point,Rocky Point,Kayalık Burun
+ZONE_stream_mouth,Stream Mouth,Dere Ağzı
+ZONE_deep_water,Deep Water,Derin Orta
 RANK_novice,Novice,Acemi
 RANK_apprentice,Apprentice,Çırak
 RANK_angler,Angler,Balıkçı

@@ -81,7 +81,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 
 **Dalga 2 — Büyük göl → v0.3**
 
-- [ ] Göl verisi v2: havzalar ve bölgeler; testler için sabit küçük göl; kıyı alanı önbelleği.
+- [x] Göl verisi v2: havzalar (her birinin derinliği ve kıyı eğimi) ve bölgeler, yürünebilen dünya; testler için sabit küçük göl (bit bit eskisi gibi, altın test); kıyı ızgarası 3,5 kat hızlı ve önbellekli; kuşbakışı önizleme aracı.
 - [ ] Gölgeler bölgelere göre doğar.
 - [ ] Kıyı yolu ve dünya sınırı.
 - [ ] Göl sahnesi ve bölge süsleri.

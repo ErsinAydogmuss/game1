@@ -64,6 +64,36 @@ func test_validation_catches_bad_data() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))
 
 
+## Bölge verisi denetlenir: bilinmeyen havza bölgesi, suyun içindeki atış noktası, karadaki
+## şamandıra, geçersiz rütbe.
+func test_zone_validation_catches_bad_data() -> void:
+	var dir := "user://test_bad_zones"
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
+	for file: String in ["rarities.json", "rules.json", "progression.json", "fish.json", "gear.json"]:
+		var text := FileAccess.get_file_as_string("res://data/" + file)
+		FileAccess.open(dir.path_join(file), FileAccess.WRITE).store_string(text)
+	var spots := JSON.parse_string(FileAccess.get_file_as_string("res://data/spots.json")) as Dictionary
+	for raw: Variant in spots["spots"]:
+		var spot: Dictionary = raw
+		if str(spot["id"]) != "lake_v2":
+			continue
+		var zones: Array = spot["zones"]
+		(zones[1] as Dictionary)["stands"] = [[-17.5, -3.5]]
+		(zones[5] as Dictionary)["buoys"] = [[0.0, 10.0]]
+		(zones[2] as Dictionary)["rank"] = 99
+		((spot["basins"] as Array)[2] as Dictionary)["zone"] = "swamp"
+	FileAccess.open(dir.path_join("spots.json"), FileAccess.WRITE).store_string(JSON.stringify(spots))
+	var db := ContentDB.load_from(dir)
+	var all := " | ".join(db.errors)
+	assert_true("swamp" in all, "bilinmeyen havza bölgesi yakalanır: " + all)
+	assert_true("reeds atış noktası" in all, "suyun içindeki atış noktası yakalanır")
+	assert_true("deep_water şamandırası" in all, "karadaki şamandıra yakalanır")
+	assert_true("lily_cove bölgesinin rütbesi" in all, "geçersiz rütbe yakalanır")
+	for file in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join(file)))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))
+
+
 ## Takım ve rütbe: başlangıç takımı bedava, kategoriler sıralı, rütbe eşikleri ve unvanlar.
 func test_gear_and_ranks() -> void:
 	var db := content()
@@ -117,6 +147,10 @@ func test_every_content_id_has_translations() -> void:
 		keys.append("RANK_" + str(t["id"]))
 	for s in db.spots:
 		keys.append("SPOT_" + str(s["id"]))
+		# Bölge adları (haritada, defterde); eski şemadaki tek bölge ("main") adsız.
+		for z: Dictionary in s["zones"]:
+			if str(z["id"]) != "main":
+				keys.append("ZONE_" + str(z["id"]))
 	for i in range(1, Elder.TIP_COUNT + 1):
 		keys.append(Elder.TIP_KEY % i)
 	for i in range(1, Nine.LINE_COUNT + 1):
