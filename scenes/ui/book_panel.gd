@@ -47,7 +47,7 @@ func _build() -> void:
 	_pager.add_theme_constant_override("separation", 14)
 	left.add_child(_pager)
 	var detail_panel := PanelContainer.new()
-	detail_panel.add_theme_stylebox_override("panel", UiKit.card_style())
+	detail_panel.add_theme_stylebox_override("panel", UiKit.framed("card", UiKit.card_style(), UiKit.CARD_CORNER))
 	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(detail_panel)
 	_detail = VBoxContainer.new()
@@ -196,6 +196,7 @@ static func _art(id: String, side: float, found: bool) -> TextureRect:
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	if not found:
 		art.modulate = SILHOUETTE
 	return art

@@ -163,7 +163,7 @@ func test_frame_sheets_have_slices() -> void:
 
 
 ## Görsel yokken kodla çizilen stil döner; görsel gelince 9 dilimli doku köşe boyuna göre
-## ölçeklenir ve içerik payları korunur.
+## ölçeklenir. İçerik payı kodla çizilenden küçük olmaz ve görselin süslü kenarının içinde başlar.
 func test_framed_scales_art_and_keeps_layout() -> void:
 	var fallback := UiKit.pill_style()
 	ItemArt.register_frame("pill", null)
@@ -174,13 +174,24 @@ func test_framed_scales_art_and_keeps_layout() -> void:
 	var sb := UiKit.framed("pill", fallback, 30.0) as StyleBoxTexture
 	assert_true(sb != null, "görsel varsa 9 dilimli doku")
 	if sb != null:
-		# Kısa kenar 100, en kalın pay 0,5 → 50 piksel; 30'a inmesi için 0,6 ölçek.
-		assert_eq(sb.texture.get_size(), Vector2(120, 60), "doku ölçeklenir")
-		assert_between(sb.texture_margin_left, 29.9, 30.1, "sol pay köşe boyu")
-		assert_between(sb.texture_margin_top, 17.9, 18.1, "üst pay orantılı")
-		assert_eq(sb.get_content_margin(SIDE_LEFT), fallback.get_content_margin(SIDE_LEFT), "içerik payı korunur")
-		assert_eq(sb.get_content_margin(SIDE_TOP), fallback.get_content_margin(SIDE_TOP), "içerik payı korunur")
-	ItemArt.register_frame("pill", null)
+		# Kısa kenar 100; en kalın pay ekranda 30 birim olacak şekilde ölçeklenir.
+		var slices := UiKit.frame_slices("pill")
+		var widest := maxf(maxf(float(slices[0]), float(slices[1])), maxf(float(slices[2]), float(slices[3])))
+		var scale := 30.0 / (100.0 * widest)
+		assert_eq(sb.texture.get_size(), Vector2(roundi(200 * scale), roundi(100 * scale)), "doku ölçeklenir")
+		assert_between(sb.texture_margin_left, 30.0 * float(slices[0]) / widest - 0.1,
+				30.0 * float(slices[0]) / widest + 0.1, "sol pay köşe boyu")
+		assert_between(sb.texture_margin_top, 30.0 * float(slices[1]) / widest - 0.1,
+				30.0 * float(slices[1]) / widest + 0.1, "üst pay orantılı")
+		var inset := UiKit.frame_content("pill")
+		var sides: Array[int] = [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]
+		for k in 4:
+			var margin := sb.get_content_margin(sides[k])
+			assert_true(margin >= fallback.get_content_margin(sides[k]), "içerik payı kodla çizilenden küçük değil (%d)" % k)
+			assert_true(margin >= 100.0 * scale * float(inset[k]) + UiKit.CONTENT_PAD - 0.01,
+					"içerik süslü kenarın içinde başlar (%d)" % k)
+	ItemArt.forget_frame("pill")
+	UiKit.clear_style_cache()
 
 
 ## Paletin düğme renkleri arayüz kitindeki düğmeyi kullanır; basılı hâli biraz koyu.
@@ -195,5 +206,14 @@ func test_button_art_matches_palette() -> void:
 		assert_true(pressed.modulate_color.v < normal.modulate_color.v, "basılıyken koyu")
 		assert_true(pressed.content_margin_top > normal.content_margin_top, "basılıyken yazı aşağıda")
 	assert_true(UiKit._button_art(Color("#123456"), false, 30) == null, "palet dışı renk kodla çizilir")
+	assert_true(UiKit._hover_style(UiKit.SUCCESS) == UiKit.glossy(UiKit.SUCCESS, false), "üzerine gelme normalin aynısı")
+	ItemArt.register_frame("button_gray", ImageTexture.create_from_image(img))
+	var disabled := UiKit._disabled_style(UiKit.SUCCESS) as StyleBoxTexture
+	assert_true(disabled != null and disabled.modulate_color.a < 1.0, "pasif düğme yarı saydam gri görsel")
+	var wait := UiKit._button_art(UiKit.WAIT, false, 30)
+	assert_true(wait != null and wait.modulate_color.v < 0.9, "BEKLE gri görselin koyusu")
+	ItemArt.forget_frame("button_gray")
 	ItemArt.register_frame("button_green", null)
 	assert_true(UiKit._button_art(UiKit.SUCCESS, false, 30) == null, "görsel yoksa kodla çizilir")
+	ItemArt.forget_frame("button_green")
+	UiKit.clear_style_cache()

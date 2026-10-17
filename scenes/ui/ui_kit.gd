@@ -19,8 +19,12 @@ const PRIMARY := Color("#ff9f1c")
 const SECONDARY := Color("#3d8bff")
 const SUCCESS := Color("#25b864")
 const NEUTRAL := Color("#59617f")
+## Eylem düğmesinin BEKLE hâli (dürtme: dokunma!): koyu gri.
+const WAIT := Color("#43495f")
 const DANGER := Color("#e5484d")
 const MYSTERY_BUTTON := Color("#9a7bff")
+## Resimli kart çerçevesinin köşe boyu (dükkân kartları, kova satırları, defter ayrıntısı).
+const CARD_CORNER := 34.0
 ## Krem diyaloglar: zemin, kart, kenar ve üstündeki koyu kahve yazı.
 const CREAM := Color("#fff3d9")
 const CREAM_CARD := Color("#fffaf0")
@@ -41,22 +45,38 @@ const BODY_FONT := "res://assets/fonts/Baloo2-Variable.ttf"
 ## Ersin'in arayüz kitindeki 9 dilimli görsellerin kenar payları (docs/gorsel-istekleri.md):
 ## [sol, üst, sağ, alt], görselin kısa kenarına oranla. Köşe ve kenar süsleri bu payın içinde
 ## kalır; orta düzdür ve gerilir. Görsel yoksa kodla çizilen stil kullanılır (framed).
+## Kesilen görsellerde ölçüldü: ortadaki dikdörtgen tamamen düz krem.
 const FRAME_SLICES := {
-	"panel": [0.2, 0.2, 0.2, 0.2],
+	"panel": [0.23, 0.2, 0.23, 0.2],
 	"card": [0.18, 0.18, 0.18, 0.18],
-	"tab": [0.3, 0.3, 0.3, 0.3],
-	"ribbon": [0.45, 0.3, 0.45, 0.3],
-	"pill": [0.5, 0.3, 0.5, 0.3],
+	"tab": [0.3, 0.34, 0.3, 0.3],
+	"ribbon": [0.45, 0.3, 0.45, 0.36],
+	"pill": [0.52, 0.3, 0.52, 0.3],
 	"bubble": [0.3, 0.3, 0.3, 0.42],
 	"button_round": [0.5, 0.5, 0.5, 0.5],
 }
+## İçerik çerçevenin süsüne binmesin: süslü kenarın kalınlığı (düz kremin başladığı yer),
+## kısa kenara oranla. framed() içerik payını en az bu kadar (+ CONTENT_PAD) yapar.
+const FRAME_CONTENT := {
+	"panel": [0.22, 0.17, 0.21, 0.15],
+	"card": [0.17, 0.13, 0.16, 0.11],
+	"tab": [0.22, 0.21, 0.2, 0.11],
+	"ribbon": [0.44, 0.15, 0.45, 0.34],
+	"pill": [0.36, 0.17, 0.36, 0.15],
+	"bubble": [0.27, 0.12, 0.26, 0.27],
+}
+const CONTENT_PAD := 6.0
 ## "button_<renk>" düğmeleri (altta kalınlık payı) ve "frame_<nadirlik>" kart çerçeveleri.
 const BUTTON_SLICES := [0.38, 0.3, 0.38, 0.42]
-const RARITY_FRAME_SLICES := [0.22, 0.22, 0.22, 0.22]
-## Paletin düğme renkleri → arayüz kitindeki düğme görseli. Başka renkler kodla çizilir.
+## Düğme görselinin alttaki kalınlığı (koyu dudak), kısa kenara oranla: yazı onun üstünde ortalanır.
+const BUTTON_LIP := 0.17
+const RARITY_FRAME_SLICES := [0.22, 0.31, 0.22, 0.31]
+const RARITY_FRAME_CONTENT := [0.21, 0.3, 0.2, 0.3]
+## Paletin düğme renkleri → arayüz kitindeki düğme görseli ve rengi (koyulaştırma). Başka
+## renkler kodla çizilir.
 const BUTTON_ART := {
-	"ff9f1c": "button_orange", "3d8bff": "button_blue", "25b864": "button_green",
-	"59617f": "button_gray", "e5484d": "button_red",
+	"ff9f1c": ["button_orange", 1.0], "3d8bff": ["button_blue", 1.0], "25b864": ["button_green", 1.0],
+	"59617f": ["button_gray", 1.0], "e5484d": ["button_red", 1.0], "43495f": ["button_gray", 0.78],
 }
 
 static var _theme: Theme
@@ -105,10 +125,10 @@ static func theme() -> Theme:
 	t.set_constant("shadow_offset_y", "Label", 3)
 	t.set_constant("line_spacing", "Label", -6)
 	t.set_stylebox("normal", "Button", glossy(PRIMARY, false))
-	t.set_stylebox("hover", "Button", glossy(PRIMARY.lightened(0.06), false))
+	t.set_stylebox("hover", "Button", _hover_style(PRIMARY))
 	t.set_stylebox("pressed", "Button", glossy(PRIMARY, true))
 	t.set_stylebox("hover_pressed", "Button", glossy(PRIMARY, true))
-	t.set_stylebox("disabled", "Button", glossy(Color("#8c8f9e"), false))
+	t.set_stylebox("disabled", "Button", _disabled_style(PRIMARY))
 	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
 	t.set_font("font", "Button", display_font())
 	for state: String in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
@@ -172,10 +192,53 @@ static func button(text: String, color: Color = PRIMARY, size: int = SIZE_BODY,
 
 static func style_button(b: Button, color: Color) -> void:
 	b.add_theme_stylebox_override("normal", glossy(color, false))
-	b.add_theme_stylebox_override("hover", glossy(color.lightened(0.06), false))
+	b.add_theme_stylebox_override("hover", _hover_style(color))
 	b.add_theme_stylebox_override("pressed", glossy(color, true))
 	b.add_theme_stylebox_override("hover_pressed", glossy(color, true))
-	b.add_theme_stylebox_override("disabled", glossy(color.lerp(Color("#8c8f9e"), 0.7), false))
+	b.add_theme_stylebox_override("disabled", _disabled_style(color))
+
+
+## Üzerine gelme: düğme görseli varsa normal hâlin aynısı (telefonda dokunuştan sonra "üzerinde"
+## kalır; karışık görünmesin), yoksa biraz açık kodla çizilen.
+static func _hover_style(color: Color) -> StyleBox:
+	if has_button_art(color):
+		return glossy(color, false)
+	return glossy(color.lightened(0.06), false)
+
+
+## Pasif düğme: görsel varsa gri düğme görseli, yoksa griye çekilmiş kodla çizilen.
+static func _disabled_style(color: Color) -> StyleBox:
+	if has_button_art(color) and has_button_art(NEUTRAL):
+		var sb := glossy(NEUTRAL, false).duplicate() as StyleBoxTexture
+		sb.modulate_color = Color(1.0, 1.0, 1.0, 0.8)
+		return sb
+	return glossy(color.lerp(Color("#8c8f9e"), 0.7), false)
+
+
+## Resimli kartın çevresindeki anlam taşıyan renk (ör. kuşanılan takım): ince, yuvarlak köşeli
+## halka. Kartı saran PanelContainer'a verilir; içerik payı yok.
+static func ring_style(color: Color, width: int = 6) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.draw_center = false
+	sb.border_color = color
+	sb.set_border_width_all(width)
+	sb.set_corner_radius_all(30)
+	sb.set_expand_margin_all(4)
+	sb.set_content_margin_all(0)
+	sb.anti_aliasing = true
+	return sb
+
+
+## Önbellekteki düğme ve çerçeve stillerini atar (testler sahte görsel verdikten sonra).
+static func clear_style_cache() -> void:
+	_glossy_cache.clear()
+	_frame_cache.clear()
+
+
+## Bu renk arayüz kitindeki bir düğme görseliyle mi çiziliyor?
+static func has_button_art(color: Color) -> bool:
+	var entry: Array = BUTTON_ART.get(color.to_html(false), [])
+	return not entry.is_empty() and ItemArt.frame(str(entry[0])) != null
 
 
 ## Düz renkli buton stili (eski, kodla çizilen yerler için).
@@ -245,20 +308,22 @@ static func glossy(color: Color, pressed: bool, radius: int = 30) -> StyleBoxTex
 
 
 ## Arayüz kitinde bu renge ait düğme görseli varsa ondan 9 dilimli stil (basılıyken biraz
-## koyu ve yazı aşağıda); yoksa null.
+## koyu ve yazı aşağıda); yoksa null. Yazı alttaki kalınlığın (dudak) üstünde ortalanır.
 static func _button_art(color: Color, pressed: bool, radius: int) -> StyleBoxTexture:
-	var frame_name: String = BUTTON_ART.get(color.to_html(false), "")
-	if frame_name.is_empty() or ItemArt.frame(frame_name) == null:
+	var entry: Array = BUTTON_ART.get(color.to_html(false), [])
+	if entry.is_empty() or ItemArt.frame(str(entry[0])) == null:
 		return null
-	var sb := framed(frame_name, StyleBoxEmpty.new(), radius + 4) as StyleBoxTexture
+	var sb := framed(str(entry[0]), StyleBoxEmpty.new(), radius + 4) as StyleBoxTexture
 	if sb == null:
 		return null
+	var lip := sb.texture_margin_bottom * BUTTON_LIP / float(BUTTON_SLICES[3])
 	sb.content_margin_left = 34
 	sb.content_margin_right = 34
 	sb.content_margin_top = 14 + (9 if pressed else 0)
-	sb.content_margin_bottom = 12
-	if pressed:
-		sb.modulate_color = Color(0.86, 0.86, 0.86)
+	sb.content_margin_bottom = 10 + lip
+	var shade := float(entry[1]) * (0.86 if pressed else 1.0)
+	if shade < 0.999:
+		sb.modulate_color = Color(shade, shade, shade)
 	return sb
 
 
@@ -274,10 +339,20 @@ static func frame_slices(frame_name: String) -> Array:
 	return []
 
 
+## Bir çerçevenin süslü kenarının kalınlığı (FRAME_CONTENT; düğmede boş: yazı payını
+## _button_art verir).
+static func frame_content(frame_name: String) -> Array:
+	if FRAME_CONTENT.has(frame_name):
+		return FRAME_CONTENT[frame_name]
+	if frame_name.begins_with("frame_"):
+		return RARITY_FRAME_CONTENT
+	return []
+
+
 ## Arayüz kitinde görseli varsa 9 dilimli StyleBoxTexture, yoksa fallback döner.
 ## corner: en kalın kenar payının ekrandaki boyu (tasarım birimi). Doku buna göre ölçeklenir:
-## aynı görsel büyük panelde ve küçük hapta orantılı durur. İçerik payları fallback'ten
-## alınır, böylece görsel gelince yerleşim kaymaz.
+## aynı görsel büyük panelde ve küçük hapta orantılı durur. İçerik payları fallback'ten alınır;
+## görselin süslü kenarı daha kalınsa içerik onun içinde başlar (FRAME_CONTENT + CONTENT_PAD).
 static func framed(frame_name: String, fallback: StyleBox, corner: float) -> StyleBox:
 	var slices := frame_slices(frame_name)
 	var texture := ItemArt.frame(frame_name)
@@ -303,8 +378,13 @@ static func framed(frame_name: String, fallback: StyleBox, corner: float) -> Sty
 	sb.texture_margin_top = px * float(slices[1])
 	sb.texture_margin_right = px * float(slices[2])
 	sb.texture_margin_bottom = px * float(slices[3])
-	for side: int in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
-		sb.set_content_margin(side, fallback.get_content_margin(side))
+	var inset := frame_content(frame_name)
+	var sides: Array[int] = [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]
+	for k in 4:
+		var margin := fallback.get_content_margin(sides[k])
+		if inset.size() == 4:
+			margin = maxf(margin, px * float(inset[k]) + CONTENT_PAD)
+		sb.set_content_margin(sides[k], margin)
 	return sb
 
 

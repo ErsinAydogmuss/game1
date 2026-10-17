@@ -43,6 +43,8 @@ const COLUMNS := 3
 const CARDS := 6
 const CARD := Vector2(548, 292)
 const TAB := Vector2(232, 122)
+## Sekme görselinin köşe boyu (kemerli tabela).
+const TAB_CORNER := 30.0
 const ACTION := Vector2(236, 122)
 ## Satış satırları: iki sütun, en çok bu kadar tür (daha fazlası "+N tür").
 const SELL_ROWS := 8
@@ -73,6 +75,7 @@ func _build() -> void:
 	_face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_face.visible = false
 	header.add_child(_face)
 	header.move_child(_face, 0)
@@ -183,8 +186,9 @@ func _gear_card(item: Dictionary) -> Control:
 	var panel := PanelContainer.new()
 	panel.name = "Card_" + id
 	panel.custom_minimum_size = CARD
-	panel.add_theme_stylebox_override("panel", UiKit.card_style(BETTER if equipped else UiKit.CREAM_EDGE, 28,
-			UiKit.CREAM_CARD, 6 if equipped else 4))
+	var style := UiKit.framed("card", UiKit.card_style(BETTER if equipped else UiKit.CREAM_EDGE, 28,
+			UiKit.CREAM_CARD, 6 if equipped else 4), UiKit.CARD_CORNER)
+	panel.add_theme_stylebox_override("panel", style)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
@@ -228,6 +232,12 @@ func _gear_card(item: Dictionary) -> Control:
 	bottom.add_child(action)
 	if not equipped and Economy.buy_block(db, save, id) == "rank":
 		panel.modulate = Color(1, 1, 1, 0.82)
+	if equipped and style is StyleBoxTexture:
+		# Resimli kartın kenarı ahşap: kuşanılanı çevresindeki yeşil halka gösterir.
+		var ring := PanelContainer.new()
+		ring.add_theme_stylebox_override("panel", UiKit.ring_style(BETTER))
+		ring.add_child(panel)
+		return ring
 	return panel
 
 
@@ -381,6 +391,7 @@ func _gear_icon(item: Dictionary, side: float) -> Control:
 		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		return rect
 	return GameIcon.make(str(item["kind"]), side)
 
@@ -447,7 +458,8 @@ func _sell_row(row: Array) -> Control:
 	var fish_id := str(row[0])
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(WIDTH * 0.5 - 60, 96)
-	panel.add_theme_stylebox_override("panel", UiKit.card_style(UiKit.rarity_color(db, int(row[3])), 22))
+	panel.add_theme_stylebox_override("panel", UiKit.framed("card", UiKit.card_style(UiKit.rarity_color(db, int(row[3])), 22),
+			UiKit.CARD_CORNER * 0.8))
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 14)
 	panel.add_child(line)
@@ -545,9 +557,14 @@ func _style_tab(b: Button, selected: bool) -> void:
 	var fill := UiKit.CREAM_CARD if selected else Color("#ead8b5")
 	var edge := UiKit.PRIMARY if selected else UiKit.CREAM_EDGE
 	for state: String in ["normal", "hover", "pressed", "hover_pressed"]:
-		var sb := UiKit.card_style(edge, 24, fill, 6 if selected else 3)
-		sb.content_margin_left = 88
-		sb.content_margin_right = 12
+		var flat := UiKit.card_style(edge, 24, fill, 6 if selected else 3)
+		flat.content_margin_left = 88
+		flat.content_margin_right = 12
+		# Arayüz kitinin kemerli sekmesi: seçili olan parlak, ötekiler biraz koyu.
+		var sb := UiKit.framed("tab", flat, TAB_CORNER)
+		if sb is StyleBoxTexture and not selected:
+			sb = sb.duplicate() as StyleBox
+			(sb as StyleBoxTexture).modulate_color = Color(0.86, 0.82, 0.76)
 		b.add_theme_stylebox_override(state, sb)
 	for state: String in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
 		b.add_theme_color_override(state, UiKit.INK if selected else UiKit.INK_SOFT)

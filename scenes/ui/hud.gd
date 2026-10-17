@@ -29,7 +29,8 @@ const ACTIONS := {
 }
 const TOAST_TIME := 1.7
 ## Defter düğmesinin rengi (deri kapak).
-const BOOK_COLOR := Color("#a8643a")
+## Defter düğmesi turuncu (arayüz kitindeki düğme görseli; palet dışı renk kodla çizilirdi).
+const BOOK_COLOR := UiKit.PRIMARY
 
 var settings_button: TouchButton
 var book_button: TouchButton
@@ -233,7 +234,7 @@ static func action_color(kind: String) -> Color:
 		"retrieve":
 			return UiKit.NEUTRAL
 		"wait":
-			return UiKit.NEUTRAL.darkened(0.25)
+			return UiKit.WAIT
 		"hook":
 			return UiKit.DANGER
 		"reel":
@@ -342,12 +343,14 @@ func _build_bottom() -> void:
 	_face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	row.add_child(_face)
 	_face_icon = GameIcon.make("bobber", 64)
 	row.add_child(_face_icon)
 	set_portrait(ItemArt.portrait("dede_smile"))
 	set_portrait(ItemArt.portrait("nine_smile"), "nine")
-	_hint_label = UiKit.label("", UiKit.SIZE_BODY)
+	# Hap görseli krem: üstünde koyu mürekkep; görsel yoksa koyu hap üstünde açık yazı.
+	_hint_label = UiKit.ink("", UiKit.SIZE_BODY) if ItemArt.frame("pill") != null else UiKit.label("", UiKit.SIZE_BODY)
 	row.add_child(_hint_label)
 	action_button = TouchButton.make("", "rod", UiKit.PRIMARY, ACTION_SIZE, UiKit.SIZE_TITLE, 120.0)
 	action_button.click = false

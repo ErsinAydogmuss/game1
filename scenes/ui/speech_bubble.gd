@@ -16,6 +16,11 @@ const HOLD_TIME := 2.0
 const SHRINK_TIME := 0.2
 const FILL := Color("#fffaf0")
 const INK := Color("#2b1a10")
+## Arayüz kitinin balon görseliyle çizilirken boyu (kuyruk altta, ortada).
+const ART_SIZE := Vector2(126, 95)
+## Görselde kuyruğun ucu (genişliğe oranla) ve gövdenin ortası (yüksekliğe oranla).
+const ART_TIP_X := 0.49
+const ART_BODY_Y := 0.37
 
 ## Kuyruğun ucunun ekrandaki yeri (viewport birimi); Elder her kare verir.
 var anchor := Vector2.ZERO
@@ -24,11 +29,15 @@ var kind: Kind = Kind.DOTS
 var _time: float = -1.0
 var _fill := StyleBoxFlat.new()
 var _edge := StyleBoxFlat.new()
+## Arayüz kitinin balonu (yoksa kodla çizilir).
+var _art: Texture2D
 
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	size = BODY + Vector2(0.0, TAIL)
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_art = ItemArt.frame("bubble")
+	size = ART_SIZE if _art != null else BODY + Vector2(0.0, TAIL)
 	pivot_offset = _tip()
 	visible = false
 	_fill.bg_color = FILL
@@ -70,6 +79,10 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if _art != null:
+		draw_texture_rect(_art, Rect2(Vector2.ZERO, ART_SIZE), false)
+		_draw_mark(Vector2(ART_SIZE.x * 0.5, ART_SIZE.y * ART_BODY_Y))
+		return
 	var body := Rect2(Vector2.ZERO, BODY)
 	var tail := PackedVector2Array([Vector2(BODY.x * 0.2, BODY.y - 10.0), Vector2(BODY.x * 0.48, BODY.y - 10.0), _tip()])
 	# Önce koyu kenar (gövde ve kuyruk biraz büyük), sonra açık dolgu.
@@ -78,7 +91,11 @@ func _draw() -> void:
 		draw_colored_polygon(outer, INK)
 	draw_style_box(_fill, body)
 	draw_colored_polygon(tail, FILL)
-	var c := body.get_center()
+	_draw_mark(body.get_center())
+
+
+## Balonun içi: üç zıplayan nokta ya da ünlem (c: gövdenin ortası).
+func _draw_mark(c: Vector2) -> void:
 	if kind == Kind.DOTS:
 		for i in 3:
 			var hop := 6.0 * maxf(0.0, sin(_time * 7.0 - float(i) * 1.1))
@@ -93,6 +110,8 @@ func _draw() -> void:
 
 ## Kuyruğun ucu (balonun kendi uzayında).
 func _tip() -> Vector2:
+	if _art != null:
+		return Vector2(ART_SIZE.x * ART_TIP_X, ART_SIZE.y)
 	return Vector2(BODY.x * 0.22, BODY.y + TAIL)
 
 

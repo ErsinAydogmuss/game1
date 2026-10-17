@@ -62,6 +62,11 @@ static func register_frame(frame_name: String, texture: Texture2D) -> void:
 	_cache[FRAMES % frame_name] = texture
 
 
+## register_frame'i geri alır: sonraki istekte dosyadan yüklenir (testler).
+static func forget_frame(frame_name: String) -> void:
+	_cache.erase(FRAMES % frame_name)
+
+
 static func portrait(mood: String) -> Texture2D:
 	return _load(PORTRAITS % mood)
 

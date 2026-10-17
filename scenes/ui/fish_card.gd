@@ -14,12 +14,18 @@ signal closed
 
 ## Bu kadar sn geçmeden dokunuş kartı kapatmaz (çekerken basılı kalan parmak kapatmasın).
 const MIN_OPEN := 0.6
+## Resimli kartın köşe boyu; nadirlik çerçevesinin köşe boyu (resim aşağı yukarı kendi boyunda,
+## süsleri gerilmeden çizilsin) ve çerçevenin içindeki balığın boyu.
+const CARD_CORNER := 44.0
+const FRAME_CORNER := 96.0
+const FRAMED_ART := 240.0
 const CONFETTI_COLORS: Array[Color] = [Color("#ffcf3c"), Color("#ff5a7a"), Color("#4fd2ff"), Color("#7cf06a"), Color("#c47bff"), Color.WHITE]
 
 var ok_button: Button
 ## Dede'nin sözünün yanındaki yüzü (main verir; yoksa yer tutucu ikon).
 var dede_face: Texture2D
 
+## Kartın en dıştaki düğümü (resimli kartta nadirlik renginde halka, yoksa kartın kendisi).
 var _card: PanelContainer
 var _age: float = 0.0
 ## Kart açıkken (MIN_OPEN'dan sonra) bir basış oldu: parmak kalkınca kapanır.
@@ -46,19 +52,27 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	var rarity := int(info["rarity"])
 	var color := UiKit.rarity_color(db, rarity)
 	var fish_id := str(info["fish"])
-	_card = PanelContainer.new()
+	var panel := PanelContainer.new()
 	var sb := UiKit.card_style(color, 44, UiKit.CREAM, 10)
 	sb.set_content_margin_all(34)
 	sb.shadow_color = Color(color, 0.55)
 	sb.shadow_size = 38
-	# Ersin'in nadirlik çerçevesi varsa o (arayüz kiti), yoksa nadirlik renginde kenar.
-	_card.add_theme_stylebox_override("panel", UiKit.framed("frame_" + db.rarity_id(rarity), sb, 72.0))
-	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Arayüz kitinin kartı varsa o (ahşap) ve çevresinde nadirlik renginde halka; yoksa nadirlik
+	# renginde kenar ve parıltı. Nadirliğin kendi çerçevesi balığın resmini sarar (aşağıda).
+	var style := UiKit.framed("card", sb, CARD_CORNER)
+	panel.add_theme_stylebox_override("panel", style)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_card = panel
+	if style is StyleBoxTexture:
+		_card = PanelContainer.new()
+		_card.add_theme_stylebox_override("panel", UiKit.ring_style(color, 8))
+		_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_card.add_child(panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
 	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_card.add_child(column)
+	panel.add_child(column)
 	var badges := HBoxContainer.new()
 	badges.alignment = BoxContainer.ALIGNMENT_CENTER
 	badges.add_theme_constant_override("separation", 14)
@@ -75,8 +89,26 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	column.add_child(art)
-	column.add_child(UiKit.title(tr("FISH_" + fish_id), 84, color.lightened(0.05), HORIZONTAL_ALIGNMENT_CENTER, 14))
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	# Balık nadirliğinin çerçevesinde (kendi oranında; gerilip süsleri uzamasın).
+	var frame := UiKit.framed("frame_" + db.rarity_id(rarity), StyleBoxEmpty.new(), FRAME_CORNER)
+	if frame is StyleBoxTexture:
+		var box := PanelContainer.new()
+		box.add_theme_stylebox_override("panel", frame)
+		box.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		art.custom_minimum_size = Vector2(FRAMED_ART, FRAMED_ART)
+		box.add_child(art)
+		column.add_child(box)
+	else:
+		column.add_child(art)
+	# Adın arkasında arayüz kitinin kurdelesi (görsel yoksa boş: yalnızca ad).
+	var ribbon := PanelContainer.new()
+	ribbon.add_theme_stylebox_override("panel", UiKit.framed("ribbon", StyleBoxEmpty.new(), 44.0))
+	ribbon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ribbon.add_child(UiKit.title(tr("FISH_" + fish_id), 84, color.lightened(0.05), HORIZONTAL_ALIGNMENT_CENTER, 14))
+	column.add_child(ribbon)
 	var size_row := HBoxContainer.new()
 	size_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	size_row.add_theme_constant_override("separation", 22)
@@ -107,12 +139,24 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	_card.scale = Vector2(0.4, 0.4)
 	_card.modulate.a = 0.0
 	var tween := _card.create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_card, "scale", Vector2.ONE, 0.35)
+	tween.tween_property(_card, "scale", Vector2.ONE * fit_scale(), 0.35)
 	tween.tween_property(_card, "modulate:a", 1.0, 0.15)
 	Sounds.play("card")
 	if rarity >= db.rarity_index("epic"):
 		_confetti(size * 0.5, 120 if rarity >= db.rarity_index("legendary") else 70)
 		Sounds.haptic(160)
+
+
+## Kartın ekrana (güvenli alan ve kenar payıyla) sığma ölçeği, en çok 1 (Dialog.fit_scale gibi).
+func fit_scale() -> float:
+	if _card == null:
+		return 1.0
+	var inset := UiKit.safe_insets(self)
+	var room := Vector2(size.x - inset.x - inset.z, size.y - inset.y - inset.w) - Vector2(40.0, 24.0)
+	var need := _card.get_combined_minimum_size()
+	if need.x <= 0.0 or need.y <= 0.0:
+		return 1.0
+	return clampf(minf(room.x / need.x, room.y / need.y), 0.5, 1.0)
 
 
 ## Dede'nin karttaki sözü: Nadir ve üstünde nadirliğe göre, yoksa yeni tür ya da rekor için
@@ -135,7 +179,7 @@ func _dede_row(text: String) -> Control:
 	sb.content_margin_right = 28
 	sb.content_margin_top = 6
 	sb.content_margin_bottom = 6
-	pill.add_theme_stylebox_override("panel", sb)
+	pill.add_theme_stylebox_override("panel", UiKit.framed("pill", sb, 30.0))
 	pill.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var row := HBoxContainer.new()
@@ -149,6 +193,7 @@ func _dede_row(text: String) -> Control:
 		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		row.add_child(face)
 	var label := UiKit.ink(text, UiKit.SIZE_BODY, UiKit.INK)
 	row.add_child(label)
