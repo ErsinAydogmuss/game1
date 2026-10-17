@@ -46,6 +46,11 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(func() -> void:
 		if visible and not _opening:
 			_panel.scale = Vector2.ONE * fit_scale())
+	# resized her zaman son boyutla gelmez (dükkânda sekme değişince ölçek bayat kalıyordu): sığma
+	# ölçeği her kare de denetlenir (en küçük boy önbellekte; ucuz).
+	get_tree().process_frame.connect(func() -> void:
+		if visible and not _opening and not is_equal_approx(_panel.scale.x, fit_scale()):
+			_panel.scale = Vector2.ONE * fit_scale())
 	center.add_child(_panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 22)

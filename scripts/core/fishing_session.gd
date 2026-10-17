@@ -16,8 +16,8 @@ extends RefCounted
 ## Olaylar (sözlük; "type" ve "step" alanlı):
 ## cast {from, to, steps} · land {pos} · scare {shadow} · notice {shadow} · arrive {shadow} ·
 ## nibble {shadow, index} · bite {shadow} · early {shadow, startle} · retry {shadow} (ilk av
-## kaçırılınca yeniden ısıracak) · hook {shadow, fish, distance} · warn · burst · burst_end ·
-## strain · strain_end · lost {reason: early | missed | snapped | escaped} ·
+## kaçırılınca yeniden ısıracak) · hook {shadow, fish, distance, too_big} · warn · burst · burst_end ·
+## strain · strain_end · lost {reason: early | missed | snapped | escaped, too_big} ·
 ## catch {fish, fish_index, size_cm, stars, rarity, percentile, shadow, zone} · retrieve · idle ·
 ## spawn {shadow} · despawn {shadow}
 ##
@@ -52,6 +52,9 @@ var fight_reach: float = 0.0
 ## Son yakalanan balık (catch olayının içeriği) ve son kaçırma nedeni.
 var last_catch: Dictionary = {}
 var last_loss: String = ""
+## Takılan balık fazla iriyse yıldızı (takımı taşımıyor: ReelModel.excess), değilse 0. hook ve
+## çekişmede kaybedilince lost olayında too_big olarak gelir (Dede eksik takımı söyler).
+var too_big: int = 0
 var lake: LakeShape
 var rules: FishingRules
 ## Kuşanılmış takım (menzil, sarma, fren, misina, iğne, şamandıra, yem, kepçe).
@@ -344,11 +347,14 @@ func _hook() -> void:
 	var extra := rules.escape_extra + gear.escape_extra
 	var cap := range_m() + extra
 	fight_reach = _water_reach(dist, cap)
+	# Senaryolu ilk balık hiçbir zaman fazla iri sayılmaz (boyu çekişmeye girmez).
 	reel = ReelModel.new(rules, fight, gear.reel_speed, dist,
-			clampf(fight_reach, minf(dist + extra, cap), cap), easy or s.scripted, Dice.derive(s.seed, 1), gear)
+			clampf(fight_reach, minf(dist + extra, cap), cap), easy or s.scripted, Dice.derive(s.seed, 1), gear,
+			0 if s.scripted else s.percentile)
 	reel.holding = holding
+	too_big = s.stars if reel.excess > 0 else 0
 	state = State.FIGHTING
-	_emit({ "type": "hook", "shadow": s.id, "fish": s.fish_id, "distance": dist })
+	_emit({ "type": "hook", "shadow": s.id, "fish": s.fish_id, "distance": dist, "too_big": too_big })
 
 
 ## Balıkçıdan hook_dir yönünde, from_dist'ten dışarı doğru suyun sürdüğü en uzak uzaklık
@@ -390,6 +396,7 @@ func _caught() -> void:
 	sim.remove(s)
 	hooked = null
 	reel = null
+	too_big = 0
 	state = State.CAUGHT
 	var e := last_catch.duplicate()
 	e["type"] = "catch"
@@ -418,7 +425,8 @@ func _lose(reason: String) -> void:
 	_timer = maxi(1, rules.lost_steps)
 	last_loss = reason
 	reel = null
-	_emit({ "type": "lost", "reason": reason })
+	_emit({ "type": "lost", "reason": reason, "too_big": too_big })
+	too_big = 0
 
 
 func _to_idle() -> void:

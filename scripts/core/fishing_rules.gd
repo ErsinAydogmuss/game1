@@ -76,6 +76,20 @@ var escape_extra: float = 2.0
 ## Kolay modda patlamada basılı tutunca misina kaçış hızının bu katı kayar.
 var easy_slip: float = 2.0
 var first_burst_steps := Vector2i(96, 144)
+# İri balık (docs/gdd.md §5): iri türün (fight.heavy) boyu çekişini artırır; yıldızı takımın
+# taşımasını aşan fazla iridir.
+## Takımsız taşıma (yıldız): bambu olta ve ince misina.
+var carry: int = 3
+## İri türde sakin çekişe boy yüzdeliğiyle eklenen (en irisinde bu kadar).
+var size_pull: float = 0.08
+## Fazla iride sakin çekiş sınırın bu kadar üstünde (fazla yıldız başına): sakinken de kırmızı.
+var over_pull: float = 0.12
+## Fazla iride patlamanın çekişine eklenen (fazla yıldız başına).
+var over_burst: float = 0.1
+## Fazla iride bırakınca uzaklaşma × (1 + over_drift × fazla yıldız); Kolay modda artmaz.
+var over_drift: float = 3.0
+## Kolay modda fazla iri balığın sarma hızı çarpanı (kopmaz, yalnızca yavaş gelir).
+var over_easy_reel: float = 0.9
 
 
 static func to_steps(seconds: float) -> int:
@@ -139,6 +153,12 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 	r.escape_extra = float(reel.get("escape_extra_m", r.escape_extra))
 	r.easy_slip = float(reel.get("easy_slip", r.easy_slip))
 	r.first_burst_steps = _steps2(reel.get("first_burst"), r.first_burst_steps)
+	r.carry = int(reel.get("carry", r.carry))
+	r.size_pull = float(reel.get("size_pull", r.size_pull))
+	r.over_pull = float(reel.get("over_pull", r.over_pull))
+	r.over_burst = float(reel.get("over_burst", r.over_burst))
+	r.over_drift = float(reel.get("over_drift", r.over_drift))
+	r.over_easy_reel = float(reel.get("over_easy_reel", r.over_easy_reel))
 	r._validate(errors)
 	return r
 
@@ -159,6 +179,9 @@ func _validate(errors: PackedStringArray) -> void:
 		"gerilim hızları": rise > 0.0 and fall > 0.0,
 		"fark etme uzaklıkları": notice_front >= notice_side and notice_side > 0.0,
 		"ilk patlama uyarıdan sonra": first_burst_steps.x > warn_steps and first_burst_steps.y >= first_burst_steps.x,
+		"iri balık (taşıma 1–5, fazla iri sınırın üstünde, Kolay'da yavaş ama gelir)": carry >= 1 and carry <= 5 \
+				and size_pull >= 0.0 and over_pull > 0.0 and over_burst >= 0.0 and over_drift >= 0.0 \
+				and over_easy_reel > 0.0 and over_easy_reel <= 1.0,
 	}
 	for label: String in checks:
 		if not bool(checks[label]):

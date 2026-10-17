@@ -54,6 +54,7 @@ UI_HINT_COMING,It's coming! Don't touch yet...,Geliyor! Sakın dokunma...
 UI_HINT_NIBBLE,Nibbling... Strike when it dives!,Dürtüyor... Dalınca VUR!
 UI_HINT_BITE,Now! Tap anywhere!,Şimdi! Ekranın her yerine dokun!
 UI_HINT_REEL,Hold to reel in. Let go when it thrashes!,"Basılı tut, sar. Çırpınınca bırak!"
+UI_HINT_TOO_BIG,"Too big! This gear can't hold it.","Çok iri! Bu takım onu taşımaz."
 UI_DEDE_TIP_1,"Cast in front of a shadow, not on top of it.","Gölgenin önüne at evlat, üstüne değil."
 UI_DEDE_TIP_2,Strike the moment the bobber dives!,Şamandıra dalınca hemen VUR!
 UI_DEDE_TIP_3,"Let go when it thrashes, or the line snaps.","Balık çırpınınca bırak, misina kopmasın."
@@ -66,6 +67,7 @@ UI_MISSED,It got away!,Kaçtı!
 UI_RETRY,Missed! It will bite again.,Kaçırdın! Yine ısıracak.
 UI_SNAPPED,The line snapped!,Misina koptu!
 UI_ESCAPED,The fish escaped!,Balık kaçtı!
+UI_TOO_BIG,Too big!,Çok iri!
 UI_SCARED,You scared it! Cast in front of it.,Ürküttün! Önüne at.
 UI_NO_WATER,Tap the water to cast.,Atmak için suya dokun.
 UI_LET_GO,Let go!,Bırak!
@@ -182,6 +184,11 @@ UI_DEDE_BOAT,"That boat's for deep water, kid. Your time will come!","Sandalla d
 UI_DEDE_BOAT_SHOP,"You're ready for deep water, kid! Nana sells a boat.",Derin sulara hazırsın evlat! Nine sandal satıyor.
 UI_DEDE_BOAT_DEEP,"Deep water! Big fish live here, kid. Hold tight!",Derin sular! Burada iri balıklar yaşar evlat. Sıkı tut!
 UI_DEDE_GATE,"We'll go there later, kid. Let's fish here first!","Oraya sonra gideriz evlat. Önce burada balık tutalım!"
+UI_DEDE_TOO_BIG_BUY,Too big! Nana sells the %s.,Çok iriydi! Nine'den %s al.
+UI_DEDE_TOO_BIG_EQUIP,Too big! Equip your %s.,Çok iriydi! Dükkânda tak: %s.
+UI_DEDE_TOO_BIG_BOTH,Too big! Nana sells the %s; equip your %s.,"Çok iriydi! Nine'den %s al; %s sende, tak."
+UI_DEDE_TOO_BIG_RANK,Too big! Nana sells gear for it at rank %d.,Çok iriydi! Onu taşıyan takımı Nine rütbe %d olunca satar.
+UI_LIST_AND,%s and %s,%s ve %s
 UI_DEDE_ZONE_OPEN,"A new spot is open, kid! Take a look at the map.",Yeni bir yer açıldı evlat! Haritaya bir bak.
 UI_SHOP_SIGN,Nana's shop,Nine'nin dükkânı
 UI_NINE_LINE_1,"Come again, dear!",Yine bekleriz evladım!
@@ -197,11 +204,10 @@ UI_SHOP_TAB_TACKLE,Tackle,İğne
 UI_SHOP_TAB_BAIT,Bait,Yem
 UI_SHOP_TAB_EXTRA,Extras,Ekstra
 UI_STAT_RANGE,Range,Menzil
-UI_STAT_POWER,Power,Güç
 UI_STAT_SPEED,Speed,Sarma
 UI_STAT_DRAG,Drag,Fren
-UI_STAT_STRENGTH,Strength,Dayanım
 UI_STAT_STEALTH,Stealth,Görünmez
+UI_STAT_CARRY,Big fish,İri balık
 UI_STAT_HOLD,Hold,Tutma
 UI_STAT_SENSITIVE,Feel,Hassasiyet
 UI_STAT_REACH,Reach,Erişim

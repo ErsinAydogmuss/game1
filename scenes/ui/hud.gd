@@ -38,6 +38,9 @@ const TOAST_ICON := 104.0
 ## İpucu çubuğunda konuşanın yüzü ve yüzle yazı arasındaki boşluk.
 const FACE := 84.0
 const HINT_GAP := 18
+## Sığmayan ipucu (Dede'nin uzun takım adlı öğüdü) en çok bu boya küçülür; ötekiler tam boyda sığar
+## (test_hud ölçer).
+const HINT_MIN_SIZE := 33
 ## Defter düğmesi turuncu, harita düğmesi mavi (arayüz kitindeki düğme görselleri; palet dışı renk
 ## kodla çizilirdi).
 const BOOK_COLOR := UiKit.PRIMARY
@@ -83,6 +86,7 @@ var _face_icon: Control
 ## Ersin'in portresi yokken konuşanların modelden çekilen yedek yüzleri: "dede", "nine" -> Texture2D.
 var _faces: Dictionary = {}
 var _hint_key: String = ""
+var _hint_args: Array = []
 var _speaker: String = "dede"
 var _toast: Label
 ## Bildirimin ikonu (ör. kova dolu: göle dönen balık) ve ikonla yazının kutusu (canlandırılan).
@@ -172,7 +176,7 @@ func _process(delta: float) -> void:
 ## Dil değişince metinleri yeniden yazar.
 func refresh() -> void:
 	if not _hint_key.is_empty():
-		_hint_label.text = tr(_hint_key)
+		_set_hint_text(tr(_hint_key) % _hint_args if not _hint_args.is_empty() else tr(_hint_key))
 	if shore_button != null:
 		shore_button.set_text(tr("UI_BOAT_RETURN"))
 	var kind := _action_kind
@@ -188,16 +192,27 @@ func set_portrait(texture: Texture2D, speaker: String = "dede") -> void:
 		_show_face()
 
 
-## Alttaki ipucu çubuğu: çeviri anahtarı ve konuşan ("dede", "nine"); boş anahtar gizler.
-func show_hint(key: String, speaker: String = "dede") -> void:
-	if key == _hint_key and speaker == _speaker:
+## Alttaki ipucu çubuğu: çeviri anahtarı, konuşan ("dede", "nine") ve biçimli sözün değerleri
+## (tr(key) % args; Dede'nin takım öğüdü); boş anahtar gizler.
+func show_hint(key: String, speaker: String = "dede", args: Array = []) -> void:
+	if key == _hint_key and speaker == _speaker and args == _hint_args:
 		return
 	_hint_key = key
 	_speaker = speaker
+	_hint_args = args.duplicate()
 	_show_face()
 	_hint.visible = not key.is_empty()
 	if _hint.visible:
-		_hint_label.text = tr(key)
+		_set_hint_text(tr(key) % args if not args.is_empty() else tr(key))
+
+
+## İpucunun yazısı; ekranın genişliğine sığmazsa HINT_MIN_SIZE'a kadar küçülür.
+func _set_hint_text(text: String) -> void:
+	_hint_label.text = text
+	var inset := UiKit.safe_insets(self)
+	var room := hint_text_room(get_viewport_rect().size.x, maxf(inset.x, inset.z))
+	_hint_label.add_theme_font_size_override("font_size",
+			UiKit.fit_size(text, UiKit.body_font(), UiKit.SIZE_BODY, room, HINT_MIN_SIZE))
 
 
 ## Şu an ipucu çubuğunda konuşan.

@@ -105,7 +105,31 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - **Kolay çekme (Ayarlar):** gerilim tavanlıdır, misina kopmak yerine kayar, balık kaçmaz; beceri yalnızca hızı belirler.
 - **Süre:** iyi bir oyuncuyla çekişme Kızılkanat'ta 4–7 sn, Yayın'da 14–20 sn sürer.
 - **Kolay modda** patlamada basılı tutunca misina kayar: balık, kaçış hızının 2 katıyla uzaklaşır. Hep basılı tutan yine tutar; bırakmayı bilen daha hızlı tutar.
-- **Denge raporu** (`tools/reel_report.gd`; 4–9 m'den 200 deneme, ortalama süre):
+- **İri balık takım ister** (v0.3.1; Ersin: "iskelede takım almadan bütün balıkları tutabiliyorum"):
+  - **İri türler:** sazan, turna, yayın, kadife, sudak, altın sazan, mersin (`fish.json` `fight.heavy`). Ötekiler (kızılkanat, gümüş balığı, levrek, çapak, tatlısu kefali) her boyda bambu oltayla tutulur.
+  - **Boy çekişi artırır:** iri türde sakin çekiş en irisinde 0,08 artar (`size_pull`). Yine sınırın altında kalır.
+  - **Taşıma:** kamışın ve misinanın bir taşıması var (yıldız). Kuşanılan takımın taşıması ikisinin küçüğüdür.
+    - Bambu kamış ve ince misina 3★ taşır.
+    - Cam elyafı kamış (300 para, rütbe 2) ve naylon ya da florokarbon misina 4★ taşır.
+    - Karbon kamış (2.000, rütbe 5) ve örgü (1.800, rütbe 6), usta florokarbon ya da altın örgü misina 5★ taşır.
+  - **Fazla iri:** iri türün yıldızı taşımayı aşarsa:
+    - takılınca "Çok iri!" bildirimi çıkar, telefon titrer;
+    - sakinken de basılı tutmak kırmızıya çıkar (sakin çekiş sınırın 0,12 üstü, fazla yıldız başına);
+    - patlama sertleşir (+0,1);
+    - bırakınca balık 4 kat hızlı uzaklaşır (fazla yıldız başına +3 kat).
+    - Sonuç: basılı tutan ~1,2 sn'de koparır, bırakan balığı kaçırır. Kusursuz pompalayan bot bile tutamıyor.
+  - **Dede'nin öğüdü:** fazla iri balık kopunca ya da kaçınca Dede eksik takımı adıyla söyler (`Economy.gear_for_stars`: önce sendeki, sonra rütbesi yeten en ucuz, sonra en erken açılan):
+    - "Nine'den cam elyafı kamış ve naylon misina al.";
+    - sende varsa "Dükkânda tak: …";
+    - biri sende, biri Nine'deyse "Nine'den cam elyafı kamış al; naylon misina sende, tak.";
+    - rütbe yetmiyorsa "Onu taşıyan takımı Nine rütbe 6 olunca satar."
+    - Öğüt 6 sn kalır; hemen yeniden atınca silinmez. Takım adları dil değişince de doğru dilde.
+  - **İlk 3 balıkta** (Dede'nin ipuçları) fazla iri balığın çekişmesinde "Basılı tut, sar" yerine "Çok iri! Bu takım onu taşımaz." yazar.
+  - **Dükkân:** kamış ve misina kartında "İri balık" satırı, 5 yıldızdan taşıdığı kadarı dolu.
+  - **Kolay modda** kopma ve kaçma yine yok; fazla iri balık yalnızca yavaş gelir (sarma ×0,9; çekişi ve bırakınca uzaklaşması artmaz). Kolay çekme çekişme sürerken ayarlardan açılırsa balık o andan Kolay kurallarıyla gelir.
+  - **Senaryolu ilk balık** hiç fazla iri sayılmaz.
+  - **Kaç balık:** boyların %20'si 4★ ve üstü, %6'sı 5★. İskele koyunda ısırmaların ~%6'sı bambu oltayla fazla iri (sazan, turna, yayın). Cam elyafı kamış ve naylon misinadan sonra ~%2'si (yalnızca 5★).
+- **Denge raporu** (`tools/reel_report.gd`; 4–9 m'den 200 deneme, ortalama süre; boy 1–3★ aralığında, takımın taşıdığı balık):
 
 | Balık | Çekiş | İyi oyuncu (0,4 sn tepki) | Yavaş oyuncu (0,7 sn) | Hep basılı (Normal) |
 |---|---|---|---|---|
@@ -128,19 +152,36 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Balık | İyi oyuncu (0,4 sn): başlangıç → en iyi takım | Hep basılı, en iyi takım (Normal) |
 |---|---|---|
 | Kızılkanat | 5,8 → 3,9 sn | tutar |
-| Sazan | 10,7 → 6,9 sn | %36 tutar |
+| Sazan | 10,7 → 6,9 sn | %32 tutar |
 | Levrek | 9,5 → 5,7 sn | tutar |
-| Turna | 13,7 → 8,0 sn | %38 tutar |
+| Turna | 13,7 → 8,0 sn | %36 tutar |
 | Yayın | 16,1 → 9,7 sn | koparır |
 | Gümüş balığı | 4,6 → 3,2 sn | tutar |
 | Çapak | 7,1 → 4,9 sn | tutar |
 | Tatlısu kefali | 7,4 → 4,8 sn | tutar |
-| Kadife | 10,4 → 6,7 sn | %18 tutar |
-| Sudak | 13,9 → 7,7 sn | %40 tutar |
+| Kadife | 10,4 → 6,7 sn | %14 tutar |
+| Sudak | 13,9 → 7,7 sn | %37 tutar |
 | Altın sazan | 14,0 → 8,5 sn | %2 tutar |
 | Mersin | 17,4 → 10,4 sn | koparır |
 
   Korkuluklar (`test_reel_model`): en iyi takımla yavaş oyuncu her balığı tutar; hep basılı tutan Nadir balığı en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar; çekişme en çok %40 kısalır. Misinanın kopma süresi bu yüzden en çok 0,95 sn.
+- **İri balık raporu** (`tools/reel_report.gd`, `-- --gear=mid` cam elyafı kamış + naylon misina, `-- --gear=top`; iyi oyuncu 0,4 sn tepki; pompa: gerilimi sınırın hemen altında tutan kusursuz bot):
+
+| İri tür | Bambu olta, 4–5★ (fazla iri): iyi oyuncu / pompa | Cam elyafı + naylon: 4★ / 5★ | En iyi takım, 5★ | Kolay, hep basılı: 3★ → 5★ (bambu) |
+|---|---|---|---|---|
+| Sazan | %0 / %0 | 9,8 sn / %0 | 6,9 sn | 9,8 → 11,7 sn |
+| Turna | %0 / %0 | 12,3 sn / %0 | 8,0 sn | 12,3 → 15,6 sn |
+| Yayın | %0 / %0 | 14,6 sn / %0 | 9,7 sn | 16,1 → 20,7 sn |
+| Kadife | %0 / %0 | 9,6 sn / %0 | 6,7 sn | 9,5 → 11,4 sn |
+| Sudak | %0 / %0 | 12,1 sn / %0 | 7,7 sn | 11,7 → 15,3 sn |
+| Altın sazan | %0 / %0 | 12,7 sn / %0 | 8,5 sn | 13,3 → 16,7 sn |
+| Mersin | %0 / %0 | 15,7 sn / %0 | 10,4 sn | 19,7 → 27,1 sn |
+
+  Takımın taşıdığı balığı iyi oyuncu %100 tutar (süreler bu oranla). Kusursuz pompalayan fazla iri balığı bazen 2 dakika yerinde tutar ama getiremez (raporda "bitmedi"; cam elyafı + naylonla 5★ kadife %99, sazan %48); bırakınca kaçar. Kolay modda yavaş oyuncu (0,7 sn) için de fark en çok ~1,4 kat (sudak 18,9 → 27,1 sn). Korkuluklar (`test_reel_model`):
+  - bambu olta 3★ iri balığı rahat tutar;
+  - fazla iriyi iyi oyuncu en çok %5, kusursuz pompalayan en çok %25 tutar (ölçüm: %0);
+  - o yıldızı taşıyan takımla iyi oyuncu en az %90 tutar;
+  - Kolay modda fazla iri balık hep tutulur (hep basılı tutan da 0,7 sn tepkili oyuncu da), en çok 75 sn ve 3★'ın en çok 1,75 katı sürer; Kolay çekişme sırasında açılsa da.
 
 **Sonuç**
 
@@ -380,15 +421,15 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - Rütbe kilidi var.
   - Sade tutulur: araştırmada en çok "seçenek kalabalığı" eleştirildi.
   - ✅ Dalga 1'deki hâli: Nine'ye ya da dükkâna dokununca açılır (kovada balık varsa Kova sekmesi, yoksa en son bakılan sekme). Üstte Nine'nin yüzü ve sözü ("Hoş geldin evladım!", "Güle güle kullan!", "Paran biraz eksik...", "Rütbe 4 olunca gel!", "Eline sağlık!") ve para. Sekmeler: Kova, Kamış, Makara, Misina, İğne (iğne ve şamandıra), Yem, Ekstra (kepçe, sandal ve sıradaki kova: kovalar tek kartta, sahip olunanın bir üstü; Dalga 2). Her sekmede en çok 6 kart (3×2), kaydırma yok.
-  - ✅ Kart: ikon (Ersin'in ekipman görseli gelene kadar kodla çizilir), ad, kısa açıklama, değer çubukları (koyu çizgi kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf; menzil ve kova kapasitesinin sayısı da yazar) ve tek düğme: fiyat (al ve tak), TAK, TAKILI, SENDE ya da kilitli rütbe. Para yetmeyen ya da rütbesi tutmayan düğme gri kalır ama basılınca Nine nedenini söyler (kilit sessiz kalmaz). Kuşanılan kartın kenarı yeşil.
+  - ✅ Kart: ikon (Ersin'in ekipman görseli gelene kadar kodla çizilir), ad, kısa açıklama, değer çubukları (koyu çizgi kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf; menzil ve kova kapasitesinin sayısı da yazar; kamışta ve misinada çubuk yerine "İri balık" yıldızları: kaç yıldızlı iri balığı taşıdığı, v0.3.1) ve tek düğme: fiyat (al ve tak), TAK, TAKILI, SENDE ya da kilitli rütbe. Para yetmeyen ya da rütbesi tutmayan düğme gri kalır ama basılınca Nine nedenini söyler (kilit sessiz kalmaz). Kuşanılan kartın kenarı yeşil.
   - ✅ Yem kartında çektiği balıklar ve bir gölgenin o balık olma şansı solucanla ve bu yemle ("Levrek %22 → %41"; defterdeki oranın aynısı), elindeki sayı ve paket boyu. Takılı yem yeniden alınabilir.
   - ✅ Sesler: satın almada tezgâh zili, kuşanmada tıkırtı, satışta para şıkırtısı; her birinin titreşimi ve Nine'nin sözü var.
 
 | Kategori | Ne yapar | Kademe |
 |---|---|---|
-| Kamış (teknik başına) | menzil, güç (balığın çekişini azaltır) | 3–4 |
+| Kamış (teknik başına) | menzil, iri balık taşıma (yıldız), güç (sarma) | 3–4 |
 | Makara | sarma hızı, fren (gerilim tepesini kırpar) | 4 |
-| Misina | dayanım (kopma eşiği), görünmezlik (ürkek balık) | 4 |
+| Misina | iri balık taşıma (yıldız), dayanım (kopma süresi), görünmezlik (ürkek balık) | 4 |
 | İğne | tutma (kaçışı azaltır) | 3 |
 | Yem | tür çekimi; tükenir, solucan bedava ve sınırsız | 6 |
 | Yapay yem, sinek | yırtıcı ve alabalık çekimi; kalıcı | 5 + 3 |
@@ -423,26 +464,31 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 - ✅ **Bölgeli denge botu** (Dalga 2): kıyı bölgesini oyuncu gibi seçer. Önce gidilmemiş açık bölgeye gider (yeni bölge açılınca hemen), sonra defterde tutulmamış türü en çok olana, sonra balık başına en çok kazandırana. Sandalı rütbesi yetince öncelikle alır, parası yetene kadar başka şey almaz; sonra kovaların yarısını derin ortada doldurur (`boat_share`, tahmin). Bölge değiştirmek ve satmak için iskeleye dönmek 6 sn sürer (`travel_s`: harita, dokunuş, kararma). Bölge başına süreler `session_timing.gd --zone=` ile ölçülür (`sim.json` "zones").
 - ✅ **Rütbe eğrisi uzadı:** bölgeler rütbe 3–9'da açıldığı için eşikler 0, 60, 300, 600, 950, 1.400, 2.050, 2.900, 4.000, 5.000 … 26.000 (rütbe 20). Eski kayıtta rütbe ve rütbedeki ilerleme korunur: kayıt sürümü 3, puan yeni eğriye taşınır (`SaveData.remap_xp`). Sandal 3.500 para.
 - ✅ **Dalga 2 ölçümü** (`tools/economy_report.gd -- --hours=12 --seeds=6`; gölgeler yalnızca avlanılan bölgede doğar, derin ortanın uzak kıyı şeridi bölgesiz): saatte yaklaşık 6.000 para ve 190 av. Zamanın ~%47'si dere ağzında, ~%47'si derin ortada geçiyor (en çok kazandıran iki yer); öteki kıyı bölgelerine yeni türleri tutmak için gidiliyor. Rütbe 9 hedefin (80–110 dk) biraz önünde: dere ağzında balık çabuk geliyor; eğri Dalga 3'te teknik kilitleriyle yeniden ayarlanır. Korkuluklar `tests/test_session_sim.gd`'de (200 dk, 3 seed); "yeni bölge öncekilerden az kazandırmaz" `test_economy.gd`'de.
+- ✅ **v0.3.1 ölçümü (iri balık takım ister):**
+  - Saatte ~5.850 para (−%3) ve 190 av.
+  - Rütbe 9: 76–92 dk (önce 69–81). Sandal: 111–150 dk (önce 104–132).
+  - Bot Dede'nin öğüdüne uymaz, takımı yine en ucuzdan alır. Cam elyafı kamış ~22–35. dakikada, karbon kamış ve örgü misina ~3. saatte geliyor. O zamana dek iri türlerin 5★'ları (~%6) kaçıyor; öğüde uyan oyuncu daha erken alır.
+  - Mersinin ilk tutuluşu şansa çok bağlı (20 seed: 125–276 dk; eski kodda da bir seed 288). Korkuluk 100–240 dk, 250 dakikada ölçülür.
 
 | Olay (ilk kez) | Dakika | Korkuluk |
 |---|---|---|
 | ilk satış | 2–3 | ≤ 5 |
-| ilk alışveriş (misina) | 3–7 | ≤ 10 |
-| rütbe 2 / 3 / 5 / 7 / 9 | 1–3 / 6–13 / 19–28 / 41–49 / 69–81 | ≤ 5 / 5–15 / 15–35 / 38–65 / 60–120 |
-| rütbe 10 / 15 / 20 | 84–100 / 183–216 / 333–359 | — |
-| ilk gidiş: sazlık / nilüferli koy / kayalık burun / dere ağzı | 2–3 / 6–13 / 19–28 / 41–49 | — / 5–15 / 15–35 / — |
-| gölün 5 türü / 11 kıyı türü / mersin (12.) | 2–4 / 21–33 / 119–159 | ≤ 30 / — / 100–200 |
-| makara, iğne, şamandıra (ilk kademe) | 3–25 | — |
-| cam kamış | 20–30 | 10–45 |
-| büyük kova | 23–36 | 15–60 |
-| floro misina, hızlı makara, kepçe, büyük iğne | 37–76 | kepçe 40–100 |
-| sandal (3.500) ve derin orta | 104–132 | 90–180 |
-| güçlü makara, parlak şamandıra, balık filesi | 114–177 | — |
-| örgü misina, karbon kamış, usta florokarbon | 169–240 | — |
-| usta makarası, büyük file, altın örgü | 249–409 | — |
-| altın makara (15.000) / dev file (15.000) | 507–546 / 638–689 | — |
+| ilk alışveriş (misina) | 3–8 | ≤ 10 |
+| rütbe 2 / 3 / 5 / 7 / 9 | 1–3 / 10–14 / 21–31 / 45–56 / 76–92 | ≤ 5 / 5–15 / 15–35 / 38–65 / 60–120 |
+| rütbe 10 / 15 / 20 | 90–112 / 193–225 / 334–375 | — |
+| ilk gidiş: sazlık / nilüferli koy / kayalık burun / dere ağzı | 2–3 / 10–14 / 22–31 / 45–56 | — / 5–15 / 15–35 / — |
+| gölün 5 türü / 11 kıyı türü / mersin (12.) | 2–4 / 25–37 / 135–276 | ≤ 30 / — / 100–240 |
+| makara, iğne, şamandıra (ilk kademe) | 10–26 | — |
+| cam kamış | 22–35 | 10–45 |
+| büyük kova | 30–42 | 15–60 |
+| floro misina, hızlı makara, kepçe, büyük iğne | 40–85 | kepçe 40–100 |
+| sandal (3.500) ve derin orta | 111–150 | 90–180 |
+| güçlü makara, parlak şamandıra, balık filesi | 126–185 | — |
+| örgü misina, karbon kamış, usta florokarbon | 171–250 | — |
+| usta makarası, büyük file, altın örgü | 261–428 | — |
+| altın makara (15.000) / dev file (15.000) | 528–559 / 665–703 | — |
 
-- **Değerlendirme:** ilk saat dolu: yeni bölge yaklaşık 10, 24 ve 46. dakikada, araya alışverişler giriyor. Sandal rütbe 9'dan sonra 35–50 dakikalık bir birikim hedefi; alınınca balık başına kazanç ~1,7 katına çıkıyor (derin ortada ~40 para, dere ağzında ~24). Rütbe 20'ye ~5,7 saatte varılıyor (Dalga 1'de 5). Şamandıra takımının hepsi 12 saatte alınıyor (dev file ~11. saatte); Dalga 3'te tekniklerin takımı gelince fiyatlar "bütün kademeler 8–15 saat" hedefine göre yeniden ayarlanır.
+- **Değerlendirme:** ilk saat dolu: yeni bölge yaklaşık 12, 26 ve 50. dakikada, araya alışverişler giriyor. Sandal rütbe 9'dan sonra 35–50 dakikalık bir birikim hedefi; alınınca balık başına kazanç ~1,7 katına çıkıyor (derin ortada ~40 para, dere ağzında ~24). Rütbe 20'ye ~5,9 saatte varılıyor (Dalga 1'de 5). Şamandıra takımının hepsi 12 saatte alınıyor (dev file ~11. saatte); Dalga 3'te tekniklerin takımı gelince fiyatlar "bütün kademeler 8–15 saat" hedefine göre yeniden ayarlanır.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
 ### 10.5 Canlı dünya

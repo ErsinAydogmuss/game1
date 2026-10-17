@@ -14,16 +14,17 @@ const ALL: Array[String] = [SMILE, STORY, WOW]
 const BY_KEY := {
 	# İlk balıklarda Dede yol gösterir: talimatı anlatır, heyecanlı anda şaşırır.
 	"UI_HINT_FIRST_SHADOW": STORY, "UI_HINT_CAST": STORY, "UI_HINT_NIBBLE": STORY, "UI_HINT_REEL": STORY,
-	"UI_HINT_COMING": WOW, "UI_HINT_BITE": WOW,
+	"UI_HINT_COMING": WOW, "UI_HINT_BITE": WOW, "UI_HINT_TOO_BIG": WOW,
 	"UI_DEDE_BUCKET": STORY, "UI_DEDE_BAIT_OUT": STORY, "UI_DEDE_BOAT": STORY, "UI_DEDE_GATE": STORY, "UI_DEDE_LEGEND_NEAR": WOW,
 	"UI_DEDE_ZONE_OPEN": WOW,
 	"UI_DEDE_CARD_NEW": SMILE, "UI_DEDE_CARD_RECORD": WOW, "UI_DEDE_CARD_RELEASE": STORY,
 	# Nine satın almada paketi uzatır, satışta sevinir.
 	"UI_NINE_BOUGHT": STORY, "UI_NINE_SOLD": WOW,
 }
-## Ön ekle eşlenen sözler: Dede'nin öğütleri (UI_DEDE_TIP_1...) ve kartta nadirliğe göre sözleri
-## (UI_DEDE_CARD_<nadirlik>, Nadir ve üstü). Önce BY_KEY bakılır.
-const BY_PREFIX := {"UI_DEDE_TIP_": STORY, "UI_DEDE_CARD_": WOW}
+## Ön ekle eşlenen sözler: Dede'nin öğütleri (UI_DEDE_TIP_1...), fazla iri balıkta takım öğüdü
+## (UI_DEDE_TOO_BIG_...) ve kartta nadirliğe göre sözleri (UI_DEDE_CARD_<nadirlik>, Nadir ve üstü).
+## Önce BY_KEY bakılır.
+const BY_PREFIX := {"UI_DEDE_TIP_": STORY, "UI_DEDE_TOO_BIG_": STORY, "UI_DEDE_CARD_": WOW}
 
 
 ## Sözün ifadesi.

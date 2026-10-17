@@ -8,7 +8,8 @@ extends RefCounted
 ##    oyunda garanti tek bir gölge doğurur (oyuncu önce başka bir gölgeyi tutabilir); bot garantiyi
 ##    sıradaki ısırmaya uygular. 40 avda Nadir gelmeme olasılığı ~%0,4: ekonomiye etkisi yok.
 ## 3. Isırmada kaçırma: miss_ppm. Takılınca yem harcanır (Economy.use_bait).
-## 4. Çekişme: ReelModel kuşanılan takımla, ReelBot (tepkili oyuncu, reaction_s) oynar.
+## 4. Çekişme: ReelModel kuşanılan takımla ve balığın boyuyla (fazla iri kaçar), ReelBot (tepkili
+##    oyuncu, reaction_s) oynar.
 ## 5. Tutulan balık: defter, şans garantisi sayaçları, rütbe puanı, kova (doluysa bırakılır).
 ## 6. Kova dolunca Nine'ye gider (sell_s), hepsini satar, alışveriş yapar (shop).
 ## 7. Bölgeli göl: kıyı bölgesini oyuncu gibi seçer: önce gidilmemiş açık bölge (merak; yeni
@@ -97,7 +98,7 @@ func cast_once() -> void:
 	var rules := db.rules
 	var max_distance := gear.range_m + rules.escape_extra + gear.escape_extra
 	var model := ReelModel.new(rules, def["fight"], gear.reel_speed, _range("start_m", Vector2(4, 8)), max_distance,
-			false, rng.randi(), gear)
+			false, rng.randi(), gear, percentile)
 	var fight := ReelBot.play(model, ReelBot.make(ReelBot.Style.REACT, _num("reaction_s", 0.45)))
 	elapsed += float(fight["seconds"])
 	if int(fight["outcome"]) != ReelModel.Outcome.CAUGHT:

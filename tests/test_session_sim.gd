@@ -7,7 +7,7 @@ extends BaseTest
 
 const SEEDS := [1000, 1077, 1154]
 ## Korkulukların ölçüldüğü oyun süresi (dk).
-const MINUTES := 200.0
+const MINUTES := 310.0
 ## [olay, en erken dk, en geç dk]: her seed'de olay bu aralıkta ilk kez olmalı.
 const PACING := [
 	["sell", 0.0, 5.0],            # ilk satış (kova dolar, Nine'ye gidilir)
@@ -24,7 +24,9 @@ const PACING := [
 	["buy:bucket_big", 15.0, 60.0],
 	["buy:net", 40.0, 100.0],
 	["buy:boat", 90.0, 180.0],     # rütbe 9 + biriktirme (90–180)
-	["species_12", 100.0, 200.0],  # mersin: sandalla derin ortada, Efsanevi
+	# Mersin: sandalla derin ortada, Efsanevi; ilk tutuluşu şansa çok bağlı (v0.3.1, 20 seed: 125–276
+	# dk; eski kodda da bir seed 288). Zarların sırası değişince bir seed kolayca kayar: pay geniş.
+	["species_12", 100.0, 300.0],
 ]
 
 

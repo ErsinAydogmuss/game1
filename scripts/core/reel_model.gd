@@ -15,6 +15,10 @@ extends RefCounted
 ## - Takım (GearStats, isteğe bağlı): kamışın gücü sarmayı hızlandırır ve patlamadaki kaçışı
 ##   yavaşlatır; makaranın freni patlamadaki gerilimi kırpar; misina kopma süresini, kepçe
 ##   tutma uzaklığını belirler. Takım verilmezse kurallardaki (bambu olta) sayılar.
+## - İri tür (fight.heavy): boy yüzdeliği sakin çekişi size_pull kadar artırır (yine sınırın
+##   altında). Yıldızı takımın taşımasını (carry) aşan balık fazla iridir (excess = fazla yıldız):
+##   sakinken de basılı tutmak kırmızıya çıkar, patlama sertleşir, bırakınca daha hızlı uzaklaşır.
+##   Kolay modda kopmaz, kaçmaz; yalnızca yavaş gelir.
 
 enum Phase { CALM, WARN, BURST }
 enum Outcome { NONE, CAUGHT, SNAPPED, ESCAPED }
@@ -36,6 +40,11 @@ var in_red: bool = false
 var steps: int = 0
 ## Kopma sayacı (adım × UNIT).
 var over: int = 0
+## Fazla iri: iri türün yıldızı takımın taşımasını kaç aşıyor (0: aşmıyor).
+var excess: int = 0
+## Gerilim sınırı ve basılı tutunca bir adımdaki artış (botlar ve sunum okur).
+var limit: float = 0.85
+var rise_step: float = 0.04
 
 var _rules: FishingRules
 var _reel_speed: float = 1.0
@@ -47,13 +56,21 @@ var _len := Vector2i(30, 60)
 var _recover: int = 350
 var _snap_units: int = 48000
 var _catch_m: float = 0.6
+var _drift: float = 0.25
+## Fazla iride Normal modun değerleri ve Kolay modun sarma hızı (fazla iri değilse temel değerler).
+## Mod ayarlardan çekişme sürerken de değişebilir: hangisinin geçerli olduğuna her adımda bakılır.
+var _strained_pull: float = 0.5
+var _strained_burst: float = 1.1
+var _strained_drift: float = 0.25
+var _easy_reel: float = 1.0
 var _rng := RandomNumberGenerator.new()
 
 
 ## fight: balığın çekişme ayarları (ContentDB fish["fight"]); reel_speed: makaranın sarma hızı
-## (m/sn); seed: patlama zamanlarının zarı; gear: kuşanılmış takım (yoksa kurallardaki sayılar).
+## (m/sn); seed: patlama zamanlarının zarı; gear: kuşanılmış takım (yoksa kurallardaki sayılar);
+## percentile: balığın boy yüzdeliği (ppm; iri türde çekişi ve fazla iriliği belirler).
 func _init(rules: FishingRules, fight: Dictionary, reel_speed: float, start_distance: float,
-		max_dist: float, easy_mode: bool, seed: int, gear: GearStats = null) -> void:
+		max_dist: float, easy_mode: bool, seed: int, gear: GearStats = null, percentile: int = 0) -> void:
 	_rules = rules
 	_reel_speed = reel_speed * float(fight["reel"])
 	_pull = fight["pull"]
@@ -64,12 +81,31 @@ func _init(rules: FishingRules, fight: Dictionary, reel_speed: float, start_dist
 	_recover = int(round(rules.snap_recover * UNIT))
 	_snap_units = rules.snap_steps * UNIT
 	_catch_m = rules.catch_m
+	_drift = rules.drift
+	limit = rules.limit
+	rise_step = rules.rise * STEP
+	var carry := rules.carry
 	if gear != null:
 		_reel_speed *= 1.0 + gear.power
 		_run *= 1.0 - gear.power
 		_burst_pull *= 1.0 - gear.drag
 		_snap_units = gear.snap_steps * UNIT
 		_catch_m = gear.catch_m
+		carry = gear.carry
+	if bool(fight.get("heavy", false)):
+		_pull += rules.size_pull * float(clampi(percentile, 0, Dice.PPM)) / Dice.PPM
+	excess = excess_for(fight, percentile, carry)
+	_strained_pull = _pull
+	_strained_burst = _burst_pull
+	_strained_drift = _drift
+	_easy_reel = _reel_speed
+	if excess > 0:
+		# Normal modda takım taşımaz: sakinken de kırmızı, sert patlama, bırakınca hızla uzaklaşır.
+		# Kolay modda yalnızca yavaş gelir.
+		_strained_pull = rules.limit + rules.over_pull * excess
+		_strained_burst = _burst_pull + rules.over_burst * excess
+		_strained_drift = _drift * (1.0 + rules.over_drift * excess)
+		_easy_reel = _reel_speed * rules.over_easy_reel
 	_rng.seed = seed
 	distance = start_distance
 	max_distance = max_dist
@@ -102,8 +138,10 @@ func step() -> PackedStringArray:
 				phase_steps = maxi(1, Dice.between(_rng, _every) - _rules.warn_steps)
 				out.append("burst_end")
 	var bursting := phase == Phase.BURST
+	var strained := excess > 0 and not easy
 	if holding:
-		tension = move_toward(tension, _burst_pull if bursting else _pull, _rules.rise * STEP)
+		var target := (_strained_burst if strained else _burst_pull) if bursting else (_strained_pull if strained else _pull)
+		tension = move_toward(tension, target, _rules.rise * STEP)
 	else:
 		tension = move_toward(tension, 0.0, _rules.fall * STEP)
 	if easy:
@@ -114,9 +152,9 @@ func step() -> PackedStringArray:
 		elif easy and tension >= _rules.limit:
 			distance += _run * _rules.easy_slip * STEP
 	elif holding:
-		distance -= _reel_speed * STEP
+		distance -= (_easy_reel if easy else _reel_speed) * STEP
 	else:
-		distance += _rules.drift * STEP
+		distance += (_strained_drift if strained else _drift) * STEP
 	var red := tension > _rules.limit
 	if red != in_red:
 		in_red = red
@@ -140,6 +178,14 @@ func step() -> PackedStringArray:
 			outcome = Outcome.ESCAPED
 			out.append("escaped")
 	return out
+
+
+## Fazla iri mi: iri türün (fight.heavy) yıldızı taşımayı (carry, yıldız) kaç aşıyor; iri tür
+## değilse ya da takım taşıyorsa 0.
+static func excess_for(fight: Dictionary, percentile: int, carry: int) -> int:
+	if not bool(fight.get("heavy", false)):
+		return 0
+	return maxi(0, FishTable.stars(percentile) - carry)
 
 
 ## Kopmaya ne kadar yakın (0..1; sunumdaki kırmızı dolgu).

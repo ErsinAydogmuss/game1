@@ -4,8 +4,10 @@ extends RefCounted
 ## - PERFECT: patlama başlamadan hemen önce bırakır, biter bitmez yeniden basar.
 ## - REACT: uyarıdan (warn) reaction adım sonra bırakır, patlama bitişinden reaction adım sonra basar.
 ## - ALWAYS: hep basılı tutar. NEVER: hiç basmaz.
+## - PUMP: kusursuz usta: PERFECT gibi bırakır; sakinken de gerilim sınırı geçecekse bırakır
+##   ("pompalar": fazla iri balığın en iyi denenebileceği yol).
 
-enum Style { PERFECT, REACT, ALWAYS, NEVER }
+enum Style { PERFECT, REACT, ALWAYS, NEVER, PUMP }
 
 ## Bir çekişme bu kadar adımda bitmezse "bitmedi" sayılır (2 dakika).
 const LIMIT_STEPS := 120 * FishingRules.HZ
@@ -34,6 +36,10 @@ func decide(model: ReelModel, events: PackedStringArray) -> bool:
 		Style.PERFECT:
 			return not (model.phase == ReelModel.Phase.BURST
 					or (model.phase == ReelModel.Phase.WARN and model.phase_steps <= 1))
+		Style.PUMP:
+			if model.phase == ReelModel.Phase.BURST or (model.phase == ReelModel.Phase.WARN and model.phase_steps <= 1):
+				return false
+			return model.tension + model.rise_step <= model.limit
 	for e in events:
 		if e == "warn":
 			_release_at = model.steps + reaction

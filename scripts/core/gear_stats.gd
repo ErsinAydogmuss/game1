@@ -18,6 +18,9 @@ var drag: float = 0.0
 var snap_steps: int = 48
 ## 0–0,5 (görünmezlik): gölgeyi korkutma yarıçapı × (1 − stealth).
 var stealth: float = 0.0
+## Taşıma (yıldız): kamışın ve misinanın küçüğü. İri türün daha çok yıldızlısı fazla iridir
+## (ReelModel.excess_for).
+var carry: int = 3
 ## İğne: balığın kaçma payına eklenen metre.
 var escape_extra: float = 0.0
 ## Şamandıra: VUR süresine eklenen adım.
@@ -42,6 +45,8 @@ static func from_items(db: ContentDB, items: Dictionary, extras: Array[String]) 
 	var g := GearStats.new()
 	g.snap_steps = db.rules.snap_steps
 	g.catch_m = db.rules.catch_m
+	var rod_carry := db.rules.carry
+	var line_carry := db.rules.carry
 	for slot: String in ContentDB.GEAR_SLOTS:
 		var id := str(items.get(slot, ""))
 		var item := db.gear_item(id)
@@ -56,18 +61,21 @@ static func from_items(db: ContentDB, items: Dictionary, extras: Array[String]) 
 				g.technique = str(item["technique"])
 				g.range_m = float(item["range_m"])
 				g.power = float(item["power"])
+				rod_carry = int(item["carry"])
 			"reel":
 				g.reel_speed = float(item["reel_speed"])
 				g.drag = float(item["drag"])
 			"line":
 				g.snap_steps = maxi(1, FishingRules.to_steps(float(item["snap_after"])))
 				g.stealth = float(item["stealth"])
+				line_carry = int(item["carry"])
 			"hook":
 				g.escape_extra = float(item["escape_extra"])
 			"bobber":
 				g.window_add_steps = FishingRules.to_steps(float(item["window_add"]))
 			"bait":
 				g.attract = (item["attract"] as Dictionary).duplicate()
+	g.carry = mini(rod_carry, line_carry)
 	for id in extras:
 		var extra := db.gear_item(id)
 		if str(extra.get("category", "")) == "extra":

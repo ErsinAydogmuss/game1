@@ -98,6 +98,13 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Parti 3 görselleri oyunda: zemin dokuları (çimen, kum, toprak yol, yosunlu taş), bölge rozetleri (harita ve bildirimler), harita kâğıdı ve çıkartmaları (sazlık, nilüfer, kayalar, ağaçlar, sandal, dükkân), harita ikonları (iğne, kilit, pusula, şamandıra, çit tabelası) ve "Kıyıya dön" düğmesinde çapa.
 - [x] Parti 4 görselleri (teknikler) kesildi; teknikler Dalga 3'te geldikçe oyuna girer.
 - [x] Sis: oyun alanı berrak. Üstel sis yerine 35 m'de başlayan derinlik sisi, bloom yok, doygunluk ayarı kalktı (Ersin: "telefonda sisli").
+- [x] İri balık takım ister (Ersin: "iskelede takım almadan bütün balıkları tutabiliyorum"):
+  - İri türlerin boyu çekişini artırır.
+  - Kamış ve misinanın taşıması var: bambu 3★, cam elyafı ve naylon 4★, karbon ve örgü 5★.
+  - Taşımayı aşan balıkta "Çok iri!" bildirimi çıkar; sakinken de kırmızıya çeker, koparır. Ardından Dede eksik takımı adıyla söyler.
+  - Dükkân kartında "İri balık" yıldızları var.
+  - Kolay modda iri balık yalnızca yavaş gelir.
+  - Bkz. `docs/gdd.md` §5.
 - [ ] Telefonda deneme ve hız ölçümü: Ersin'in sorun listesi.
 
 **Dalga 3 — Teknikler → v0.4**

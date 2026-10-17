@@ -201,7 +201,7 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 
 ### 11. Geri bildirim
 
-Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl). Eski kayıt kendiliğinden yeni biçime (v3) geçer: rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır. Para, kova, takım ve defter aynen kalır.
+Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v0.3.1: berrak görüntü ve iri balık). Eski kayıt kendiliğinden yeni biçime (v3) geçer: rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır. Para, kova, takım ve defter aynen kalır.
 
 1. Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
 2. Rütben güncellemeden önceki gibi mi? (Sayı değişebilir; rütbe ve çubuk aynı kalmalı.)
@@ -211,8 +211,14 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl). 
 6. **Bölgelerin görünüşü:** sazlıkta sık kamış, nilüferli koyda nilüfer tarlası, kayalık burunda iri kayalar ve yosunlu taş, dere ağzında akan su, derin ortada şamandıralar. Kıyıya gelen dalga çizgileri, toprak yol ve ıslak kum güzel mi?
 7. **Yeni türler** (7 tür, toplam 12): gümüş balığı iskele koyunda ve sazlıkta, çapak iskele koyunda ve derin ortada, kadife sazlıkta, altın sazan nilüferli koyda, tatlısu kefali kayalık burunda ve dere ağzında, sudak kayalık burunda ve derin ortada, mersin derin ortada. Defter bulunduğun bölgenin oranlarını gösteriyor mu?
 8. **Sandal:** rütbe 9'da Nine'nin Ekstra sekmesinde (3.500 para). İskeledeki sandala dokun: derin ortada sandaldasın; sol alttaki "Kıyıya dön" iskeleye getirir. Mersin tutulunca kartında "Göle bırak" çıkıyor mu? "Kıyıya dön" düğmesi çentiğe takılmadan tam görünüyor mu?
-9. **Hepsini hızlıca görmek için** 12. adımdaki **Bütün bölgeleri aç**'ı kullan (kaydı değiştirir; istersen sonra **Kaydı sıfırla**). Normal oyunda nilüferli koy ≈ 10. dakikada açılır; derin ortaya (rütbe 9 ve sandal) ≈ 2 saatte varılır.
-10. Takılma, ısınma ya da pil çabuk bitmesi var mı? Sonra 12. adımdaki ölçümü yap.
+9. **Hepsini hızlıca görmek için** aşağıdaki "12. Telefonda hız ölçümü" bölümündeki **Bütün bölgeleri aç**'ı kullan (kaydı değiştirir; istersen sonra **Kaydı sıfırla**). Normal oyunda nilüferli koy ≈ 10. dakikada açılır; derin ortaya (rütbe 9 ve sandal) ≈ 2 saatte varılır.
+10. Takılma, ısınma ya da pil çabuk bitmesi var mı? Sonra "12. Telefonda hız ölçümü" bölümündeki ölçümü yap.
+11. **v0.3.1: renkler berrak mı?** Eskiden görüntü sisli gibiydi; şimdi su daha koyu mavi, çimen ve iskele daha canlı olmalı. Olta sudayken de puslu görünmemeli.
+12. **v0.3.1: iri balık takım ister.**
+    - İskele koyunda bambu oltayla 4–5 yıldızlı iri sazan, turna ya da yayın takılınca "Çok iri!" çıkıyor mu?
+    - O balıkta gerilim sakinken bile kırmızıya çıkıp misina kopuyor mu? Ardından Dede neyi alman gerektiğini söylüyor mu?
+    - Nine'nin kamış ve misina kartlarında "İri balık" yıldızları var mı? Cam elyafı kamış ve naylon misinayı alınca 4 yıldızlılar tutuluyor mu?
+    - Kolay çekme açıkken iri balık kopmadan, yalnızca yavaş geliyor mu?
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 

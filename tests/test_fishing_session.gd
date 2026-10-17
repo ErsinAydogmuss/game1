@@ -233,6 +233,63 @@ func test_catch_waits_for_the_card() -> void:
 	assert_true(session.cast(BOBBER), "yeni atış serbest")
 
 
+## İri balık takım ister: bambu olta ve ince misinayla (3★) 4★ yayın fazla iridir. hook olayı
+## too_big (yıldızı) taşır; basılı tutunca kopar ve lost olayında too_big gelir (Dede eksik takımı
+## söyler). Cam elyafı kamış ve naylon misinayla (4★) aynı balık fazla iri değildir.
+func test_too_big_fish_is_flagged() -> void:
+	var db := content()
+	var mid_items := db.gear_start.duplicate()
+	mid_items["rod"] = "rod_float_glass"
+	mid_items["line"] = "line_mono"
+	var none: Array[String] = []
+	for setup: Array in [[GearStats.starter(db), 4], [GearStats.from_items(db, mid_items, none), 0]]:
+		var session := FishingSession.new(db, "home_lake", setup[0], 99, false, false)
+		var s := _to_biting(session)
+		s.fish_id = "wels"
+		s.fish_index = db.fish_index("wels")
+		s.percentile = 800000
+		s.stars = FishTable.stars(s.percentile)
+		session.poll_events()
+		session.press()
+		var hook := {}
+		for e in session.poll_events():
+			if str(e["type"]) == "hook":
+				hook = e
+		var want: int = setup[1]
+		assert_eq(int(hook.get("too_big", -1)), want, "hook olayında too_big (taşıma %d★)" % (setup[0] as GearStats).carry)
+		assert_eq(session.too_big, want, "oturumda too_big")
+		if want == 0:
+			continue
+		var lost := {}
+		for i in 5 * HZ:
+			session.step()
+			for e in session.poll_events():
+				if str(e["type"]) == "lost":
+					lost = e
+			if not lost.is_empty():
+				break
+		assert_eq(str(lost.get("reason", "")), "snapped", "fazla iri balık basılı tutunca koparır")
+		assert_eq(int(lost.get("too_big", 0)), 4, "lost olayında too_big")
+		assert_eq(session.too_big, 0, "kayıptan sonra sıfırlanır")
+
+
+## Senaryolu ilk balık (öğretici) iri bir türün en irisi olsa da fazla iri sayılmaz.
+func test_scripted_first_fish_is_never_too_big() -> void:
+	var db := content()
+	var session := _session(false, true)
+	var first := session.sim.shadows[0]
+	first.fish_id = "wels"
+	first.fish_index = db.fish_index("wels")
+	first.percentile = 990000
+	first.stars = FishTable.stars(first.percentile)
+	assert_true(session.cast(Vector2(4.5, -2.0)), "atış")
+	assert_true(_run_until(session, FishingSession.State.BITING, 30.0), "ilk balık ısırır")
+	session.press()
+	assert_eq(session.state, FishingSession.State.FIGHTING, "çekişme")
+	assert_eq(session.too_big, 0, "senaryolu balık fazla iri değil")
+	assert_eq(session.reel.excess, 0, "çekişmede fazla iri kuralı yok")
+
+
 ## Balıkçı kıyıdan geride (karada) dururken kopan balık karada değil suda kaçar.
 func test_lost_fight_flees_through_water() -> void:
 	var session := _session()

@@ -14,10 +14,10 @@ const PPM := 1_000_000
 var rarities: Array[Dictionary] = []
 ## Balıklar: id, rarity (sıra), value (para), release_only (koruma altında: yalnızca bırakılır),
 ## shadow_m, size_cm (Vector2i), weight, color, back, accent, fight { reel, pull, burst_pull,
-## burst_every, burst_len (sn, Vector2), *_steps (Vector2i), run }.
+## burst_every, burst_len (sn, Vector2), *_steps (Vector2i), run, heavy (iri tür) }.
 var fish: Array[Dictionary] = []
 ## Takım (gear.json): id, category, price, rank, icon, kind ve kategoriye göre değerler
-## (rod: technique, range_m, power; reel: reel_speed, drag; line: snap_after, stealth;
+## (rod: technique, range_m, power, carry; reel: reel_speed, drag; line: snap_after, stealth, carry;
 ## hook: escape_extra; bobber: window_add; bait: attract {tür: çarpan}, pack; extra: catch_m;
 ## bucket: capacity).
 var gear: Array[Dictionary] = []
@@ -225,6 +225,7 @@ func _load_fish(raw: Dictionary) -> void:
 			"burst_every_steps": Vector2i(FishingRules.to_steps(every.x), FishingRules.to_steps(every.y)),
 			"burst_len_steps": Vector2i(FishingRules.to_steps(burst_len.x), FishingRules.to_steps(burst_len.y)),
 			"run": float(raw_fight.get("run", 1.0)),
+			"heavy": bool(raw_fight.get("heavy", false)),
 		}
 		var def := {
 			"id": id,
@@ -264,12 +265,14 @@ func _load_gear(raw: Dictionary) -> void:
 				def["technique"] = str(d.get("technique", "float"))
 				def["range_m"] = float(d.get("range_m", 9.0))
 				def["power"] = float(d.get("power", 0.0))
+				def["carry"] = int(d.get("carry", rules.carry))
 			"reel":
 				def["reel_speed"] = float(d.get("reel_speed", 1.6))
 				def["drag"] = float(d.get("drag", 0.0))
 			"line":
 				def["snap_after"] = float(d.get("snap_after", 0.8))
 				def["stealth"] = float(d.get("stealth", 0.0))
+				def["carry"] = int(d.get("carry", rules.carry))
 			"hook":
 				def["escape_extra"] = float(d.get("escape_extra", 0.0))
 			"bobber":
@@ -470,6 +473,8 @@ func _validate_gear() -> void:
 					errors.append("gear.json: %s: teknik ya da menzil geçersiz" % id)
 				if float(g["power"]) < 0.0 or float(g["power"]) > 0.3:
 					errors.append("gear.json: %s: power 0–0,3 olmalı" % id)
+				if int(g["carry"]) < 1 or int(g["carry"]) > 5:
+					errors.append("gear.json: %s: carry (taşıma) 1–5 yıldız olmalı" % id)
 			"reel":
 				if float(g["reel_speed"]) <= 0.0 or float(g["drag"]) < 0.0 or float(g["drag"]) > 0.25:
 					errors.append("gear.json: %s: sarma hızı ya da fren geçersiz" % id)
@@ -477,6 +482,8 @@ func _validate_gear() -> void:
 			"line":
 				if float(g["snap_after"]) <= 0.0 or float(g["stealth"]) < 0.0 or float(g["stealth"]) > 0.5:
 					errors.append("gear.json: %s: dayanım ya da görünmezlik geçersiz" % id)
+				if int(g["carry"]) < 1 or int(g["carry"]) > 5:
+					errors.append("gear.json: %s: carry (taşıma) 1–5 yıldız olmalı" % id)
 			"hook":
 				if float(g["escape_extra"]) < 0.0:
 					errors.append("gear.json: %s: escape_extra eksi olamaz" % id)
@@ -525,9 +532,11 @@ func _validate_fish(f: Dictionary) -> void:
 	if float(f["shadow_m"]) <= 0.0:
 		errors.append("fish.json: %s: gölge uzunluğu geçersiz" % id)
 	var fight: Dictionary = f["fight"]
-	# Sakin balıkta basılı tutmak kırmızıya hiç çıkmamalı; patlamada çıkmalı.
-	if float(fight["pull"]) >= rules.limit - 0.05 or float(fight["pull"]) <= 0.0:
-		errors.append("fish.json: %s: pull sınırın (%.2f) en az 0,05 altında olmalı" % [id, rules.limit])
+	# Sakin balıkta basılı tutmak kırmızıya hiç çıkmamalı (iri türün en irisinde de, takım taşıyorsa);
+	# patlamada çıkmalı.
+	var calm := float(fight["pull"]) + (rules.size_pull if bool(fight["heavy"]) else 0.0)
+	if calm >= rules.limit - 0.05 or float(fight["pull"]) <= 0.0:
+		errors.append("fish.json: %s: pull (iri türde + size_pull) sınırın (%.2f) en az 0,05 altında olmalı" % [id, rules.limit])
 	if float(fight["burst_pull"]) <= rules.limit:
 		errors.append("fish.json: %s: burst_pull sınırın üstünde olmalı" % id)
 	var every: Vector2i = fight["burst_every_steps"]

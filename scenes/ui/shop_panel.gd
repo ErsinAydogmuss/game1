@@ -6,7 +6,8 @@ extends Dialog
 ##   sandal, sıradaki kova: kovalar tek kartta). Her sekmede en çok 6 kart (3×2): kaydırma yok,
 ##   parmakla aranmaz.
 ## - Kart: ikon, ad, kısa açıklama, en çok iki değer çubuğu (kuşanılanla karşılaştırma: işaret
-##   kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf) ve tek düğme: fiyat (al ve tak), TAK,
+##   kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf; kamışta ve misinada "İri balık": kaç
+##   yıldızlı iri balığı taşıdığı, 5 yıldızdan dolu olanlar) ve tek düğme: fiyat (al ve tak), TAK,
 ##   TAKILI, SENDE ya da rütbe kilidi. Yem kartında hangi balığı çektiği ve elindeki sayı; takılı
 ##   yem yeniden alınabilir (düğme fiyat olur, kart yeşil kenarlı).
 ## - Kova: tür başına bir satır (sayı, değer), altta toplam ve HEPSİNİ SAT.
@@ -28,11 +29,13 @@ const TABS: Array[Array] = [
 	["bait", "bait", "UI_SHOP_TAB_BAIT", ["bait"]],
 	["extra", "net", "UI_SHOP_TAB_EXTRA", ["extra", "boat", "bucket"]],
 ]
-## Kategori başına gösterilen değerler: [gear.json alanı, çeviri anahtarı, birim ("" = sayı yok)].
+## Kategori başına gösterilen değerler: [gear.json alanı, çeviri anahtarı, birim ("" = sayı yok,
+## "★" = çubuk yerine 5 yıldızdan dolu olanlar)]. Kamışta ve misinada "İri balık": kaç yıldızlı iri
+## balığı taşır (ikisinin küçüğü işler; güç ve kopma süresi kuralda kalır, satır olarak görünmez).
 const STATS := {
-	"rod": [["range_m", "UI_STAT_RANGE", "m"], ["power", "UI_STAT_POWER", ""]],
+	"rod": [["range_m", "UI_STAT_RANGE", "m"], ["carry", "UI_STAT_CARRY", "★"]],
 	"reel": [["reel_speed", "UI_STAT_SPEED", ""], ["drag", "UI_STAT_DRAG", ""]],
-	"line": [["snap_after", "UI_STAT_STRENGTH", ""], ["stealth", "UI_STAT_STEALTH", ""]],
+	"line": [["carry", "UI_STAT_CARRY", "★"], ["stealth", "UI_STAT_STEALTH", ""]],
 	"hook": [["escape_extra", "UI_STAT_HOLD", ""]],
 	"bobber": [["window_add", "UI_STAT_SENSITIVE", ""]],
 	"extra": [["catch_m", "UI_STAT_REACH", ""]],
@@ -46,6 +49,9 @@ const CARDS := 6
 ## Kartın boyu: kart görselinin kenar payları içeriğin çevresinde (bot her sekmede denetler; aşan
 ## kart paneli sekmeden sekmeye büyütürdü).
 const CARD := Vector2(572, 312)
+## Kart sıraları arası; başlık, sekmeler ve kartlar arası (panelin boyu, telefonda sığsın).
+const ROW_GAP := 12
+const GAP := 6
 ## Satış satırının boyu (iki sütun).
 const SELL_ROW := Vector2(820, 96)
 const TAB := Vector2(232, 122)
@@ -57,6 +63,8 @@ const ACTION := Vector2(236, 122)
 const ODDS_TEXT := 204.0
 ## Satış satırları: iki sütun, en çok bu kadar tür (daha fazlası "+N tür").
 const SELL_ROWS := 8
+## Kamış ve misina kartında "İri balık" yıldızlarının boyu (5 yıldız, kartı CARD'dan genişletmesin).
+const STAR_SIDE := 27.0
 const BETTER := Color("#2f9e52")
 const WORSE := Color("#e07a24")
 const SAME := Color("#a88a64")
@@ -101,6 +109,10 @@ func _build() -> void:
 	header.move_child(_line, _title.get_index() + 1)
 	_coins = HBoxContainer.new()
 	header_extra.add_child(_coins)
+	# Telefonda (çentik ve ev çubuğu payıyla ~997 birim) küçülmeden sığsın, düğmeler 122 birim
+	# kalsın: başlık, sekmeler ve kartlar arası dar (panel 993 birim).
+	(_panel.get_child(0) as VBoxContainer).add_theme_constant_override("separation", GAP)
+	body.add_theme_constant_override("separation", GAP)
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 12)
 	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -111,7 +123,7 @@ func _build() -> void:
 		_tab_buttons[str(t[0])] = b
 	_content = VBoxContainer.new()
 	_content.add_theme_constant_override("separation", 16)
-	_content.custom_minimum_size = Vector2(0, CARD.y * 2 + 16)
+	_content.custom_minimum_size = Vector2(0, CARD.y * 2 + ROW_GAP)
 	body.add_child(_content)
 
 
@@ -198,7 +210,7 @@ func _build_gear() -> void:
 	var grid := GridContainer.new()
 	grid.columns = COLUMNS
 	grid.add_theme_constant_override("h_separation", 16)
-	grid.add_theme_constant_override("v_separation", 16)
+	grid.add_theme_constant_override("v_separation", ROW_GAP)
 	_content.add_child(grid)
 	for item in items_for(GameState.db, _tab, GameState.save):
 		grid.add_child(_gear_card(item))
@@ -318,6 +330,11 @@ func _stat_row(item: Dictionary, stat: Array) -> Control:
 	var label := UiKit.ink(tr(str(stat[1])), 24, UiKit.INK_SOFT)
 	label.custom_minimum_size = Vector2(112, 0)
 	row.add_child(label)
+	if str(stat[2]) == "★":
+		var stars := UiKit.stars(int(item.get(key, 0)), STAR_SIDE)
+		stars.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(stars)
+		return row
 	var value := float(item.get(key, 0.0))
 	var current := _current_value(str(item["category"]), key)
 	# Aralık şimdikini de kapsar: tek eşyalı kategoride (kepçe) işaret "kepçesiz" yerinde dursun.

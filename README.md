@@ -2,7 +2,7 @@
 
 **"Kıyını süsle, havayı bekle: bu gece oltana ne takılacak?"** Her yaşa hitap eden, rahat bir 3D mobil balıkçılık oyunu (iOS + Android, yatay ekran). Kendi balıkçınla yazı Dede'nin göl köyünde geçiriyorsun. Suda balık gölgeleri dolaşıyor; gölgenin önüne atıyorsun, gölge yaklaşıp dürtüyor, ısırınca VUR ve çek. Ersin'in Kazı'dan sonraki oyunu; kodu Claude yazıyor.
 
-> **Durum (Ekim 2026): v0.3 (H2 "Büyük Göl", Dalga 2 bitti).** Göl büyüdü: altı bölge (iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı, derin orta), her birinin kendi balıkları ve süsleri. Bölgeler rütbeyle açılır; haritadan hızlı geçilir, koyların çevresinden kıyı yolu dolaşır. Nine'den alınan sandalla derin ortaya açılınır. 7 yeni tür (toplam 12): gümüş balığı, çapak, tatlısu kefali, kadife, sudak, altın sazan ve koruma altındaki mersin (kartıyla göle bırakılır). Su ve zemin yenilendi; zemin, bölge rozetleri ve parşömen harita Ersin'in görselleriyle (Parti 3). Telefonda hız ölçümü ayarlarda. Sırada Dalga 3: teknikler ([yol haritası](docs/yol-haritasi.md)).
+> **Durum (Ekim 2026): v0.3.1 (H2 "Büyük Göl", Dalga 2 bitti; ara sürümde berrak görüntü ve "iri balık takım ister").** Göl büyüdü: altı bölge (iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı, derin orta), her birinin kendi balıkları ve süsleri. Bölgeler rütbeyle açılır; haritadan hızlı geçilir, koyların çevresinden kıyı yolu dolaşır. Nine'den alınan sandalla derin ortaya açılınır. 7 yeni tür (toplam 12): gümüş balığı, çapak, tatlısu kefali, kadife, sudak, altın sazan ve koruma altındaki mersin (kartıyla göle bırakılır). Su ve zemin yenilendi; zemin, bölge rozetleri ve parşömen harita Ersin'in görselleriyle (Parti 3). Telefonda hız ölçümü ayarlarda. Sırada Dalga 3: teknikler ([yol haritası](docs/yol-haritasi.md)).
 
 ![İskele koyu: balıkçı, Dede, Nine'nin dükkânı ve bağlı sandal; kıyı yolu gölü dolaşıyor](docs/ekran/01_iskele.jpg)
 
@@ -22,11 +22,16 @@
 4. **Çek:** parmağını basılı tut, balık gelsin. Balık çırpınınca ("!", titreşim, gıcırtı) **bırak**; gerilim kırmızıda kalırsa misina kopar.
 5. Tutulan balık elde gösterilir; yeni tür, rekor ya da Nadir ve üstünde kart açılır.
 6. **Kova ve dükkân:** tutulan balık kovaya girer. Nine'ye (iskelenin başındaki dükkân) dokun: kovayı sat, parayla yeni takım al. Bazı takımlar rütbe ister; rütbe balık tuttukça artar.
-7. **Nadirlik:** Sıradan ●, Güzel ▲, Nadir ◆, Destansı ★, Efsanevi ✦ (oyunda Ersin'in rozetleri; şekilleri renk körü oyuncu için de ayrılır). Nadir balığın gölgesi arada pırıldar, Destansınınki mor ışıldar, Efsanevinin kenarı altın parlar. Uzun süre gelmezse şans garantisi devreye girer.
-8. **Balık Defteri** (sağ üst): tuttuğun türler ve rekorlar; tutmadıklarının ipuçları; bulunduğun bölgede takımınla gerçek oranlar ve şans garantisi sayaçları. Bütün oranlar: [balık kataloğu](docs/balik-katalogu.md).
-9. **Bölgeler ve harita:** göl altı bölgeye ayrılmış (iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı, derin orta); her birinin kendi balıkları ve süsleri var. Yeni bölge rütbeyle açılır (3, 5, 7; derin orta 9 ve sandal). İlk balıktan sonra sağ üstte harita düğmesi çıkar: bir bölgenin rozetine dokun, ekran kararır ve oradasın. Gölgeler bulunduğun bölgede doğar, defterdeki oran o bölgenin.
-10. **Sandal:** rütbe 9'da Nine'den alınır (Ekstra sekmesi). İskeledeki sandala ya da haritada Derin Orta'ya dokun: derin ortada şamandıranın yanındasın; iri yayın ve mersin orada. Sol alttaki "Kıyıya dön" iskeleye getirir.
-11. **Mersin** koruma altında: kovaya girmez, kartında Dede'nin sözüyle göle bırakılır (rütbe puanı ve göl sevgisi verir).
+7. **İri balık takım ister:**
+   - Sazan, turna, yayın, kadife, sudak, altın sazan ve mersin iri türlerdir. Boyları büyüdükçe daha çok çekerler.
+   - Bambu olta 3 yıldıza kadarını taşır. 4★ için cam elyafı kamış ve naylon misina, 5★ için karbon kamış ve örgü misina gerekir; dükkân kartında "İri balık" yıldızları yazar.
+   - Takımın taşımadığı balık takılınca "Çok iri!" çıkar; sakinken bile gerilim kırmızıya çıkar ve misina kopar. Ardından Dede neyi alman gerektiğini söyler.
+   - Kolay modda kopmaz, yalnızca yavaş gelir.
+8. **Nadirlik:** Sıradan ●, Güzel ▲, Nadir ◆, Destansı ★, Efsanevi ✦ (oyunda Ersin'in rozetleri; şekilleri renk körü oyuncu için de ayrılır). Nadir balığın gölgesi arada pırıldar, Destansınınki mor ışıldar, Efsanevinin kenarı altın parlar. Uzun süre gelmezse şans garantisi devreye girer.
+9. **Balık Defteri** (sağ üst): tuttuğun türler ve rekorlar; tutmadıklarının ipuçları; bulunduğun bölgede takımınla gerçek oranlar ve şans garantisi sayaçları. Bütün oranlar: [balık kataloğu](docs/balik-katalogu.md).
+10. **Bölgeler ve harita:** göl altı bölgeye ayrılmış (iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı, derin orta); her birinin kendi balıkları ve süsleri var. Yeni bölge rütbeyle açılır (3, 5, 7; derin orta 9 ve sandal). İlk balıktan sonra sağ üstte harita düğmesi çıkar: bir bölgenin rozetine dokun, ekran kararır ve oradasın. Gölgeler bulunduğun bölgede doğar, defterdeki oran o bölgenin.
+11. **Sandal:** rütbe 9'da Nine'den alınır (Ekstra sekmesi). İskeledeki sandala ya da haritada Derin Orta'ya dokun: derin ortada şamandıranın yanındasın; iri yayın ve mersin orada. Sol alttaki "Kıyıya dön" iskeleye getirir.
+12. **Mersin** koruma altında: kovaya girmez, kartında Dede'nin sözüyle göle bırakılır (rütbe puanı ve göl sevgisi verir).
 
 - **Yürü:** karaya ya da iskeleye dokun. Önü su ise balıkçı kıyı yolundan dolaşır; kilitli bölgenin çitinde durur, Dede ne zaman geçileceğini söyler.
 - **Dede:** ilk 3 balığa kadar ipucu verir. Ona dokununca her zaman bir öğüt söyler.

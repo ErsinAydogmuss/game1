@@ -27,6 +27,44 @@ func test_hint_lines_fit_one_line() -> void:
 	assert_true(checked >= 30, "ipucu sözleri denetlendi (%d)" % checked)
 
 
+## Dede'nin fazla iri balıktan sonraki takım öğüdü biçimli söz: en geniş kamış ve misina adıyla
+## (cümlenin ortasında küçük harfle) ve en büyük rütbeyle iki dilde tek satıra sığar; gerekirse
+## ipucu çubuğu yazıyı Hud.HINT_MIN_SIZE'a kadar küçültür.
+func test_gear_advice_fits_one_line() -> void:
+	var room := Hud.hint_text_room()
+	var font := UiKit.body_font()
+	var rows := {}
+	var f := FileAccess.open("res://localization/strings.csv", FileAccess.READ)
+	while f != null and not f.eof_reached():
+		var row := f.get_csv_line()
+		if row.size() >= 3:
+			rows[row[0]] = row
+	for column: int in [1, 2]:
+		var widest := { "rod": "", "line": "" }
+		for g in content().gear:
+			var category := str(g["category"])
+			if not category in widest:
+				continue
+			var gear_name: String = (rows["GEAR_" + str(g["id"])] as PackedStringArray)[column]
+			gear_name = gear_name.left(1).to_lower() + gear_name.substr(1)
+			if _width(font, gear_name) > _width(font, str(widest[category])):
+				widest[category] = gear_name
+		var listed: String = (rows["UI_LIST_AND"] as PackedStringArray)[column] % [widest["rod"], widest["line"]]
+		var lines := PackedStringArray()
+		for key: String in ["UI_DEDE_TOO_BIG_BUY", "UI_DEDE_TOO_BIG_EQUIP"]:
+			lines.append((rows[key] as PackedStringArray)[column] % listed)
+		lines.append((rows["UI_DEDE_TOO_BIG_BOTH"] as PackedStringArray)[column] % [widest["rod"], widest["line"]])
+		lines.append((rows["UI_DEDE_TOO_BIG_RANK"] as PackedStringArray)[column] % content().rank_xp.size())
+		for text in lines:
+			var size := UiKit.fit_size(text, font, UiKit.SIZE_BODY, room, Hud.HINT_MIN_SIZE)
+			assert_true(_width(font, text, size) <= room, "takım öğüdü %d boyda da sığmıyor (%s): %s (%.0f > %.0f)" % [
+					size, "en" if column == 1 else "tr", text, _width(font, text, size), room])
+
+
+static func _width(font: Font, text: String, size: int = UiKit.SIZE_BODY) -> float:
+	return font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+
+
 static func _is_hint(key: String) -> bool:
 	if key in HINT_KEYS:
 		return true

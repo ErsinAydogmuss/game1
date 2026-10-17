@@ -257,8 +257,8 @@ func _play_controls() -> void:
 		await _tap(card.ok_button.get_global_rect().get_center())
 	await _wait_state(FishingSession.State.IDLE, 2.0)
 	_check("kart kapanınca yeni atış", _state() == FishingSession.State.IDLE)
-	# 10) Patlamada bırakmazsa misina kopar (Yayın, hep basılı).
-	var wels := _shadow_at(Vector2(-0.5, -3.2), Vector2(0, 1), "wels")
+	# 10) Patlamada bırakmazsa misina kopar (2★ Yayın: bambu olta taşır; hep basılı).
+	var wels := _shadow_at(Vector2(-0.5, -3.2), Vector2(0, 1), "wels", 300000)
 	await _tap_world(Vector2(-0.5, -1.0))
 	await _wait_state(FishingSession.State.BITING, 20.0)
 	_touch(1, Vector2(260, 520), true)
@@ -275,7 +275,32 @@ func _play_controls() -> void:
 	await _wait_until(func() -> bool: return _session().sim.shadows.size() >= 4, 10.0)
 	var waited := float(_session().steps - gone_at) / HZ
 	_check("8 sn içinde yeni balık (%.1f sn)" % waited, gone and _session().sim.shadows.size() >= 4 and waited <= 8.0)
-	# 12) Düğmeler yeterince büyük ve güvenli alanın içinde.
+	# 12) Çok iri balık (rütbe 2, bambu olta ve ince misina 3★ taşır): 4★ yayın takılınca "Çok iri!";
+	# sakinken de kırmızıya çeker, basılı tutan koparır; Dede eksik takımı adıyla söyler (Nine'de var).
+	var db := GameState.db
+	GameState.save.xp = maxi(GameState.save.xp, db.rank_xp[1])
+	GameState.changed.emit()
+	_shadow_at(Vector2(0.5, -3.2), Vector2(0, 1), "wels", 800000)
+	await _tap_world(Vector2(0.5, -1.0))
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait_frames(2)
+	var toast: Label = _hud().get("_toast")
+	var warned := _state() == FishingSession.State.FIGHTING and _session().too_big == 4 \
+			and toast.is_visible_in_tree() and toast.text == UiKit.upper(tr("UI_TOO_BIG"))
+	await _wait(0.6)
+	var red_calm := _session().reel != null and _session().reel.in_red and _session().reel.phase == ReelModel.Phase.CALM
+	await _shot("09_cok_iri")
+	await _wait_until(func() -> bool: return _state() != FishingSession.State.FIGHTING, 10.0)
+	_touch(1, Vector2(260, 520), false)
+	var told := await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_TOO_BIG_BUY", 3.0)
+	var hint: Label = _hud().get("_hint_label")
+	var names := hint.text.contains(tr("GEAR_rod_float_glass").to_lower()) and hint.text.contains(tr("GEAR_line_mono").to_lower())
+	_check("çok iri balık: \"Çok iri!\", sakinken de kırmızı, kopar, Dede takımı söyler (%s)" % hint.text,
+			warned and red_calm and _session().last_loss == "snapped" and told and names)
+	await _wait(0.4)
+	await _shot("10_dede_takim")
+	# 13) Düğmeler yeterince büyük ve güvenli alanın içinde.
 	_check_buttons()
 	for line in _results:
 		print("KONTROL ", line)
@@ -752,7 +777,8 @@ func _play_boat() -> void:
 		only_deep = only_deep and sh.zone == deep
 	_check("sandaldayken gölgeler derin ortada", only_deep and _session().sim.shadows.size() > 0)
 	# 4) Sandalda yürünmez: suya dokunmak atıştır, balıkçı yerinden oynamaz.
-	_shadow_at(at + Vector2(0.0, -7.0), Vector2(0, 1), "wels")
+	# 3★ yayın: başlangıç takımı taşır (fazla iri olsa kopardı).
+	_shadow_at(at + Vector2(0.0, -7.0), Vector2(0, 1), "wels", 600000)
 	await _tap_world(at + Vector2(0.0, -5.0))
 	await _wait_frames(3)
 	_check("sandalda suya dokun → atış (yürüme yok)", _state() in [FishingSession.State.CASTING, FishingSession.State.WAITING]
@@ -1005,7 +1031,8 @@ func _play_video() -> void:
 	await _wait(2.0)
 	# Nadir bir turna (pırıltılı gölge): VUR, çekişme, ışık sütunu, kart. Rütbe 3: nilüferli koy
 	# açılır (bildirim, Dede, harita düğmesi atar); kovanın son yeri dolar.
-	_shadow_at(Vector2(-1.2, -3.0), Vector2(0.2, 1.0), "pike", 860000)
+	# 3★: başlangıç takımı (bambu olta, ince misina) 3 yıldıza kadar iri balık taşır.
+	_shadow_at(Vector2(-1.2, -3.0), Vector2(0.2, 1.0), "pike", 690000)
 	await _wait(1.6)
 	await _tap_world(Vector2(-1.0, -0.8))
 	await _wait_state(FishingSession.State.BITING, 30.0)
@@ -1045,7 +1072,8 @@ func _play_video() -> void:
 	await _wait(1.2)
 	# Nilüferli koyda Destansı altın sazan: mor ışıltılı gölge, uzun çekişme, kart.
 	var lily: Vector2 = (db.zone(spot, "lily_cove")["stands"] as Array)[0]
-	_shadow_at(lily + Vector2(-0.2, -6.0), Vector2(0.05, 1.0), "golden_carp", 700000)
+	# 3★: cam elyafı kamış 4★ taşır ama misina hâlâ ince (3★).
+	_shadow_at(lily + Vector2(-0.2, -6.0), Vector2(0.05, 1.0), "golden_carp", 690000)
 	await _wait(1.8)
 	await _shot("v5_nilufer")
 	await _tap_world(lily + Vector2(0.0, -3.8))

@@ -28,6 +28,10 @@ const ELDER_ALONG := 2.4
 const ELDER_TURN := deg_to_rad(25.0)
 ## Dede'nin ya da Nine'nin sözü ipucu çubuğunda bu kadar kalır (sn).
 const LINE_TIME := 4.0
+## Fazla iri balıktan sonra Dede'nin takım öğüdü (UI_DEDE_TOO_BIG_BUY, _EQUIP, _BOTH, _RANK): atışta
+## silinmez, biraz daha uzun kalır.
+const TOO_BIG_PREFIX := "UI_DEDE_TOO_BIG_"
+const ADVICE_TIME := 6.0
 const STEP_SOUND_EVERY := 0.36
 ## İlk atıştan önce ilk av gölgesinin çevresinde halka aralığı (sn): "bu gölge!"
 const FIRST_CUE_EVERY := 1.6
@@ -83,9 +87,12 @@ var _buoy: int = -1
 var _card_wait: float = -1.0
 ## İpucu çubuğunda şu an gösterilen anahtar (değişince Dede konuşur).
 var _hint_shown: String = ""
-## Dede'nin ya da Nine'nin sözü (onlara dokununca, bir olayda), kalan süresi ve konuşan.
+## Dede'nin ya da Nine'nin sözü (onlara dokununca, bir olayda), kalan süresi, biçimli sözün
+## değerleri (ya da onları o anki dilde kuran işlev: takım adları dil değişince de doğru) ve konuşan.
 var _line: String = ""
 var _line_time: float = 0.0
+var _line_args: Array = []
+var _line_args_fn: Callable = Callable()
 ## Yem bu atışta bitti: olta dönünce Dede söyler.
 var _bait_out: bool = false
 var _line_speaker: String = "dede"
@@ -446,8 +453,10 @@ func _on_event(e: Dictionary) -> void:
 	match str(e["type"]):
 		"cast":
 			GameState.save.casts += 1
-			# Dede'nin öğüdü (Nine'nin sözü) atışın ipuçlarına yer açar.
-			_line_time = 0.0
+			# Dede'nin öğüdü (Nine'nin sözü) atışın ipuçlarına yer açar. Takım öğüdü kalır: hangi takımın
+			# gerektiğini söyleyen tek yer (kopunca hemen yeniden atan oyuncu da okuyabilsin).
+			if not _line.begins_with(TOO_BIG_PREFIX):
+				_line_time = 0.0
 			catch_fx.clear()
 			angler.play_cast()
 			var to: Vector2 = e["to"]
@@ -504,8 +513,14 @@ func _on_event(e: Dictionary) -> void:
 			bobber.start_fight(bobber.global_position)
 			ripples.spawn(session.bobber, 1.2, 0.7, Color(1, 1, 1, 0.9), 0.18)
 			Sounds.play("hook")
-			Sounds.haptic(40)
-			camera.shake(0.09)
+			if int(e.get("too_big", 0)) > 0:
+				# Takım bu iriliği taşımıyor: sakinken de kırmızıya çeker (Kolay'da yalnızca yavaş gelir).
+				hud.toast(tr("UI_TOO_BIG"), UiKit.BAD, "burst")
+				Sounds.haptic(80)
+				camera.shake(0.16)
+			else:
+				Sounds.haptic(40)
+				camera.shake(0.09)
 		"warn":
 			Sounds.play("warn")
 			Sounds.haptic(35)
@@ -517,7 +532,7 @@ func _on_event(e: Dictionary) -> void:
 			# Gıcırtı döngüsü _present'te her kare (duraklamadan sonra da) açılır.
 			Sounds.haptic(25)
 		"lost":
-			_on_lost(str(e["reason"]))
+			_on_lost(str(e["reason"]), int(e.get("too_big", 0)))
 		"catch":
 			_on_catch()
 		"retrieve":
@@ -528,9 +543,12 @@ func _on_event(e: Dictionary) -> void:
 				bobber.hide_bobber()
 
 
-func _on_lost(reason: String) -> void:
+## too_big: kaçan balık fazla iriyse yıldızı (Dede eksik takımı söyler).
+func _on_lost(reason: String, too_big: int = 0) -> void:
 	Sounds.set_loop("reel", false)
 	Sounds.set_loop("strain", false)
+	if too_big > 0 and reason in ["snapped", "escaped"]:
+		_advise_gear(too_big)
 	match reason:
 		"missed":
 			hud.toast(tr("UI_MISSED"), UiKit.BAD)
@@ -783,14 +801,18 @@ func _first_cue(delta: float) -> void:
 
 func _update_hint() -> void:
 	var key := _hint_key()
-	var speaker := _line_speaker if _line_time > 0.0 and key == _line else "dede"
+	var spoken := _line_time > 0.0 and key == _line
+	var speaker := _line_speaker if spoken else "dede"
 	if key != _hint_shown:
 		_hint_shown = key
 		# Yeni bir söz: konuşan konuşur (balon, baş sallama, oyuncuya bakış). Nine'nin selamı
 		# dokunuşta söylenir (_on_shop).
 		if not key.is_empty() and speaker == "dede":
 			elder.say()
-	hud.show_hint(key, speaker)
+	var args: Array = []
+	if spoken:
+		args = _line_args_fn.call() if _line_args_fn.is_valid() else _line_args
+	hud.show_hint(key, speaker, args)
 
 
 ## Gösterilecek ipucu: önce Dede'nin öğüdü ya da Nine'nin sözü (onlara dokununca), sonra ilk 3
@@ -812,7 +834,8 @@ func _hint_key() -> String:
 		FishingSession.State.BITING:
 			return "UI_HINT_BITE"
 		FishingSession.State.FIGHTING:
-			return "UI_HINT_REEL"
+			# Fazla iri balıkta "basılı tut" misinayı koparır (Kolay modda yalnızca yavaş gelir).
+			return "UI_HINT_TOO_BIG" if session.too_big > 0 and not session.easy else "UI_HINT_REEL"
 	# Kayıp, yakalama, geri sarma: önceki ipucu kalır (süresi biten öğüt söner).
 	return "" if _hint_shown == _line else _hint_shown
 
@@ -944,12 +967,45 @@ func _panel_open() -> bool:
 
 
 ## Dede (ya da Nine) bir söz söyler: ipucu çubuğunda, konuşanın yüzüyle (söz değişince
-## _update_hint Dede'yi konuşturur).
-func _say(key: String, speaker: String = "dede") -> void:
+## _update_hint Dede'yi konuşturur). args: biçimli sözün değerleri (tr(key) % args).
+func _say(key: String, speaker: String = "dede", args: Array = []) -> void:
 	_line = key
 	_line_time = LINE_TIME
 	_line_speaker = speaker
+	_line_args = args
+	_line_args_fn = Callable()
 	Sounds.play("hint")
+
+
+## Fazla iri balık kaçtı: Dede eksik takımı adıyla söyler: Nine'den alınacak, sende olup takılacak
+## ya da Nine'nin onu hangi rütbede sattığı. Adlar her gösterişte o anki dilde kurulur.
+func _advise_gear(stars: int) -> void:
+	var advice := Economy.gear_for_stars(GameState.db, GameState.save, stars)
+	var buy: Array[String] = advice["buy"]
+	var equip: Array[String] = advice["equip"]
+	if buy.is_empty() and equip.is_empty():
+		return
+	if int(advice["rank"]) > 0:
+		_say("UI_DEDE_TOO_BIG_RANK", "dede", [int(advice["rank"])])
+	elif equip.is_empty():
+		_say("UI_DEDE_TOO_BIG_BUY")
+		_line_args_fn = func() -> Array: return [_gear_list(buy)]
+	elif buy.is_empty():
+		_say("UI_DEDE_TOO_BIG_EQUIP")
+		_line_args_fn = func() -> Array: return [_gear_list(equip)]
+	else:
+		_say("UI_DEDE_TOO_BIG_BOTH")
+		_line_args_fn = func() -> Array: return [_gear_list(buy), _gear_list(equip)]
+	_line_time = ADVICE_TIME
+
+
+## Takım adları cümlenin ortasında: ilk harf küçük ("cam elyafı kamış ve naylon misina").
+func _gear_list(ids: Array[String]) -> String:
+	var names: Array[String] = []
+	for id in ids:
+		var gear_name := tr("GEAR_" + id)
+		names.append(gear_name.left(1).to_lower() + gear_name.substr(1))
+	return names[0] if names.size() == 1 else tr("UI_LIST_AND") % [names[0], names[1]]
 
 
 ## Dünyadaki bir hedefe dokunuldu (InputRouter.hit_targets).

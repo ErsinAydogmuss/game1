@@ -60,6 +60,10 @@ func test_validation_catches_bad_data() -> void:
 	(fish["fish"][0]["fight"] as Dictionary)["pull"] = 0.95
 	# Satılan bir balığın değeri 0 olamaz (yalnızca Masalsı ve koruma altındaki tür).
 	(fish["fish"][1] as Dictionary)["value"] = 0
+	# İri türde boyla artan çekiş de sınırın altında kalmalı (mersin: 0,75 + size_pull).
+	for f: Variant in fish["fish"]:
+		if str((f as Dictionary)["id"]) == "sturgeon":
+			((f as Dictionary)["fight"] as Dictionary)["pull"] = 0.75
 	FileAccess.open(dir.path_join("fish.json"), FileAccess.WRITE).store_string(JSON.stringify(fish))
 	var spots := JSON.parse_string(FileAccess.get_file_as_string("res://data/spots.json")) as Dictionary
 	var spot: Dictionary = spots["spots"][0]
@@ -73,12 +77,16 @@ func test_validation_catches_bad_data() -> void:
 			(g["attract"] as Dictionary)["shark"] = 2.0
 		if str(g["id"]) == "reel_master":
 			g["drag"] = 0.6
+		if str(g["id"]) == "line_braid":
+			g["carry"] = 7
 	FileAccess.open(dir.path_join("gear.json"), FileAccess.WRITE).store_string(JSON.stringify(gear))
 	var db := ContentDB.load_from(dir)
 	var all := " | ".join(db.errors)
 	assert_true("bait_corn" in all, "yemin bilinmeyen balığı yakalanır")
 	assert_true("reel_master" in all, "aşırı fren yakalanır")
-	assert_true("pull" in all, "sakin çekişi sınırı aşan balık yakalanır: " + all)
+	assert_true("sturgeon: pull" in all, "iri türün en irisinde sakin çekiş sınırı aşarsa yakalanır")
+	assert_true("line_braid: carry" in all, "taşıma 1–5 yıldız dışında yakalanır")
+	assert_true("rudd: pull" in all, "sakin çekişi sınırı aşan balık yakalanır: " + all)
 	assert_true("carp: value" in all, "satılan balığın değeri 0 olamaz")
 	assert_true("shark" in all, "bilinmeyen balık yakalanır")
 	assert_true("başlangıç" in all, "suyun içindeki başlangıç yakalanır")
@@ -129,6 +137,8 @@ func test_gear_and_ranks() -> void:
 	assert_eq(float(db.gear_item("reel_basic")["reel_speed"]), 1.6, "basit makara bugünkü sarma hızı")
 	assert_eq(FishingRules.to_steps(float(db.gear_item("line_mono_thin")["snap_after"])), db.rules.snap_steps, "ince misina bugünkü kopma süresi")
 	assert_eq(int(db.gear_item("bait_worm")["pack"]), 0, "solucan sınırsız")
+	assert_eq(int(db.gear_item("rod_bamboo")["carry"]), db.rules.carry, "bambu kamış kurallardaki kadar taşır")
+	assert_eq(int(db.gear_item("line_mono_thin")["carry"]), db.rules.carry, "ince misina kurallardaki kadar taşır")
 	assert_eq(db.rank_for_xp(0), 1, "0 puan: 1. rütbe")
 	assert_eq(db.rank_for_xp(db.rank_xp[1] - 1), 1, "eşiğin altı")
 	assert_eq(db.rank_for_xp(db.rank_xp[1]), 2, "eşikte bir üst rütbe")

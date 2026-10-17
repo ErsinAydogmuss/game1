@@ -114,6 +114,38 @@ func test_buying_needs_rank_and_coins() -> void:
 	assert_eq(int(s.stats["spent"]), 150 + 2000, "harcanan sayacı")
 
 
+## Fazla iri balıktan sonra Dede'nin öğüdü: hangi kamış ve misina gerek; Nine'den mi alınacak, sende
+## mi (tak), hangi rütbede.
+func test_gear_for_stars() -> void:
+	var db := content()
+	var s := _save()
+	var none := Economy.gear_for_stars(db, s, 3)
+	assert_true((none["buy"] as Array).is_empty() and (none["equip"] as Array).is_empty(), "3★'ı bambu olta taşır")
+	var four := Economy.gear_for_stars(db, s, 4)
+	assert_eq(str(four["buy"]), str(["rod_float_glass", "line_mono"]), "4★: cam elyafı kamış ve naylon misina")
+	assert_eq(int(four["rank"]), 2, "rütbe 1'de cam elyafı kamış kilitli (rütbe 2)")
+	s.xp = db.rank_xp[1]
+	assert_eq(int(Economy.gear_for_stars(db, s, 4)["rank"]), 0, "rütbe 2'de ikisi de Nine'de")
+	s.coins = 1000
+	assert_true(Economy.buy(db, s, "line_mono"), "naylon misina alınır")
+	assert_true(Economy.equip(db, s, "line_mono_thin"), "ince misinaya dönülür")
+	var both := Economy.gear_for_stars(db, s, 4)
+	assert_eq(str(both["buy"]), str(["rod_float_glass"]), "kamış Nine'den alınır")
+	assert_eq(str(both["equip"]), str(["line_mono"]), "naylon misina sende: takılır (yeniden alınmaz)")
+	assert_true(Economy.buy(db, s, "rod_float_glass") and Economy.equip(db, s, "line_mono"), "alınır ve kuşanılır")
+	var fitted := Economy.gear_for_stars(db, s, 4)
+	assert_true((fitted["buy"] as Array).is_empty() and (fitted["equip"] as Array).is_empty(), "kuşanılan takım 4★ taşır")
+	assert_true(Economy.equip(db, s, "rod_bamboo") and Economy.equip(db, s, "line_mono_thin"), "eskilere dönülür")
+	var equip := Economy.gear_for_stars(db, s, 4)
+	assert_eq(str(equip["equip"]), str(["rod_float_glass", "line_mono"]), "sendekiler önerilir")
+	assert_true((equip["buy"] as Array).is_empty() and int(equip["rank"]) == 0, "alınacak yok")
+	assert_true(Economy.equip(db, s, "rod_float_glass") and Economy.equip(db, s, "line_mono"), "kuşanılır")
+	s.xp = db.rank_xp[4]
+	var five := Economy.gear_for_stars(db, s, 5)
+	assert_eq(str(five["buy"]), str(["rod_float_carbon", "line_braid"]), "5★: karbon kamış ve örgü misina")
+	assert_eq(int(five["rank"]), 6, "rütbe 5'te örgü misina kilitli (rütbe 6; usta florokarbon 7'de açılır)")
+
+
 func test_baits_are_packs_used_on_hook() -> void:
 	var db := content()
 	var s := _save()

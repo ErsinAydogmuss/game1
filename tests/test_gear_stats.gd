@@ -18,6 +18,21 @@ func test_starter_matches_the_prototype_rod() -> void:
 	assert_eq(g.catch_m, db.rules.catch_m, "kepçe yok")
 	assert_true(g.attract.is_empty(), "solucan tür çekmez")
 	assert_eq(str(g.items["rod"]), "rod_bamboo", "bambu kamış kuşanılı")
+	assert_eq(g.carry, db.rules.carry, "iri balıkta 3★ taşır (kurallardaki gibi)")
+
+
+## Taşıma kamışın ve misinanın küçüğüdür: iri balık için ikisi de sağlam olmalı.
+func test_carry_is_the_weaker_of_rod_and_line() -> void:
+	var db := content()
+	var none: Array[String] = []
+	var cases := [
+		["rod_float_glass", "line_mono_thin", 3], ["rod_bamboo", "line_mono", 3], ["rod_float_glass", "line_mono", 4],
+		["rod_float_carbon", "line_mono", 4], ["rod_float_carbon", "line_braid", 5], ["rod_float_glass", "line_braid_pro", 4],
+	]
+	for c: Array in cases:
+		var g := GearStats.from_items(db, { "rod": c[0], "line": c[1] }, none)
+		assert_eq(g.carry, int(c[2]), "%s + %s: %d★ taşır" % [c[0], c[1], c[2]])
+	assert_eq(GearStats.best(db).carry, 5, "en iyi takım 5★ taşır")
 
 
 func test_items_set_the_stats() -> void:

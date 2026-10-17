@@ -43,6 +43,7 @@ func _initialize() -> void:
 	lines.append("")
 	_rarities(db, lines)
 	_sizes(lines)
+	_big_fish(db, lines)
 	_pity(db, lines)
 	_spot(db, db.main_spot, lines)
 	var file := FileAccess.open(OUTPUT, FileAccess.WRITE)
@@ -137,6 +138,28 @@ func _spot(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
 		_tables(db, z, lines)
 
 
+## İri türler ve takımın taşıması (fish.json fight.heavy, gear.json carry; docs/gdd.md §5).
+func _big_fish(db: ContentDB, lines: PackedStringArray) -> void:
+	var names := PackedStringArray()
+	for f in db.fish:
+		if bool((f["fight"] as Dictionary)["heavy"]):
+			names.append(_name("FISH_" + str(f["id"])).to_lower())
+	lines.append("## İri balık ve takım")
+	lines.append("")
+	lines.append("İri türlerin (%s) boyu çekişini artırır. Bir iri balığı ancak yıldızını taşıyan kamış ve" % ", ".join(names))
+	lines.append("misina rahat tutar; ikisinin küçüğü işler. Takım taşımıyorsa balık fazla iridir: takılınca \"Çok iri!\"")
+	lines.append("çıkar, sakinken de gerilim kırmızıya çeker, bırakınca balık hızla uzaklaşır. Misina koparsa ya da balık")
+	lines.append("kaçarsa Dede eksik takımı söyler. Kolay modda kopma yok; fazla iri balık yalnızca yavaş gelir. Öteki")
+	lines.append("türler her boyda bambu oltayla tutulur.")
+	lines.append("")
+	lines.append("| Takım | Fiyat | Rütbe | Taşır |")
+	lines.append("|---|---|---|---|")
+	for g in db.gear_in("rod") + db.gear_in("line"):
+		var price := "başlangıç" if int(g["price"]) == 0 else _number(float(g["price"]))
+		lines.append("| %s | %s | %d | %s |" % [_name("GEAR_" + str(g["id"])), price, int(g["rank"]), "★".repeat(int(g["carry"]))])
+	lines.append("")
+
+
 ## Bir yerin (göl ya da bölge: fish_ids, fish_weights) tür ve nadirlik tabloları, yeme göre.
 func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 	var baits: Array[Dictionary] = db.gear_in("bait")
@@ -145,8 +168,8 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 		odds.append(CatchOdds.species_ppm(db, spot, {"attract": bait["attract"]}))
 	lines.append("Bir gölgenin o tür olma şansı, kuşanılan yeme göre:")
 	lines.append("")
-	var header := "| Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) |"
-	var rule := "|---|---|---|---|---|---|"
+	var header := "| Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri |"
+	var rule := "|---|---|---|---|---|---|---|"
 	for bait in baits:
 		header += " %s |" % _name("GEAR_" + str(bait["id"]))
 		rule += "---|"
@@ -159,8 +182,9 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 		var value := "%d–%d" % [Economy.fish_value(db, id, span.x), Economy.fish_value(db, id, span.y)]
 		if Bucket.release_only(db, id):
 			value = "satılmaz (bırakılır)"
-		var row := "| %s | %s | %s | %d–%d | %s | %s |" % [_name("FISH_" + id), _name("FISH_" + id, "en"),
-				_name("RARITY_" + db.rarity_id(int(f["rarity"]))), span.x, span.y, value, _number(float(f["shadow_m"]))]
+		var row := "| %s | %s | %s | %d–%d | %s | %s | %s |" % [_name("FISH_" + id), _name("FISH_" + id, "en"),
+				_name("RARITY_" + db.rarity_id(int(f["rarity"]))), span.x, span.y, value, _number(float(f["shadow_m"])),
+				"✓" if bool((f["fight"] as Dictionary)["heavy"]) else ""]
 		for o in odds:
 			row += " %s |" % _percent(int(o.get(id, 0)))
 		lines.append(row)

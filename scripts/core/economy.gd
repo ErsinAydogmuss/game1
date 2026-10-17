@@ -144,6 +144,44 @@ static func gear_for(db: ContentDB, save: SaveData, technique: String = "float")
 	return GearStats.from_items(db, items, extras)
 
 
+## Fazla iri balık için ne gerek (Dede'nin öğüdü): kuşanılan kamışın ya da misinanın taşıması
+## stars'tan azsa o yuvada stars'ı taşıyan takım. Önce sahip olunan, sonra rütbesi yeten (en ucuzu),
+## sonra en erken açılan. Döner: { "buy": Nine'den alınacaklar, "equip": sende olup takılacaklar
+## (kimlikler; kamış, misina sırasıyla), "rank": alınacaklardan rütbesi yetmeyen varsa açıldığı en
+## yüksek rütbe (yoksa 0) }.
+static func gear_for_stars(db: ContentDB, save: SaveData, stars: int, technique: String = "float") -> Dictionary:
+	var buy: Array[String] = []
+	var equip: Array[String] = []
+	var rank := 0
+	var my_rank := Rank.rank(db, save)
+	for slot: String in ["rod", "line"]:
+		var current := db.gear_item(equipped(db, save, slot, technique))
+		if int(current.get("carry", db.rules.carry)) >= stars:
+			continue
+		var pick: Dictionary = {}
+		var pick_key := Vector3i.ZERO
+		for g in db.gear_in(slot):
+			if int(g["carry"]) < stars or (slot == "rod" and str(g["technique"]) != technique):
+				continue
+			var id := str(g["id"])
+			# Küçük olan önce: sahip olunan (0), rütbesi yeten (0) ya da açıldığı rütbe, fiyat.
+			var locked := my_rank < int(g["rank"])
+			var key := Vector3i(0 if owns(db, save, id) else 1, int(g["rank"]) if locked else 0, int(g["price"]))
+			if pick.is_empty() or key < pick_key:
+				pick = g
+				pick_key = key
+		if pick.is_empty():
+			continue
+		var pick_id := str(pick["id"])
+		if owns(db, save, pick_id):
+			equip.append(pick_id)
+		else:
+			buy.append(pick_id)
+			if my_rank < int(pick["rank"]):
+				rank = maxi(rank, int(pick["rank"]))
+	return { "buy": buy, "equip": equip, "rank": rank }
+
+
 ## Balık oltaya takılınca yem harcanır (atışta değil: kaçan gölge yemi yemez).
 static func use_bait(db: ContentDB, save: SaveData, technique: String = "float") -> void:
 	var id := equipped(db, save, "bait", technique)
