@@ -22,7 +22,7 @@ const BY_KEY := {
 	# Dip: bekleyiş ve koklama anlatılır, koşu heyecanlı.
 	"UI_HINT_BOTTOM_WAIT": STORY, "UI_HINT_BOTTOM_SNIFF": STORY, "UI_HINT_BOTTOM_RUN": WOW,
 	# Sinek: sürüklenme ve altındaki balık anlatılır, halka heyecanlı.
-	"UI_HINT_FLY_DRIFT": STORY, "UI_HINT_FLY_UNDER": STORY, "UI_HINT_FLY_RISE": WOW, "UI_DEDE_FLY_HERE": STORY,
+	"UI_HINT_FLY_DRIFT": STORY, "UI_HINT_FLY_UNDER": STORY, "UI_HINT_FLY_RISE": WOW,
 	"UI_DEDE_FLY_STILL": STORY,
 	# Tuzak: açılınca sevinir, ilk tuzakta anlatır.
 	"UI_DEDE_TRAP_OPEN": WOW, "UI_DEDE_TRAP_FIRST": STORY,
@@ -30,12 +30,12 @@ const BY_KEY := {
 	# Nine satın almada paketi uzatır, satışta sevinir.
 	"UI_NINE_BOUGHT": STORY, "UI_NINE_SOLD": WOW, "UI_NINE_FLY_ZONE": STORY, "UI_NINE_TRAP": STORY,
 }
-## Ön ekle eşlenen sözler: Dede'nin öğütleri (UI_DEDE_TIP_1...), fazla iri balıkta takım öğüdü
-## (UI_DEDE_TOO_BIG_...), kartta nadirliğe göre sözleri (UI_DEDE_CARD_<nadirlik>, Nadir ve üstü), yeni
-## teknik açılınca (UI_DEDE_TECH_OPEN_<teknik>) ve ilk kez ele alınınca (UI_DEDE_TECH_FIRST_<teknik>).
-## Önce BY_KEY bakılır.
+## Ön ekle eşlenen sözler: Dede'nin öğütleri (UI_DEDE_TIP_1..., UI_DEDE_TIP_<teknik>), fazla iri
+## balıkta takım öğüdü (UI_DEDE_TOO_BIG_...), kartta nadirliğe göre sözleri (UI_DEDE_CARD_<nadirlik>,
+## Nadir ve üstü), yeni teknik açılınca (UI_DEDE_TECH_OPEN_<teknik>), ilk kez ele alınınca
+## (UI_DEDE_TECH_FIRST_<teknik>) ve bölgenin önerdiği teknik (UI_DEDE_SUGGEST_<bölge>). Önce BY_KEY bakılır.
 const BY_PREFIX := {"UI_DEDE_TIP_": STORY, "UI_DEDE_TOO_BIG_": STORY, "UI_DEDE_CARD_": WOW,
-		"UI_DEDE_TECH_OPEN_": WOW, "UI_DEDE_TECH_FIRST_": STORY}
+		"UI_DEDE_TECH_OPEN_": WOW, "UI_DEDE_TECH_FIRST_": STORY, "UI_DEDE_SUGGEST_": STORY}
 
 
 ## Sözün ifadesi.

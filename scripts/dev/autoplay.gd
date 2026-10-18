@@ -676,8 +676,40 @@ func _play_rarity() -> void:
 	book.open_book("wels")
 	await _wait(0.4)
 	await _shot("21_defter_yayin_siluet")
+	# Dalga 3: 16 tür iki sayfada; ikinci sayfada teknik türleri. Kerevitin ipucu tuzağı, alabalığınki
+	# sineği söyler; oranların başlığında elindeki tekniğin adı.
+	var pages := 0
+	for node in book.find_children("*", "Button", true, false):
+		if (node as Button).text.is_valid_int():
+			pages += 1
+	var count := BookPanel.species(db, str(main.get("spot_id"))).size()
+	_check("defterde %d tür, %d sayfa" % [count, pages], count == db.fish.size() and pages == 2)
+	book.open_book("crayfish")
+	await _wait(0.4)
+	await _shot("22_defter_kerevit")
+	var crayfish_text := _texts_in(book)
+	_check("kerevitin ipucu tuzağı söyler, oranlarda teknik", crayfish_text.contains(tr("UI_BOOK_HINT_TRAP").split("%")[0])
+			and crayfish_text.contains(tr("UI_TECH_" + save.technique)))
+	book.open_book("trout")
+	await _wait(0.4)
+	await _shot("23_defter_alabalik")
+	var trout_text := _texts_in(book)
+	_check("alabalığın ipucu sineği söyler", trout_text.contains(tr("UI_BOOK_FLY_HINT") % tr("GEAR_fly_nymph"))
+			and trout_text.contains(tr("UI_TECH_fly")))
+	_check("defter ekrana sığar (%.2f)" % book.fit_scale(), book.fit_scale() > 0.75)
 	book.close_panel()
+	for line in _results:
+		print("KONTROL ", line)
 	_quit()
+
+
+## Bir düğümün altındaki bütün yazılar (Label), satır satır.
+static func _texts_in(root: Node) -> String:
+	var lines := PackedStringArray()
+	for node in root.find_children("*", "Label", true, false):
+		if (node as Label).is_visible_in_tree():
+			lines.append((node as Label).text)
+	return "\n".join(lines)
 
 
 ## Harita ve hızlı geçiş. Kayıt rütbe 3'ün bir puan altında başlar: tutulan balık rütbe atlatır,
@@ -1790,7 +1822,8 @@ func _tap_card(shop: ShopPanel, id: String, which: int) -> void:
 	await _tap_control(buttons[which] as Control)
 
 
-## Gölün bütün balıkları (12): elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları işlemez.
+## Gölün bütün balıkları (16; kerevit dahil): elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları
+## işlemez. --fish=<kimlik> yalnızca o tür.
 func _play_fish() -> void:
 	_use_save(1)
 	main.set("bot_camera", true)
@@ -1826,7 +1859,7 @@ func _play_fish() -> void:
 	# Ayarlar paneli (düğme boyları, sığma).
 	(main.get("settings_panel") as SettingsPanel).open()
 	await _wait(0.5)
-	await _shot("13_ayarlar")
+	await _shot("99_ayarlar")
 	_quit()
 
 

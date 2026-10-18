@@ -783,6 +783,8 @@ func _on_catch() -> void:
 	# Rütbe atlama, kova dolu gibi bildirimler balığın etiketi sönünce (üst üste binmesin).
 	hud.hold_toasts(CatchFx.HOLD_TIME)
 	zone_news = _after_rank(ranked)
+	# Bölgenin önerdiği teknik (Dede bir kez; yeni haber varsa sonraki balıkta).
+	var suggestion := "" if zone_news else Elder.suggestion(db, save, spot_id, zone_id, technique)
 	if protected:
 		hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
 	elif not kept:
@@ -791,9 +793,9 @@ func _on_catch() -> void:
 		# Kova bu balıkla doldu: Dede hatırlatır (Nine'ye sat ki yenileri de sığsın). Aynı balıkla
 		# yeni bölge açıldıysa Dede onu söyler; kova, sonraki balıkta "Kova dolu" bildirimiyle hatırlanır.
 		_say("UI_DEDE_BUCKET")
-	elif not zone_news and technique == "float" and _suggest_fly():
-		save.flags["told_fly_here"] = true
-		_say("UI_DEDE_FLY_HERE")
+	elif not suggestion.is_empty():
+		save.flags[Elder.SUGGEST_FLAG % zone_id] = true
+		_say(suggestion)
 	elif not zone_news and _trap_line_due():
 		_say_trap_open()
 	bobber.hide_bobber()
@@ -1354,15 +1356,6 @@ func _trap_line_due() -> bool:
 			and TrapSim.owned(GameState.db, save) == 0
 
 
-## Dere ağzında (sineğin avlanıldığı yerde) şamandırayla tutan oyuncuya Dede bir kez sineği önerir:
-## sineğin rütbesi gelmiş, söylenmemiş.
-func _suggest_fly() -> bool:
-	var db := GameState.db
-	var save := GameState.save
-	return db.has_technique("fly") and not save.flags.has("told_fly_here") \
-			and Rank.rank(db, save) >= db.technique_rank("fly") and Economy.technique_allowed(db, spot_id, zone_id, "fly")
-
-
 ## Şamandıradan başka bir teknik açıldı mı (rütbesi geldi ya da kamışı alındı): teknik düğmesi.
 func _other_technique_open() -> bool:
 	var db := GameState.db
@@ -1750,8 +1743,9 @@ func _return_to_shore() -> void:
 func _on_talk() -> void:
 	if session.state != FishingSession.State.IDLE or _card_up():
 		return
-	_tip_index = _tip_index % Elder.TIP_COUNT + 1
-	_say(Elder.TIP_KEY % _tip_index)
+	var tips := Elder.tips(GameState.db, GameState.save)
+	_tip_index = _tip_index % tips.size() + 1
+	_say(tips[_tip_index - 1])
 	Sounds.haptic(10)
 
 

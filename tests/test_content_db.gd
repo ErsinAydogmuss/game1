@@ -121,6 +121,8 @@ func test_zone_validation_catches_bad_data() -> void:
 		(zones[2] as Dictionary)["rank"] = 99
 		# Her bölgede şamandıra olmalı; sinek yalnızca akıntılı bölgede.
 		(zones[0] as Dictionary)["techniques"] = ["spin", "fly"]
+		# Dede bölgede avlanılmayan tekniği önermez (sazlıkta sinek yok).
+		(zones[1] as Dictionary)["suggest"] = "fly"
 		((spot["basins"] as Array)[2] as Dictionary)["zone"] = "swamp"
 	_write(dir.path_join("spots.json"), JSON.stringify(spots))
 	var db := ContentDB.load_from(dir)
@@ -131,6 +133,7 @@ func test_zone_validation_catches_bad_data() -> void:
 	assert_true("lily_cove bölgesinin rütbesi" in all, "geçersiz rütbe yakalanır")
 	assert_true("dock_cove bölgesinde şamandıra" in all, "şamandırasız bölge yakalanır")
 	assert_true("dock_cove: sinek yalnızca akıntılı" in all, "akıntısız bölgede sinek yakalanır")
+	assert_true("reeds: önerilen teknik bölgede avlanılmıyor: fly" in all, "avlanılmayan öneri yakalanır")
 	for file in DirAccess.get_files_at(dir):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join(file)))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))
@@ -226,8 +229,13 @@ func test_every_content_id_has_translations() -> void:
 		for z: Dictionary in s["zones"]:
 			if str(z["id"]) != "main":
 				keys.append("ZONE_" + str(z["id"]))
+			# Dede'nin bölgede önerdiği teknik.
+			if not str(z["suggest"]).is_empty():
+				keys.append("UI_DEDE_SUGGEST_" + str(z["id"]))
 	for i in range(1, Elder.TIP_COUNT + 1):
 		keys.append(Elder.TIP_KEY % i)
+	for id: String in Elder.TECH_TIPS:
+		keys.append(str(Elder.TECH_TIPS[id]))
 	for i in range(1, Nine.LINE_COUNT + 1):
 		keys.append(Nine.LINE_KEY % i)
 	# Dede'nin karttaki sözleri: Nadir ve üstü her nadirlik için; koruma altındaki türde koruma sözü.
@@ -268,6 +276,25 @@ func test_translation_rows_are_complete() -> void:
 			continue
 		var row: PackedStringArray = table[key]
 		assert_true(row.size() >= 3 and not row[1].is_empty() and not row[2].is_empty(), "EN/TR metni boş: " + key)
+
+
+## Biçimli metinlerde İngilizcesi ve Türkçesi aynı yer tutucuları taşır (%s, %d; sırası dilde değişebilir).
+func test_translation_placeholders_match() -> void:
+	var table := _read_translations()
+	var regex := RegEx.create_from_string("%[sd%]")
+	for key: String in table:
+		var row: PackedStringArray = table[key]
+		if key == "keys" or row.size() < 3:
+			continue
+		var en := PackedStringArray()
+		for m in regex.search_all(row[1]):
+			en.append(m.get_string())
+		var tr_marks := PackedStringArray()
+		for m in regex.search_all(row[2]):
+			tr_marks.append(m.get_string())
+		en.sort()
+		tr_marks.sort()
+		assert_eq(tr_marks, en, "yer tutucular aynı değil: " + key)
 
 
 static func _read_translations() -> Dictionary:

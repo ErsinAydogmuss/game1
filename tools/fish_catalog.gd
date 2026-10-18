@@ -1,10 +1,11 @@
 extends SceneTree
 ## Balık kataloğunu (docs/balik-katalogu.md) veriden üretir: nadirlikler, boy ve yıldız şansları,
-## şans garantisi, oyunun gölündeki türler ve her yemle gelme şansları, yem başına nadirlik oranı
-## ve ortalama değer. Oranlar oyunun gölge doğururken kullandığı işlevlerden (CatchOdds) okunur:
-## Balık Defteri'nde yazan oranlarla hep aynıdır (gelir kuralı 10).
+## şans garantisi, tekniklerin yatkınlık tablosu, oyunun gölündeki türler ve her bölgede her teknikle
+## (şamandıra ve dipte yeme, spinde yapay yeme, sinekte sineğe göre) gelme şansları, nadirlik oranı ve
+## ortalama değer; kerevit tuzağının tablosu. Oranlar oyunun gölge doğururken kullandığı işlevlerden
+## (CatchOdds) okunur: Balık Defteri'nde yazan oranlarla hep aynıdır (gelir kuralı 10).
 ##   godot --headless --path . -s res://tools/fish_catalog.gd
-## Balık, nadirlik, yem ya da atış noktası değişince yeniden çalıştırılır.
+## Balık, nadirlik, yem, teknik ya da atış noktası değişince yeniden çalıştırılır.
 
 const OUTPUT := "res://docs/balik-katalogu.md"
 const PPM := Dice.PPM
@@ -12,6 +13,8 @@ const PPM := Dice.PPM
 const SAMPLES := 4000
 ## Nadirlik simgeleri (rarities.json "shape"; oyunda GameIcon çizer).
 const SYMBOLS := { "circle": "●", "triangle": "▲", "diamond": "◆", "star": "★", "sparkle": "✦", "medallion": "✪" }
+## Tekniğin tablosundaki takım sütunları: yuva -> [başlık, cümledeki adı].
+const ATTRACT_SLOTS := { "bait": ["Yem", "yeme"], "lure": ["Yapay yem", "yapay yeme"], "fly": ["Sinek", "sineğe"] }
 const SHADOW_FX := {
 	"none": "—",
 	"glint": "arada bir baştan kuyruğa pırıltı",
@@ -45,6 +48,7 @@ func _initialize() -> void:
 	_sizes(lines)
 	_big_fish(db, lines)
 	_pity(db, lines)
+	_techniques(db, db.main_spot, lines)
 	_spot(db, db.main_spot, lines)
 	var file := FileAccess.open(OUTPUT, FileAccess.WRITE)
 	if file == null:
@@ -135,7 +139,19 @@ func _spot(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
 			opens += ", yalnızca sandalla"
 		lines.append("### %s (`%s`; %s)" % [_name("ZONE_" + str(z["id"])), z["id"], opens])
 		lines.append("")
-		_tables(db, z, lines)
+		var suggest := str(z["suggest"])
+		if not suggest.is_empty():
+			lines.append("Dede'nin önerisi: %s (\"%s\")." % [_name("UI_TECH_" + suggest).to_lower(),
+					_name("UI_DEDE_SUGGEST_" + str(z["id"]))])
+			lines.append("")
+		for t: String in ContentDB.TECHNIQUES:
+			if not db.has_technique(t) or not CatchOdds.allows(z, t):
+				continue
+			var at := db.technique_rank(t)
+			lines.append("#### %s%s" % [_name("UI_TECH_" + t), "" if at <= 1 else " (rütbe %d)" % at])
+			lines.append("")
+			_tables(db, z, lines, t)
+		_trap_table(db, z, lines)
 
 
 ## İri türler ve takımın taşıması (fish.json fight.heavy, gear.json carry; docs/gdd.md §5).
@@ -160,13 +176,16 @@ func _big_fish(db: ContentDB, lines: PackedStringArray) -> void:
 	lines.append("")
 
 
-## Bir yerin (göl ya da bölge: fish_ids, fish_weights) tür ve nadirlik tabloları, yeme göre.
-func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
-	var baits: Array[Dictionary] = db.gear_in("bait")
+## Bir yerin (göl ya da bölge: fish_ids, fish_weights) bir teknikle tür ve nadirlik tabloları, o
+## tekniğin yemine (şamandıra ve dip: yem, spin: yapay yem, sinek: sinek) göre. O teknikle gelmeyen tür
+## yazılmaz.
+func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray, technique: String = "float") -> void:
+	var slot := _attract_slot(db, technique)
+	var baits: Array[Dictionary] = db.gear_in(slot)
 	var odds: Array[Dictionary] = []
 	for bait in baits:
-		odds.append(CatchOdds.species_ppm(db, spot, {"attract": bait["attract"]}))
-	lines.append("Bir gölgenin o tür olma şansı, kuşanılan yeme göre:")
+		odds.append(CatchOdds.species_ppm(db, spot, {"attract": bait["attract"], "technique": technique}))
+	lines.append("Bir gölgenin o tür olma şansı, kuşanılan %s göre:" % str(ATTRACT_SLOTS[slot][1]))
 	lines.append("")
 	var header := "| Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri |"
 	var rule := "|---|---|---|---|---|---|---|"
@@ -177,8 +196,8 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 	lines.append(rule)
 	var ids: PackedStringArray = spot["fish_ids"]
 	for id in ids:
-		# Bu tablolar şamandıranın: şamandırayla gelmeyen tür (aynalı sazan: yalnızca dip) yazılmaz.
-		if db.affinity(id, "float") <= 0.0:
+		# O teknikle gelmeyen tür (şamandırada aynalı sazan: yalnızca dip) yazılmaz.
+		if db.affinity(id, technique) <= 0.0:
 			continue
 		var f := db.fish_by_id(id)
 		var span: Vector2i = f["size_cm"]
@@ -192,10 +211,15 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 			row += " %s |" % _percent(int(o.get(id, 0)))
 		lines.append(row)
 	lines.append("")
-	var top := CatchOdds.top_rarity(db, spot)
-	lines.append("Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı (yem bedeli düşülmeden):")
+	var top := CatchOdds.top_rarity(db, spot, technique)
+	if slot == "bait":
+		lines.append("Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı (yem bedeli düşülmeden):")
+		header = "| Yem | Fiyat (para / paket) |"
+	else:
+		var by := str(ATTRACT_SLOTS[slot][1])
+		lines.append("%s göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı:" % (by.left(1).to_upper() + by.substr(1)))
+		header = "| %s | Fiyat (para) |" % str(ATTRACT_SLOTS[slot][0])
 	lines.append("")
-	header = "| Yem | Fiyat (para / paket) |"
 	rule = "|---|---|"
 	for i in top + 1:
 		header += " %s |" % _name("RARITY_" + db.rarity_id(i))
@@ -206,7 +230,11 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 	lines.append(rule)
 	for b in baits.size():
 		var bait := baits[b]
-		var price := "bedava, sınırsız" if int(bait["price"]) <= 0 else "%d / %d" % [int(bait["price"]), int(bait["pack"])]
+		var price := ""
+		if slot == "bait":
+			price = "bedava, sınırsız" if int(bait["price"]) <= 0 else "%d / %d" % [int(bait["price"]), int(bait["pack"])]
+		else:
+			price = "başlangıç" if int(bait["price"]) <= 0 else "%d (rütbe %d)" % [int(bait["price"]), int(bait["rank"])]
 		var row := "| %s | %s |" % [_name("GEAR_" + str(bait["id"])), price]
 		var by_rarity := CatchOdds.rarity_ppm(db, odds[b])
 		for i in top + 1:
@@ -219,6 +247,101 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 			xp += share * _mean_xp(db, int(db.fish_by_id(id)["rarity"]))
 		row += " %s | %s |" % [_number(value), _number(xp)]
 		lines.append(row)
+	lines.append("")
+
+
+## Tekniğin tür çeken yuvası (şamandıra ve dip: yem, spin: yapay yem, sinek: sinek).
+static func _attract_slot(db: ContentDB, technique: String) -> String:
+	for slot in db.slots_for(technique):
+		if ATTRACT_SLOTS.has(slot):
+			return slot
+	return "bait"
+
+
+## Teknikler: açıldığı rütbe, ilk kamışı, nerede avlanıldığı; türlerin yatkınlığı ve tuzağa girenler.
+func _techniques(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
+	var zones := db.zones_of(spot_id)
+	lines.append("## Teknikler")
+	lines.append("")
+	lines.append("Bir gölgenin türü bölgenin doğma ağırlığı × yemin (yapay yemin, sineğin) çekimi × türün teknik")
+	lines.append("yatkınlığıyla seçilir. Yatkınlığı olmayan tür o teknikle hiç gelmez; şamandırada Dalga 3 öncesi")
+	lines.append("türlerin hepsi 1 (şamandıranın oranları değişmedi). Teknik bölgede avlanılmıyorsa (sinek yalnızca")
+	lines.append("akıntılı bölgede) orada o teknikle gölge doğmaz. Balık takıldıktan sonraki çekişme her teknikte aynı.")
+	lines.append("")
+	lines.append("| Teknik | Açıldığı rütbe | İlk kamış | Avlanıldığı bölgeler |")
+	lines.append("|---|---|---|---|")
+	for t: String in ContentDB.TECHNIQUES:
+		if not db.has_technique(t):
+			continue
+		var rod := db.rods_of(t)[0]
+		var rod_text := "%s (%s)" % [_name("GEAR_" + str(rod["id"])), "başlangıç" if int(rod["price"]) <= 0 \
+				else "%s para" % _number(float(rod["price"]))]
+		var where := PackedStringArray()
+		for z in zones:
+			if CatchOdds.allows(z, t):
+				where.append(_name("ZONE_" + str(z["id"])))
+		lines.append("| %s | %d | %s | %s |" % [_name("UI_TECH_" + t), maxi(1, db.technique_rank(t)), rod_text,
+				"hepsi" if where.size() == zones.size() else ", ".join(where)])
+	var trap_rank := TrapSim.rank(db)
+	if trap_rank > 0:
+		var where := PackedStringArray()
+		for z in zones:
+			if not (z["trap_ids"] as PackedStringArray).is_empty():
+				where.append(_name("ZONE_" + str(z["id"])))
+		var first := db.gear_in("trap")[0]
+		lines.append("| %s | %d | %s (%s para) | %s |" % [_name("UI_BAG_TRAP"), trap_rank, _name("GEAR_" + str(first["id"])),
+				_number(float(first["price"])), ", ".join(where)])
+	lines.append("")
+	lines.append("Türlerin teknik yatkınlığı (çarpan; boş: o teknikle gelmez) ve tuzağa girdiği bölgeler:")
+	lines.append("")
+	var header := "| Tür | Nadirlik |"
+	var rule := "|---|---|"
+	for t: String in ContentDB.TECHNIQUES:
+		if db.has_technique(t):
+			header += " %s |" % _name("UI_TECH_" + t)
+			rule += "---|"
+	lines.append(header + " Tuzak |")
+	lines.append(rule + "---|")
+	for f in db.fish:
+		var id := str(f["id"])
+		var row := "| %s | %s |" % [_name("FISH_" + id), _name("RARITY_" + db.rarity_id(int(f["rarity"])))]
+		for t: String in ContentDB.TECHNIQUES:
+			if db.has_technique(t):
+				var aff := db.affinity(id, t)
+				row += " %s |" % ("×" + _number(aff) if aff > 0.0 else "")
+		var traps := PackedStringArray()
+		for z in zones:
+			if id in (z["trap_ids"] as PackedStringArray):
+				traps.append(_name("ZONE_" + str(z["id"])))
+		lines.append(row + " %s |" % ", ".join(traps))
+	lines.append("")
+
+
+## Bölgenin kerevit tuzağı tablosu (spots.json trap; yoksa yazılmaz): tuzağa giren tür, şansı, değeri.
+func _trap_table(db: ContentDB, zone: Dictionary, lines: PackedStringArray) -> void:
+	var ids: PackedStringArray = zone["trap_ids"]
+	if ids.is_empty():
+		return
+	var weights: PackedInt32Array = zone["trap_weights"]
+	var total := 0
+	for w in weights:
+		total += maxi(0, w)
+	var rules := db.rules
+	lines.append("#### %s (rütbe %d)" % [_name("UI_BAG_TRAP"), TrapSim.rank(db)])
+	lines.append("")
+	lines.append("Gerçek saatle %d dakikada bir tuzağa bir tür girer, en çok %d birikir; içindekiler tuzak kurulunca" % [
+			roundi(rules.trap_fill_s / 60.0), rules.trap_max])
+	lines.append("belli olur. Tuzaktan gelen balık şans garantisi sayaçlarını ilerletmez.")
+	lines.append("")
+	lines.append("| Tür | Nadirlik | Şans | Değer (para) | Ortalama değer |")
+	lines.append("|---|---|---|---|---|")
+	for i in ids.size():
+		var id := ids[i]
+		var f := db.fish_by_id(id)
+		var span: Vector2i = f["size_cm"]
+		lines.append("| %s | %s | %s | %d–%d | %s |" % [_name("FISH_" + id), _name("RARITY_" + db.rarity_id(int(f["rarity"]))),
+				_percent(Dice.PPM * maxi(0, weights[i]) / maxi(1, total)), Economy.fish_value(db, id, span.x),
+				Economy.fish_value(db, id, span.y), _number(_mean_value(db, id))])
 	lines.append("")
 
 

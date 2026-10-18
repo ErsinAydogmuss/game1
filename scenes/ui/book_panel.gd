@@ -15,6 +15,8 @@ const CARD := Vector2(168, 232)
 ## Görülme sıklığı ipucu: tür oranı bu kadar ppm ve üstündeyse "sık", "ara sıra".
 const OFTEN_PPM := 200_000
 const SOMETIMES_PPM := 80_000
+## "Sevdiği yem" ipucu: yuva (kategori) -> söz. Türün tekniklerinin kullandığı yuvalara bakılır.
+const FAVOURITE_KEYS := { "bait": "UI_BOOK_BAIT_HINT", "lure": "UI_BOOK_LURE_HINT", "fly": "UI_BOOK_FLY_HINT" }
 const UNKNOWN_BORDER := Color("#cdb48a")
 const SILHOUETTE := Color(0.16, 0.1, 0.06, 0.6)
 ## Tutulmamış türün görselli nadirlik simgesi: şekli belli, rengi soluk.
@@ -282,30 +284,33 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 	_add_lake_odds(db, save, species_odds)
 
 
-## Tutulmamış bir balığın ipuçları: sevdiği yem (en çok çeken), şamandırayla gelmiyorsa hangi
-## teknikle tutulduğu, bölgeli gölde yaşadığı yerler ve ne sıklıkla görüldüğü (oyundaki tekniklerin
-## her biriyle, en sık görüldüğü bölgede).
+## Tutulmamış bir balığın ipuçları: sevdiği yem (tekniklerinin yemi, yapay yemi ya da sineği; en
+## çok çeken), tuzağa giriyorsa nerede, şamandırayla gelmiyorsa hangi teknikle tutulduğu, bölgeli
+## gölde yaşadığı yerler ve ne sıklıkla görüldüğü (oyundaki tekniklerin her biriyle, en sık
+## görüldüğü bölgede). Tuzak türünde sıklık yazılmaz (tuzağa hep o girer); yaşadığı yerler
+## tuzağınkilerle aynıysa yinelenmez.
 static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, zone: String = "") -> PackedStringArray:
 	var out := PackedStringArray()
-	var best_bait := ""
-	var best := 1.0
-	for g in db.gear_in("bait"):
-		var attract: Dictionary = g["attract"]
-		var mult := float(attract.get(fish_id, 1.0))
-		if mult > best:
-			best = mult
-			best_bait = str(g["id"])
-	if not best_bait.is_empty():
-		out.append(UiKit.translate("UI_BOOK_BAIT_HINT") % UiKit.translate("GEAR_" + best_bait))
 	var techniques := PackedStringArray()
 	for t: String in ContentDB.TECHNIQUES:
 		if db.has_technique(t) and db.affinity(fish_id, t) > 0.0:
 			techniques.append(t)
+	var favourite := _favourite(db, fish_id, techniques)
+	if not favourite.is_empty():
+		out.append(UiKit.translate(FAVOURITE_KEYS[str(db.gear_item(favourite)["category"])]) \
+				% UiKit.translate("GEAR_" + favourite))
+	var trap_zones := PackedStringArray()
+	for z in db.zones_of(spot):
+		if fish_id in (z["trap_ids"] as PackedStringArray):
+			trap_zones.append(UiKit.translate("ZONE_" + str(z["id"])))
+	if not trap_zones.is_empty():
+		out.append(UiKit.translate("UI_BOOK_HINT_TRAP") % ", ".join(trap_zones))
 	if not "float" in techniques and not techniques.is_empty():
 		var names := PackedStringArray()
 		for t in techniques:
 			names.append(UiKit.translate("UI_TECH_" + t))
-		out.append(UiKit.translate("UI_BOOK_HINT_TECH") % ", ".join(names))
+		var key := "UI_BOOK_HINT_TECH_ALSO" if not trap_zones.is_empty() else "UI_BOOK_HINT_TECH"
+		out.append(UiKit.translate(key) % ", ".join(names))
 	var ppm := _best_ppm(db, Zones.place(db, spot, zone), fish_id, techniques)
 	var zones := db.zones_of(spot)
 	if zones.size() > 1:
@@ -315,8 +320,10 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, 
 			if here > 0:
 				names.append(UiKit.translate("ZONE_" + str(z["id"])))
 			ppm = maxi(ppm, here)
-		if not names.is_empty():
+		if not names.is_empty() and names != trap_zones:
 			out.append(UiKit.translate("UI_BOOK_HINT_ZONE") % ", ".join(names))
+	if not trap_zones.is_empty():
+		return out
 	if ppm >= OFTEN_PPM:
 		out.append(UiKit.translate("UI_BOOK_HINT_OFTEN"))
 	elif ppm >= SOMETIMES_PPM:
@@ -324,6 +331,25 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, 
 	else:
 		out.append(UiKit.translate("UI_BOOK_HINT_RARELY"))
 	return out
+
+
+## Türü en çok çeken yem, yapay yem ya da sinek (türün tekniklerinin kullandığı; eşitlikte teknik ve
+## gear.json sırasıyla ilki; çeken yoksa "").
+static func _favourite(db: ContentDB, fish_id: String, techniques: PackedStringArray) -> String:
+	var best_id := ""
+	var best := 1.0
+	var seen := PackedStringArray()
+	for t in techniques:
+		for slot in db.slots_for(t):
+			if not FAVOURITE_KEYS.has(slot) or slot in seen:
+				continue
+			seen.append(slot)
+			for g in db.gear_in(slot):
+				var mult := float((g["attract"] as Dictionary).get(fish_id, 1.0))
+				if mult > best:
+					best = mult
+					best_id = str(g["id"])
+	return best_id
 
 
 ## Türün bu yerdeki en yüksek oranı (ppm; tekniklerden hangisiyle en sık geliyorsa, yemsiz).
@@ -334,11 +360,17 @@ static func _best_ppm(db: ContentDB, place: Dictionary, fish_id: String, techniq
 	return top
 
 
-## Gölün nadirlik oranları (kuşanılan yemle) ve şans garantisi sayaçları.
+## Gölün nadirlik oranları (elindeki teknik ve kuşanılan yemle; başlıkta tekniğin adı) ve şans
+## garantisi sayaçları (o teknikle bu bölgede gelebilen kademeler).
 func _add_lake_odds(db: ContentDB, save: SaveData, species_odds: Dictionary) -> void:
 	var zoned := not zone_id.is_empty() and db.zones_of(spot_id).size() > 1
-	var title := tr("UI_BOOK_ZONE_ODDS") % tr("ZONE_" + zone_id) if zoned else tr("UI_BOOK_ODDS")
-	_detail.add_child(UiKit.ink(title, 26, UiKit.INK_SOFT))
+	var technique := tr("UI_TECH_" + save.technique)
+	var title := tr("UI_BOOK_ZONE_ODDS") % [tr("ZONE_" + zone_id), technique] if zoned \
+			else tr("UI_BOOK_ODDS") % technique
+	var heading := UiKit.ink(title, 26, UiKit.INK_SOFT)
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.custom_minimum_size = Vector2(420, 0)
+	_detail.add_child(heading)
 	var by_rarity := CatchOdds.rarity_ppm(db, species_odds)
 	var grid := GridContainer.new()
 	grid.columns = 4

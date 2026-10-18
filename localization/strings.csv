@@ -61,6 +61,10 @@ UI_DEDE_TIP_3,"Let go when it thrashes, or the line snaps.","Balık çırpının
 UI_DEDE_TIP_4,A big shadow means a big fish.,"Büyük gölge, büyük balık demek."
 UI_DEDE_TIP_5,This lake has a secret... I'll tell you one day.,Bu gölün bir sırrı var... Bir gün anlatırım.
 UI_DEDE_TIP_6,"Be patient, kid. The lake is generous.","Sabırlı ol evlat, göl cömerttir."
+UI_DEDE_TIP_SPIN,"Stop and go, kid: predators strike a lure that pauses.","Dur-kalk yap evlat: yırtıcı en çok duran yeme saldırır."
+UI_DEDE_TIP_TRAP,"A trap fills while you're away, but holds four crayfish at most.","Tuzak sen yokken de dolar, ama dört kereviti geçmez."
+UI_DEDE_TIP_BOTTOM,A feeder draws fish to your bait faster.,Yem sepeti balığı yemin çevresine daha çabuk toplar.
+UI_DEDE_TIP_FLY,"Trout leap when they thrash. Let go then, or the line snaps.","Alabalık çırpınınca sudan sıçrar. O an bırak, misina kopmasın."
 UI_EARLY,Too early!,Erken davrandın!
 UI_STARTLE,The fish flinched!,Balık irkildi!
 UI_MISSED,It got away!,Kaçtı!
@@ -266,14 +270,18 @@ UI_BOOK_BEST,Biggest: %d cm,En büyük: %d cm
 UI_BOOK_COUNT,Caught: %d · Released: %d,Tutulan: %d · Bırakılan: %d
 UI_BOOK_PROTECTED,"Protected: caught, admired and let go.","Koruma altında: tutulur, sevilir, göle bırakılır."
 UI_BOOK_BAIT_HINT,Favourite bait: %s,Sevdiği yem: %s
+UI_BOOK_LURE_HINT,Favourite lure: %s,Sevdiği yapay yem: %s
+UI_BOOK_FLY_HINT,Favourite fly: %s,Sevdiği sinek: %s
+UI_BOOK_HINT_TRAP,Enters traps at: %s,Tuzağa girer: %s
 UI_BOOK_HINT_ZONE,Lives in: %s,Yaşadığı yer: %s
 UI_BOOK_HINT_TECH,Caught with: %s,Şununla tutulur: %s
+UI_BOOK_HINT_TECH_ALSO,Also caught with: %s,Şununla da tutulur: %s
 UI_BOOK_HINT_OFTEN,Often seen in this lake.,Bu gölde sık görülür.
 UI_BOOK_HINT_SOMETIMES,Sometimes seen in this lake.,Bu gölde ara sıra görülür.
 UI_BOOK_HINT_RARELY,Rarely seen in this lake.,Bu gölde nadiren görülür.
 UI_BOOK_CHANCE,"Chance a shadow is this fish (with your gear): %s","Takımınla bir gölgenin bu balık olma şansı: %s"
-UI_BOOK_ODDS,Odds in this lake (with your gear),Bu göldeki oranlar (takımınla)
-UI_BOOK_ZONE_ODDS,Odds at %s (with your gear),%s oranları (takımınla)
+UI_BOOK_ODDS,"Odds in this lake (%s, your gear)","Bu göldeki oranlar (%s, takımınla)"
+UI_BOOK_ZONE_ODDS,"Odds at %s (%s, your gear)","%s oranları (%s, takımınla)"
 UI_BOOK_PITY_TITLE,Lucky guarantee,Şans garantisi
 UI_BOOK_PITY,Guaranteed within %d catches,%d av içinde garanti
 UI_BOOK_PITY_NOW,The next shadow is guaranteed!,Sıradaki gölge garanti!
@@ -338,7 +346,11 @@ UI_HINT_FLY_UNDER,A fish is under it! Wait for the ring.,Altında bir balık var
 UI_HINT_FLY_RISE,A ring! Strike now!,Halka! Hemen VUR!
 UI_DEDE_TECH_OPEN_fly,"Trout rise to flies, kid. Nana sells fly rods!","Alabalık sineğe çıkar evlat. Nine sinek kamışı satıyor!"
 UI_DEDE_TECH_FIRST_fly,"Cast on the current and let the fly drift. Strike at the ring!","Akıntıya at, sinek süzülsün. Halka çıkınca VUR!"
-UI_DEDE_FLY_HERE,"Try a fly here, kid. Trout rise in the current.","Burada sinek dene evlat. Alabalık akıntıda çıkar."
+UI_DEDE_SUGGEST_reeds,"Tench and carp feed on the bottom here, kid. Try ledgering!","Sazlıkta kadife ile sazan dipte beslenir evlat. Dip dene!"
+UI_DEDE_SUGGEST_lily_cove,"Pike lurk among the lilies, kid. They strike a moving lure!","Nilüferlerde turna pusuda evlat. Oynayan yeme saldırır!"
+UI_DEDE_SUGGEST_rocky_point,"Zander hunt by the rocks, kid. Spin a lure, stop and go!","Kayalıkta sudak avlanır evlat. Spin dene, dur-kalk yap!"
+UI_DEDE_SUGGEST_deep_water,"Catfish and sturgeon roam the deep, kid. Try ledgering!","Yayın ile mersin derinin dibinde gezer evlat. Dip dene!"
+UI_DEDE_SUGGEST_stream_mouth,"Try a fly here, kid. Trout rise in the current.","Burada sinek dene evlat. Alabalık akıntıda çıkar."
 UI_TECH_FLY_ONLY,Flies only at the stream mouth,Sinek yalnızca dere ağzında
 UI_NINE_FLY_ZONE,"Use it at the stream mouth, dear: the trout are there.","Dere ağzında kullan evladım, alabalık orada."
 UI_FLY_STILL,Still water,Durgun su

@@ -498,7 +498,8 @@ func _basin_def(raw: Variant, zone: String, deepest: float, shelf_m: float) -> D
 ## Dice.NO_POINT: bölgenin suyunun ortası), techniques (bölgede avlanılan teknikler; yazılmazsa
 ## ZONE_TECHNIQUES, sinek yalnızca akıntılı bölgede açıkça), snag_s (otlu ya da kayalık bölgede
 ## bu kadar sn bekleyen yapay yem takılır; 0 = takılmaz), trap (kerevit tuzağının tablosu: tür ->
-## ağırlık; yazılmazsa bölgeye tuzak kurulmaz; trap_ids, trap_weights).
+## ağırlık; yazılmazsa bölgeye tuzak kurulmaz; trap_ids, trap_weights), suggest (Dede'nin bu bölgede
+## önerdiği teknik: UI_DEDE_SUGGEST_<bölge>; yazılmazsa "").
 func _zone_def(raw: Variant) -> Dictionary:
 	var z: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
 	var techniques := PackedStringArray()
@@ -547,6 +548,7 @@ func _zone_def(raw: Variant) -> Dictionary:
 		"snag_s": float(z.get("snag_s", 0.0)),
 		"trap_ids": trap_ids,
 		"trap_weights": trap_weights,
+		"suggest": str(z.get("suggest", "")),
 	}
 
 
@@ -848,6 +850,10 @@ func _validate_zone(spot_id: String, z: Dictionary, known: Dictionary) -> void:
 					trap_ids[i]])
 	if not trap_ids.is_empty() and bool(z["boat"]):
 		errors.append("spots.json: %s: %s: tuzak sandal bölgesine kurulmaz" % [spot_id, id])
+	# Dede'nin önerdiği teknik bölgede avlanılır ve şamandıra değildir (şamandırayı herkes bilir).
+	var suggest := str(z["suggest"])
+	if not suggest.is_empty() and (suggest == "float" or not suggest in techniques):
+		errors.append("spots.json: %s: %s: önerilen teknik bölgede avlanılmıyor: %s" % [spot_id, id, suggest])
 
 
 ## Bölge oyunun başında açık mı (rütbe 1, sandalsız)?

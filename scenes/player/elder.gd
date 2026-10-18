@@ -9,6 +9,13 @@ extends Villager
 ## Dede'ye dokununca sırayla söylediği öğütler: çeviri anahtarı ve sayısı (strings.csv).
 const TIP_KEY := "UI_DEDE_TIP_%d"
 const TIP_COUNT := 6
+## Teknik (ya da tuzak) açılınca öğütlere katılanlar: genel öğütlerin arasına, açıldıkları rütbe
+## sırasıyla girer (tips).
+const TECH_TIPS := { "spin": "UI_DEDE_TIP_SPIN", "trap": "UI_DEDE_TIP_TRAP", "bottom": "UI_DEDE_TIP_BOTTOM",
+		"fly": "UI_DEDE_TIP_FLY" }
+## Bölgenin önerdiği tekniğin sözü ve söylendiğinin bayrağı (bölge kimliğiyle).
+const SUGGEST_KEY := "UI_DEDE_SUGGEST_%s"
+const SUGGEST_FLAG := "told_suggest_%s"
 ## Yürüme engeli: oturma noktasından içeri doğru gövdenin ortası ve yarıçapı (m).
 const BODY_INSET := 0.15
 const BODY_RADIUS := 0.25
@@ -23,6 +30,38 @@ static var force_toy: bool = false
 var use_toy: bool = false
 
 var _seat := Vector3.ZERO
+
+
+## Dede'ye dokununca sırayla söylediği öğütler: genel öğütler; aralarında, rütbesi gelmiş tekniklerin
+## ve tuzağın öğütleri (açıldıkları rütbe sırasıyla, her genel öğütten sonra biri). Hiçbiri açık
+## değilken yalnızca genel öğütler.
+static func tips(db: ContentDB, save: SaveData) -> PackedStringArray:
+	var rank := Rank.rank(db, save)
+	var opened: Array[Array] = []
+	for id: String in TECH_TIPS:
+		var at := TrapSim.rank(db) if id == "trap" else db.technique_rank(id)
+		if at > 0 and rank >= at:
+			opened.append([at, str(TECH_TIPS[id])])
+	opened.sort_custom(func(a: Array, b: Array) -> bool: return int(a[0]) < int(b[0]))
+	var out := PackedStringArray()
+	for i in TIP_COUNT:
+		out.append(TIP_KEY % (i + 1))
+		if i < opened.size():
+			out.append(str(opened[i][1]))
+	return out
+
+
+## Bölgenin önerdiği teknik (spots.json suggest: sazlıkta ve derin ortada dip, nilüferli koyda ve
+## kayalıkta spin, dere ağzında sinek): orada başka bir teknikle balık tutana Dede bir kez söyler.
+## Tekniğin rütbesi gelmiş (kamışı alınmamış olsa da: Nine'ye yönlendirir), bölgede avlanılıyor, o
+## bölgede söylenmemiş. Sözün anahtarı ya da "".
+static func suggestion(db: ContentDB, save: SaveData, spot_id: String, zone_id: String, technique: String) -> String:
+	var suggest := str(db.zone(spot_id, zone_id).get("suggest", ""))
+	if suggest.is_empty() or suggest == technique or not db.has_technique(suggest) \
+			or save.flags.has(SUGGEST_FLAG % zone_id) or Rank.rank(db, save) < db.technique_rank(suggest) \
+			or not Economy.technique_allowed(db, spot_id, zone_id, suggest):
+		return ""
+	return SUGGEST_KEY % zone_id
 
 
 func _make_body() -> Node3D:
