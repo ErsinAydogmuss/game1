@@ -17,8 +17,6 @@ extends RefCounted
 ## bölgeli göl (eski şema) bugünkü gibi çalışır (altın test).
 
 const STEP := 1.0 / FishingRules.HZ
-## Yolu kapalı (kıyı arada) bir balık bu kadar adım sonra vazgeçer (ilk av vazgeçmez).
-const GIVE_UP_STEPS := 20 * FishingRules.HZ
 ## Önü kapalıysa denenecek sapma açıları (radyan): kıyı boyunca kayar.
 const DETOURS := [0.5, -0.5, 1.0, -1.0, 1.5, -1.5]
 ## Sığda kalan balığın derine dönüş yolu iskeleden bu kadar uzak olmalı (m).
@@ -35,6 +33,9 @@ var approacher: FishShadow = null
 ## Şans garantisi: yakında doğan sıradaki gölge en az bu nadirlikte (-1 = garanti yok). Aynı
 ## anda yalnızca bir garanti gölgesi olur.
 var pity_floor: int = -1
+## Takım profili (tekniğin fark etme, yaklaşma, vazgeçme ve toplanma sayıları; FishingSession
+## verir). Varsayılanı şamandıranınki.
+var rig: TechniqueRules
 
 var _db: ContentDB
 var _rules: FishingRules
@@ -74,6 +75,7 @@ func _init(db: ContentDB, spot: Dictionary, lake: LakeShape, seed: int, first_ca
 		angler: Vector2, odds: Dictionary = {}) -> void:
 	_db = db
 	_rules = db.rules
+	rig = _rules.technique("float")
 	_lake = lake
 	_spot = spot
 	_seed = seed
@@ -130,7 +132,7 @@ func step(angler: Vector2, bobber: Vector2, listening: bool, waiting_steps: int)
 				if _approach(s, bobber):
 					s.mode = FishShadow.Mode.NIBBLE
 					out.append({ "type": "arrive", "shadow": s.id })
-				elif not s.scripted and s.timer > GIVE_UP_STEPS:
+				elif not s.scripted and s.timer > rig.give_up_steps:
 					lose_interest(s)
 					# Aynı adımda yeniden fark edip aynı kapalı yola girmesin.
 					s.bored = true
@@ -152,7 +154,7 @@ func step(angler: Vector2, bobber: Vector2, listening: bool, waiting_steps: int)
 				continue
 			if s.bored:
 				continue
-			if not (s.scripted or BiteRules.notices(s, bobber, _rules)):
+			if not (s.scripted or BiteRules.notices_in(s, bobber, rig.notice_front, rig.notice_side, rig.notice_cos)):
 				continue
 			var d := s.pos.distance_squared_to(bobber)
 			if d < best_d:
@@ -237,6 +239,11 @@ func relocate(angler: Vector2) -> Array[Dictionary]:
 			continue
 		out.append({ "type": "spawn", "shadow": born.id })
 	return out
+
+
+## Teknik değişti: gölgeler takımı bu profille fark eder, ona bu hızla yaklaşır.
+func set_rig(profile: TechniqueRules) -> void:
+	rig = profile
 
 
 ## Gölgelerin doğduğu yarıçap: menzil + reach_extra (takım değişince).
@@ -455,10 +462,12 @@ func _spawn_point(rng: RandomNumberGenerator, angler: Vector2, bobber: Vector2, 
 	return Dice.NO_POINT
 
 
-## Yeni bir dolaşma hedefi seçer. Şamandıra uzun süredir sudaysa gölgeler (yarı yarıya) onun
-## çevresine yönelir; ilk av evinin yakınında dolaşır.
+## Yeni bir dolaşma hedefi seçer. Takım uzun süredir sudaysa gölgeler (profile göre, şamandırada
+## yarı yarıya) onun çevresine yönelir; ilk av evinin yakınında dolaşır.
 func _pick_target(s: FishShadow, bobber: Vector2, listening: bool, waiting_steps: int) -> void:
-	var lure := listening and waiting_steps >= _rules.lure_after_steps and Dice.chance(s.rng, _rules.lure_ppm)
+	# Kısa devre sırası şamandırada v0.3'teki gibi: zar yalnızca toplanma açıkken atılır.
+	var gather := listening and rig.gather_ppm > 0 and waiting_steps >= rig.gather_after_steps \
+			and Dice.chance(s.rng, rig.gather_ppm)
 	var bounds := _lake.water_bounds
 	var depth := _min_depth(s)
 	var own := _zoned and s.zone >= 0 and s.zone < _lake.zone_bounds.size()
@@ -470,8 +479,8 @@ func _pick_target(s: FishShadow, bobber: Vector2, listening: bool, waiting_steps
 	var stranded := _stranded(s)
 	for attempt in 12:
 		var p: Vector2
-		if lure:
-			p = bobber + Dice.in_disc(s.rng, _rules.lure_radius)
+		if gather:
+			p = bobber + Dice.in_disc(s.rng, rig.gather_radius)
 		elif s.scripted:
 			p = s.home + Dice.in_disc(s.rng, 1.5)
 		else:
@@ -479,7 +488,7 @@ func _pick_target(s: FishShadow, bobber: Vector2, listening: bool, waiting_steps
 					s.rng.randf_range(bounds.position.y, bounds.end.y))
 		# Sığda kalmış balığın yolunu adım adım _wander denetler (başlangıç zaten sınır dışında).
 		var path_ok := stranded or _lake.segment_is_deep(s.pos, p, depth * 0.75)
-		var home_zone := not own or lure or s.scripted or _lake.zone_at(p) == s.zone
+		var home_zone := not own or gather or s.scripted or _lake.zone_at(p) == s.zone
 		if _lake.is_deep(p, depth) and path_ok and home_zone and _clear_of_boat(s.pos, p):
 			s.target = p
 			s.mode = FishShadow.Mode.WANDER
@@ -534,7 +543,7 @@ func _approach(s: FishShadow, bobber: Vector2) -> bool:
 	if d <= stop + 0.05:
 		return true
 	_turn(s, to / d, _rules.turn * 2.0)
-	var step_len := minf(_rules.approach_speed * STEP, d - stop)
+	var step_len := minf(rig.approach_speed * STEP, d - stop)
 	var next := s.pos + s.heading * step_len
 	if _lake.is_water(next):
 		s.pos = next

@@ -29,10 +29,13 @@ var flee_speed: float = 2.2
 var flee_steps: int = 96
 ## Dönüş hızı (1/sn): yön her adımda hedefe bu oranda yaklaşır.
 var turn: float = 2.5
-## Şamandıra bu kadar adımdır suyadaysa gölgeler ona doğru dolaşmaya başlar.
-var lure_after_steps: int = 360
-var lure_ppm: int = 500_000
-var lure_radius: float = 2.5
+## Yolu kapalı (kıyı arada) balık bu kadar adım sonra vazgeçer (ilk av vazgeçmez).
+var give_up_steps: int = 20 * HZ
+## Şamandıra bu kadar adımdır suyadaysa gölgeler (gather_ppm olasılıkla) onun gather_radius
+## çevresine doğru dolaşmaya başlar: bekleme uzamasın.
+var gather_after_steps: int = 360
+var gather_ppm: int = 500_000
+var gather_radius: float = 2.5
 ## Doğan gölgeler birbirine bundan yakın olmaz.
 var spacing: float = 1.2
 var spawn_from_angler: float = 3.0
@@ -92,8 +95,19 @@ var over_drift: float = 3.0
 var over_easy_reel: float = 0.9
 
 
+## Tekniklerin profilleri (kimlik → TechniqueRules). Şamandıranınki üst düzey bölümlerden.
+var _techniques: Dictionary = {}
+
+
 static func to_steps(seconds: float) -> int:
 	return int(round(seconds * HZ))
+
+
+## Tekniğin profili; bilinmeyen teknikte şamandıranınki.
+func technique(id: String) -> TechniqueRules:
+	if not _techniques.has("float"):
+		_techniques["float"] = TechniqueRules.from_float(self)
+	return _techniques.get(id, _techniques["float"])
 
 
 static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
@@ -118,9 +132,10 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 	r.flee_speed = float(shadows.get("flee_speed", r.flee_speed))
 	r.flee_steps = to_steps(float(shadows.get("flee", 1.6)))
 	r.turn = float(shadows.get("turn", r.turn))
-	r.lure_after_steps = to_steps(float(shadows.get("lure_after", 6.0)))
-	r.lure_ppm = int(round(float(shadows.get("lure_chance", 0.5)) * Dice.PPM))
-	r.lure_radius = float(shadows.get("lure_radius", r.lure_radius))
+	r.give_up_steps = to_steps(float(shadows.get("give_up", 20.0)))
+	r.gather_after_steps = to_steps(float(shadows.get("gather_after", 6.0)))
+	r.gather_ppm = int(round(float(shadows.get("gather_chance", 0.5)) * Dice.PPM))
+	r.gather_radius = float(shadows.get("gather_radius", r.gather_radius))
 	r.spacing = float(shadows.get("spacing", r.spacing))
 	r.spawn_from_angler = float(shadows.get("spawn_from_angler", r.spawn_from_angler))
 	r.reach_extra = float(shadows.get("reach_extra", r.reach_extra))

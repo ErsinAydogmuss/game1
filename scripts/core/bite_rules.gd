@@ -7,13 +7,19 @@ extends RefCounted
 ## Gölge şamandırayı fark eder mi? Önündeki ±70°'lik konide notice_front'tan, başka yönde
 ## notice_side'dan yakınsa evet.
 static func notices(shadow: FishShadow, bobber: Vector2, rules: FishingRules) -> bool:
-	var to := bobber - shadow.pos
+	return notices_in(shadow, bobber, rules.notice_front, rules.notice_side, rules.notice_cos)
+
+
+## Gölge takımı (şamandıra, yapay yem, kurşun, sinek) fark eder mi? Önündeki konide (yarım açının
+## kosinüsü cone_cos) front'tan, başka yönde side'dan yakınsa evet (tekniğin profili: TechniqueRules).
+static func notices_in(shadow: FishShadow, rig: Vector2, front: float, side: float, cone_cos: float) -> bool:
+	var to := rig - shadow.pos
 	var d := to.length()
-	if d <= rules.notice_side:
+	if d <= side:
 		return true
-	if d > rules.notice_front:
+	if d > front:
 		return false
-	return shadow.heading.dot(to / d) >= rules.notice_cos
+	return shadow.heading.dot(to / d) >= cone_cos
 
 
 ## Şamandıra buraya düşerse gölge korkup kaçar mı? Gölgenin merkezine "gölge boyunun yarısı

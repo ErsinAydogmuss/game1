@@ -5,12 +5,17 @@ extends RefCounted
 ## alır, gölgeleri `sim.shadows`'tan okur. İç adım sabit 1/60 sn: aynı girdilerle her fps'te ve
 ## video kaydında aynı sonuç çıkar.
 ##
+## Isırmaya kadarki kısım tekniğin (technique: Technique; şamandıra FloatTechnique): takımın
+## nereye düştüğü, suda ne yaptığı, girdilerin anlamı, eylem düğmesi. Teknikler dürtme, ısırma,
+## erken dokunuş, kaçırma ve takılma için buradaki ortak işlevleri çağırır (start_nibbling …
+## hook_fish). Çekişme (ReelModel) ve sonrası her teknikte ortak.
+##
 ## Girdiler:
 ## - angler: balıkçının yeri (sunum her karede yazar).
 ## - cast(hedef): yalnızca BOŞ durumda. Hedef karadaysa ya da menzil dışındaysa şamandıra yine
 ##   suya düşer; çizgide hiç su yoksa false (sunum o zaman yürür).
-## - press() / release(): eylem; parmak değdiği an işler. Beklerken oltayı geri sarar, dürtmede
-##   erken sayılır, ısırmada VUR, çekişmede basılı tutunca sarar.
+## - press() / release(): eylem; parmak değdiği an işler. Şamandırada beklerken oltayı geri sarar,
+##   dürtmede erken sayılır, ısırmada VUR; çekişmede basılı tutunca sarar.
 ## - acknowledge(): yakalanan balığın kartı kapandı; yeni atış serbest.
 ##
 ## Olaylar (sözlük; "type" ve "step" alanlı):
@@ -36,6 +41,7 @@ var state: State = State.IDLE
 ## Toplam adım (oturum saati).
 var steps: int = 0
 var angler := Vector2.ZERO
+## Takımın (şamandıra, yem, kurşun, sinek) suyundaki yeri.
 var bobber := Vector2.ZERO
 var cast_from := Vector2.ZERO
 var easy: bool = false
@@ -59,15 +65,22 @@ var lake: LakeShape
 var rules: FishingRules
 ## Kuşanılmış takım (menzil, sarma, fren, misina, iğne, şamandıra, yem, kepçe).
 var gear: GearStats
+## Elindeki teknik (gear.technique; teknik yalnızca boştayken değişir).
+var technique: Technique
+
+# Durum sayaçları (teknikler de okur ve yazar).
+## Atışta, dürtmede, geri sarmada ve kaçırmadan sonra kalan adım.
+var timer: int = 0
+## Takım kaç adımdır suda (gölgelerin toplanması).
+var waiting_steps: int = 0
+## Isırmadan beri geçen adım ve vuruş penceresi.
+var bite_steps: int = 0
+var window: int = 60
 
 var _db: ContentDB
 var _acc: float = 0.0
-var _timer: int = 0
-var _waiting_steps: int = 0
 var _nibbles_left: int = 0
 var _nibble_index: int = 0
-var _bite_steps: int = 0
-var _window: int = 60
 var _events: Array[Dictionary] = []
 
 
@@ -87,6 +100,8 @@ func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, eas
 	if not access.is_empty():
 		odds["open"] = access
 	sim = ShadowSim.new(db, spot, lake, seed, first_catch, angler, odds)
+	technique = Techniques.make(gear.technique, rules)
+	sim.set_rig(technique.rig)
 
 
 ## Gerçek zamanı sabit adımlara çevirir.
@@ -102,38 +117,26 @@ func step() -> void:
 	steps += 1
 	match state:
 		State.CASTING:
-			_timer -= 1
-			if _timer <= 0:
-				_land()
-		State.WAITING:
-			_waiting_steps += 1
-		State.NIBBLING:
-			_timer -= 1
-			if _timer <= 0:
-				_next_nibble()
-		State.BITING:
-			_bite_steps += 1
-			if _bite_steps >= _window:
-				_missed()
+			timer -= 1
+			if timer <= 0:
+				technique.land(self)
+		State.WAITING, State.NIBBLING, State.BITING:
+			technique.step(self)
 		State.FIGHTING:
 			_step_fight()
 		State.RETRIEVING, State.LOST:
-			_timer -= 1
-			if _timer <= 0:
+			timer -= 1
+			if timer <= 0:
 				_to_idle()
-	var listening := state == State.WAITING
-	for e in sim.step(angler, bobber, listening, _waiting_steps):
+	var listening := technique.listening(self)
+	for e in sim.step(angler, bobber, listening, waiting_steps):
 		if str(e["type"]) != "arrive":
-			_emit(e)
+			push_event(e)
 			continue
 		var s := sim.find(int(e["shadow"]))
 		if s == null:
 			continue
-		if state == State.WAITING and s == sim.approacher:
-			_emit(e)
-			_start_nibbling()
-		else:
-			sim.lose_interest(s)
+		technique.on_arrive(self, s, e)
 
 
 func poll_events() -> Array[Dictionary]:
@@ -147,35 +150,32 @@ func poll_events() -> Array[Dictionary]:
 func cast(target: Vector2) -> bool:
 	if state != State.IDLE:
 		return false
-	var point := lake.landing_point(angler, target, gear.range_m, rules.min_shore)
-	if not Dice.is_point(point) or angler.distance_to(point) < rules.min_cast:
+	var point := technique.landing_point(self, target)
+	if not Dice.is_point(point) or angler.distance_to(point) < technique.min_cast(self):
 		return false
 	cast_from = angler
 	bobber = point
 	var dist := angler.distance_to(point)
-	_timer = maxi(1, FishingRules.to_steps(rules.flight_base + rules.flight_per_m * dist))
+	timer = maxi(1, FishingRules.to_steps(rules.flight_base + rules.flight_per_m * dist))
 	state = State.CASTING
-	_emit({ "type": "cast", "from": angler, "to": point, "steps": _timer })
+	push_event({ "type": "cast", "from": angler, "to": point, "steps": timer })
 	return true
 
 
 func press() -> void:
 	holding = true
-	match state:
-		State.WAITING:
-			_retrieve()
-		State.NIBBLING:
-			_early()
-		State.BITING:
-			_hook()
-		State.FIGHTING:
-			reel.holding = true
+	if state == State.FIGHTING:
+		reel.holding = true
+	else:
+		technique.press(self)
 
 
 func release() -> void:
 	holding = false
 	if state == State.FIGHTING:
 		reel.holding = false
+	else:
+		technique.release(self)
 
 
 func acknowledge() -> void:
@@ -195,15 +195,9 @@ func action_kind() -> String:
 	match state:
 		State.IDLE:
 			return "cast"
-		State.WAITING:
-			return "retrieve"
-		State.NIBBLING:
-			return "wait"
-		State.BITING:
-			return "hook"
 		State.FIGHTING:
 			return "reel"
-	return ""
+	return technique.action_kind(self)
 
 
 ## Çekişmede balığın yeri (balıkçıdan hook_dir yönünde, reel.distance uzakta; suyun bittiği
@@ -218,11 +212,15 @@ func range_m() -> float:
 	return gear.range_m
 
 
-## Takım değişti (dükkân): menzil ve sarma sonraki atıştan, yemin çekimi sonraki gölgeden geçerli.
+## Takım değişti (dükkân, takım çantası): menzil ve sarma sonraki atıştan, yemin çekimi sonraki
+## gölgeden geçerli. Teknik değiştiyse (yalnızca boştayken; değilse boşa dönünce) gölgeler yeni
+## tekniğin oranıyla yeniden doğar: defterin gösterdiği oran gerçek oran kalır.
 func set_gear(gear_stats: GearStats) -> void:
 	gear = gear_stats
 	sim.set_reach(gear.range_m)
 	sim.set_odds({ "attract": gear.attract, "pity_floor": sim.pity_floor })
+	if state == State.IDLE:
+		_apply_technique()
 
 
 ## Gölge doğabilen bölgeler değişti (rütbe atladı, sandala binildi ya da inildi).
@@ -234,7 +232,7 @@ func set_access(open: PackedStringArray) -> void:
 func relocate(p: Vector2) -> void:
 	angler = p
 	for e in sim.relocate(p):
-		_emit(e)
+		push_event(e)
 
 
 ## Balıkçının avlandığı bölge (sıra): bölgeli gölde gölgelerin doğduğu bölge (ShadowSim.player_zone:
@@ -262,79 +260,84 @@ func seconds() -> float:
 	return float(steps) / FishingRules.HZ
 
 
-# --- Durum geçişleri -------------------------------------------------------------------
+# --- Tekniklerin ortak işlevleri -------------------------------------------------------
 
-func _emit(e: Dictionary) -> void:
+func push_event(e: Dictionary) -> void:
 	e["step"] = steps
 	_events.append(e)
 
 
-func _land() -> void:
+## Takım suya değdi: bekleme başlar.
+func land_rig() -> void:
 	state = State.WAITING
-	_waiting_steps = 0
-	_emit({ "type": "land", "pos": bobber })
-	for e in sim.scare(bobber, gear.stealth):
-		_emit(e)
+	waiting_steps = 0
+	push_event({ "type": "land", "pos": bobber })
 
 
-func _retrieve() -> void:
+## Olta geri sarılır (yaklaşan balık ilgisini kaybeder).
+func retrieve() -> void:
 	if sim.approacher != null:
 		sim.lose_interest(sim.approacher)
 	state = State.RETRIEVING
-	_timer = maxi(1, rules.retrieve_steps)
-	_emit({ "type": "retrieve" })
+	timer = maxi(1, rules.retrieve_steps)
+	push_event({ "type": "retrieve" })
 
 
-func _start_nibbling() -> void:
+## Yaklaşan balık takıma vardı: dürtmeler (tekniğin sayısıyla) başlar.
+func start_nibbling() -> void:
 	var s := sim.approacher
 	state = State.NIBBLING
-	_nibbles_left = 0 if s.scripted else BiteRules.roll_nibbles(s.rng, rules)
+	_nibbles_left = 0 if s.scripted else technique.roll_nibbles(s.rng)
 	_nibble_index = 0
-	_timer = BiteRules.roll_gap(s.rng, rules)
+	timer = technique.roll_gap(s.rng)
 
 
-func _next_nibble() -> void:
+## Sıradaki dürtme; dürtme kalmadıysa ısırma (vuruş penceresi açılır).
+func next_nibble() -> void:
 	var s := sim.approacher
 	if _nibbles_left > 0:
 		_nibbles_left -= 1
 		_nibble_index += 1
-		_emit({ "type": "nibble", "shadow": s.id, "index": _nibble_index })
-		_timer = BiteRules.roll_gap(s.rng, rules)
+		push_event({ "type": technique.nibble_event(), "shadow": s.id, "index": _nibble_index })
+		timer = technique.roll_gap(s.rng)
 	else:
 		state = State.BITING
-		_bite_steps = 0
-		_window = BiteRules.window_steps(rules, easy or s.scripted) + gear.window_add_steps
-		_emit({ "type": "bite", "shadow": s.id })
+		bite_steps = 0
+		window = technique.window(self, s)
+		push_event({ "type": technique.bite_event(), "shadow": s.id })
 
 
-func _early() -> void:
+## Dürtmede (ısırmadan önce) dokunuş: balık irkilir ya da kaçar.
+func early() -> void:
 	var s := sim.approacher
 	if BiteRules.early_outcome(easy, s.scripted, s.startles) == "startle":
 		s.startles += 1
 		# İlk av sözünü tutar: sık sık dokunan çocuk da ısırmayı görsün (sayaç baştan başlamaz).
 		if not s.scripted:
-			_timer = BiteRules.roll_gap(s.rng, rules)
-		_emit({ "type": "early", "shadow": s.id, "startle": true })
+			timer = technique.roll_gap(s.rng)
+		push_event({ "type": "early", "shadow": s.id, "startle": true })
 		return
-	_emit({ "type": "early", "shadow": s.id, "startle": false })
+	push_event({ "type": "early", "shadow": s.id, "startle": false })
 	sim.flee(s, bobber)
-	_lose("early")
+	lose("early")
 
 
-func _missed() -> void:
+## Vuruş penceresi kaçtı: balık gider (ilk av gitmez, yeniden ısırır).
+func missed() -> void:
 	var s := sim.approacher
 	if s.scripted:
 		# İlk av: balık gitmez, biraz sonra yeniden ısırır.
 		state = State.NIBBLING
 		_nibbles_left = 0
-		_timer = BiteRules.roll_gap(s.rng, rules)
-		_emit({ "type": "retry", "shadow": s.id })
+		timer = technique.roll_gap(s.rng)
+		push_event({ "type": "retry", "shadow": s.id })
 		return
 	sim.flee(s, bobber)
-	_lose("missed")
+	lose("missed")
 
 
-func _hook() -> void:
+## Yaklaşan balık oltaya takıldı: çekişme başlar.
+func hook_fish() -> void:
 	var s := sim.approacher
 	hooked = s
 	sim.hook(s)
@@ -354,8 +357,20 @@ func _hook() -> void:
 	reel.holding = holding
 	too_big = s.stars if reel.excess > 0 else 0
 	state = State.FIGHTING
-	_emit({ "type": "hook", "shadow": s.id, "fish": s.fish_id, "distance": dist, "too_big": too_big })
+	push_event({ "type": "hook", "shadow": s.id, "fish": s.fish_id, "distance": dist, "too_big": too_big })
 
+
+## Balık kaçtı ya da misina koptu: kısa bir beklemeden sonra boşa döner.
+func lose(reason: String) -> void:
+	state = State.LOST
+	timer = maxi(1, rules.lost_steps)
+	last_loss = reason
+	reel = null
+	push_event({ "type": "lost", "reason": reason, "too_big": too_big })
+	too_big = 0
+
+
+# --- İç işler ----------------------------------------------------------------------
 
 ## Balıkçıdan hook_dir yönünde, from_dist'ten dışarı doğru suyun sürdüğü en uzak uzaklık
 ## (kıyıdan FIGHT_SHORE payıyla, en çok cap).
@@ -382,7 +397,7 @@ func _step_fight() -> void:
 				_fight_lost("escaped")
 				return
 			_:
-				_emit({ "type": what })
+				push_event({ "type": what })
 	hooked.pos = fight_point()
 
 
@@ -400,14 +415,14 @@ func _caught() -> void:
 	state = State.CAUGHT
 	var e := last_catch.duplicate()
 	e["type"] = "catch"
-	_emit(e)
+	push_event(e)
 
 
 func _fight_lost(reason: String) -> void:
 	hooked.pos = _water_near(fight_point())
 	sim.flee(hooked, angler)
 	hooked = null
-	_lose(reason)
+	lose(reason)
 
 
 ## p karadaysa (balıkçı kıyıdan geriye, balık kıyının ötesine kaçtı) şamandıraya doğru ilk su noktası.
@@ -420,15 +435,17 @@ func _water_near(p: Vector2) -> Vector2:
 	return bobber
 
 
-func _lose(reason: String) -> void:
-	state = State.LOST
-	_timer = maxi(1, rules.lost_steps)
-	last_loss = reason
-	reel = null
-	_emit({ "type": "lost", "reason": reason, "too_big": too_big })
-	too_big = 0
-
-
 func _to_idle() -> void:
 	state = State.IDLE
-	_emit({ "type": "idle" })
+	push_event({ "type": "idle" })
+	_apply_technique()
+
+
+## Takımın tekniği elindekinden farklıysa (boştayken) değiştirir: gölgeler yeni tekniğin
+## profiliyle fark eder ve yeni oranla, balıkçının çevresinde yeniden doğar.
+func _apply_technique() -> void:
+	if Techniques.resolve(gear.technique) == technique.id:
+		return
+	technique = Techniques.make(gear.technique, rules)
+	sim.set_rig(technique.rig)
+	relocate(angler)

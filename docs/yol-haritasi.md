@@ -109,7 +109,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 
 **Dalga 3 — Teknikler → v0.4**
 
-- [ ] Teknik soyutlaması (önce bugünkü şamandıra için altın test).
+- [x] Teknik soyutlaması: ısırmaya kadarki kısım tekniğin (`Technique`, şamandıra `FloatTechnique`); gölgeler tekniğin profilini okur (`TechniqueRules`). Şamandıra bit bit aynı (altın test).
 - [ ] Spin.
 - [ ] Dip: sehpa ve zil.
 - [ ] Sinek (dere ağzı).
