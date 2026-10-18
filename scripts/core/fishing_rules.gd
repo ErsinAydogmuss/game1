@@ -175,6 +175,16 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 	r.over_drift = float(reel.get("over_drift", r.over_drift))
 	r.over_easy_reel = float(reel.get("over_easy_reel", r.over_easy_reel))
 	r._validate(errors)
+	# Teknikler: şamandıra üst düzey bölümlerden; ötekiler "techniques" bölümünden.
+	var base := r.technique("float")
+	var techniques: Dictionary = d.get("techniques", {})
+	for id: Variant in techniques:
+		if typeof(techniques[id]) != TYPE_DICTIONARY or str(id) == "float":
+			errors.append("rules.json: techniques.%s: bölüm olmalı (şamandıra üst düzeyde)" % id)
+			continue
+		var t := TechniqueRules.from_dict(str(id), techniques[id], base)
+		t.validate(errors)
+		r._techniques[str(id)] = t
 	return r
 
 

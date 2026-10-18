@@ -112,6 +112,12 @@ GEAR_rod_float_glass,Fiberglass rod,Cam elyafı kamış
 GEAR_rod_float_glass_DESC,Casts farther and handles bigger fish better.,"Daha uzağa atar, iri balığa daha dayanıklıdır."
 GEAR_rod_float_carbon,Carbon rod,Karbon kamış
 GEAR_rod_float_carbon_DESC,"Master-made: long casts, strong pull.","Usta işi: uzun atış, güçlü çekiş."
+GEAR_rod_spin_light,Light spin rod,Hafif spin kamışı
+GEAR_rod_spin_light_DESC,Throws lures for predators. Light in the hand.,Yırtıcıya yapay yem atar. Eli yormaz.
+GEAR_rod_spin_medium,Medium spin rod,Orta spin kamışı
+GEAR_rod_spin_medium_DESC,Casts farther and holds bigger predators.,"Daha uzağa atar, iri yırtıcıyı taşır."
+GEAR_rod_spin_heavy,Heavy spin rod,Ağır spin kamışı
+GEAR_rod_spin_heavy_DESC,A sturdy backbone for big pike.,İri turna için sağlam omurga.
 GEAR_reel_basic,Basic reel,Basit makara
 GEAR_reel_basic_DESC,"Squeaky, but it does the job.",Gıcır gıcır ama işini görür.
 GEAR_reel_smooth,Smooth reel,Yumuşak makara
@@ -160,6 +166,18 @@ GEAR_bait_boilie,Boilies,Boili
 GEAR_bait_boilie_DESC,"Round bait balls that draw big carp, golden carp and catfish.","Yuvarlak yem topları: iri sazanı, altın sazanı ve yayını çeker."
 GEAR_bait_shrimp,Shrimp,Karides
 GEAR_bait_shrimp_DESC,"Catfish, pike and zander can't resist.","Yayın, turna ve sudak dayanamaz."
+GEAR_lure_spoon,Spoon,Kaşık
+GEAR_lure_spoon_DESC,A shiny spoon. Perch love the flash.,Parlak kaşık. Levrek ışıltısına bayılır.
+GEAR_lure_spinner,Spinner,Döner kaşık
+GEAR_lure_spinner_DESC,Its blade buzzes; perch and chub come.,Pervanesi titrer; levrek ve kefal gelir.
+GEAR_lure_soft,Soft lure,Silikon yem
+GEAR_lure_soft_DESC,A soft tail wiggling low. Zander love it.,Yumuşak kuyruğu dipte kıvrılır. Sudak sever.
+GEAR_lure_crank,Crankbait,Maket balık
+GEAR_lure_crank_DESC,Dives like a little fish. Pike can't resist.,Küçük balık gibi dalar. Turna dayanamaz.
+GEAR_lure_popper,Popper,Su üstü yemi
+GEAR_lure_popper_DESC,Pops on the surface; chub and pike leap.,Suyun üstünde şıpırdar; kefal ve turna fırlar.
+GEAR_lure_gold,Golden spoon,Altın kaşık
+GEAR_lure_gold_DESC,The masters' spoon calls the big predators.,Ustaların kaşığı: büyük yırtıcıları çağırır.
 GEAR_net,Landing net,Kepçe
 GEAR_net_DESC,Land fish from a little farther away: shorter fights.,Balığı biraz daha uzaktan alırsın: çekişme kısalır.
 GEAR_boat,Rowboat,Sandal
@@ -203,6 +221,9 @@ UI_SHOP_TAB_LINE,Lines,Misina
 UI_SHOP_TAB_TACKLE,Tackle,İğne
 UI_SHOP_TAB_BAIT,Bait,Yem
 UI_SHOP_TAB_EXTRA,Extras,Ekstra
+UI_SHOP_TAB_LURE,Lures,Yapay yem
+UI_SHOP_TAB_RIG,Sinkers,Kurşun
+UI_SHOP_TAB_FLY,Flies,Sinek
 UI_STAT_RANGE,Range,Menzil
 UI_STAT_SPEED,Speed,Sarma
 UI_STAT_DRAG,Drag,Fren

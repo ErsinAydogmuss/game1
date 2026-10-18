@@ -136,6 +136,10 @@ func step(angler: Vector2, bobber: Vector2, listening: bool, waiting_steps: int)
 					lose_interest(s)
 					# Aynı adımda yeniden fark edip aynı kapalı yola girmesin.
 					s.bored = true
+			FishShadow.Mode.NIBBLE:
+				# Şamandırada takım durur, balık da (izleme hızı 0); spinde yemin peşinden gelir.
+				if rig.follow_speed > 0.0:
+					_follow_rig(s, bobber)
 			FishShadow.Mode.FLEE:
 				_flee_step(s)
 				s.timer -= 1
@@ -559,6 +563,21 @@ func _approach(s: FishShadow, bobber: Vector2) -> bool:
 			s.heading = dir
 			return false
 	return false
+
+
+## Takımı izleyen balık (spinde yemin peşindeki): takıma doğru izleme hızıyla yüzer, ağzı takımın
+## dibinde durur.
+func _follow_rig(s: FishShadow, rig_pos: Vector2) -> void:
+	var to := rig_pos - s.pos
+	var d := to.length()
+	var stop := s.length * 0.5
+	if d <= stop + 0.02:
+		return
+	var dir := to / d
+	var next := s.pos + dir * minf(rig.follow_speed * STEP, d - stop)
+	if _lake.is_water(next):
+		s.pos = next
+		s.heading = dir
 
 
 func _flee_step(s: FishShadow) -> void:

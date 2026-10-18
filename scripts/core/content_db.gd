@@ -488,7 +488,8 @@ func _basin_def(raw: Variant, zone: String, deepest: float, shelf_m: float) -> D
 ## gates (bölge kilitliyken kıyı yolunu kesen çitler: iki uç), buoys (sandalın gittiği
 ## şamandıralar), current (akıntı yönü; görsel ve sinek), map (haritada rozetin yeri; yoksa
 ## Dice.NO_POINT: bölgenin suyunun ortası), techniques (bölgede avlanılan teknikler; yazılmazsa
-## ZONE_TECHNIQUES, sinek yalnızca akıntılı bölgede açıkça).
+## ZONE_TECHNIQUES, sinek yalnızca akıntılı bölgede açıkça), snag_s (otlu ya da kayalık bölgede
+## bu kadar sn bekleyen yapay yem takılır; 0 = takılmaz).
 func _zone_def(raw: Variant) -> Dictionary:
 	var z: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
 	var techniques := PackedStringArray()
@@ -527,6 +528,7 @@ func _zone_def(raw: Variant) -> Dictionary:
 		"current": _vec2(z.get("current"), Vector2.ZERO),
 		"map": _vec2(z.get("map"), Dice.NO_POINT),
 		"techniques": techniques,
+		"snag_s": float(z.get("snag_s", 0.0)),
 	}
 
 

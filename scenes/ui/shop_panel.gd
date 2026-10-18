@@ -2,9 +2,12 @@ class_name ShopPanel
 extends Dialog
 ## Nine'nin dükkânı (docs/gdd.md §10.4). Nine'ye ya da dükkânına dokununca açılır.
 ## - Üstte Nine'nin yüzü ve sözü (selam, "güle güle kullan", "biraz daha balık getir"...), para.
-## - Sekmeler: Kova (balıkları sat), Kamış, Makara, Misina, İğne ve şamandıra, Yem, Ekstra (kepçe,
-##   sandal, sıradaki kova: kovalar tek kartta). Her sekmede en çok 6 kart (3×2): kaydırma yok,
-##   parmakla aranmaz.
+## - Sekmeler: Kova (balıkları sat), Kamış, Makara, Misina, tekniğe özel sekme (şamandırada iğne ve
+##   şamandıra, spinde yapay yem, dipte kurşun, sinekte sinek), Yem, Ekstra (kepçe, sandal, sıradaki
+##   kova: kovalar tek kartta). Her sekmede en çok 6 kart (3×2): kaydırma yok, parmakla aranmaz.
+## - Başlıkta teknik düğmeleri: Kamış ve tekniğe özel sekme bakılan tekniğin takımını gösterir
+##   (açılışta elindeki teknik). Kilitli teknik de görünür, düğmesinde rütbesi yazar. Makara ve
+##   misina her teknikte ortak. Bir tekniğin ilk kamışı alınınca o teknik ele geçer.
 ## - Kart: ikon, ad, kısa açıklama, en çok iki değer çubuğu (kuşanılanla karşılaştırma: işaret
 ##   kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf; kamışta ve misinada "İri balık": kaç
 ##   yıldızlı iri balığı taşıdığı, 5 yıldızdan dolu olanlar) ve tek düğme: fiyat (al ve tak), TAK,
@@ -14,7 +17,8 @@ extends Dialog
 ## Para yalnızca oynayarak kazanılır; satın alma oyun parasıyla (gelir kuralları, CLAUDE.md).
 ## Düğmeler normal Button (TouchButton değil): paneller tek parmakla kullanılır.
 
-## Takım değişti (satın alma, kuşanma): main oturumun takımını yeniler.
+## Takım değişti (satın alma, kuşanma; tekniğin ilk kamışı alınınca elindeki teknik de): main
+## oturumun takımını yeniler.
 signal gear_changed
 ## Kova satıldı: kazanılan para (main: HUD, Nine'nin sevinci).
 signal sold(coins: int)
@@ -32,6 +36,15 @@ const TABS: Array[Array] = [
 ## Kategori başına gösterilen değerler: [gear.json alanı, çeviri anahtarı, birim ("" = sayı yok,
 ## "★" = çubuk yerine 5 yıldızdan dolu olanlar)]. Kamışta ve misinada "İri balık": kaç yıldızlı iri
 ## balığı taşır (ikisinin küçüğü işler; güç ve kopma süresi kuralda kalır, satır olarak görünmez).
+## Tekniğe özel sekme ("tackle"): teknik -> [kategoriler, başlık anahtarı, ikon].
+const TECHNIQUE_TACKLE := {
+	"float": [["hook", "bobber"], "UI_SHOP_TAB_TACKLE", "hook"],
+	"spin": [["lure"], "UI_SHOP_TAB_LURE", "lure"],
+	"bottom": [["rig"], "UI_SHOP_TAB_RIG", "rig"],
+	"fly": [["fly"], "UI_SHOP_TAB_FLY", "fly"],
+}
+## Teknik düğmesinin boyu (başlık satırında, kapat düğmesi kadar: panel uzamaz).
+const TECH_BUTTON := Vector2(122, 122)
 const STATS := {
 	"rod": [["range_m", "UI_STAT_RANGE", "m"], ["carry", "UI_STAT_CARRY", "★"]],
 	"reel": [["reel_speed", "UI_STAT_SPEED", ""], ["drag", "UI_STAT_DRAG", ""]],
@@ -72,6 +85,8 @@ const SAME := Color("#a88a64")
 var _tab: String = "rod"
 var _last_gear_tab: String = "rod"
 var _tab_buttons: Dictionary = {}
+var _tab_icons: Dictionary = {}
+var _tech_buttons: Dictionary = {}
 var _content: VBoxContainer
 var _face: TextureRect
 ## Ersin'in portresi yokken Nine'nin modelden çekilen yedek yüzü (main verir).
@@ -84,6 +99,8 @@ var _line_args: Array = []
 var spot_id: String = ""
 ## Balıkçının bölgesi: yem kartındaki oranlar o bölgenin (Balık Defteri'yle aynı).
 var zone_id: String = ""
+## Bakılan teknik (Kamış ve tekniğe özel sekme; açılışta elindeki teknik).
+var technique: String = "float"
 
 
 func _build() -> void:
@@ -104,9 +121,17 @@ func _build() -> void:
 	_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_line.size_flags_stretch_ratio = 6.0
-	_line.custom_minimum_size = Vector2(700, 0)
+	_line.custom_minimum_size = Vector2(600, 0)
 	header.add_child(_line)
 	header.move_child(_line, _title.get_index() + 1)
+	var techs := HBoxContainer.new()
+	techs.add_theme_constant_override("separation", 8)
+	header_extra.add_child(techs)
+	for id: String in ContentDB.TECHNIQUES:
+		if GameState.db.has_technique(id):
+			var b := _tech_button(id)
+			techs.add_child(b)
+			_tech_buttons[id] = b
 	_coins = HBoxContainer.new()
 	header_extra.add_child(_coins)
 	# Telefonda (çentik ve ev çubuğu payıyla ~997 birim) küçülmeden sığsın, düğmeler 122 birim
@@ -145,7 +170,9 @@ func _show_line() -> void:
 
 
 ## Açar: kovada balık varsa Kova sekmesi, yoksa en son bakılan takım sekmesi (ilk açılışta Kamış).
-func open_shop(tab: String = "") -> void:
+## look: bakılacak teknik (boşsa elindeki).
+func open_shop(tab: String = "", look: String = "") -> void:
+	technique = look if not look.is_empty() else GameState.save.technique
 	if not tab.is_empty():
 		_tab = tab
 	elif not GameState.save.bucket.is_empty():
@@ -164,8 +191,12 @@ func refresh() -> void:
 	_coins.add_child(Dialog.coin_pill(GameState.save.coins))
 	for id: String in _tab_buttons:
 		var b: Button = _tab_buttons[id]
-		b.text = UiKit.upper(tr(_tab_title(id)))
+		b.text = UiKit.upper(tr(_tab_title(id, technique)))
+		b.add_theme_font_size_override("font_size", UiKit.fit_size(b.text, b.get_theme_font("font"), 26, TAB.x - 104.0, 18))
+		(_tab_icons[id] as GameIcon).kind = _tab_icon(id, technique)
 		_style_tab(b, id == _tab)
+	for id: String in _tech_buttons:
+		_style_tech(_tech_buttons[id], id)
 	Dialog.clear(_content)
 	if _tab == "sell":
 		_build_sell()
@@ -173,23 +204,36 @@ func refresh() -> void:
 		_build_gear()
 
 
-## Bir sekmenin kartları (gear.json'daki sıra). Kovalardan yalnızca sıradaki (Bucket.next_bucket;
-## kayıt verilmezse yeni oyuncununki). Sekme başına en çok CARDS (test denetler).
-static func items_for(db: ContentDB, tab: String, save: SaveData = null) -> Array[Dictionary]:
+## Bir sekmenin kartları (gear.json'daki sıra) bakılan teknikte: Kamış sekmesinde o tekniğin
+## kamışları, tekniğe özel sekmede o tekniğin takımı. Kovalardan yalnızca sıradaki
+## (Bucket.next_bucket; kayıt verilmezse yeni oyuncununki). Sekme başına en çok CARDS (test denetler).
+static func items_for(db: ContentDB, tab: String, save: SaveData = null, look: String = "float") -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	for t: Array in TABS:
-		if str(t[0]) != tab:
+	for category: String in tab_categories(tab, look):
+		if category == "bucket":
+			out.append(Bucket.next_bucket(db, save if save != null else SaveData.create_new(0)))
 			continue
-		for category: String in t[3]:
-			if category == "bucket":
-				out.append(Bucket.next_bucket(db, save if save != null else SaveData.create_new(0)))
+		for g in db.gear_in(category):
+			if category == "rod" and str(g["technique"]) != look:
 				continue
-			for g in db.gear_in(category):
-				# Kamış sekmesinde şimdilik yalnızca şamandıra kamışları (teknikler Dalga 3'te).
-				if category == "rod" and str(g["technique"]) != "float":
-					continue
-				out.append(g)
+			out.append(g)
 	return out
+
+
+## Sekmenin kategorileri bakılan teknikte.
+static func tab_categories(tab: String, look: String) -> Array:
+	if tab == "tackle":
+		return (TECHNIQUE_TACKLE.get(look, TECHNIQUE_TACKLE["float"]) as Array)[0]
+	for t: Array in TABS:
+		if str(t[0]) == tab:
+			return t[3]
+	return []
+
+
+## Başka bir tekniğin takımına bak (başlıktaki teknik düğmeleri, bot).
+func select_technique(look: String) -> void:
+	technique = look
+	refresh()
 
 
 ## Sekmeyi değiştirir (sekme düğmeleri, bot).
@@ -261,7 +305,7 @@ func _gear_card(item: Dictionary) -> Control:
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.alignment = BoxContainer.ALIGNMENT_END
 	bottom.add_child(left)
-	if category == "bait":
+	if category in ["bait", "lure", "fly"]:
 		_bait_info(left, item)
 	else:
 		for stat: Array in STATS.get(category, []):
@@ -356,14 +400,16 @@ func _stat_row(item: Dictionary, stat: Array) -> Control:
 	return row
 
 
-## Yemin çektiği balıklar (en çok iki): bir gölgenin o balık olma şansı solucanla ve bu yemle
-## ("Levrek %22 → %41"; Balık Defteri'yle aynı işlev, CatchOdds). Altında elindeki sayı.
+## Yemin (yapay yemin, sineğin) çektiği balıklar (en çok iki): bir gölgenin o balık olma şansı
+## çekimsiz ve bu yemle, yemin tekniğinde ("Levrek %22 → %41"; Balık Defteri'yle aynı işlev,
+## CatchOdds). Altında elindeki sayı (yapay yem ve sinek tükenmez: yalnızca takılıysa).
 func _bait_info(parent: VBoxContainer, item: Dictionary) -> void:
 	var db := GameState.db
 	var spot := Zones.place(db, spot_id if not spot_id.is_empty() else db.main_spot, zone_id)
 	var attract: Dictionary = item["attract"]
-	var plain := CatchOdds.species_ppm(db, spot)
-	var baited := CatchOdds.species_ppm(db, spot, { "attract": attract })
+	var tech := _item_technique(item)
+	var plain := CatchOdds.species_ppm(db, spot, { "technique": tech })
+	var baited := CatchOdds.species_ppm(db, spot, { "attract": attract, "technique": tech })
 	var keys := attract.keys().filter(func(k: Variant) -> bool: return plain.has(k))
 	keys.sort_custom(func(a: Variant, b: Variant) -> bool: return float(attract[a]) > float(attract[b]))
 	for i in mini(2, keys.size()):
@@ -375,6 +421,10 @@ func _bait_info(parent: VBoxContainer, item: Dictionary) -> void:
 				UiKit.format_percent(int(baited[fish_id]))]
 		row.add_child(UiKit.ink(odds, UiKit.fit_size(odds, UiKit.body_font(), 24, ODDS_TEXT, 18)))
 		parent.add_child(row)
+	if str(item["category"]) != "bait":
+		if _is_equipped(item):
+			parent.add_child(UiKit.ink(tr("UI_SHOP_EQUIPPED"), 24, BETTER))
+		return
 	var pack := int(item["pack"])
 	var count := int(GameState.save.baits.get(str(item["id"]), 0))
 	var text := tr("UI_SHOP_UNLIMITED") if pack == 0 else tr("UI_SHOP_HAVE") % count
@@ -408,7 +458,7 @@ func _current_value(category: String, key: String) -> float:
 	var db := GameState.db
 	var save := GameState.save
 	if category in ContentDB.GEAR_SLOTS:
-		return float(db.gear_item(Economy.equipped(db, save, category)).get(key, 0.0))
+		return float(db.gear_item(Economy.equipped(db, save, category, _slot_technique(category))).get(key, 0.0))
 	var best := 0.0
 	var any := false
 	for g in db.gear_in(category):
@@ -424,7 +474,25 @@ func _is_equipped(item: Dictionary) -> bool:
 	var category := str(item["category"])
 	if not category in ContentDB.GEAR_SLOTS:
 		return false
-	return Economy.equipped(GameState.db, GameState.save, category) == str(item["id"])
+	return Economy.equipped(GameState.db, GameState.save, category, _item_technique(item)) == str(item["id"])
+
+
+## Takımın kuşanıldığı teknik: kamış kendi tekniği; yem bakılan teknik (yem kullanmıyorsa
+## şamandıra); yapay yem, kurşun, sinek ve iğne kendi tekniği; ortak yuvada bakılan teknik.
+func _item_technique(item: Dictionary) -> String:
+	if str(item["category"]) == "rod":
+		return str(item["technique"])
+	return _slot_technique(str(item["category"]))
+
+
+func _slot_technique(slot: String) -> String:
+	var db := GameState.db
+	if db.is_shared(slot):
+		return technique
+	var owner := db.slot_technique(slot)
+	if not owner.is_empty():
+		return owner
+	return technique if db.uses_slot(technique, slot) else "float"
 
 
 func _gear_icon(item: Dictionary, side: float) -> Control:
@@ -530,7 +598,12 @@ func _buy(id: String) -> void:
 	var save := GameState.save
 	match Economy.buy_block(db, save, id):
 		"":
-			Economy.buy(db, save, id)
+			var item := db.gear_item(id)
+			var first_rod := str(item["category"]) == "rod" and not Economy.technique_ready(db, save, str(item["technique"]))
+			Economy.buy(db, save, id, technique)
+			# Tekniğin ilk kamışı: teknik ele geçer (takım çantasında da seçili).
+			if first_rod:
+				save.technique = str(item["technique"])
 			GameState.save_game()
 			Sounds.play("buy")
 			Sounds.haptic(18)
@@ -544,7 +617,7 @@ func _buy(id: String) -> void:
 
 
 func _equip(id: String) -> void:
-	if not Economy.equip(GameState.db, GameState.save, id):
+	if not Economy.equip(GameState.db, GameState.save, id, technique):
 		Sounds.play("error")
 		return
 	GameState.save_game()
@@ -593,6 +666,7 @@ func _tab_button(id: String, icon_kind: String) -> Button:
 	var icon := GameIcon.make(icon_kind, 64)
 	icon.position = Vector2(14, (TAB.y - 64.0) * 0.5)
 	b.add_child(icon)
+	_tab_icons[id] = icon
 	b.pressed.connect(func() -> void:
 		if _tab != id:
 			Sounds.play("ui_tap")
@@ -618,11 +692,64 @@ func _style_tab(b: Button, selected: bool) -> void:
 	b.add_theme_constant_override("outline_size", 0)
 
 
-static func _tab_title(id: String) -> String:
+static func _tab_title(id: String, look: String = "float") -> String:
+	if id == "tackle":
+		return str((TECHNIQUE_TACKLE.get(look, TECHNIQUE_TACKLE["float"]) as Array)[1])
 	for t: Array in TABS:
 		if str(t[0]) == id:
 			return str(t[2])
 	return ""
+
+
+static func _tab_icon(id: String, look: String) -> String:
+	if id == "tackle":
+		return str((TECHNIQUE_TACKLE.get(look, TECHNIQUE_TACKLE["float"]) as Array)[2])
+	for t: Array in TABS:
+		if str(t[0]) == id:
+			return str(t[1])
+	return "question"
+
+
+# --- Teknik düğmeleri ---------------------------------------------------------------
+
+func _tech_button(id: String) -> Button:
+	var b := Button.new()
+	b.name = "Tech_" + id
+	b.custom_minimum_size = TECH_BUTTON
+	b.focus_mode = Control.FOCUS_NONE
+	var icon := GameIcon.make("tech_" + id, 92)
+	icon.name = "Icon"
+	icon.position = (TECH_BUTTON - Vector2(92, 92)) * 0.5
+	b.add_child(icon)
+	var lock := HBoxContainer.new()
+	lock.name = "Lock"
+	lock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lock.add_theme_constant_override("separation", 0)
+	lock.position = Vector2(6, TECH_BUTTON.y - 50.0)
+	lock.add_child(GameIcon.make("lock", 44))
+	var rank := UiKit.title(str(GameState.db.technique_rank(id)), 34, UiKit.TEXT, HORIZONTAL_ALIGNMENT_LEFT, 8)
+	rank.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lock.add_child(rank)
+	b.add_child(lock)
+	b.pressed.connect(func() -> void:
+		if technique != id:
+			Sounds.play("ui_tap")
+			select_technique(id)
+		if Rank.rank(GameState.db, GameState.save) < GameState.db.technique_rank(id):
+			_refuse("UI_NINE_RANK", [GameState.db.technique_rank(id)]))
+	return b
+
+
+## Teknik düğmesi: bakılan teknik yeşil halkalı; rütbesi yetmeyen kilitli (rütbesi yazar).
+func _style_tech(b: Button, id: String) -> void:
+	var selected := id == technique
+	var locked := Rank.rank(GameState.db, GameState.save) < GameState.db.technique_rank(id)
+	var sb := UiKit.card_style(BETTER if selected else UiKit.CREAM_EDGE, 24,
+			UiKit.CREAM_CARD if selected else Color("#ead8b5"), 6 if selected else 3)
+	for state: String in ["normal", "hover", "pressed", "hover_pressed"]:
+		b.add_theme_stylebox_override(state, sb)
+	(b.get_node("Lock") as Control).visible = locked
+	(b.get_node("Icon") as GameIcon).modulate_art = Color(1, 1, 1, 0.55) if locked else Color.WHITE
 
 
 ## Değer çubuğu: yuvarlak zemin, dolgu (bu takım) ve kuşanılanın yerinde koyu bir çizgi.

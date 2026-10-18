@@ -24,11 +24,17 @@ const ART_NAMES := {
 	"trophy": "trophy", "rod": "rod", "reel": "reel", "bait": "bait", "bucket": "bucket",
 	"aquarium": "aquarium", "hook": "hook", "shop": "shop", "map": "map", "sell": "sell",
 	"release": "release", "pin": "pin", "anchor": "anchor", "compass": "compass", "buoy": "buoy",
-	"signpost": "signpost",
+	"signpost": "signpost", "tech_float": "tech_float", "tech_spin": "tech_spin", "tech_bottom": "tech_bottom",
+	"tech_fly": "tech_fly", "tech_trap": "tech_trap", "tackle_bag": "tackle_bag",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
-## Misina, Yem ve Ekstra sekmeleri.
-const GEAR_ART := {"line": "line_braid", "bait": "bait_worm", "net": "net", "boat": "boat"}
+## Misina, Yem, Ekstra ve tekniğe özel sekmeleri (yapay yem, kurşun, sinek).
+const GEAR_ART := {"line": "line_braid", "bait": "bait_worm", "net": "net", "boat": "boat", "lure": "lure_spoon",
+		"rig": "sinker", "fly": "fly_dry"}
+## Yalnızca görselle çizilen adların görseli yokken kodla çizilen yedeği (teknik düğmeleri,
+## takım çantası, tekniğe özel sekmeler).
+const FALLBACK := {"lure": "bait", "rig": "bait", "fly": "bait", "tech_float": "bobber", "tech_spin": "rod",
+		"tech_bottom": "rod", "tech_fly": "rod", "tech_trap": "net", "tackle_bag": "bucket"}
 
 ## Nadirlik şekli (rarities.json "shape") → arayüz kitindeki rozet görseli (assets/icons/ui).
 ## Görsel varsa renk tint'ten değil görselden gelir; test_art_sheet her nadirliği denetler.
@@ -104,7 +110,7 @@ func _draw() -> void:
 		_zone(kind.substr(5))
 		draw_set_transform(Vector2.ZERO)
 		return
-	match kind:
+	match str(FALLBACK.get(kind, kind)):
 		"coin", "sell":
 			_coin()
 		"star":

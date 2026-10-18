@@ -29,7 +29,9 @@ extends RefCounted
 ## Bölgeli gölde gölgeler balıkçının çevresinde doğar (ShadowSim); balıkçının bölgesi zone().
 ## access: gölge doğabilen bölgeler (Zones.open_ids; boşsa sandalsız bütün bölgeler).
 
-enum State { IDLE, CASTING, WAITING, NIBBLING, BITING, FIGHTING, RETRIEVING, CAUGHT, LOST }
+## Durumlar sona eklenir (kayıt ve testler sıra numarasını tutar). FOLLOWING: spinde balık yemin
+## peşinde (Dalga 3).
+enum State { IDLE, CASTING, WAITING, NIBBLING, BITING, FIGHTING, RETRIEVING, CAUGHT, LOST, FOLLOWING }
 
 const STEP := 1.0 / FishingRules.HZ
 ## Bir karede en fazla bu kadar adım (uzun bir takılmadan sonra oyun "koşmasın").
@@ -62,6 +64,8 @@ var last_loss: String = ""
 ## çekişmede kaybedilince lost olayında too_big olarak gelir (Dede eksik takımı söyler).
 var too_big: int = 0
 var lake: LakeShape
+## Atış noktasının tanımı (ContentDB.spot: bölgeler, ağırlıklar).
+var spot_def: Dictionary = {}
 var rules: FishingRules
 ## Kuşanılmış takım (menzil, sarma, fren, misina, iğne, şamandıra, yem, kepçe).
 var gear: GearStats
@@ -93,6 +97,7 @@ func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, eas
 	rules = db.rules
 	gear = gear_stats if gear_stats != null else GearStats.starter(db)
 	var spot := db.spot(spot_id)
+	spot_def = spot
 	lake = db.lake(spot_id)
 	angler = spot.get("start", Vector2.ZERO)
 	easy = easy_mode
@@ -121,7 +126,7 @@ func step() -> void:
 			timer -= 1
 			if timer <= 0:
 				technique.land(self)
-		State.WAITING, State.NIBBLING, State.BITING:
+		State.WAITING, State.NIBBLING, State.BITING, State.FOLLOWING:
 			technique.step(self)
 		State.FIGHTING:
 			_step_fight()
@@ -188,7 +193,7 @@ func acknowledge() -> void:
 
 ## Olta suda mı (ekranın her yeri eylem düğmesi)?
 func line_out() -> bool:
-	return state in [State.CASTING, State.WAITING, State.NIBBLING, State.BITING, State.FIGHTING]
+	return state in [State.CASTING, State.WAITING, State.NIBBLING, State.BITING, State.FIGHTING, State.FOLLOWING]
 
 
 ## Eylem düğmesinin şu anki işi: cast, retrieve, wait (dürtme: dokunma!), hook, reel ya da "".
@@ -248,6 +253,12 @@ func zone_id() -> String:
 	return lake.zone_ids[k] if k >= 0 and k < lake.zone_ids.size() else ""
 
 
+## Bölgenin tanımı (sıra: LakeShape.zone_ids; bilinmeyen sırada boş).
+func zone_def(k: int) -> Dictionary:
+	var zones: Array = spot_def.get("zones", [])
+	return zones[k] if k >= 0 and k < zones.size() else {}
+
+
 ## Şans garantisi değişti (bir balık tutuldu).
 func set_pity_floor(floor: int) -> void:
 	sim.pity_floor = floor
@@ -275,13 +286,17 @@ func land_rig() -> void:
 	push_event({ "type": "land", "pos": bobber })
 
 
-## Olta geri sarılır (yaklaşan balık ilgisini kaybeder).
-func retrieve() -> void:
+## Olta geri sarılır (yaklaşan balık ilgisini kaybeder). steps: geri sarma süresi (adım; verilmezse
+## kuraldaki); reason: nedeni (spinde "home" yem geldi, "snag" yem takıldı; sinekte "drift").
+func retrieve(retrieve_steps: int = -1, reason: String = "") -> void:
 	if sim.approacher != null:
 		sim.lose_interest(sim.approacher)
 	state = State.RETRIEVING
-	timer = maxi(1, rules.retrieve_steps)
-	push_event({ "type": "retrieve" })
+	timer = maxi(1, rules.retrieve_steps if retrieve_steps < 0 else retrieve_steps)
+	var e := { "type": "retrieve" }
+	if not reason.is_empty():
+		e["reason"] = reason
+	push_event(e)
 
 
 ## Yaklaşan balık takıma vardı: dürtmeler (tekniğin sayısıyla) başlar.
@@ -302,10 +317,18 @@ func next_nibble() -> void:
 		push_event({ "type": technique.nibble_event(), "shadow": s.id, "index": _nibble_index })
 		timer = technique.roll_gap(s.rng)
 	else:
-		state = State.BITING
-		bite_steps = 0
-		window = technique.window(self, s)
-		push_event({ "type": technique.bite_event(), "shadow": s.id })
+		open_window(technique.bite_event())
+
+
+## Vuruş penceresi açılır (ısırma, spinde saldırı, sinekte halka): olay type'tır.
+func open_window(type: String, extra: Dictionary = {}) -> void:
+	var s := sim.approacher
+	state = State.BITING
+	bite_steps = 0
+	window = technique.window(self, s)
+	var e := { "type": type, "shadow": s.id }
+	e.merge(extra)
+	push_event(e)
 
 
 ## Dürtmede (ısırmadan önce) dokunuş: balık irkilir ya da kaçar.

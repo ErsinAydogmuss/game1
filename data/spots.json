@@ -1,5 +1,5 @@
 {
-	"_note": "Atış noktaları (göller). Koordinatlar dünya x/z metre; kamera +x +z tarafında. ellipses: gölü oluşturan elipsler (merkez, yarıçaplar, derece cinsinden dönüş); dock: iskele dikdörtgeni (merkez, boyut); start: balıkçının başladığı yer; fish: tür -> doğma ağırlığı; first_fish ve first_shadow: ilk av (senaryolu, dürtmesiz); max_depth ve shelf_m: derinlik kıyıdan shelf_m metrede max_depth'e iner. main: oyunun açıldığı yer; home_lake testlerin sabit gölüdür (değiştirme, eski şema: ellipses + tek derinlik). big_lake oyunun gölü (Dalga 2): basins (elips + derinlik + kıyı eğimi + bölge), zones (rank, boat ve boat_from, min_depth, fish, stands: hızlı geçiş noktaları, gates: kilitliyken kıyı yolunu kesen çitler, buoys: sandalın şamandıraları, current: akıntı, map: haritada rozetin yeri; yoksa bölgenin suyunun ortası), world (rect: yürünebilen kutu, band_m: suya en çok uzaklık). Göl şekli değişince tools/lake_map.gd ile önizle. techniques: bölgede avlanılan teknikler (yazılmazsa şamandıra, spin ve dip; sinek yalnızca akıntılı bölgede, açıkça yazılır); her biriyle gelen bir tür olmalı (fish.json affinity, ContentDB denetler).",
+	"_note": "Atış noktaları (göller). Koordinatlar dünya x/z metre; kamera +x +z tarafında. ellipses: gölü oluşturan elipsler (merkez, yarıçaplar, derece cinsinden dönüş); dock: iskele dikdörtgeni (merkez, boyut); start: balıkçının başladığı yer; fish: tür -> doğma ağırlığı; first_fish ve first_shadow: ilk av (senaryolu, dürtmesiz); max_depth ve shelf_m: derinlik kıyıdan shelf_m metrede max_depth'e iner. main: oyunun açıldığı yer; home_lake testlerin sabit gölüdür (değiştirme, eski şema: ellipses + tek derinlik). big_lake oyunun gölü (Dalga 2): basins (elips + derinlik + kıyı eğimi + bölge), zones (rank, boat ve boat_from, min_depth, fish, stands: hızlı geçiş noktaları, gates: kilitliyken kıyı yolunu kesen çitler, buoys: sandalın şamandıraları, current: akıntı, map: haritada rozetin yeri; yoksa bölgenin suyunun ortası), world (rect: yürünebilen kutu, band_m: suya en çok uzaklık). Göl şekli değişince tools/lake_map.gd ile önizle. techniques: bölgede avlanılan teknikler (yazılmazsa şamandıra, spin ve dip; sinek yalnızca akıntılı bölgede, açıkça yazılır); her biriyle gelen bir tür olmalı (fish.json affinity, ContentDB denetler). snag_s: otlu ya da kayalık bölgede bu kadar sn bekleyen yapay yem takılır (yalnızca zaman kaybı; yazılmazsa takılmaz).",
 	"main": "big_lake",
 	"spots": [
 		{ "id": "home_lake",
@@ -29,11 +29,11 @@
 			"zones": [
 				{ "id": "dock_cove", "rank": 1, "stands": [[0.0, 4.0]],
 					"fish": { "rudd": 26, "silverside": 14, "bream": 10, "carp": 20, "perch": 18, "pike": 8, "wels": 4 } },
-				{ "id": "reeds", "rank": 1, "min_depth": 0.5, "stands": [[-17.5, 2.0]],
+				{ "id": "reeds", "snag_s": 4.0, "rank": 1, "min_depth": 0.5, "stands": [[-17.5, 2.0]],
 					"fish": { "rudd": 28, "silverside": 14, "carp": 24, "tench": 22, "perch": 7, "pike": 5 } },
-				{ "id": "lily_cove", "rank": 3, "stands": [[14.0, 4.2]], "gates": [[[9.3, 1.0], [9.8, 12.5]]],
+				{ "id": "lily_cove", "snag_s": 5.0, "rank": 3, "stands": [[14.0, 4.2]], "gates": [[[9.3, 1.0], [9.8, 12.5]]],
 					"fish": { "pike": 22, "perch": 26, "carp": 24, "rudd": 22, "golden_carp": 6 } },
-				{ "id": "rocky_point", "rank": 5, "stands": [[14.0, -8.5]], "gates": [[[19.8, -1.2], [26.5, -1.2]]],
+				{ "id": "rocky_point", "snag_s": 3.5, "rank": 5, "stands": [[14.0, -8.5]], "gates": [[[19.8, -1.2], [26.5, -1.2]]],
 					"fish": { "chub": 30, "perch": 28, "zander": 16, "rudd": 10, "pike": 10, "wels": 6 } },
 				{ "id": "stream_mouth", "rank": 7, "min_depth": 0.5, "techniques": ["float", "spin", "bottom", "fly"], "stands": [[-16.0, -10.2]], "gates": [[[-24.0, -3.0], [-30.5, -3.0]]],
 					"current": [0.82, 0.57],
