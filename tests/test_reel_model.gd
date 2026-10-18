@@ -8,6 +8,8 @@ const DISTANCES := [4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
 const BOTTOM_DISTANCES := [8.0, 9.5, 11.0, 12.5, 14.0, 15.0]
 ## Sinekte yakında (ölçüm: ortalama 4,4 m; tools/session_timing.gd --technique=fly).
 const FLY_DISTANCES := [3.0, 3.5, 4.0, 4.5, 5.0, 5.5]
+## Spinde yem balıkçıya gelirken takılır (ölçüm: 3,3–8,0 m; tools/session_timing.gd --technique=spin).
+const SPIN_DISTANCES := [3.5, 4.5, 5.5, 6.0, 7.0, 8.0]
 
 
 ## gear: kuşanılmış takım (yoksa başlangıç takımı, yani bambu olta); percentile: boy yüzdeliği (ppm).
@@ -302,7 +304,7 @@ func test_top_gear_keeps_skill_relevant() -> void:
 		assert_true(after >= 0.6 * before, "%s: ama yarıdan fazla sürer (%.1f → %.1f sn)" % [fish_id, before, after])
 
 
-## Dipin en iyi takımı da (kamışların gücü 0,15–0,25) beceriyi silmez: dipte gelen her tür dip
+## Dipin en iyi takımı da (kamışların gücü 0,25–0,3) beceriyi silmez: dipte gelen her tür dip
 ## uzaklığında aynı korkuluklarla; çekişme ilk dip kamışına göre kısalır ama en çok %40.
 func test_top_bottom_gear_keeps_skill_relevant() -> void:
 	var db := content()
@@ -328,6 +330,39 @@ func test_top_bottom_gear_keeps_skill_relevant() -> void:
 		var before: float = _rates(fish_id, ReelBot.Style.PERFECT, 0.0, false, first, 0, BOTTOM_DISTANCES)["mean"]
 		var after: float = _rates(fish_id, ReelBot.Style.PERFECT, 0.0, false, top, 0, BOTTOM_DISTANCES)["mean"]
 		assert_true(after < before and after >= 0.6 * before, "%s: dipte en iyi takımla çekişme kısalır, yarıdan fazla sürer (%.1f → %.1f sn)" % [
+				fish_id, before, after])
+
+
+## Spin takımıyla da (ilk spin kamışı ve en iyisi) beceri gerekir: yırtıcı yakında takılır. Spinle
+## gelen her tür 0,7 sn tepkiyle tutulur; hep basılı tutan Nadir türü en çok yarı yarıya, Destansı ve
+## üstünü en çok %30 tutar; en iyi takımla çekişme kısalır ama en çok %40.
+func test_spin_gear_keeps_skill_relevant() -> void:
+	var db := content()
+	var items := db.gear_start.duplicate()
+	items["rod"] = "rod_spin_light"
+	items["lure"] = "lure_spoon"
+	var none: Array[String] = []
+	var first := GearStats.from_items(db, items, none)
+	var top := GearStats.best(db, "spin")
+	for f in db.fish:
+		var id := str(f["id"])
+		if db.affinity(id, "spin") <= 0.0:
+			continue
+		for gear: GearStats in [first, top]:
+			var name := "en iyi spin takımı" if gear == top else "spin kamışı"
+			var slow := _rates(id, ReelBot.Style.REACT, 0.7, false, gear, 0, SPIN_DISTANCES)
+			assert_true(slow["caught"] >= 0.98, "%s: %s, 0,7 sn tepkiyle tutulur (%.2f)" % [id, name, slow["caught"]])
+			var rarity := int(f["rarity"])
+			if rarity < db.rarity_index("rare"):
+				continue
+			var limit := 0.5 if rarity == db.rarity_index("rare") else 0.3
+			var hold := _rates(id, ReelBot.Style.ALWAYS, 0.0, false, gear, 0, SPIN_DISTANCES)
+			assert_true(hold["caught"] <= limit, "%s: %s, hep basılı tutan en çok %%%d tutar (%.2f)" % [id, name,
+					roundi(limit * 100), hold["caught"]])
+	for fish_id: String in ["perch", "pike", "zander"]:
+		var before: float = _rates(fish_id, ReelBot.Style.PERFECT, 0.0, false, first, 0, SPIN_DISTANCES)["mean"]
+		var after: float = _rates(fish_id, ReelBot.Style.PERFECT, 0.0, false, top, 0, SPIN_DISTANCES)["mean"]
+		assert_true(after < before and after >= 0.6 * before, "%s: spinde en iyi takımla çekişme kısalır, yarıdan fazla sürer (%.1f → %.1f sn)" % [
 				fish_id, before, after])
 
 

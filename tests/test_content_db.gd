@@ -67,6 +67,9 @@ func test_validation_catches_bad_data() -> void:
 		# Hiçbir teknikle gelmeyen tür olmaz; bilinmeyen teknik yakalanır.
 		if str((f as Dictionary)["id"]) == "tench":
 			(f as Dictionary)["affinity"] = { "float": 0, "harpoon": 1 }
+		# Binde birin altındaki yatkınlık sıfıra yuvarlanırdı (tür sessizce gelmezdi).
+		if str((f as Dictionary)["id"]) == "perch":
+			((f as Dictionary)["affinity"] as Dictionary)["spin"] = 0.0004
 	_write(dir.path_join("fish.json"), JSON.stringify(fish))
 	var spots := JSON.parse_string(FileAccess.get_file_as_string("res://data/spots.json")) as Dictionary
 	var spot: Dictionary = spots["spots"][0]
@@ -82,6 +85,8 @@ func test_validation_catches_bad_data() -> void:
 			g["drag"] = 0.6
 		if str(g["id"]) == "line_braid":
 			g["carry"] = 7
+		if str(g["id"]) == "lure_spinner":
+			(g["attract"] as Dictionary)["chub"] = 0.0002
 	# Kamış ortak yuva olamaz.
 	((gear["slots"] as Dictionary)["shared"] as Array).append("rod")
 	_write(dir.path_join("gear.json"), JSON.stringify(gear))
@@ -97,6 +102,8 @@ func test_validation_catches_bad_data() -> void:
 	assert_true("başlangıç" in all, "suyun içindeki başlangıç yakalanır")
 	assert_true("slots.shared" in all, "ortak yuvada kamış yakalanır")
 	assert_true("tench: bilinmeyen teknik" in all, "yatkınlıkta bilinmeyen teknik yakalanır")
+	assert_true("perch: bilinmeyen teknik ya da geçersiz yatkınlık: spin" in all, "binde birin altındaki yatkınlık")
+	assert_true("lure_spinner: bilinmeyen balık ya da geçersiz çarpan: chub" in all, "binde birin altındaki çekim")
 	for file in DirAccess.get_files_at(dir):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join(file)))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))
@@ -123,6 +130,8 @@ func test_zone_validation_catches_bad_data() -> void:
 		(zones[0] as Dictionary)["techniques"] = ["spin", "fly"]
 		# Dede bölgede avlanılmayan tekniği önermez (sazlıkta sinek yok).
 		(zones[1] as Dictionary)["suggest"] = "fly"
+		# Koruma altındaki tür tuzağa girmez (kovaya giremez, tuzak hiç boşalmazdı).
+		((zones[1] as Dictionary)["trap"] as Dictionary)["sturgeon"] = 1
 		((spot["basins"] as Array)[2] as Dictionary)["zone"] = "swamp"
 	_write(dir.path_join("spots.json"), JSON.stringify(spots))
 	var db := ContentDB.load_from(dir)
@@ -134,6 +143,7 @@ func test_zone_validation_catches_bad_data() -> void:
 	assert_true("dock_cove bölgesinde şamandıra" in all, "şamandırasız bölge yakalanır")
 	assert_true("dock_cove: sinek yalnızca akıntılı" in all, "akıntısız bölgede sinek yakalanır")
 	assert_true("reeds: önerilen teknik bölgede avlanılmıyor: fly" in all, "avlanılmayan öneri yakalanır")
+	assert_true("reeds: koruma altındaki tür tuzağa girmez: sturgeon" in all, "tuzakta koruma altındaki tür yakalanır")
 	for file in DirAccess.get_files_at(dir):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join(file)))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))

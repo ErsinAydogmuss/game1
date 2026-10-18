@@ -204,29 +204,41 @@ func test_newer_zones_pay_at_least_as_much() -> void:
 						z["id"], int(z["rank"]), value, older["id"], int(older["rank"]), before])
 
 
-## Dede'nin bölgede önerdiği teknik (spots.json suggest) orada şamandıradan az kazandırmaz: tekniğin
-## ilk kamışı ve başlangıç takımıyla (spinde kaşık, sinekte kuru sinek, yem solucan) dakikada ortalama
-## kazanç (SessionSim.rate; süreler sim.json'dan). Sinek dere ağzında, spin nilüferli koyda ve
-## kayalıkta, dip sazlıkta ve derin ortada (docs/gdd.md §10.3).
+## Dede'nin bölgede önerdiği teknik (spots.json suggest) orada şamandıradan az kazandırmaz: dakikada
+## ortalama kazanç (SessionSim.rate; süreler sim.json'dan, takımın taşıyamadığı iri balık kaçar), iki
+## teknikte aynı kademe takımla (spinde kaşık, sinekte kuru sinek, yem solucan):
+## - öneri ilk söylendiğinde: tekniğin ilk kamışı, şamandırada bambu; naylon misina (line_mono: rütbe 1,
+##   120 para; test_session_sim: tekniklerden önce alınır);
+## - iki teknikte de 4 yıldız taşıyan en ucuz kamış, naylon misina; 5 yıldız, örgü misina (line_braid).
+## Sinek dere ağzında, spin nilüferli koyda ve kayalıkta, dip sazlıkta ve derin ortada (docs/gdd.md §10.3).
 func test_suggested_technique_pays_at_least_float() -> void:
 	var db := content()
 	var timing := SessionSim.load_timing()
 	var checked := 0
-	for z in db.zones_of(db.main_spot):
-		var suggest := str(z["suggest"])
-		if suggest.is_empty():
-			continue
-		checked += 1
-		var own := SessionSim.rate(db, timing, z, suggest, _starter(db, suggest).attract)
-		var float_rate := SessionSim.rate(db, timing, z, "float", _starter(db, "float").attract)
-		assert_true(own >= float_rate, "%s: %s dakikada %.1f para, şamandıra %.1f" % [z["id"], suggest, own, float_rate])
-	assert_true(checked >= 4, "öneriler denetlendi (%d)" % checked)
+	for tier: Array in [[0, "line_mono"], [4, "line_mono"], [5, "line_braid"]]:
+		for z in db.zones_of(db.main_spot):
+			var suggest := str(z["suggest"])
+			if suggest.is_empty():
+				continue
+			checked += 1
+			var gear := _loadout(db, suggest, tier[0], tier[1])
+			var float_gear := _loadout(db, "float", tier[0], tier[1])
+			var own := SessionSim.rate(db, timing, z, suggest, gear)
+			var float_rate := SessionSim.rate(db, timing, z, "float", float_gear)
+			assert_true(own >= float_rate, "%s (%d yıldız): %s dakikada %.1f para, şamandıra %.1f" % [z["id"],
+					float_gear.carry, suggest, own, float_rate])
+	assert_true(checked >= 12, "öneriler denetlendi (%d)" % checked)
 
 
-## Tekniğin ilk kamışı ve başlangıç takımı.
-static func _starter(db: ContentDB, technique: String) -> GearStats:
+## Tekniğin taşıması en az min_carry olan en ucuz kamışı ve verilen misina; geri kalanı başlangıç takımı.
+static func _loadout(db: ContentDB, technique: String, min_carry: int, line: String) -> GearStats:
 	var items := db.gear_start.duplicate()
-	items["rod"] = str(db.rods_of(technique)[0]["id"])
+	var best: Dictionary = {}
+	for rod in db.rods_of(technique):
+		if int(rod["carry"]) >= min_carry and (best.is_empty() or int(rod["price"]) < int(best["price"])):
+			best = rod
+	items["rod"] = str(best["id"])
+	items["line"] = line
 	var none: Array[String] = []
 	return GearStats.from_items(db, items, none)
 

@@ -144,6 +144,10 @@ static func from_dict(raw: Dictionary) -> SaveData:
 	s.technique = technique if not technique.is_empty() else "float"
 	s.traps = _traps(d.get("traps", []))
 	s.trap_serial = maxi(0, _int(d, "trap_serial", 0))
+	# Tuzak kimliğiyle bulunur (dokunma, toplama, kaldırma): sayaç kurulu tuzakların kimliğinin üstünde
+	# kalmalı, yoksa yeni tuzak eskisinin kimliğini alır (elle düzenlenmiş ya da bozuk kayıt).
+	for trap in s.traps:
+		s.trap_serial = maxi(s.trap_serial, int(trap["id"]) + 1)
 	s.baits = _counts(d.get("baits", {}))
 	s.xp = maxi(0, _int(d, "xp", 0))
 	s.love = maxi(0, _int(d, "love", 0))
@@ -286,11 +290,12 @@ static func _loadouts(raw: Variant) -> Dictionary:
 
 
 ## Tuzaklar: bölgesi yazı, yeri sayı, zamanları sıfır ya da pozitif olmalı; içerik satırları kova
-## gibi ayıklanır; bozuk tuzak düşer.
+## gibi ayıklanır; bozuk tuzak ve kimliği öncekiyle aynı olan tuzak düşer.
 static func _traps(raw: Variant) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if typeof(raw) != TYPE_ARRAY:
 		return out
+	var ids := {}
 	for entry: Variant in raw:
 		if typeof(entry) != TYPE_DICTIONARY or out.size() >= MAX_TRAPS:
 			continue
@@ -301,11 +306,15 @@ static func _traps(raw: Variant) -> Array[Dictionary]:
 		if zone.is_empty() or not typeof(x) in [TYPE_INT, TYPE_FLOAT] or not typeof(z) in [TYPE_INT, TYPE_FLOAT] \
 				or not is_finite(float(x)) or not is_finite(float(z)):
 			continue
+		var id := maxi(0, _int(e, "id", 0))
+		if ids.has(id):
+			continue
+		ids[id] = true
 		var items := _bucket(e.get("items", []))
 		if items.size() > MAX_TRAP_ITEMS:
 			items.resize(MAX_TRAP_ITEMS)
 		out.append({
-			"id": maxi(0, _int(e, "id", 0)),
+			"id": id,
 			"zone": zone,
 			"x": float(x),
 			"z": float(z),

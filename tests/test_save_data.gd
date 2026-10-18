@@ -75,11 +75,31 @@ func test_bad_values_are_sanitized() -> void:
 	assert_eq(back.xp, 0, "eksi rütbe puanı sıfırlanır")
 	assert_eq(back.pity, { "rare": 3 }, "sayı yazısı okunur")
 	assert_eq(v4.technique, "float", "yazı olmayan teknik şamandıra olur")
-	assert_eq(v4.trap_serial, 0, "eksi tuzak sayacı sıfırlanır")
+	assert_eq(v4.trap_serial, 2, "eksi tuzak sayacı sıfırlanır, kurulu tuzağın kimliğinin üstüne çıkar")
 	assert_eq(v4.traps.size(), 1, "bölgesi ya da yeri bozuk tuzak düşer")
 	assert_eq(int(v4.traps[0]["placed_unix"]), 0, "eksi zaman sıfırlanır")
 	assert_eq(float(v4.traps[0]["z"]), 2.0, "tamsayı yer okunur")
 	assert_eq(v4.traps[0]["items"], [{ "fish": "crayfish", "size_cm": 9, "stars": 1 }], "tuzağın içi kova gibi ayıklanır")
+
+
+## Tuzak kimliğiyle bulunur: kimliği aynı ikinci tuzak düşer, sayaç kurulu tuzakların kimliğinin
+## üstüne çıkar (yeni tuzak eskisinin kimliğini almaz).
+func test_trap_ids_stay_unique() -> void:
+	var trap := { "zone": "reeds", "x": -16.5, "z": 1.25, "items": [] }
+	var a := trap.duplicate(true)
+	a["id"] = 5
+	var b := trap.duplicate(true)
+	b["id"] = 5
+	b["x"] = -14.0
+	var c := trap.duplicate(true)
+	c["id"] = 2
+	var s := SaveData.from_dict({ "version": SaveData.VERSION, "trap_serial": 1, "traps": [a, b, c] })
+	assert_eq(s.traps.size(), 2, "kimliği aynı ikinci tuzak düşer")
+	assert_eq(float(s.traps[0]["x"]), -16.5, "ilki kalır")
+	assert_eq(s.trap_serial, 6, "sayaç en büyük kimliğin üstünde")
+	var db := content()
+	var placed := TrapSim.place(db, s, db.main_spot, "reeds", Vector2(-16.0, 1.0), 100)
+	assert_true(TrapSim.find(s, int(placed["id"])) == s.traps.size() - 1, "yeni tuzağın kimliği eşsiz")
 
 
 ## Elle bozulmuş ya da hatalı yazılmış tek bir değer bütün ilerlemeyi sildirmez: o alan

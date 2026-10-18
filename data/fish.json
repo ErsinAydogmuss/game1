@@ -30,7 +30,7 @@
 			"fight": { "heavy": true, "reel": 0.75, "pull": 0.6, "burst_pull": 1.2, "burst_every": [2.2, 3.0], "burst_len": [0.9, 1.3], "run": 0.55 } },
 		{ "id": "zander", "rarity": "rare", "value": 40, "shadow_m": 0.95, "size_cm": [40, 90], "weight": 8,
 			"color": "#bec6b4", "back": "#465448", "accent": "#a7b0a0", "affinity": { "float": 1, "spin": 2.0, "bottom": 0.3 },
-			"fight": { "heavy": true, "reel": 0.75, "pull": 0.55, "burst_pull": 1.3, "burst_every": [1.6, 2.4], "burst_len": [0.8, 1.05], "run": 0.75 } },
+			"fight": { "heavy": true, "reel": 0.75, "pull": 0.55, "burst_pull": 1.3, "burst_every": [1.6, 2.4], "burst_len": [0.8, 1.05], "first_burst": [1.2, 1.6], "run": 0.75 } },
 		{ "id": "golden_carp", "rarity": "epic", "value": 110, "shadow_m": 0.9, "size_cm": [40, 85], "weight": 4,
 			"color": "#f39a1e", "back": "#e06a12", "accent": "#ffc04d", "affinity": { "float": 1, "bottom": 0.8 },
 			"fight": { "heavy": true, "reel": 0.65, "pull": 0.65, "burst_pull": 1.3, "burst_every": [2.0, 3.0], "burst_len": [0.9, 1.3], "run": 0.6 } },

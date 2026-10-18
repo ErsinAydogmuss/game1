@@ -190,6 +190,11 @@ func open_shop(tab: String = "", look: String = "", remote: bool = false) -> voi
 	open()
 
 
+## Takım çantasından uzaktan mı açıldı (Nine yanında değil)?
+func is_remote() -> bool:
+	return _remote
+
+
 func refresh() -> void:
 	set_header(tr("UI_SHOP_TITLE"), "shop", WIDTH)
 	_title.visible = false

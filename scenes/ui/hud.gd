@@ -259,9 +259,15 @@ func set_status(coins: int, bucket: int, capacity: int, rank: int, progress: flo
 
 ## Bildirim: biri gösteriliyorsa ya da bekletiliyorsa (hold_toasts) sırasını bekler (rütbe atlama,
 ## kova dolu gibi ikincil haberler). sound: göründüğü an çalan ses (titreşimiyle; "" = yok);
-## icon: yazının yanındaki GameIcon ("" = yok).
-func toast_later(text: String, color: Color = UiKit.TEXT, sound: String = "", icon: String = "") -> void:
-	_toast_queue.append([text, color, sound, icon])
+## icon: yazının yanındaki GameIcon ("" = yok); key: sırada aynı anahtarlı bildirim varsa onun yerine
+## geçer (bölge sınırında gidip gelen balıkçının teknik haberleri birikmesin; "" = yok).
+func toast_later(text: String, color: Color = UiKit.TEXT, sound: String = "", icon: String = "", key: String = "") -> void:
+	if not key.is_empty():
+		for i in _toast_queue.size():
+			if _toast_queue[i].size() > 4 and str(_toast_queue[i][4]) == key:
+				_toast_queue.remove_at(i)
+				break
+	_toast_queue.append([text, color, sound, icon, key])
 	if _toast_age < 0.0 and _toast_hold <= 0.0:
 		_show_queued()
 

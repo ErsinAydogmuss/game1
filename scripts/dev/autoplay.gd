@@ -36,6 +36,7 @@ extends Node
 ##     bekleyen yem takılır; çantadan şamandıraya dönülür. Dip: rütbe 4'te açılır, dip kamışı, uzağa
 ##     atış ve sehpa, zil tek tük (koklama) ve durmadan (koşu), koklarken dokunmak kaçırır, aynalı sazan.
 ##     Spin ile dip arasında tuzak bölümü (aşağıda trap), sonra sinek ve sandalda dip.
+##   fly: yalnızca technique'in sinek bölümü (rütbe 6'nın kaydından; hızlı deneme).
 ##   trap: kerevit tuzağı (KONTROL satırları; telefon oranında ve --safe-inset=130 ile): rütbe 3'te açılır,
 ##     çantada tuzak satırı → Nine'nin Ekstra sekmesi, ilk tuzak; iskelede kurulmaz; sazlıkta "Tuzak bırak"
 ##     (uçar, sığ suya düşer); boş tuzağa dokun → panel; saat ileri alınır → rozet, dokun → kovaya ve
@@ -45,10 +46,10 @@ extends Node
 ##     dokunuş (ölçüm açılır: sol üstte FPS, çizim, üçgen); sonra her bölgenin atış noktasına ve
 ##     sandalla derin ortaya geçer; her yerde ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü;
 ##     KONTROL: her yerde en çok TOUR_DRAWS çizim.
-##   video: kısa tanıtım (--write-movie ile kaydedilir, ~90 sn): dönen bir oyuncu; Dede'ye dokun,
-##     pırıltılı gölgeden nadir bir turna (VUR, çekişme, ışık sütunu, kart), rütbe 3: nilüferli koy
-##     açılır; Nine'de hepsini sat, cam kamışı al; haritadan nilüferli koya geç, Destansı altın sazan;
-##     iskeleye dön (rütbe 9, sandal), sandalla derin orta ve Efsanevi mersin (göle bırakılır).
+##   video: v0.4 tanıtımı, teknikler (--write-movie ile kaydedilir): rütbe 9'un oyuncusu; takım
+##     çantasından spin, dur-kalk ve turna; haritadan sazlığa geç, dolu tuzağı topla (kerevitler);
+##     çantadan dip, sehpa, zil ve koşu, aynalı sazan; haritadan dere ağzına geç, çantadan sinek,
+##     sürüklenme, halka ve sıçrayan alabalık.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -993,6 +994,8 @@ func _play_technique() -> void:
 			and bool(first.get("reel_hint", false)) and bool(first.get("follow_hint", false)))
 	_check("spin: dur-kalk → basılıyken kendiliğinden takılır, tutulur", bool(seen["auto"]))
 	_check("spin: dur-kalk → bırakılmışken VUR, dokununca takılır, tutulur", bool(seen["tap"]))
+	_check("spin: iskelede yem çekilirken (iz halkaları) en çok %d çizim (%d)" % [TOUR_DRAWS, int(first.get("draws", 0))],
+			int(first.get("draws", 0)) > 0 and int(first.get("draws", 0)) <= TOUR_DRAWS)
 	# 7) Sazlıkta bekleyen yem otlara takılır: bildirim, Dede söyler, geri sarma uzun sürer.
 	await _travel_to("reeds")
 	await _tap_control(hud.action_button)
@@ -1616,7 +1619,7 @@ func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
 ## ("tap"); sonra bir oyuncu gibi çekişir. Her an bir kez görüntülenir.
 func _spin_cast(p: Vector2, cast_to: Vector2, fish_id: String = "perch") -> Dictionary:
 	var out := { "moved": 0.0, "hidden": false, "followed": false, "reel_hint": false, "follow_hint": false,
-			"strike": "", "caught": false }
+			"strike": "", "caught": false, "draws": 0 }
 	var finger := Vector2(260, 520)
 	var card: FishCard = main.get("card")
 	_shadow_at(p, Vector2(0, -1), fish_id, 300000)
@@ -1631,6 +1634,8 @@ func _spin_cast(p: Vector2, cast_to: Vector2, fish_id: String = "perch") -> Dict
 	var hold := true
 	await _wait_frames(12)
 	await _shot_once("06_yem_geliyor")
+	# Yem çekilirken arkasında iz halkaları (her biri bir çizim): iskelede de sınırın altında kalmalı.
+	out["draws"] = int((await _measure_draws(8))["draws"])
 	await _wait_until(func() -> bool: return _state() != FishingSession.State.WAITING, 6.0)
 	out["moved"] = _session().bobber.distance_to(start)
 	out["followed"] = _state() == FishingSession.State.FOLLOWING

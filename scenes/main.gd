@@ -81,8 +81,10 @@ var ripples: Ripples
 var catch_fx: CatchFx
 ## Çekişmede sudan sıçrayan balık (alabalıklar).
 var fish_jump: FishJump
-## Bölgede avlanılmadığı için şamandıraya dönülen teknik (sinek dere ağzı dışında; _fit_technique)
-## ve oturumun bölgesinin bir kez belli olup olmadığı (ilk geçiş sessiz).
+## Bölgede avlanılmadığı için şamandıraya dönülen teknik (sinek dere ağzı dışında; _fit_technique;
+## kayıtta da: uygulama yeniden açılınca avlanıldığı bölgeye dönen yine ele alır, _hold) ve oturumun
+## bölgesinin bir kez belli olup olmadığı (ilk geçiş sessiz).
+const HELD_FLAG := "held_technique"
 var _held_technique: String = ""
 var _zone_known: bool = false
 var camera: FollowCamera
@@ -235,7 +237,7 @@ func _start_session() -> void:
 			CatchOdds.pity_floor(GameState.db, save, start, gear.technique), Zones.open_ids(GameState.db, save, spot_id))
 	zone_id = ""
 	_zone_known = false
-	_held_technique = ""
+	_held_technique = str(save.flags.get(HELD_FLAG, ""))
 	in_boat = false
 	_buoy = -1
 	_access_rank = Rank.rank(GameState.db, save)
@@ -255,6 +257,7 @@ func _start_session() -> void:
 	_pending_trap = -1
 	traps.clear()
 	_refresh_traps()
+	fish_jump.clear()
 	_quick_catch = -1.0
 	_announced.clear()
 	_legend_look = 0.0
@@ -518,6 +521,7 @@ func _try_cast(target: Vector2) -> void:
 		angler.face(dir)
 		return
 	Sounds.play("error")
+	Sounds.haptic(30)
 	hud.toast(tr("UI_NO_WATER"), UiKit.MUTED)
 
 
@@ -757,6 +761,8 @@ func _on_lost(reason: String, too_big: int = 0) -> void:
 
 func _on_catch() -> void:
 	_stop_loops()
+	# Havadaki alabalık elde gösterilir: sıçrayışı bitmeden kalkar (iki balık görünmesin, sonradan şapırtı yok).
+	fish_jump.clear()
 	var info := session.last_catch
 	var fish_id := str(info["fish"])
 	var rarity := int(info["rarity"])
@@ -888,23 +894,32 @@ func _fit_technique() -> void:
 		return
 	var db := GameState.db
 	var save := GameState.save
-	if save.technique != "float":
-		_held_technique = ""
+	if save.technique != "float" and not _held_technique.is_empty():
+		_hold("")
 	if not _held_technique.is_empty() and Economy.technique_allowed(db, spot_id, zone_id, _held_technique) \
 			and Economy.technique_ready(db, save, _held_technique):
 		save.technique = _held_technique
-		_held_technique = ""
+		_hold("")
 		_use_technique_gear()
 		if _zone_known:
-			hud.toast_later(tr("UI_TECH_" + save.technique), UiKit.TEXT, "", "tech_" + save.technique)
+			hud.toast_later(tr("UI_TECH_" + save.technique), UiKit.TEXT, "", "tech_" + save.technique, "technique")
 		return
 	if Economy.technique_allowed(db, spot_id, zone_id, save.technique):
 		return
-	_held_technique = save.technique
+	_hold(save.technique)
 	save.technique = "float"
 	_use_technique_gear()
 	if _zone_known:
-		hud.toast_later(tr("UI_TECH_FLY_ONLY"), UiKit.ACCENT, "", "tech_float")
+		hud.toast_later(tr("UI_TECH_FLY_ONLY"), UiKit.ACCENT, "", "tech_float", "technique")
+
+
+## Bırakılan teknik (boşsa unutulur); kayıtta da tutulur.
+func _hold(technique: String) -> void:
+	_held_technique = technique
+	if technique.is_empty():
+		GameState.save.flags.erase(HELD_FLAG)
+	else:
+		GameState.save.flags[HELD_FLAG] = technique
 
 
 ## Elindeki tekniğin (save.technique) takımı oturuma geçer; şans garantisi o tekniğe göre.
@@ -987,7 +1002,7 @@ func _present(delta: float) -> void:
 		Sounds.set_loop("reel", fighting and reel.holding, 0.0, 0.9 + 0.3 * tension)
 	Sounds.set_loop("strain", fighting and reel.in_red)
 	# Arayüz.
-	hud.set_action("" if card.visible else session.action_kind())
+	hud.set_action("" if _card_up() else session.action_kind())
 	hud.tension_bar.visible = fighting
 	hud.set_fighting(fighting)
 	hud.set_line_out(session.line_out())
@@ -1329,7 +1344,10 @@ func _announce_techniques(quiet_trap: bool = false) -> bool:
 		if Economy.technique_ready(db, save, t):
 			continue
 		hud.toast_later(tr("UI_TECH_OPEN") % tr("UI_TECH_" + t), UiKit.ACCENT, "", "tech_" + t)
-		_say("UI_DEDE_TECH_OPEN_" + t)
+		# Aynı anda birden çok teknik açıldıysa (rütbeler atlandı) Dede ilkini anlatır (sözler birbirini
+		# ezmesin); ötekiler bildirimde, nasıl oynandıkları ilk geçişte (UI_DEDE_TECH_FIRST_).
+		if not told:
+			_say("UI_DEDE_TECH_OPEN_" + t)
 		hud.pulse_technique()
 		told = true
 	# Kerevit tuzağı (rütbe 3): bildirim ve nabız hemen; Dede'nin sözü aynı anda bir bölge (quiet_trap) ya
@@ -1542,6 +1560,7 @@ func _place_trap() -> void:
 		var why := TrapSim.why_not(db, save, spot_id, zone_id, at, angler.facing)
 		hud.toast(tr(why if not why.is_empty() else "UI_TRAP_NO_SPOT"), UiKit.ACCENT, "tech_trap")
 		Sounds.play("error")
+		Sounds.haptic(30)
 		return
 	angler.stop()
 	_pending_cast = Dice.NO_POINT
@@ -1621,6 +1640,7 @@ func _collect_trap(id: int) -> void:
 		hud.toast(tr("UI_TRAP_BUCKET_FULL"), UiKit.ACCENT, "tech_trap")
 		_say("UI_DEDE_BUCKET")
 		Sounds.play("error")
+		Sounds.haptic(30)
 		return
 	var result := TrapSim.collect(db, save, spot_id, index, now)
 	var items: Array = result["items"]
@@ -1766,8 +1786,11 @@ func _on_shop() -> void:
 	shop_panel.open_shop()
 
 
-## Dükkân kapandı: Nine uğurlar (ipucu çubuğunda, sırayla uğurlama ve öğüt sözleri).
+## Dükkân kapandı: tezgâhta açıldıysa Nine uğurlar (ipucu çubuğunda, sırayla uğurlama ve öğüt
+## sözleri); takım çantasından uzaktan açıldıysa Nine yanında değil, susar.
 func _on_shop_closed() -> void:
+	if shop_panel.is_remote():
+		return
 	_nine_index = _nine_index % Nine.LINE_COUNT + 1
 	_say(Nine.LINE_KEY % _nine_index, "nine")
 
@@ -1786,7 +1809,7 @@ func _on_gear_changed() -> void:
 func _on_technique_selected(technique: String) -> void:
 	if session.state != FishingSession.State.IDLE or not Economy.technique_ready(GameState.db, GameState.save, technique):
 		return
-	_held_technique = ""
+	_hold("")
 	GameState.save.technique = technique
 	GameState.save_game()
 	var gear := _gear()

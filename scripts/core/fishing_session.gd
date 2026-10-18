@@ -73,6 +73,8 @@ var rules: FishingRules
 var gear: GearStats
 ## Elindeki teknik (gear.technique; teknik yalnızca boştayken değişir).
 var technique: Technique
+## Atış sürerken gelen başka tekniğin takımı: boşa dönünce kuşanılır (set_gear).
+var _pending_gear: GearStats = null
 
 # Durum sayaçları (teknikler de okur ve yazar).
 ## Atışta, dürtmede, geri sarmada ve kaçırmadan sonra kalan adım.
@@ -225,9 +227,14 @@ func range_m() -> float:
 
 
 ## Takım değişti (dükkân, takım çantası): menzil ve sarma sonraki atıştan, yemin çekimi sonraki
-## gölgeden geçerli. Teknik değiştiyse (yalnızca boştayken; değilse boşa dönünce) gölgeler yeni
-## tekniğin oranıyla yeniden doğar: defterin gösterdiği oran gerçek oran kalır.
+## gölgeden geçerli. Teknik değiştiyse (yalnızca boştayken) gölgeler yeni tekniğin oranıyla yeniden
+## doğar: defterin gösterdiği oran gerçek oran kalır. Atış sürerken başka tekniğin takımı gelirse atış
+## eski takımla biter, yenisi boşa dönünce kuşanılır (_pending_gear).
 func set_gear(gear_stats: GearStats) -> void:
+	if state != State.IDLE and Techniques.resolve(gear_stats.technique) != technique.id:
+		_pending_gear = gear_stats
+		return
+	_pending_gear = null
 	gear = gear_stats
 	sim.set_reach(gear.range_m)
 	if state == State.IDLE and _apply_technique():
@@ -380,6 +387,8 @@ func hook_fish() -> void:
 	var s := sim.approacher
 	hooked = s
 	sim.hook(s)
+	# Takım balıkla birlikte gelir: dipte takıma toplanan öteki gölgeler olağan hızına döner.
+	sim.end_gather()
 	var offset := bobber - angler
 	hook_dir = offset.normalized() if offset.length_squared() > 0.0001 else Vector2(0.0, -1.0)
 	var dist := offset.length()
@@ -478,7 +487,10 @@ func _water_near(p: Vector2) -> Vector2:
 func _to_idle() -> void:
 	state = State.IDLE
 	push_event({ "type": "idle" })
-	_apply_technique()
+	if _pending_gear != null:
+		set_gear(_pending_gear)
+	else:
+		_apply_technique()
 
 
 ## Takımın tekniği elindekinden farklıysa (boştayken) değiştirir: gölgeler yeni tekniğin

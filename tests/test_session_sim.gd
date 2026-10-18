@@ -22,10 +22,13 @@ const PACING := [
 	["zone:rocky_point", 15.0, 35.0],
 	["species_5", 0.0, 30.0],
 	# Dalga 3 dengesi (economy_report -- --hours=16 --seeds=6): sıradaki kova öncelikli ama onun için
-	# biriktirilmez (oyuncu sık dolan kovayı büyütür): büyük kova 35–55 dk (Dalga 3'ün ilk ölçümünde
-	# 95–101). Cam kamış şamandıranın: bot rütbe 4'ten sonra şamandırayı az kullanır (zamanının ~%4'ü),
-	# kamışı tekniklerin ilk kamışlarından ve kovadan sonra alır (79–91 dk). Kepçe 158–177 dk.
+	# biriktirilmez (oyuncu sık dolan kovayı büyütür): büyük kova 43–54 dk (Dalga 3'ün ilk ölçümünde
+	# 95–101). Cam kamış şamandıranın: bot rütbe 4'ten sonra şamandırayı az kullanır (zamanının ~%2'si),
+	# kamışı tekniklerin ilk kamışlarından ve kovadan sonra alır (52–87 dk). Kepçe 159–172 dk.
 	["buy:rod_float_glass", 10.0, 100.0],
+	# Naylon misina (120 para, rütbe 1; 9 seed'de 6–20 dk, dip kamışı 22–32). Dipten önce alındığını
+	# test_pacing_guard_rails ayrıca denetler (BEFORE).
+	["buy:line_mono", 0.0, 25.0],
 	["buy:bucket_big", 25.0, 70.0],
 	["buy:net", 120.0, 220.0],
 	["buy:boat", 90.0, 180.0],     # rütbe 9 + biriktirme (90–180)
@@ -42,6 +45,9 @@ const PACING := [
 	# Dalga 3'te türler 12'yi aştı (aynalı sazan): 12. tür artık erken; mersin Efsanevinin ilki.
 	["rarity_legendary", 100.0, 300.0],
 ]
+## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
+## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.
+const BEFORE := [["buy:line_mono", "buy:rod_carp_1"]]
 
 
 func test_same_seed_same_session() -> void:
@@ -71,6 +77,9 @@ func test_pacing_guard_rails() -> void:
 			assert_true(sim.milestones.has(key), "seed %d: %s %d dk içinde hiç olmadı" % [seed_value, key, int(MINUTES)])
 			if sim.milestones.has(key):
 				assert_between(float(sim.milestones[key]), row[1], row[2], "seed %d: %s (dk)" % [seed_value, key])
+		for pair: Array in BEFORE:
+			assert_true(float(sim.milestones.get(pair[0], INF)) <= float(sim.milestones.get(pair[1], -INF)),
+					"seed %d: %s, %s'den önce" % [seed_value, pair[0], pair[1]])
 		var hours := sim.elapsed / 3600.0
 		assert_between(sim.earned / hours, 2500.0, 6500.0, "seed %d: saatte para" % seed_value)
 		assert_between(sim.catches / hours, 120.0, 280.0, "seed %d: saatte av" % seed_value)

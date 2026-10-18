@@ -274,8 +274,8 @@ UI_BOOK_LURE_HINT,Favourite lure: %s,Sevdiği yapay yem: %s
 UI_BOOK_FLY_HINT,Favourite fly: %s,Sevdiği sinek: %s
 UI_BOOK_HINT_TRAP,Enters traps at: %s,Tuzağa girer: %s
 UI_BOOK_HINT_ZONE,Lives in: %s,Yaşadığı yer: %s
-UI_BOOK_HINT_TECH,Caught with: %s,Şununla tutulur: %s
-UI_BOOK_HINT_TECH_ALSO,Also caught with: %s,Şununla da tutulur: %s
+UI_BOOK_HINT_TECH,Caught with: %s,%s ile tutulur
+UI_BOOK_HINT_TECH_ALSO,Also caught with: %s,%s ile de tutulur
 UI_BOOK_HINT_OFTEN,Often seen in this lake.,Bu gölde sık görülür.
 UI_BOOK_HINT_SOMETIMES,Sometimes seen in this lake.,Bu gölde ara sıra görülür.
 UI_BOOK_HINT_RARELY,Rarely seen in this lake.,Bu gölde nadiren görülür.
@@ -301,7 +301,7 @@ UI_HINT_SPIN_FOLLOW,Something's following! Stop and go!,Peşinde biri var! Dur-k
 UI_HINT_SPIN_STRIKE,It struck! Tap now!,Saldırdı! Hemen VUR!
 UI_DEDE_TECH_OPEN_spin,"Predators chase a moving lure, kid. Nana sells spinning rods!","Yırtıcılar oynayan yeme gelir evlat. Nine spin kamışı satıyor!"
 UI_DEDE_TECH_FIRST_spin,"Cast past a shadow, then reel the lure right by it!","Gölgenin ötesine at, yemi tam önünden geçir!"
-UI_DEDE_SNAG,"Snagged in the weeds! Don't let the lure rest here.","Yem otlara takıldı! Burada yemi bekletme."
+UI_DEDE_SNAG,"Snagged! Don't let the lure rest here.","Yem takıldı! Burada yemi bekletme."
 UI_SHOP_SELL_AT_STALL,"Come to my stall to sell, dear.",Satmak için tezgâhıma gel evladım.
 FISH_mirror_carp,Mirror Carp,Aynalı Sazan
 FISH_mirror_carp_DESC,"A thick carp with a few huge, mirror-bright scales. Feeds on the bottom.","Kalın gövdeli, birkaç iri ayna gibi pullu bir sazan. Dipte beslenir."

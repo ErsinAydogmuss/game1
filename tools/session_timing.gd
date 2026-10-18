@@ -65,6 +65,10 @@ func _initialize() -> void:
 			_seeds = int(arg.substr(8))
 		elif arg == "--gear=top":
 			_top = true
+		elif arg.begins_with("--gear="):
+			printerr("Bilinmeyen takım: %s (yalnızca --gear=top; verilmezse başlangıç takımı)" % arg.substr(7))
+			quit(1)
+			return
 		elif arg.begins_with("--zone="):
 			_zone = arg.substr(7)
 		elif arg.begins_with("--technique="):
@@ -72,6 +76,11 @@ func _initialize() -> void:
 	var db := ContentDB.load_default()
 	for e in db.errors:
 		printerr("İçerik hatası: " + e)
+	var problem := _check_args(db)
+	if not problem.is_empty():
+		printerr(problem)
+		quit(1)
+		return
 	var gear := _gear(db)
 	var started := Time.get_ticks_msec()
 	for s in _seeds:
@@ -96,22 +105,47 @@ func _initialize() -> void:
 		print("  yem geldi %d, takıldı %d, vazgeçen %d, kendiliğinden takılan %d" % [_count("home"), _count("snag"),
 				_count("turn_away"), _count("auto")])
 	print("  saatte %.0f av (satış ve kart hariç, kartsız gösteri dahil)" % (_count("catch") / hours))
+	if _to_bite.is_empty() or _fight.is_empty():
+		printerr("Isırma ya da çekişme ölçülmedi: öneri yok (atış sayısını artır).")
+		quit(1)
+		return
 	# Önerilen sim.json: atış = nişan + ortalama uçuş; dürtme ve yaklaşma tekdüze aralık
-	# [p10, 2·ort − p10] (ortalaması ölçülen ortalamaya eşit).
+	# [p10, 2·ort − p10] (ortalaması ölçülen ortalamaya eşit). Balığın uzaklığı menzili aşamaz (dipte
+	# takım menzilin sonuna düşer: çoğu ölçüm tam menzilde, aralık menzilde kesilir).
 	var cast_s := AIM_S + _mean(_flight)
 	var approach: Array[float] = []
 	for i in _to_bite.size():
 		approach.append(_to_bite[i] - _nibble[i] - cast_s)
+	var where := ""
+	if _technique != "float":
+		where = "techniques.%s" % _technique + ("" if _zone.is_empty() else ".zones.%s" % _zone)
+	elif not _zone.is_empty():
+		where = "zones.%s" % _zone
 	print("")
-	print("  önerilen data/sim.json%s:" % ("" if _technique == "float" else " (techniques.%s)" % _technique))
+	print("  önerilen data/sim.json%s:" % ("" if where.is_empty() else " (%s)" % where))
 	print("    \"cast_s\": %.1f," % cast_s)
 	print("    \"approach_s\": %s," % _uniform(approach))
 	print("    \"nibble_s\": %s," % _uniform(_nibble))
 	print("    \"show_s\": %.1f," % SHOW_S)
-	print("    \"start_m\": %s," % _uniform(_hook_m))
+	print("    \"start_m\": %s," % _uniform(_hook_m, gear.range_m))
 	print("    \"fight_s\": %.1f," % _mean(_fight))
 	print("    \"reaction_s\": %.2f" % REACTION_S)
 	quit()
+
+
+## Seçenekler oyunun içeriğiyle uyumlu mu: bilinen teknik ve bölge, teknik o bölgede (bölge yoksa
+## başlangıç bölgesinde) avlanılır. Sorun yoksa boş.
+func _check_args(db: ContentDB) -> String:
+	if not _technique in ContentDB.TECHNIQUES or not db.has_technique(_technique):
+		return "Bilinmeyen teknik: %s" % _technique
+	var z: Dictionary = Zones.at(db, db.main_spot, db.spot(db.main_spot)["start"])
+	if not _zone.is_empty():
+		z = db.zone(db.main_spot, _zone)
+		if z.is_empty():
+			return "Bilinmeyen bölge: %s" % _zone
+	if not z.is_empty() and not CatchOdds.allows(z, _technique):
+		return "%s bölgesinde %s ile avlanılmaz (sinek: --zone=stream_mouth)" % [z["id"], _technique]
+	return ""
 
 
 ## Ölçülen tekniğin takımı: tekniğin ilk (en ucuz) kamışı ve başlangıç takımı; --gear=top en iyisi.
@@ -351,12 +385,15 @@ func _mean(values: Array[float]) -> float:
 
 
 func _pct(values: Array[float], q: float) -> float:
+	if values.is_empty():
+		return 0.0
 	var sorted := values.duplicate()
 	sorted.sort()
 	return float(sorted[clampi(int(q * (sorted.size() - 1)), 0, sorted.size() - 1)])
 
 
-func _uniform(values: Array[float]) -> String:
-	var lo := maxf(0.0, _pct(values, 0.1))
-	var hi := maxf(lo, 2.0 * _mean(values) - lo)
+## Tekdüze aralık [p10, 2·ort − p10], en çok cap.
+func _uniform(values: Array[float], cap: float = INF) -> String:
+	var lo := minf(maxf(0.0, _pct(values, 0.1)), cap)
+	var hi := minf(maxf(lo, 2.0 * _mean(values) - lo), cap)
 	return "[%.1f, %.1f]" % [lo, hi]

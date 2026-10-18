@@ -78,13 +78,16 @@ func test_new_technique_respawns_the_shadows() -> void:
 	assert_eq(spawned, 4, "yenileri doğar")
 
 
-## Teknik ancak boşa dönünce değişir (olta sudayken değil).
+## Teknik ancak boşa dönünce değişir (olta sudayken değil); atış eski takımla biter.
 func test_technique_changes_only_when_idle() -> void:
 	var session := _session()
 	session.technique = _Other.new(content().rules)
+	var old_gear := session.gear
 	assert_true(session.cast(Vector2(0, 0)), "atış")
-	session.set_gear(GearStats.starter(content()))
+	var next := GearStats.starter(content())
+	session.set_gear(next)
 	assert_true(session.technique is _Other, "olta suda: teknik değişmez")
+	assert_true(session.gear == old_gear, "atış eski takımla sürer")
 	for i in 120:
 		session.step()
 		if session.state == FishingSession.State.WAITING:
@@ -98,6 +101,7 @@ func test_technique_changes_only_when_idle() -> void:
 			break
 	assert_eq(session.state, FishingSession.State.IDLE, "geri sarıldı")
 	assert_true(session.technique is FloatTechnique, "boşa dönünce değişir")
+	assert_true(session.gear == next, "boşa dönünce yeni takım kuşanılır")
 
 
 ## Testte başka bir tekniği taklit eder (davranışı şamandıranınki, kimliği farklı).

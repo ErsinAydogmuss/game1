@@ -679,10 +679,11 @@ func _validate_slots() -> void:
 			errors.append("gear.json: slots: %s yuvası hiçbir teknikte yok" % slot)
 
 
-## Yemin, yapay yemin ya da sineğin çektiği türler bilinmeli, çarpan pozitif olmalı.
+## Yemin, yapay yemin ya da sineğin çektiği türler bilinmeli, çarpan en az 0,001 olmalı (CatchOdds
+## binde birle yuvarlar: daha küçüğü türü sessizce siler).
 func _validate_attract(id: String, attract: Dictionary) -> void:
 	for fid: Variant in attract:
-		if fish_index(str(fid)) < 0 or float(attract[fid]) <= 0.0:
+		if fish_index(str(fid)) < 0 or float(attract[fid]) < 0.001:
 			errors.append("gear.json: %s: bilinmeyen balık ya da geçersiz çarpan: %s" % [id, fid])
 
 
@@ -727,12 +728,14 @@ func _validate_fish(f: Dictionary) -> void:
 			errors.append("fish.json: %s: first_burst uyarıdan uzun olmalı" % id)
 	if float(fight["reel"]) <= 0.0 or float(fight["run"]) < 0.0:
 		errors.append("fish.json: %s: reel ya da run geçersiz" % id)
+	# Yatkınlık 0 (o teknikle gelmez) ya da en az 0,001 (CatchOdds binde birle yuvarlar).
 	var affinity: Dictionary = f["affinity"]
 	var any := false
 	for t: Variant in affinity:
-		if not str(t) in TECHNIQUES or float(affinity[t]) < 0.0:
-			errors.append("fish.json: %s: bilinmeyen teknik ya da eksi yatkınlık: %s" % [id, t])
-		elif float(affinity[t]) > 0.0:
+		var value := float(affinity[t])
+		if not str(t) in TECHNIQUES or value < 0.0 or (value > 0.0 and value < 0.001):
+			errors.append("fish.json: %s: bilinmeyen teknik ya da geçersiz yatkınlık: %s" % [id, t])
+		elif value > 0.0:
 			any = true
 	if not any:
 		errors.append("fish.json: %s: hiçbir teknikle gelmiyor (affinity)" % id)
@@ -842,12 +845,16 @@ func _validate_zone(spot_id: String, z: Dictionary, known: Dictionary) -> void:
 		if reach <= 0.0:
 			errors.append("spots.json: %s: %s: %s tekniğiyle gelen tür yok" % [spot_id, id, t])
 	# Tuzak tablosu (kerevit tuzağı kurulan bölge): bilinen türler, pozitif ağırlık, sandalsız kıyı.
+	# Koruma altındaki tür (release_only) tuzağa girmez: kovaya giremez, tuzak hiç boşalmazdı.
 	var trap_ids: PackedStringArray = z["trap_ids"]
 	var trap_weights: PackedInt32Array = z["trap_weights"]
 	for i in trap_ids.size():
-		if fish_index(trap_ids[i]) < 0 or trap_weights[i] <= 0:
+		var k := fish_index(trap_ids[i])
+		if k < 0 or trap_weights[i] <= 0:
 			errors.append("spots.json: %s: %s: tuzak tablosunda bilinmeyen tür ya da ağırlık: %s" % [spot_id, id,
 					trap_ids[i]])
+		elif bool(fish[k]["release_only"]):
+			errors.append("spots.json: %s: %s: koruma altındaki tür tuzağa girmez: %s" % [spot_id, id, trap_ids[i]])
 	if not trap_ids.is_empty() and bool(z["boat"]):
 		errors.append("spots.json: %s: %s: tuzak sandal bölgesine kurulmaz" % [spot_id, id])
 	# Dede'nin önerdiği teknik bölgede avlanılır ve şamandıra değildir (şamandırayı herkes bilir).

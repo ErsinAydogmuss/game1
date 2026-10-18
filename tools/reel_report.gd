@@ -38,6 +38,10 @@ func _initialize() -> void:
 		printerr("Bilinmeyen teknik: " + technique)
 		quit(1)
 		return
+	if not mode in ["start", "mid", "top"]:
+		printerr("Bilinmeyen takım: %s (--gear=mid ya da --gear=top; verilmezse başlangıç takımı)" % mode)
+		quit(1)
+		return
 	var gear := gear_for(db, mode, technique)
 	var distances := distances_for(technique)
 	var max_distance: float = gear.range_m + db.rules.escape_extra + gear.escape_extra
@@ -116,9 +120,15 @@ func _initialize() -> void:
 
 
 ## Raporda yer alan tür: şamandırada hepsi (çekişme modelinin karşılaştırması; docs/gdd.md §5
-## tabloları), öteki teknikte yalnızca o teknikle gelenler.
+## tabloları), öteki teknikte yalnızca oyunun gölünde o teknikle gelenler (sinek yalnızca dere ağzında:
+## yatkınlığı olan ama orada yaşamayan tür sinekle hiç gelmez).
 static func _reported(db: ContentDB, fish_id: String, technique: String) -> bool:
-	return technique == "float" or db.affinity(fish_id, technique) > 0.0
+	if technique == "float":
+		return true
+	for z in db.zones_of(db.main_spot):
+		if CatchOdds.species_ppm(db, z, { "technique": technique }).has(fish_id):
+			return true
+	return false
 
 
 ## Rapor ve testlerin takımları: start (tekniğin ilk kamışı; şamandırada bambu olta), mid (başlangıç +

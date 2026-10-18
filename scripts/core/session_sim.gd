@@ -35,6 +35,8 @@ const SIM_PATH := "res://data/sim.json"
 const BUY_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bucket", "extra", "boat", "trap"]
 ## Teknik seçiminde defterde olmayan bir türün değeri (para cinsinden): kazançtan önce gelir.
 const NEW_SPECIES_WORTH := 100000.0
+## rate'in boy zarı: balığın ortalama değeri bu kadar eşit aralıklı örnekle hesaplanır.
+const RATE_SAMPLES := 50
 
 var db: ContentDB
 var save: SaveData
@@ -118,8 +120,11 @@ func cast_once() -> void:
 	Economy.use_bait(db, save, technique)
 	var rules := db.rules
 	var max_distance := gear.range_m + rules.escape_extra + gear.escape_extra
-	var model := ReelModel.new(rules, def["fight"], gear.reel_speed, _range("start_m", Vector2(4, 8)), max_distance,
-			false, rng.randi(), gear, percentile)
+	# Balık takımın düştüğü yerde takılır: menzilin ötesinde olamaz (ölçüm daha uzun kamışla yapılmış
+	# olabilir; yem sepeti menzili kısaltır).
+	var start := minf(_range("start_m", Vector2(4, 8)), gear.range_m)
+	var model := ReelModel.new(rules, def["fight"], gear.reel_speed, start, max_distance, false, rng.randi(), gear,
+			percentile)
 	var fight := ReelBot.play(model, ReelBot.make(ReelBot.Style.REACT, _num("reaction_s", 0.45)))
 	elapsed += float(fight["seconds"])
 	if int(fight["outcome"]) != ReelModel.Outcome.CAUGHT:
@@ -326,21 +331,34 @@ func _technique_score(t: String) -> float:
 		if not save.records.has(fid):
 			fresh += float(odds[fid]) / ContentDB.PPM
 	var per_minute := (1.0 - miss_share(timing, zone_id, t)) * 60.0 / cycle_s(timing, zone_id, t)
-	return score + rate(db, timing, _spot, t, gear.attract) + fresh * NEW_SPECIES_WORTH * per_minute
+	return score + rate(db, timing, _spot, t, gear) + fresh * NEW_SPECIES_WORTH * per_minute
 
 
-## Bir teknikle bu yerde (bölge ya da göl) dakikada ortalama kazanç (para): oranlar (attract: yemin,
-## yapay yemin, sineğin çekimi) × orta boy balığın değeri, tekniğin bu bölgedeki atış döngüsüyle
-## (cycle_s) ve kaçırılan ısırma payıyla. Botun teknik seçimi ve test_economy (bölgenin önerdiği
-## teknik orada şamandıradan az kazandırmaz) kullanır.
-static func rate(db: ContentDB, sim_timing: Dictionary, place: Dictionary, t: String, attract: Dictionary = {}) -> float:
-	var odds := CatchOdds.species_ppm(db, place, {"attract": attract, "technique": t})
+## Bir teknikle bu yerde (bölge ya da göl) dakikada ortalama kazanç (para): oranlar (takımın yeminin,
+## yapay yeminin, sineğin çekimiyle) × takılan balığın ortalama değeri (kept_value: takımın
+## taşıyamadığı iri balık kaçar), tekniğin bu bölgedeki atış döngüsüyle (cycle_s) ve kaçırılan ısırma
+## payıyla. Botun teknik seçimi ve test_economy (bölgenin önerdiği teknik orada şamandıradan az
+## kazandırmaz) kullanır.
+static func rate(db: ContentDB, sim_timing: Dictionary, place: Dictionary, t: String, gear: GearStats) -> float:
+	var odds := CatchOdds.species_ppm(db, place, {"attract": gear.attract, "technique": t})
 	var worth := 0.0
 	for fid: String in odds:
-		var span: Vector2i = db.fish_by_id(fid)["size_cm"]
-		worth += float(odds[fid]) / ContentDB.PPM * float(Economy.fish_value(db, fid, (span.x + span.y) >> 1))
+		worth += float(odds[fid]) / ContentDB.PPM * kept_value(db, fid, gear.carry)
 	var zone := str(place.get("id", ""))
 	return worth * (1.0 - miss_share(sim_timing, zone, t)) * 60.0 / cycle_s(sim_timing, zone, t)
+
+
+## Takılan bir balığın ortalama değeri (para): boy zarının eşit aralıklı RATE_SAMPLES örneğiyle;
+## takımın taşıyamadığı boy (fazla iri: ReelModel.excess_for) kaçar, değeri 0.
+static func kept_value(db: ContentDB, fish_id: String, carry: int) -> float:
+	var def := db.fish_by_id(fish_id)
+	var fight: Dictionary = def["fight"]
+	var total := 0
+	for i in RATE_SAMPLES:
+		var percentile := FishTable.percentile_for(int((float(i) + 0.5) / RATE_SAMPLES * Dice.PPM))
+		if ReelModel.excess_for(fight, percentile, carry) == 0:
+			total += Economy.fish_value(db, fish_id, FishTable.size_cm(def, percentile))
+	return float(total) / RATE_SAMPLES
 
 
 ## Bir atışın ortalama süresi (sn): atış, balığın gelişi, dürtme (ısırmaya kadar), çekişme ve

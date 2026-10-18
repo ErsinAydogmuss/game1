@@ -18,9 +18,10 @@ func test_bottom_only_fish_names_its_technique_and_zones() -> void:
 func test_float_fish_has_no_technique_line() -> void:
 	var db := content()
 	var save := SaveData.create_new(0)
-	var tech := UiKit.translate("UI_BOOK_HINT_TECH").split("%")[0]
 	var text := "\n".join(BookPanel.hints(db, save, db.main_spot, "carp"))
-	assert_true(not text.contains(tech), "şamandırayla gelen türde teknik satırı yok: %s" % text)
+	# Satırın sabit kısmı (yer tutucu dilde başta ya da sonda).
+	var tech := UiKit.translate("UI_BOOK_HINT_TECH").replace("%s", "").strip_edges()
+	assert_true(not tech.is_empty() and not text.contains(tech), "şamandırayla gelen türde teknik satırı yok: %s" % text)
 
 
 ## Kerevit tuzağa girer: ipucu tuzağın kurulduğu bölgeleri söyler, dip "da" olur; tuzak hep kerevit
