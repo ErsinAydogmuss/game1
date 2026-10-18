@@ -96,7 +96,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 **Ara sürüm v0.3.1 — Parti 3–4 görselleri ve telefondaki geri bildirim**
 
 - [x] Parti 3 görselleri oyunda: zemin dokuları (çimen, kum, toprak yol, yosunlu taş), bölge rozetleri (harita ve bildirimler), harita kâğıdı ve çıkartmaları (sazlık, nilüfer, kayalar, ağaçlar, sandal, dükkân), harita ikonları (iğne, kilit, pusula, şamandıra, çit tabelası) ve "Kıyıya dön" düğmesinde çapa.
-- [x] Parti 4 görselleri (teknikler) kesildi; teknikler Dalga 3'te geldikçe oyuna girer.
+- [x] Parti 4 görselleri (teknikler) kesildi; Dalga 3'te oyuna girdi.
 - [x] Sis: oyun alanı berrak. Üstel sis yerine 35 m'de başlayan derinlik sisi, bloom yok, doygunluk ayarı kalktı (Ersin: "telefonda sisli").
 - [x] İri balık takım ister (Ersin: "iskelede takım almadan bütün balıkları tutabiliyorum"):
   - İri türlerin boyu çekişini artırır.
@@ -107,7 +107,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
   - Bkz. `docs/gdd.md` §5.
 - [ ] Telefonda deneme ve hız ölçümü: Ersin'in sorun listesi.
 
-**Dalga 3 — Teknikler → v0.4**
+**Dalga 3 — Teknikler → v0.4 ✅** (5 kişilik test kaldı)
 
 - [x] Teknik soyutlaması: ısırmaya kadarki kısım tekniğin (`Technique`, şamandıra `FloatTechnique`); gölgeler tekniğin profilini okur (`TechniqueRules`). Şamandıra bit bit aynı (altın test).
 - [x] Takım çantasının temeli: makara ve misina her teknikte ortak, her tekniğin kendi yuvaları; türlerin teknik yatkınlığı (şamandırada oranlar ve katalog aynı); kayıt v4 (elindeki teknik, kerevit tuzakları).
@@ -118,7 +118,8 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Teknik balıkları: aynalı sazan (dip), alabalık ve dere alabalığı (sinek, az da spin), kerevit (tuzak, az da dip); şamandırayla gelmezler (şamandıranın oranları değişmedi).
 - [x] Defter ve katalog: 16 tür iki sayfada; oranlar elindeki teknikle (başlıkta tekniğin adı); tutulmamış türün ipucu en sevdiği yemi, yapay yemi ya da sineği, tuzağını ("Tuzağa girer: Sazlık, Kayalık Burun") ve tekniğini söyler. Katalogda tekniklerin yatkınlık tablosu, her bölgede her teknikle oranlar ve tuzak tablosu; çekişme raporu tekniklere açıldı (`--technique=`).
 - [x] Dede'nin teknik ipuçları: bölgenin önerisi (sazlıkta ve derin ortada dip, nilüferli koyda ve kayalıkta spin, dere ağzında sinek; orada başka teknikle tutana bir kez) ve Dede'ye dokununca açılmış tekniklerin öğütleri.
-- [x] Denge: Dede'nin önerdiği teknik o bölgede şamandıradan az kazandırmaz (test); dip yayının tekniği ve daha çabuk (balık yeme çabuk toplanır, kamışlar güçlü), spin nilüferli koyda ve kayalıkta öne çıkar; kerevit 10 para, tuzaklar ucuzladı; bot büyük kovayı erken alır (35–55. dk); bütün takım 13,4–14,2 saatte (hedef 8–15).
+- [x] Denge: Dede'nin önerdiği teknik o bölgede şamandıradan az kazandırmaz (test); dip yayının tekniği ve daha çabuk (balık yeme çabuk toplanır, kamışlar güçlü), spin nilüferli koyda ve kayalıkta öne çıkar; kerevit 10 para, tuzaklar ucuzladı; bot büyük kovayı erken alır (43–54. dk); bütün takım 13,5–13,9 saatte (hedef 8–15).
+- [x] Kapanış: üç inceleme ajanı (çekirdek, sunum, araçlar ve belgeler) ve düzeltmeleri; tanıtım videosu; telefon boyutunda README görüntüleri; iskelede en çok 150 çizim (`tour`); sürüm 0.4.
 - [ ] **5 kişiye oynat** (aşağıdaki sorular). Devam ya da vazgeç burada verilir; Dalga 4–5 beklemez.
 
 **Dalga 4 — Canlı dünya → v0.5**
