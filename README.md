@@ -13,6 +13,9 @@
 | ![Kayalık burun: iri kayalar ve yosunlu taş](docs/ekran/06_kayalik.jpg) | ![Dere ağzı: akıntı çizgileri](docs/ekran/07_dere.jpg) |
 | ![Sandalla derin orta: Efsanevi mersinin gölgesi](docs/ekran/08_sandal.jpg) | ![Mersin koruma altında: kartında Göle bırak](docs/ekran/09_mersin.jpg) |
 | ![Destansı altın sazan kartı](docs/ekran/10_altin_sazan.jpg) | ![Nadir turna kartı ve Dede'nin sözü](docs/ekran/11_turna.jpg) |
+| ![Takım Çantası: şamandıra, spin, dip, sinek ve kerevit tuzağı](docs/ekran/12_canta.jpg) | ![Spin: turna yeme saldırdı, Dede "Hemen VUR!" diyor](docs/ekran/13_spin.jpg) |
+| ![Dip: olta sehpada, zil durmadan çalıyor, VUR](docs/ekran/14_dip.jpg) | ![Sinek: dere ağzında halka çıktı](docs/ekran/15_sinek.jpg) |
+| ![Sazlıkta dolu kerevit tuzağı: turuncu şamandıra ve 4/4 rozeti](docs/ekran/16_tuzak.jpg) | ![Dipte tutulan Nadir aynalı sazan, yeni tür kartı](docs/ekran/17_aynali.jpg) |
 
 ## Nasıl oynanır
 
