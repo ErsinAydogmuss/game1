@@ -27,9 +27,9 @@ func _initialize() -> void:
 			(Time.get_ticks_msec() - started) / 1000.0])
 	for sim in sims:
 		var hours := sim.elapsed / 3600.0
-		print("  seed %d: %d atış, %d av, %d kaçan, %d satış, %d para kazanıldı (saatte %.0f para, %.0f av), rütbe %d" % [
+		print("  seed %d: %d atış, %d av, %d kaçan, %d satış, %d para kazanıldı (saatte %.0f para, %.0f av), rütbe %d, tuzaktan %d kerevit (%d tuzak)" % [
 				sim.rng.seed, sim.casts, sim.catches, sim.lost, sim.sells, sim.earned, sim.earned / hours,
-				sim.catches / hours, Rank.rank(db, sim.save)])
+				sim.catches / hours, Rank.rank(db, sim.save), sim.trapped, sim.save.traps.size()])
 	print("")
 	print("%-28s %s" % ["olay (ilk kez, dakika)", "  ".join(range(_seeds).map(func(i: int) -> String: return "seed%d" % (i + 1)))])
 	var keys: Array[String] = []
@@ -45,6 +45,8 @@ func _initialize() -> void:
 		if int(g["price"]) > 0 and str(g["category"]) != "bait":
 			keys.append("buy:" + str(g["id"]))
 	keys.append("sell")
+	keys.append("trap_set")
+	keys.append("trap")
 	for n in range(1, db.fish.size() + 1):
 		keys.append("species_%d" % n)
 	for r in db.rarities:

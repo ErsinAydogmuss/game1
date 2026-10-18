@@ -23,12 +23,16 @@ extends RefCounted
 ##    hiç denenmemiş teknik önce (merak); defterde olmayan, burada gelen bir tür varsa onu en çabuk
 ##    getiren (dakikada yeni tür); yoksa dakikada en çok kazandıran (tekniğin süreleriyle: sim.json
 ##    techniques). Teknik değiştirmek switch_s sürer; oranlar, şans garantisi ve süreler tekniğin.
+## 9. Kerevit tuzağı (rütbe 3): ilk tuzak öncelikli (Dede haber verir); sonrakiler sıradan takım gibi.
+##    Her satıştan sonra tuzağına kerevit girmiş olan toplanır (kova boşken; tuzağın bölgesine gidilir),
+##    boştaki tuzak sazlığın atış noktasının yakınına bırakılır (yer kalmazsa açık başka bir tuzak
+##    bölgesine); tuzak başına trap_s. Tuzaklar botun oyun süresiyle dolar (TrapSim; şimdi = geçen sn).
 ## Aynı seed aynı sonucu verir.
 
 const SIM_PATH := "res://data/sim.json"
 ## Alışverişe giren kategoriler (yem alınmaz: bot solucanla avlanır). Öteki tekniklerin kamışları
 ## ("rod:<teknik>") ve küçük takımı ayrıca (_buy_categories).
-const BUY_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bucket", "extra", "boat"]
+const BUY_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bucket", "extra", "boat", "trap"]
 ## Teknik seçiminde defterde olmayan bir türün değeri (para cinsinden): kazançtan önce gelir.
 const NEW_SPECIES_WORTH := 100000.0
 
@@ -44,8 +48,11 @@ var catches: int = 0
 var lost: int = 0
 var sells: int = 0
 var earned: int = 0
+## Tuzaklardan toplanan kerevit.
+var trapped: int = 0
 ## Olayların ilk olduğu dakika: "rank_3", "buy" (ilk alışveriş), "buy:<takım>", "sell", "species_4",
-## "rarity_<id>", "zone:<bölge>" (o bölgede ilk avlanış), "tech:<teknik>" (o teknikle ilk atış).
+## "rarity_<id>", "zone:<bölge>" (o bölgede ilk avlanış), "tech:<teknik>" (o teknikle ilk atış),
+## "trap_set" (ilk tuzak bırakıldı), "trap" (tuzaktan ilk kerevit).
 var milestones: Dictionary = {}
 ## Botun elindeki teknik ve her teknikte geçen süre (sn).
 var technique: String = "float"
@@ -145,8 +152,7 @@ func _on_catch(def: Dictionary, percentile: int) -> void:
 	CatchOdds.note_catch(db, save, rarity, _spot, technique)
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
-		for r in range(int(ranked["old_rank"]) + 1, int(ranked["new_rank"]) + 1):
-			_mark("rank_%d" % r)
+		_note_rank(ranked)
 		# Yeni bölge açıldı: oyuncu merak eder, hemen gider.
 		if not Zones.unlocked_between(db, spot_id, int(ranked["old_rank"]), int(ranked["new_rank"])).is_empty():
 			_choose_zone()
@@ -172,9 +178,64 @@ func _sell_and_shop() -> void:
 	sells += 1
 	_mark("sell")
 	shop()
+	_tend_traps()
 	_trips += 1
 	_choose_zone()
 	_choose_technique()
+
+
+## Kerevit tuzakları (satıştan sonra, kova boşken): kerevit girmiş tuzaklar toplanır (kovaya,
+## deftere, rütbe puanına), boştaki tuzaklar bırakılır. Tuzağın bölgesine gitmek travel_s, tuzak başına
+## trap_s.
+func _tend_traps() -> void:
+	var rules := db.rules
+	TrapSim.update_all(rules, save, int(elapsed))
+	for i in save.traps.size():
+		if TrapSim.ready(rules, save.traps[i]) <= 0 or Bucket.is_full(db, save):
+			continue
+		_go_to(str(save.traps[i]["zone"]))
+		elapsed += _num("trap_s", 4.0)
+		var result := TrapSim.collect(db, save, spot_id, i, int(elapsed))
+		var got := (result["items"] as Array).size()
+		if got > 0:
+			trapped += got
+			_mark("trap")
+			_mark("species_%d" % save.records.size())
+		_note_rank(result["ranked"])
+	while TrapSim.spare(db, save) > 0:
+		var placed := false
+		for z in db.zones_of(spot_id):
+			if not TrapSim.zone_allows(db, spot_id, str(z["id"])) or not Zones.unlocked(db, save, z):
+				continue
+			var stands: Array[Vector2] = z["stands"]
+			if stands.is_empty():
+				continue
+			var p := TrapSim.spot_near(db, save, spot_id, str(z["id"]), stands[0], Vector2(0, -1))
+			if not Dice.is_point(p):
+				continue
+			_go_to(str(z["id"]))
+			elapsed += _num("trap_s", 4.0)
+			TrapSim.place(db, save, spot_id, str(z["id"]), p, int(elapsed))
+			_mark("trap_set")
+			placed = true
+			break
+		if not placed:
+			return
+
+
+## Bölgeye gider (başka bölgedeyse travel_s; balık tutmadığı için "zone:" sayılmaz).
+func _go_to(id: String) -> void:
+	if id.is_empty() or id == zone_id:
+		return
+	elapsed += _num("travel_s", 6.0)
+	zone_id = id
+	_spot = Zones.place(db, spot_id, id)
+
+
+## Rütbe atladıysa atlanan her rütbenin dakikası.
+func _note_rank(ranked: Dictionary) -> void:
+	for r in range(int(ranked["old_rank"]) + 1, int(ranked["new_rank"]) + 1):
+		_mark("rank_%d" % r)
 
 
 ## Avlanılacak bölge: açılan en yeni kıyı bölgesi; sandal bölgesi açıksa kovaların boat_share
@@ -290,8 +351,8 @@ func _count_zone(since: float) -> void:
 
 ## Alışveriş (Kazı'nın botu gibi): her kategorinin sıradaki takımından rütbesi yetenlerin en
 ## ucuzunu, para yettikçe alır. En ucuz olana para yetmiyorsa biriktirir (daha pahalısını almaz).
-## Sandal ve yeni tekniğin ilk kamışı öncelikli: rütbesi yetince önce onlar alınır, parası yetene
-## kadar başka şey alınmaz (oyuncu derin ortayı, yeni tekniği merak eder). Satın alınan
+## Sandal, yeni tekniğin ilk kamışı ve ilk tuzak öncelikli: rütbesi yetince önce onlar alınır, parası
+## yetene kadar başka şey alınmaz (oyuncu derin ortayı, yeni tekniği merak eder). Satın alınan
 ## kendiliğinden kuşanılır. Döner: alınanlar.
 func shop() -> Array[String]:
 	var bought: Array[String] = []
@@ -299,6 +360,9 @@ func shop() -> Array[String]:
 	for t: String in ContentDB.TECHNIQUES:
 		if t != "float" and db.has_technique(t) and not Economy.technique_ready(db, save, t):
 			first.append(next_upgrade("rod:" + t))
+	# İlk kerevit tuzağı da öncelikli (rütbe 3'te Dede haber verir, düğme atar).
+	if TrapSim.owned(db, save) == 0:
+		first.append(TrapSim.next_trap(db, save))
 	for item in first:
 		if item.is_empty() or Rank.rank(db, save) < int(item["rank"]):
 			continue

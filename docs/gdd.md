@@ -50,12 +50,12 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 - ✅ **Spin:** atınca yapay yem düşer. Basılı tut = yem sana gelir (makara tıkırdar, arkasında iz), bırak = durur ve batar. Yırtıcı peşine düşünce dur-kalk yap. Saldırı anında basılıysa balık kendiliğinden takılır, değilse VUR! (0,6 sn; Kolay modda 1 sn). Eylem düğmesi beklerken SAR yazar.
 - ✅ **Dip:** dokunduğun yöne uzağa at, olta sehpaya konur. Zil tek tük çalarsa balık kokluyor: dokunma (kaçar; düğme BEKLE). Zil durmadan çalıp misina akınca ekranın her yerine dokun: VUR! (2,5 sn; Kolay modda 3,5 sn). Beklerken dokunmak oltayı geri sarar (düğme GERİ SAR).
 - ✅ **Sinek** (yalnızca dere ağzında): akıntıya at, sinek akıntıyla sürüklenir (düğme GERİ SAR). Alabalık sineğin altına gelince bekle (dokunursan kaçar; düğme BEKLE). Halka çıkınca hemen dokun: VUR! (0,5 sn; Kolay modda 0,9 sn). Durgun suya düşen sinek kımıldamaz, kendiliğinden döner.
+- ✅ **Kerevit tuzağı** (sazlıkta ve kayalık burunda): Takım Çantası'nın altındaki satırda TUZAK BIRAK → tuzak yakındaki sığ suya atılır. Turuncu şamandırasına dokun → içindekiler toplanır (uzaktaysan balıkçı önce yürür); boşsa küçük bir panel: BEKLE ya da KALDIR.
 
 **Mac:** tıkla (yürü, at), WASD (yürü), Space (VUR; basılı tutunca sar).
 
 **H2'de eklenecekler 🔜** (ayrıntı §10.3):
 
-- **Tuzak:** kıyıdaki tuzak şamandırasına dokun → bırak ya da topla.
 - **Dünyada dokunulanlar:** Nine → dükkân; Dede → öğüt ve istekler; kedi → sev.
 
 ## 5. Kurallar ve başlangıç sayıları ✅
@@ -430,7 +430,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | Spin | Basılı tut = yem gelir, bırak = durur ve batar. Yırtıcı yemi kovalar; "dur-kalk" ritmiyle saldırır. Saldırı anında basılıysa balık kendiliğinden takılır, değilse kısa VUR anı. Otlu ve kayalık yerde uzun bekleyen yem takılır (yalnızca zaman kaybı). | spin kamışı, makara, yapay yem | rütbe 2 |
 | Dip | Uzağa at, olta sehpaya konur. Zil: tek tük bip = balık kokluyor; sürekli bip ve misina akıyor = koşu → dokun. İri balık, uzun çekişme. | dip kamışı, kurşun, yem, sehpa + zil | rütbe 4 |
 | Sinek | Yalnızca dere ağzında. Akıntıya at, sinek sürüklenir; halka çıkınca 0,5 sn içinde dokun. Hafif, zıplayan çekişme. | sinek kamışı, sinek | rütbe 7 |
-| Kerevit tuzağı | Sığ kıyıya bırak. Oyunda değilken de dolar: 20 dk'da bir, en çok 4. İçi bırakılırken belirlenir. | tuzak (en çok 3) | rütbe 3 |
+| Kerevit tuzağı ✅ | Sığ kıyıya bırak. Oyunda değilken de dolar: 20 dk'da bir, en çok 4. İçi bırakılırken belirlenir. | tuzak (en çok 3) | rütbe 3 |
 
 - ✅ **Teknik altyapısı (Dalga 3):** tekniğin ısırmaya kadarki kuralları bir strateji sınıfında (`Technique`: şamandıra `FloatTechnique`, spin `SpinTechnique`); sayıları `rules.json` `techniques` (şamandıranınki üst bölümlerden). Teknik yalnızca olta boştayken değişir; değişince gölgeler yeni tekniğin oranıyla yeniden doğar. Şamandıra bit bit eskisi gibi (altın test).
 - ✅ **Tür yatkınlığı** (`fish.json` `affinity`): şamandırada bütün türler 1. Spin yalnızca yırtıcıları çağırır: levrek 1, sudak 0,9, turna 0,8, tatlısu kefali 0,7, yayın 0,25. Defter ve dükkân oranı elindeki tekniğe göre gösterir.
@@ -463,6 +463,16 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - **Takım:** 3 sinek kamışı (sinek kamışı 1.500 para / rütbe 7 / 10 m / 3★; uzun 4.000 / 9 / 11 m / 4★; usta 9.000 / 12 / 12 m / 5★). 3 sinek (tükenmez): kuru sinek (bedava; alabalık ×1,2), nimf (300, r7; alabalık ×1,6, tatlısu kefali ×1,5), streamer (900, r8; dere alabalığı ×2,2, alabalık ×1,2). Dükkânda sinekte tekniğe özel sekme "Sinek".
   - **Yatkınlık:** alabalık ve dere alabalığı 1; tatlısu kefali 0,5, kızılkanat 0,3, gümüş balığı 0,2. Dere ağzında kuru sinekle alabalık %59, tatlısu kefali %30, dere alabalığı %7, kızılkanat %5.
   - **Açılış:** rütbe 7'de (dere ağzıyla birlikte) bildirim, Dede "Alabalık sineğe çıkar evlat. Nine sinek kamışı satıyor!" der, teknik düğmesi nabız gibi atar. Dere ağzında sinek ilk seçilince Dede "Akıntıya at, sinek süzülsün. Halka çıkınca VUR!" der; ilk 3 atışta ipuçları: "Sinek akıntıyla süzülüyor... halkayı bekle.", "Altında bir alabalık var! Halkayı bekle.", "Halka! Hemen VUR!". Dere ağzında şamandırayla balık tutan oyuncuya Dede bir kez "Burada sinek dene evlat. Alabalık akıntıda çıkar." der.
+- ✅ **Kerevit tuzağı (v0.4):**
+  - **Kurma:** Takım Çantası'nın altında tuzak satırı (bir teknik değil, bir eylem): ikonu, "Sığ suya bırak: 20 dakikada bir kerevit girer.", kaç tuzağın kurulu olduğu ("1/2 kurulu") ve tek düğme: TUZAK BIRAK, NİNE'DE (tuzağı yok: dükkân Ekstra sekmesinde açılır), HEPSİ KURULU, "Sazlık, kayalık" (bu bölgeye kurulmaz) ya da rütbe kilidi. TUZAK BIRAK'ta balıkçı baktığı yöne en yakın uygun yere atar: sazlık ya da kayalık burun, derinlik en çok 1,2 m, balıkçıya 1,2–3,5 m, öteki tuzaklara en az 2 m. Yer yoksa nedeni bildirilir. Tuzak yay çizerek uçar, suya düşünce halka, ses ve titreşim; "Tuzak kuruldu: 20 dakikada bir kerevit"; ilk tuzakta Dede "Sen yokken de dolar. Turuncu şamandıraya dokun, topla!" der.
+  - **Dolma** (`TrapSim`): gerçek saatle, oyun kapalıyken de; 20 dakikada bir kerevit girer, en çok 4 (boşta biriken gelir üst sınırda durur; gelir kuralı 7). İçindekiler tuzak kurulunca zarlanır ve bekler (gelir kuralı 4; tuzağın zarı `trap_serial`'dan); parayla hızlandırma yok. Saat geri alınırsa bir şey kaybolmaz ya da kazanılmaz (yalnızca dayanak yenilenir); ileri alınırsa en çok 4. Oyun her saniye ve öne gelince dolmayı yeniler.
+  - **Görünüm:** suda turuncu bir şamandıra (beyaz bant, sırık, küçük kırmızı bayrak; tek ağ, gölgesiz; suyla iner kalkar) ve üstünde 2B rozet: kerevit resmi ve "2/4"; boşken soluk, kerevit varken altın, dolunca yeşil ve nabız gibi atar. Haritada tuzakların küçük işareti.
+  - **Toplama:** şamandıraya ya da rozete dokun (yakındaysa hemen; 5 m'den uzaksa balıkçı kıyı yolundan yürür, varınca toplar). Kerevitler kovaya, deftere ve rütbe puanına girer (şans garantisi sayaçları ilerlemez); tuzak yeniden kurulur (içeriği yeniden zarlanır), artan süre sonraki kereviti bekler. En irisi elde gösterilir (kodla kurulan kerevit: kabuk, halkalı kuyruk, kıskaçlar, bacaklar, duyargalar; sırtı kameraya dönük), adının üstünde kaç tane olduğu ("Kerevit ×3"); ilk kerevitte yeni tür kartı (Ersin'in kerevit resmiyle). Kova doluysa toplanmaz ("Kova dolu: kerevitler tuzakta bekliyor", Dede Nine'yi söyler); kova toplarken dolarsa kalanı tuzakta bekler (kayıp yok).
+  - **Boş tuzak:** dokununca küçük panel: sıradaki kerevitin kaç dakika sonra gireceği, BEKLE ya da KALDIR (tuzak çantaya döner; girmemiş içerik girmemiş sayılır; panel açıkken kerevit girdiyse kaldırılmaz, toplanır).
+  - **Takım:** 3 tuzak, Ekstra sekmesinde tek kart (sıradaki): kerevit tuzağı 250 para / rütbe 3, ikinci tuzak 600 / 3, üçüncü tuzak 1.500 / 5. Nine alınca "Takım çantandan sığ suya bırak evladım." der.
+  - **Kerevit:** Sıradan, 6 para, 6–14 cm. Tuzak tablosu sazlıkta ve kayalık burunda; dipte de arada gelir (sazlık ve kayalık burunda %3–15), şamandırayla gelmez.
+  - **Açılış:** rütbe 3'te bildirim ("Yeni: kerevit tuzağı!", tuzağın ikonuyla), Dede "Kerevit tuzağa kendi girer evlat. Nine tuzak satıyor!" der, teknik düğmesi nabız gibi atar (aynı rütbede bir teknik de açılırsa Dede tekniği söyler).
+  - **Sesler:** bırakma (iri plop, tel kafes tıkırtısı, batan kabarcıklar) ve toplama (şıpırtı, damlalar, kerevitlerin tıkırtısı); her birinin titreşimi var.
 - ✅ **Takım Çantası** (teknik düğmesi): her teknik bir karo: ikonu, adı, nasıl oynandığı, kuşanılmış kamışı ve küçük takımı (makara ve misina her teknikte ortak). Karonun düğmesi: ELİNDE, SEÇ, NİNE'DE (dükkân o tekniğin Kamış sekmesinde açılır), rütbe kilidi ya da (kamışı var ama bu bölgede avlanılmıyorsa) "Dere ağzında". Teknik seçilince bildirim çıkar; gölgeler panel açıkken yeniden doğar.
 
 ### 10.4 Dükkân, takım ve para
@@ -471,7 +481,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - Her eşyada en çok 2 değer, çubukla gösterilir; şimdiki takımla karşılaştırılır.
   - Rütbe kilidi var.
   - Sade tutulur: araştırmada en çok "seçenek kalabalığı" eleştirildi.
-  - ✅ Dalga 1'deki hâli: Nine'ye ya da dükkâna dokununca açılır (kovada balık varsa Kova sekmesi, yoksa en son bakılan sekme). Üstte Nine'nin yüzü ve sözü ("Hoş geldin evladım!", "Güle güle kullan!", "Paran biraz eksik...", "Rütbe 4 olunca gel!", "Eline sağlık!") ve para. Sekmeler: Kova, Kamış, Makara, Misina, İğne (iğne ve şamandıra), Yem, Ekstra (kepçe, sandal ve sıradaki kova: kovalar tek kartta, sahip olunanın bir üstü; Dalga 2). Her sekmede en çok 6 kart (3×2), kaydırma yok.
+  - ✅ Dalga 1'deki hâli: Nine'ye ya da dükkâna dokununca açılır (kovada balık varsa Kova sekmesi, yoksa en son bakılan sekme). Üstte Nine'nin yüzü ve sözü ("Hoş geldin evladım!", "Güle güle kullan!", "Paran biraz eksik...", "Rütbe 4 olunca gel!", "Eline sağlık!") ve para. Sekmeler: Kova, Kamış, Makara, Misina, İğne (iğne ve şamandıra), Yem, Ekstra (kepçe, sandal ve sıradaki kova: kovalar tek kartta, sahip olunanın bir üstü; Dalga 2; Dalga 3'te sıradaki tuzak da tek kartta). Her sekmede en çok 6 kart (3×2), kaydırma yok.
   - ✅ Kart: ikon (Ersin'in ekipman görseli gelene kadar kodla çizilir), ad, kısa açıklama, değer çubukları (koyu çizgi kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf; menzil ve kova kapasitesinin sayısı da yazar; kamışta ve misinada çubuk yerine "İri balık" yıldızları: kaç yıldızlı iri balığı taşıdığı, v0.3.1) ve tek düğme: fiyat (al ve tak), TAK, TAKILI, SENDE ya da kilitli rütbe. Para yetmeyen ya da rütbesi tutmayan düğme gri kalır ama basılınca Nine nedenini söyler (kilit sessiz kalmaz). Kuşanılan kartın kenarı yeşil.
   - ✅ Yem kartında çektiği balıklar ve bir gölgenin o balık olma şansı solucanla ve bu yemle ("Levrek %22 → %41"; defterdeki oranın aynısı), elindeki sayı ve paket boyu. Takılı yem yeniden alınabilir.
   - ✅ Sesler: satın almada tezgâh zili, kuşanmada tıkırtı, satışta para şıkırtısı; her birinin titreşimi ve Nine'nin sözü var.
@@ -506,9 +516,9 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | rütbe 9 (sandal Nine'de) | 80–110 dk |
 | sandal | 90–180 dk |
 | spin takımı ✅ | 4–10 dk |
-| tuzak | 10–20 dk |
-| dip takımı | 15–35 dk |
-| sinek | 60–120 dk |
+| tuzak ✅ | 10–20 dk |
+| dip takımı ✅ | 15–35 dk |
+| sinek ✅ | 60–120 dk |
 | bütün kademeler | 8–15 saat |
 
 - ✅ **Denge botu** (`SessionSim`): oyunun kurallarını aynen kullanır (oranlar ve şans garantisi `CatchOdds`, boy `FishTable`, çekişme `ReelModel` + tepkili oyuncu botu, kova, rütbe, satış), yalnızca zamanı ve el becerisini taklit eder. Süreler `data/sim.json`'dan; atış, balığın gelişi, dürtmeler ve çekişme uzaklığı `tools/session_timing.gd` ile gerçek `FishingSession`'dan ölçülür (insan gibi şaşarak nişan alan bot). Dalga 1'deki ölçüm (eski göl, başlangıç takımı): ısırmaya ortalama 9 sn (atış ve geri sarma dahil), dürtmeler 2,8 sn, çekişme 5,2 sn, takılma uzaklığı 4,5 m; saatte 225 av (satışsız). Büyük gölde bölge başına: saatte 204–251 av (sazlık ve dere ağzında en çok, derin ortada en az). İnsan hatası tahmin: ısırmaların %15'i kaçırılır.
@@ -535,9 +545,10 @@ Dakikalar v0.3.1 ölçümü; Dalga 3 satırları ve korkuluklar bugünkü (`test
 | Dalga 3: spin kamışı / ilk spin atışı | 4–10 / 4–10 | 4–10 / 4–12 |
 | Dalga 3: dip kamışı / ilk dip atışı | 22–31 / 22–31 | 15–35 / 15–40 |
 | Dalga 3: sinek kamışı / ilk sinek atışı | 83–99 / 83–99 | 60–120 / 60–125 |
+| Dalga 3: ilk tuzak / tuzaktan ilk kerevit | 13–17 / 35–41 | 10–20 / 28–55 |
 | makara, iğne, şamandıra (ilk kademe) | 10–26 | — |
 | cam kamış | 22–35 (Dalga 3: 48–62) | 10–75 (8. adımda daralır) |
-| büyük kova | 30–42 | 15–60 |
+| büyük kova | 30–42 (Dalga 3: 95–103) | 15–110 (8. adımda daralır) |
 | floro misina, hızlı makara, kepçe, büyük iğne | 40–85 (Dalga 3'te kepçe 170–187) | kepçe 40–220 (8. adımda daralır) |
 | sandal (3.500) ve derin orta | 111–150 | 90–180 |
 | güçlü makara, parlak şamandıra, balık filesi | 126–185 | — |
@@ -580,6 +591,13 @@ Dakikalar v0.3.1 ölçümü; Dalga 3 satırları ve korkuluklar bugünkü (`test
     - saatte ~5.700–5.950 para ve ~187 av (önce ~5.600–5.900 ve 187); rütbe 20'ye 5,8–5,9 saatte (önce 6,3–6,8: alabalıklar Nadir, balık başına rütbe puanı çok);
     - kepçe 170–187. dakikada (sinek kamışına da para ayrılıyor); bütün türler 153–276. dakikada.
   - **Değerlendirme:** bot zamanının ~%44'ünü sinekte, ~%44'ünü spinde, %7–16'sını şamandırada, %1–3'ünü dipte geçiriyor. Dere ağzında sinekle balık başına değer şamandırayla aynı (~25 para), ama balık daha çabuk geliyor. 8. adımda (Denge) teknikler birbirine göre ayarlanır.
+- ✅ **Dalga 3, tuzak ölçümü:**
+  - **Denge botu:** ilk tuzağı öncelikle alır (Dede haber verir, düğme atar); sonraki tuzaklar sıradan takım gibi. Her satıştan sonra (kova boşken) kerevit girmiş tuzakları toplar, boştaki tuzağı sazlığın atış noktasının yakınına bırakır (yer kalmazsa kayalık buruna); tuzağın bölgesine gitmek `travel_s`, tuzak başına 4 sn (`trap_s`, tahmin). Tuzaklar botun oyun süresiyle dolar.
+  - **Sonuç** (`economy_report.gd -- --hours=12 --seeds=6`):
+    - ilk tuzak 13–17. dakikada (hedef 10–20), tuzaktan ilk kerevit 35–41. dakikada; ikinci tuzak ~3. saatte, üçüncüsü ~5. saatte;
+    - 12 saatte 79–81 kerevit (saatte ~7);
+    - saatte ~5.400–5.750 para ve 180 av (önce ~5.700–5.950 ve 187); rütbe 20'ye 6,0–6,2 saatte.
+  - **Değerlendirme:** tuzak kendini çok geç öder (kerevit 6 para, ilk tuzak 250) ve ucuz kerevit kovada yer kaplıyor: saatteki para %3–5 düştü. 250 paralık tuzak ~13. dakikada alınınca alışveriş birkaç dakika kaydı, büyük kova rütbe 7'ye kaldı ve sinek kamışına biriktirirken 95–103. dakikaya düştü (korkuluk 15–110). 8. adımda (Denge) kerevitin değeri ya da tuzağın fiyatı ve büyük kovanın sırası ayarlanır.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
 ### 10.5 Canlı dünya

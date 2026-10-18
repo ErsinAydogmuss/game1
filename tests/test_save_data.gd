@@ -208,6 +208,45 @@ func test_v3_save_migrates_to_v4() -> void:
 	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
 
 
+## v0.4'ün gerçek bir kaydı (denge botu spin, dip ve sinek kamışını, ilk tuzağı alıp sazlığa bırakana
+## kadar oynadı; botun saniyeleri gerçek saate taşındı; değiştirilmez): okunur ve gidiş-dönüşte aynı
+## kalır (v5 gelince göç bundan sınanır). Teknik başına setler, ortak makara ve misina, elindeki teknik,
+## kurulmuş tuzak ve içeriği, tuzak sayacı.
+func test_v4_save_reads_back() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v4.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v4 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var db := content()
+	var rules := db.rules
+	var s := SaveData.from_dict(raw)
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "güncel sürüm")
+	assert_eq(s.technique, "fly", "elindeki teknik")
+	for t: String in ["spin", "bottom", "fly"]:
+		assert_true(Economy.technique_ready(db, s, t), "%s kamışı alınmış" % t)
+	assert_eq(Economy.equipped(db, s, "rod", "spin"), "rod_spin_light", "spin kamışı spinin setinde")
+	assert_eq(Economy.equipped(db, s, "lure", "spin"), "lure_spinner", "kuşanılan yapay yem")
+	assert_eq(Economy.equipped(db, s, "rod", "bottom"), "rod_carp_1", "dip kamışı dipin setinde")
+	assert_eq(Economy.equipped(db, s, "rod"), "rod_float_glass", "şamandıranın kamışı")
+	assert_eq(Economy.equipped(db, s, "reel", "bottom"), "reel_smooth", "makara her teknikte ortak")
+	assert_eq(Economy.equipped(db, s, "line", "fly"), "line_mono", "misina her teknikte ortak")
+	assert_eq(s.traps.size(), 1, "bir tuzak kurulu")
+	assert_eq(TrapSim.owned(db, s), 1, "bir tuzağı var")
+	assert_eq(TrapSim.spare(db, s), 0, "boşta tuzak yok")
+	assert_eq(s.trap_serial, 4, "tuzak zarı sayacı")
+	if s.traps.size() == 1:
+		var trap := s.traps[0]
+		assert_eq(str(trap["zone"]), "reeds", "tuzak sazlıkta")
+		assert_eq((trap["items"] as Array).size(), rules.trap_max, "içeriği kurulunca belli")
+		assert_eq(int(trap["progress_s"]), 270, "dolma")
+		TrapSim.update(rules, trap, int(trap["last_unix"]) + 2 * rules.trap_fill_s)
+		assert_eq(TrapSim.ready(rules, trap), 2, "kayıttan sonra da gerçek saatle dolar")
+	assert_eq(int(s.records["crayfish"]["count"]), 4, "kerevit defterde")
+	assert_eq(int(s.stats["trapped"]), 3, "tuzaktan toplanan")
+	var fresh := SaveData.from_dict(raw)
+	assert_eq(SaveData.from_dict(fresh.to_dict()).to_dict(), fresh.to_dict(), "gidiş-dönüşte aynı")
+
+
 ## Rütbe puanı eğriden eğriye taşınınca her eşikte ve aralığın içinde rütbe aynı kalır,
 ## rütbedeki ilerleme oranı korunur.
 func test_xp_remap_keeps_rank_and_progress() -> void:

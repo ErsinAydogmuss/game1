@@ -1,0 +1,241 @@
+{
+	"baits": {},
+	"bucket": [
+		{
+			"fish": "chub",
+			"size_cm": 27,
+			"stars": 2
+		},
+		{
+			"fish": "chub",
+			"size_cm": 43,
+			"stars": 4
+		},
+		{
+			"fish": "chub",
+			"size_cm": 40,
+			"stars": 3
+		}
+	],
+	"casts": 221,
+	"catches": 175,
+	"character": "rogue",
+	"coins": 77,
+	"created_unix": 1760300000,
+	"flags": {
+		"seen_card": true,
+		"tech_casts_bottom": 3,
+		"tech_casts_fly": 3,
+		"tech_casts_spin": 3,
+		"told_open_bottom": true,
+		"told_open_fly": true,
+		"told_open_spin": true,
+		"told_open_trap": true,
+		"told_trap_first": true,
+		"visited_dock_cove": true,
+		"visited_lily_cove": true,
+		"visited_reeds": true,
+		"visited_rocky_point": true,
+		"visited_stream_mouth": true
+	},
+	"hint_step": 0,
+	"last_seen_unix": 1760305013,
+	"loadouts": {
+		"bottom": {
+			"rod": "rod_carp_1"
+		},
+		"float": {
+			"bobber": "bobber_sensitive",
+			"hook": "hook_medium",
+			"rod": "rod_float_glass"
+		},
+		"fly": {
+			"rod": "rod_fly_1"
+		},
+		"shared": {
+			"line": "line_mono",
+			"reel": "reel_smooth"
+		},
+		"spin": {
+			"lure": "lure_spinner",
+			"rod": "rod_spin_light"
+		}
+	},
+	"love": 0,
+	"owned": [
+		"rod_spin_light",
+		"trap_1",
+		"line_mono",
+		"rod_carp_1",
+		"lure_spinner",
+		"reel_smooth",
+		"hook_medium",
+		"bobber_sensitive",
+		"rod_float_glass",
+		"rod_fly_1"
+	],
+	"pity": {
+		"epic": 6,
+		"rare": 4
+	},
+	"player_id": "0123456789abcdef0123456789abcdef",
+	"records": {
+		"bream": {
+			"best_cm": 42,
+			"best_stars": 3,
+			"count": 3,
+			"first_unix": 1760300029,
+			"released": 0
+		},
+		"brook_trout": {
+			"best_cm": 50,
+			"best_stars": 2,
+			"count": 1,
+			"first_unix": 1760304019,
+			"released": 0
+		},
+		"carp": {
+			"best_cm": 63,
+			"best_stars": 3,
+			"count": 15,
+			"first_unix": 1760300057,
+			"released": 0
+		},
+		"chub": {
+			"best_cm": 50,
+			"best_stars": 5,
+			"count": 33,
+			"first_unix": 1760301959,
+			"released": 0
+		},
+		"crayfish": {
+			"best_cm": 10,
+			"best_stars": 3,
+			"count": 4,
+			"first_unix": 1760302436,
+			"released": 0
+		},
+		"golden_carp": {
+			"best_cm": 53,
+			"best_stars": 2,
+			"count": 1,
+			"first_unix": 1760301132,
+			"released": 0
+		},
+		"mirror_carp": {
+			"best_cm": 85,
+			"best_stars": 4,
+			"count": 2,
+			"first_unix": 1760302275,
+			"released": 0
+		},
+		"perch": {
+			"best_cm": 44,
+			"best_stars": 5,
+			"count": 44,
+			"first_unix": 1760300043,
+			"released": 0
+		},
+		"pike": {
+			"best_cm": 103,
+			"best_stars": 4,
+			"count": 25,
+			"first_unix": 1760300533,
+			"released": 0
+		},
+		"rudd": {
+			"best_cm": 29,
+			"best_stars": 5,
+			"count": 20,
+			"first_unix": 1760300012,
+			"released": 0
+		},
+		"silverside": {
+			"best_cm": 17,
+			"best_stars": 5,
+			"count": 5,
+			"first_unix": 1760300198,
+			"released": 0
+		},
+		"tench": {
+			"best_cm": 26,
+			"best_stars": 1,
+			"count": 2,
+			"first_unix": 1760302313,
+			"released": 0
+		},
+		"trout": {
+			"best_cm": 38,
+			"best_stars": 2,
+			"count": 3,
+			"first_unix": 1760303775,
+			"released": 0
+		},
+		"wels": {
+			"best_cm": 213,
+			"best_stars": 4,
+			"count": 8,
+			"first_unix": 1760303096,
+			"released": 0
+		},
+		"zander": {
+			"best_cm": 68,
+			"best_stars": 3,
+			"count": 11,
+			"first_unix": 1760301762,
+			"released": 0
+		}
+	},
+	"seed": 4242,
+	"session": 22,
+	"settings": {
+		"easy": false,
+		"locale": "tr",
+		"music": true,
+		"sfx": true,
+		"vibration": true
+	},
+	"stats": {
+		"earned": 3567,
+		"sold": 174,
+		"spent": 3490,
+		"trapped": 3
+	},
+	"technique": "fly",
+	"trap_serial": 4,
+	"traps": [
+		{
+			"id": 0,
+			"items": [
+				{
+					"fish": "crayfish",
+					"size_cm": 10,
+					"stars": 2
+				},
+				{
+					"fish": "crayfish",
+					"size_cm": 11,
+					"stars": 3
+				},
+				{
+					"fish": "crayfish",
+					"size_cm": 6,
+					"stars": 1
+				},
+				{
+					"fish": "crayfish",
+					"size_cm": 9,
+					"stars": 2
+				}
+			],
+			"last_unix": 1760304965,
+			"placed_unix": 1760301095,
+			"progress_s": 270,
+			"x": -17.5,
+			"z": -0.349999904632568,
+			"zone": "reeds"
+		}
+	],
+	"version": 4,
+	"xp": 3255
+}
