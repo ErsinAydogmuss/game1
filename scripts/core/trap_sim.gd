@@ -96,7 +96,36 @@ static func place_block(db: ContentDB, save: SaveData, spot_id: String, zone_id:
 ## (place_block ""); yoksa Dice.NO_POINT.
 static func spot_near(db: ContentDB, save: SaveData, spot_id: String, zone_id: String, angler: Vector2,
 		facing: Vector2) -> Vector2:
-	var rules := db.rules
+	for p in _candidates(db.rules, angler, facing):
+		if place_block(db, save, spot_id, zone_id, p, angler).is_empty():
+			return p
+	return Dice.NO_POINT
+
+
+## Balıkçının çevresine neden tuzak kurulamıyor (spot_near yer bulamadıysa): önce genel neden (tuzağı
+## yok, hepsi kurulu, bölge), sonra denenen yerlerde görülen: öteki tuzağa çok yakın sığ su, çok derin
+## su, yoksa yakında sığ su yok. Kurulabiliyorsa "".
+static func why_not(db: ContentDB, save: SaveData, spot_id: String, zone_id: String, angler: Vector2,
+		facing: Vector2) -> String:
+	var general := place_block(db, save, spot_id, zone_id, angler, angler)
+	if general != "UI_TRAP_NO_SPOT":
+		return general
+	var seen := {}
+	for p in _candidates(db.rules, angler, facing):
+		var why := place_block(db, save, spot_id, zone_id, p, angler)
+		if why.is_empty():
+			return ""
+		seen[why] = true
+	for why: String in ["UI_TRAP_CLOSE", "UI_TRAP_DEEP"]:
+		if seen.has(why):
+			return why
+	return "UI_TRAP_NO_SPOT"
+
+
+## spot_near'ın denediği yerler, sırayla: baktığı yönden başlayıp 15°'lik adımlarla iki yana, her yönde
+## uygun uzaklığın ortası, iki yanı ve uçları.
+static func _candidates(rules: FishingRules, angler: Vector2, facing: Vector2) -> Array[Vector2]:
+	var out: Array[Vector2] = []
 	var dir0 := facing.normalized() if facing.length_squared() > 0.0001 else Vector2(0, -1)
 	var mid := (rules.trap_near.x + rules.trap_near.y) * 0.5
 	var distances: Array[float] = [mid, lerpf(rules.trap_near.x, mid, 0.5), lerpf(mid, rules.trap_near.y, 0.5),
@@ -104,10 +133,8 @@ static func spot_near(db: ContentDB, save: SaveData, spot_id: String, zone_id: S
 	for k in 24:
 		var dir := dir0.rotated(deg_to_rad(15.0 * ((k + 1) >> 1)) * (1.0 if k % 2 == 1 else -1.0))
 		for d: float in distances:
-			var p := angler + dir * d
-			if place_block(db, save, spot_id, zone_id, p, angler).is_empty():
-				return p
-	return Dice.NO_POINT
+			out.append(angler + dir * d)
+	return out
 
 
 ## Tuzağı kurar (place_block'u çağıran denetler): kimliği trap_serial, içeriği o an zarlanır.

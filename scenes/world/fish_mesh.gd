@@ -23,7 +23,8 @@ const NOSE_X := 0.5
 ## rengi), dorsals (sırt yüzgeci sayısı), dorsal ([baş, son, tepe, yükseklik]: sırt yüzgecinin yeri),
 ## anal (uzun anal yüzgeç), low_fins (alt yüzgeçlerin rengi), fork (kuyruğun çatal derinliği),
 ## tail_tilt (üst lobu uzun kuyruk), crayfish (balık değil kerevit), wiggle (kıvrılmanın çarpanı), show
-## (elde gösterilen boyun çarpanı: küçük kerevit seçilsin).
+## (elde gösterilen boyun çarpanı: küçük kerevit seçilsin), outline (dış çizginin çarpanı: kerevitin
+## ince bacakları ve duyargaları kalın çizgiye boğulmasın).
 const SHAPES := {
 	"rudd": { "ratio": 2.4, "nose": 2.4, "eye": 0.075 },
 	"carp": { "ratio": 2.2, "nose": 2.6, "eye": 0.065, "whiskers": 0.12 },
@@ -43,7 +44,7 @@ const SHAPES := {
 	"trout": { "ratio": 3.3, "nose": 2.0, "eye": 0.07, "lateral": "#ef8fa6", "spots": "#2e2a1e", "fork": 0.04 },
 	"brook_trout": { "ratio": 3.1, "nose": 2.1, "eye": 0.068, "flat": 0.08, "spots": "#e04a2f", "low_fins": "#e8743a",
 		"fork": 0.03 },
-	"crayfish": { "crayfish": true, "wiggle": 0.3, "show": 2.0 },
+	"crayfish": { "crayfish": true, "wiggle": 0.3, "show": 2.0, "outline": 0.6 },
 }
 const DEFAULT_SHAPE := { "ratio": 2.2, "nose": 2.4, "eye": 0.075 }
 ## Dış çizginin dünyadaki kalınlığı (m).
@@ -52,8 +53,9 @@ const OUTLINE_M := 0.012
 static var _meshes: Dictionary = {}
 static var _material: ShaderMaterial
 
-## Türün kıvrılma çarpanı (kerevitte kısık: kuyruğu hafifçe oynar).
+## Türün kıvrılma ve dış çizgi çarpanı (kerevitte kısık: kuyruğu hafifçe oynar, çizgisi ince).
 var wiggle_scale: float = 1.0
+var outline_scale: float = 1.0
 
 
 ## Türün (ContentDB fish tanımı) balığı; toplam boyu length metre.
@@ -62,7 +64,9 @@ static func make(def: Dictionary, length: float) -> FishMesh:
 	node.mesh = mesh_for(def)
 	node.material_override = _shared_material()
 	node.scale = Vector3.ONE * length
-	node.wiggle_scale = float((SHAPES.get(str(def.get("id", "")), DEFAULT_SHAPE) as Dictionary).get("wiggle", 1.0))
+	var shape: Dictionary = SHAPES.get(str(def.get("id", "")), DEFAULT_SHAPE)
+	node.wiggle_scale = float(shape.get("wiggle", 1.0))
+	node.outline_scale = float(shape.get("outline", 1.0))
 	node.set_instance_shader_parameters_safe(length)
 	return node
 
@@ -90,7 +94,7 @@ func set_instance_shader_parameters_safe(length: float) -> void:
 	material.set_shader_parameter("fish_length", 1.0)
 	(material.next_pass as ShaderMaterial).set_shader_parameter("fish_length", 1.0)
 	# Dış çizgi dünyada ~12 mm (modelin biriminde, ölçeğe bölünür): telefonda ve portrede seçilsin.
-	(material.next_pass as ShaderMaterial).set_shader_parameter("outline_width", OUTLINE_M / maxf(length, 0.2))
+	(material.next_pass as ShaderMaterial).set_shader_parameter("outline_width", OUTLINE_M * outline_scale / maxf(length, 0.2))
 	material_override = material
 
 

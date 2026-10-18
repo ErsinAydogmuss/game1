@@ -153,6 +153,43 @@ func test_where_a_trap_can_be_placed() -> void:
 		assert_eq(TrapSim.place_block(db, _save(1), SPOT, "reeds", deep, reeds), "UI_TRAP_DEEP", "derin suya kurulmaz")
 
 
+## Kurulamayınca nedeni söylenir: genel neden (tuzak yok, hepsi kurulu, bölge), öteki tuzağa çok yakın
+## sığ su, yakında su yok; kurulabiliyorsa boş.
+func test_why_a_trap_cannot_be_placed() -> void:
+	var db := content()
+	var lake := db.lake(SPOT)
+	var up := Vector2(0, -1)
+	var reeds := _stand("reeds")
+	assert_eq(TrapSim.why_not(db, _save(0), SPOT, "reeds", reeds, up), "UI_TRAP_NONE", "tuzağı yok")
+	assert_eq(TrapSim.why_not(db, _save(1), SPOT, "dock_cove", _stand("dock_cove"), up), "UI_TRAP_ZONE", "bölgeye kurulmaz")
+	assert_eq(TrapSim.why_not(db, _save(1), SPOT, "reeds", reeds, up), "", "kurulabiliyorsa neden yok")
+	var full := _save(1)
+	_placed(full)
+	assert_eq(TrapSim.why_not(db, full, SPOT, "reeds", reeds, up), "UI_TRAP_ALL_SET", "hepsi kurulu")
+	# Kıyıdan uzakta, sazlığın karasında: yakında su yok.
+	var inland := Dice.NO_POINT
+	for d in range(4, 30):
+		var p := reeds + Vector2(0, float(d) * 0.5)
+		if lake.in_world(p) and lake.shore_distance(p) <= -3.7 and str(Zones.at(db, SPOT, p).get("id", "")) == "reeds":
+			inland = p
+			break
+	assert_true(Dice.is_point(inland), "sazlığın karasında sudan uzak bir yer var")
+	if Dice.is_point(inland):
+		assert_eq(TrapSim.why_not(db, _save(1), SPOT, "reeds", inland, up), "UI_TRAP_NO_SPOT", "yakında su yok")
+	# Kayalık burunda bir tuzağın dibinde: yakındaki sığ su öteki tuzağa çok yakın.
+	var two := _save(2)
+	var first := TrapSim.spot_near(db, two, SPOT, "rocky_point", _stand("rocky_point"), up)
+	TrapSim.place(db, two, SPOT, "rocky_point", first, T0)
+	var close := false
+	for gx in range(-8, 9):
+		for gz in range(-8, 9):
+			var p := first + Vector2(gx, gz) * 0.5
+			if lake.is_water(p) or str(Zones.at(db, SPOT, p).get("id", "")) != "rocky_point":
+				continue
+			close = close or TrapSim.why_not(db, two, SPOT, "rocky_point", p, up) == "UI_TRAP_CLOSE"
+	assert_true(close, "öteki tuzağın dibinde: çok yakın")
+
+
 func test_rocky_point_has_traps_too() -> void:
 	var db := content()
 	assert_true(TrapSim.zone_allows(db, SPOT, "reeds") and TrapSim.zone_allows(db, SPOT, "rocky_point"),

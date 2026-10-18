@@ -374,3 +374,5 @@ UI_TRAP_WAIT,Wait,Bekle
 UI_TRAP_REMOVE,Take it,Kaldır
 UI_TRAP_REMOVED,Trap back in your bag,Tuzak çantana döndü
 UI_NINE_TRAP,"Set it from your tackle bag, in the shallows, dear.",Takım çantandan sığ suya bırak evladım.
+UI_TRAP_ENTERED,A crayfish just walked in!,Tuzağa bir kerevit girdi!
+UI_TRAP_COLLECT,Collect,Topla

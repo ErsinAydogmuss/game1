@@ -359,7 +359,7 @@ func _build_input() -> void:
 			_trap_tap = -1 if in_boat else traps.hit(camera, screen)
 			return _trap_tap >= 0],
 	]
-	input.targets_active = func() -> bool: return session.state == FishingSession.State.IDLE and not card.visible
+	input.targets_active = func() -> bool: return session.state == FishingSession.State.IDLE and not _card_up()
 	add_child(input)
 	input.target_tapped.connect(_on_target)
 	input.walk_requested.connect(_on_walk_requested)
@@ -394,7 +394,7 @@ func ground_point(screen: Vector2) -> Vector2:
 
 
 func _on_walk_requested(target: Vector2) -> void:
-	if session.state != FishingSession.State.IDLE or in_boat:
+	if session.state != FishingSession.State.IDLE or in_boat or _card_up():
 		return
 	_pending_cast = Dice.NO_POINT
 	_pending_trap = -1
@@ -410,7 +410,8 @@ func _on_cast_requested(target: Vector2) -> void:
 	if returning:
 		_pending_cast = target
 		return
-	if session.state != FishingSession.State.IDLE:
+	# Tuzaktan ilk kerevitin kartı açılmak üzere (oturum boşta): dokunuş atış değil.
+	if session.state != FishingSession.State.IDLE or _card_up():
 		return
 	_pending_trap = -1
 	# Sandalda yürünmez: dokunulan yöne atılır (şamandıra menzilin içine düşer).
@@ -491,8 +492,10 @@ func _check_pending_cast() -> void:
 
 
 func _try_cast(target: Vector2) -> void:
-	# Hangi yoldan gelirse gelsin (dokunuş, AT, bekleyen atış) önceki hedef unutulur, yürüme biter.
+	# Hangi yoldan gelirse gelsin (dokunuş, AT, bekleyen atış) önceki hedef (bekleyen tuzak da)
+	# unutulur, yürüme biter.
 	_pending_cast = Dice.NO_POINT
+	_pending_trap = -1
 	angler.stop()
 	# Balıkçının yeri ve avlandığı bölge hemen (yürüyüş bu karede bittiyse): teknik bölgeye uyar
 	# (sinek dere ağzı dışında atılmasın), kamış ve takımın görünüşü de.
@@ -519,7 +522,7 @@ func _try_cast(target: Vector2) -> void:
 
 
 func _on_action_down() -> void:
-	if card.visible:
+	if _card_up():
 		return
 	if session.state == FishingSession.State.IDLE:
 		# Space / AT: balıkçının önüne; önü kara ise suyun olduğu en yakın yöne.
@@ -791,6 +794,8 @@ func _on_catch() -> void:
 	elif not zone_news and technique == "float" and _suggest_fly():
 		save.flags["told_fly_here"] = true
 		_say("UI_DEDE_FLY_HERE")
+	elif not zone_news and _trap_line_due():
+		_say_trap_open()
 	bobber.hide_bobber()
 	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)
 	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
@@ -839,8 +844,9 @@ func _after_rank(ranked: Dictionary) -> bool:
 		news = true
 		_say("UI_DEDE_ZONE_OPEN")
 		hud.pulse_map()
-	# Yeni teknik ya da tuzak açıldı (Dede'nin sözü bölgeninkinden önemli: Nine'nin sattığı takım).
-	if _announce_techniques():
+	# Yeni teknik ya da tuzak açıldı (tekniğin sözü bölgeninkinden önemli: Nine'nin sattığı kamış;
+	# tuzağın sözü bölgenin sözünü ezmez, sonraki balığa kalır).
+	if _announce_techniques(not opened.is_empty()):
 		news = true
 	return news
 
@@ -989,7 +995,7 @@ func _present(delta: float) -> void:
 		hud.tension_bar.distance = reel.distance
 	_update_hint()
 	_first_cue(delta)
-	input.walking_allowed = session.state == FishingSession.State.IDLE and not card.visible and not in_boat
+	input.walking_allowed = session.state == FishingSession.State.IDLE and not _card_up() and not in_boat
 	# Yürürken adım sesi.
 	if angler.is_walking():
 		_step_clock += delta
@@ -1304,21 +1310,12 @@ func _refresh_status() -> void:
 ## Rütbesi gelmiş ama haber verilmemiş teknik (rütbe atladı ya da eski kayıt): adı ikonuyla, Dede
 ## söyler, teknik düğmesi nabız gibi atar. Her teknik bir kez (flags["told_open_<teknik>"]); kamışı
 ## zaten alınmışsa haber verilmez. Kerevit tuzağı da (flags["told_open_trap"]; tuzağı varsa haber
-## verilmez). Haber verildiyse true.
-func _announce_techniques() -> bool:
+## verilmez; Dede'nin sözü flags["told_trap_line"]). Haber verildiyse true.
+func _announce_techniques(quiet_trap: bool = false) -> bool:
 	var db := GameState.db
 	var save := GameState.save
 	var rank := Rank.rank(db, save)
 	var told := false
-	# Kerevit tuzağı (rütbe 3): tekniklerden önce; aynı anda bir teknik de açıldıysa Dede onu söyler.
-	var trap_rank := TrapSim.rank(db)
-	if trap_rank > 0 and rank >= trap_rank and not save.flags.has("told_open_trap"):
-		save.flags["told_open_trap"] = true
-		if TrapSim.owned(db, save) == 0:
-			hud.toast_later(tr("UI_TRAP_OPEN"), UiKit.ACCENT, "", "tech_trap")
-			_say("UI_DEDE_TRAP_OPEN")
-			hud.pulse_technique()
-			told = true
 	for t: String in ContentDB.TECHNIQUES:
 		var flag := "told_open_" + t
 		if t == "float" or not db.has_technique(t) or rank < db.technique_rank(t) or save.flags.has(flag):
@@ -1330,7 +1327,31 @@ func _announce_techniques() -> bool:
 		_say("UI_DEDE_TECH_OPEN_" + t)
 		hud.pulse_technique()
 		told = true
+	# Kerevit tuzağı (rütbe 3): bildirim ve nabız hemen; Dede'nin sözü aynı anda bir bölge (quiet_trap) ya
+	# da teknik açıldıysa onları ezmez, sonraki balığa kalır (_trap_line_due).
+	var trap_rank := TrapSim.rank(db)
+	if trap_rank > 0 and rank >= trap_rank and not save.flags.has("told_open_trap"):
+		save.flags["told_open_trap"] = true
+		if TrapSim.owned(db, save) == 0:
+			hud.toast_later(tr("UI_TRAP_OPEN"), UiKit.ACCENT, "", "tech_trap")
+			hud.pulse_technique()
+			if not quiet_trap and not told:
+				_say_trap_open()
+			told = true
 	return told
+
+
+## Dede tuzağı anlatır (bir kez).
+func _say_trap_open() -> void:
+	GameState.save.flags["told_trap_line"] = true
+	_say("UI_DEDE_TRAP_OPEN")
+
+
+## Tuzak açıldı ama Dede'nin sözü başka bir habere yenildi ve tuzak hâlâ alınmadı: sıradaki balıkta söyler.
+func _trap_line_due() -> bool:
+	var save := GameState.save
+	return save.flags.has("told_open_trap") and not save.flags.has("told_trap_line") \
+			and TrapSim.owned(GameState.db, save) == 0
 
 
 ## Dere ağzında (sineğin avlanıldığı yerde) şamandırayla tutan oyuncuya Dede bir kez sineği önerir:
@@ -1489,7 +1510,7 @@ func _on_target(id: String) -> void:
 ## Sandala dokunuldu: sandal alındıysa binilir (derin ortanın ilk şamandırası); yoksa Dede söyler
 ## (rütbe yetiyorsa Nine'nin sandal sattığını).
 func _on_boat() -> void:
-	if session.state != FishingSession.State.IDLE or card.visible or in_boat:
+	if session.state != FishingSession.State.IDLE or _card_up() or in_boat:
 		return
 	var db := GameState.db
 	var deep := _boat_zone()
@@ -1514,15 +1535,15 @@ func _refresh_traps() -> void:
 ## Takım çantasında "Tuzak bırak": balıkçının yakınındaki sığ suya (baktığı yöne en yakın uygun yer)
 ## atılır; içeriği o an belli olur (TrapSim.place). Uygun yer yoksa nedeni bildirilir.
 func _place_trap() -> void:
-	if session.state != FishingSession.State.IDLE or card.visible or traps.is_flying():
+	if session.state != FishingSession.State.IDLE or _card_up() or traps.is_flying():
 		return
 	var db := GameState.db
 	var save := GameState.save
 	var at := angler.pos2()
 	var p := TrapSim.spot_near(db, save, spot_id, zone_id, at, angler.facing)
 	if not Dice.is_point(p):
-		# Genel neden (tuzak yok, hepsi kurulu, bölge) ya da yakında sığ su yok.
-		var why := TrapSim.place_block(db, save, spot_id, zone_id, at, at)
+		# Nedeni: tuzak yok, hepsi kurulu, bölge, öteki tuzağa çok yakın, çok derin ya da sığ su yok.
+		var why := TrapSim.why_not(db, save, spot_id, zone_id, at, angler.facing)
 		hud.toast(tr(why if not why.is_empty() else "UI_TRAP_NO_SPOT"), UiKit.ACCENT, "tech_trap")
 		Sounds.play("error")
 		return
@@ -1553,8 +1574,9 @@ func _on_trap_landed(at: Vector2) -> void:
 ## Bir tuzağa dokunuldu (kıyıdayken): yakınsa toplanır; uzaktaysa balıkçı kıyı yolundan yürür, varınca
 ## toplar.
 func _on_trap_tapped(id: int) -> void:
-	if session.state != FishingSession.State.IDLE or card.visible:
+	if session.state != FishingSession.State.IDLE or _card_up():
 		return
+	_pending_trap = -1
 	var index := TrapSim.find(GameState.save, id)
 	if index < 0:
 		return
@@ -1726,7 +1748,7 @@ func _return_to_shore() -> void:
 
 ## Dede'ye dokunuldu: sıradaki öğüdü ipucu çubuğunda söyler (balon, baş sallama).
 func _on_talk() -> void:
-	if session.state != FishingSession.State.IDLE or card.visible:
+	if session.state != FishingSession.State.IDLE or _card_up():
 		return
 	_tip_index = _tip_index % Elder.TIP_COUNT + 1
 	_say(Elder.TIP_KEY % _tip_index)
@@ -1736,7 +1758,7 @@ func _on_talk() -> void:
 ## Nine'ye ya da dükkânına dokunuldu: Nine selam verir (balon, baş sallama, tezgâha uzanma) ve
 ## dükkân açılır (kova doluysa Kova sekmesi). Olta suda değilken açılır: oturum zaten boşta.
 func _on_shop() -> void:
-	if session.state != FishingSession.State.IDLE or card.visible:
+	if session.state != FishingSession.State.IDLE or _card_up():
 		return
 	nine.greet()
 	Sounds.haptic(10)
@@ -1860,10 +1882,10 @@ func _build_ui() -> void:
 		input.release_all()
 		book_panel.open_book())
 	hud.shore_pressed.connect(func() -> void:
-		if session.state == FishingSession.State.IDLE and not card.visible:
+		if session.state == FishingSession.State.IDLE and not _card_up():
 			_return_to_shore())
 	hud.map_pressed.connect(func() -> void:
-		if session.state != FishingSession.State.IDLE or card.visible:
+		if session.state != FishingSession.State.IDLE or _card_up():
 			return
 		input.release_all()
 		angler.stop()
@@ -1871,7 +1893,7 @@ func _build_ui() -> void:
 		_pending_trap = -1
 		map_panel.open_map(angler.pos2(), zone_id, _map_marks()))
 	hud.technique_pressed.connect(func() -> void:
-		if session.state != FishingSession.State.IDLE or card.visible:
+		if session.state != FishingSession.State.IDLE or _card_up():
 			return
 		input.release_all()
 		angler.stop()

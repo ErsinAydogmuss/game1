@@ -3,7 +3,8 @@ extends Dialog
 ## Boş tuzak (docs/gdd.md §10.3): şamandırasına dokunulan tuzakta kerevit yoksa açılır. Sıradaki
 ## kerevitin ne zaman gireceği (gerçek saatle; oyun kapalıyken de dolar, hızlandırma yok) ve iki
 ## düğme: BEKLE (kapanır) ya da KALDIR (tuzak geri alınır, takım çantasından yeniden bırakılır;
-## girmemiş içerik girmemiş sayılır). Kalan süre panel açıkken her saniye yenilenir.
+## girmemiş içerik girmemiş sayılır). Kalan süre panel açıkken her saniye yenilenir; bu arada bir
+## kerevit girerse yazı söyler ve KALDIR TOPLA olur (main kerevit girmiş tuzağı kaldırmaz, toplar).
 
 signal remove_requested(id: int)
 
@@ -75,6 +76,10 @@ func refresh() -> void:
 		return
 	var trap := save.traps[index]
 	TrapSim.update(db.rules, trap, GameState.clock.now_unix())
+	if TrapSim.ready(db.rules, trap) > 0:
+		_text.text = tr("UI_TRAP_ENTERED")
+		_remove.text = UiKit.upper(tr("UI_TRAP_COLLECT"))
+		return
 	var minutes := maxi(1, ceili(TrapSim.seconds_to_next(db.rules, trap) / 60.0))
 	_text.text = tr("UI_TRAP_EMPTY") % minutes
 
