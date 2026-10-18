@@ -109,11 +109,12 @@ func copy() -> TechniqueRules:
 	return t
 
 
-## Yem sepeti (dip; pull 0–1): gölgeler takımın çevresine daha erken ve daha sık toplanır.
+## Yem sepeti (dip; pull 0–1): gölgeler takımın çevresine daha erken ve daha sık toplanır. Eşik en
+## az 1 adım: bekleme adımı 1'den sayılır (BottomTechnique eşitlikle bakar).
 func with_pull(pull: float) -> TechniqueRules:
 	var t := copy()
 	var p := clampf(pull, 0.0, 1.0)
-	t.gather_after_steps = roundi(gather_after_steps * (1.0 - p))
+	t.gather_after_steps = maxi(1, roundi(gather_after_steps * (1.0 - p)))
 	t.gather_ppm = mini(Dice.PPM, roundi(gather_ppm * (1.0 + p)))
 	return t
 

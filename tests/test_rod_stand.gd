@@ -1,6 +1,6 @@
 extends BaseTest
 ## Dipteki sehpa (RodStand) balıkçının yanına konur ve atış yönüne bakar; o yanda yer yoksa (iskele
-## kenarı, su) öteki yanına, o da yoksa arkasına.
+## kenarı, su) öteki yanına, o da yoksa arkasına (önce biraz yana kayık); sandalda küpeştede.
 
 
 func test_stand_goes_beside_the_angler() -> void:
@@ -25,3 +25,25 @@ func test_stand_finds_room_on_the_other_side_or_behind() -> void:
 	stand.place(Vector3(0, 0, 0), Vector2(0, -1), behind_only)
 	assert_true(stand.position.z > 0.0 and absf(stand.position.x) < 0.001, "arkasına (%s)" % str(stand.position))
 	stand.free()
+
+
+func test_stand_behind_keeps_the_rod_clear_and_boat_is_closer() -> void:
+	var stand := RodStand.new()
+	# Yanlar su, arkada yer var: önce biraz sağa kayık (atış yönüne uzanan kamış balıkçıdan geçmesin).
+	var behind := func(p: Vector2) -> bool: return p.y > 0.0 and absf(p.x) < 0.5
+	stand.place(Vector3.ZERO, Vector2(0, -1), behind)
+	assert_true(stand.position.z > 0.0 and absf(stand.position.x - RodStand.BEHIND_SIDE) < 0.001,
+			"arkada, biraz yanda (%s)" % str(stand.position))
+	# Sandalda küpeştede: teknenin içinde kalacak kadar yakın.
+	var everywhere := func(_p: Vector2) -> bool: return true
+	stand.place(Vector3.ZERO, Vector2(0, -1), everywhere, RodStand.BOAT_SIDE)
+	assert_true(absf(stand.position.x - RodStand.BOAT_SIDE) < 0.001 and RodStand.BOAT_SIDE < 0.45,
+			"sandalda yakın (%s)" % str(stand.position))
+	stand.free()
+
+
+func test_rod_rests_on_both_supports() -> void:
+	# Kamışın altı arka desteğin ve ön çatalın yüksekliğinde: ön çatal arkadan yüksek (kamış yükselir).
+	var rear := RodStand.rest_height(RodStand.REAR_Z, 0.03)
+	var front := RodStand.rest_height(RodStand.FRONT_Z, 0.026)
+	assert_true(rear > 0.2 and front > rear + 0.3 and front < 1.0, "arka %.2f, ön %.2f m" % [rear, front])

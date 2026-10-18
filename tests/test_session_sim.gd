@@ -21,10 +21,11 @@ const PACING := [
 	["zone:rocky_point", 15.0, 35.0],
 	["species_5", 0.0, 30.0],
 	# Dalga 3: spin ve dip takımları da alışverişte (yeni tekniğin ilk kamışına biriktirir): cam kamış
-	# ve kepçe biraz gecikti (önce 32–42 ve 71–83 dk). Fiyatlar 8. adımda (Denge) yeniden ayarlanır.
-	["buy:rod_float_glass", 10.0, 60.0],
+	# ve kepçe gecikti (economy_report, 6 seed: 48–62 ve 138–172 dk; önce 32–42 ve 71–83). Sınırlar
+	# ölçüme pay bırakır; fiyatlar 8. adımda (Denge) yeniden ayarlanınca daralır.
+	["buy:rod_float_glass", 10.0, 75.0],
 	["buy:bucket_big", 15.0, 60.0],
-	["buy:net", 40.0, 150.0],
+	["buy:net", 40.0, 190.0],
 	["buy:boat", 90.0, 180.0],     # rütbe 9 + biriktirme (90–180)
 	["buy:rod_spin_light", 4.0, 10.0], # spin rütbe 2'de: ilk kamışı (150) öncelikli
 	["tech:spin", 4.0, 12.0],      # spinle ilk atış

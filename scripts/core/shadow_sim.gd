@@ -206,6 +206,13 @@ func call_to_rig(bobber: Vector2, waiting_steps: int) -> void:
 			_pick_target(s, bobber, true, waiting_steps)
 
 
+## Takım sudan çıktı (geri sarma, kaçma): takıma toplanan gölgeler yine olağan hızla dolaşır
+## (gidecekleri yer değişmez; zar atılmaz).
+func end_gather() -> void:
+	for s in shadows:
+		s.gathering = false
+
+
 ## Yaklaşan balık ilgisini kaybeder (oyuncu oltayı geri sardı).
 func lose_interest(s: FishShadow) -> void:
 	s.mode = FishShadow.Mode.PAUSE

@@ -267,6 +267,7 @@ UI_BOOK_COUNT,Caught: %d · Released: %d,Tutulan: %d · Bırakılan: %d
 UI_BOOK_PROTECTED,"Protected: caught, admired and let go.","Koruma altında: tutulur, sevilir, göle bırakılır."
 UI_BOOK_BAIT_HINT,Favourite bait: %s,Sevdiği yem: %s
 UI_BOOK_HINT_ZONE,Lives in: %s,Yaşadığı yer: %s
+UI_BOOK_HINT_TECH,Caught with: %s,Şununla tutulur: %s
 UI_BOOK_HINT_OFTEN,Often seen in this lake.,Bu gölde sık görülür.
 UI_BOOK_HINT_SOMETIMES,Sometimes seen in this lake.,Bu gölde ara sıra görülür.
 UI_BOOK_HINT_RARELY,Rarely seen in this lake.,Bu gölde nadiren görülür.

@@ -296,6 +296,7 @@ func land_rig() -> void:
 func retrieve(retrieve_steps: int = -1, reason: String = "") -> void:
 	if sim.approacher != null:
 		sim.lose_interest(sim.approacher)
+	sim.end_gather()
 	state = State.RETRIEVING
 	timer = maxi(1, rules.retrieve_steps if retrieve_steps < 0 else retrieve_steps)
 	var e := { "type": "retrieve" }
@@ -391,6 +392,7 @@ func hook_fish() -> void:
 
 ## Balık kaçtı ya da misina koptu: kısa bir beklemeden sonra boşa döner.
 func lose(reason: String) -> void:
+	sim.end_gather()
 	state = State.LOST
 	timer = maxi(1, rules.lost_steps)
 	last_loss = reason

@@ -282,8 +282,9 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 	_add_lake_odds(db, save, species_odds)
 
 
-## Tutulmamış bir balığın ipuçları: sevdiği yem (en çok çeken), bölgeli gölde yaşadığı yerler ve ne
-## sıklıkla görüldüğü (en sık görüldüğü bölgede).
+## Tutulmamış bir balığın ipuçları: sevdiği yem (en çok çeken), şamandırayla gelmiyorsa hangi
+## teknikle tutulduğu, bölgeli gölde yaşadığı yerler ve ne sıklıkla görüldüğü (oyundaki tekniklerin
+## her biriyle, en sık görüldüğü bölgede).
 static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, zone: String = "") -> PackedStringArray:
 	var out := PackedStringArray()
 	var best_bait := ""
@@ -296,12 +297,21 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, 
 			best_bait = str(g["id"])
 	if not best_bait.is_empty():
 		out.append(UiKit.translate("UI_BOOK_BAIT_HINT") % UiKit.translate("GEAR_" + best_bait))
-	var ppm := int(CatchOdds.species_ppm(db, Zones.place(db, spot, zone)).get(fish_id, 0))
+	var techniques := PackedStringArray()
+	for t: String in ContentDB.TECHNIQUES:
+		if db.has_technique(t) and db.affinity(fish_id, t) > 0.0:
+			techniques.append(t)
+	if not "float" in techniques and not techniques.is_empty():
+		var names := PackedStringArray()
+		for t in techniques:
+			names.append(UiKit.translate("UI_TECH_" + t))
+		out.append(UiKit.translate("UI_BOOK_HINT_TECH") % ", ".join(names))
+	var ppm := _best_ppm(db, Zones.place(db, spot, zone), fish_id, techniques)
 	var zones := db.zones_of(spot)
 	if zones.size() > 1:
 		var names := PackedStringArray()
 		for z in zones:
-			var here := int(CatchOdds.species_ppm(db, z).get(fish_id, 0))
+			var here := _best_ppm(db, z, fish_id, techniques)
 			if here > 0:
 				names.append(UiKit.translate("ZONE_" + str(z["id"])))
 			ppm = maxi(ppm, here)
@@ -314,6 +324,14 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, 
 	else:
 		out.append(UiKit.translate("UI_BOOK_HINT_RARELY"))
 	return out
+
+
+## Türün bu yerdeki en yüksek oranı (ppm; tekniklerden hangisiyle en sık geliyorsa, yemsiz).
+static func _best_ppm(db: ContentDB, place: Dictionary, fish_id: String, techniques: PackedStringArray) -> int:
+	var top := 0
+	for t in techniques:
+		top = maxi(top, int(CatchOdds.species_ppm(db, place, { "technique": t }).get(fish_id, 0)))
+	return top
 
 
 ## Gölün nadirlik oranları (kuşanılan yemle) ve şans garantisi sayaçları.

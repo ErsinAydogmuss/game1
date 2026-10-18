@@ -436,10 +436,10 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - **Bekleyiş:** olta balıkçının yanındaki sehpaya konur, ucunda zil var. Balık yemi her yönden 4,5 m'den sezer. 2 sn sonra yemin kokusu yayılır: dolaşan gölgeler hemen yeni hedef seçer, %85 olasılıkla takımın 2 m çevresine yönelir ve oraya 2,5 kat hızlı yüzer. Yaklaşma 0,5 m/sn.
   - **Zil:** varan balık 1–3 kez koklar (zil tek tük çalar; ağırlıklar 50/35/15; aralık 0,8–1,8 sn). Bu sırada dokunmak balığı kaçırır. Sonra zil durmadan çalar ve misina akar (koşu): 2,5 sn içinde (Kolay modda 3,5 sn) ekranın her yerine dokun.
   - Beklerken dokunmak oltayı geri sarar (uzun misina: 1 sn).
-  - **Takım:** 3 dip kamışı (dip kamışı 500 para / rütbe 4 / 14 m / 4★; uzun 1.800 / 6 / 16 m / 5★; usta 4.500 / 10 / 18 m / 5★). Kamışların gücü yüksek (0,15 / 0,2 / 0,25): balık uzaktan gelir. Kurşun bedava; yem sepeti (400, r4): toplanma daha erken (×0,5) ve sık (×1,5), menzil −1 m. Yem şamandırayla ortak stok.
+  - **Takım:** 3 dip kamışı (dip kamışı 500 para / rütbe 4 / 14 m / 4★; uzun 1.800 / 6 / 16 m / 5★; usta 4.500 / 10 / 18 m / 5★). Kamışların gücü yüksek (0,15 / 0,2 / 0,25): balık uzaktan gelir. Kurşun bedava; yem sepeti (400, r4): yemin kokusu 2 sn yerine 1 sn sonra yayılır ve dolaşan gölgelerin hepsi takıma yönelir (%85 yerine %100), menzil −1 m. Yem şamandırayla ortak stok.
   - **Yatkınlık:** dip sazangillerini ve iri dip balıklarını çağırır: çapak, sazan, kadife, yayın 1, altın sazan 0,8, tatlısu kefali 0,5, mersin 1,5; az da kızılkanat 0,3, sudak 0,3, levrek ve turna 0,2. Aynalı sazan yalnızca dipte.
   - **Görünüm:** kurşun uçarken küçük koyu bir ağırlık; suya düşünce büyük halka ve pes şapırtı. Olta balıkçının yanındaki ahşap sehpaya konur (yanında yer yoksa öteki yanına, o da yoksa arkasına; `RodStand`, tek ağ, gölgesiz), misina kamışın ucundan kurşuna gerili. Koklamada zil çınlar, uç seğirir, kurşunun üstünde küçük halka. Koşuda zil durmadan çalar, uç eğilir, misina titrer, kamışın üstünde 2B zil sallanır. VUR'da balıkçı oltayı sehpadan alır.
-  - **Kamera:** kurşun uzağa düştüğü için kamera biraz yatar (45°; şamandırada olta sudayken 60°) ve balıkçıyla takımı birlikte gösterecek kadar uzaklaşır (en çok 1,3 kat). Sınırlar ekran payıyla: balıkçının ayağı ipucu çubuğunun üstünde, kurşun üstteki göstergelerin altında kalır; sığmazsa öncelik balıkçı ve sehpada (uzun kamışta kurşun yukarı taşar). Çekişmede balık yaklaştıkça kamera çekişmenin yakınlığına döner (`FollowCamera.fit`).
+  - **Kamera:** kurşun uzağa düştüğü için kamera biraz yatar (45°; şamandırada olta sudayken 60°) ve balıkçıyla takımı birlikte gösterecek kadar uzaklaşır (en çok 1,3 kat). Sınırlar ekran payıyla: balıkçının ayağı ipucu çubuğunun üstünde, kurşun üstteki göstergelerin altında kalır (bu iki çizgi arasına en çok 12,4 m sığar). Sığmazsa öncelik balıkçı ve sehpada: ekranın tam yukarısına atışta kurşun 14 m'de üst kenara yakın, 16 m'de üst kenarda, 18 m'de ekranın dışında kalır; çapraz atışta daha çoğu sığar. Çekişmede balık yaklaştıkça kamera çekişmenin yakınlığına döner (`FollowCamera.fit`).
   - **Açılış:** rütbe 4'te bildirim, Dede "İri sazanlar dipte beslenir evlat. Nine dip kamışı satıyor!" der, teknik düğmesi nabız gibi atar. İlk dip kamışı alınınca Dede "Uzağa at, sabret. Zil durmadan çalınca VUR!" der. İlk 3 dip atışında ipuçları: "Bekle... balıklar yemin çevresine toplanır.", "Zil tek tük çalıyor: kokluyor. Dokunma!", "Zil durmadan çalıyor! Hemen VUR!".
 - ✅ **Takım Çantası** (teknik düğmesi): her teknik bir karo: ikonu, adı, nasıl oynandığı, kuşanılmış kamışı ve küçük takımı (makara ve misina her teknikte ortak). Karonun düğmesi: ELİNDE, SEÇ, NİNE'DE (dükkân o tekniğin Kamış sekmesinde açılır) ya da rütbe kilidi. Teknik seçilince bildirim çıkar; gölgeler panel açıkken yeniden doğar.
 
@@ -513,9 +513,9 @@ Dakikalar v0.3.1 ölçümü; Dalga 3 satırları ve korkuluklar bugünkü (`test
 | Dalga 3: spin kamışı / ilk spin atışı | 4–10 / 4–10 | 4–10 / 4–12 |
 | Dalga 3: dip kamışı / ilk dip atışı | 22–31 / 22–31 | 15–35 / 15–40 |
 | makara, iğne, şamandıra (ilk kademe) | 10–26 | — |
-| cam kamış | 22–35 (Dalga 3: 48–62) | 10–60 |
+| cam kamış | 22–35 (Dalga 3: 48–62) | 10–75 (8. adımda daralır) |
 | büyük kova | 30–42 | 15–60 |
-| floro misina, hızlı makara, kepçe, büyük iğne | 40–85 (Dalga 3'te kepçe 138–172) | kepçe 40–150 |
+| floro misina, hızlı makara, kepçe, büyük iğne | 40–85 (Dalga 3'te kepçe 138–172) | kepçe 40–190 (8. adımda daralır) |
 | sandal (3.500) ve derin orta | 111–150 | 90–180 |
 | güçlü makara, parlak şamandıra, balık filesi | 126–185 | — |
 | örgü misina, karbon kamış, usta florokarbon | 171–250 | — |

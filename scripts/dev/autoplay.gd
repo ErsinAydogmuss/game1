@@ -1029,7 +1029,7 @@ func _play_bottom() -> void:
 	# Uzağa atış: olta sehpaya konur; bir balık takımın yanına gelir, koklar (zil tek tük), koşar.
 	var caught := await _bottom_cast(true)
 	_check("dip: uzağa atar (%.1f m), olta sehpada, misina sehpadan" % float(caught["reach"]),
-			float(caught["reach"]) >= 8.0 and bool(caught["on_stand"]))
+			float(caught["reach"]) >= 8.0 and bool(caught["on_stand"]) and bool(caught["line_from_stand"]))
 	_check("dip: iskelede sehpayla en çok %d çizim (%d)" % [TOUR_DRAWS, int(caught["draws"])],
 			int(caught["draws"]) > 0 and int(caught["draws"]) <= TOUR_DRAWS)
 	_check("dip: zil tek tük çalar (koklama), dokunulmaz", bool(caught["sniffed"]))
@@ -1044,7 +1044,7 @@ func _play_bottom() -> void:
 	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
 	await _wait(0.4)
 	var mirror := await _bottom_cast(true, "mirror_carp")
-	_check("sazlıkta dipte aynalı sazan tutulur", bool(mirror["caught"])
+	_check("sazlıkta dipte aynalı sazan (botun koyduğu gölge) tutulur", bool(mirror["caught"])
 			and str(_session().last_catch.get("fish", "")) == "mirror_carp")
 	await _shot_once("18_aynali_sazan")
 	var card: FishCard = main.get("card")
@@ -1052,14 +1052,32 @@ func _play_bottom() -> void:
 		await _close_card(card)
 	await _wait_state(FishingSession.State.IDLE, 5.0)
 	_check("dip bitince sehpa kalkar", not stand.visible and not _angler().rod_on_stand)
+	# Sandalda dip: sehpa teknenin içinde, küpeştede (suyun üstünde).
+	save.xp = maxi(save.xp, db.rank_xp[8])
+	save.coins = maxi(save.coins, int(db.gear_item(Zones.BOAT)["price"]))
+	Economy.buy(db, save, Zones.BOAT)
+	GameState.changed.emit()
+	await _wait_frames(3)
+	main.call("_go_boat", 0)
+	await _wait_until(func() -> bool: return bool(main.get("in_boat")) and not fade.busy(), 5.0)
+	await _wait(0.5)
+	await _tap_control(hud.action_button)
+	var cast_out := await _wait_state(FishingSession.State.WAITING, 3.0)
+	await _wait(1.0)
+	var on_board := Vector2(stand.global_position.x, stand.global_position.z).distance_to(_angler().pos2())
+	_check("sandalda dip: sehpa teknede (yanda %.2f m, %.2f m yukarıda)" % [on_board, stand.global_position.y],
+			cast_out and stand.visible and on_board < 0.45 and stand.global_position.y > 0.05)
+	await _shot("19_sandalda_dip")
+	await _tap(Vector2(260, 520))
+	await _wait_state(FishingSession.State.IDLE, 5.0)
 
 
 ## Dipte bir atış: balıkçının baktığı yöne atar (takım menzilin sonuna düşer); bir balığı (fish_id)
 ## takımla balıkçının arasına koyar; koklamada dokunmaz (strike false ise ilk koklamada dokunur:
 ## erken), koşuda VUR'a dokunur ve bir oyuncu gibi çekişir.
 func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
-	var out := { "reach": 0.0, "on_stand": false, "sniffed": false, "ran": false, "picked_up": false, "caught": false,
-			"early": false, "draws": 0 }
+	var out := { "reach": 0.0, "on_stand": false, "line_from_stand": false, "sniffed": false, "ran": false,
+			"picked_up": false, "caught": false, "early": false, "draws": 0 }
 	var stand: RodStand = main.get("stand")
 	var card: FishCard = main.get("card")
 	var finger := Vector2(260, 520)
@@ -1071,6 +1089,8 @@ func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
 	var session := _session()
 	out["reach"] = session.angler.distance_to(session.bobber)
 	out["on_stand"] = stand.visible and _angler().rod_on_stand
+	var line: FishingLine = main.get("line")
+	out["line_from_stand"] = (line.from_point.call() as Vector3).distance_to(stand.tip_point()) < 0.01
 	out["draws"] = int((await _measure_draws())["draws"])
 	if fish != null:
 		var toward := (session.angler - session.bobber).normalized()
@@ -1087,8 +1107,9 @@ func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
 		main.set("bot_camera", false)
 	if not await _wait_state(FishingSession.State.NIBBLING, 25.0):
 		return out
-	out["sniffed"] = true
-	await _wait_frames(4)
+	# İlk koklama: zil çınlar, kamışın ucu seğirir (sehpanın seğirmesi olayın görünen izi).
+	out["sniffed"] = await _wait_until(func() -> bool: return float(stand.get("_twitch")) > 0.0, 4.0)
+	await _wait_frames(2)
 	await _shot_once("16_koklama")
 	if not strike:
 		await _tap(finger)

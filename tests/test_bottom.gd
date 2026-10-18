@@ -260,3 +260,35 @@ func test_random_input_never_gets_stuck() -> void:
 				break
 		assert_true(problem.is_empty(), "deneme %d: %s" % [run, problem])
 		assert_true(casts >= 3, "deneme %d: oyun ilerler (%d atış)" % [run, casts])
+
+
+## Yemin kokusu (gather_after) duraklayan ve dolaşan gölgeleri takıma çağırır: yeni hedefleri takımın
+## çevresinde; geri sarınca toplanma biter (gölgeler yine olağan hızla dolaşır).
+func test_smell_calls_fish_to_the_rig_until_reeled_in() -> void:
+	var session := _session()
+	for s in session.sim.shadows:
+		s.mode = FishShadow.Mode.PAUSE
+		s.timer = 1_000_000
+	assert_true(session.cast(TARGET), "atış")
+	assert_true(_run_until(session, FishingSession.State.WAITING, 3.0), "kurşun suya düşer")
+	var rig := session.sim.rig
+	while session.waiting_steps < rig.gather_after_steps and session.state == FishingSession.State.WAITING:
+		session.step()
+	var called := 0
+	for s in session.sim.shadows:
+		if s.gathering:
+			called += 1
+			assert_true(s.target.distance_to(session.bobber) <= rig.gather_radius + 0.001,
+					"hedef takımın %.1f m çevresinde (%.2f)" % [rig.gather_radius, s.target.distance_to(session.bobber)])
+	assert_true(called >= 1, "koku gölgeleri takıma çağırır (%d)" % called)
+	session.press()
+	assert_eq(session.state, FishingSession.State.RETRIEVING, "beklerken dokunmak geri sarar")
+	for s in session.sim.shadows:
+		assert_true(not s.gathering, "geri sarınca toplanma biter")
+
+
+## Yem sepetinin çekişi en güçlüyken (1,0) de koku yayılır: eşik en az 1 adım.
+func test_strongest_feeder_still_calls_fish() -> void:
+	var rig := _session().technique.rig.with_pull(1.0)
+	assert_true(rig.gather_after_steps >= 1, "eşik en az 1 adım (%d)" % rig.gather_after_steps)
+	assert_eq(rig.gather_ppm, Dice.PPM, "hepsi toplanır")

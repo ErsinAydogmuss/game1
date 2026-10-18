@@ -4,6 +4,8 @@ extends BaseTest
 
 const RUNS := 40
 const DISTANCES := [4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
+## Dipte balık uzakta takılır (ölçüm: ortalama 12,5 m; tools/session_timing.gd --technique=bottom).
+const BOTTOM_DISTANCES := [8.0, 9.5, 11.0, 12.5, 14.0, 15.0]
 
 
 ## gear: kuşanılmış takım (yoksa başlangıç takımı, yani bambu olta); percentile: boy yüzdeliği (ppm).
@@ -37,14 +39,14 @@ static func _percentile(stars: int, i: int) -> int:
 ## RUNS deneme: { caught, snapped, escaped (oran 0..1), mean (tutulanların ortalama sn), max }.
 ## stars: balıkların yıldızı (0: en küçük boy).
 func _rates(fish_id: String, bot_style: ReelBot.Style, reaction: float, easy: bool,
-		gear: GearStats = null, stars: int = 0) -> Dictionary:
+		gear: GearStats = null, stars: int = 0, distances: Array = DISTANCES) -> Dictionary:
 	var caught := 0
 	var snapped := 0
 	var escaped := 0
 	var total := 0.0
 	var longest := 0.0
 	for i in RUNS:
-		var model := _model(fish_id, DISTANCES[i % DISTANCES.size()], easy, Dice.derive(4242, i), gear,
+		var model := _model(fish_id, distances[i % distances.size()], easy, Dice.derive(4242, i), gear,
 				_percentile(stars, i))
 		var result := ReelBot.play(model, ReelBot.make(bot_style, reaction))
 		match int(result["outcome"]):
@@ -296,3 +298,32 @@ func test_top_gear_keeps_skill_relevant() -> void:
 		var after: float = _rates(fish_id, ReelBot.Style.PERFECT, 0.0, false, top)["mean"]
 		assert_true(after < before, "%s: en iyi takımla çekişme kısalır (%.1f → %.1f sn)" % [fish_id, before, after])
 		assert_true(after >= 0.6 * before, "%s: ama yarıdan fazla sürer (%.1f → %.1f sn)" % [fish_id, before, after])
+
+
+## Dipin en iyi takımı da (kamışların gücü 0,15–0,25) beceriyi silmez: dipte gelen her tür dip
+## uzaklığında aynı korkuluklarla; çekişme ilk dip kamışına göre kısalır ama en çok %40.
+func test_top_bottom_gear_keeps_skill_relevant() -> void:
+	var db := content()
+	var top := GearStats.best(db, "bottom")
+	var items := db.gear_start.duplicate()
+	items["rod"] = "rod_carp_1"
+	items["rig"] = "sinker"
+	var none: Array[String] = []
+	var first := GearStats.from_items(db, items, none)
+	for f in db.fish:
+		var id := str(f["id"])
+		if db.affinity(id, "bottom") <= 0.0:
+			continue
+		var slow := _rates(id, ReelBot.Style.REACT, 0.7, false, top, 0, BOTTOM_DISTANCES)
+		assert_true(slow["caught"] >= 0.98, "%s: en iyi dip takımıyla 0,7 sn tepkiyle tutulur (%.2f)" % [id, slow["caught"]])
+		var rarity := int(f["rarity"])
+		if rarity >= db.rarity_index("rare"):
+			var limit := 0.5 if rarity == db.rarity_index("rare") else 0.3
+			var hold := _rates(id, ReelBot.Style.ALWAYS, 0.0, false, top, 0, BOTTOM_DISTANCES)
+			assert_true(hold["caught"] <= limit, "%s: en iyi dip takımıyla hep basılı tutan en çok %%%d tutar (%.2f)" % [id,
+					roundi(limit * 100), hold["caught"]])
+	for fish_id: String in ["carp", "wels", "mirror_carp"]:
+		var before: float = _rates(fish_id, ReelBot.Style.PERFECT, 0.0, false, first, 0, BOTTOM_DISTANCES)["mean"]
+		var after: float = _rates(fish_id, ReelBot.Style.PERFECT, 0.0, false, top, 0, BOTTOM_DISTANCES)["mean"]
+		assert_true(after < before and after >= 0.6 * before, "%s: dipte en iyi takımla çekişme kısalır, yarıdan fazla sürer (%.1f → %.1f sn)" % [
+				fish_id, before, after])

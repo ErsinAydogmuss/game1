@@ -210,6 +210,8 @@ func _start_session() -> void:
 	angler.face(Vector2(0, -1))
 	bobber.hide_bobber()
 	line.visible = false
+	angler.rod_on_stand = false
+	stand.show_stand(false)
 	_sync_technique()
 	_pending_cast = Dice.NO_POINT
 	_quick_catch = -1.0
@@ -441,9 +443,16 @@ func _try_cast(target: Vector2) -> void:
 	if offset.length() > 0.001 and offset.length() < near:
 		target = angler.pos2() + offset.normalized() * near
 	angler.face(target - angler.pos2())
-	if not session.cast(target):
-		Sounds.play("error")
-		hud.toast(tr("UI_NO_WATER"), UiKit.MUTED)
+	if session.cast(target):
+		return
+	# Dipte dokunuş bir yöndür: o yönde avlanılan bölgenin suyu yoksa (komşu bölgenin suyu) en yakın
+	# uygun yöne atılır.
+	var dir := _cast_dir(offset) if session.technique.id == "bottom" else Vector2.ZERO
+	if dir != Vector2.ZERO and session.cast(angler.pos2() + dir * FORWARD_CAST):
+		angler.face(dir)
+		return
+	Sounds.play("error")
+	hud.toast(tr("UI_NO_WATER"), UiKit.MUTED)
 
 
 func _on_action_down() -> void:
@@ -451,22 +460,25 @@ func _on_action_down() -> void:
 		return
 	if session.state == FishingSession.State.IDLE:
 		# Space / AT: balıkçının önüne; önü kara ise suyun olduğu en yakın yöne.
-		_try_cast(angler.pos2() + _cast_dir() * FORWARD_CAST)
+		var dir := _cast_dir()
+		_try_cast(angler.pos2() + (dir if dir != Vector2.ZERO else angler.facing) * FORWARD_CAST)
 		return
 	session.press()
 
 
-## AT düğmesinin yönü: balıkçının baktığı yön; orada su yoksa 15° adımlarla iki yana (arkaya kadar)
-## bakılır, baktığı yöne yakın ve suya iyi düşen yön seçilir.
-func _cast_dir() -> Vector2:
+## Atış yönü: base yönü (verilmezse balıkçının baktığı yön); orada takım suya düşmüyorsa 15°
+## adımlarla iki yana (arkaya kadar) bakılır, o yöne yakın ve suya iyi düşen yön seçilir. Hiçbir
+## yönde düşmüyorsa Vector2.ZERO.
+func _cast_dir(base: Vector2 = Vector2.ZERO) -> Vector2:
 	var from := angler.pos2()
 	session.angler = from
 	var shortest := session.technique.min_cast(session)
-	var best := angler.facing
+	var facing := base.normalized() if base.length_squared() > 0.0001 else angler.facing
+	var best := Vector2.ZERO
 	var best_score := -INF
 	for k in 25:
 		var angle := deg_to_rad(15.0 * ((k + 1) >> 1)) * (1.0 if k % 2 == 1 else -1.0)
-		var dir := angler.facing.rotated(angle)
+		var dir := facing.rotated(angle)
 		# Takımın düşeceği yer tekniğin kuralıyla (spinde en kısa atış daha uzun).
 		var landing := session.technique.landing_point(session, from + dir * FORWARD_CAST)
 		if not Dice.is_point(landing) or from.distance_to(landing) < shortest:
@@ -564,7 +576,6 @@ func _on_event(e: Dictionary) -> void:
 		"run":
 			# Koşu: zil durmadan çalar (döngü ve 2B zil _present_bottom'da), misina akar.
 			ripples.spawn(session.bobber, 1.0, 0.8, Color(1, 1, 1, 0.9), 0.14)
-			Sounds.play("bell")
 			Sounds.haptic(70)
 			camera.shake(0.06)
 		"nibble":
@@ -896,7 +907,8 @@ func _present_bottom() -> bool:
 	if on != angler.rod_on_stand:
 		angler.rod_on_stand = on
 		if on:
-			stand.place(angler.global_position, session.bobber - angler.pos2(), _stand_room)
+			stand.place(angler.global_position, session.bobber - angler.pos2(), _stand_room,
+					RodStand.BOAT_SIDE if in_boat else RodStand.SIDE)
 			stand.position.y = scene.stand_height(Vector2(stand.position.x, stand.position.z))
 		stand.show_stand(on)
 	var running := on and session.state == FishingSession.State.BITING
@@ -941,10 +953,21 @@ func _focus() -> Vector3:
 	if catch_fx.is_showing():
 		return _show_point() + Vector3(0, -0.2, 0)
 	if session.line_out() or session.state == FishingSession.State.LOST:
-		var p := session.fight_point() if session.state == FishingSession.State.FIGHTING else session.bobber
+		var p := _line_point()
 		var far := _far_frame()
 		return a.lerp(Vector3(p.x, 0.0, p.y), far.x if far.x >= 0.0 else FOCUS_SHARE)
 	return a
+
+
+## Kameranın baktığı takım: çekişmede balık; kaçtıktan sonra geri dönen takımın görünen yeri (balık
+## çekişmede kaçtıysa oturumun takımı eski atış noktasında kalır); yoksa oturumun takımı.
+func _line_point() -> Vector2:
+	match session.state:
+		FishingSession.State.FIGHTING:
+			return session.fight_point()
+		FishingSession.State.LOST:
+			return Vector2(bobber.position.x, bobber.position.z)
+	return session.bobber
 
 
 ## Dipte olta suda: kameranın çerçevesi (odağın balıkçıyla takım arasındaki yoldaki payı, zoom;
@@ -955,8 +978,7 @@ func _far_frame() -> Vector2:
 		return Vector2(-1.0, 1.0)
 	var fighting := session.state == FishingSession.State.FIGHTING
 	var base := FIGHT_ZOOM if fighting else 1.0
-	var p := session.fight_point() if fighting else session.bobber
-	var ahead := (p - angler.pos2()).dot(FollowCamera.screen_up())
+	var ahead := (_line_point() - angler.pos2()).dot(FollowCamera.screen_up())
 	if ahead < 1.0:
 		return Vector2(FOCUS_SHARE, base)
 	var view := FollowCamera.fit(ahead, FAR_PITCH, FOCUS_SHARE, base, FAR_MAX_ZOOM, FAR_LOW, FAR_HIGH)
