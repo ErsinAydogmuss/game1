@@ -58,6 +58,10 @@ const FAR_MAX_ZOOM := 1.3
 const FLY_MAX_ZOOM := 1.15
 const FAR_LOW := -0.5
 const FAR_HIGH := 0.8
+## Tuzağa bu kadar yakından (m) dokunulunca toplanır; uzaktaysa balıkçı önce yürür. Tuzakların dolması
+## (gerçek saatle) bu aralıkla (sn) yenilenir.
+const TRAP_REACH := 5.0
+const TRAP_SYNC_EVERY := 1.0
 
 var session: FishingSession
 var lake: LakeShape
@@ -70,6 +74,8 @@ var bobber: Bobber
 var line: FishingLine
 ## Dipte balıkçının yanındaki sehpa (kamış ve zil).
 var stand: RodStand
+## Kerevit tuzaklarının işaretleri (suda turuncu şamandıra, dolma rozeti).
+var traps: TrapMarkers
 var shadows: ShadowLayer
 var ripples: Ripples
 var catch_fx: CatchFx
@@ -87,8 +93,10 @@ var settings_panel: SettingsPanel
 var shop_panel: ShopPanel
 var book_panel: BookPanel
 var map_panel: MapPanel
-## Takım çantası (sol alttaki teknik düğmesi): teknik seçilir.
+## Takım çantası (sol alttaki teknik düğmesi): teknik seçilir, tuzak bırakılır.
 var technique_panel: TechniquePanel
+## Boş tuzağın paneli (bekle ya da kaldır).
+var trap_panel: TrapPanel
 ## Haritadan hızlı geçişte ekran kararır (en üstte).
 var fade: Fade
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
@@ -135,6 +143,11 @@ var _nine_index: int = 0
 ## Sahnede gösterilen teknik (elindeki kamış, suya atılan takım, teknik düğmesinin ikonu).
 var _shown_technique: String = ""
 var _wake_clock: float = 0.0
+## Uzaktaki tuzağa dokunuldu: balıkçı yürür, varınca toplar (tuzağın kimliği; yoksa -1). Dokunma
+## denetiminin bulduğu tuzak (hit_targets → _on_target) ve dolmanın yenilenme sayacı.
+var _pending_trap: int = -1
+var _trap_tap: int = -1
+var _trap_clock: float = 0.0
 
 
 func _ready() -> void:
@@ -179,6 +192,9 @@ func _ready() -> void:
 	add_child(bobber)
 	stand = RodStand.new()
 	add_child(stand)
+	traps = TrapMarkers.new()
+	add_child(traps)
+	traps.landed.connect(_on_trap_landed)
 	camera = FollowCamera.new()
 	add_child(camera)
 	elder.camera = camera
@@ -197,7 +213,7 @@ func _ready() -> void:
 	_announce_techniques()
 	GameState.changed.connect(_on_state_changed)
 	GameState.focus_lost.connect(_on_focus_lost)
-	GameState.focus_gained.connect(func() -> void: _paused = false)
+	GameState.focus_gained.connect(_on_focus_gained)
 	ItemArt.register_fish_colors(GameState.db.fish_colors())
 	FishPortrait.render_all(self, GameState.db)
 	_load_faces()
@@ -236,6 +252,9 @@ func _start_session() -> void:
 	stand.show_stand(false)
 	_sync_technique()
 	_pending_cast = Dice.NO_POINT
+	_pending_trap = -1
+	traps.clear()
+	_refresh_traps()
 	_quick_catch = -1.0
 	_announced.clear()
 	_legend_look = 0.0
@@ -258,6 +277,7 @@ func _on_state_changed() -> void:
 		_start_session()
 		return
 	hud.perf = bool(GameState.setting("perf", false))
+	_refresh_traps()
 	# Rütbe dışarıdan değiştiyse (geliştirme sürümünde "Bütün bölgeleri aç"): erişim ve çitler.
 	var rank := Rank.rank(GameState.db, GameState.save)
 	if rank != _access_rank:
@@ -269,6 +289,12 @@ func _on_state_changed() -> void:
 	# Ayar çekişmenin ortasında değişirse (Ayarlar açıkken oyun donuk) süren çekişmeye de geçer.
 	if session.reel != null and session.hooked != null:
 		session.reel.easy = session.easy or session.hooked.scripted
+
+
+## Uygulama öne geldi: oyun sürer, tuzakların dolması (oyun kapalıyken de) yenilenir.
+func _on_focus_gained() -> void:
+	_paused = false
+	_refresh_traps()
 
 
 func _on_focus_lost() -> void:
@@ -294,6 +320,11 @@ func _process(delta: float) -> void:
 	if session.state == FishingSession.State.IDLE:
 		session.angler = angler.pos2()
 	_check_pending_cast()
+	_check_pending_trap()
+	_trap_clock += delta
+	if _trap_clock >= TRAP_SYNC_EVERY:
+		_trap_clock = 0.0
+		_refresh_traps()
 	session.advance(delta)
 	for e in session.poll_events():
 		_on_event(e)
@@ -324,6 +355,9 @@ func _build_input() -> void:
 		["dede", func(screen: Vector2) -> bool: return elder.hit(camera, screen)],
 		["shop", func(screen: Vector2) -> bool: return nine.hit(camera, screen) or shop.hit(camera, screen)],
 		["boat", func(screen: Vector2) -> bool: return not in_boat and scene.boat_hit(camera, screen)],
+		["trap", func(screen: Vector2) -> bool:
+			_trap_tap = -1 if in_boat else traps.hit(camera, screen)
+			return _trap_tap >= 0],
 	]
 	input.targets_active = func() -> bool: return session.state == FishingSession.State.IDLE and not card.visible
 	add_child(input)
@@ -336,6 +370,7 @@ func _build_input() -> void:
 		if in_boat:
 			return
 		_pending_cast = Dice.NO_POINT
+		_pending_trap = -1
 		angler.step_dir(dir, get_process_delta_time()))
 
 
@@ -362,6 +397,7 @@ func _on_walk_requested(target: Vector2) -> void:
 	if session.state != FishingSession.State.IDLE or in_boat:
 		return
 	_pending_cast = Dice.NO_POINT
+	_pending_trap = -1
 	_walk_route(target)
 
 
@@ -376,6 +412,7 @@ func _on_cast_requested(target: Vector2) -> void:
 		return
 	if session.state != FishingSession.State.IDLE:
 		return
+	_pending_trap = -1
 	# Sandalda yürünmez: dokunulan yöne atılır (şamandıra menzilin içine düşer).
 	if in_boat or angler.pos2().distance_to(target) <= session.range_m() - 0.3:
 		angler.stop()
@@ -742,23 +779,7 @@ func _on_catch() -> void:
 	_refresh_status()
 	# Rütbe atlama, kova dolu gibi bildirimler balığın etiketi sönünce (üst üste binmesin).
 	hud.hold_toasts(CatchFx.HOLD_TIME)
-	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
-		session.set_access(Zones.open_ids(db, save, spot_id, in_boat))
-		_update_gates()
-		var rank := int(ranked["new_rank"])
-		_access_rank = rank
-		hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up", "star")
-		# Yeni bölge açıldı: adı rozetiyle, Dede söyler, harita düğmesi nabız gibi atar.
-		var opened := Zones.unlocked_between(db, spot_id, int(ranked["old_rank"]), rank)
-		for z in opened:
-			hud.toast_later(tr("UI_ZONE_OPENED") % tr("ZONE_" + str(z["id"])), UiKit.ACCENT, "", "zone:" + str(z["id"]))
-		if not opened.is_empty():
-			zone_news = true
-			_say("UI_DEDE_ZONE_OPEN")
-			hud.pulse_map()
-		# Yeni teknik açıldı (Dede'nin sözü bölgeninkinden önemli: Nine'nin sattığı kamış).
-		if _announce_techniques():
-			zone_news = true
+	zone_news = _after_rank(ranked)
 	if protected:
 		hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
 	elif not kept:
@@ -795,6 +816,33 @@ func _on_catch() -> void:
 	else:
 		# Kartsız yakalama: adı ve boyu balığın üstündeki etikette (CatchTag); bildirim yok.
 		_quick_catch = 0.0
+
+
+## Rütbe atladıysa (av ya da tuzak): oturumun erişimi ve çitler yenilenir; rütbe bildirimi, açılan
+## bölge (adı rozetiyle, Dede söyler, harita düğmesi nabız gibi atar), açılan teknik ve tuzak. Dede
+## bir haber söylediyse true (kovanın hatırlatması o zaman sonraki balığa kalır).
+func _after_rank(ranked: Dictionary) -> bool:
+	if int(ranked["new_rank"]) <= int(ranked["old_rank"]):
+		return false
+	var db := GameState.db
+	var save := GameState.save
+	var news := false
+	session.set_access(Zones.open_ids(db, save, spot_id, in_boat))
+	_update_gates()
+	var rank := int(ranked["new_rank"])
+	_access_rank = rank
+	hud.toast_later(tr("UI_RANK_UP") % [rank, tr("RANK_" + db.rank_title(rank))], UiKit.ACCENT, "rank_up", "star")
+	var opened := Zones.unlocked_between(db, spot_id, int(ranked["old_rank"]), rank)
+	for z in opened:
+		hud.toast_later(tr("UI_ZONE_OPENED") % tr("ZONE_" + str(z["id"])), UiKit.ACCENT, "", "zone:" + str(z["id"]))
+	if not opened.is_empty():
+		news = true
+		_say("UI_DEDE_ZONE_OPEN")
+		hud.pulse_map()
+	# Yeni teknik ya da tuzak açıldı (Dede'nin sözü bölgeninkinden önemli: Nine'nin sattığı takım).
+	if _announce_techniques():
+		news = true
+	return news
 
 
 # --- Sunum ---------------------------------------------------------------------------
@@ -1255,12 +1303,22 @@ func _refresh_status() -> void:
 
 ## Rütbesi gelmiş ama haber verilmemiş teknik (rütbe atladı ya da eski kayıt): adı ikonuyla, Dede
 ## söyler, teknik düğmesi nabız gibi atar. Her teknik bir kez (flags["told_open_<teknik>"]); kamışı
-## zaten alınmışsa haber verilmez. Haber verildiyse true.
+## zaten alınmışsa haber verilmez. Kerevit tuzağı da (flags["told_open_trap"]; tuzağı varsa haber
+## verilmez). Haber verildiyse true.
 func _announce_techniques() -> bool:
 	var db := GameState.db
 	var save := GameState.save
 	var rank := Rank.rank(db, save)
 	var told := false
+	# Kerevit tuzağı (rütbe 3): tekniklerden önce; aynı anda bir teknik de açıldıysa Dede onu söyler.
+	var trap_rank := TrapSim.rank(db)
+	if trap_rank > 0 and rank >= trap_rank and not save.flags.has("told_open_trap"):
+		save.flags["told_open_trap"] = true
+		if TrapSim.owned(db, save) == 0:
+			hud.toast_later(tr("UI_TRAP_OPEN"), UiKit.ACCENT, "", "tech_trap")
+			_say("UI_DEDE_TRAP_OPEN")
+			hud.pulse_technique()
+			told = true
 	for t: String in ContentDB.TECHNIQUES:
 		var flag := "told_open_" + t
 		if t == "float" or not db.has_technique(t) or rank < db.technique_rank(t) or save.flags.has(flag):
@@ -1330,6 +1388,7 @@ func _travel(target: String) -> void:
 func _stop_for_travel() -> void:
 	angler.stop()
 	_pending_cast = Dice.NO_POINT
+	_pending_trap = -1
 	input.release_all()
 	Sounds.play("travel")
 	Sounds.haptic(15)
@@ -1342,8 +1401,8 @@ func _snap_camera() -> void:
 	camera.snap(_focus())
 
 
-## Haritadaki işaretler: Nine'nin dükkânı, Dede ve iskeledeki sandal (sandaldayken sandal iğnenin
-## yerinde, işareti yok).
+## Haritadaki işaretler: Nine'nin dükkânı, Dede, iskeledeki sandal (sandaldayken sandal iğnenin
+## yerinde, işareti yok) ve kerevit tuzakları.
 func _map_marks() -> Array[Dictionary]:
 	var front := ShopStall.front_for(lake.dock)
 	var stall := front - ShopStall.facing_dir() * ShopStall.DEPTH * 0.5
@@ -1354,6 +1413,8 @@ func _map_marks() -> Array[Dictionary]:
 	if not in_boat:
 		var boat := scene.boat_point()
 		marks.append({ "kind": "boat", "pos": Vector2(boat.x, boat.z) })
+	for t in GameState.save.traps:
+		marks.append({ "kind": "trap", "pos": TrapSim.position(t) })
 	return marks
 
 
@@ -1421,6 +1482,8 @@ func _on_target(id: String) -> void:
 			_on_shop()
 		"boat":
 			_on_boat()
+		"trap":
+			_on_trap_tapped(_trap_tap)
 
 
 ## Sandala dokunuldu: sandal alındıysa binilir (derin ortanın ilk şamandırası); yoksa Dede söyler
@@ -1436,6 +1499,174 @@ func _on_boat() -> void:
 	var ready := not deep.is_empty() and Rank.rank(db, GameState.save) >= int(deep["rank"])
 	_say("UI_DEDE_BOAT_SHOP" if ready else "UI_DEDE_BOAT")
 	Sounds.haptic(10)
+
+
+# --- Kerevit tuzakları --------------------------------------------------------------
+
+## Tuzakların dolması şimdiye getirilir (gerçek saat; oyun kapalıyken de dolar) ve işaretler kayda
+## uyar.
+func _refresh_traps() -> void:
+	var save := GameState.save
+	TrapSim.update_all(GameState.db.rules, save, GameState.clock.now_unix())
+	traps.sync(save, GameState.db.rules)
+
+
+## Takım çantasında "Tuzak bırak": balıkçının yakınındaki sığ suya (baktığı yöne en yakın uygun yer)
+## atılır; içeriği o an belli olur (TrapSim.place). Uygun yer yoksa nedeni bildirilir.
+func _place_trap() -> void:
+	if session.state != FishingSession.State.IDLE or card.visible or traps.is_flying():
+		return
+	var db := GameState.db
+	var save := GameState.save
+	var at := angler.pos2()
+	var p := TrapSim.spot_near(db, save, spot_id, zone_id, at, angler.facing)
+	if not Dice.is_point(p):
+		# Genel neden (tuzak yok, hepsi kurulu, bölge) ya da yakında sığ su yok.
+		var why := TrapSim.place_block(db, save, spot_id, zone_id, at, at)
+		hud.toast(tr(why if not why.is_empty() else "UI_TRAP_NO_SPOT"), UiKit.ACCENT, "tech_trap")
+		Sounds.play("error")
+		return
+	angler.stop()
+	_pending_cast = Dice.NO_POINT
+	_pending_trap = -1
+	angler.face(p - at)
+	angler.play_cast()
+	var trap := TrapSim.place(db, save, spot_id, zone_id, p, GameState.clock.now_unix())
+	GameState.save_game()
+	traps.sync(save, db.rules)
+	traps.throw(int(trap["id"]), angler.hand_point())
+	Sounds.play("cast")
+	Sounds.haptic(10)
+
+
+## Atılan tuzak suya düştü: halka, ses, titreşim ve bildirim; ilk tuzakta Dede nasıl olduğunu söyler.
+func _on_trap_landed(at: Vector2) -> void:
+	ripples.spawn(at, 1.0, 0.8)
+	Sounds.play("trap_place")
+	Sounds.haptic(30)
+	hud.toast(tr("UI_TRAP_PLACED") % roundi(GameState.db.rules.trap_fill_s / 60.0), UiKit.SUCCESS, "tech_trap")
+	if not GameState.save.flags.has("told_trap_first"):
+		GameState.save.flags["told_trap_first"] = true
+		_say("UI_DEDE_TRAP_FIRST")
+
+
+## Bir tuzağa dokunuldu (kıyıdayken): yakınsa toplanır; uzaktaysa balıkçı kıyı yolundan yürür, varınca
+## toplar.
+func _on_trap_tapped(id: int) -> void:
+	if session.state != FishingSession.State.IDLE or card.visible:
+		return
+	var index := TrapSim.find(GameState.save, id)
+	if index < 0:
+		return
+	var p := TrapSim.position(GameState.save.traps[index])
+	_pending_cast = Dice.NO_POINT
+	Sounds.haptic(10)
+	if angler.pos2().distance_to(p) <= TRAP_REACH:
+		angler.stop()
+		_collect_trap(id)
+		return
+	_pending_trap = id
+	_walk_route(p)
+
+
+## Yürüyüş bitti: bekleyen tuzağa yetişildiyse toplanır.
+func _check_pending_trap() -> void:
+	if _pending_trap < 0 or angler.is_walking() or session.state != FishingSession.State.IDLE:
+		return
+	var id := _pending_trap
+	_pending_trap = -1
+	var index := TrapSim.find(GameState.save, id)
+	if index >= 0 and angler.pos2().distance_to(TrapSim.position(GameState.save.traps[index])) <= TRAP_REACH + 0.5:
+		_collect_trap(id)
+
+
+## Tuzak toplanır: içindeki kerevitler kovaya (sığmayan tuzakta bekler), deftere ve rütbe puanına
+## (şans garantisi ilerlemez); tuzak yeniden kurulur. En irisi elde gösterilir, yeni türse kartı açılır.
+## Boşsa boş tuzağın paneli açılır (bekle ya da kaldır); kova doluysa Dede Nine'yi söyler.
+func _collect_trap(id: int) -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var rules := db.rules
+	var index := TrapSim.find(save, id)
+	if index < 0:
+		return
+	var trap := save.traps[index]
+	var now := GameState.clock.now_unix()
+	TrapSim.update(rules, trap, now)
+	var p := TrapSim.position(trap)
+	angler.face(p - angler.pos2())
+	if TrapSim.ready(rules, trap) <= 0:
+		input.release_all()
+		trap_panel.open_trap(id)
+		return
+	if Bucket.is_full(db, save):
+		hud.toast(tr("UI_TRAP_BUCKET_FULL"), UiKit.ACCENT, "tech_trap")
+		_say("UI_DEDE_BUCKET")
+		Sounds.play("error")
+		return
+	var result := TrapSim.collect(db, save, spot_id, index, now)
+	var items: Array = result["items"]
+	if items.is_empty():
+		return
+	GameState.save_game()
+	_refresh_status()
+	_refresh_traps()
+	traps.bounce(id)
+	ripples.spawn(p, 0.9, 0.7)
+	Sounds.play("trap_collect")
+	Sounds.haptic(40)
+	var best: Dictionary = items[0]
+	for item: Dictionary in items:
+		if int(item["size_cm"]) > int(best["size_cm"]):
+			best = item
+	var fish_id := str(best["fish"])
+	var def := db.fish_by_id(fish_id)
+	var rarity := int(def["rarity"])
+	var fresh := bool(result["new_species"])
+	catch_fx.show_catch(def, int(best["size_cm"]), "%s ×%d" % [tr("FISH_" + fish_id), items.size()],
+			UiKit.rarity_color(db, rarity), _show_point, false, func() -> Vector3: return angler.global_position,
+			UiKit.rarity_icon(db, rarity))
+	if fresh:
+		angler.cheer()
+		elder.cheer()
+	else:
+		angler.show_fish()
+		elder.approve()
+	Sounds.find(rarity)
+	hud.hold_toasts(CatchFx.HOLD_TIME)
+	var news := _after_rank(result["ranked"])
+	var left := int(result["left"])
+	if left > 0:
+		hud.toast_later(tr("UI_TRAP_LEFT") % left, UiKit.ACCENT, "", "tech_trap")
+	if (left > 0 or Bucket.is_full(db, save)) and not news:
+		_say("UI_DEDE_BUCKET")
+	if fresh:
+		_card_info = { "fish": fish_id, "rarity": rarity, "size_cm": int(best["size_cm"]), "stars": int(best["stars"]) }
+		_card_outcome = { "new_species": true }
+		_card_wait = CARD_DELAY
+
+
+## Boş tuzak kaldırıldı (panelden): tuzak takım çantasına döner. Panel açıkken kerevit girdiyse
+## kaldırılmaz, toplanır (kayıp yok).
+func _on_trap_remove(id: int) -> void:
+	var save := GameState.save
+	var rules := GameState.db.rules
+	var index := TrapSim.find(save, id)
+	if index < 0:
+		return
+	var trap := save.traps[index]
+	TrapSim.update(rules, trap, GameState.clock.now_unix())
+	if TrapSim.ready(rules, trap) > 0:
+		_collect_trap(id)
+		return
+	var p := TrapSim.position(trap)
+	TrapSim.remove(save, index)
+	GameState.save_game()
+	_refresh_traps()
+	ripples.spawn(p, 0.8, 0.6)
+	Sounds.play("trap_collect")
+	Sounds.haptic(20)
+	hud.toast(tr("UI_TRAP_REMOVED"), UiKit.TEXT, "tech_trap")
 
 
 ## Gölün sandal bölgesi (derin orta; yoksa boş).
@@ -1511,6 +1742,7 @@ func _on_shop() -> void:
 	Sounds.haptic(10)
 	angler.stop()
 	_pending_cast = Dice.NO_POINT
+	_pending_trap = -1
 	input.release_all()
 	shop_panel.open_shop()
 
@@ -1609,7 +1841,16 @@ func _build_ui() -> void:
 	layer.add_child(technique_panel)
 	technique_panel.technique_selected.connect(_on_technique_selected)
 	technique_panel.shop_requested.connect(func(technique: String) -> void:
-		shop_panel.open_shop("rod", technique, in_boat or angler.global_position.distance_to(nine.global_position) > SHOP_NEAR))
+		var far := in_boat or angler.global_position.distance_to(nine.global_position) > SHOP_NEAR
+		# Tuzak Ekstra sekmesinde (bakılan teknik elindeki).
+		if technique == "trap":
+			shop_panel.open_shop("extra", GameState.save.technique, far)
+		else:
+			shop_panel.open_shop("rod", technique, far))
+	technique_panel.trap_requested.connect(_place_trap)
+	trap_panel = TrapPanel.new()
+	layer.add_child(trap_panel)
+	trap_panel.remove_requested.connect(_on_trap_remove)
 	var top := CanvasLayer.new()
 	top.layer = 20
 	add_child(top)
@@ -1627,6 +1868,7 @@ func _build_ui() -> void:
 		input.release_all()
 		angler.stop()
 		_pending_cast = Dice.NO_POINT
+		_pending_trap = -1
 		map_panel.open_map(angler.pos2(), zone_id, _map_marks()))
 	hud.technique_pressed.connect(func() -> void:
 		if session.state != FishingSession.State.IDLE or card.visible:
@@ -1634,6 +1876,7 @@ func _build_ui() -> void:
 		input.release_all()
 		angler.stop()
 		_pending_cast = Dice.NO_POINT
+		_pending_trap = -1
 		technique_panel.open())
 	hud.settings_pressed.connect(func() -> void:
 		input.release_all()

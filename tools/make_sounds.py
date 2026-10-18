@@ -719,6 +719,39 @@ def bell_loop():
     return finish(out, -2.0, 0.0)
 
 
+def trap_place(seed):
+    """Kerevit tuzağı suya bırakılır: iri bir plop, tel kafesin kısa tıkırtıları ve batan kabarcıklar."""
+    r = rng(seed)
+    n = frames(0.75)
+    x = 0.8 * bubble(r.uniform(320, 380), r.uniform(900, 1100), n, 0.06)
+    x += 0.4 * splash_noise(n, seed, 500, 5000, 0.09)
+    for i, t in enumerate((0.03, 0.07, 0.12)):
+        m = frames(0.06)
+        clink = partials(r.uniform(2600, 3400), m, [(1.0, 1.0, 0.02), (2.4, 0.5, 0.012)], seed + i)
+        place(x, 0.22 * unit(clink), frames(t))
+    for i in range(4):
+        m = frames(0.12)
+        place(x, 0.25 * bubble(r.uniform(700, 900), r.uniform(1500, 2000), m, 0.03), frames(0.22 + 0.09 * i))
+    return finish(x + 0.12 * reverb(x, 0.5)[:n], -1.0, 0.08)
+
+
+def trap_collect():
+    """Tuzak çekilir (şıkırtı): sudan çıkan kafesin şıpırtısı, damlalar ve kerevitlerin kabuğunun tel
+    kafese çarpan kuru tıkırtıları."""
+    r = rng(811)
+    n = frames(0.9)
+    x = 0.5 * splash_noise(n, 812, 600, 7000, 0.12, 0.01)
+    for i in range(6):
+        m = frames(0.08)
+        drop = bubble(r.uniform(900, 1300), r.uniform(1800, 2600), m, 0.015)
+        place(x, 0.3 * drop, frames(0.15 + 0.1 * i + r.uniform(0.0, 0.04)))
+    for i in range(10):
+        m = frames(0.025)
+        tick = unit(band(noise(m, 820 + i), 2500, 9000)) * env_exp(m, 0.004)
+        place(x, r.uniform(0.15, 0.3) * tick, frames(0.1 + 0.06 * i + r.uniform(0.0, 0.03)))
+    return finish(x + 0.1 * reverb(x, 0.4)[:n], -1.0, 0.1)
+
+
 # --- Liste ve çalıştırma ----------------------------------------------------------------
 
 def registry():
@@ -744,6 +777,7 @@ def registry():
         "panel_open_1": lambda: panel(True), "panel_close_1": lambda: panel(False), "card_1": card,
         "hint_1": tutorial, "coins_1": coins, "buy_1": buy, "equip_1": equip,
         "sting_1": sting, "rank_up_1": rank_up, "travel_1": travel, "strike_1": strike, "snag_1": snag,
+        "trap_place_1": lambda: trap_place(830), "trap_collect_1": trap_collect,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

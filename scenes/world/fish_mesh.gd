@@ -6,7 +6,8 @@ extends MeshInstance3D
 ## açıklığı 0,9 × yükseklik; göz yarıçapı boyun 0,075'i, burundan %16'da. Renk: koyu sırt, açık
 ## karın, türün vurgusu yüzgeçlerde (data/fish.json: back, color, accent).
 ## Model yerel +X'e bakar, toplam boyu 1 birimdir (ölçekle büyütülür). Yüzme kıvrılması ve dış
-## çizgi fish.gdshader / fish_outline.gdshader'da.
+## çizgi fish.gdshader / fish_outline.gdshader'da. Kerevit aynı yolla kurulur (SHAPES "crayfish":
+## kabuk, halkalı kuyruk, kıskaçlar, bacaklar, duyargalar; kıvrılması kısık: "wiggle").
 
 const RINGS := 14
 const SIDES := 12
@@ -21,7 +22,8 @@ const NOSE_X := 0.5
 ## yanlardaki küçük beneklerin rengi: alabalıklar), mirror (aynalı sazanın iri, yassı pullarının
 ## rengi), dorsals (sırt yüzgeci sayısı), dorsal ([baş, son, tepe, yükseklik]: sırt yüzgecinin yeri),
 ## anal (uzun anal yüzgeç), low_fins (alt yüzgeçlerin rengi), fork (kuyruğun çatal derinliği),
-## tail_tilt (üst lobu uzun kuyruk).
+## tail_tilt (üst lobu uzun kuyruk), crayfish (balık değil kerevit), wiggle (kıvrılmanın çarpanı), show
+## (elde gösterilen boyun çarpanı: küçük kerevit seçilsin).
 const SHAPES := {
 	"rudd": { "ratio": 2.4, "nose": 2.4, "eye": 0.075 },
 	"carp": { "ratio": 2.2, "nose": 2.6, "eye": 0.065, "whiskers": 0.12 },
@@ -41,6 +43,7 @@ const SHAPES := {
 	"trout": { "ratio": 3.3, "nose": 2.0, "eye": 0.07, "lateral": "#ef8fa6", "spots": "#2e2a1e", "fork": 0.04 },
 	"brook_trout": { "ratio": 3.1, "nose": 2.1, "eye": 0.068, "flat": 0.08, "spots": "#e04a2f", "low_fins": "#e8743a",
 		"fork": 0.03 },
+	"crayfish": { "crayfish": true, "wiggle": 0.3, "show": 1.6 },
 }
 const DEFAULT_SHAPE := { "ratio": 2.2, "nose": 2.4, "eye": 0.075 }
 ## Dış çizginin dünyadaki kalınlığı (m).
@@ -49,6 +52,9 @@ const OUTLINE_M := 0.012
 static var _meshes: Dictionary = {}
 static var _material: ShaderMaterial
 
+## Türün kıvrılma çarpanı (kerevitte kısık: kuyruğu hafifçe oynar).
+var wiggle_scale: float = 1.0
+
 
 ## Türün (ContentDB fish tanımı) balığı; toplam boyu length metre.
 static func make(def: Dictionary, length: float) -> FishMesh:
@@ -56,8 +62,19 @@ static func make(def: Dictionary, length: float) -> FishMesh:
 	node.mesh = mesh_for(def)
 	node.material_override = _shared_material()
 	node.scale = Vector3.ONE * length
+	node.wiggle_scale = float((SHAPES.get(str(def.get("id", "")), DEFAULT_SHAPE) as Dictionary).get("wiggle", 1.0))
 	node.set_instance_shader_parameters_safe(length)
 	return node
+
+
+## Elde gösterilen boyun türe göre çarpanı (SHAPES "show"; yoksa 1).
+static func show_scale(def: Dictionary) -> float:
+	return float((SHAPES.get(str(def.get("id", "")), DEFAULT_SHAPE) as Dictionary).get("show", 1.0))
+
+
+## Tür balık değil kerevit mi (elde sırtı kameraya dönük gösterilir)?
+static func is_crayfish(def: Dictionary) -> bool:
+	return bool((SHAPES.get(str(def.get("id", "")), DEFAULT_SHAPE) as Dictionary).get("crayfish", false))
 
 
 ## Elde gösterilen boy (m): logaritmik büyür (küçük balık da seçilsin); 15 cm'lik balık 0,3 m,
@@ -81,7 +98,7 @@ func set_instance_shader_parameters_safe(length: float) -> void:
 func set_wiggle(amount: float, speed: float) -> void:
 	var material := material_override as ShaderMaterial
 	for m: ShaderMaterial in [material, material.next_pass as ShaderMaterial]:
-		m.set_shader_parameter("wiggle", amount)
+		m.set_shader_parameter("wiggle", amount * wiggle_scale)
 		m.set_shader_parameter("wiggle_speed", speed)
 
 
@@ -137,6 +154,10 @@ class _Builder:
 	var anal: bool
 	var fork: float
 	var tail_tilt: float
+	var crayfish: bool
+	## Kerevitin köşeleri bu dönüşümle yerine konur (tasarım biriminde uzun duyargalarla ~1,4: boy 1'e
+	## sığsın). Balıkta kullanılmaz.
+	var shrink := Transform3D(Basis.from_scale(Vector3.ONE * 0.75), Vector3(-0.03, 0.0, 0.0))
 
 	func _init(def: Dictionary, shape: Dictionary) -> void:
 		body = def.get("color", Color("#9fb3c8"))
@@ -170,10 +191,15 @@ class _Builder:
 		anal = bool(shape.get("anal", false))
 		fork = float(shape.get("fork", 0.07))
 		tail_tilt = float(shape.get("tail_tilt", 0.0))
+		crayfish = bool(shape.get("crayfish", false))
 		half_h = 0.5 / ratio
 
 	func build() -> ArrayMesh:
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		if crayfish:
+			_crayfish()
+			st.generate_normals()
+			return st.commit()
 		_body()
 		_tail()
 		_fins()
@@ -357,6 +383,95 @@ class _Builder:
 				for t: float in row[1]:
 					_disc(ring_point(t, a), Vector3(0.0, cos(a), sin(a)), height_scaled(t) * 0.075, spots)
 
+	## Kerevit: baş-göğüs kabuğu ve burun dikeni, öne doğru büyüyen beş halkalı kuyruk ve yelpazesi,
+	## iki iri kıskaç (kol, bilek, kıskaç, iki parmak), dört çift ince bacak, uzun duyargalar ve saplı
+	## gözler. Sırt koyu (back), alt açık (belly), parmak uçları vurgu renginde (accent). +X'e bakar:
+	## kıskaçlar önde, kuyruk geride (kıvrılma kuyrukta). Noktalar tasarım biriminde; _tri_as_is
+	## küçültür (shrink).
+	func _crayfish() -> void:
+		var shell := back.lerp(body, 0.4)
+		var dark := Color("#1d1f24")
+		# Çizgi film oranları: elde küçük gösterildiği için gövde ve kıskaçlar gerçeğinden tombul (ince bir
+		# kerevit ekranda birkaç piksel kalıyordu).
+		_ellipsoid(Vector3(0.1, 0.0, 0.0), Vector3(0.21, 0.1, 0.12), shell, belly, 12, 7)
+		_tube(Vector3(0.29, 0.04, 0.0), Vector3(0.42, 0.03, 0.0), 0.032, back)
+		for i in 5:
+			var t := float(i) / 4.0
+			var r := lerpf(1.0, 0.65, t)
+			_ellipsoid(Vector3(lerpf(-0.12, -0.4, t), -0.01 - 0.025 * t * t, 0.0), Vector3(0.072, 0.085 * r, 0.1 * r),
+					shell, belly, 10, 5)
+		# Kuyruk yelpazesi: ortada bir, yanlarda ikişer kürek.
+		var root := Vector3(-0.44, -0.035, 0.0)
+		var fan := shell.lerp(accent, 0.25)
+		for k in 5:
+			var side := float(k - 2)
+			var tip := Vector3(-0.56 + 0.02 * absf(side), -0.04, side * 0.065)
+			var across := Vector3(0.0, 0.0, 1.0).rotated(Vector3.UP, side * 0.25)
+			_quad(root + across * 0.016, tip + across * 0.036, tip - across * 0.036, root - across * 0.016, fan)
+		for s: float in [-1.0, 1.0]:
+			# Kıskaç: omuzdan öne ve dışa kol, bilek, iri kıskaç ve aralarında boşluk olan iki parmak.
+			var shoulder := Vector3(0.24, -0.03, s * 0.08)
+			var elbow := Vector3(0.34, -0.015, s * 0.19)
+			var wrist := Vector3(0.44, 0.0, s * 0.22)
+			_limb(shoulder, elbow, 0.032, 0.028, shell)
+			_sphere(elbow, 0.03, shell, 6, 4)
+			_limb(elbow, wrist, 0.028, 0.034, shell)
+			_ellipsoid(Vector3(0.55, 0.0, s * 0.23), Vector3(0.12, 0.045, 0.075), shell, belly, 10, 5)
+			_tube(Vector3(0.65, 0.0, s * 0.2), Vector3(0.78, 0.005, s * 0.18), 0.03, accent)
+			_tube(Vector3(0.65, 0.0, s * 0.26), Vector3(0.77, 0.005, s * 0.255), 0.027, accent)
+			# Bacaklar: kabuğun altından dışa ve aşağı.
+			for j in 4:
+				var x := 0.19 - 0.065 * j
+				var knee := Vector3(x - 0.01, -0.07, s * (0.16 + 0.01 * j))
+				_limb(Vector3(x, -0.06, s * 0.07), knee, 0.015, 0.013, shell)
+				_tube(knee, Vector3(x - 0.035, -0.13, s * (0.21 + 0.012 * j)), 0.013, shell.darkened(0.15))
+			# Duyargalar: uzun olanı öne ve dışa kıvrılır; kısa çifti yukarı.
+			var base := Vector3(0.32, 0.03, s * 0.04)
+			var bend := Vector3(0.58, 0.06, s * 0.16)
+			_limb(base, bend, 0.012, 0.01, back)
+			_tube(bend, Vector3(0.82, 0.05, s * 0.32), 0.01, back)
+			_tube(Vector3(0.34, 0.045, s * 0.018), Vector3(0.46, 0.085, s * 0.055), 0.009, back)
+			# Saplı gözler.
+			_limb(Vector3(0.29, 0.05, s * 0.035), Vector3(0.33, 0.08, s * 0.055), 0.014, 0.014, shell)
+			_sphere(Vector3(0.335, 0.085, s * 0.058), 0.026, dark, 8, 6)
+			_sphere(Vector3(0.345, 0.1, s * 0.062), 0.008, Color.WHITE, 6, 4)
+
+	## Basık küre (kabuk, kuyruk halkası, kıskaç): yarıçapları radii; üstü top, altı bottom renginde.
+	## Küre noktalarıyla aynı el (dışı saat yönünde).
+	func _ellipsoid(center: Vector3, radii: Vector3, top: Color, bottom: Color, segments: int, rings: int) -> void:
+		for j in rings:
+			var v0 := PI * j / rings
+			var v1 := PI * (j + 1) / rings
+			for k in segments:
+				var u0 := TAU * k / segments
+				var u1 := TAU * (k + 1) / segments
+				var s00 := _spherical(u0, v0)
+				var s01 := _spherical(u1, v0)
+				var s10 := _spherical(u0, v1)
+				var s11 := _spherical(u1, v1)
+				_tri_as_is(center + s00 * radii, center + s10 * radii, center + s11 * radii,
+						_shade(s00, top, bottom), _shade(s10, top, bottom), _shade(s11, top, bottom))
+				_tri_as_is(center + s00 * radii, center + s11 * radii, center + s01 * radii,
+						_shade(s00, top, bottom), _shade(s11, top, bottom), _shade(s01, top, bottom))
+
+	static func _shade(n: Vector3, top: Color, bottom: Color) -> Color:
+		return bottom.lerp(top, smoothstep(-0.55, 0.45, n.y))
+
+	## Kalınlığı r0'dan r1'e değişen kısa boru (kol, bacak): _tube gibi sıralı, ucu sivrilmez.
+	func _limb(start: Vector3, finish: Vector3, r0: float, r1: float, color: Color) -> void:
+		var dir := (finish - start).normalized()
+		var u := dir.cross(Vector3.UP)
+		if u.length() < 0.1:
+			u = dir.cross(Vector3.RIGHT)
+		u = u.normalized()
+		var v := u.cross(dir).normalized()
+		for k in 6:
+			var a0 := TAU * k / 6.0
+			var a1 := TAU * (k + 1) / 6.0
+			var o0 := u * cos(a0) + v * sin(a0)
+			var o1 := u * cos(a1) + v * sin(a1)
+			_quad(start + o0 * r0, finish + o0 * r1, finish + o1 * r1, start + o1 * r0, color)
+
 	## Yassı pul: n yönünde basık küre (dışı saat yönünde: küre noktalarıyla aynı el).
 	func _disc(center: Vector3, n: Vector3, r: float, color: Color) -> void:
 		var t1 := n.cross(Vector3.RIGHT)
@@ -429,6 +544,10 @@ class _Builder:
 
 	## Verilen sırayla (küre noktaları zaten saat yönünde).
 	func _tri_as_is(a: Vector3, b: Vector3, c: Vector3, ca: Color, cb: Color, cc: Color) -> void:
+		if crayfish:
+			a = shrink * a
+			b = shrink * b
+			c = shrink * c
 		st.set_color(ca)
 		st.add_vertex(a)
 		st.set_color(cb)

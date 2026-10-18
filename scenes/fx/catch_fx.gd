@@ -4,7 +4,8 @@ extends Node3D
 ## üstünde nadirlik simgesi, adı ve boyu (CatchTag, 2B) yükselip söner; Nadir ve üstünde balıkçının
 ## çevresinde nadirlik renginde ışık sütunu yükselir. Sütun balığın arkasında kalır (toplamalı ışık
 ## balığı soldurmasın): balık kameraya doğru uzatılmıştır.
-## Balık kameraya yan döner (profilinden görünsün). Süreler _process(delta) toplamıyla ölçülür.
+## Balık kameraya yan döner (profilinden görünsün; kerevit sırtını döner). Süreler _process(delta)
+## toplamıyla ölçülür.
 
 const HOLD_TIME := 2.2
 const BEAM_TIME := 1.8
@@ -30,10 +31,13 @@ func show_catch(def: Dictionary, size_cm: int, title: String, color: Color, hand
 	clear()
 	_hand = hand
 	_origin = origin
-	var length := FishMesh.display_length(size_cm)
+	var length := FishMesh.display_length(size_cm) * FishMesh.show_scale(def)
 	_fish = FishMesh.make(def, length)
 	_fish.set_wiggle(0.16, 11.0)
 	_fish.rotation.y = FollowCamera.YAW
+	# Kerevit sırtı kameraya dönük tutulur (kıskaçları görünsün).
+	if FishMesh.is_crayfish(def):
+		_fish.rotation.x = deg_to_rad(55.0)
 	_fish.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(_fish)
 	if _tag == null:

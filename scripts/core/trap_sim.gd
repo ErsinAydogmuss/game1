@@ -25,6 +25,15 @@ static func zone_allows(db: ContentDB, spot_id: String, zone_id: String) -> bool
 	return not z.is_empty() and not (z["trap_ids"] as PackedStringArray).is_empty()
 
 
+## Tuzağın açıldığı rütbe (dükkândaki en erken tuzağınki; tuzak yoksa 0).
+static func rank(db: ContentDB) -> int:
+	var low := 0
+	for g in db.gear_in("trap"):
+		if low == 0 or int(g["rank"]) < low:
+			low = int(g["rank"])
+	return low
+
+
 ## Sahip olunan tuzak sayısı (dükkândan alınan trap_1..3).
 static func owned(db: ContentDB, save: SaveData) -> int:
 	var n := 0

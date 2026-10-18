@@ -628,7 +628,11 @@ func _buy(id: String) -> void:
 			GameState.save_game()
 			Sounds.play("buy")
 			Sounds.haptic(18)
-			_say("UI_NINE_BOUGHT" if not first_rod or here else "UI_NINE_FLY_ZONE")
+			# Tuzak: Nine nasıl bırakılacağını söyler (takım çantasından, sığ suya).
+			if str(item["category"]) == "trap":
+				_say("UI_NINE_TRAP")
+			else:
+				_say("UI_NINE_BOUGHT" if not first_rod or here else "UI_NINE_FLY_ZONE")
 			gear_changed.emit()
 			refresh()
 		"coins":

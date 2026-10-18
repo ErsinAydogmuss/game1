@@ -20,6 +20,8 @@ const BADGE_ICON := 58.0
 const BADGE_MIN := Vector2(150, 132)
 const PIN := 66.0
 const MARK := 58.0
+## Kerevit tuzağının işareti (küçük: atış noktasının iğnesini örtmesin).
+const TRAP_MARK := 44.0
 ## Çıkartmaların boyu: bölge süsü ve ağaç öbeği, dükkân, sandal, pusula; şamandıra ve çit tabelası.
 const STICKER := 92.0
 const SHOP_STICKER := 84.0
@@ -99,7 +101,7 @@ func _init() -> void:
 
 
 ## Haritayı kurar: göl ve bölgeleri, kilitler (kayda göre), balıkçının yeri (here), bulunulan
-## bölge ve işaretler ([{ "kind": "shop" | "dede" | "boat", "pos": Vector2 }]; sandal çıkartmadır,
+## bölge ve işaretler ([{ "kind": "shop" | "dede" | "boat" | "trap", "pos": Vector2 }]; sandal çıkartmadır,
 ## görseli yoksa çizilmez).
 func show_lake(db: ContentDB, save: SaveData, spot_id: String, here: Vector2, current: String,
 		marks: Array[Dictionary]) -> void:
@@ -427,8 +429,8 @@ func _new_tag() -> Control:
 	return pill
 
 
-## Dükkân ya da Dede işareti: dükkân Ersin'in çıkartması (yoksa dükkân ikonu), Dede portresi (yoksa
-## yok). Sandal çıkartmadır (_add_stickers).
+## Dükkân, Dede ya da tuzak işareti: dükkân Ersin'in çıkartması (yoksa dükkân ikonu), Dede portresi
+## (yoksa yok), kerevit tuzağı küçük tuzak resmi. Sandal çıkartmadır (_add_stickers).
 func _mark(kind: String) -> Control:
 	match kind:
 		"shop":
@@ -437,6 +439,8 @@ func _mark(kind: String) -> Control:
 		"dede":
 			var face := ItemArt.portrait("dede_smile")
 			return _art_rect(face, MARK) if face != null else null
+		"trap":
+			return GameIcon.make("trap", TRAP_MARK)
 	return null
 
 

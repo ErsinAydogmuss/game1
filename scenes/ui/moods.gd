@@ -24,9 +24,11 @@ const BY_KEY := {
 	# Sinek: sürüklenme ve altındaki balık anlatılır, halka heyecanlı.
 	"UI_HINT_FLY_DRIFT": STORY, "UI_HINT_FLY_UNDER": STORY, "UI_HINT_FLY_RISE": WOW, "UI_DEDE_FLY_HERE": STORY,
 	"UI_DEDE_FLY_STILL": STORY,
+	# Tuzak: açılınca sevinir, ilk tuzakta anlatır.
+	"UI_DEDE_TRAP_OPEN": WOW, "UI_DEDE_TRAP_FIRST": STORY,
 	"UI_DEDE_CARD_NEW": SMILE, "UI_DEDE_CARD_RECORD": WOW, "UI_DEDE_CARD_RELEASE": STORY,
 	# Nine satın almada paketi uzatır, satışta sevinir.
-	"UI_NINE_BOUGHT": STORY, "UI_NINE_SOLD": WOW, "UI_NINE_FLY_ZONE": STORY,
+	"UI_NINE_BOUGHT": STORY, "UI_NINE_SOLD": WOW, "UI_NINE_FLY_ZONE": STORY, "UI_NINE_TRAP": STORY,
 }
 ## Ön ekle eşlenen sözler: Dede'nin öğütleri (UI_DEDE_TIP_1...), fazla iri balıkta takım öğüdü
 ## (UI_DEDE_TOO_BIG_...), kartta nadirliğe göre sözleri (UI_DEDE_CARD_<nadirlik>, Nadir ve üstü), yeni

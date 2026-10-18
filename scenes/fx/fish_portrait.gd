@@ -2,7 +2,7 @@ class_name FishPortrait
 extends RefCounted
 ## Balık portreleri: her türün FishMesh'i açılışta bir kez, saydam arka planlı küçük bir
 ## görüntüye çizilir (PortraitStudio); ItemArt.register_fish_portrait ile kartlara ve ikonlara
-## verilir. Ersin'in balık görselleri gelince onlar kullanılır (ItemArt önce dosyaya bakar).
+## verilir. Ersin'in görseli olan tür (kerevit) çizilmez: ItemArt önce dosyaya bakar.
 ## Ekransız çalışmada (testler, headless) çizim olmaz; yer tutucu madalyon kalır.
 
 const SIZE := 256
@@ -13,7 +13,8 @@ static func render_all(parent: Node, db: ContentDB) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
 	for f in db.fish:
-		await render(parent, f)
+		if ItemArt.item(str(f["id"])) == null:
+			await render(parent, f)
 
 
 static func render(parent: Node, def: Dictionary) -> void:

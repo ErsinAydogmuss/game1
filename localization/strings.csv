@@ -357,3 +357,20 @@ UI_TRAP_ZONE,Traps go in the reeds or at the rocks,Tuzak sazlıkta ya da kayalı
 UI_TRAP_NO_SPOT,No shallow water close by,Yakında sığ su yok
 UI_TRAP_DEEP,Too deep for a trap,Tuzak için çok derin
 UI_TRAP_CLOSE,Too close to another trap,Öteki tuzağa çok yakın
+UI_BAG_TRAP,Crayfish trap,Kerevit tuzağı
+UI_BAG_TRAP_HOW,"Leave it in the shallows: a crayfish every %d min.",Sığ suya bırak: %d dakikada bir kerevit girer.
+UI_BAG_TRAP_COUNT,%d/%d set,%d/%d kurulu
+UI_BAG_TRAP_PLACE,Set trap,Tuzak bırak
+UI_BAG_TRAP_SET,All set,Hepsi kurulu
+UI_BAG_TRAP_WHERE,"Reeds, rocks","Sazlık, kayalık"
+UI_TRAP_OPEN,New: crayfish traps!,Yeni: kerevit tuzağı!
+UI_DEDE_TRAP_OPEN,"Crayfish walk into traps, kid. Nana sells them!","Kerevit tuzağa kendi girer evlat. Nine tuzak satıyor!"
+UI_DEDE_TRAP_FIRST,"It fills while you're away. Tap the orange float to empty it!","Sen yokken de dolar. Turuncu şamandıraya dokun, topla!"
+UI_TRAP_PLACED,Trap set: a crayfish every %d minutes,Tuzak kuruldu: %d dakikada bir kerevit
+UI_TRAP_BUCKET_FULL,Bucket full: the crayfish wait in the trap,Kova dolu: kerevitler tuzakta bekliyor
+UI_TRAP_LEFT,Bucket full: %d still in the trap,Kova doldu: %d kerevit tuzakta bekliyor
+UI_TRAP_EMPTY,The trap is empty. The next crayfish walks in within %d min.,Tuzak boş. Sıradaki kerevit %d dakika içinde girer.
+UI_TRAP_WAIT,Wait,Bekle
+UI_TRAP_REMOVE,Take it,Kaldır
+UI_TRAP_REMOVED,Trap back in your bag,Tuzak çantana döndü
+UI_NINE_TRAP,"Set it from your tackle bag, in the shallows, dear.",Takım çantandan sığ suya bırak evladım.

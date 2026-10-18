@@ -2,9 +2,10 @@ class_name ItemArt
 extends RefCounted
 ## Görsellere tek giriş noktası: arayüz ikonları, portreler, logo ve balık portreleri.
 ## Önce kullanıcının işlenmiş görselleri (assets/icons/..., assets/ui/...) kullanılır; dosya yoksa
-## null döner ve çağıran yer tutucu çizer (GameIcon kodla çizer). Balık portreleri oyunun kendi
-## 3D modelinden çekilir (FishPortrait, register_fish ile verilir); o gelene kadar balığın renginde
-## bir madalyon üretilir. (Kazı'dan uyarlandı.)
+## null döner ve çağıran yer tutucu çizer (GameIcon kodla çizer). Balık portreleri Ersin'in eşya
+## görseli varsa ondan (kerevit: assets/icons/items), yoksa oyunun kendi 3D modelinden çekilir
+## (FishPortrait, register_fish ile verilir); o gelene kadar balığın renginde bir madalyon üretilir.
+## (Kazı'dan uyarlandı.)
 ## Görseller tools/process_images.gd ile üretilir (docs/gorsel-istekleri.md).
 
 const UI := "res://assets/icons/ui/%s.png"
@@ -20,6 +21,8 @@ const ZONES := "res://assets/icons/zones/zone_%s.png"
 ## Harita çıkartmaları (Parti 3; yoksa harita süssüz). Harita kâğıdı 9 dilimli bir çerçevedir
 ## (FRAMES, "map_paper").
 const MAP := "res://assets/ui/map/%s.png"
+## Eşya görselleri (Parti 4: kerevit; Dalga 4'te göl eşyaları).
+const ITEMS := "res://assets/icons/items/%s.png"
 
 ## Yer tutucunun boyu (piksel).
 const PLACEHOLDER_SIZE := 128
@@ -41,11 +44,20 @@ static func register_fish_portrait(id: String, texture: Texture2D) -> void:
 	_fish_portraits[id] = texture
 
 
-## Balığın portresi; yoksa balığın renginde yer tutucu madalyon.
+## Balığın portresi: Ersin'in eşya görseli (kerevit), yoksa modelden çekilen, yoksa balığın renginde
+## yer tutucu madalyon.
 static func fish(id: String) -> Texture2D:
+	var art := item(id)
+	if art != null:
+		return art
 	if _fish_portraits.has(id):
 		return _fish_portraits[id]
 	return _placeholder(id)
+
+
+## Eşyanın görseli (ör. "crayfish"; yoksa null).
+static func item(item_name: String) -> Texture2D:
+	return _load(ITEMS % item_name)
 
 
 static func ui(icon_name: String) -> Texture2D:
