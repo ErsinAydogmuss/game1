@@ -43,7 +43,7 @@ const SHAPES := {
 	"trout": { "ratio": 3.3, "nose": 2.0, "eye": 0.07, "lateral": "#ef8fa6", "spots": "#2e2a1e", "fork": 0.04 },
 	"brook_trout": { "ratio": 3.1, "nose": 2.1, "eye": 0.068, "flat": 0.08, "spots": "#e04a2f", "low_fins": "#e8743a",
 		"fork": 0.03 },
-	"crayfish": { "crayfish": true, "wiggle": 0.3, "show": 1.6 },
+	"crayfish": { "crayfish": true, "wiggle": 0.3, "show": 2.0 },
 }
 const DEFAULT_SHAPE := { "ratio": 2.2, "nose": 2.4, "eye": 0.075 }
 ## Dış çizginin dünyadaki kalınlığı (m).
@@ -389,7 +389,8 @@ class _Builder:
 	## kıskaçlar önde, kuyruk geride (kıvrılma kuyrukta). Noktalar tasarım biriminde; _tri_as_is
 	## küçültür (shrink).
 	func _crayfish() -> void:
-		var shell := back.lerp(body, 0.4)
+		# Kabuk türün açık renginde (koyu kabuk balıkçının bacaklarına ve çimene karışıyordu).
+		var shell := body.lerp(back, 0.2)
 		var dark := Color("#1d1f24")
 		# Çizgi film oranları: elde küçük gösterildiği için gövde ve kıskaçlar gerçeğinden tombul (ince bir
 		# kerevit ekranda birkaç piksel kalıyordu).

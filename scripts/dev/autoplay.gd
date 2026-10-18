@@ -15,7 +15,8 @@ extends Node
 ##   first: ilk açılış; senaryolu ilk balık (ekran görüntüleri; 45 sn denetimi).
 ##   hero: balıkçı, Dede ve Nine yakın çekim (kamerayı bot sürer): Dede konuşur, ikisi, dükkân,
 ##     Nine selam verir, atış, bekleme, çekme, balığı gösterme, Dede sevinir.
-##   fish: on iki balık elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez).
+##   fish: bütün türler elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez);
+##     --fish=<kimlik> yalnızca o tür.
 ##   shop: Nine'nin dükkânı (KONTROL satırları): dokununca açılır, para yetmezse ve rütbe tutmazsa
 ##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, doluyken balık göle döner,
 ##     hepsini sat, son yem bitince solucana döner; sekme görüntüleri.
@@ -60,6 +61,8 @@ var _shots_dir: String = ""
 var _scenario: String = "controls"
 var _locale: String = ""
 var _inset: float = 0.0
+## fish senaryosunda yalnızca bu tür (--fish=<kimlik>; boşsa hepsi).
+var _only_fish: String = ""
 var _overlay: Control
 var _finger_pos: Dictionary = {}
 var _results: Array[String] = []
@@ -79,6 +82,8 @@ func _ready() -> void:
 			_locale = arg.get_slice("=", 1)
 		elif arg.begins_with("--safe-inset="):
 			_inset = float(arg.get_slice("=", 1))
+		elif arg.begins_with("--fish="):
+			_only_fish = arg.get_slice("=", 1)
 	if not _shots_dir.is_empty():
 		DirAccess.make_dir_recursive_absolute(_shots_dir)
 	GameState.persist = false
@@ -1799,6 +1804,8 @@ func _play_fish() -> void:
 	for def in db.fish:
 		index += 1
 		var id := str(def["id"])
+		if not _only_fish.is_empty() and id != _only_fish:
+			continue
 		var percentile := 800000
 		var rarity := int(def["rarity"])
 		var info := {"fish": id, "size_cm": FishTable.size_cm(def, percentile),
