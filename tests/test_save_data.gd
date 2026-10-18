@@ -15,7 +15,11 @@ func test_roundtrip_keeps_every_field() -> void:
 	s.character = "rogue"
 	s.bucket = [{ "fish": "rudd", "size_cm": 22, "stars": 3 }]
 	s.owned = PackedStringArray(["reel_smooth", "bucket_big"])
-	s.loadouts = { "float": { "reel": "reel_smooth", "bait": "bait_corn" } }
+	s.loadouts = { "shared": { "reel": "reel_smooth" }, "float": { "bait": "bait_corn" }, "spin": { "rod": "rod_spin_light" } }
+	s.technique = "spin"
+	s.traps = [{ "id": 2, "zone": "reeds", "x": -16.5, "z": 1.25, "placed_unix": 1100, "last_unix": 1500, "progress_s": 900,
+			"items": [{ "fish": "crayfish", "size_cm": 11, "stars": 2 }] }]
+	s.trap_serial = 3
 	s.baits = { "bait_corn": 12 }
 	s.xp = 150
 	s.love = 9
@@ -47,6 +51,13 @@ func test_bad_values_are_sanitized() -> void:
 		"baits": { "bait_corn": 5, "bait_dough": -2, "bait_maggot": "çok" },
 		"xp": -10, "pity": { "rare": "3" },
 	})
+	var v4 := SaveData.from_dict({
+		"version": 4, "technique": 5, "trap_serial": -2,
+		"traps": [
+			{ "id": 1, "zone": "reeds", "x": 1.0, "z": 2, "placed_unix": -9, "items": [{ "fish": "crayfish", "size_cm": 9 }, "yok"] },
+			{ "zone": "", "x": 1.0, "z": 2.0 }, { "zone": "reeds", "x": "bir", "z": 2.0 }, "bozuk",
+		],
+	})
 	assert_eq(back.coins, 0, "negatif para sıfırlanır")
 	assert_eq(back.session, 0, "negatif oturum sıfırlanır")
 	assert_true(back.records.has("carp"), "geçerli kayıt kalır")
@@ -58,10 +69,17 @@ func test_bad_values_are_sanitized() -> void:
 	assert_eq(back.bucket.size(), 1, "kovada yalnızca geçerli satır kalır")
 	assert_eq(int(back.bucket[0]["stars"]), 1, "eksik yıldız 1 olur")
 	assert_eq(back.owned, PackedStringArray(["reel_smooth"]), "takım listesi tekrarsız ve yalnızca yazı")
-	assert_eq(back.loadouts, { "float": { "reel": "reel_smooth" } }, "bozuk kuşanma düşer")
+	assert_eq(back.loadouts, { "float": {}, "shared": { "reel": "reel_smooth" } },
+			"bozuk kuşanma düşer (makara v4 göçüyle ortak sete geçer)")
 	assert_eq(back.baits, { "bait_corn": 5 }, "eksi ve bozuk yem sayısı düşer")
 	assert_eq(back.xp, 0, "eksi rütbe puanı sıfırlanır")
 	assert_eq(back.pity, { "rare": 3 }, "sayı yazısı okunur")
+	assert_eq(v4.technique, "float", "yazı olmayan teknik şamandıra olur")
+	assert_eq(v4.trap_serial, 0, "eksi tuzak sayacı sıfırlanır")
+	assert_eq(v4.traps.size(), 1, "bölgesi ya da yeri bozuk tuzak düşer")
+	assert_eq(int(v4.traps[0]["placed_unix"]), 0, "eksi zaman sıfırlanır")
+	assert_eq(float(v4.traps[0]["z"]), 2.0, "tamsayı yer okunur")
+	assert_eq(v4.traps[0]["items"], [{ "fish": "crayfish", "size_cm": 9, "stars": 1 }], "tuzağın içi kova gibi ayıklanır")
 
 
 ## Elle bozulmuş ya da hatalı yazılmış tek bir değer bütün ilerlemeyi sildirmez: o alan
@@ -159,8 +177,9 @@ func test_v2_save_migrates_to_v3() -> void:
 
 
 ## v0.3'ün gerçek bir kaydı (denge botu büyük gölde sandalı alıp mersini bırakana kadar oynadı;
-## değiştirilmez): olduğu gibi okunur. Sonraki sürümde göç testi bu örnekten yapılır.
-func test_v3_save_loads_as_is() -> void:
+## değiştirilmez): v4'e göçer. Makara ve misina her teknikte ortak sete taşınır; kuşanılan takım,
+## rütbe ve kova aynı kalır; elindeki teknik şamandıra, tuzak yok.
+func test_v3_save_migrates_to_v4() -> void:
 	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v3.json"))
 	assert_eq(typeof(raw), TYPE_DICTIONARY, "v3 kaydı okunur")
 	if typeof(raw) != TYPE_DICTIONARY:
@@ -176,6 +195,13 @@ func test_v3_save_loads_as_is() -> void:
 	assert_eq(s.bucket.size(), 4, "kovadaki balıklar")
 	assert_eq(str(s.bucket[0]["fish"]), "bream", "kovadaki ilk balık")
 	assert_eq(Economy.equipped(db, s, "rod"), "rod_float_glass", "kuşanılan olta")
+	assert_eq(Economy.equipped(db, s, "reel"), "reel_quick", "kuşanılan makara (ortak sette)")
+	assert_eq(Economy.equipped(db, s, "line"), "line_fluoro", "kuşanılan misina (ortak sette)")
+	assert_eq(Economy.equipped(db, s, "hook"), "hook_large", "kuşanılan iğne")
+	assert_eq(s.loadouts["shared"], { "reel": "reel_quick", "line": "line_fluoro" }, "ortak set")
+	assert_true(not (s.loadouts["float"] as Dictionary).has("reel"), "makara şamandıranın setinden çıktı")
+	assert_eq(s.technique, "float", "elindeki teknik şamandıra")
+	assert_true(s.traps.is_empty() and s.trap_serial == 0, "tuzak yok")
 	assert_eq(int(s.records["sturgeon"]["released"]), 1, "mersin göle bırakıldı")
 	assert_eq(s.love, 40, "göl sevgisi")
 	assert_eq(int(s.pity["legendary"]), 4, "Efsanevi sayacı")

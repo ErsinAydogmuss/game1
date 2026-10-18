@@ -400,6 +400,9 @@ func _spawn(angler: Vector2, bobber: Vector2, bobber_active: bool) -> FishShadow
 	var forced := not scripted and pity_floor >= 0 and not _has_pity() and (not _zoned or s.zone == player_zone)
 	var fish_id := str(_spot.get("first_fish", ids[0])) if scripted \
 			else CatchOdds.roll(_db, species_rng, species, pity_floor if forced else -1)
+	if fish_id.is_empty():
+		# Bu teknikle bu bölgede gelen tür yok (zarlar atıldıktan sonra; şamandırada hiç olmaz).
+		return null
 	s.fish_index = _db.fish_index(fish_id)
 	var def := _db.fish_def(s.fish_index)
 	s.fish_id = fish_id

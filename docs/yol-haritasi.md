@@ -110,6 +110,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 **Dalga 3 — Teknikler → v0.4**
 
 - [x] Teknik soyutlaması: ısırmaya kadarki kısım tekniğin (`Technique`, şamandıra `FloatTechnique`); gölgeler tekniğin profilini okur (`TechniqueRules`). Şamandıra bit bit aynı (altın test).
+- [x] Takım çantasının temeli: makara ve misina her teknikte ortak, her tekniğin kendi yuvaları; türlerin teknik yatkınlığı (şamandırada oranlar ve katalog aynı); kayıt v4 (elindeki teknik, kerevit tuzakları).
 - [ ] Spin.
 - [ ] Dip: sehpa ve zil.
 - [ ] Sinek (dere ağzı).

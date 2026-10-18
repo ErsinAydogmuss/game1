@@ -100,9 +100,10 @@ static func species(db: ContentDB, spot: String) -> Array[Dictionary]:
 	return out
 
 
-## Bu göldeki tür oranları kuşanılan takımla (doğan gölgeler de bunu kullanır).
+## Bu göldeki tür oranları elindeki teknik ve kuşanılan takımla (doğan gölgeler de bunu kullanır).
 static func odds(db: ContentDB, save: SaveData, spot: String, zone: String = "") -> Dictionary:
-	return CatchOdds.species_ppm(db, Zones.place(db, spot, zone), {"attract": Economy.gear_for(db, save).attract})
+	var gear := Economy.gear_for(db, save, save.technique)
+	return CatchOdds.species_ppm(db, Zones.place(db, spot, zone), { "attract": gear.attract, "technique": gear.technique })
 
 
 

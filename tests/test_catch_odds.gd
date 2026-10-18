@@ -176,3 +176,33 @@ func test_pity_shapes_the_next_shadow_only() -> void:
 	for i in mini(plain.shadows.size(), forced.shadows.size()):
 		assert_eq(forced.shadows[i].percentile, plain.shadows[i].percentile, "boy türden bağımsız (%d)" % i)
 		assert_eq(forced.shadows[i].pos, plain.shadows[i].pos, "yer türden bağımsız (%d)" % i)
+
+
+## Teknik (Dalga 3): şamandırada oranlar teknik verilmeden de verilince de bit bit aynı (Dalga 3
+## öncesi bütün türlerin yatkınlığı 1); spin yalnızca yırtıcıları, dip dipteki balıkları çağırır;
+## bölgede avlanılmayan teknikte tür yok; en yüksek kademe tekniğe göre.
+func test_technique_shapes_the_odds() -> void:
+	var db := content()
+	for z in db.zones_of("big_lake"):
+		for ctx: Dictionary in [{}, { "attract": { "carp": 3.0, "tench": 2.5 } }]:
+			var with_float := ctx.duplicate()
+			with_float["technique"] = "float"
+			assert_eq(CatchOdds.species_ppm(db, z, with_float), CatchOdds.species_ppm(db, z, ctx),
+					"%s: şamandıranın oranı değişmez" % z["id"])
+	var dock := _spot()
+	var spin := CatchOdds.species_ppm(db, dock, { "technique": "spin" })
+	var total := 0
+	for id: String in spin:
+		total += int(spin[id])
+		if int(spin[id]) > 0:
+			assert_true(id in ["perch", "pike", "wels", "zander", "chub"], "spinle yalnızca yırtıcı: " + id)
+	assert_eq(total, Dice.PPM, "spinde de toplam 1e6")
+	assert_true(int(spin["perch"]) > int(spin["pike"]), "iskele koyunda spinle en çok levrek")
+	var bottom := CatchOdds.species_ppm(db, dock, { "technique": "bottom" })
+	assert_true(int(bottom["carp"]) > int(bottom["rudd"]), "dipte sazan kızılkanattan çok")
+	assert_true(CatchOdds.species_ppm(db, dock, { "technique": "fly" }).is_empty(), "akıntısız bölgede sinekle tür yok")
+	var stream := Zones.place(db, "big_lake", "stream_mouth")
+	assert_true(not CatchOdds.species_ppm(db, stream, { "technique": "fly" }).is_empty(), "dere ağzında sinek")
+	assert_eq(CatchOdds.top_rarity(db, dock, "spin"), db.rarity_index("epic"), "iskelede spinle en çok Destansı (yayın)")
+	assert_eq(CatchOdds.top_rarity(db, dock, "fly"), -1, "akıntısız bölgede sinekle hiçbir kademe")
+	assert_eq(CatchOdds.top_rarity(db, dock), CatchOdds.top_rarity(db, dock, "float"), "varsayılan şamandıra")

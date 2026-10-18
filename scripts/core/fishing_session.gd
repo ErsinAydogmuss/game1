@@ -96,11 +96,12 @@ func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, eas
 	lake = db.lake(spot_id)
 	angler = spot.get("start", Vector2.ZERO)
 	easy = easy_mode
-	var odds := { "attract": gear.attract, "pity_floor": pity_floor, "reach": gear.range_m }
+	technique = Techniques.make(gear.technique, rules)
+	var odds := _odds(pity_floor)
+	odds["reach"] = gear.range_m
 	if not access.is_empty():
 		odds["open"] = access
 	sim = ShadowSim.new(db, spot, lake, seed, first_catch, angler, odds)
-	technique = Techniques.make(gear.technique, rules)
 	sim.set_rig(technique.rig)
 
 
@@ -218,9 +219,9 @@ func range_m() -> float:
 func set_gear(gear_stats: GearStats) -> void:
 	gear = gear_stats
 	sim.set_reach(gear.range_m)
-	sim.set_odds({ "attract": gear.attract, "pity_floor": sim.pity_floor })
-	if state == State.IDLE:
-		_apply_technique()
+	if state == State.IDLE and _apply_technique():
+		return
+	sim.set_odds(_odds(sim.pity_floor))
 
 
 ## Gölge doğabilen bölgeler değişti (rütbe atladı, sandala binildi ya da inildi).
@@ -442,10 +443,17 @@ func _to_idle() -> void:
 
 
 ## Takımın tekniği elindekinden farklıysa (boştayken) değiştirir: gölgeler yeni tekniğin
-## profiliyle fark eder ve yeni oranla, balıkçının çevresinde yeniden doğar.
-func _apply_technique() -> void:
+## profiliyle fark eder ve yeni oranla, balıkçının çevresinde yeniden doğar. Değiştiyse true.
+func _apply_technique() -> bool:
 	if Techniques.resolve(gear.technique) == technique.id:
-		return
+		return false
 	technique = Techniques.make(gear.technique, rules)
 	sim.set_rig(technique.rig)
+	sim.set_odds(_odds(sim.pity_floor))
 	relocate(angler)
+	return true
+
+
+## Gölgelerin oranının bağlamı: yemin (yapay yemin, sineğin) çekimi, şans garantisi, teknik.
+func _odds(pity_floor: int) -> Dictionary:
+	return { "attract": gear.attract, "pity_floor": pity_floor, "technique": technique.id }

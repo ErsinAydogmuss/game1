@@ -55,7 +55,7 @@ func test_validation_catches_bad_data() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	for file: String in ["rarities.json", "rules.json", "progression.json"]:
 		var text := FileAccess.get_file_as_string("res://data/" + file)
-		FileAccess.open(dir.path_join(file), FileAccess.WRITE).store_string(text)
+		_write(dir.path_join(file), text)
 	var fish := JSON.parse_string(FileAccess.get_file_as_string("res://data/fish.json")) as Dictionary
 	(fish["fish"][0]["fight"] as Dictionary)["pull"] = 0.95
 	# Satılan bir balığın değeri 0 olamaz (yalnızca Masalsı ve koruma altındaki tür).
@@ -64,12 +64,15 @@ func test_validation_catches_bad_data() -> void:
 	for f: Variant in fish["fish"]:
 		if str((f as Dictionary)["id"]) == "sturgeon":
 			((f as Dictionary)["fight"] as Dictionary)["pull"] = 0.75
-	FileAccess.open(dir.path_join("fish.json"), FileAccess.WRITE).store_string(JSON.stringify(fish))
+		# Hiçbir teknikle gelmeyen tür olmaz; bilinmeyen teknik yakalanır.
+		if str((f as Dictionary)["id"]) == "tench":
+			(f as Dictionary)["affinity"] = { "float": 0, "harpoon": 1 }
+	_write(dir.path_join("fish.json"), JSON.stringify(fish))
 	var spots := JSON.parse_string(FileAccess.get_file_as_string("res://data/spots.json")) as Dictionary
 	var spot: Dictionary = spots["spots"][0]
 	spot["start"] = [0.0, 0.0]
 	(spot["fish"] as Dictionary)["shark"] = 5
-	FileAccess.open(dir.path_join("spots.json"), FileAccess.WRITE).store_string(JSON.stringify(spots))
+	_write(dir.path_join("spots.json"), JSON.stringify(spots))
 	var gear := JSON.parse_string(FileAccess.get_file_as_string("res://data/gear.json")) as Dictionary
 	for item: Variant in gear["gear"]:
 		var g: Dictionary = item
@@ -79,7 +82,9 @@ func test_validation_catches_bad_data() -> void:
 			g["drag"] = 0.6
 		if str(g["id"]) == "line_braid":
 			g["carry"] = 7
-	FileAccess.open(dir.path_join("gear.json"), FileAccess.WRITE).store_string(JSON.stringify(gear))
+	# Kamış ortak yuva olamaz.
+	((gear["slots"] as Dictionary)["shared"] as Array).append("rod")
+	_write(dir.path_join("gear.json"), JSON.stringify(gear))
 	var db := ContentDB.load_from(dir)
 	var all := " | ".join(db.errors)
 	assert_true("bait_corn" in all, "yemin bilinmeyen balığı yakalanır")
@@ -90,6 +95,8 @@ func test_validation_catches_bad_data() -> void:
 	assert_true("carp: value" in all, "satılan balığın değeri 0 olamaz")
 	assert_true("shark" in all, "bilinmeyen balık yakalanır")
 	assert_true("başlangıç" in all, "suyun içindeki başlangıç yakalanır")
+	assert_true("slots.shared" in all, "ortak yuvada kamış yakalanır")
+	assert_true("tench: bilinmeyen teknik" in all, "yatkınlıkta bilinmeyen teknik yakalanır")
 	for file in DirAccess.get_files_at(dir):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join(file)))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))
@@ -102,7 +109,7 @@ func test_zone_validation_catches_bad_data() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	for file: String in ["rarities.json", "rules.json", "progression.json", "fish.json", "gear.json"]:
 		var text := FileAccess.get_file_as_string("res://data/" + file)
-		FileAccess.open(dir.path_join(file), FileAccess.WRITE).store_string(text)
+		_write(dir.path_join(file), text)
 	var spots := JSON.parse_string(FileAccess.get_file_as_string("res://data/spots.json")) as Dictionary
 	for raw: Variant in spots["spots"]:
 		var spot: Dictionary = raw
@@ -112,14 +119,18 @@ func test_zone_validation_catches_bad_data() -> void:
 		(zones[1] as Dictionary)["stands"] = [[-17.5, -3.5]]
 		(zones[5] as Dictionary)["buoys"] = [[0.0, 10.0]]
 		(zones[2] as Dictionary)["rank"] = 99
+		# Her bölgede şamandıra olmalı; sinek yalnızca akıntılı bölgede.
+		(zones[0] as Dictionary)["techniques"] = ["spin", "fly"]
 		((spot["basins"] as Array)[2] as Dictionary)["zone"] = "swamp"
-	FileAccess.open(dir.path_join("spots.json"), FileAccess.WRITE).store_string(JSON.stringify(spots))
+	_write(dir.path_join("spots.json"), JSON.stringify(spots))
 	var db := ContentDB.load_from(dir)
 	var all := " | ".join(db.errors)
 	assert_true("swamp" in all, "bilinmeyen havza bölgesi yakalanır: " + all)
 	assert_true("reeds atış noktası" in all, "suyun içindeki atış noktası yakalanır")
 	assert_true("deep_water şamandırası" in all, "karadaki şamandıra yakalanır")
 	assert_true("lily_cove bölgesinin rütbesi" in all, "geçersiz rütbe yakalanır")
+	assert_true("dock_cove bölgesinde şamandıra" in all, "şamandırasız bölge yakalanır")
+	assert_true("dock_cove: sinek yalnızca akıntılı" in all, "akıntısız bölgede sinek yakalanır")
 	for file in DirAccess.get_files_at(dir):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join(file)))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))
@@ -128,7 +139,7 @@ func test_zone_validation_catches_bad_data() -> void:
 ## Takım ve rütbe: başlangıç takımı bedava, kategoriler sıralı, rütbe eşikleri ve unvanlar.
 func test_gear_and_ranks() -> void:
 	var db := content()
-	for slot: String in ContentDB.GEAR_SLOTS:
+	for slot: String in db.slots_for("float"):
 		var item := db.gear_item(str(db.gear_start[slot]))
 		assert_eq(str(item.get("category", "")), slot, "başlangıç takımı: " + slot)
 		assert_eq(int(item.get("price", -1)), 0, "başlangıç takımı bedava: " + slot)
@@ -156,6 +167,35 @@ func test_rarity_lookups() -> void:
 	assert_eq(db.rarity_index("yok"), -1, "bilinmeyen nadirlik")
 	assert_eq(db.rarity_id(2), "rare", "2: nadir")
 	assert_true(db.rarity_def(99).is_empty(), "olmayan sıra boş döner")
+
+
+## Teknikler (Dalga 3): makara ve misina ortak, her tekniğin kendi yuvaları; türlerin teknik
+## yatkınlığı (şamandırada Dalga 3 öncesi bütün türler 1: oranları değişmez).
+func test_technique_slots_and_affinity() -> void:
+	var db := content()
+	assert_eq(db.slots_for("float"), ["rod", "reel", "line", "hook", "bobber", "bait"] as Array[String],
+			"şamandıranın yuvaları v0.3'teki sırayla")
+	assert_eq(db.slots_for("spin"), ["rod", "reel", "line", "lure"] as Array[String], "spin: kamış ve yapay yem")
+	assert_eq(db.slots_for("bottom"), ["rod", "reel", "line", "bait", "rig"] as Array[String], "dip: kamış, yem, kurşun")
+	assert_eq(db.slots_for("fly"), ["rod", "reel", "line", "fly"] as Array[String], "sinek: kamış ve sinek")
+	assert_true(db.is_shared("reel") and db.is_shared("line") and not db.is_shared("rod"), "makara ve misina ortak")
+	for pair: Array in [["hook", "float"], ["bobber", "float"], ["lure", "spin"], ["rig", "bottom"], ["fly", "fly"],
+			["rod", ""], ["bait", ""], ["reel", ""]]:
+		assert_eq(db.slot_technique(str(pair[0])), str(pair[1]), "yuvanın tekniği: %s" % pair[0])
+	for id: String in ["rudd", "silverside", "bream", "chub", "carp", "perch", "tench", "pike", "zander", "wels",
+			"golden_carp", "sturgeon"]:
+		assert_eq(db.affinity(id, "float"), 1.0, "%s şamandırayla eskisi gibi gelir" % id)
+	assert_eq(db.affinity("perch", "spin"), 1.0, "levrek oynayan yeme gelir")
+	assert_eq(db.affinity("carp", "spin"), 0.0, "sazan yapay yeme gelmez")
+	assert_true(db.affinity("sturgeon", "bottom") > 1.0, "mersin dipte daha çok gelir")
+	var zones := {}
+	for z in db.zones_of(db.main_spot):
+		zones[str(z["id"])] = z["techniques"]
+	assert_true("fly" in (zones["stream_mouth"] as PackedStringArray), "dere ağzında sinek")
+	for id: String in zones:
+		assert_true("float" in (zones[id] as PackedStringArray), "%s: şamandıra" % id)
+		if id != "stream_mouth":
+			assert_true(not "fly" in (zones[id] as PackedStringArray), "%s: akıntı yok, sinek yok" % id)
 
 
 ## Takımın görseli yokken kodla çizilen ikonu var (dükkânda boş kart kalmasın).
@@ -248,3 +288,10 @@ static func _gd_files(dir: String) -> Array[String]:
 	for sub in DirAccess.get_directories_at(dir):
 		out.append_array(_gd_files(dir.path_join(sub)))
 	return out
+
+
+## Dosyayı yazar ve kapatır (kapatılmayan dosya okunurken yarım kalabilir).
+static func _write(path: String, text: String) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(text)
+	f.close()

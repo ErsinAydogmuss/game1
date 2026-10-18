@@ -217,3 +217,34 @@ static func _mean_value(db: ContentDB, place: Dictionary) -> float:
 			total += Economy.fish_value(db, id, FishTable.size_cm(def, FishTable.percentile_for(u)))
 		value += float(odds[id]) / Dice.PPM * float(total) / SAMPLES
 	return value
+
+
+## Takım çantası (Dalga 3): makara ve misina her teknikte ortak; iğne ve şamandıra şamandıranın,
+## yem bakılan tekniğin (yem kullanmıyorsa şamandıranın) setine girer; kamışı olmayan teknik hazır
+## değil, oturum şamandırayla sürer.
+func test_technique_sets() -> void:
+	var db := content()
+	var save := _save()
+	save.coins = 5000
+	save.xp = db.rank_xp[4]
+	assert_true(Economy.buy(db, save, "reel_smooth"), "makara alınır")
+	assert_eq(save.loadouts["shared"], { "reel": "reel_smooth" }, "makara ortak sette")
+	assert_eq(Economy.equipped(db, save, "reel", "spin"), "reel_smooth", "spinde de aynı makara")
+	assert_eq(Economy.equipped(db, save, "reel", "bottom"), "reel_smooth", "dipte de aynı makara")
+	assert_true(Economy.buy(db, save, "hook_medium", "spin"), "iğne alınır (spine bakarken de)")
+	assert_eq(Economy.equipped(db, save, "hook"), "hook_medium", "iğne şamandıranın setinde")
+	assert_eq(Economy.equipped(db, save, "hook", "spin"), "", "spinde iğne yuvası yok")
+	assert_true(Economy.buy(db, save, "bait_corn", "bottom"), "mısır dipte bakarken alınır")
+	assert_eq(Economy.equipped(db, save, "bait", "bottom"), "bait_corn", "mısır dipte takılı")
+	assert_eq(Economy.equipped(db, save, "bait"), "bait_worm", "şamandırada solucan kalır")
+	assert_true(Economy.equip(db, save, "bait_corn", "spin"), "spinde yem yuvası yok: şamandıraya takılır")
+	assert_eq(Economy.equipped(db, save, "bait"), "bait_corn", "şamandırada mısır")
+	assert_true(not Economy.technique_ready(db, save, "spin"), "spin kamışı yok: spin hazır değil")
+	assert_true(Economy.technique_ready(db, save, "float"), "şamandıra hep hazır")
+	assert_eq(Economy.equipped(db, save, "rod", "spin"), "", "spinde kamış yok")
+	assert_eq(Economy.gear_for(db, save, "spin").technique, "float", "hazır olmayan teknikte şamandıranın takımı")
+	assert_eq(Economy.gear_for(db, save, "spin").reel_speed, float(db.gear_item("reel_smooth")["reel_speed"]),
+			"ortak makara işler")
+	assert_true(Economy.technique_allowed(db, "big_lake", "stream_mouth", "fly"), "dere ağzında sinek")
+	assert_true(not Economy.technique_allowed(db, "big_lake", "dock_cove", "fly"), "iskelede sinek yok")
+	assert_true(Economy.technique_allowed(db, "big_lake", "dock_cove", "spin"), "iskelede spin")

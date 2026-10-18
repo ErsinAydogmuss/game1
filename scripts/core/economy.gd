@@ -83,8 +83,9 @@ static func buy_block(db: ContentDB, save: SaveData, id: String) -> String:
 
 
 ## Satın alır: para düşer; takım sahiplenir ya da yem paketi eklenir. Takım kendiliğinden
-## kuşanılır (dükkânda "al" = "al ve tak"). Başardıysa true.
-static func buy(db: ContentDB, save: SaveData, id: String) -> bool:
+## kuşanılır (dükkânda "al" = "al ve tak"): kendi tekniğinin setine; yem, dükkânda bakılan
+## tekniğin setine (o teknik yem kullanmıyorsa şamandıranınkine). Başardıysa true.
+static func buy(db: ContentDB, save: SaveData, id: String, technique: String = "float") -> bool:
 	if not buy_block(db, save, id).is_empty():
 		return false
 	var item := db.gear_item(id)
@@ -94,12 +95,13 @@ static func buy(db: ContentDB, save: SaveData, id: String) -> bool:
 		save.baits[id] = int(save.baits.get(id, 0)) + int(item["pack"])
 	else:
 		save.owned.append(id)
-	equip(db, save, id)
+	equip(db, save, id, technique)
 	return true
 
 
-## Kuşanır (sahipliyse ve kuşanılan bir yuvaya aitse). Kamış kendi tekniğinin setine, öteki
-## takım teknik setine (H2 Dalga 1: yalnızca şamandıra) girer.
+## Kuşanır (sahipliyse ve kuşanılan bir yuvaya aitse). Makara ve misina her teknikte ortak
+## (loadouts.shared); kamış kendi tekniğinin setine; iğne, şamandıra, yapay yem, kurşun ve sinek
+## yuvasının tekniğine; yem verilen tekniğe (yem kullanmıyorsa şamandıraya) girer.
 static func equip(db: ContentDB, save: SaveData, id: String, technique: String = "float") -> bool:
 	var item := db.gear_item(id)
 	if item.is_empty():
@@ -112,30 +114,81 @@ static func equip(db: ContentDB, save: SaveData, id: String, technique: String =
 			return false
 	elif not owns(db, save, id):
 		return false
-	var set_for := str(item["technique"]) if slot == "rod" else technique
+	var set_for := set_of(db, slot, technique)
+	if slot == "rod":
+		set_for = str(item["technique"])
 	var slots: Dictionary = save.loadouts.get(set_for, {})
 	slots[slot] = id
 	save.loadouts[set_for] = slots
 	return true
 
 
-## Kuşanılan takım kimliği (yuva için; boşsa ya da artık geçersizse başlangıç takımı).
+## Bir yuvanın kuşanıldığı set: ortak yuvada "shared", tek tekniğin yuvasında o teknik, kamış ve
+## yemde verilen teknik (yem kullanmıyorsa şamandıra).
+static func set_of(db: ContentDB, slot: String, technique: String) -> String:
+	if db.is_shared(slot):
+		return "shared"
+	var owner := db.slot_technique(slot)
+	if not owner.is_empty():
+		return owner
+	return technique if db.uses_slot(technique, slot) else "float"
+
+
+## Kuşanılan takım kimliği (yuva için; boşsa ya da artık geçersizse başlangıç takımı). Teknik o
+## yuvayı kullanmıyorsa "". Kamış o tekniğin olmalı: kuşanılan geçersizse sahip olunan en iyi
+## kamışı; hiç yoksa şamandırada bambu olta, öteki tekniklerde "" (teknik hazır değil).
 static func equipped(db: ContentDB, save: SaveData, slot: String, technique: String = "float") -> String:
-	var slots: Dictionary = save.loadouts.get(technique, {})
-	var id := str(slots.get(slot, ""))
+	if not db.uses_slot(technique, slot):
+		return ""
+	var set_for := set_of(db, slot, technique)
+	var id := _loadout_id(save, set_for, slot)
+	if id.is_empty() and set_for == "shared":
+		# Göçten önceki biçim: makara ve misina şamandıranın setindeydi.
+		id = _loadout_id(save, "float", slot)
 	var item := db.gear_item(id)
 	var usable := not item.is_empty() and str(item["category"]) == slot
 	if usable and slot == "bait":
 		usable = int(item["pack"]) == 0 or int(save.baits.get(id, 0)) > 0
 	elif usable:
 		usable = owns(db, save, id)
-	return id if usable else str(db.gear_start.get(slot, ""))
+	if usable and slot == "rod":
+		usable = str(item["technique"]) == technique
+	if usable:
+		return id
+	if slot == "rod" and technique != "float":
+		return best_owned_rod(db, save, technique)
+	return str(db.gear_start.get(slot, ""))
+
+
+## Sahip olunan en pahalı kamış bu teknikte (yoksa "").
+static func best_owned_rod(db: ContentDB, save: SaveData, technique: String) -> String:
+	var best := ""
+	var best_price := -1
+	for g in db.rods_of(technique):
+		if owns(db, save, str(g["id"])) and int(g["price"]) > best_price:
+			best = str(g["id"])
+			best_price = int(g["price"])
+	return best
+
+
+## Teknik kullanılabilir mi: şamandıra hep; öteki tekniklerde o tekniğin bir kamışı alınmış olmalı.
+static func technique_ready(db: ContentDB, save: SaveData, technique: String) -> bool:
+	return technique == "float" or not best_owned_rod(db, save, technique).is_empty()
+
+
+## Teknik bu bölgede avlanılır mı (bölgenin techniques'i; sinek yalnızca dere ağzında)?
+static func technique_allowed(db: ContentDB, spot_id: String, zone_id: String, technique: String) -> bool:
+	var z := db.zone(spot_id, zone_id)
+	return z.is_empty() or CatchOdds.allows(z, technique)
 
 
 ## Bu teknik için kuşanılmış takımın etkisi (oturum bunu kullanır). Tükenmiş yem solucana döner.
+## Teknik hazır değilse (kamışı yok) şamandıranınki.
 static func gear_for(db: ContentDB, save: SaveData, technique: String = "float") -> GearStats:
+	if not technique_ready(db, save, technique):
+		technique = "float"
 	var items := {}
-	for slot: String in ContentDB.GEAR_SLOTS:
+	for slot: String in db.slots_for(technique):
 		items[slot] = equipped(db, save, slot, technique)
 	var extras: Array[String] = []
 	for g in db.gear_in("extra"):
@@ -182,8 +235,11 @@ static func gear_for_stars(db: ContentDB, save: SaveData, stars: int, technique:
 	return { "buy": buy, "equip": equip, "rank": rank }
 
 
-## Balık oltaya takılınca yem harcanır (atışta değil: kaçan gölge yemi yemez).
+## Balık oltaya takılınca yem harcanır (atışta değil: kaçan gölge yemi yemez). Yapay yem ve sinek
+## tükenmez.
 static func use_bait(db: ContentDB, save: SaveData, technique: String = "float") -> void:
+	if not db.uses_slot(technique, "bait"):
+		return
 	var id := equipped(db, save, "bait", technique)
 	var item := db.gear_item(id)
 	if item.is_empty() or int(item["pack"]) <= 0:
@@ -193,3 +249,10 @@ static func use_bait(db: ContentDB, save: SaveData, technique: String = "float")
 
 static func _add_stat(save: SaveData, key: String, amount: int) -> void:
 	save.stats[key] = int(save.stats.get(key, 0)) + amount
+
+
+static func _loadout_id(save: SaveData, set_name: String, slot: String) -> String:
+	var slots: Variant = save.loadouts.get(set_name, {})
+	if typeof(slots) != TYPE_DICTIONARY:
+		return ""
+	return str((slots as Dictionary).get(slot, ""))

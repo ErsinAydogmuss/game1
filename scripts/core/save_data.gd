@@ -4,7 +4,10 @@ extends RefCounted
 ## taşınabilir. Alan eklerken VERSION'ı artır, migrate()'e adım ekle ve test_save_data.gd'ye
 ## göç testi yaz.
 
-const VERSION := 3
+const VERSION := 4
+## Kayıtta en çok bu kadar tuzak ve tuzak başına içerik tutulur (bozuk kayıt büyümesin).
+const MAX_TRAPS := 8
+const MAX_TRAP_ITEMS := 8
 ## Rütbe eğrileri (progression.json "xp"): kaydın sürümüyle değişen eğri, göçte rütbe puanı yeni
 ## eğriye taşınır (rütbe düşmesin). Bunlar o sürümün eğrisidir, değiştirilmez; eğri yeniden
 ## değişirse yeni sürüm ve yeni sabit eklenir (test_save_data denetler).
@@ -39,8 +42,17 @@ var bucket: Array[Dictionary] = []
 ## Satın alınan takım kimlikleri (gear.json). Fiyatı 0 olan başlangıç takımı hep sahiplidir.
 ## Takım kimlikle tutulur, kademe numarasıyla değil: araya yeni kademe eklenince kayıt bozulmaz.
 var owned: PackedStringArray = []
-## Teknik -> kuşanılan takım { yuva: kimlik } (eksik yuvada başlangıç takımı).
+## Teknik -> kuşanılan takım { yuva: kimlik } (eksik yuvada başlangıç takımı); her teknikte ortak
+## yuvalar (makara, misina) "shared" altında (v4).
 var loadouts: Dictionary = {}
+## Elindeki teknik (float, spin, bottom, fly; v4).
+var technique: String = "float"
+## Göldeki kerevit tuzakları (v4): [{ id, zone, x, z, placed_unix, last_unix, progress_s,
+## items: [{ fish, size_cm, stars }] }]. İçerik tuzak kurulunca belli olur (gelir kuralı 4); dolma
+## gerçek saatle, üst sınırlı (TrapSim).
+var traps: Array[Dictionary] = []
+## Kurulan tuzakların sayacı (tuzağın kimliği ve içeriğinin zarı).
+var trap_serial: int = 0
 ## Tükenen yemler: yem kimliği -> kalan sayı (solucan sınırsız, burada tutulmaz).
 var baits: Dictionary = {}
 ## Rütbe puanı ve göl sevgisi (bırakılan balık, toplanan çöp, istekler; hiç azalmaz).
@@ -91,6 +103,9 @@ func to_dict() -> Dictionary:
 		"bucket": bucket.duplicate(true),
 		"owned": Array(owned),
 		"loadouts": loadouts.duplicate(true),
+		"technique": technique,
+		"traps": traps.duplicate(true),
+		"trap_serial": trap_serial,
 		"baits": baits.duplicate(),
 		"xp": xp,
 		"love": love,
@@ -125,6 +140,10 @@ static func from_dict(raw: Dictionary) -> SaveData:
 	s.bucket = _bucket(d.get("bucket", []))
 	s.owned = _ids(d.get("owned", []))
 	s.loadouts = _loadouts(d.get("loadouts", {}))
+	var technique := _text(d, "technique", "float")
+	s.technique = technique if not technique.is_empty() else "float"
+	s.traps = _traps(d.get("traps", []))
+	s.trap_serial = maxi(0, _int(d, "trap_serial", 0))
 	s.baits = _counts(d.get("baits", {}))
 	s.xp = maxi(0, _int(d, "xp", 0))
 	s.love = maxi(0, _int(d, "love", 0))
@@ -161,6 +180,24 @@ static func migrate(raw: Dictionary) -> Dictionary:
 		# eğriye taşınır: oyuncunun rütbesi ve rütbesindeki ilerlemesi aynı kalır.
 		d["xp"] = remap_xp(_int(d, "xp", 0), XP_CURVE_V2, XP_CURVE_V3)
 		v = 3
+	if v < 4:
+		# v4 (Dalga 3, teknikler): makara ve misina her teknikte ortak; şamandıranın setindekiler
+		# "shared" setine taşınır (kuşanılan takım aynı kalır). Elindeki teknik şamandıra; tuzak yok.
+		var loadouts: Variant = d.get("loadouts", {})
+		if typeof(loadouts) == TYPE_DICTIONARY:
+			var float_set: Variant = (loadouts as Dictionary).get("float", {})
+			if typeof(float_set) == TYPE_DICTIONARY:
+				var shared := {}
+				for slot: String in ["reel", "line"]:
+					if (float_set as Dictionary).has(slot):
+						shared[slot] = (float_set as Dictionary)[slot]
+						(float_set as Dictionary).erase(slot)
+				if not shared.is_empty():
+					(loadouts as Dictionary)["shared"] = shared
+		d["technique"] = "float"
+		d["traps"] = []
+		d["trap_serial"] = 0
+		v = 4
 	d["version"] = v
 	return d
 
@@ -245,6 +282,38 @@ static func _loadouts(raw: Variant) -> Dictionary:
 			if typeof(id) == TYPE_STRING and not str(id).is_empty():
 				clean[str(slot)] = str(id)
 		out[str(technique)] = clean
+	return out
+
+
+## Tuzaklar: bölgesi yazı, yeri sayı, zamanları sıfır ya da pozitif olmalı; içerik satırları kova
+## gibi ayıklanır; bozuk tuzak düşer.
+static func _traps(raw: Variant) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	for entry: Variant in raw:
+		if typeof(entry) != TYPE_DICTIONARY or out.size() >= MAX_TRAPS:
+			continue
+		var e: Dictionary = entry
+		var zone := _text(e, "zone", "")
+		var x: Variant = e.get("x")
+		var z: Variant = e.get("z")
+		if zone.is_empty() or not typeof(x) in [TYPE_INT, TYPE_FLOAT] or not typeof(z) in [TYPE_INT, TYPE_FLOAT] \
+				or not is_finite(float(x)) or not is_finite(float(z)):
+			continue
+		var items := _bucket(e.get("items", []))
+		if items.size() > MAX_TRAP_ITEMS:
+			items.resize(MAX_TRAP_ITEMS)
+		out.append({
+			"id": maxi(0, _int(e, "id", 0)),
+			"zone": zone,
+			"x": float(x),
+			"z": float(z),
+			"placed_unix": maxi(0, _int(e, "placed_unix", 0)),
+			"last_unix": maxi(0, _int(e, "last_unix", 0)),
+			"progress_s": maxi(0, _int(e, "progress_s", 0)),
+			"items": items,
+		})
 	return out
 
 

@@ -14,15 +14,21 @@ const PPM := 1_000_000
 var rarities: Array[Dictionary] = []
 ## Balıklar: id, rarity (sıra), value (para), release_only (koruma altında: yalnızca bırakılır),
 ## shadow_m, size_cm (Vector2i), weight, color, back, accent, fight { reel, pull, burst_pull,
-## burst_every, burst_len (sn, Vector2), *_steps (Vector2i), run, heavy (iri tür) }.
+## burst_every, burst_len (sn, Vector2), *_steps (Vector2i), run, heavy (iri tür) },
+## affinity { teknik: çarpan } (türün teknik yatkınlığı; yazılmayan teknikte 0, alan hiç yoksa
+## yalnızca şamandıra 1).
 var fish: Array[Dictionary] = []
 ## Takım (gear.json): id, category, price, rank, icon, kind ve kategoriye göre değerler
 ## (rod: technique, range_m, power, carry; reel: reel_speed, drag; line: snap_after, stealth, carry;
 ## hook: escape_extra; bobber: window_add; bait: attract {tür: çarpan}, pack; extra: catch_m;
 ## bucket: capacity).
 var gear: Array[Dictionary] = []
-## Başlangıç takımı: yuva (rod, reel, line, hook, bobber, bait, bucket) -> takım kimliği.
+## Başlangıç takımı: yuva (rod, reel, line, hook, bobber, bait, bucket ...) -> takım kimliği.
 var gear_start: Dictionary = {}
+## Kuşanılan yuvalar (gear.json "slots"): her teknikte ortak olanlar (makara, misina) ve tekniğin
+## kendi yuvaları (teknik -> yuvalar; hepsinde kamış var).
+var shared_slots: Array[String] = []
+var technique_slots: Dictionary = {}
 ## Rütbe eşikleri (her rütbeye geçmek için toplam puan; [0] = 1. rütbe = 0) ve unvanlar
 ## [{from, id}].
 var rank_xp: PackedInt32Array = []
@@ -38,10 +44,15 @@ var rules: FishingRules
 var errors: PackedStringArray = []
 
 ## Takım kategorileri ve kuşanılan yuvalar (bucket, extra ve boat kuşanılmaz: sahip olunan en iyisi
-## ya da hepsi işler; sandal derin ortayı açar, Zones.BOAT).
-const GEAR_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bait", "extra", "bucket", "boat"]
-const GEAR_SLOTS: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bait"]
+## ya da hepsi işler; sandal derin ortayı açar, Zones.BOAT). Yuvaların sırası takımın okunma
+## sırasıdır (şamandırada v0.3'teki gibi kamış, makara, misina, iğne, şamandıra, yem); yeni yuvalar
+## sona eklenir: lure (yapay yem, spin), rig (kurşun ya da yem sepeti, dip), fly (sinek).
+const GEAR_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bait", "lure", "rig", "fly",
+		"extra", "bucket", "boat"]
+const GEAR_SLOTS: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bait", "lure", "rig", "fly"]
 const TECHNIQUES: Array[String] = ["float", "spin", "bottom", "fly"]
+## Bölgede yazılmayan teknikler (sinek yalnızca akıntılı bölgede, açıkça yazılır).
+const ZONE_TECHNIQUES: Array[String] = ["float", "spin", "bottom"]
 const RARITY_SHAPES: Array[String] = ["circle", "triangle", "diamond", "star", "sparkle", "medallion"]
 const SHADOW_FX: Array[String] = ["none", "glint", "shimmer", "trail", "guardian"]
 
@@ -112,6 +123,69 @@ func gear_in(category: String) -> Array[Dictionary]:
 		if str(g["category"]) == category:
 			out.append(g)
 	return out
+
+
+## Bir tekniğin kamışları (gear.json sırasıyla).
+func rods_of(technique: String) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for g in gear_in("rod"):
+		if str(g["technique"]) == technique:
+			out.append(g)
+	return out
+
+
+## Teknik oyunda var mı (kamışı var mı)?
+func has_technique(technique: String) -> bool:
+	return not rods_of(technique).is_empty()
+
+
+## Tekniğin açıldığı rütbe: en erken açılan kamışınınki (kamışı yoksa 0).
+func technique_rank(technique: String) -> int:
+	var rank := 0
+	for g in rods_of(technique):
+		rank = int(g["rank"]) if rank == 0 else mini(rank, int(g["rank"]))
+	return rank
+
+
+## Bu teknikte kuşanılan yuvalar (GEAR_SLOTS sırasıyla: ortaklar ve tekniğinkiler). Bilinmeyen
+## teknikte şamandıranınkiler.
+func slots_for(technique: String) -> Array[String]:
+	var own: Array = technique_slots.get(technique, technique_slots.get("float", []))
+	var out: Array[String] = []
+	for slot in GEAR_SLOTS:
+		if slot in shared_slots or slot in own:
+			out.append(slot)
+	return out
+
+
+## Yuva her teknikte ortak mı (makara, misina)?
+func is_shared(slot: String) -> bool:
+	return slot in shared_slots
+
+
+## Teknik bu yuvayı kullanır mı?
+func uses_slot(technique: String, slot: String) -> bool:
+	return slot in slots_for(technique)
+
+
+## Yalnızca bir tekniğin kullandığı yuvanın tekniği (iğne ve şamandıra → şamandıra, yapay yem →
+## spin, kurşun → dip, sinek → sinek); ortak ya da birden çok teknikte olan yuvada (kamış, yem) "".
+func slot_technique(slot: String) -> String:
+	var found := ""
+	for t: String in TECHNIQUES:
+		if slot in (technique_slots.get(t, []) as Array):
+			if not found.is_empty():
+				return ""
+			found = t
+	return found
+
+
+## Türün bu teknikle gelme çarpanı (yatkınlık; yazılmamışsa 0).
+func affinity(fish_id: String, technique: String) -> float:
+	var f := fish_by_id(fish_id)
+	if f.is_empty():
+		return 0.0
+	return float((f["affinity"] as Dictionary).get(technique, 0.0))
 
 
 ## Rütbe sayısı (en yüksek rütbe).
@@ -227,6 +301,11 @@ func _load_fish(raw: Dictionary) -> void:
 			"run": float(raw_fight.get("run", 1.0)),
 			"heavy": bool(raw_fight.get("heavy", false)),
 		}
+		var affinity := {}
+		var raw_affinity: Variant = d.get("affinity", { "float": 1.0 })
+		if typeof(raw_affinity) == TYPE_DICTIONARY:
+			for t: Variant in raw_affinity:
+				affinity[str(t)] = float((raw_affinity as Dictionary)[t])
 		var def := {
 			"id": id,
 			"rarity": maxi(0, rarity_index(rarity_name)),
@@ -239,6 +318,7 @@ func _load_fish(raw: Dictionary) -> void:
 			"back": Color(str(d.get("back", "#4a5560"))),
 			"accent": Color(str(d.get("accent", "#e2463a"))),
 			"fight": fight,
+			"affinity": affinity,
 		}
 		_fish_index[id] = fish.size()
 		fish.append(def)
@@ -248,6 +328,18 @@ func _load_gear(raw: Dictionary) -> void:
 	var start: Dictionary = raw.get("start", {})
 	for slot: Variant in start:
 		gear_start[str(slot)] = str(start[slot])
+	# Yuvalar: verilmezse v0.3'teki gibi (ortak makara ve misina, şamandıranın kamış, iğne,
+	# şamandıra ve yemi).
+	var slots: Dictionary = raw.get("slots", { "shared": ["reel", "line"], "float": ["rod", "hook", "bobber", "bait"] })
+	for slot: Variant in slots.get("shared", []):
+		shared_slots.append(str(slot))
+	for t: Variant in slots:
+		if str(t) == "shared" or typeof(slots[t]) != TYPE_ARRAY:
+			continue
+		var own: Array[String] = []
+		for slot: Variant in slots[t]:
+			own.append(str(slot))
+		technique_slots[str(t)] = own
 	for entry: Variant in raw.get("gear", []):
 		var d: Dictionary = entry
 		var id := str(d.get("id", ""))
@@ -279,17 +371,28 @@ func _load_gear(raw: Dictionary) -> void:
 				def["window_add"] = float(d.get("window_add", 0.0))
 			"bait":
 				def["pack"] = int(d.get("pack", 0))
-				var attract := {}
-				var raw_attract: Dictionary = d.get("attract", {})
-				for fid: Variant in raw_attract:
-					attract[str(fid)] = float(raw_attract[fid])
-				def["attract"] = attract
+				def["attract"] = _attract(d)
+			"lure", "fly":
+				def["attract"] = _attract(d)
+			"rig":
+				def["range_add"] = float(d.get("range_add", 0.0))
+				def["pull"] = float(d.get("pull", 0.0))
 			"extra":
 				def["catch_m"] = float(d.get("catch_m", 0.0))
 			"bucket":
 				def["capacity"] = int(d.get("capacity", 6))
 		_gear_index[id] = gear.size()
 		gear.append(def)
+
+
+## Yemin (yapay yemin, sineğin) tür çekimi: tür kimliği -> çarpan.
+static func _attract(d: Dictionary) -> Dictionary:
+	var attract := {}
+	var raw_attract: Variant = d.get("attract", {})
+	if typeof(raw_attract) == TYPE_DICTIONARY:
+		for fid: Variant in raw_attract:
+			attract[str(fid)] = float((raw_attract as Dictionary)[fid])
+	return attract
 
 
 func _load_progression(raw: Dictionary) -> void:
@@ -383,10 +486,14 @@ func _basin_def(raw: Variant, zone: String, deepest: float, shelf_m: float) -> D
 ## içeride başlar), min_depth (gölgelerin girdiği en sığ su), fish_ids ve fish_weights (CatchOdds
 ## bölge sözlüğünü atış noktası gibi okur), stands (hızlı geçişte balıkçının durduğu yerler),
 ## gates (bölge kilitliyken kıyı yolunu kesen çitler: iki uç), buoys (sandalın gittiği
-## şamandıralar), current (akıntı yönü; görsel), map (haritada rozetin yeri; yoksa Dice.NO_POINT:
-## bölgenin suyunun ortası).
+## şamandıralar), current (akıntı yönü; görsel ve sinek), map (haritada rozetin yeri; yoksa
+## Dice.NO_POINT: bölgenin suyunun ortası), techniques (bölgede avlanılan teknikler; yazılmazsa
+## ZONE_TECHNIQUES, sinek yalnızca akıntılı bölgede açıkça).
 func _zone_def(raw: Variant) -> Dictionary:
 	var z: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
+	var techniques := PackedStringArray()
+	for t: Variant in z.get("techniques", ZONE_TECHNIQUES):
+		techniques.append(str(t))
 	var ids := PackedStringArray()
 	var weights := PackedInt32Array()
 	var raw_fish: Dictionary = z.get("fish", {})
@@ -419,6 +526,7 @@ func _zone_def(raw: Variant) -> Dictionary:
 		"buoys": buoys,
 		"current": _vec2(z.get("current"), Vector2.ZERO),
 		"map": _vec2(z.get("map"), Dice.NO_POINT),
+		"techniques": techniques,
 	}
 
 
@@ -454,10 +562,23 @@ func _validate_gear() -> void:
 	if gear.is_empty():
 		errors.append("gear.json: takım yok")
 		return
-	for slot: String in GEAR_SLOTS + ["bucket"]:
+	_validate_slots()
+	# Her yuvanın bedava başlangıç eşyası var: şamandıranın bütün yuvaları ve kova; kamışı olan
+	# öteki tekniklerin kamış dışındaki yuvaları (o tekniğin kamışı Nine'den alınır).
+	var needed: Array[String] = []
+	for t: String in TECHNIQUES:
+		if t != "float" and not has_technique(t):
+			continue
+		for slot in slots_for(t):
+			if (t == "float" or slot != "rod") and not slot in needed:
+				needed.append(slot)
+	needed.append("bucket")
+	for slot in needed:
 		var item := gear_item(str(gear_start.get(slot, "")))
 		if item.is_empty() or str(item["category"]) != slot or int(item["price"]) != 0:
 			errors.append("gear.json: start.%s ücretsiz ve o kategoriden olmalı" % slot)
+	if str(gear_item(str(gear_start.get("rod", ""))).get("technique", "")) != "float":
+		errors.append("gear.json: start.rod şamandıra kamışı olmalı")
 	var strongest_drag := 0.0
 	for g in gear:
 		var id := str(g["id"])
@@ -491,12 +612,14 @@ func _validate_gear() -> void:
 				if float(g["window_add"]) < 0.0:
 					errors.append("gear.json: %s: window_add eksi olamaz" % id)
 			"bait":
-				var attract: Dictionary = g["attract"]
-				for fid: Variant in attract:
-					if fish_index(str(fid)) < 0 or float(attract[fid]) <= 0.0:
-						errors.append("gear.json: %s: bilinmeyen balık ya da geçersiz çarpan: %s" % [id, fid])
+				_validate_attract(id, g["attract"])
 				if int(g["pack"]) < 0 or (int(g["pack"]) == 0 and int(g["price"]) > 0):
 					errors.append("gear.json: %s: satılan yemin paketi olmalı" % id)
+			"lure", "fly":
+				_validate_attract(id, g["attract"])
+			"rig":
+				if float(g["pull"]) < 0.0 or float(g["pull"]) > 1.0 or absf(float(g["range_add"])) > 5.0:
+					errors.append("gear.json: %s: pull 0–1, range_add en çok ±5 m olmalı" % id)
 			"extra":
 				if float(g["catch_m"]) < 0.0:
 					errors.append("gear.json: %s: catch_m eksi olamaz" % id)
@@ -508,6 +631,37 @@ func _validate_gear() -> void:
 		var burst := float((f["fight"] as Dictionary)["burst_pull"])
 		if burst * (1.0 - strongest_drag) < rules.limit + 0.1:
 			errors.append("gear.json: en güçlü fren %s'in patlamasını sınıra çok yaklaştırıyor" % f["id"])
+
+
+## Yuvalar: ortaklar kamış olamaz ve tekniklerin yuvalarıyla çakışmaz; her tekniğin kamışı var;
+## her yuva bir yerde kullanılır.
+func _validate_slots() -> void:
+	var listed := {}
+	for slot in shared_slots:
+		if not slot in GEAR_SLOTS or slot == "rod":
+			errors.append("gear.json: slots.shared: bilinmeyen ya da ortak olamayan yuva: %s" % slot)
+		listed[slot] = true
+	for t: Variant in technique_slots:
+		if not str(t) in TECHNIQUES:
+			errors.append("gear.json: slots: bilinmeyen teknik: %s" % t)
+	for t: String in TECHNIQUES:
+		var own: Array = technique_slots.get(t, [])
+		if not "rod" in own:
+			errors.append("gear.json: slots.%s: kamış yuvası yok" % t)
+		for slot: Variant in own:
+			if not str(slot) in GEAR_SLOTS or str(slot) in shared_slots:
+				errors.append("gear.json: slots.%s: bilinmeyen ya da ortak yuva: %s" % [t, slot])
+			listed[str(slot)] = true
+	for slot in GEAR_SLOTS:
+		if not listed.has(slot):
+			errors.append("gear.json: slots: %s yuvası hiçbir teknikte yok" % slot)
+
+
+## Yemin, yapay yemin ya da sineğin çektiği türler bilinmeli, çarpan pozitif olmalı.
+func _validate_attract(id: String, attract: Dictionary) -> void:
+	for fid: Variant in attract:
+		if fish_index(str(fid)) < 0 or float(attract[fid]) <= 0.0:
+			errors.append("gear.json: %s: bilinmeyen balık ya da geçersiz çarpan: %s" % [id, fid])
 
 
 func _validate_progression() -> void:
@@ -547,6 +701,15 @@ func _validate_fish(f: Dictionary) -> void:
 		errors.append("fish.json: %s: burst_len geçersiz" % id)
 	if float(fight["reel"]) <= 0.0 or float(fight["run"]) < 0.0:
 		errors.append("fish.json: %s: reel ya da run geçersiz" % id)
+	var affinity: Dictionary = f["affinity"]
+	var any := false
+	for t: Variant in affinity:
+		if not str(t) in TECHNIQUES or float(affinity[t]) < 0.0:
+			errors.append("fish.json: %s: bilinmeyen teknik ya da eksi yatkınlık: %s" % [id, t])
+		elif float(affinity[t]) > 0.0:
+			any = true
+	if not any:
+		errors.append("fish.json: %s: hiçbir teknikle gelmiyor (affinity)" % id)
 
 
 ## geometry: göl şekli kurulup başlangıç, atış noktaları, şamandıralar ve bölgeler de denetlensin.
@@ -636,6 +799,22 @@ func _validate_zone(spot_id: String, z: Dictionary, known: Dictionary) -> void:
 	for g: PackedVector2Array in z["gates"]:
 		if g.size() != 2:
 			errors.append("spots.json: %s: %s: çitin iki ucu olmalı" % [spot_id, id])
+	# Her bölgede şamandıra var; sinek yalnızca akıntıda; bölgede avlanılan her teknikle gelen bir
+	# tür olmalı (yoksa gölge doğmaz).
+	var techniques: PackedStringArray = z["techniques"]
+	if not "float" in techniques:
+		errors.append("spots.json: %s: %s bölgesinde şamandıra olmalı" % [spot_id, id])
+	for t in techniques:
+		if not t in TECHNIQUES:
+			errors.append("spots.json: %s: %s: bilinmeyen teknik: %s" % [spot_id, id, t])
+			continue
+		if t == "fly" and (z["current"] as Vector2).is_zero_approx():
+			errors.append("spots.json: %s: %s: sinek yalnızca akıntılı bölgede" % [spot_id, id])
+		var reach := 0.0
+		for i in ids.size():
+			reach += float(maxi(0, weights[i])) * affinity(ids[i], t)
+		if reach <= 0.0:
+			errors.append("spots.json: %s: %s: %s tekniğiyle gelen tür yok" % [spot_id, id, t])
 
 
 ## Bölge oyunun başında açık mı (rütbe 1, sandalsız)?

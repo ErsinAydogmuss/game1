@@ -27,9 +27,12 @@ var escape_extra: float = 0.0
 var window_add_steps: int = 0
 ## Balığın tutulduğu uzaklık (m); kepçe büyütür.
 var catch_m: float = 0.6
-## Yemin tür çekimi: tür kimliği -> ağırlık çarpanı (boş = solucan, çekim yok).
+## Yemin (yapay yemin, sineğin) tür çekimi: tür kimliği -> ağırlık çarpanı (boş = solucan, çekim
+## yok).
 var attract: Dictionary = {}
-## Kuşanılan takım: yuva -> takım kimliği (ContentDB.GEAR_SLOTS).
+## Dip: yem sepetinin çekişi (0–1; gölgeler takımın çevresine daha çabuk toplanır).
+var rig_pull: float = 0.0
+## Kuşanılan takım: yuva -> takım kimliği (tekniğin yuvaları: ContentDB.slots_for).
 var items: Dictionary = {}
 
 
@@ -39,16 +42,21 @@ static func starter(db: ContentDB) -> GearStats:
 	return from_items(db, db.gear_start, none)
 
 
-## items: yuva -> takım kimliği. Eksik, bilinmeyen ya da yanlış kategoriden yuvaya başlangıç
-## takımı konur (bozuk bir kayıt oyunu kilitlemesin). extras: sahip olunan ekstralar (kepçe).
+## items: yuva -> takım kimliği. Teknik kamıştan gelir; o tekniğin yuvaları okunur. Eksik,
+## bilinmeyen ya da yanlış kategoriden yuvaya başlangıç takımı konur (bozuk bir kayıt oyunu
+## kilitlemesin; kamış geçersizse bambu olta). extras: sahip olunan ekstralar (kepçe).
 static func from_items(db: ContentDB, items: Dictionary, extras: Array[String]) -> GearStats:
 	var g := GearStats.new()
 	g.snap_steps = db.rules.snap_steps
 	g.catch_m = db.rules.catch_m
 	var rod_carry := db.rules.carry
 	var line_carry := db.rules.carry
-	for slot: String in ContentDB.GEAR_SLOTS:
-		var id := str(items.get(slot, ""))
+	var rod := db.gear_item(str(items.get("rod", "")))
+	if rod.is_empty() or str(rod["category"]) != "rod":
+		rod = db.gear_item(str(db.gear_start.get("rod", "")))
+	var technique := str(rod.get("technique", "float"))
+	for slot: String in db.slots_for(technique):
+		var id := str(items.get(slot, "")) if slot != "rod" else str(rod.get("id", ""))
 		var item := db.gear_item(id)
 		if item.is_empty() or str(item["category"]) != slot:
 			id = str(db.gear_start.get(slot, ""))
@@ -73,8 +81,11 @@ static func from_items(db: ContentDB, items: Dictionary, extras: Array[String]) 
 				g.escape_extra = float(item["escape_extra"])
 			"bobber":
 				g.window_add_steps = FishingRules.to_steps(float(item["window_add"]))
-			"bait":
+			"bait", "lure", "fly":
 				g.attract = (item["attract"] as Dictionary).duplicate()
+			"rig":
+				g.range_m += float(item["range_add"])
+				g.rig_pull = float(item["pull"])
 	g.carry = mini(rod_carry, line_carry)
 	for id in extras:
 		var extra := db.gear_item(id)
@@ -87,7 +98,7 @@ static func from_items(db: ContentDB, items: Dictionary, extras: Array[String]) 
 ## "en iyi takımla bile beceri gerekiyor mu?"). Yem solucan kalır: çekişmeyi değiştirmez.
 static func best(db: ContentDB, technique: String = "float") -> GearStats:
 	var items := {}
-	for slot: String in ContentDB.GEAR_SLOTS:
+	for slot: String in db.slots_for(technique):
 		if slot == "bait":
 			continue
 		var top: Dictionary = {}

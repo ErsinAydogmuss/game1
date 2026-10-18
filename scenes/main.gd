@@ -167,9 +167,10 @@ func _start_session() -> void:
 	var save := GameState.save
 	_save_ref = save
 	var start: Dictionary = Zones.at(GameState.db, spot_id, GameState.db.spot(spot_id)["start"])
-	session = FishingSession.new(GameState.db, spot_id, Economy.gear_for(GameState.db, save), Dice.derive(save.seed, save.session),
-			bool(GameState.setting("easy", false)), save.catches == 0, CatchOdds.pity_floor(GameState.db, save, start),
-			Zones.open_ids(GameState.db, save, spot_id))
+	var gear := _gear()
+	session = FishingSession.new(GameState.db, spot_id, gear, Dice.derive(save.seed, save.session),
+			bool(GameState.setting("easy", false)), save.catches == 0,
+			CatchOdds.pity_floor(GameState.db, save, start, gear.technique), Zones.open_ids(GameState.db, save, spot_id))
 	zone_id = ""
 	in_boat = false
 	_buoy = -1
@@ -505,10 +506,11 @@ func _on_event(e: Dictionary) -> void:
 			# Yem balık takılınca harcanır (kaçan gölge yemi yemez). Biten yem solucana döner; oturumun
 			# takımı da: yeni gölgeler solucanın oranlarıyla doğar (defter ve dükkânla aynı). Dede,
 			# olta dönünce ve o an başka bir söz (kova dolu) yokken söyler.
-			var bait_id := Economy.equipped(GameState.db, GameState.save, "bait")
-			Economy.use_bait(GameState.db, GameState.save)
-			if Economy.equipped(GameState.db, GameState.save, "bait") != bait_id:
-				session.set_gear(Economy.gear_for(GameState.db, GameState.save))
+			var technique := session.technique.id
+			var bait_id := Economy.equipped(GameState.db, GameState.save, "bait", technique)
+			Economy.use_bait(GameState.db, GameState.save, technique)
+			if Economy.equipped(GameState.db, GameState.save, "bait", technique) != bait_id:
+				session.set_gear(_gear())
 				_bait_out = true
 			bobber.start_fight(bobber.global_position)
 			ripples.spawn(session.bobber, 1.2, 0.7, Color(1, 1, 1, 0.9), 0.18)
@@ -579,8 +581,9 @@ func _on_catch() -> void:
 	var stars := int(info["stars"])
 	var outcome := Records.add(save.records, fish_id, size_cm, stars, GameState.clock.now_unix())
 	save.catches += 1
-	CatchOdds.note_catch(db, save, rarity, Zones.place(db, spot_id, str(info.get("zone", ""))))
-	session.set_pity_floor(CatchOdds.pity_floor(db, save, Zones.place(db, spot_id, zone_id)))
+	var technique := session.technique.id
+	CatchOdds.note_catch(db, save, rarity, Zones.place(db, spot_id, str(info.get("zone", ""))), technique)
+	session.set_pity_floor(CatchOdds.pity_floor(db, save, Zones.place(db, spot_id, zone_id), technique))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	var zone_news := false
 	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir). Koruma
@@ -660,7 +663,8 @@ func _follow_zone() -> void:
 	zone_id = now
 	shop_panel.zone_id = now
 	book_panel.zone_id = now
-	session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save, Zones.place(GameState.db, spot_id, now)))
+	session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save, Zones.place(GameState.db, spot_id, now),
+			session.technique.id))
 
 
 func _present(delta: float) -> void:
@@ -916,7 +920,8 @@ func _travel(target: String) -> void:
 		var k := lake.zone_index(target)
 		angler.face_now(MapView.badge_anchor(lake, k) - stand)
 		# Yeni yerin gölgeleri o bölgenin şans garantisiyle doğsun.
-		session.set_pity_floor(CatchOdds.pity_floor(db, GameState.save, Zones.place(db, spot_id, target)))
+		session.set_pity_floor(CatchOdds.pity_floor(db, GameState.save, Zones.place(db, spot_id, target),
+				session.technique.id))
 		session.relocate(stand)
 		_follow_zone()
 		_snap_camera())
@@ -980,7 +985,7 @@ func _say(key: String, speaker: String = "dede", args: Array = []) -> void:
 ## Fazla iri balık kaçtı: Dede eksik takımı adıyla söyler: Nine'den alınacak, sende olup takılacak
 ## ya da Nine'nin onu hangi rütbede sattığı. Adlar her gösterişte o anki dilde kurulur.
 func _advise_gear(stars: int) -> void:
-	var advice := Economy.gear_for_stars(GameState.db, GameState.save, stars)
+	var advice := Economy.gear_for_stars(GameState.db, GameState.save, stars, session.technique.id)
 	var buy: Array[String] = advice["buy"]
 	var equip: Array[String] = advice["equip"]
 	if buy.is_empty() and equip.is_empty():
@@ -1063,7 +1068,7 @@ func _go_boat(buoy: int) -> void:
 		angler.face_now(buoys[index] - at)
 		session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id, true))
 		session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save,
-				Zones.place(GameState.db, spot_id, str(zone["id"]))))
+				Zones.place(GameState.db, spot_id, str(zone["id"])), session.technique.id))
 		session.relocate(at)
 		hud.set_boat(true)
 		_follow_zone()
@@ -1119,8 +1124,13 @@ func _on_shop_closed() -> void:
 
 ## Takım değişti (dükkânda satın alma ya da kuşanma): oturumun takımı ve oranları yenilenir.
 func _on_gear_changed() -> void:
-	session.set_gear(Economy.gear_for(GameState.db, GameState.save))
+	session.set_gear(_gear())
 	_refresh_status()
+
+
+## Elindeki tekniğin kuşanılmış takımı (teknik hazır değilse şamandıranınki).
+func _gear() -> GearStats:
+	return Economy.gear_for(GameState.db, GameState.save, GameState.save.technique)
 
 
 ## Kova satıldı: para göstergesi ve Nine'nin sevinci.
