@@ -39,7 +39,7 @@ Ortalama boy çarpanı 0,99: ortalama bir balık türünün değerinin yaklaşı
 
 ## İri balık ve takım
 
-İri türlerin (sazan, turna, yayın, kadife, sudak, altın sazan, mersin balığı) boyu çekişini artırır. Bir iri balığı ancak yıldızını taşıyan kamış ve
+İri türlerin (sazan, turna, yayın, kadife, sudak, altın sazan, mersin balığı, aynalı sazan) boyu çekişini artırır. Bir iri balığı ancak yıldızını taşıyan kamış ve
 misina rahat tutar; ikisinin küçüğü işler. Takım taşımıyorsa balık fazla iridir: takılınca "Çok iri!"
 çıkar, sakinken de gerilim kırmızıya çeker, bırakınca balık hızla uzaklaşır. Misina koparsa ya da balık
 kaçarsa Dede eksik takımı söyler. Kolay modda kopma yok; fazla iri balık yalnızca yavaş gelir. Öteki
@@ -50,6 +50,12 @@ türler her boyda bambu oltayla tutulur.
 | Bambu kamış | başlangıç | 1 | ★★★ |
 | Cam elyafı kamış | 300 | 2 | ★★★★ |
 | Karbon kamış | 2000 | 5 | ★★★★★ |
+| Hafif spin kamışı | 150 | 2 | ★★★ |
+| Orta spin kamışı | 1100 | 4 | ★★★★ |
+| Ağır spin kamışı | 3000 | 8 | ★★★★★ |
+| Dip kamışı | 500 | 4 | ★★★★ |
+| Uzun dip kamışı | 1800 | 6 | ★★★★★ |
+| Usta dip kamışı | 4500 | 10 | ★★★★★ |
 | İnce misina | başlangıç | 1 | ★★★ |
 | Naylon misina | 120 | 1 | ★★★★ |
 | Florokarbon misina | 500 | 3 | ★★★★ |

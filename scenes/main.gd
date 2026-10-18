@@ -43,6 +43,17 @@ const LEGEND_LOOK_TIME := 3.0
 const WAKE_EVERY := 0.2
 ## Takım çantasından açılan dükkânda balıkçı Nine'ye bundan uzaksa kova satılmaz (tezgâha gelinir).
 const SHOP_NEAR := 6.0
+## Olta sudayken kameranın odağı balıkçıyla takımın arasında, yolun bu kadarında.
+const FOCUS_SHARE := 0.45
+## Dipte takım uzağa düşer (14–18 m): kamera biraz yatar (FAR_PITCH) ve ikisi de görünsün diye en
+## çok FAR_MAX_ZOOM kadar uzaklaşır. Balıkçının ayağı ekranın FAR_LOW çizgisinin üstünde (ipucu
+## çubuğunun üstü), takım FAR_HIGH çizgisinin altında (üstteki para ve kova göstergeleri) kalır;
+## ekran payı: -1 alt kenar, 1 üst kenar. Sığmazsa balıkçı ve sehpa görünür kalır, takım yukarı
+## taşar.
+const FAR_PITCH := deg_to_rad(45.0)
+const FAR_MAX_ZOOM := 1.3
+const FAR_LOW := -0.5
+const FAR_HIGH := 0.8
 
 var session: FishingSession
 var lake: LakeShape
@@ -53,6 +64,8 @@ var nine: Nine
 var shop: ShopStall
 var bobber: Bobber
 var line: FishingLine
+## Dipte balıkçının yanındaki sehpa (kamış ve zil).
+var stand: RodStand
 var shadows: ShadowLayer
 var ripples: Ripples
 var catch_fx: CatchFx
@@ -144,6 +157,8 @@ func _ready() -> void:
 	_place_shop()
 	bobber = Bobber.new()
 	add_child(bobber)
+	stand = RodStand.new()
+	add_child(stand)
 	camera = FollowCamera.new()
 	add_child(camera)
 	elder.camera = camera
@@ -151,7 +166,7 @@ func _ready() -> void:
 	line = FishingLine.new()
 	line.camera = camera
 	line.visible = false
-	line.from_point = func() -> Vector3: return angler.rod_tip()
+	line.from_point = func() -> Vector3: return stand.tip_point() if angler.rod_on_stand else angler.rod_tip()
 	line.to_point = func() -> Vector3: return bobber.line_point()
 	add_child(line)
 	_build_ui()
@@ -237,8 +252,14 @@ func _on_focus_lost() -> void:
 	_paused = true
 	input.release_all()
 	session.release()
+	_stop_loops()
+
+
+## Makara, gerilim ve zil döngüleri susar (kaçtı, tutuldu, odak kaybı, ayarlar).
+func _stop_loops() -> void:
 	Sounds.set_loop("reel", false)
 	Sounds.set_loop("strain", false)
+	Sounds.set_loop("bell_run", false)
 
 
 func _process(delta: float) -> void:
@@ -486,12 +507,17 @@ func _on_event(e: Dictionary) -> void:
 		"land":
 			var p: Vector2 = e["pos"]
 			bobber.land(Vector3(p.x, 0.0, p.y))
-			if bobber.kind == "lure":
-				ripples.spawn(p, 0.45, 0.7)
-				Sounds.play("lure")
-			else:
-				ripples.spawn(p, 0.7, 0.9)
-				Sounds.play("plop")
+			match bobber.kind:
+				"lure":
+					ripples.spawn(p, 0.45, 0.7)
+					Sounds.play("lure")
+				"sinker":
+					# Ağır kurşun: büyük halka, pes şapırtı.
+					ripples.spawn(p, 0.9, 1.0)
+					Sounds.play("plop", 0.0, 0.8)
+				_:
+					ripples.spawn(p, 0.7, 0.9)
+					Sounds.play("plop")
 			Sounds.haptic(12)
 		"follow":
 			# Yırtıcı oynayan yemin peşine düştü: arkasında bir halka, hafif titreşim.
@@ -529,6 +555,18 @@ func _on_event(e: Dictionary) -> void:
 			Sounds.play("scare")
 			if GameState.save.catches < HINT_CATCHES:
 				hud.toast(tr("UI_SCARED"), UiKit.ACCENT)
+		"sniff":
+			# Dipte balık kokluyor: zil bir kez çınlar, kamışın ucu seğirir, kurşunun üstünde halka.
+			stand.sniff()
+			ripples.spawn(session.bobber, 0.4, 0.6, Color(1, 1, 1, 0.6), 0.1)
+			Sounds.play("bell")
+			Sounds.haptic(15)
+		"run":
+			# Koşu: zil durmadan çalar (döngü ve 2B zil _present_bottom'da), misina akar.
+			ripples.spawn(session.bobber, 1.0, 0.8, Color(1, 1, 1, 0.9), 0.14)
+			Sounds.play("bell")
+			Sounds.haptic(70)
+			camera.shake(0.06)
 		"nibble":
 			bobber.nibble()
 			ripples.spawn(session.bobber, 0.45, 0.6, Color(1, 1, 1, 0.7), 0.12)
@@ -599,8 +637,7 @@ func _on_event(e: Dictionary) -> void:
 
 ## too_big: kaçan balık fazla iriyse yıldızı (Dede eksik takımı söyler).
 func _on_lost(reason: String, too_big: int = 0) -> void:
-	Sounds.set_loop("reel", false)
-	Sounds.set_loop("strain", false)
+	_stop_loops()
 	if too_big > 0 and reason in ["snapped", "escaped"]:
 		_advise_gear(too_big)
 	match reason:
@@ -622,8 +659,7 @@ func _on_lost(reason: String, too_big: int = 0) -> void:
 
 
 func _on_catch() -> void:
-	Sounds.set_loop("reel", false)
-	Sounds.set_loop("strain", false)
+	_stop_loops()
 	var info := session.last_catch
 	var fish_id := str(info["fish"])
 	var rarity := int(info["rarity"])
@@ -732,6 +768,7 @@ func _present(delta: float) -> void:
 		var fp := session.fight_point()
 		bobber.fight_point = Vector3(fp.x, 0.0, fp.y)
 	var lure_reeling := _present_lure(delta)
+	var on_stand := _present_bottom()
 	var show_line := session.line_out() or bobber.look == Bobber.Look.RETURNING
 	line.visible = show_line and bobber.visible
 	if line.visible:
@@ -741,11 +778,19 @@ func _present(delta: float) -> void:
 			FishingSession.State.FIGHTING:
 				line.sag = 0.03
 			_:
-				# Çekilen yemde misina gergin.
-				line.sag = 0.05 if lure_reeling else (0.25 if bobber.kind == "lure" else 0.35)
+				# Çekilen yemde misina gergin; dipte uzun misina sehpadan kurşuna gerili.
+				if lure_reeling:
+					line.sag = 0.05
+				elif bobber.kind == "sinker":
+					line.sag = 0.1
+				else:
+					line.sag = 0.25 if bobber.kind == "lure" else 0.35
 		line.shake = 0.0
 		if fighting:
 			line.shake = clampf(reel.tension, 0.0, 1.3) * (1.6 if reel.thrashing() else 0.6)
+		elif on_stand and session.state == FishingSession.State.BITING:
+			# Koşu: misina akar ve titrer.
+			line.shake = 0.8
 	var tension := reel.tension if fighting else 0.0
 	angler.tension = tension
 	# Dede olta sudayken şamandırayı izler (efsanevi gölgeyi haber verdiyse önce ona bakar); Nine
@@ -770,12 +815,16 @@ func _present(delta: float) -> void:
 			angler.pose = "reel"
 		FishingSession.State.CASTING, FishingSession.State.WAITING, FishingSession.State.NIBBLING, \
 				FishingSession.State.BITING, FishingSession.State.FOLLOWING:
-			angler.pose = "reel" if lure_reeling else "hold"
+			# Dipte kamış sehpada: balıkçının eli boş.
+			angler.pose = "free" if on_stand else ("reel" if lure_reeling else "hold")
 		_:
 			angler.pose = "free"
 	if lure_reeling:
 		# Yem çekilirken makaranın tıkırtısı (çekişmedekinden kısık ve pes).
 		Sounds.set_loop("reel", true, -4.0, 0.8)
+	elif on_stand and session.state == FishingSession.State.BITING:
+		# Dipte koşu: misina makaradan akar (hızlı tıkırtı, zilin altında).
+		Sounds.set_loop("reel", true, -6.0, 1.7)
 	else:
 		Sounds.set_loop("reel", fighting and reel.holding, 0.0, 0.9 + 0.3 * tension)
 	Sounds.set_loop("strain", fighting and reel.in_red)
@@ -805,9 +854,17 @@ func _present(delta: float) -> void:
 		return
 	camera.target = _focus()
 	var line_view := session.line_out() or session.state == FishingSession.State.LOST
-	camera.pitch = lerpf(camera.pitch, LINE_PITCH if line_view else FollowCamera.PITCH, minf(1.0, delta * 2.5))
+	var far := _far_frame()
+	var pitch := FollowCamera.PITCH
+	if far.x >= 0.0:
+		pitch = FAR_PITCH
+	elif line_view:
+		pitch = LINE_PITCH
+	camera.pitch = lerpf(camera.pitch, pitch, minf(1.0, delta * 2.5))
 	var zoom := 1.0
-	if fighting:
+	if far.x >= 0.0:
+		zoom = far.y
+	elif fighting:
 		zoom = FIGHT_ZOOM
 	elif catch_fx.is_showing():
 		zoom = SHOW_ZOOM
@@ -828,6 +885,29 @@ func _present_lure(delta: float) -> bool:
 			_wake_clock = 0.0
 			ripples.spawn(session.bobber, 0.28, 0.6, Color(1, 1, 1, 0.5), 0.12)
 	return moving
+
+
+## Dip: kurşun suya düşünce kamış sehpaya konur (balıkçının yanında, atış yönüne bakar); koklamada
+## zil tek tük çalar (sniff olayı), koşuda durmadan çalar ve 2B zil işareti çıkar. Kamış
+## sehpadaysa true.
+func _present_bottom() -> bool:
+	var on := session.technique.id == "bottom" and session.state in [FishingSession.State.WAITING,
+			FishingSession.State.NIBBLING, FishingSession.State.BITING]
+	if on != angler.rod_on_stand:
+		angler.rod_on_stand = on
+		if on:
+			stand.place(angler.global_position, session.bobber - angler.pos2(), _stand_room)
+			stand.position.y = scene.stand_height(Vector2(stand.position.x, stand.position.z))
+		stand.show_stand(on)
+	var running := on and session.state == FishingSession.State.BITING
+	stand.set_running(running)
+	Sounds.set_loop("bell_run", running)
+	return on
+
+
+## Sehpa burada durabilir mi: karada ya da iskelede (sandalda balıkçının yanı: küpeşte).
+func _stand_room(p: Vector2) -> bool:
+	return in_boat or lake.is_walkable(p)
 
 
 ## Oturumun tekniği değişti (Takım Çantası, ilk kamış): elindeki kamış, suya atılan takımın görünüşü
@@ -862,8 +942,25 @@ func _focus() -> Vector3:
 		return _show_point() + Vector3(0, -0.2, 0)
 	if session.line_out() or session.state == FishingSession.State.LOST:
 		var p := session.fight_point() if session.state == FishingSession.State.FIGHTING else session.bobber
-		return a.lerp(Vector3(p.x, 0.0, p.y), 0.45)
+		var far := _far_frame()
+		return a.lerp(Vector3(p.x, 0.0, p.y), far.x if far.x >= 0.0 else FOCUS_SHARE)
 	return a
+
+
+## Dipte olta suda: kameranın çerçevesi (odağın balıkçıyla takım arasındaki yoldaki payı, zoom;
+## eğim FAR_PITCH). Takım (ya da çekişmedeki balık) uzaktaysa kamera uzaklaşır; yakınsa eskisi gibi.
+## Dip değilse ya da olta suda değilse (-1, 1).
+func _far_frame() -> Vector2:
+	if session.technique.id != "bottom" or not (session.line_out() or session.state == FishingSession.State.LOST):
+		return Vector2(-1.0, 1.0)
+	var fighting := session.state == FishingSession.State.FIGHTING
+	var base := FIGHT_ZOOM if fighting else 1.0
+	var p := session.fight_point() if fighting else session.bobber
+	var ahead := (p - angler.pos2()).dot(FollowCamera.screen_up())
+	if ahead < 1.0:
+		return Vector2(FOCUS_SHARE, base)
+	var view := FollowCamera.fit(ahead, FAR_PITCH, FOCUS_SHARE, base, FAR_MAX_ZOOM, FAR_LOW, FAR_HIGH)
+	return Vector2(view.x / ahead, view.y)
 
 
 ## Efsanevi (ve üstü) bir gölge yaklaşınca Dede bir kez haber verir: sözü, kısa ezgi, titreşim ve
@@ -1380,8 +1477,7 @@ func _build_ui() -> void:
 	hud.settings_pressed.connect(func() -> void:
 		input.release_all()
 		session.release()
-		Sounds.set_loop("reel", false)
-		Sounds.set_loop("strain", false)
+		_stop_loops()
 		settings_panel.open())
 	hud.action_down.connect(func() -> void: input.pointer(InputRouter.BUTTON_POINTER, true))
 	hud.action_up.connect(func() -> void: input.pointer(InputRouter.BUTTON_POINTER, false))

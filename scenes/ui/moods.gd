@@ -19,6 +19,8 @@ const BY_KEY := {
 	"UI_DEDE_ZONE_OPEN": WOW,
 	# Spin: talimat anlatılır, peşindeki balık ve saldırı heyecanlı.
 	"UI_HINT_SPIN_REEL": STORY, "UI_HINT_SPIN_FOLLOW": WOW, "UI_HINT_SPIN_STRIKE": WOW, "UI_DEDE_SNAG": STORY,
+	# Dip: bekleyiş ve koklama anlatılır, koşu heyecanlı.
+	"UI_HINT_BOTTOM_WAIT": STORY, "UI_HINT_BOTTOM_SNIFF": STORY, "UI_HINT_BOTTOM_RUN": WOW,
 	"UI_DEDE_CARD_NEW": SMILE, "UI_DEDE_CARD_RECORD": WOW, "UI_DEDE_CARD_RELEASE": STORY,
 	# Nine satın almada paketi uzatır, satışta sevinir.
 	"UI_NINE_BOUGHT": STORY, "UI_NINE_SOLD": WOW,

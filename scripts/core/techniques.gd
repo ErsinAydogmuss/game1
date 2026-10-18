@@ -4,7 +4,7 @@ extends RefCounted
 ## bilinmeyen) kimlik şamandıra olur.
 
 ## Kurulabilen teknikler (Dalga 3'te sırayla eklenir).
-const KNOWN: Array[String] = ["float", "spin"]
+const KNOWN: Array[String] = ["float", "spin", "bottom"]
 
 
 ## Bu kimlikle kurulacak tekniğin kimliği.
@@ -16,5 +16,7 @@ static func make(id: String, rules: FishingRules) -> Technique:
 	match resolve(id):
 		"spin":
 			return SpinTechnique.new(rules)
+		"bottom":
+			return BottomTechnique.new(rules)
 		_:
 			return FloatTechnique.new(rules)

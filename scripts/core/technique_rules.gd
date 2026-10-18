@@ -24,6 +24,8 @@ var give_up_steps: int = 20 * FishingRules.HZ
 var gather_after_steps: int = 360
 var gather_ppm: int = 500_000
 var gather_radius: float = 2.5
+## Toplanan gölgenin yüzme hızı çarpanı (dipte yemin kokusu; şamandırada 1: eskisi gibi).
+var gather_speed: float = 1.0
 ## Takıma varan balık hareket eden takımı bu hızla izler (m/sn; 0 = takım durur, balık da: şamandıra).
 var follow_speed: float = 0.0
 
@@ -71,6 +73,7 @@ static func from_dict(technique_id: String, d: Dictionary, base: TechniqueRules)
 	t.gather_after_steps = FishingRules.to_steps(float(d["gather_after"])) if d.has("gather_after") else base.gather_after_steps
 	t.gather_ppm = int(round(float(d["gather_chance"]) * Dice.PPM)) if d.has("gather_chance") else base.gather_ppm
 	t.gather_radius = float(d.get("gather_radius", base.gather_radius))
+	t.gather_speed = float(d.get("gather_speed", base.gather_speed))
 	t.follow_speed = float(d.get("follow_speed", 0.0))
 	t.nibble_weights = base.nibble_weights.duplicate()
 	if d.has("nibbles") and typeof(d["nibbles"]) == TYPE_ARRAY:
@@ -81,6 +84,37 @@ static func from_dict(technique_id: String, d: Dictionary, base: TechniqueRules)
 	t.window_steps = FishingRules.to_steps(float(d["window"])) if d.has("window") else base.window_steps
 	t.window_easy_steps = FishingRules.to_steps(float(d["window_easy"])) if d.has("window_easy") else base.window_easy_steps
 	t.params = d.duplicate(true)
+	return t
+
+
+## Aynı sayılarla yeni bir profil (params paylaşılır: yalnızca okunur).
+func copy() -> TechniqueRules:
+	var t := TechniqueRules.new()
+	t.id = id
+	t.notice_cos = notice_cos
+	t.notice_front = notice_front
+	t.notice_side = notice_side
+	t.approach_speed = approach_speed
+	t.give_up_steps = give_up_steps
+	t.gather_after_steps = gather_after_steps
+	t.gather_ppm = gather_ppm
+	t.gather_radius = gather_radius
+	t.gather_speed = gather_speed
+	t.follow_speed = follow_speed
+	t.nibble_weights = nibble_weights.duplicate()
+	t.gap_steps = gap_steps
+	t.window_steps = window_steps
+	t.window_easy_steps = window_easy_steps
+	t.params = params
+	return t
+
+
+## Yem sepeti (dip; pull 0–1): gölgeler takımın çevresine daha erken ve daha sık toplanır.
+func with_pull(pull: float) -> TechniqueRules:
+	var t := copy()
+	var p := clampf(pull, 0.0, 1.0)
+	t.gather_after_steps = roundi(gather_after_steps * (1.0 - p))
+	t.gather_ppm = mini(Dice.PPM, roundi(gather_ppm * (1.0 + p)))
 	return t
 
 
@@ -114,7 +148,7 @@ func validate(errors: PackedStringArray) -> void:
 	var checks := {
 		"fark etme uzaklıkları": notice_front >= notice_side and notice_side > 0.0,
 		"yaklaşma hızı ve vazgeçme": approach_speed > 0.0 and give_up_steps > 0,
-		"toplanma": gather_ppm >= 0 and gather_ppm <= Dice.PPM and gather_radius >= 0.0,
+		"toplanma": gather_ppm >= 0 and gather_ppm <= Dice.PPM and gather_radius >= 0.0 and gather_speed >= 1.0,
 		"izleme hızı": follow_speed >= 0.0,
 		"dürtme ağırlıkları (4 değer, toplam > 0)": nibble_weights.size() == 4 and FishingRules._sum(nibble_weights) > 0,
 		"dürtme arası": gap_steps.x > 0 and gap_steps.y >= gap_steps.x,

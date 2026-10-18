@@ -6,7 +6,7 @@ func test_loads_without_errors() -> void:
 	var db := content()
 	assert_eq(db.errors.size(), 0, "içerik hataları: " + ", ".join(db.errors))
 	assert_eq(db.rarities.size(), 6, "6 nadirlik (Masalsı eklendi)")
-	assert_eq(db.fish.size(), 12, "12 balık (Dalga 2'de 7 tür eklendi)")
+	assert_eq(db.fish.size(), 13, "13 balık (Dalga 2'de 7 tür, Dalga 3'te aynalı sazan)")
 	assert_true(not db.spot("home_lake").is_empty(), "testlerin gölü")
 	assert_eq(db.main_spot, "big_lake", "oyun Köy Gölü'nde açılır")
 	assert_true(db.gear.size() >= 30, "dükkân takımı okundu")
@@ -19,7 +19,7 @@ func test_fish_follow_the_design() -> void:
 	var db := content()
 	var expected := { "rudd": "common", "carp": "fine", "perch": "fine", "pike": "rare", "wels": "epic",
 		"silverside": "common", "bream": "common", "chub": "common", "tench": "fine", "zander": "rare",
-		"golden_carp": "epic", "sturgeon": "legendary" }
+		"golden_carp": "epic", "sturgeon": "legendary", "mirror_carp": "rare" }
 	for id: String in expected:
 		var f := db.fish_by_id(id)
 		assert_true(not f.is_empty(), "balık var: " + id)
@@ -201,7 +201,9 @@ func test_technique_slots_and_affinity() -> void:
 ## Takımın görseli yokken kodla çizilen ikonu var (dükkânda boş kart kalmasın).
 func test_gear_kinds_are_drawable() -> void:
 	for g in content().gear:
-		assert_true(str(g["kind"]) in GameIcon.DRAWN, "%s: kodla çizilen ikon yok (kind %s)" % [g["id"], g["kind"]])
+		# Kodla çizilen ikon: türün kendisi ya da yedeği (yapay yem, kurşun, sinek → yem).
+		var drawn := str(GameIcon.FALLBACK.get(str(g["kind"]), str(g["kind"])))
+		assert_true(drawn in GameIcon.DRAWN, "%s: kodla çizilen ikon yok (kind %s)" % [g["id"], g["kind"]])
 
 
 func test_every_content_id_has_translations() -> void:

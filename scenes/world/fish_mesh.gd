@@ -17,7 +17,8 @@ const NOSE_X := 0.5
 ## burun), eye (göz yarıçapı / boy), iris (gözün rengi; yoksa beyaz), stripes (dikey çizgi sayısı) ve
 ## stripe_strength (koyuluğu), whiskers (bıyık), barbels (burnun altından sarkan dört kısa bıyık),
 ## flat (baş basıklığı), thin (genişlik / yükseklik), stem (kuyruk sapının yüksekliği), lateral (yan
-## şeridin rengi), patches (lekelerin rengi), scutes (sırt ve yan plakaların rengi), dorsals (sırt
+## şeridin rengi), patches (lekelerin rengi), scutes (sırt ve yan plakaların rengi), mirror (aynalı
+## sazanın iri, yassı pullarının rengi), dorsals (sırt
 ## yüzgeci sayısı), dorsal ([baş, son, tepe, yükseklik]: sırt yüzgecinin yeri), anal (uzun anal
 ## yüzgeç), low_fins (alt yüzgeçlerin rengi), fork (kuyruğun çatal derinliği), tail_tilt (üst lobu
 ## uzun kuyruk).
@@ -36,6 +37,7 @@ const SHAPES := {
 	"golden_carp": { "ratio": 2.25, "nose": 2.6, "eye": 0.065, "whiskers": 0.12, "patches": "#f7f1e6" },
 	"sturgeon": { "ratio": 4.4, "nose": 0.85, "eye": 0.034, "flat": 0.4, "scutes": "#ece7d8", "barbels": 0.08,
 		"dorsal": [0.72, 0.9, 0.78, 0.6], "tail_tilt": 0.55, "fork": 0.12 },
+	"mirror_carp": { "ratio": 2.0, "nose": 2.6, "eye": 0.06, "whiskers": 0.12, "thin": 0.68, "mirror": "#f3d58a" },
 }
 const DEFAULT_SHAPE := { "ratio": 2.2, "nose": 2.4, "eye": 0.075 }
 ## Dış çizginin dünyadaki kalınlığı (m).
@@ -125,6 +127,7 @@ class _Builder:
 	var lateral := Color(0, 0, 0, 0)
 	var patches := Color(0, 0, 0, 0)
 	var scutes := Color(0, 0, 0, 0)
+	var mirror := Color(0, 0, 0, 0)
 	var dorsals: int
 	var dorsal: Array
 	var anal: bool
@@ -154,6 +157,8 @@ class _Builder:
 			patches = Color(str(shape["patches"]))
 		if shape.has("scutes"):
 			scutes = Color(str(shape["scutes"]))
+		if shape.has("mirror"):
+			mirror = Color(str(shape["mirror"]))
 		dorsals = int(shape.get("dorsals", 1))
 		dorsal = shape.get("dorsal", [0.32, 0.62, 0.4, 0.45])
 		anal = bool(shape.get("anal", false))
@@ -175,6 +180,8 @@ class _Builder:
 			_barbels()
 		if scutes.a > 0.0:
 			_scutes()
+		if mirror.a > 0.0:
+			_mirror_scales()
 		st.generate_normals()
 		return st.commit()
 
@@ -321,6 +328,41 @@ class _Builder:
 				var r := height_scaled(t) * 0.2
 				var out := Vector3(0.0, cos(a), sin(a))
 				_sphere(ring_point(t, a) + out * r * 0.25, r, scutes, 5, 3)
+
+	## Aynalı sazanın pulları: iki yanda yan çizgi boyunca ve sırtın iki yanında birkaç iri, parlak,
+	## yassı pul (yüzeye yatık).
+	func _mirror_scales() -> void:
+		var rows: Array = [[PI * 0.5, [0.3, 0.46, 0.62, 0.78]], [PI * 1.5, [0.34, 0.5, 0.68]],
+				[PI * 0.2, [0.4, 0.58]], [TAU - PI * 0.2, [0.36, 0.54]]]
+		for row: Array in rows:
+			var a: float = row[0]
+			for t: float in row[1]:
+				_disc(ring_point(t, a), Vector3(0.0, cos(a), sin(a)), height_scaled(t) * 0.24, mirror)
+
+	## Yassı pul: n yönünde basık küre (dışı saat yönünde: küre noktalarıyla aynı el).
+	func _disc(center: Vector3, n: Vector3, r: float, color: Color) -> void:
+		var t1 := n.cross(Vector3.RIGHT)
+		if t1.length() < 0.1:
+			t1 = n.cross(Vector3.UP)
+		t1 = t1.normalized()
+		var t2 := t1.cross(n).normalized()
+		var rings := 3
+		var segments := 6
+		for j in rings:
+			var v0 := PI * j / rings
+			var v1 := PI * (j + 1) / rings
+			for k in segments:
+				var u0 := TAU * k / segments
+				var u1 := TAU * (k + 1) / segments
+				var p00 := center + _squash(_spherical(u0, v0), t1, n, t2) * r
+				var p01 := center + _squash(_spherical(u1, v0), t1, n, t2) * r
+				var p10 := center + _squash(_spherical(u0, v1), t1, n, t2) * r
+				var p11 := center + _squash(_spherical(u1, v1), t1, n, t2) * r
+				_tri_as_is(p00, p10, p11, color, color, color)
+				_tri_as_is(p00, p11, p01, color, color, color)
+
+	static func _squash(p: Vector3, t1: Vector3, n: Vector3, t2: Vector3) -> Vector3:
+		return t1 * p.x + n * (p.y * 0.3) + t2 * p.z
 
 	## İncelen boru (bıyık): start'tan finish'e, kalınlığı r'den neredeyse sıfıra. Kesitin halkası
 	## borunun çevresinde, gövde noktaları gibi dışarıdan bakınca saat yönünün tersine döner.

@@ -18,6 +18,8 @@ extends SceneTree
 ## balık peşine düşünce dur-kalk yapar (evreler RHYTHM_S aralığında); saldırı bırakılmışken olduysa
 ## REACTION_S sonra VUR. Yem gelince (ya da takılınca) atış kendiliğinden biter. Burada "geliş"
 ## balığın peşine düşmesi, "dürtme" izlemesi, "ısırma" saldırısıdır.
+## Dip: en yakın gölgenin yönüne atar (takım menzilin sonuna düşer), BOTTOM_PATIENCE_S bekler;
+## koklamada (zil tek tük) dokunmaz, koşuda (zil durmadan) REACTION_S sonra VUR.
 ## Balıkçı başlangıç yerinde (iskelenin ucu) durur. Bot ısırmayı hiç kaçırmaz; insan hatası
 ## sim.json'da ayrıca (miss_ppm).
 
@@ -30,6 +32,8 @@ const SHOW_S := 1.3
 ## Spin: gölgenin ne kadar ötesine atılır (m) ve dur-kalk evrelerinin süresi (sn).
 const SPIN_PAST_M := 2.5
 const RHYTHM_S := Vector2(0.35, 0.8)
+## Dip: gelen balık yokken bu kadar sn sonra geri sarar (dip sabır ister).
+const BOTTOM_PATIENCE_S := 30.0
 
 var _casts: int = 600
 var _seeds: int = 3
@@ -149,6 +153,9 @@ func _play(db: ContentDB, gear: GearStats, seed_value: int) -> void:
 	var reel_events := PackedStringArray()
 	var casts := 0
 	var spin := _technique == "spin"
+	var bottom := _technique == "bottom"
+	if bottom:
+		patience = FishingRules.to_steps(BOTTOM_PATIENCE_S)
 	var phase_end := 0
 	while casts < _casts:
 		match session.state:
@@ -206,7 +213,7 @@ func _play(db: ContentDB, gear: GearStats, seed_value: int) -> void:
 						arrive_at = session.steps
 						_wait.append(_sec(arrive_at - landed_at))
 						phase_end = session.steps + FishingRules.to_steps(rng.randf_range(RHYTHM_S.x, RHYTHM_S.y))
-				"bite", "strike":
+				"bite", "strike", "run":
 					bite_at = session.steps
 					_add("bite")
 					if bool(e.get("auto", false)):

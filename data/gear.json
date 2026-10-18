@@ -1,11 +1,11 @@
 {
 	"_note": "Nine'nin dükkânındaki takım (docs/gdd.md §10.4). Kimlikler değişmez; kayıt takımı kimlikle tutar. price: para (0 = baştan var), rank: açıldığı rütbe. icon: görsel adı (assets/icons/gear/<icon>.png; yoksa kimlik), kind: görsel yoksa çizilen GameIcon. Sayılar taslak; denge botuyla ayarlanır (tools/economy_report.gd). Takımın gücü test_reel_model korkuluklarıyla sınırlı: en iyi takımla bile hep basılı tutan Nadir balığı en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar, çekişme en çok %40 kısalır (tools/reel_report.gd -- --gear=top).",
-	"_stats": "rod: technique (float, spin, bottom, fly), range_m (atış menzili), power (0-0,3: sarma x (1 + power), patlamada kaçış x (1 - power)). rod ve line: carry (taşıma, yıldız 1-5): kuşanılan kamış ve misinanın küçüğü; iri türün (fish.json fight.heavy) bundan büyük yıldızlısı fazla iri olur: sakinken bile kırmızıya çeker (docs/gdd.md §5). reel: reel_speed (m/sn, balığın reel çarpanıyla), drag (0-0,25: patlamada gerilim x (1 - drag); en güçlü frende bile her balığın patlaması sınırın en az 0,1 üstünde kalmalı, ContentDB denetler). line: snap_after (sınırın üstünde kopmadan önce sn), stealth (0-0,5: gölgeyi korkutma yarıçapı x (1 - stealth)). hook: escape_extra (balığın kaçma payına eklenen m). bobber: window_add (VUR süresine eklenen sn). bait: attract (tür -> ağırlık çarpanı), pack (bir alımda kaç tane; 0 = sınırsız). lure (yapay yem, spin): attract; tükenmez, bir kez alınır. extra: net (catch_m: balık bu uzaklıkta tutulur). bucket: capacity (kova kaç balık alır). boat: sandal (derin ortaya açılır; Zones.BOAT).",
+	"_stats": "rod: technique (float, spin, bottom, fly), range_m (atış menzili), power (0-0,3: sarma x (1 + power), patlamada kaçış x (1 - power)). rod ve line: carry (taşıma, yıldız 1-5): kuşanılan kamış ve misinanın küçüğü; iri türün (fish.json fight.heavy) bundan büyük yıldızlısı fazla iri olur: sakinken bile kırmızıya çeker (docs/gdd.md §5). reel: reel_speed (m/sn, balığın reel çarpanıyla), drag (0-0,25: patlamada gerilim x (1 - drag); en güçlü frende bile her balığın patlaması sınırın en az 0,1 üstünde kalmalı, ContentDB denetler). line: snap_after (sınırın üstünde kopmadan önce sn), stealth (0-0,5: gölgeyi korkutma yarıçapı x (1 - stealth)). hook: escape_extra (balığın kaçma payına eklenen m). bobber: window_add (VUR süresine eklenen sn). bait: attract (tür -> ağırlık çarpanı), pack (bir alımda kaç tane; 0 = sınırsız). lure (yapay yem, spin): attract; tükenmez, bir kez alınır. rig (dip): kurşun ya da yem sepeti; range_add (menzile eklenen m), pull (0–1: gölgeler takımın çevresine daha erken ve sık toplanır; rules.json techniques.bottom gather). extra: net (catch_m: balık bu uzaklıkta tutulur). bucket: capacity (kova kaç balık alır). boat: sandal (derin ortaya açılır; Zones.BOAT).",
 	"_slots": "slots: kuşanılan yuvalar. shared her teknikte ortak (makara ve misina: bir kez alınan her teknikte işe yarar); öteki satırlar tekniğin kendi yuvaları (kamış hepsinde). Takım çantası her teknik için ayrı kuşanılır (SaveData.loadouts; ortaklar loadouts.shared). Kamışı olan tekniğin kamış dışındaki her yuvasının bedava başlangıç eşyası start'ta (ContentDB denetler); o tekniğin ilk kamışı Nine'den alınır.",
 	"slots": { "shared": ["reel", "line"], "float": ["rod", "hook", "bobber", "bait"], "spin": ["rod", "lure"],
 		"bottom": ["rod", "rig", "bait"], "fly": ["rod", "fly"] },
 	"start": { "rod": "rod_bamboo", "reel": "reel_basic", "line": "line_mono_thin", "hook": "hook_small",
-		"bobber": "bobber_basic", "bait": "bait_worm", "lure": "lure_spoon", "bucket": "bucket" },
+		"bobber": "bobber_basic", "bait": "bait_worm", "lure": "lure_spoon", "rig": "sinker", "bucket": "bucket" },
 	"gear": [
 		{ "id": "rod_bamboo", "category": "rod", "technique": "float", "price": 0, "rank": 1, "range_m": 9.0, "power": 0.0, "carry": 3 },
 		{ "id": "rod_float_glass", "category": "rod", "technique": "float", "price": 300, "rank": 2, "range_m": 11.0, "power": 0.05, "carry": 4 },
@@ -13,6 +13,9 @@
 		{ "id": "rod_spin_light", "category": "rod", "technique": "spin", "price": 150, "rank": 2, "range_m": 10.0, "power": 0.0, "carry": 3 },
 		{ "id": "rod_spin_medium", "category": "rod", "technique": "spin", "price": 1100, "rank": 4, "range_m": 12.0, "power": 0.05, "carry": 4 },
 		{ "id": "rod_spin_heavy", "category": "rod", "technique": "spin", "price": 3000, "rank": 8, "range_m": 13.0, "power": 0.08, "carry": 5 },
+		{ "id": "rod_carp_1", "category": "rod", "technique": "bottom", "price": 500, "rank": 4, "range_m": 14.0, "power": 0.15, "carry": 4 },
+		{ "id": "rod_carp_2", "category": "rod", "technique": "bottom", "price": 1800, "rank": 6, "range_m": 16.0, "power": 0.2, "carry": 5 },
+		{ "id": "rod_carp_3", "category": "rod", "technique": "bottom", "price": 4500, "rank": 10, "range_m": 18.0, "power": 0.25, "carry": 5 },
 
 		{ "id": "reel_basic", "category": "reel", "price": 0, "rank": 1, "reel_speed": 1.6, "drag": 0.0 },
 		{ "id": "reel_smooth", "category": "reel", "price": 150, "rank": 1, "reel_speed": 1.7, "drag": 0.02 },
@@ -49,6 +52,8 @@
 		{ "id": "lure_crank", "category": "lure", "kind": "bait", "price": 700, "rank": 5, "attract": { "pike": 2.2, "zander": 1.5 } },
 		{ "id": "lure_popper", "category": "lure", "kind": "bait", "price": 1000, "rank": 6, "attract": { "chub": 2.2, "pike": 1.8 } },
 		{ "id": "lure_gold", "category": "lure", "kind": "bait", "price": 2500, "rank": 10, "attract": { "pike": 2.5, "zander": 2.0, "wels": 1.6 } },
+		{ "id": "sinker", "category": "rig", "kind": "rig", "price": 0, "rank": 1, "range_add": 0.0, "pull": 0.0 },
+		{ "id": "feeder", "category": "rig", "kind": "rig", "price": 400, "rank": 4, "range_add": -1.0, "pull": 0.5 },
 
 		{ "id": "net", "category": "extra", "kind": "net", "price": 700, "rank": 3, "catch_m": 0.85 },
 		{ "id": "boat", "category": "boat", "kind": "boat", "price": 3500, "rank": 9 },

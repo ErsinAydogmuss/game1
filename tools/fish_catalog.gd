@@ -177,6 +177,9 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray) -> void:
 	lines.append(rule)
 	var ids: PackedStringArray = spot["fish_ids"]
 	for id in ids:
+		# Bu tablolar şamandıranın: şamandırayla gelmeyen tür (aynalı sazan: yalnızca dip) yazılmaz.
+		if db.affinity(id, "float") <= 0.0:
+			continue
 		var f := db.fish_by_id(id)
 		var span: Vector2i = f["size_cm"]
 		var value := "%d–%d" % [Economy.fish_value(db, id, span.x), Economy.fish_value(db, id, span.y)]

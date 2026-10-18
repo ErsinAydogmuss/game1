@@ -233,6 +233,7 @@ UI_STAT_HOLD,Hold,Tutma
 UI_STAT_SENSITIVE,Feel,Hassasiyet
 UI_STAT_REACH,Reach,Erişim
 UI_STAT_CAPACITY,Capacity,Kapasite
+UI_STAT_GATHER,Gather,Toplama
 UI_SHOP_EQUIPPED,Equipped,Takılı
 UI_SHOP_EQUIP,Equip,Tak
 UI_SHOP_OWNED,Owned,Sende
@@ -293,3 +294,22 @@ UI_DEDE_TECH_OPEN_spin,"Predators chase a moving lure, kid. Nana sells spinning 
 UI_DEDE_TECH_FIRST_spin,"Cast past a shadow, then reel the lure right by it!","Gölgenin ötesine at, yemi tam önünden geçir!"
 UI_DEDE_SNAG,"Snagged in the weeds! Don't let the lure rest here.","Yem otlara takıldı! Burada yemi bekletme."
 UI_SHOP_SELL_AT_STALL,"Come to my stall to sell, dear.",Satmak için tezgâhıma gel evladım.
+FISH_mirror_carp,Mirror Carp,Aynalı Sazan
+FISH_mirror_carp_DESC,"A thick carp with a few huge, mirror-bright scales. Feeds on the bottom.","Kalın gövdeli, birkaç iri ayna gibi pullu bir sazan. Dipte beslenir."
+GEAR_rod_carp_1,Carp rod,Dip kamışı
+GEAR_rod_carp_1_DESC,Casts far and waits on its stand. Comes with a bell.,"Uzağa atar, sehpada bekler. Zili de var."
+GEAR_rod_carp_2,Long carp rod,Uzun dip kamışı
+GEAR_rod_carp_2_DESC,Casts farther and holds big carp.,"Daha uzağa atar, iri sazanı taşır."
+GEAR_rod_carp_3,Master carp rod,Usta dip kamışı
+GEAR_rod_carp_3_DESC,Casts farthest. Built for giant catfish.,En uzağa atar. Dev yayın için.
+GEAR_sinker,Sinker,Kurşun
+GEAR_sinker_DESC,Holds the bait on the bottom.,Yemi dipte tutar.
+GEAR_feeder,Feeder,Yem sepeti
+GEAR_feeder_DESC,Spreads bait: fish gather sooner. A little heavier.,"Yem saçar: balık çabuk toplanır. Biraz ağır."
+UI_TECH_bottom,Ledgering,Dip
+UI_TECH_bottom_HOW,"Cast far, rod on the stand. When the bell rings nonstop, strike!","Uzağa at, olta sehpada. Zil durmadan çalınca VUR!"
+UI_HINT_BOTTOM_WAIT,Wait... fish gather around the bait.,Bekle... balıklar yemin çevresine toplanır.
+UI_HINT_BOTTOM_SNIFF,"The bell tinkles: it's sniffing. Don't touch!","Zil tek tük çalıyor: kokluyor. Dokunma!"
+UI_HINT_BOTTOM_RUN,The bell won't stop! Strike now!,Zil durmadan çalıyor! Hemen VUR!
+UI_DEDE_TECH_OPEN_bottom,"Big carp feed on the bottom, kid. Nana sells carp rods!","İri sazanlar dipte beslenir evlat. Nine dip kamışı satıyor!"
+UI_DEDE_TECH_FIRST_bottom,"Cast far and be patient. Strike when the bell rings nonstop!","Uzağa at, sabret. Zil durmadan çalınca VUR!"

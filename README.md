@@ -34,6 +34,7 @@
 12. **Mersin** koruma altında: kovaya girmez, kartında Dede'nin sözüyle göle bırakılır (rütbe puanı ve göl sevgisi verir).
 13. **Teknikler ve Takım Çantası:** rütbe 2'de spin açılır; sol altta teknik düğmesi çıkar. Dokununca Takım Çantası açılır: elindeki tekniği seçersin ya da Nine'den o tekniğin kamışını alırsın. Makara ve misina her teknikte ortaktır; her tekniğin kendi kamışı ve küçük takımı var. Dükkânın başlığındaki teknik düğmeleriyle her tekniğin takımına bakılır.
 14. **Spin:** yapay yemi bir gölgenin ötesine at. **Basılı tut:** yem sana gelir. **Bırak:** durur ve batar. Yırtıcı (levrek, sudak, turna, kefal, yayın) yalnızca oynayan yeme gelir. Peşine düşünce **dur-kalk** yap: o an basılıysan balık kendiliğinden takılır, bırakmışsan "VUR!" çıkar. Uzun bekletilen yemden balık vazgeçer; sazlıkta ve kayalıkta bekleyen yem takılır.
+15. **Dip:** rütbe 4'te açılır. Suya dokunduğun yöne uzağa atarsın; olta yanındaki sehpaya konur, ucunda zil var. Balıklar yemin çevresine toplanır (yem sepetiyle daha çabuk). **Zil tek tük çalarsa** balık kokluyor: dokunma, yoksa kaçar. **Zil durmadan çalarsa** ekranın her yerine dokun: VUR! Dipte iri balıklar gelir; aynalı sazan yalnızca dipte.
 
 - **Yürü:** karaya ya da iskeleye dokun. Önü su ise balıkçı kıyı yolundan dolaşır; kilitli bölgenin çitinde durur, Dede ne zaman geçileceğini söyler.
 - **Dede:** ilk 3 balığa kadar ipucu verir. Ona dokununca her zaman bir öğüt söyler.

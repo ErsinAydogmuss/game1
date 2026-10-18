@@ -196,6 +196,16 @@ func flee(s: FishShadow, from: Vector2) -> void:
 		approacher = null
 
 
+## Takımın kokusu yayıldı (dip): dolaşan ve duraklayan gölgeler yolculuğunu bitirmeden hemen yeni
+## hedef seçer (toplanma zarıyla, kendi zarından). Şamandırada çağrılmaz.
+func call_to_rig(bobber: Vector2, waiting_steps: int) -> void:
+	for s in shadows:
+		if s.scripted or s == approacher or s.bored:
+			continue
+		if s.mode == FishShadow.Mode.WANDER or s.mode == FishShadow.Mode.PAUSE:
+			_pick_target(s, bobber, true, waiting_steps)
+
+
 ## Yaklaşan balık ilgisini kaybeder (oyuncu oltayı geri sardı).
 func lose_interest(s: FishShadow) -> void:
 	s.mode = FishShadow.Mode.PAUSE
@@ -499,6 +509,7 @@ func _pick_target(s: FishShadow, bobber: Vector2, listening: bool, waiting_steps
 		if _lake.is_deep(p, depth) and path_ok and home_zone and _clear_of_boat(s.pos, p):
 			s.target = p
 			s.mode = FishShadow.Mode.WANDER
+			s.gathering = gather
 			return
 	s.mode = FishShadow.Mode.PAUSE
 	s.timer = FishingRules.HZ
@@ -517,7 +528,8 @@ func _wander(s: FishShadow) -> void:
 		s.heading = to / d
 	else:
 		_turn(s, to / d, _rules.turn)
-	var next := s.pos + s.heading * s.speed * STEP
+	# Takıma toplanan gölge (dipte yemin kokusu) daha hızlı yüzer; şamandırada çarpan 1.
+	var next := s.pos + s.heading * (s.speed * (rig.gather_speed if s.gathering else 1.0)) * STEP
 	var boat_ok := not _afloat or next.distance_to(_angler) >= BOAT_CLEAR * 0.6 \
 			or next.distance_to(_angler) >= s.pos.distance_to(_angler) - 0.0005
 	if boat_ok and (_lake.is_deep(next, _min_depth(s) * 0.75) or _escapes_shallows(s, next)):

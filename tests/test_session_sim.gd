@@ -20,15 +20,20 @@ const PACING := [
 	["zone:lily_cove", 5.0, 15.0], # bölge açılınca bot hemen gider
 	["zone:rocky_point", 15.0, 35.0],
 	["species_5", 0.0, 30.0],
-	["buy:rod_float_glass", 10.0, 45.0],
+	# Dalga 3: spin ve dip takımları da alışverişte (yeni tekniğin ilk kamışına biriktirir): cam kamış
+	# ve kepçe biraz gecikti (önce 32–42 ve 71–83 dk). Fiyatlar 8. adımda (Denge) yeniden ayarlanır.
+	["buy:rod_float_glass", 10.0, 60.0],
 	["buy:bucket_big", 15.0, 60.0],
-	["buy:net", 40.0, 100.0],
+	["buy:net", 40.0, 150.0],
 	["buy:boat", 90.0, 180.0],     # rütbe 9 + biriktirme (90–180)
 	["buy:rod_spin_light", 4.0, 10.0], # spin rütbe 2'de: ilk kamışı (150) öncelikli
 	["tech:spin", 4.0, 12.0],      # spinle ilk atış
+	["buy:rod_carp_1", 15.0, 35.0], # dip rütbe 4'te: ilk kamışı (500) öncelikli
+	["tech:bottom", 15.0, 40.0],   # dipte ilk atış
 	# Mersin: sandalla derin ortada, Efsanevi; ilk tutuluşu şansa çok bağlı (v0.3.1, 20 seed: 125–276
 	# dk; eski kodda da bir seed 288). Zarların sırası değişince bir seed kolayca kayar: pay geniş.
-	["species_12", 100.0, 300.0],
+	# Dalga 3'te türler 12'yi aştı (aynalı sazan): 12. tür artık erken; mersin Efsanevinin ilki.
+	["rarity_legendary", 100.0, 300.0],
 ]
 
 

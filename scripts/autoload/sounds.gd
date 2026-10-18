@@ -27,10 +27,10 @@ const BANK := {
 	"card": [-11.0, 0.05, 2], "hint": [-12.0, 0.0, 1],
 	"coins": [-9.0, 0.0, 1], "buy": [-9.0, 0.0, 1], "equip": [-11.0, 0.04, 1], "sting": [-8.0, 0.0, 1],
 	"rank_up": [-9.0, 0.0, 1], "travel": [-10.0, 0.0, 1],
-	"lure": [-8.0, 0.06, 2], "strike": [-4.0, 0.03, 1], "snag": [-8.0, 0.0, 1],
+	"lure": [-8.0, 0.06, 2], "strike": [-4.0, 0.03, 1], "snag": [-8.0, 0.0, 1], "bell": [-7.0, 0.05, 2],
 }
 ## Döngüler: ad -> ses (dB).
-const LOOPS := { "reel": -12.0, "strain": -14.0 }
+const LOOPS := { "reel": -12.0, "strain": -14.0, "bell_run": -9.0 }
 const MUSIC_DB := -15.0
 const AMBIENCE_DB := -12.0
 const FADE_TIME := 2.0

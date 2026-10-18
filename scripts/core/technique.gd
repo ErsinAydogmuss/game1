@@ -4,8 +4,8 @@ extends RefCounted
 ## ne yaptığı, gölgelerin onu nasıl fark ettiği (rig: TechniqueRules), girdilerin anlamı ve
 ## eylem düğmesi. Çekişme (ReelModel) her teknikte ortaktır: balık takıldıktan sonrası
 ## FishingSession'da. Teknik oturumu saklamaz, her işlev onu parametre olarak alır (RefCounted
-## döngüsü olmasın). Teknikler: şamandıra (FloatTechnique); spin, dip ve sinek Dalga 3'te
-## (docs/gdd.md §10.3).
+## döngüsü olmasın). Teknikler: şamandıra (FloatTechnique), spin (SpinTechnique), dip
+## (BottomTechnique); sinek Dalga 3'te (docs/gdd.md §10.3).
 
 var id: String = "float"
 var rules: FishingRules
@@ -77,6 +77,12 @@ func roll_gap(rng: RandomNumberGenerator) -> int:
 ## Vuruş penceresi (adım).
 func window(s: FishingSession, fish: FishShadow) -> int:
 	return rig.window_easy_steps if s.easy or fish.scripted else rig.window_steps
+
+
+## Gölgelerin okuduğu profil bu takımla (dipte yem sepeti toplanmayı hızlandırır); çoğu teknikte
+## rig'in kendisi.
+func rig_for(_gear: GearStats) -> TechniqueRules:
+	return rig
 
 
 ## Dürtme ve ısırma olaylarının adı (dipte koklama ve koşu, sinekte halka).

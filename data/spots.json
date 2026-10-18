@@ -30,7 +30,7 @@
 				{ "id": "dock_cove", "rank": 1, "stands": [[0.0, 4.0]],
 					"fish": { "rudd": 26, "silverside": 14, "bream": 10, "carp": 20, "perch": 18, "pike": 8, "wels": 4 } },
 				{ "id": "reeds", "snag_s": 4.0, "rank": 1, "min_depth": 0.5, "stands": [[-17.5, 2.0]],
-					"fish": { "rudd": 28, "silverside": 14, "carp": 24, "tench": 22, "perch": 7, "pike": 5 } },
+					"fish": { "rudd": 28, "silverside": 14, "carp": 24, "tench": 22, "perch": 7, "pike": 5, "mirror_carp": 6 } },
 				{ "id": "lily_cove", "snag_s": 5.0, "rank": 3, "stands": [[14.0, 4.2]], "gates": [[[9.3, 1.0], [9.8, 12.5]]],
 					"fish": { "pike": 22, "perch": 26, "carp": 24, "rudd": 22, "golden_carp": 6 } },
 				{ "id": "rocky_point", "snag_s": 3.5, "rank": 5, "stands": [[14.0, -8.5]], "gates": [[[19.8, -1.2], [26.5, -1.2]]],
@@ -40,7 +40,7 @@
 					"fish": { "chub": 36, "pike": 26, "perch": 20, "rudd": 10, "wels": 8 } },
 				{ "id": "deep_water", "rank": 9, "boat": true, "boat_from": 4.0,
 					"buoys": [[-9.0, -15.0], [-3.0, -17.0], [3.0, -14.5]],
-					"fish": { "wels": 220, "carp": 200, "bream": 190, "zander": 140, "pike": 120, "perch": 115, "sturgeon": 15 } }
+					"fish": { "wels": 220, "carp": 200, "bream": 190, "zander": 140, "pike": 120, "perch": 115, "sturgeon": 15, "mirror_carp": 60 } }
 			],
 			"dock": { "center": [0.0, 6.0], "size": [1.6, 5.0] },
 			"world": { "rect": [[-30.0, -11.0], [26.0, 14.0]], "band_m": 9.0 },

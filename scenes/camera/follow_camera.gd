@@ -28,6 +28,36 @@ func _init() -> void:
 	far = FAR
 
 
+## Zeminde odaktan ekranın iki yatay çizgisine uzaklık (m; zoom 1'de, verilen eğimle; ekranın dikey
+## ekseni boyunca, screen_up): x odaktan aşağıdaki low çizgisine, y yukarıdaki high çizgisine.
+## Çizgiler ekran payıyla: -1 alt kenar, 0 orta, 1 üst kenar (perspektife uygun). Uzaklık zoom'la
+## doğru orantılı büyür.
+static func ground_extents(view_pitch: float, low: float = -1.0, high: float = 1.0) -> Vector2:
+	var spread := tan(deg_to_rad(FOV * 0.5))
+	var near_ray := view_pitch - atan(low * spread)
+	var far_ray := view_pitch - atan(high * spread)
+	var down := SURFACE_DISTANCE * (cos(view_pitch) - sin(view_pitch) / tan(near_ray))
+	var up := SURFACE_DISTANCE * (sin(view_pitch) / tan(far_ray) - cos(view_pitch))
+	return Vector2(down, up)
+
+
+## Ekranın yukarısı zeminde (xz): kameradan uzağa.
+static func screen_up() -> Vector2:
+	return Vector2(-sin(YAW), -cos(YAW))
+
+
+## Uzaktaki bir hedefi (balıkçının ahead m önünde, ekranın dikey ekseninde) balıkçıyla birlikte
+## gösteren çerçeve: odağın balıkçıdan uzaklığı (x, m) ve zoom (y). Odak yolun share'inde; hedef
+## sığmıyorsa kamera max_zoom'a kadar uzaklaşır. Balıkçının ayağı ekranın low çizgisinin, hedef
+## high çizgisinin içinde kalır (ground_extents); ikisi birden sığmazsa balıkçı görünür kalır.
+static func fit(ahead: float, view_pitch: float, share: float, base_zoom: float, max_zoom: float,
+		low: float, high: float) -> Vector2:
+	var ext := ground_extents(view_pitch, low, high)
+	var zoom := clampf(ahead / (ext.x + ext.y), base_zoom, max_zoom)
+	var offset := maxf(ahead * share, ahead - ext.y * zoom)
+	return Vector2(clampf(offset, 0.0, ext.x * zoom), zoom)
+
+
 ## Hedefe anında geç (sahne açılışında).
 func snap(point: Vector3) -> void:
 	target = point

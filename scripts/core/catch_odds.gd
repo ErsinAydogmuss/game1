@@ -141,4 +141,9 @@ static func _normalize(ids: PackedStringArray, raw: Array[int]) -> Dictionary:
 		out[ids[order[k]]] = int(out[ids[order[k]]]) + 1
 		given += 1
 		k += 1
+	# Bu teknikle (ya da bu yemle) hiç gelmeyen tür listede olmaz. Kalanlar ona hiç düşmez
+	# (kalan birim sayısı, kalanı olan türlerden azdır): ötekilerin oranı değişmez.
+	for i in ids.size():
+		if raw[i] <= 0:
+			out.erase(ids[i])
 	return out

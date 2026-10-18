@@ -32,7 +32,8 @@ extends Node
 ##     Takım Çantası (spin "Nine'de") → dükkân spin kamışlarında; ilk spin kamışı → spin ele geçer,
 ##     gölgeler yırtıcı, Dede nasıl oynandığını söyler; spinde basılı tut → yem gelir, yırtıcı peşine
 ##     düşer, dur-kalk → saldırır (basılıyken kendiliğinden takılır, bırakılmışken VUR); sazlıkta
-##     bekleyen yem takılır; çantadan şamandıraya dönülür.
+##     bekleyen yem takılır; çantadan şamandıraya dönülür. Dip: rütbe 4'te açılır, dip kamışı, uzağa
+##     atış ve sehpa, zil tek tük (koklama) ve durmadan (koşu), koklarken dokunmak kaçırır, aynalı sazan.
 ##   tour: gezi (hız ölçümü): ayarlarda "Bütün bölgeleri aç" (geliştirme düğmesi) ve sürüm yazısına 5
 ##     dokunuş (ölçüm açılır: sol üstte FPS, çizim, üçgen); sonra her bölgenin atış noktasına ve
 ##     sandalla derin ortaya geçer; her yerde ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü;
@@ -977,10 +978,143 @@ func _play_technique() -> void:
 			and (hud.technique_button.get("_icon") as GameIcon).kind == "tech_float")
 	await _wait(0.4)
 	await _shot("12_samandira")
+	await _play_bottom()
 	_check_buttons()
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Dip (rütbe 4): rütbe gelince haber verilir; çantadan Nine'ye, dip kamışı; uzağa atış, olta sehpada;
+## zil tek tük (koklama), sonra durmadan (koşu): VUR, olta ele alınır; koklarken dokunmak kaçırır;
+## sazlıkta aynalı sazan.
+func _play_bottom() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var hud := _hud()
+	var shop: ShopPanel = main.get("shop_panel")
+	var bag: TechniquePanel = main.get("technique_panel")
+	var stand: RodStand = main.get("stand")
+	var fade: Fade = main.get("fade")
+	save.xp = maxi(save.xp, db.rank_xp[3])
+	GameState.changed.emit()
+	await _wait_frames(3)
+	var told := str(main.get("_hint_shown")) == "UI_DEDE_TECH_OPEN_bottom"
+	var toasted := await _wait_toast(UiKit.upper(tr("UI_TECH_OPEN") % tr("UI_TECH_bottom")), 6.0)
+	_check("rütbe 4: dip açılır (bildirim, Dede, nabız)", told and toasted and float(hud.get("_tech_pulse")) > 0.0)
+	await _shot("13_dip_acildi")
+	await _tap_control(hud.technique_button)
+	await _wait_frames(3)
+	await _wait(0.3)
+	_check("takım çantasında dip Nine'de", bag.visible and TechniquePanel.state_of(db, save, "bottom") == "shop")
+	await _tap_control(bag.find_child("Button_bottom", true, false))
+	await _wait_frames(3)
+	save.coins = maxi(save.coins, 900)
+	shop.refresh()
+	await _wait_frames(2)
+	_check("dükkân dip kamışlarında", shop.visible and shop.technique == "bottom"
+			and shop.find_child("Card_rod_carp_1", true, false) != null)
+	await _tap_card(shop, "rod_carp_1", -1)
+	await _wait_frames(3)
+	await _tap_control(shop.find_child("Tab_tackle", true, false))
+	await _wait(0.3)
+	await _shot("14_dukkan_kursun")
+	_check("dipte iğne sekmesi kurşun (kurşun ve yem sepeti)", shop.find_child("Card_sinker", true, false) != null
+			and shop.find_child("Card_feeder", true, false) != null)
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait_frames(4)
+	_check("dip elde: kamış, düğme, Dede'nin sözü", _session().technique.id == "bottom" and _angler().rod.style == "bottom"
+			and (hud.technique_button.get("_icon") as GameIcon).kind == "tech_bottom"
+			and str(main.get("_hint_shown")) == "UI_DEDE_TECH_FIRST_bottom")
+	# Uzağa atış: olta sehpaya konur; bir balık takımın yanına gelir, koklar (zil tek tük), koşar.
+	var caught := await _bottom_cast(true)
+	_check("dip: uzağa atar (%.1f m), olta sehpada, misina sehpadan" % float(caught["reach"]),
+			float(caught["reach"]) >= 8.0 and bool(caught["on_stand"]))
+	_check("dip: iskelede sehpayla en çok %d çizim (%d)" % [TOUR_DRAWS, int(caught["draws"])],
+			int(caught["draws"]) > 0 and int(caught["draws"]) <= TOUR_DRAWS)
+	_check("dip: zil tek tük çalar (koklama), dokunulmaz", bool(caught["sniffed"]))
+	_check("dip: zil durmadan (koşu) → VUR → olta ele alınır, tutulur", bool(caught["ran"]) and bool(caught["picked_up"])
+			and bool(caught["caught"]))
+	# Koklarken dokunmak balığı kaçırır.
+	var early := await _bottom_cast(false)
+	_check("dip: koklarken dokunmak kaçırır", bool(early["early"]))
+	# Sazlıkta aynalı sazan (yalnızca dip).
+	main.call("_travel", "reeds")
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(0.4)
+	var mirror := await _bottom_cast(true, "mirror_carp")
+	_check("sazlıkta dipte aynalı sazan tutulur", bool(mirror["caught"])
+			and str(_session().last_catch.get("fish", "")) == "mirror_carp")
+	await _shot_once("18_aynali_sazan")
+	var card: FishCard = main.get("card")
+	if card.visible:
+		await _close_card(card)
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	_check("dip bitince sehpa kalkar", not stand.visible and not _angler().rod_on_stand)
+
+
+## Dipte bir atış: balıkçının baktığı yöne atar (takım menzilin sonuna düşer); bir balığı (fish_id)
+## takımla balıkçının arasına koyar; koklamada dokunmaz (strike false ise ilk koklamada dokunur:
+## erken), koşuda VUR'a dokunur ve bir oyuncu gibi çekişir.
+func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
+	var out := { "reach": 0.0, "on_stand": false, "sniffed": false, "ran": false, "picked_up": false, "caught": false,
+			"early": false, "draws": 0 }
+	var stand: RodStand = main.get("stand")
+	var card: FishCard = main.get("card")
+	var finger := Vector2(260, 520)
+	var fish := _shadow_at(_angler().pos2() + _angler().facing * 3.0, Vector2(0, 1), fish_id, 300000)
+	await _tap_control(_hud().action_button)
+	if not await _wait_state(FishingSession.State.WAITING, 3.0):
+		return out
+	await _wait_frames(3)
+	var session := _session()
+	out["reach"] = session.angler.distance_to(session.bobber)
+	out["on_stand"] = stand.visible and _angler().rod_on_stand
+	out["draws"] = int((await _measure_draws())["draws"])
+	if fish != null:
+		var toward := (session.angler - session.bobber).normalized()
+		fish.pos = session.bobber + toward * 2.0
+		fish.mode = FishShadow.Mode.PAUSE
+		fish.timer = 1_000_000
+	await _shot_once("15_dip_sehpa")
+	if not _taken.has("15b_sehpa_yakin"):
+		# Sehpa, kamış ve zil yakından (bir kez): kamerayı bot sürer, sonra main'e bırakır.
+		main.set("bot_camera", true)
+		_frame_on(stand.global_position + Vector3(0.0, 0.45, 0.0), 0.32, deg_to_rad(40.0))
+		await _wait_frames(3)
+		await _shot_once("15b_sehpa_yakin")
+		main.set("bot_camera", false)
+	if not await _wait_state(FishingSession.State.NIBBLING, 25.0):
+		return out
+	out["sniffed"] = true
+	await _wait_frames(4)
+	await _shot_once("16_koklama")
+	if not strike:
+		await _tap(finger)
+		await _wait_frames(2)
+		out["early"] = _state() == FishingSession.State.LOST and _session().last_loss == "early"
+		await _wait_state(FishingSession.State.IDLE, 4.0)
+		return out
+	if not await _wait_state(FishingSession.State.BITING, 12.0):
+		return out
+	await _wait_frames(6)
+	out["ran"] = stand.get("_running") == true
+	await _shot_once("17_kosu")
+	_touch(1, finger, true)
+	await _wait_frames(3)
+	out["picked_up"] = _state() == FishingSession.State.FIGHTING and not _angler().rod_on_stand
+	_touch(1, finger, false)
+	await _wait_frames(1)
+	if _state() == FishingSession.State.FIGHTING:
+		await _reel_like_player(6, 40.0)
+	out["caught"] = _state() == FishingSession.State.CAUGHT
+	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE or card.visible, 4.0)
+	if card.visible and fish_id != "mirror_carp":
+		await _close_card(card)
+	if fish_id != "mirror_carp":
+		await _wait_state(FishingSession.State.IDLE, 5.0)
+	return out
 
 
 ## Spinde bir atış: bir levreği p'ye (balıkçıdan uzağa bakan) koyar, ötesine atar, basılı tutup yemi

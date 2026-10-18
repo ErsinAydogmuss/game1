@@ -107,7 +107,7 @@ func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, eas
 	if not access.is_empty():
 		odds["open"] = access
 	sim = ShadowSim.new(db, spot, lake, seed, first_catch, angler, odds)
-	sim.set_rig(technique.rig)
+	sim.set_rig(technique.rig_for(gear))
 
 
 ## Gerçek zamanı sabit adımlara çevirir.
@@ -229,6 +229,8 @@ func set_gear(gear_stats: GearStats) -> void:
 	sim.set_reach(gear.range_m)
 	if state == State.IDLE and _apply_technique():
 		return
+	# Aynı teknikte takım değişti (dipte yem sepeti toplanmayı hızlandırır).
+	sim.set_rig(technique.rig_for(gear))
 	sim.set_odds(_odds(sim.pity_floor))
 
 
@@ -474,7 +476,7 @@ func _apply_technique() -> bool:
 	if Techniques.resolve(gear.technique) == technique.id:
 		return false
 	technique = Techniques.make(gear.technique, rules)
-	sim.set_rig(technique.rig)
+	sim.set_rig(technique.rig_for(gear))
 	sim.set_odds(_odds(sim.pity_floor))
 	relocate(angler)
 	return true

@@ -683,6 +683,33 @@ def snag():
     return finish(x, -1.0, 0.08)
 
 
+def bell_tink(seed):
+    """Dip zili tek tük (koklama): küçük pirinç zilin kısa çınlaması ve dilinin tıkırtısı."""
+    r = rng(seed)
+    n = frames(0.5)
+    f = r.uniform(2350, 2650)
+    x = unit(partials(f, n, [(1.0, 1.0, 0.22), (2.32, 0.45, 0.12), (4.1, 0.25, 0.06), (5.6, 0.12, 0.04)], seed))
+    m = frames(0.02)
+    place(x, 0.3 * unit(band(noise(m, seed + 1), 3000, 9000)) * env_exp(m, 0.003), 0)
+    return finish(x + 0.12 * reverb(x, 0.5, seed)[:n], -1.0, 0.05)
+
+
+def bell_loop():
+    """Koşu döngüsü (1 sn, dikişsiz): durmadan çalan zil (saniyede 11 vuruş) ve makaradan boşalan
+    misinanın hızlı tıkırtısı."""
+    n = frames(1.0)
+    out = np.zeros(n)
+    r = rng(790)
+    for i in range(11):
+        f = 2500 * (1.0 + 0.04 * ((i * 5) % 3 - 1))
+        ting = unit(partials(f, frames(0.12), [(1.0, 1.0, 0.06), (2.32, 0.4, 0.04), (4.1, 0.2, 0.02)], 791 + i))
+        place(out, ting * r.uniform(0.6, 1.0), frames(i / 11.0))
+    tick = unit(band(noise(frames(0.008), 795), 2500, 8000)) * env_exp(frames(0.008), 0.002)
+    for i in range(36):
+        place(out, 0.25 * tick, frames(i / 36.0))
+    return finish(out, -2.0, 0.0)
+
+
 # --- Liste ve çalıştırma ----------------------------------------------------------------
 
 def registry():
@@ -698,6 +725,7 @@ def registry():
         items.append(("sfx", "step_%d" % v, lambda v=v: wood_step(540 + v)))
     for v in range(1, 3):
         items.append(("sfx", "lure_%d" % v, lambda v=v: lure_plop(750 + v)))
+        items.append(("sfx", "bell_%d" % v, lambda v=v: bell_tink(780 + v)))
     for rarity in range(1, 6):
         items.append(("sfx", "find_%d_1" % rarity, lambda r=rarity: find(r)))
     singles = {
@@ -711,6 +739,7 @@ def registry():
         items.append(("sfx", name, fn))
     items.append(("loops", "reel", reel_loop))
     items.append(("loops", "strain", strain_loop))
+    items.append(("loops", "bell_run", bell_loop))
     items.append(("ambience", "lake", amb_lake))
     return items
 

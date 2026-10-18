@@ -40,4 +40,16 @@ static func key(technique: String, state: FishingSession.State) -> String:
 					return "UI_HINT_SPIN_STRIKE"
 				FishingSession.State.FIGHTING:
 					return "UI_HINT_REEL"
+		"bottom":
+			match state:
+				FishingSession.State.IDLE:
+					return "UI_DEDE_TECH_FIRST_bottom"
+				FishingSession.State.CASTING, FishingSession.State.WAITING:
+					return "UI_HINT_BOTTOM_WAIT"
+				FishingSession.State.NIBBLING:
+					return "UI_HINT_BOTTOM_SNIFF"
+				FishingSession.State.BITING:
+					return "UI_HINT_BOTTOM_RUN"
+				FishingSession.State.FIGHTING:
+					return "UI_HINT_REEL"
 	return ""

@@ -35,6 +35,8 @@ var home := Vector2.ZERO
 var startles: int = 0
 ## Yolu kapalı olduğu için vazgeçti: şamandıra yeniden düşene kadar onu fark etmez.
 var bored: bool = false
+## Hedefi takımın çevresi mi (toplanma; dipte yemin kokusuna daha hızlı yüzer: rig.gather_speed)?
+var gathering: bool = false
 ## Şans garantisiyle doğdu (aynı anda yalnızca bir tane).
 var pity: bool = false
 ## Doğduğu bölge (LakeShape.zone_grid sırası; -1 bilinmiyor). Türü bu bölgenin oranından gelir.

@@ -51,6 +51,7 @@ const STATS := {
 	"line": [["carry", "UI_STAT_CARRY", "★"], ["stealth", "UI_STAT_STEALTH", ""]],
 	"hook": [["escape_extra", "UI_STAT_HOLD", ""]],
 	"bobber": [["window_add", "UI_STAT_SENSITIVE", ""]],
+	"rig": [["pull", "UI_STAT_GATHER", ""], ["range_add", "UI_STAT_RANGE", "m"]],
 	"extra": [["catch_m", "UI_STAT_REACH", ""]],
 	"bucket": [["capacity", "UI_STAT_CAPACITY", "#"]],
 }
