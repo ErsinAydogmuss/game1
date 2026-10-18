@@ -30,7 +30,7 @@
 				{ "id": "dock_cove", "rank": 1, "stands": [[0.0, 4.0]],
 					"fish": { "rudd": 26, "silverside": 14, "bream": 10, "carp": 20, "perch": 18, "pike": 8, "wels": 4 } },
 				{ "id": "reeds", "snag_s": 4.0, "suggest": "bottom", "rank": 1, "min_depth": 0.5, "stands": [[-17.5, 2.0]],
-					"fish": { "rudd": 28, "silverside": 14, "carp": 24, "tench": 22, "perch": 7, "pike": 5, "mirror_carp": 6, "crayfish": 8 },
+					"fish": { "rudd": 28, "silverside": 14, "carp": 24, "tench": 22, "perch": 7, "pike": 5, "mirror_carp": 12, "crayfish": 8 },
 					"trap": { "crayfish": 1 } },
 				{ "id": "lily_cove", "snag_s": 5.0, "suggest": "spin", "rank": 3, "stands": [[14.0, 4.2]], "gates": [[[9.3, 1.0], [9.8, 12.5]]],
 					"fish": { "pike": 22, "perch": 26, "carp": 24, "rudd": 22, "golden_carp": 6 } },

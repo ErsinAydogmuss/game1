@@ -315,32 +315,62 @@ func _choose_technique() -> void:
 	elapsed += _num("switch_s", 3.0)
 
 
-## Tekniğin çekiciliği: hiç denenmemişse merak; sonra dakikada "değer": balık başına ortalama değer
-## ve defterde olmayan türün payı (NEW_SPECIES_WORTH: yeni tür kazançtan önce gelir), tekniğin atış,
-## geliş, ısırma ve çekişme süreleriyle ve kaçırılan ısırma payıyla (sim.json techniques; yoksa genel
-## değerler).
+## Tekniğin çekiciliği: hiç denenmemişse merak; sonra dakikada kazanç (rate) ve defterde olmayan türün
+## payı (NEW_SPECIES_WORTH: yeni tür kazançtan önce gelir), tekniğin bu bölgedeki süreleriyle.
 func _technique_score(t: String) -> float:
 	var score := 0.0 if t == "float" or milestones.has("tech:" + t) else 1.0e12
 	var gear := Economy.gear_for(db, save, t)
 	var odds := CatchOdds.species_ppm(db, _spot, {"attract": gear.attract, "technique": t})
+	var fresh := 0.0
+	for fid: String in odds:
+		if not save.records.has(fid):
+			fresh += float(odds[fid]) / ContentDB.PPM
+	var per_minute := (1.0 - miss_share(timing, zone_id, t)) * 60.0 / cycle_s(timing, zone_id, t)
+	return score + rate(db, timing, _spot, t, gear.attract) + fresh * NEW_SPECIES_WORTH * per_minute
+
+
+## Bir teknikle bu yerde (bölge ya da göl) dakikada ortalama kazanç (para): oranlar (attract: yemin,
+## yapay yemin, sineğin çekimi) × orta boy balığın değeri, tekniğin bu bölgedeki atış döngüsüyle
+## (cycle_s) ve kaçırılan ısırma payıyla. Botun teknik seçimi ve test_economy (bölgenin önerdiği
+## teknik orada şamandıradan az kazandırmaz) kullanır.
+static func rate(db: ContentDB, sim_timing: Dictionary, place: Dictionary, t: String, attract: Dictionary = {}) -> float:
+	var odds := CatchOdds.species_ppm(db, place, {"attract": attract, "technique": t})
 	var worth := 0.0
 	for fid: String in odds:
-		var f := db.fish_by_id(fid)
-		var span: Vector2i = f["size_cm"]
-		var value := float(Economy.fish_value(db, fid, (span.x + span.y) >> 1))
-		if not save.records.has(fid):
-			value += NEW_SPECIES_WORTH
-		worth += float(odds[fid]) / ContentDB.PPM * value
-	var own: Dictionary = (timing.get("techniques", {}) as Dictionary).get(t, {})
+		var span: Vector2i = db.fish_by_id(fid)["size_cm"]
+		worth += float(odds[fid]) / ContentDB.PPM * float(Economy.fish_value(db, fid, (span.x + span.y) >> 1))
+	var zone := str(place.get("id", ""))
+	return worth * (1.0 - miss_share(sim_timing, zone, t)) * 60.0 / cycle_s(sim_timing, zone, t)
+
+
+## Bir atışın ortalama süresi (sn): atış, balığın gelişi, dürtme (ısırmaya kadar), çekişme ve
+## gösteri (sim.json; tekniğin bölgedeki, tekniğin, bölgenin, genel ölçümü: timing_of).
+static func cycle_s(sim_timing: Dictionary, zone: String, t: String) -> float:
 	var cycle := 0.0
-	for key: String in ["cast_s", "fight_s"]:
-		cycle += float(own.get(key, timing.get(key, 4.0)))
+	for key: String in ["cast_s", "fight_s", "show_s"]:
+		cycle += float(timing_of(sim_timing, zone, t, key, 4.0 if key != "show_s" else 1.3))
 	for key: String in ["approach_s", "nibble_s"]:
-		var r: Variant = own.get(key, timing.get(key, [2.0, 6.0]))
+		var r: Variant = timing_of(sim_timing, zone, t, key, [2.0, 6.0])
 		cycle += (float(r[0]) + float(r[1])) * 0.5 if r is Array and (r as Array).size() >= 2 else 4.0
-	# Kaçırılan ısırma kazandırmaz (tekniğin miss_ppm'i: sinekte VUR anı kısa, daha çok kaçırılır).
-	var miss := float(own.get("miss_ppm", timing.get("miss_ppm", 150000))) / ContentDB.PPM
-	return score + worth * (1.0 - miss) * 60.0 / maxf(1.0, cycle)
+	return maxf(1.0, cycle)
+
+
+## Kaçırılan ısırmaların payı (0–1; miss_ppm: sinekte VUR anı kısa, daha çok kaçırılır).
+static func miss_share(sim_timing: Dictionary, zone: String, t: String) -> float:
+	return float(timing_of(sim_timing, zone, t, "miss_ppm", 150000)) / ContentDB.PPM
+
+
+## sim.json'da bir ölçüm: önce tekniğin bu bölgedeki, sonra tekniğin, sonra bölgenin, sonra genel
+## değeri (_range'in sırası); hiçbiri yoksa fallback.
+static func timing_of(sim_timing: Dictionary, zone: String, t: String, key: String, fallback: Variant) -> Variant:
+	var own: Dictionary = (sim_timing.get("techniques", {}) as Dictionary).get(t, {})
+	for source: Dictionary in [own, sim_timing]:
+		var here: Dictionary = (source.get("zones", {}) as Dictionary).get(zone, {})
+		if here.has(key):
+			return here[key]
+		if source.has(key):
+			return source[key]
+	return fallback
 
 
 ## Atışın süresi bölgenin ve tekniğin hanesine (rapor: bölgelerde ve tekniklerde geçen zaman).
@@ -352,8 +382,10 @@ func _count_zone(since: float) -> void:
 ## Alışveriş (Kazı'nın botu gibi): her kategorinin sıradaki takımından rütbesi yetenlerin en
 ## ucuzunu, para yettikçe alır. En ucuz olana para yetmiyorsa biriktirir (daha pahalısını almaz).
 ## Sandal, yeni tekniğin ilk kamışı ve ilk tuzak öncelikli: rütbesi yetince önce onlar alınır, parası
-## yetene kadar başka şey alınmaz (oyuncu derin ortayı, yeni tekniği merak eder). Satın alınan
-## kendiliğinden kuşanılır. Döner: alınanlar.
+## yetene kadar başka şey alınmaz (oyuncu derin ortayı, yeni tekniği merak eder). Sıradaki kova da
+## öncelikli ama onun için biriktirilmez: parası yetiyorsa ötekilerden önce alınır (sık dolan kovayı
+## oyuncu önce büyütür; Dede her dolduğunda söyler). Satın alınan kendiliğinden kuşanılır. Döner:
+## alınanlar.
 func shop() -> Array[String]:
 	var bought: Array[String] = []
 	var first: Array[Dictionary] = [next_upgrade("boat")]
@@ -372,6 +404,13 @@ func shop() -> Array[String]:
 		bought.append(str(item["id"]))
 		_mark("buy")
 		_mark("buy:" + str(item["id"]))
+	var bucket := next_upgrade("bucket")
+	if not bucket.is_empty() and Rank.rank(db, save) >= int(bucket["rank"]) \
+			and Economy.buy_block(db, save, str(bucket["id"])).is_empty():
+		Economy.buy(db, save, str(bucket["id"]))
+		bought.append(str(bucket["id"]))
+		_mark("buy")
+		_mark("buy:" + str(bucket["id"]))
 	while true:
 		var cheapest: Dictionary = {}
 		for category in _buy_categories():

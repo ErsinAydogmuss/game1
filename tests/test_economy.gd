@@ -204,6 +204,33 @@ func test_newer_zones_pay_at_least_as_much() -> void:
 						z["id"], int(z["rank"]), value, older["id"], int(older["rank"]), before])
 
 
+## Dede'nin bölgede önerdiği teknik (spots.json suggest) orada şamandıradan az kazandırmaz: tekniğin
+## ilk kamışı ve başlangıç takımıyla (spinde kaşık, sinekte kuru sinek, yem solucan) dakikada ortalama
+## kazanç (SessionSim.rate; süreler sim.json'dan). Sinek dere ağzında, spin nilüferli koyda ve
+## kayalıkta, dip sazlıkta ve derin ortada (docs/gdd.md §10.3).
+func test_suggested_technique_pays_at_least_float() -> void:
+	var db := content()
+	var timing := SessionSim.load_timing()
+	var checked := 0
+	for z in db.zones_of(db.main_spot):
+		var suggest := str(z["suggest"])
+		if suggest.is_empty():
+			continue
+		checked += 1
+		var own := SessionSim.rate(db, timing, z, suggest, _starter(db, suggest).attract)
+		var float_rate := SessionSim.rate(db, timing, z, "float", _starter(db, "float").attract)
+		assert_true(own >= float_rate, "%s: %s dakikada %.1f para, şamandıra %.1f" % [z["id"], suggest, own, float_rate])
+	assert_true(checked >= 4, "öneriler denetlendi (%d)" % checked)
+
+
+## Tekniğin ilk kamışı ve başlangıç takımı.
+static func _starter(db: ContentDB, technique: String) -> GearStats:
+	var items := db.gear_start.duplicate()
+	items["rod"] = str(db.rods_of(technique)[0]["id"])
+	var none: Array[String] = []
+	return GearStats.from_items(db, items, none)
+
+
 ## Bölgede solucanla balık başına ortalama değer (boy zarının eşit aralıklı örnekleriyle).
 static func _mean_value(db: ContentDB, place: Dictionary) -> float:
 	const SAMPLES := 200

@@ -21,16 +21,13 @@ const PACING := [
 	["zone:lily_cove", 5.0, 15.0], # bölge açılınca bot hemen gider
 	["zone:rocky_point", 15.0, 35.0],
 	["species_5", 0.0, 30.0],
-	# Dalga 3: spin ve dip takımları da alışverişte (yeni tekniğin ilk kamışına biriktirir): cam kamış
-	# ve kepçe gecikti (economy_report, 6 seed: 48–62 ve 138–172 dk; önce 32–42 ve 71–83). Sınırlar
-	# ölçüme pay bırakır; sinek kamışı da (1.500, rütbe 7) öncelikli olunca kepçe biraz daha gecikti.
-	# Kerevit dipte de gelince (sazlık, kayalık burun; 6 para) büyük kova bir seed'de 61. dakikaya
-	# kaydı. İlk tuzak da öncelikli alınınca (250, ~13. dk) alışveriş birkaç dakika kaydı: büyük kova
-	# rütbe 7'ye kaldı ve sinek kamışına biriktirirken bekliyor (economy_report, 6 seed: 95–101 dk).
-	# Fiyatlar 8. adımda (Denge) yeniden ayarlanınca daralır.
-	["buy:rod_float_glass", 10.0, 75.0],
-	["buy:bucket_big", 15.0, 110.0],
-	["buy:net", 40.0, 220.0],
+	# Dalga 3 dengesi (economy_report -- --hours=16 --seeds=6): sıradaki kova öncelikli ama onun için
+	# biriktirilmez (oyuncu sık dolan kovayı büyütür): büyük kova 35–55 dk (Dalga 3'ün ilk ölçümünde
+	# 95–101). Cam kamış şamandıranın: bot rütbe 4'ten sonra şamandırayı az kullanır (zamanının ~%4'ü),
+	# kamışı tekniklerin ilk kamışlarından ve kovadan sonra alır (79–91 dk). Kepçe 158–177 dk.
+	["buy:rod_float_glass", 10.0, 100.0],
+	["buy:bucket_big", 25.0, 70.0],
+	["buy:net", 120.0, 220.0],
 	["buy:boat", 90.0, 180.0],     # rütbe 9 + biriktirme (90–180)
 	["buy:rod_spin_light", 4.0, 10.0], # spin rütbe 2'de: ilk kamışı (150) öncelikli
 	["tech:spin", 4.0, 12.0],      # spinle ilk atış
@@ -38,7 +35,7 @@ const PACING := [
 	["tech:bottom", 15.0, 40.0],   # dipte ilk atış
 	["buy:rod_fly_1", 60.0, 120.0], # sinek rütbe 7'de: ilk kamışı (1.500) öncelikli
 	["tech:fly", 60.0, 125.0],     # dere ağzında sinekle ilk atış
-	["buy:trap_1", 10.0, 20.0],    # tuzak rütbe 3'te: ilk tuzak (250) öncelikli (ölçüm 10–17)
+	["buy:trap_1", 8.0, 20.0],     # tuzak rütbe 3'te: ilk tuzak (150) öncelikli (ölçüm 10–17)
 	["trap", 28.0, 55.0],          # tuzaktan ilk kerevit: bırakıldıktan 20 dk sonra, sıradaki satışta
 	# Mersin: sandalla derin ortada, Efsanevi; ilk tutuluşu şansa çok bağlı (v0.3.1, 20 seed: 125–276
 	# dk; eski kodda da bir seed 288). Zarların sırası değişince bir seed kolayca kayar: pay geniş.

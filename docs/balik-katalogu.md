@@ -91,7 +91,7 @@ akıntılı bölgede) orada o teknikle gölge doğmaz. Balık takıldıktan sonr
 | Spin | 2 | Hafif spin kamışı (150 para) | hepsi |
 | Dip | 4 | Dip kamışı (500 para) | hepsi |
 | Sinek | 7 | Sinek kamışı (1500 para) | Dere Ağzı |
-| Kerevit tuzağı | 3 | Kerevit tuzağı (250 para) | Sazlık, Kayalık Burun |
+| Kerevit tuzağı | 3 | Kerevit tuzağı (150 para) | Sazlık, Kayalık Burun |
 
 Türlerin teknik yatkınlığı (çarpan; boş: o teknikle gelmez) ve tuzağa girdiği bölgeler:
 
@@ -100,13 +100,13 @@ Türlerin teknik yatkınlığı (çarpan; boş: o teknikle gelmez) ve tuzağa gi
 | Kızılkanat | Sıradan | ×1 |  | ×0,3 | ×0,3 |  |
 | Sazan | Güzel | ×1 |  | ×1 |  |  |
 | Levrek | Güzel | ×1 | ×1 | ×0,2 |  |  |
-| Turna | Nadir | ×1 | ×0,8 | ×0,2 |  |  |
-| Yayın | Destansı | ×1 | ×0,25 | ×1 |  |  |
+| Turna | Nadir | ×1 | ×1,4 | ×0,2 |  |  |
+| Yayın | Destansı | ×1 | ×0,1 | ×1,5 |  |  |
 | Gümüş Balığı | Sıradan | ×1 |  |  | ×0,2 |  |
-| Çapak | Sıradan | ×1 |  | ×1 |  |  |
+| Çapak | Sıradan | ×1 |  | ×0,5 |  |  |
 | Tatlısu Kefali | Sıradan | ×1 | ×0,7 | ×0,5 | ×0,5 |  |
 | Kadife | Güzel | ×1 |  | ×1 |  |  |
-| Sudak | Nadir | ×1 | ×0,9 | ×0,3 |  |  |
+| Sudak | Nadir | ×1 | ×2 | ×0,3 |  |  |
 | Altın Sazan | Destansı | ×1 |  | ×0,8 |  |  |
 | Mersin Balığı | Efsanevi | ×1 |  | ×1,5 |  |  |
 | Aynalı Sazan | Nadir |  |  | ×1 |  |  |
@@ -155,20 +155,20 @@ Bir gölgenin o tür olma şansı, kuşanılan yapay yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Kaşık | Döner kaşık | Silikon yem | Maket balık | Su üstü yemi | Altın kaşık |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %76 | %82,9 | %77,3 | %54,4 | %59 | %50,6 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %20,8 | %14,7 | %19,6 | %42,6 | %37,7 | %44,9 |
-| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %3,2 | %2,3 | %3,1 | %3 | %3,3 | %4,5 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %66,9 | %75,6 | %68,5 | %41,8 | %46,7 | %38,6 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %32 | %23,5 | %30,4 | %57,2 | %52,3 | %60 |
+| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %1,1 | %0,84 | %1,1 | %0,93 | %1 | %1,4 |
 
 Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı:
 
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
-| Kaşık | başlangıç | %0 | %76 | %20,8 | %3,2 | 19,96 | 19,3 |
-| Döner kaşık | 120 (rütbe 2) | %0 | %82,9 | %14,7 | %2,3 | 17,6 | 17,48 |
-| Silikon yem | 300 (rütbe 3) | %0 | %77,3 | %19,6 | %3,1 | 19,51 | 18,96 |
-| Maket balık | 700 (rütbe 5) | %0 | %54,4 | %42,6 | %3 | 24,61 | 23,46 |
-| Su üstü yemi | 1000 (rütbe 6) | %0 | %59 | %37,7 | %3,3 | 23,8 | 22,68 |
-| Altın kaşık | 2500 (rütbe 10) | %0 | %50,6 | %44,9 | %4,5 | 26,71 | 24,91 |
+| Kaşık | başlangıç | %0 | %66,9 | %32 | %1,1 | 20,24 | 20,13 |
+| Döner kaşık | 120 (rütbe 2) | %0 | %75,6 | %23,5 | %0,84 | 18,01 | 18,25 |
+| Silikon yem | 300 (rütbe 3) | %0 | %68,5 | %30,4 | %1,1 | 19,83 | 19,78 |
+| Maket balık | 700 (rütbe 5) | %0 | %41,8 | %57,2 | %0,93 | 25,68 | 24,98 |
+| Su üstü yemi | 1000 (rütbe 6) | %0 | %46,7 | %52,3 | %1 | 24,68 | 24,07 |
+| Altın kaşık | 2500 (rütbe 10) | %0 | %38,6 | %60 | %1,4 | 26,78 | 25,82 |
 
 #### Dip (rütbe 4)
 
@@ -176,23 +176,23 @@ Bir gölgenin o tür olma şansı, kuşanılan yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Solucan | Kurtçuk | Ekmek hamuru | Mısır | Boili | Karides |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %16,6 | %14,9 | %10,3 | %9 | %7,7 | %13,6 |
-| Çapak | Bream | Sıradan | 25–60 | 4–10 | 0,7 |  | %21,3 | %19,1 | %26,4 | %11,5 | %17,8 | %17,4 |
-| Sazan | Carp | Güzel | 30–80 | 7–19 | 0,75 | ✓ | %42,6 | %38,2 | %47,4 | %69 | %59,4 | %34,8 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %7,7 | %17,2 | %8,5 | %4,1 | %3,6 | %6,3 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %3,4 | %3,1 | %2,1 | %1,8 | %1,6 | %7 |
-| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %8,5 | %7,6 | %5,3 | %4,6 | %9,9 | %20,9 |
+| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %17,7 | %15,8 | %11,5 | %9,3 | %8 | %13,4 |
+| Çapak | Bream | Sıradan | 25–60 | 4–10 | 0,7 |  | %11,4 | %10,1 | %14,7 | %6 | %9,3 | %8,6 |
+| Sazan | Carp | Güzel | 30–80 | 7–19 | 0,75 | ✓ | %45,5 | %40,5 | %53 | %71,4 | %61,9 | %34,2 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %8,2 | %18,2 | %9,5 | %4,3 | %3,7 | %6,2 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %3,6 | %3,2 | %2,4 | %1,9 | %1,6 | %6,8 |
+| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %13,6 | %12,1 | %8,8 | %7,1 | %15,5 | %30,8 |
 
 Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı (yem bedeli düşülmeden):
 
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
-| Solucan | bedava, sınırsız | %37,9 | %50,2 | %3,4 | %8,5 | 19,23 | 16,83 |
-| Kurtçuk | 30 / 20 | %34 | %55,3 | %3,1 | %7,6 | 18,47 | 16,44 |
-| Ekmek hamuru | 30 / 20 | %36,6 | %56 | %2,1 | %5,3 | 15,63 | 14,51 |
-| Mısır | 40 / 20 | %20,5 | %73,1 | %1,8 | %4,6 | 15,82 | 15,09 |
-| Boili | 60 / 10 | %25,5 | %63 | %1,6 | %9,9 | 21,12 | 18,21 |
-| Karides | 100 / 10 | %31 | %41,1 | %7 | %20,9 | 33,66 | 26,21 |
+| Solucan | bedava, sınırsız | %29,1 | %53,6 | %3,6 | %13,6 | 25,24 | 20,86 |
+| Kurtçuk | 30 / 20 | %25,9 | %58,7 | %3,2 | %12,1 | 23,78 | 20,01 |
+| Ekmek hamuru | 30 / 20 | %26,2 | %62,6 | %2,4 | %8,8 | 20,08 | 17,62 |
+| Mısır | 40 / 20 | %15,2 | %75,7 | %1,9 | %7,1 | 18,84 | 17,14 |
+| Boili | 60 / 10 | %17,3 | %65,6 | %1,6 | %15,5 | 27,53 | 22,47 |
+| Karides | 100 / 10 | %21,9 | %40,4 | %6,8 | %30,8 | 44,72 | 33,38 |
 
 ### Sazlık (`reeds`; başta açık)
 
@@ -228,19 +228,19 @@ Bir gölgenin o tür olma şansı, kuşanılan yapay yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Kaşık | Döner kaşık | Silikon yem | Maket balık | Su üstü yemi | Altın kaşık |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %69,5 | %77,8 | %71 | %44,3 | %49,3 | %41,2 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %30,5 | %22,2 | %29 | %55,7 | %50,7 | %58,8 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %56,5 | %66,7 | %58,3 | %31,2 | %35,7 | %28,6 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %43,5 | %33,3 | %41,7 | %68,8 | %64,3 | %71,4 |
 
 Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı:
 
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|
-| Kaşık | başlangıç | %0 | %69,5 | %30,5 | 18,69 | 19,08 |
-| Döner kaşık | 120 (rütbe 2) | %0 | %77,8 | %22,2 | 16,83 | 17,43 |
-| Silikon yem | 300 (rütbe 3) | %0 | %71 | %29 | 18,35 | 18,77 |
-| Maket balık | 700 (rütbe 5) | %0 | %44,3 | %55,7 | 24,35 | 24,05 |
-| Su üstü yemi | 1000 (rütbe 6) | %0 | %49,3 | %50,7 | 23,22 | 23,07 |
-| Altın kaşık | 2500 (rütbe 10) | %0 | %41,2 | %58,8 | 25,05 | 24,67 |
+| Kaşık | başlangıç | %0 | %56,5 | %43,5 | 21,6 | 21,64 |
+| Döner kaşık | 120 (rütbe 2) | %0 | %66,7 | %33,3 | 19,32 | 19,63 |
+| Silikon yem | 300 (rütbe 3) | %0 | %58,3 | %41,7 | 21,19 | 21,28 |
+| Maket balık | 700 (rütbe 5) | %0 | %31,2 | %68,8 | 27,28 | 26,63 |
+| Su üstü yemi | 1000 (rütbe 6) | %0 | %35,7 | %64,3 | 26,28 | 25,75 |
+| Altın kaşık | 2500 (rütbe 10) | %0 | %28,6 | %71,4 | 27,88 | 27,16 |
 
 #### Dip (rütbe 4)
 
@@ -248,24 +248,24 @@ Bir gölgenin o tür olma şansı, kuşanılan yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Solucan | Kurtçuk | Ekmek hamuru | Mısır | Boili | Karides |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %12,6 | %12,2 | %9,6 | %5,7 | %7,3 | %12,3 |
-| Sazan | Carp | Güzel | 30–80 | 7–19 | 0,75 | ✓ | %35,9 | %34,8 | %49,6 | %48,7 | %62,7 | %35,1 |
-| Kadife | Tench | Güzel | 25–55 | 8–22 | 0,7 | ✓ | %32,9 | %31,9 | %25,3 | %37,2 | %19,2 | %32,2 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %2,1 | %5,1 | %2,9 | %0,95 | %1,2 | %2 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %1,5 | %1,5 | %1,1 | %0,68 | %0,87 | %3,7 |
-| Aynalı Sazan | Mirror Carp | Nadir | 40–95 | 20–54 | 0,85 | ✓ | %9 | %8,7 | %6,9 | %4,1 | %5,2 | %8,8 |
-| Kerevit | Crayfish | Sıradan | 6–14 | 4–10 | 0,3 |  | %6 | %5,8 | %4,6 | %2,7 | %3,5 | %5,9 |
+| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %11,5 | %11,2 | %9 | %5,5 | %7 | %11,3 |
+| Sazan | Carp | Güzel | 30–80 | 7–19 | 0,75 | ✓ | %33 | %32 | %46,4 | %46,8 | %59,6 | %32,3 |
+| Kadife | Tench | Güzel | 25–55 | 8–22 | 0,7 | ✓ | %30,2 | %29,4 | %23,6 | %35,8 | %18,2 | %29,6 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %1,9 | %4,7 | %2,7 | %0,91 | %1,2 | %1,9 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %1,4 | %1,3 | %1,1 | %0,65 | %0,83 | %3,4 |
+| Aynalı Sazan | Mirror Carp | Nadir | 40–95 | 20–54 | 0,85 | ✓ | %16,5 | %16 | %12,9 | %7,8 | %9,9 | %16,2 |
+| Kerevit | Crayfish | Sıradan | 6–14 | 6–16 | 0,3 |  | %5,5 | %5,3 | %4,3 | %2,6 | %3,3 | %5,4 |
 
 Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı (yem bedeli düşülmeden):
 
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|
-| Solucan | bedava, sınırsız | %18,6 | %71 | %10,5 | 13,51 | 13,87 |
-| Kurtçuk | 30 / 20 | %18 | %71,8 | %10,2 | 13,46 | 13,85 |
-| Ekmek hamuru | 30 / 20 | %14,2 | %77,7 | %8 | 13,11 | 13,68 |
-| Mısır | 40 / 20 | %8,4 | %86,9 | %4,7 | 13,01 | 13,42 |
-| Boili | 60 / 10 | %10,8 | %83,1 | %6,1 | 12,8 | 13,52 |
-| Karides | 100 / 10 | %18,2 | %69,4 | %12,4 | 13,97 | 14,29 |
+| Solucan | bedava, sınırsız | %17 | %65,1 | %17,9 | 15,38 | 15,43 |
+| Kurtçuk | 30 / 20 | %16,6 | %66,1 | %17,4 | 15,28 | 15,37 |
+| Ekmek hamuru | 30 / 20 | %13,3 | %72,7 | %14 | 14,6 | 14,91 |
+| Mısır | 40 / 20 | %8,1 | %83,5 | %8,5 | 13,92 | 14,17 |
+| Boili | 60 / 10 | %10,3 | %79 | %10,8 | 13,96 | 14,48 |
+| Karides | 100 / 10 | %16,7 | %63,8 | %19,5 | 15,76 | 15,78 |
 
 #### Kerevit tuzağı (rütbe 3)
 
@@ -274,7 +274,7 @@ belli olur. Tuzaktan gelen balık şans garantisi sayaçlarını ilerletmez.
 
 | Tür | Nadirlik | Şans | Değer (para) | Ortalama değer |
 |---|---|---|---|---|
-| Kerevit | Sıradan | %100 | 4–10 | 5,94 |
+| Kerevit | Sıradan | %100 | 6–16 | 9,93 |
 
 ### Nilüferli Koy (`lily_cove`; rütbe 3)
 
@@ -309,19 +309,19 @@ Bir gölgenin o tür olma şansı, kuşanılan yapay yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Kaşık | Döner kaşık | Silikon yem | Maket balık | Su üstü yemi | Altın kaşık |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %34,2 | %25,3 | %32,6 | %59,8 | %54,9 | %62,9 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %65,8 | %74,7 | %67,4 | %40,2 | %45,1 | %37,1 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %47,7 | %37,2 | %45,8 | %72,3 | %68,1 | %74,8 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %52,3 | %62,8 | %54,2 | %27,7 | %31,9 | %25,2 |
 
 Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı:
 
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|
-| Kaşık | başlangıç | %0 | %65,8 | %34,2 | 19,53 | 19,81 |
-| Döner kaşık | 120 (rütbe 2) | %0 | %74,7 | %25,3 | 17,51 | 18,04 |
-| Silikon yem | 300 (rütbe 3) | %0 | %67,4 | %32,6 | 19,16 | 19,49 |
-| Maket balık | 700 (rütbe 5) | %0 | %40,2 | %59,8 | 25,27 | 24,87 |
-| Su üstü yemi | 1000 (rütbe 6) | %0 | %45,1 | %54,9 | 24,17 | 23,9 |
-| Altın kaşık | 2500 (rütbe 10) | %0 | %37,1 | %62,9 | 25,95 | 25,47 |
+| Kaşık | başlangıç | %0 | %52,3 | %47,7 | 22,54 | 22,47 |
+| Döner kaşık | 120 (rütbe 2) | %0 | %62,8 | %37,2 | 20,19 | 20,4 |
+| Silikon yem | 300 (rütbe 3) | %0 | %54,2 | %45,8 | 22,13 | 22,1 |
+| Maket balık | 700 (rütbe 5) | %0 | %27,7 | %72,3 | 28,07 | 27,33 |
+| Su üstü yemi | 1000 (rütbe 6) | %0 | %31,9 | %68,1 | 27,13 | 26,5 |
+| Altın kaşık | 2500 (rütbe 10) | %0 | %25,2 | %74,8 | 28,63 | 27,82 |
 
 #### Dip (rütbe 4)
 
@@ -380,22 +380,22 @@ Bir gölgenin o tür olma şansı, kuşanılan yapay yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Kaşık | Döner kaşık | Silikon yem | Maket balık | Su üstü yemi | Altın kaşık |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %25,8 | %29,6 | %20,7 | %23,4 | %44,2 | %21 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %44,8 | %49,3 | %38,7 | %31,2 | %26,8 | %27,9 |
-| Sudak | Zander | Nadir | 40–90 | 24–64 | 0,95 | ✓ | %17,7 | %12,7 | %31,2 | %24,1 | %13,8 | %28,7 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %9,8 | %7 | %7,9 | %19,6 | %13,8 | %20 |
-| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %1,8 | %1,3 | %1,5 | %1,7 | %1,4 | %2,4 |
+| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %20,2 | %24,7 | %14,5 | %16,4 | %35 | %14,1 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %35 | %41,1 | %27 | %21,8 | %21,2 | %18,8 |
+| Sudak | Zander | Nadir | 40–90 | 24–64 | 0,95 | ✓ | %30,8 | %23,5 | %48,5 | %37,4 | %24,2 | %43 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %13,5 | %10,3 | %9,6 | %24 | %19,1 | %23,5 |
+| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %0,58 | %0,44 | %0,41 | %0,47 | %0,45 | %0,64 |
 
 Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı:
 
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
-| Kaşık | başlangıç | %25,8 | %44,8 | %27,6 | %1,8 | 19,61 | 17,99 |
-| Döner kaşık | 120 (rütbe 2) | %29,6 | %49,3 | %19,7 | %1,3 | 16,86 | 15,84 |
-| Silikon yem | 300 (rütbe 3) | %20,7 | %38,7 | %39,1 | %1,5 | 22,77 | 20,38 |
-| Maket balık | 700 (rütbe 5) | %23,4 | %31,2 | %43,7 | %1,7 | 23,5 | 21,23 |
-| Su üstü yemi | 1000 (rütbe 6) | %44,2 | %26,8 | %27,6 | %1,4 | 18,07 | 16,49 |
-| Altın kaşık | 2500 (rütbe 10) | %21 | %27,9 | %48,7 | %2,4 | 25,75 | 22,86 |
+| Kaşık | başlangıç | %20,2 | %35 | %44,2 | %0,58 | 22,96 | 20,82 |
+| Döner kaşık | 120 (rütbe 2) | %24,7 | %41,1 | %33,8 | %0,44 | 19,87 | 18,36 |
+| Silikon yem | 300 (rütbe 3) | %14,5 | %27 | %58,1 | %0,41 | 27,09 | 23,84 |
+| Maket balık | 700 (rütbe 5) | %16,4 | %21,8 | %61,4 | %0,47 | 27,22 | 24,39 |
+| Su üstü yemi | 1000 (rütbe 6) | %35 | %21,2 | %43,3 | %0,45 | 21,56 | 19,57 |
+| Altın kaşık | 2500 (rütbe 10) | %14,1 | %18,8 | %66,5 | %0,64 | 28,95 | 25,67 |
 
 #### Dip (rütbe 4)
 
@@ -403,24 +403,24 @@ Bir gölgenin o tür olma şansı, kuşanılan yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Solucan | Kurtçuk | Ekmek hamuru | Mısır | Boili | Karides |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %37,1 | %30,7 | %33,4 | %37,1 | %30,4 | %36,2 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %13,9 | %28,7 | %22,5 | %13,9 | %11,3 | %7,5 |
-| Sudak | Zander | Nadir | 40–90 | 24–64 | 0,95 | ✓ | %11,9 | %9,8 | %10,7 | %11,9 | %9,7 | %16,1 |
-| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %7,4 | %6,1 | %6,7 | %7,4 | %6,1 | %4 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %5 | %4,1 | %4,5 | %5 | %4 | %6,7 |
-| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %14,9 | %12,3 | %13,4 | %14,9 | %30,4 | %24,1 |
-| Kerevit | Crayfish | Sıradan | 6–14 | 4–10 | 0,3 |  | %9,9 | %8,2 | %8,9 | %9,9 | %8,1 | %5,4 |
+| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %34,6 | %29 | %31,3 | %34,6 | %26,4 | %32,3 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %12,9 | %27 | %21,1 | %12,9 | %9,8 | %6,7 |
+| Sudak | Zander | Nadir | 40–90 | 24–64 | 0,95 | ✓ | %11,1 | %9,3 | %10 | %11,1 | %8,4 | %14,4 |
+| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %6,9 | %5,8 | %6,3 | %6,9 | %5,3 | %3,6 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %4,6 | %3,9 | %4,2 | %4,6 | %3,5 | %6 |
+| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %20,7 | %17,4 | %18,8 | %20,7 | %39,5 | %32,3 |
+| Kerevit | Crayfish | Sıradan | 6–14 | 6–16 | 0,3 |  | %9,2 | %7,7 | %8,4 | %9,2 | %7 | %4,8 |
 
 Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı (yem bedeli düşülmeden):
 
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
-| Solucan | bedava, sınırsız | %54,5 | %13,9 | %16,8 | %14,9 | 29,09 | 22,58 |
-| Kurtçuk | 30 / 20 | %45,1 | %28,7 | %13,9 | %12,3 | 26,12 | 20,94 |
-| Ekmek hamuru | 30 / 20 | %49 | %22,5 | %15,2 | %13,4 | 27,36 | 21,63 |
-| Mısır | 40 / 20 | %54,5 | %13,9 | %16,8 | %14,9 | 29,09 | 22,58 |
-| Boili | 60 / 10 | %44,5 | %11,3 | %13,8 | %30,4 | 45,32 | 32,93 |
-| Karides | 100 / 10 | %45,6 | %7,5 | %22,8 | %24,1 | 41,06 | 30,51 |
+| Solucan | bedava, sınırsız | %50,7 | %12,9 | %15,7 | %20,7 | 35,61 | 26,51 |
+| Kurtçuk | 30 / 20 | %42,5 | %27 | %13,1 | %17,4 | 31,76 | 24,32 |
+| Ekmek hamuru | 30 / 20 | %45,9 | %21,1 | %14,2 | %18,8 | 33,39 | 25,25 |
+| Mısır | 40 / 20 | %50,7 | %12,9 | %15,7 | %20,7 | 35,61 | 26,51 |
+| Boili | 60 / 10 | %38,7 | %9,8 | %12 | %39,5 | 55,21 | 39,05 |
+| Karides | 100 / 10 | %40,7 | %6,7 | %20,3 | %32,3 | 49,56 | 35,77 |
 
 #### Kerevit tuzağı (rütbe 3)
 
@@ -429,7 +429,7 @@ belli olur. Tuzaktan gelen balık şans garantisi sayaçlarını ilerletmez.
 
 | Tür | Nadirlik | Şans | Değer (para) | Ortalama değer |
 |---|---|---|---|---|
-| Kerevit | Sıradan | %100 | 4–10 | 5,94 |
+| Kerevit | Sıradan | %100 | 6–16 | 9,93 |
 
 ### Dere Ağzı (`stream_mouth`; rütbe 7)
 
@@ -464,23 +464,23 @@ Bir gölgenin o tür olma şansı, kuşanılan yapay yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Kaşık | Döner kaşık | Silikon yem | Maket balık | Su üstü yemi | Altın kaşık |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %26,9 | %32,9 | %26,4 | %22,4 | %41,2 | %21 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %22,2 | %16,9 | %21,8 | %40,7 | %27,8 | %43,3 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %27,8 | %32,6 | %29,3 | %17,8 | %14,9 | %16,7 |
-| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %2,1 | %1,6 | %2,1 | %1,8 | %1,5 | %2,7 |
-| Alabalık | Trout | Nadir | 25–60 | 18–48 | 0,65 |  | %19,2 | %14,7 | %18,8 | %16 | %13,4 | %15 |
-| Dere Alabalığı | Brook Trout | Destansı | 35–80 | 42–112 | 0,8 | ✓ | %1,7 | %1,3 | %1,7 | %1,4 | %1,2 | %1,3 |
+| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %23,3 | %29,4 | %22,9 | %17,3 | %34,4 | %16 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %33,7 | %26,5 | %33,1 | %55 | %40,6 | %57,9 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %24,1 | %29,2 | %25,5 | %13,7 | %12,4 | %12,7 |
+| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %0,74 | %0,58 | %0,73 | %0,55 | %0,50 | %0,81 |
+| Alabalık | Trout | Nadir | 25–60 | 18–48 | 0,65 |  | %16,7 | %13,1 | %16,4 | %12,4 | %11,2 | %11,5 |
+| Dere Alabalığı | Brook Trout | Destansı | 35–80 | 42–112 | 0,8 | ✓ | %1,5 | %1,2 | %1,5 | %1,1 | %0,99 | %1 |
 
 Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı:
 
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
-| Kaşık | başlangıç | %26,9 | %27,8 | %41,5 | %3,8 | 22,15 | 21,99 |
-| Döner kaşık | 120 (rütbe 2) | %32,9 | %32,6 | %31,6 | %2,9 | 19,09 | 19,04 |
-| Silikon yem | 300 (rütbe 3) | %26,4 | %29,3 | %40,6 | %3,8 | 21,94 | 21,8 |
-| Maket balık | 700 (rütbe 5) | %22,4 | %17,8 | %56,6 | %3,2 | 25,4 | 24,87 |
-| Su üstü yemi | 1000 (rütbe 6) | %41,2 | %14,9 | %41,2 | %2,7 | 20,68 | 20,21 |
-| Altın kaşık | 2500 (rütbe 10) | %21 | %16,7 | %58,3 | %4 | 26,79 | 25,82 |
+| Kaşık | başlangıç | %23,3 | %24,1 | %50,4 | %2,2 | 22,84 | 22,91 |
+| Döner kaşık | 120 (rütbe 2) | %29,4 | %29,2 | %39,7 | %1,8 | 19,96 | 20,08 |
+| Silikon yem | 300 (rütbe 3) | %22,9 | %25,5 | %49,5 | %2,2 | 22,64 | 22,74 |
+| Maket balık | 700 (rütbe 5) | %17,3 | %13,7 | %67,3 | %1,6 | 26,73 | 26,29 |
+| Su üstü yemi | 1000 (rütbe 6) | %34,4 | %12,4 | %51,8 | %1,5 | 22,33 | 21,97 |
+| Altın kaşık | 2500 (rütbe 10) | %16 | %12,7 | %69,4 | %1,8 | 27,53 | 26,91 |
 
 #### Dip (rütbe 4)
 
@@ -488,22 +488,22 @@ Bir gölgenin o tür olma şansı, kuşanılan yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Solucan | Kurtçuk | Ekmek hamuru | Mısır | Boili | Karides |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %47,1 | %40,7 | %43,5 | %47,1 | %35,9 | %42,4 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %13,6 | %11,8 | %12,6 | %13,6 | %10,4 | %17 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %10,5 | %22,6 | %17,4 | %10,5 | %8 | %5,2 |
-| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %7,9 | %6,8 | %7,2 | %7,9 | %6 | %3,9 |
-| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %20,9 | %18,1 | %19,3 | %20,9 | %39,8 | %31,4 |
+| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %42,7 | %37,3 | %39,6 | %42,7 | %29,9 | %36,7 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %12,3 | %10,8 | %11,5 | %12,3 | %8,6 | %14,7 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %9,5 | %20,7 | %15,9 | %9,5 | %6,6 | %4,5 |
+| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %7,1 | %6,2 | %6,6 | %7,1 | %5 | %3,4 |
+| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %28,4 | %24,9 | %26,4 | %28,4 | %49,8 | %40,7 |
 
 Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı (yem bedeli düşülmeden):
 
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
-| Solucan | bedava, sınırsız | %55 | %10,5 | %13,6 | %20,9 | 34,29 | 25,95 |
-| Kurtçuk | 30 / 20 | %47,5 | %22,6 | %11,8 | %18,1 | 31,25 | 24,2 |
-| Ekmek hamuru | 30 / 20 | %50,7 | %17,4 | %12,6 | %19,3 | 32,56 | 24,95 |
-| Mısır | 40 / 20 | %55 | %10,5 | %13,6 | %20,9 | 34,29 | 25,95 |
-| Boili | 60 / 10 | %41,8 | %8 | %10,4 | %39,8 | 54,36 | 38,72 |
-| Karides | 100 / 10 | %46,3 | %5,2 | %17 | %31,4 | 46,7 | 34,15 |
+| Solucan | bedava, sınırsız | %49,8 | %9,5 | %12,3 | %28,4 | 42,25 | 31,01 |
+| Kurtçuk | 30 / 20 | %43,6 | %20,7 | %10,8 | %24,9 | 38,46 | 28,78 |
+| Ekmek hamuru | 30 / 20 | %46,3 | %15,9 | %11,5 | %26,4 | 40,11 | 29,75 |
+| Mısır | 40 / 20 | %49,8 | %9,5 | %12,3 | %28,4 | 42,25 | 31,01 |
+| Boili | 60 / 10 | %34,9 | %6,6 | %8,6 | %49,8 | 64,97 | 45,47 |
+| Karides | 100 / 10 | %40 | %4,5 | %14,7 | %40,7 | 56,41 | 40,29 |
 
 #### Sinek (rütbe 7)
 
@@ -511,17 +511,17 @@ Bir gölgenin o tür olma şansı, kuşanılan sineğe göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Kuru sinek | Nimf | Streamer |
 |---|---|---|---|---|---|---|---|---|---|
-| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %29,5 | %32,9 | %27,4 |
-| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %4,9 | %3,7 | %4,6 |
-| Alabalık | Trout | Nadir | 25–60 | 18–48 | 0,65 |  | %59 | %58,5 | %54,7 |
-| Dere Alabalığı | Brook Trout | Destansı | 35–80 | 42–112 | 0,8 | ✓ | %6,6 | %4,9 | %13,4 |
+| Tatlısu Kefali | Chub | Sıradan | 20–50 | 4–11 | 0,65 |  | %29,5 | %28,7 | %27,4 |
+| Kızılkanat | Rudd | Sıradan | 15–30 | 3–8 | 0,5 |  | %4,9 | %3,2 | %4,6 |
+| Alabalık | Trout | Nadir | 25–60 | 18–48 | 0,65 |  | %59 | %63,8 | %54,7 |
+| Dere Alabalığı | Brook Trout | Destansı | 35–80 | 42–112 | 0,8 | ✓ | %6,6 | %4,3 | %13,4 |
 
 Sineğe göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı:
 
 | Sinek | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Kuru sinek | başlangıç | %34,4 | %0 | %59 | %6,6 | 24,24 | 26,76 |
-| Nimf | 300 (rütbe 7) | %36,6 | %0 | %58,5 | %4,9 | 23,11 | 25,41 |
+| Nimf | 300 (rütbe 7) | %31,9 | %0 | %63,8 | %4,3 | 23,94 | 26,35 |
 | Streamer | 900 (rütbe 8) | %31,9 | %0 | %54,7 | %13,4 | 27,5 | 30,6 |
 
 ### Derin Orta (`deep_water`; rütbe 9, yalnızca sandalla)
@@ -559,21 +559,21 @@ Bir gölgenin o tür olma şansı, kuşanılan yapay yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Kaşık | Döner kaşık | Silikon yem | Maket balık | Su üstü yemi | Altın kaşık |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %12,9 | %10,8 | %9,3 | %9,6 | %11,7 | %12,7 |
-| Sudak | Zander | Nadir | 40–90 | 24–64 | 0,95 | ✓ | %29,5 | %24,9 | %47 | %33,1 | %26,9 | %36,3 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %22,5 | %18,9 | %16,3 | %37 | %36,9 | %34,5 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %35,1 | %45,4 | %27,3 | %20,2 | %24,5 | %16,5 |
+| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %3,6 | %3,1 | %2,3 | %2,4 | %3,1 | %3,1 |
+| Sudak | Zander | Nadir | 40–90 | 24–64 | 0,95 | ✓ | %45,2 | %40 | %63,7 | %45,3 | %38,9 | %49,5 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %27,1 | %24 | %17,4 | %39,9 | %42 | %37,2 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %24,1 | %32,9 | %16,6 | %12,4 | %16 | %10,2 |
 
 Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı:
 
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
-| Kaşık | başlangıç | %0 | %35,1 | %52,1 | %12,9 | 38,76 | 31,89 |
-| Döner kaşık | 120 (rütbe 2) | %0 | %45,4 | %43,8 | %10,8 | 34,48 | 28,9 |
-| Silikon yem | 300 (rütbe 3) | %0 | %27,3 | %63,3 | %9,3 | 38,4 | 31,76 |
-| Maket balık | 700 (rütbe 5) | %0 | %20,2 | %70,2 | %9,6 | 39,56 | 33,32 |
-| Su üstü yemi | 1000 (rütbe 6) | %0 | %24,5 | %63,7 | %11,7 | 40,01 | 33,43 |
-| Altın kaşık | 2500 (rütbe 10) | %0 | %16,5 | %70,8 | %12,7 | 43,06 | 35,44 |
+| Kaşık | başlangıç | %0 | %24,1 | %72,3 | %3,6 | 34,17 | 29,7 |
+| Döner kaşık | 120 (rütbe 2) | %0 | %32,9 | %64 | %3,1 | 31,6 | 27,78 |
+| Silikon yem | 300 (rütbe 3) | %0 | %16,6 | %81,1 | %2,3 | 35,72 | 30,58 |
+| Maket balık | 700 (rütbe 5) | %0 | %12,4 | %85,2 | %2,4 | 35,82 | 31,47 |
+| Su üstü yemi | 1000 (rütbe 6) | %0 | %16 | %81 | %3,1 | 35,26 | 31,08 |
+| Altın kaşık | 2500 (rütbe 10) | %0 | %10,2 | %86,7 | %3,1 | 37,16 | 32,25 |
 
 #### Dip (rütbe 4)
 
@@ -581,23 +581,23 @@ Bir gölgenin o tür olma şansı, kuşanılan yeme göre:
 
 | Tür | English | Nadirlik | Boy (cm) | Değer (para) | Gölge (m) | İri | Solucan | Kurtçuk | Ekmek hamuru | Mısır | Boili | Karides |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %28,2 | %27 | %19,1 | %18,6 | %33,1 | %50 |
-| Sazan | Carp | Güzel | 30–80 | 7–19 | 0,75 | ✓ | %25,6 | %24,5 | %31,3 | %50,8 | %36,1 | %15,1 |
-| Çapak | Bream | Sıradan | 25–60 | 4–10 | 0,7 |  | %24,3 | %23,3 | %33 | %16,1 | %20,6 | %14,4 |
-| Sudak | Zander | Nadir | 40–90 | 24–64 | 0,95 | ✓ | %5,4 | %5,1 | %3,7 | %3,6 | %2,5 | %8 |
-| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %3,1 | %2,9 | %2,1 | %2 | %1,4 | %4,5 |
-| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %2,9 | %7 | %3,6 | %1,9 | %1,4 | %1,7 |
-| Mersin Balığı | Sturgeon | Efsanevi | 100–220 | satılmaz (bırakılır) | 1,75 | ✓ | %2,9 | %2,8 | %2 | %1,9 | %1,4 | %1,7 |
-| Aynalı Sazan | Mirror Carp | Nadir | 40–95 | 20–54 | 0,85 | ✓ | %7,7 | %7,4 | %5,2 | %5,1 | %3,6 | %4,5 |
+| Yayın | Wels Catfish | Destansı | 100–250 | 72–192 | 1,5 | ✓ | %41,4 | %39,7 | %30,8 | %27,6 | %46,7 | %63,6 |
+| Sazan | Carp | Güzel | 30–80 | 7–19 | 0,75 | ✓ | %25,1 | %24,1 | %33,6 | %50,1 | %33,9 | %12,9 |
+| Çapak | Bream | Sıradan | 25–60 | 4–10 | 0,7 |  | %11,9 | %11,4 | %17,8 | %7,9 | %9,7 | %6,1 |
+| Sudak | Zander | Nadir | 40–90 | 24–64 | 0,95 | ✓ | %5,3 | %5,1 | %3,9 | %3,5 | %2,4 | %6,8 |
+| Turna | Pike | Nadir | 50–120 | 21–56 | 1,05 | ✓ | %3 | %2,9 | %2,2 | %2 | %1,4 | %3,9 |
+| Levrek | Perch | Güzel | 20–45 | 7–19 | 0,75 |  | %2,9 | %6,9 | %3,9 | %1,9 | %1,3 | %1,5 |
+| Mersin Balığı | Sturgeon | Efsanevi | 100–220 | satılmaz (bırakılır) | 1,75 | ✓ | %2,8 | %2,7 | %2,1 | %1,9 | %1,3 | %1,4 |
+| Aynalı Sazan | Mirror Carp | Nadir | 40–95 | 20–54 | 0,85 | ✓ | %7,5 | %7,2 | %5,6 | %5 | %3,4 | %3,9 |
 
 Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puanı (yem bedeli düşülmeden):
 
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Efsanevi | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|---|
-| Solucan | bedava, sınırsız | %24,3 | %28,5 | %16,1 | %28,2 | %2,9 | 43,83 | 38,61 |
-| Kurtçuk | 30 / 20 | %23,3 | %31,6 | %15,4 | %27 | %2,8 | 42,48 | 37,53 |
-| Ekmek hamuru | 30 / 20 | %33 | %34,9 | %11 | %19,1 | %2 | 32,6 | 29,31 |
-| Mısır | 40 / 20 | %16,1 | %52,7 | %10,7 | %18,6 | %1,9 | 32,99 | 29,95 |
-| Boili | 60 / 10 | %20,6 | %37,5 | %7,6 | %33,1 | %1,4 | 47,42 | 37,6 |
-| Karides | 100 / 10 | %14,4 | %16,9 | %17 | %50 | %1,7 | 68,15 | 51,76 |
+| Solucan | bedava, sınırsız | %11,9 | %28 | %15,8 | %41,4 | %2,8 | 58,63 | 48,09 |
+| Kurtçuk | 30 / 20 | %11,4 | %31 | %15,2 | %39,7 | %2,7 | 56,68 | 46,63 |
+| Ekmek hamuru | 30 / 20 | %17,8 | %37,5 | %11,8 | %30,8 | %2,1 | 46,14 | 38,54 |
+| Mısır | 40 / 20 | %7,9 | %52,1 | %10,5 | %27,6 | %1,9 | 42,97 | 36,37 |
+| Boili | 60 / 10 | %9,7 | %35,2 | %7,1 | %46,7 | %1,3 | 62,45 | 47,12 |
+| Karides | 100 / 10 | %6,1 | %14,3 | %14,5 | %63,6 | %1,4 | 82,57 | 60,39 |
 

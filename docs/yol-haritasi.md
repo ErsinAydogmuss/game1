@@ -118,7 +118,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Teknik balıkları: aynalı sazan (dip), alabalık ve dere alabalığı (sinek, az da spin), kerevit (tuzak, az da dip); şamandırayla gelmezler (şamandıranın oranları değişmedi).
 - [x] Defter ve katalog: 16 tür iki sayfada; oranlar elindeki teknikle (başlıkta tekniğin adı); tutulmamış türün ipucu en sevdiği yemi, yapay yemi ya da sineği, tuzağını ("Tuzağa girer: Sazlık, Kayalık Burun") ve tekniğini söyler. Katalogda tekniklerin yatkınlık tablosu, her bölgede her teknikle oranlar ve tuzak tablosu; çekişme raporu tekniklere açıldı (`--technique=`).
 - [x] Dede'nin teknik ipuçları: bölgenin önerisi (sazlıkta ve derin ortada dip, nilüferli koyda ve kayalıkta spin, dere ağzında sinek; orada başka teknikle tutana bir kez) ve Dede'ye dokununca açılmış tekniklerin öğütleri.
-- [ ] Denge: teknikler birbirine göre, kerevitin değeri ve tuzağın fiyatı, büyük kova, dipte uzun çekişme.
+- [x] Denge: Dede'nin önerdiği teknik o bölgede şamandıradan az kazandırmaz (test); dip yayının tekniği ve daha çabuk (balık yeme çabuk toplanır, kamışlar güçlü), spin nilüferli koyda ve kayalıkta öne çıkar; kerevit 10 para, tuzaklar ucuzladı; bot büyük kovayı erken alır (35–55. dk); bütün takım 13,4–14,2 saatte (hedef 8–15).
 - [ ] **5 kişiye oynat** (aşağıdaki sorular). Devam ya da vazgeç burada verilir; Dalga 4–5 beklemez.
 
 **Dalga 4 — Canlı dünya → v0.5**
