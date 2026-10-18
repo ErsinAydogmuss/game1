@@ -110,8 +110,9 @@ func _on_version_input(event: InputEvent) -> void:
 	GameState.set_setting("perf", not bool(GameState.setting("perf", false)))
 
 
-## Geliştirme sürümü: rütbe en yüksek bölgenin rütbesine çıkar ve sandal verilir (bütün bölgeler
-## açılır; telefonda her bölgede ölçüm ve deneme için). Para ve defter değişmez.
+## Geliştirme sürümü: rütbe en yüksek bölgenin rütbesine çıkar; sandal, tekniklerin ilk kamışları ve
+## ilk tuzak verilir (bütün bölgeler ve teknikler açılır; telefonda her bölgede ölçüm ve deneme için).
+## Para ve defter değişmez.
 func _unlock_zones() -> void:
 	var db := GameState.db
 	var save := GameState.save
@@ -121,6 +122,14 @@ func _unlock_zones() -> void:
 	save.xp = maxi(save.xp, db.rank_xp[top - 1])
 	if not Zones.BOAT in save.owned:
 		save.owned.append(Zones.BOAT)
+	# Telefonda bütün teknikleri denemek için tekniklerin ilk kamışı ve ilk tuzak da verilir.
+	for t: String in ContentDB.TECHNIQUES:
+		var rods := db.rods_of(t)
+		if t != "float" and not rods.is_empty() and not Economy.technique_ready(db, save, t):
+			save.owned.append(str(rods[0]["id"]))
+			Economy.equip(db, save, str(rods[0]["id"]))
+	if TrapSim.owned(db, save) == 0 and not TrapSim.next_trap(db, save).is_empty():
+		save.owned.append(str(TrapSim.next_trap(db, save)["id"]))
 	Sounds.play("ui_tap")
 	GameState.save_game()
 	GameState.changed.emit()

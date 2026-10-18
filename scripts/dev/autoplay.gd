@@ -1610,16 +1610,16 @@ func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
 	return out
 
 
-## Spinde bir atış: bir levreği p'ye (balıkçıdan uzağa bakan) koyar, ötesine atar, basılı tutup yemi
+## Spinde bir atış: bir levreği (fish_id) p'ye (balıkçıdan uzağa bakan) koyar, ötesine atar, basılı tutup yemi
 ## getirir (yem balığın önünden gelir); balık peşine düşünce dur-kalk yapar (evreler kuraldaki en kısa
 ## evreden uzun). Saldırı anında basılıysa balık kendiliğinden takılır ("auto"), değilse VUR'a dokunur
 ## ("tap"); sonra bir oyuncu gibi çekişir. Her an bir kez görüntülenir.
-func _spin_cast(p: Vector2, cast_to: Vector2) -> Dictionary:
+func _spin_cast(p: Vector2, cast_to: Vector2, fish_id: String = "perch") -> Dictionary:
 	var out := { "moved": 0.0, "hidden": false, "followed": false, "reel_hint": false, "follow_hint": false,
 			"strike": "", "caught": false }
 	var finger := Vector2(260, 520)
 	var card: FishCard = main.get("card")
-	_shadow_at(p, Vector2(0, -1), "perch", 300000)
+	_shadow_at(p, Vector2(0, -1), fish_id, 300000)
 	await _tap_world(cast_to)
 	if not await _wait_state(FishingSession.State.WAITING, 3.0):
 		return out
@@ -1863,139 +1863,112 @@ func _play_fish() -> void:
 	_quit()
 
 
-## Tanıtım videosu (Dalga 2). Oyun zamanı --fixed-fps ile kare kare akar; bekleyişler oyun zamanıyla.
-## İskelede nadir turna (rütbe 3: nilüferli koy açılır), Nine'de satış ve cam kamış; haritadan
-## nilüferli koy ve Destansı altın sazan; haritadan iskeleye dönüş (kararma sırasında zaman ilerler:
-## rütbe 9, sandal, daha iyi takım); sandalla derin orta ve Efsanevi mersin: kartında "Göle bırak".
+## Tanıtım videosu (Dalga 3, v0.4: teknikler). Oyun zamanı --fixed-fps ile kare kare akar; bekleyişler
+## oyun zamanıyla. Dönen bir oyuncu (rütbe 9; spin, dip ve sinek kamışı alınmış, sazlıkta dolu bir
+## tuzak): iskelede Takım Çantası'ndan spin, dur-kalk ve saldıran turna; haritadan sazlık, dolu tuzağı
+## topla (kerevit ×4), dip: uzağa atış, sehpa, zil tek tük ve durmadan, aynalı sazan; haritadan dere
+## ağzı, sinek: akıntıda süzülen sinek, halka, VUR, sudan sıçrayan alabalık.
 func _play_video() -> void:
-	# Dönen bir oyuncu: üç tür defterde, kovada bir yer kalmış, rütbe 3'e az kalmış, biraz para.
-	_use_save(4)
+	_use_save(40)
 	var db := GameState.db
 	var save := GameState.save
-	save.coins = 260
-	save.xp = db.rank_xp[2] - 4
-	for f: Array in [["rudd", 26, 4], ["carp", 52, 3], ["perch", 31, 2]]:
-		Records.add(save.records, f[0], f[1], f[2], 0)
-	var fill: Array[String] = ["rudd", "carp", "perch", "rudd", "rudd"]
-	for i in Bucket.capacity(db, save) - 1:
-		Bucket.add(db, save, fill[i % fill.size()], 20 + i * 4, 2)
-	GameState.changed.emit()
 	var spot := str(main.get("spot_id"))
-	var elder := _elder()
-	var nine := _nine()
-	var angler := _angler()
-	var hud := _hud()
-	var card: FishCard = main.get("card")
-	var shop: ShopPanel = main.get("shop_panel")
-	var panel: MapPanel = main.get("map_panel")
-	var fade: Fade = main.get("fade")
-	var scene: LakeScene = main.get("scene")
-	await _wait(1.4)
-	# Dede'ye dokun: öğüdünü söyler.
-	await _tap(_screen(elder.head_point()))
-	await _wait(2.0)
-	# Nadir bir turna (pırıltılı gölge): VUR, çekişme, ışık sütunu, kart. Rütbe 3: nilüferli koy
-	# açılır (bildirim, Dede, harita düğmesi atar); kovanın son yeri dolar.
-	# 3★: başlangıç takımı (bambu olta, ince misina) 3 yıldıza kadar iri balık taşır.
-	_shadow_at(Vector2(-1.2, -3.0), Vector2(0.2, 1.0), "pike", 690000)
-	await _wait(1.6)
-	await _tap_world(Vector2(-1.0, -0.8))
-	await _wait_state(FishingSession.State.BITING, 30.0)
-	await _wait(0.2)
-	await _reel_like_player(7, 40.0)
-	_check("video: turna tutulur", _state() == FishingSession.State.CAUGHT)
-	await _wait(3.4)
-	await _shot("v1_turna_kart")
-	await _close_card(card)
-	await _wait_state(FishingSession.State.IDLE, 3.0)
-	await _wait(2.4)
-	await _shot("v2_bolge_acildi")
-	_check("video: rütbe 3, nilüferli koy açık", Zones.unlocked(db, save, db.zone(spot, "lily_cove")))
-	# İskelenin kara ucuna yürü, Nine'ye dokun: kova dolu; hepsini sat, cam kamışı al.
-	await _tap_world(Vector2(0.0, 7.8))
-	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
-	await _wait(0.3)
-	await _tap(_screen(nine.head_point()))
-	await _wait(1.4)
-	await _tap_control(shop.find_child("SellAll", true, false))
-	await _wait(1.4)
-	await _shot("v3_satildi")
-	await _tap_control(shop.find_child("Tab_rod", true, false))
-	await _wait(0.8)
-	await _tap_card(shop, "rod_float_glass", -1)
-	await _wait(1.4)
-	await _tap(shop.close_button.get_global_rect().get_center())
-	await _wait(1.0)
-	# Harita: nilüferli koy açık ("Yeni!"), kilitliler taralı; dokun → ekran kararır, oradasın.
-	await _tap_control(hud.map_button)
-	await _wait_until(func() -> bool: return panel.visible, 2.0)
-	await _wait(1.6)
-	await _shot("v4_harita")
-	await _tap_control(panel.view.badge("lily_cove"))
-	await _wait_until(func() -> bool: return fade.busy(), 1.0)
-	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
-	await _wait(1.2)
-	# Nilüferli koyda Destansı altın sazan: mor ışıltılı gölge, uzun çekişme, kart.
-	var lily: Vector2 = (db.zone(spot, "lily_cove")["stands"] as Array)[0]
-	# 3★: cam elyafı kamış 4★ taşır ama misina hâlâ ince (3★).
-	_shadow_at(lily + Vector2(-0.2, -6.0), Vector2(0.05, 1.0), "golden_carp", 690000)
-	await _wait(1.8)
-	await _shot("v5_nilufer")
-	await _tap_world(lily + Vector2(0.0, -3.8))
-	await _wait_state(FishingSession.State.BITING, 30.0)
-	await _wait(0.2)
-	await _reel_like_player(7, 50.0)
-	_check("video: altın sazan tutulur", _state() == FishingSession.State.CAUGHT
-			and str(_session().last_catch.get("fish", "")) == "golden_carp")
-	await _wait(3.4)
-	await _shot("v6_altin_sazan")
-	await _close_card(card)
-	await _wait_state(FishingSession.State.IDLE, 3.0)
-	await _wait(0.8)
-	# Haritadan iskele koyuna dön. Ekran kararınca zaman ilerler: rütbe 9, sandal, daha iyi takım.
-	await _tap_control(hud.map_button)
-	await _wait_until(func() -> bool: return panel.visible, 2.0)
-	await _wait(0.8)
-	await _tap_control(panel.view.badge("dock_cove"))
-	await _wait_until(func() -> bool: return fade.busy(), 1.0)
-	await _wait(Fade.TIME + 0.02)
-	save.xp = maxi(save.xp, db.rank_xp[8])
-	save.coins += 1200
-	for id: String in [Zones.BOAT, "reel_quick", "line_fluoro", "hook_large", "net"]:
+	save.coins = 1800
+	save.xp = db.rank_xp[8]
+	for f: Array in [["rudd", 26, 4], ["carp", 52, 3], ["perch", 31, 2], ["silverside", 14, 2], ["bream", 40, 3],
+			["tench", 38, 3], ["crayfish", 11, 3]]:
+		Records.add(save.records, f[0], f[1], f[2], 0)
+	for id: String in ["rod_spin_light", "rod_carp_1", "rod_fly_1", "line_mono", "trap_1"]:
 		if not id in save.owned:
 			save.owned.append(id)
 		Economy.equip(db, save, id)
+	# Bot ekran görüntüsü almaz; dipteki sehpa yakın çekimi (kamera sıçraması) videoda yok.
+	_taken["15b_sehpa_yakin"] = true
+	# Sazlıkta dolu bir tuzak: atış noktasının önündeki sığ suda, oyun kapalıyken dolmuş.
+	var reeds := db.zone(spot, "reeds")
+	var stand: Vector2 = (reeds["stands"] as Array)[0]
+	var clock := GameState.clock
+	var t0 := clock.now_unix()
+	clock.fixed_unix = t0
+	var at := TrapSim.spot_near(db, save, spot, "reeds", stand, Vector2(0.0, -1.0))
+	if at != Dice.NO_POINT:
+		TrapSim.place(db, save, spot, "reeds", at, t0 - (db.rules.trap_max + 1) * db.rules.trap_fill_s)
+		TrapSim.update_all(db.rules, save, t0)
 	GameState.changed.emit()
 	main.call("_on_gear_changed")
-	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	var hud := _hud()
+	var bag: TechniquePanel = main.get("technique_panel")
+	var panel: MapPanel = main.get("map_panel")
+	var fade: Fade = main.get("fade")
+	var traps: TrapMarkers = main.get("traps")
+	var card: FishCard = main.get("card")
+	await _wait(1.4)
+	# Takım Çantası: dört teknik ve tuzak; spin seçilir (kamış, yapay yem, Dede'nin sözü).
+	await _tap_control(hud.technique_button)
+	await _wait_until(func() -> bool: return bag.visible, 2.0)
+	await _wait(1.8)
+	await _shot("v1_canta")
+	await _tap_control(bag.find_child("Button_spin", true, false))
+	await _wait(1.2)
+	_check("video: spin elde", save.technique == "spin" and _session().technique.id == "spin")
+	# Spin: yemin ötesine atılır, basılı tutunca gelir; turna peşine düşer, dur-kalkta saldırır.
+	var spin := await _spin_cast(Vector2(0.4, -2.6), Vector2(0.4, -5.4), "pike")
+	_check("video: spinle turna tutulur", bool(spin["caught"]))
+	await _wait(0.6)
+	# Haritadan sazlığa: dolu tuzak (yeşil, nabız gibi atan 4/4 rozeti).
+	await _map_to(panel, fade, "reeds")
+	await _wait(1.2)
+	await _shot("v2_tuzak_dolu")
+	var trap_id := int(save.traps[0]["id"]) if not save.traps.is_empty() else -1
+	_check("video: sazlıkta dolu tuzak (%d)" % traps.shown_count(trap_id), trap_id >= 0
+			and traps.shown_count(trap_id) == db.rules.trap_max)
+	if trap_id >= 0:
+		await _tap(_screen(traps.mark_point(trap_id)))
+		await _wait(2.6)
+		await _shot("v3_kerevitler")
+		_check("video: tuzak toplanır (kerevitler kovada)", save.bucket.filter(
+				func(b: Dictionary) -> bool: return str(b["fish"]) == "crayfish").size() == db.rules.trap_max)
+	# Dip: çantadan; uzağa atış, olta sehpada; zil tek tük çalar (kokluyor), sonra durmadan: VUR.
+	await _tap_control(hud.technique_button)
+	await _wait_until(func() -> bool: return bag.visible, 2.0)
 	await _wait(1.0)
-	# İskeledeki sandala dokun: ekran kararır, derin ortada sandaldasın (Dede: "Derin sular!").
-	await _tap(_screen(scene.boat_point()))
-	await _wait_until(func() -> bool: return fade.busy(), 1.0)
-	await _wait_until(func() -> bool: return bool(main.get("in_boat")) and not fade.busy(), 4.0)
+	await _tap_control(bag.find_child("Button_bottom", true, false))
 	await _wait(1.6)
-	# Efsanevi mersin: parlayan kenarlı gölge, dalga izi; uzun çekişme; kartında koruma sözü ve
-	# "Göle bırak".
-	var at := angler.pos2()
-	_shadow_at(at + Vector2(0.0, -7.0), Vector2(0.0, 1.0), "sturgeon", 650000)
-	await _wait(2.2)
-	await _shot("v7_mersin_golge")
-	await _tap_world(at + Vector2(0.0, -5.0))
-	await _wait_state(FishingSession.State.BITING, 30.0)
-	await _wait(0.2)
-	await _reel_like_player(7, 60.0)
-	_check("video: sandaldan mersin tutulur", bool(main.get("in_boat")) and _state() == FishingSession.State.CAUGHT
-			and str(_session().last_catch.get("fish", "")) == "sturgeon")
-	await _wait(3.6)
-	await _shot("v8_mersin_kart")
+	var bottom := await _bottom_cast(true, "mirror_carp")
+	_check("video: dipte aynalı sazan tutulur", bool(bottom["caught"]))
+	await _wait(3.0)
+	await _shot("v4_aynali_sazan")
 	await _close_card(card)
-	await _wait(2.4)
-	_check("video: mersin göle bırakılır (kovada yok)", save.bucket.filter(
-			func(b: Dictionary) -> bool: return str(b["fish"]) == "sturgeon").is_empty()
-			and int(save.records.get("sturgeon", {}).get("released", 0)) == 1)
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	await _wait(0.6)
+	# Haritadan dere ağzına; sinek: akıntıya at, sinek süzülür, alabalık altına gelir, halka: VUR.
+	await _map_to(panel, fade, "stream_mouth")
+	await _wait(0.8)
+	await _tap_control(hud.technique_button)
+	await _wait_until(func() -> bool: return bag.visible, 2.0)
+	await _wait(1.0)
+	await _tap_control(bag.find_child("Button_fly", true, false))
+	await _wait(1.6)
+	_check("video: sinek elde (dere ağzında)", save.technique == "fly")
+	var fly := await _fly_cast("trout", true)
+	_check("video: sinekle alabalık tutulur, sudan sıçrar", bool(fly["caught"]) and bool(fly["jumped"]))
+	await _wait(2.0)
+	await _shot("v5_son")
+	clock.fixed_unix = -1
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Harita düğmesine dokunur, bölgenin rozetine dokunur ve kararmanın bitmesini bekler (videoda
+## haritanın kendisi görünsün diye _travel_to yerine).
+func _map_to(panel: MapPanel, fade: Fade, zone: String) -> void:
+	await _tap_control(_hud().map_button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	await _wait(1.2)
+	await _tap_control(panel.view.badge(zone))
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
 
 
 ## Açılan balık kartını düğmesiyle kapatır (kart açılana kadar bekler; en kısa açık kalma süresi).

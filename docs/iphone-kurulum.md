@@ -201,7 +201,7 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 
 ### 11. Geri bildirim
 
-Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v0.3.1: berrak görüntü ve iri balık). Eski kayıt kendiliğinden yeni biçime (v3) geçer: rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır. Para, kova, takım ve defter aynen kalır.
+Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v0.3.1: berrak görüntü ve iri balık; v0.4: teknikler, 13–19). Eski kayıt kendiliğinden yeni biçime geçer: v2'den v3'e rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır; v3'ten v4'e şamandıra takımı aynen kalır, makara ve misina bütün tekniklerde ortak olur. Para, kova, takım ve defter aynen kalır.
 
 1. Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
 2. Rütben güncellemeden önceki gibi mi? (Sayı değişebilir; rütbe ve çubuk aynı kalmalı.)
@@ -211,7 +211,7 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
 6. **Bölgelerin görünüşü:** sazlıkta sık kamış, nilüferli koyda nilüfer tarlası, kayalık burunda iri kayalar ve yosunlu taş, dere ağzında akan su, derin ortada şamandıralar. Kıyıya gelen dalga çizgileri, toprak yol ve ıslak kum güzel mi?
 7. **Yeni türler** (7 tür, toplam 12): gümüş balığı iskele koyunda ve sazlıkta, çapak iskele koyunda ve derin ortada, kadife sazlıkta, altın sazan nilüferli koyda, tatlısu kefali kayalık burunda ve dere ağzında, sudak kayalık burunda ve derin ortada, mersin derin ortada. Defter bulunduğun bölgenin oranlarını gösteriyor mu?
 8. **Sandal:** rütbe 9'da Nine'nin Ekstra sekmesinde (3.500 para). İskeledeki sandala dokun: derin ortada sandaldasın; sol alttaki "Kıyıya dön" iskeleye getirir. Mersin tutulunca kartında "Göle bırak" çıkıyor mu? "Kıyıya dön" düğmesi çentiğe takılmadan tam görünüyor mu?
-9. **Hepsini hızlıca görmek için** aşağıdaki "12. Telefonda hız ölçümü" bölümündeki **Bütün bölgeleri aç**'ı kullan (kaydı değiştirir; istersen sonra **Kaydı sıfırla**). Normal oyunda nilüferli koy ≈ 10. dakikada açılır; derin ortaya (rütbe 9 ve sandal) ≈ 2 saatte varılır.
+9. **Hepsini hızlıca görmek için** aşağıdaki "12. Telefonda hız ölçümü" bölümündeki **Bölgeleri ve teknikleri aç**'ı kullan (kaydı değiştirir; istersen sonra **Kaydı sıfırla**). Normal oyunda nilüferli koy ≈ 10. dakikada açılır; derin ortaya (rütbe 9 ve sandal) ≈ 2 saatte varılır.
 10. Takılma, ısınma ya da pil çabuk bitmesi var mı? Sonra "12. Telefonda hız ölçümü" bölümündeki ölçümü yap.
 11. **v0.3.1: renkler berrak mı?** Eskiden görüntü sisli gibiydi; şimdi su daha koyu mavi, çimen ve iskele daha canlı olmalı. Olta sudayken de puslu görünmemeli.
 12. **v0.3.1: iri balık takım ister.**
@@ -219,6 +219,13 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     - O balıkta gerilim sakinken bile kırmızıya çıkıp misina kopuyor mu? Ardından Dede neyi alman gerektiğini söylüyor mu?
     - Nine'nin kamış ve misina kartlarında "İri balık" yıldızları var mı? Cam elyafı kamış ve naylon misinayı alınca 4 yıldızlılar tutuluyor mu?
     - Kolay çekme açıkken iri balık kopmadan, yalnızca yavaş geliyor mu?
+13. **v0.4: Takım Çantası.** Rütbe 2'de sol altta teknik düğmesi çıkar ("Yeni teknik: Spin!", Dede, düğme nabız gibi atar). Dokun: şamandıra, spin, dip, sinek karoları ve altta kerevit tuzağı. Kilitli teknikte rütbesi, kamışı yoksa NİNE'DE (dükkân o tekniğin kamışlarında açılır). Panel ve düğmeler çentiğe takılmadan sığıyor mu? Hızlı denemek için "12. Telefonda hız ölçümü"ndeki **Bölgeleri ve teknikleri aç** her tekniğin ilk kamışını ve bir tuzak verir.
+14. **v0.4: Spin.** Bir gölgenin ötesine at, **basılı tut:** yem gelir; **bırak:** durur ve batar. Yırtıcı peşine düşünce (halka, "Peşinde biri var!") dur-kalk yap: o an basılıysan balık kendiliğinden takılır, bırakmışsan "VUR!" çıkar. Dur-kalk ritmi parmakta rahat mı? Sazlıkta yemi bekletince takılıyor mu (geri sarma)?
+15. **v0.4: Dip** (rütbe 4). Suya dokun: kurşun uzağa uçar, olta yanındaki sehpaya konur. Zil tek tük çalarken dokunma (balık kokluyor); durmadan çalınca ve misina akınca ekranın her yerine dokun. Kamera kurşunu da gösteriyor mu, balıkçı ipucu çubuğunun arkasında kalıyor mu? Sazlıkta aynalı sazan geliyor mu?
+16. **v0.4: Sinek** (rütbe 7, yalnızca dere ağzında). Akıntıya at: sinek süzülür, alabalık altına gelir; **halka çıkınca hemen dokun.** Halkadan önce dokunursan balık kaçar. Alabalık çekişirken sudan sıçrıyor mu? Dere ağzından çıkınca şamandıraya dönüp geri gelince sinek yine elinde mi?
+17. **v0.4: Kerevit tuzağı** (rütbe 3). Nine'den tuzak al (Ekstra), sazlıkta ya da kayalık burunda Takım Çantası'ndan **Tuzak bırak**. Turuncu şamandıra ve "0/4" rozeti çıkıyor mu? Oyunu kapat, 20–40 dakika sonra aç: rozet 1/4 ya da 2/4 mü? Şamandıraya dokun: kerevitler kovaya, elde kerevit. Boş tuzağa dokununca bekle ya da kaldır paneli.
+18. **v0.4: Defter ve Dede.** Defter iki sayfa (16 tür). Tutulmamış kerevitte "Tuzağa girer: Sazlık, Kayalık Burun", alabalıkta "Sevdiği sinek" yazıyor mu? Oranların başlığında elindeki teknik yazıyor mu? Rütbe 4'ten sonra sazlıkta şamandırayla bir balık tutunca Dede bir kez "Dip dene!" diyor mu? Dede'ye dokununca açtığın tekniklerin öğütleri de geliyor mu?
+19. **v0.4: Denge.** Spinle iskelede ve nilüferli koyda, dipte derin ortada, sinekle dere ağzında para şamandıradan çabuk geliyor mu? Bir tekniğin sıkıcı ya da çok zor geldiği yer var mı?
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
@@ -230,7 +237,7 @@ Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte
 
 1. Telefonu prize tak ya da şarjı yüksek tut. **Düşük Güç Modu** kapalı olsun: açıkken telefon kendini yavaşlatır.
 2. Oyunda **Ayarlar**'ı (dişli) aç. Dil satırının altındaki sürüm yazısına ("Olta: Gölün Sırrı · v…") arka arkaya **5 kez** dokun. Yazının sonuna "ölçüm açık" eklenir. Sol üstte "60 FPS · 140 çizim · 244k üçgen" gibi bir yazı belirir. Kapatmak için yine 5 dokunuş.
-3. Ölçüm açıkken debug derlemede iki geliştirici satırı da görünür: **Bütün bölgeleri aç** ve **Kaydı sıfırla**. Bütün bölgeleri görmek için **Bütün bölgeleri aç** → **AÇ**: rütbe 9 olur, sandal verilir, para ve defter değişmez. Bu kaydı değiştirir: istersen denemeden sonra **Kaydı sıfırla** ile baştan başla.
+3. Ölçüm açıkken debug derlemede iki geliştirici satırı da görünür: **Bölgeleri ve teknikleri aç** ve **Kaydı sıfırla**. Bütün bölgeleri görmek için **Bölgeleri ve teknikleri aç** → **AÇ**: rütbe 9 olur; sandal, spin, dip ve sinek kamışları ve bir tuzak verilir; para ve defter değişmez. Bu kaydı değiştirir: istersen denemeden sonra **Kaydı sıfırla** ile baştan başla.
 4. Haritadan sırayla her bölgeye geç: iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı. Sonra haritada **Derin Orta**'ya dokun: sandalla derin ortaya açılırsın. Her yerde 10 saniye bekle ve sol üstteki üç sayıyı yaz.
 5. Bir balık tut. Çekişme sırasında FPS'e bak: en çok iş o anda yapılır.
 
@@ -248,7 +255,7 @@ Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte
 - **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken): iskelede 140, öteki yerlerde 88–114, sandalda 98. Telefondaki sayı bundan çok farklıysa not et.
 - FPS 50'nin altındaysa şunları da yaz: hangi yerde düştüğü, telefonun ısınıp ısınmadığı, ilk açılışta mı yoksa sürekli mi olduğu.
 
-İstersen bir de `--export-release` ile kur (8. adım) ve açık bölgelerde ölç. Release derlemede "Bütün bölgeleri aç" düğmesi yoktur; sayılar debug'dan biraz daha iyi çıkar.
+İstersen bir de `--export-release` ile kur (8. adım) ve açık bölgelerde ölç. Release derlemede "Bölgeleri ve teknikleri aç" düğmesi yoktur; sayılar debug'dan biraz daha iyi çıkar.
 
 ## Sonraki güncellemeler (kısa yol)
 

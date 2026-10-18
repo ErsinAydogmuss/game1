@@ -19,7 +19,7 @@ Görseller partiler hâlinde geliyor; her parti bir dalgadan önce. **Hepsini bi
 | 1. Arayüz | ✅ geldi, oyunda (v0.2.1) | 12 | paneller, düğmeler, nadirlik kartları, ikonlar, Dede ve Nine'nin yüzü, uygulama ikonu |
 | 2. Ekipman | ✅ geldi, oyunda (v0.2.1) | 7 | Nine'nin dükkânındaki 42 eşya (bugün satılan 33'ü görünüyor; kalanı Dalga 2–4'te) |
 | 3. Göl | ✅ geldi, oyunda | 5 | bölge rozetleri, harita kâğıdı, harita çıkartmaları ve ikonları, zemin dokuları |
-| 4. Teknikler | ✅ geldi, kesildi; Dalga 3'te oyuna girer | 4 | yapay yemler, sinekler ve dip takımı, teknik ikonları, kerevit ve çöp |
+| 4. Teknikler | ✅ geldi, oyunda (v0.4) | 4 | yapay yemler, sinekler ve dip takımı, teknik ikonları, takım çantası, kerevit (çöp ve hikâye eşyaları Dalga 4'te) |
 | 5. Hikâye ve yuva | Dalga 4'ten önce | ~8 | mektuplar, Gölün Bekçisi, hava ikonları, kedi, kıyafetler, tanıtım görseli |
 
 5. partinin promptlarını Dalga 4'ten önce bu sayfaya eklerim.
@@ -447,7 +447,7 @@ Kesilen adlar: `grass` (çimen), `sand` (kıyı kumu), `path` (kıyı yolu), `mo
 
 ## Parti 4 — Teknikler
 
-✅ Dört sayfa da geldi ve kesildi; teknikler Dalga 3'te geldikçe oyuna girer. Dalga 3'te dört yeni teknik geliyor: spin (yapay yemle), dip (sehpa ve zille), sinek (dere ağzında) ve kerevit tuzağı. Kamışların, sehpanın ve tuzağın resimleri Parti 2'den hazır; bu dört sayfa gerisini tamamlar.
+✅ Dört sayfa da geldi ve oyunda (v0.4); çöp ve hikâye eşyaları (çizme, şişeler, anahtar) Dalga 4'te göl sevgisiyle bağlanır. Dalga 3'te dört yeni teknik geliyor: spin (yapay yemle), dip (sehpa ve zille), sinek (dere ağzında) ve kerevit tuzağı. Kamışların, sehpanın ve tuzağın resimleri Parti 2'den hazır; bu dört sayfa gerisini tamamlar.
 
 **1. `gear_lures.png`: yapay yemler (spin)**
 
@@ -558,7 +558,7 @@ Sayfa adları, kesim şekli (`fit`) ve kesilen adlar `data/art_sheets.json`'da. 
 
 Mor ve pembe nesneli sayfalarda (`rarity_frames`, `rarity_badges`, `zone_badges`, `map_stickers`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru ve nilüferin pembesi solmaz. Zemin dokuları `"fit": "tile"`: kare örneğin içinden kesilir ve dikişsiz yapılır (`ArtSheet.make_tile`). Harita kâğıdı `"fit": "trim"`: saydam payı kırpılır, 9 dilimli çerçeve olarak `assets/ui/frames/`'e gider.
 
-Oyuna bağlama (v0.3'ten sonraki durum; Parti 4 Dalga 3'te):
+Oyuna bağlama (v0.4'teki durum):
 
 | Görsel | Çıktı | Bağlantı |
 |---|---|---|
@@ -577,6 +577,6 @@ Oyuna bağlama (v0.3'ten sonraki durum; Parti 4 Dalga 3'te):
 | `map_stickers` | `assets/ui/map/` | ✅ `MapView` çıkartmaları (`ItemArt.map_art`): sazlık, nilüfer ve kayalar kendi bölgesinin yanında, ağaç öbekleri ormanda, sandal iskelede (sandaldayken yok), dükkân Nine'nin yerinde; rozetlere, iğneye ve birbirine binmeyecek yere kayar, yer yoksa gizlenir. |
 | `map_icons` | `assets/icons/ui/` | ✅ `GameIcon.ART_NAMES`: `pin` "Buradasın", `lock` kilitli bölge ve dükkânın rütbe kilidi, `compass` haritanın sol alt köşesi, `buoy` haritada derin ortanın şamandıraları, `anchor` "Kıyıya dön" düğmesi, `signpost` haritada kapalı çitin tabelası. |
 | `ground_tiles` | `assets/textures/ground/` | ✅ Zemin shader'ı (çimen, kum, kıyı yolu, kayalık): dördü birden olunca zemin onlarla çizilir (`LakeScene.GROUND_TILES`, bir karo 3 m); yoksa kodla. |
-| `gear_lures`, `gear_flies` | `assets/icons/gear/` | Dalga 3: `ItemArt.gear` (dükkânın yapay yem ve sinek kartları, dip takımı); `bell` dip zili çalınca ipucu ve bildirimde. Yoksa kodla çizilen ikon. |
-| `technique_icons` | `assets/icons/ui/` | Dalga 3: teknik düğmesi ve takım çantası (`GameIcon.ART_NAMES`'e eklenecek). Yoksa kodla çizilen ikon. |
-| `catch_items` | `assets/icons/items/` | Dalga 3: tuzaktan ve dip avından çıkan kerevit ve çöp; mesajlı şişe ve anahtar Dalga 4'ün hikâyesinde. |
+| `gear_lures`, `gear_flies` | `assets/icons/gear/` | ✅ `ItemArt.gear`: dükkânın yapay yem, sinek ve kurşun kartları, yem sepeti, takım çantasının karoları; `bell` dipte koşuda sehpanın üstündeki 2B zil (`BellMark`). Yoksa kodla çizilen ikon. |
+| `technique_icons` | `assets/icons/ui/` | ✅ `GameIcon.ART_NAMES` (`tech_float`, `tech_spin`, `tech_bottom`, `tech_fly`, `tech_trap`, `tackle_bag`): sol alttaki teknik düğmesi, Takım Çantası'nın başlığı ve karoları, dükkânın başlığındaki teknik düğmeleri, "Yeni teknik" ve tuzak bildirimleri. Yoksa kodla çizilen ikon. |
+| `catch_items` | `assets/icons/items/` | ✅ `ItemArt.item`: kerevit (defter, kart, tuzak rozeti). Çöp (çizme, şişe) ve hikâye eşyaları (mesajlı şişe, anahtar) Dalga 4'te. |
