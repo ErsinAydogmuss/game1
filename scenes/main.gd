@@ -53,6 +53,9 @@ const FOCUS_SHARE := 0.45
 ## taşar.
 const FAR_PITCH := deg_to_rad(45.0)
 const FAR_MAX_ZOOM := 1.3
+## Sinekte takım akıntıda balıkçının önünde, 6–12 m'de: aynı çerçeve, eğim şamandıranınki gibi
+## (LINE_PITCH), kamera en çok FLY_MAX_ZOOM kadar uzaklaşır (sinek küçük; uzaktan seçilmez).
+const FLY_MAX_ZOOM := 1.15
 const FAR_LOW := -0.5
 const FAR_HIGH := 0.8
 
@@ -918,7 +921,7 @@ func _present(delta: float) -> void:
 	var far := _far_frame()
 	var pitch := FollowCamera.PITCH
 	if far.x >= 0.0:
-		pitch = FAR_PITCH
+		pitch = _far_pitch()
 	elif line_view:
 		pitch = LINE_PITCH
 	camera.pitch = lerpf(camera.pitch, pitch, minf(1.0, delta * 2.5))
@@ -1043,19 +1046,27 @@ func _line_point() -> Vector2:
 	return session.bobber
 
 
-## Dipte olta suda: kameranın çerçevesi (odağın balıkçıyla takım arasındaki yoldaki payı, zoom;
-## eğim FAR_PITCH). Takım (ya da çekişmedeki balık) uzaktaysa kamera uzaklaşır; yakınsa eskisi gibi.
-## Dip değilse ya da olta suda değilse (-1, 1).
+## Uzağa atılan teknikte (dip, sinek) olta suda: kameranın çerçevesi (odağın balıkçıyla takım
+## arasındaki yoldaki payı, zoom; eğim _far_pitch). Takım (ya da çekişmedeki balık) uzaktaysa kamera
+## uzaklaşır, balıkçı ipucu çubuğunun üstünde kalır; yakınsa eskisi gibi. Başka teknikte ya da olta
+## suda değilse (-1, 1).
 func _far_frame() -> Vector2:
-	if session.technique.id != "bottom" or not (session.line_out() or session.state == FishingSession.State.LOST):
+	var technique := session.technique.id
+	if not technique in ["bottom", "fly"] or not (session.line_out() or session.state == FishingSession.State.LOST):
 		return Vector2(-1.0, 1.0)
 	var fighting := session.state == FishingSession.State.FIGHTING
 	var base := FIGHT_ZOOM if fighting else 1.0
 	var ahead := (_line_point() - angler.pos2()).dot(FollowCamera.screen_up())
 	if ahead < 1.0:
 		return Vector2(FOCUS_SHARE, base)
-	var view := FollowCamera.fit(ahead, FAR_PITCH, FOCUS_SHARE, base, FAR_MAX_ZOOM, FAR_LOW, FAR_HIGH)
+	var max_zoom := maxf(base, FAR_MAX_ZOOM if technique == "bottom" else FLY_MAX_ZOOM)
+	var view := FollowCamera.fit(ahead, _far_pitch(), FOCUS_SHARE, base, max_zoom, FAR_LOW, FAR_HIGH)
 	return Vector2(view.x / ahead, view.y)
+
+
+## Uzağa atılan teknikte kameranın eğimi: dipte yatık (FAR_PITCH), sinekte şamandıranınki gibi.
+func _far_pitch() -> float:
+	return FAR_PITCH if session.technique.id == "bottom" else LINE_PITCH
 
 
 ## Efsanevi (ve üstü) bir gölge yaklaşınca Dede bir kez haber verir: sözü, kısa ezgi, titreşim ve

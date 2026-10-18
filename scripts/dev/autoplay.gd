@@ -1135,7 +1135,7 @@ func _play_fly() -> void:
 	await _wait_frames(3)
 	await _wait(0.3)
 	var where := bag.find_child("Button_fly", true, false) as Button
-	var where_ok := where != null and where.text == tr("UI_TECH_fly_WHERE")
+	var where_ok := where != null and where.text == UiKit.upper(tr("UI_TECH_fly_WHERE"))
 	if where != null:
 		await _tap_control(where)
 		await _wait_frames(3)

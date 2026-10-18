@@ -8,9 +8,11 @@ extends Node3D
 signal left(at: Vector2)
 signal landed(at: Vector2)
 
-## Sıçrayışın süresi (sn) ve yüksekliği (balığın boyuna göre, m).
+## Sıçrayışın süresi (sn) ve yüksekliği (m; balığın boyunun yarısı da eklenir). Balık elde
+## gösterilen boyunun SCALE katı: yukarıdan bakan kamerada seçilsin (gölgeler de iri çizilir).
 const TIME := 0.62
-const HEIGHT := 0.55
+const HEIGHT := 0.8
+const SCALE := 1.5
 
 var _fish: FishMesh
 var _from := Vector3.ZERO
@@ -24,7 +26,7 @@ func jump(def: Dictionary, size_cm: int, at: Vector2, heading: Vector2) -> void:
 	if _age >= 0.0:
 		return
 	clear()
-	var length := FishMesh.display_length(size_cm)
+	var length := FishMesh.display_length(size_cm) * SCALE
 	_fish = FishMesh.make(def, length)
 	_fish.set_wiggle(0.3, 16.0)
 	_fish.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

@@ -8,8 +8,9 @@ extends Node3D
 ##   (drag_to) titreşir ve parlar, durunca (sink) batar: yalnızca soluk izi kalır.
 ## - Kurşun (dip): uçarken ve geri sarılırken küçük koyu bir ağırlık; suda dipte durur, görünmez:
 ##   misina suya girdiği yerde biter (line_point).
-## - Sinek: kahve gövdeli, sarı kanatlı küçük kuru sinek (telefonda seçilsin diye iri); suyun yüzünde
-##   hafifçe sallanarak akıntıyla sürüklenir (drag_to), halkada suya çekilir (go_under).
+## - Sinek: koyu gövdeli kuru sinek; yukarıdan bakan kamerada suyun üstünde beyaz bir nokta olarak
+##   seçilsin diye beyaz dik tüylü (paraşüt sineği) ve gerçeğinden çok iri. Suyun yüzünde hafifçe
+##   sallanarak akıntıyla sürüklenir (drag_to), halkada suya çekilir (go_under).
 ## Kare başı konum _process'te hesaplanır (Tween yok).
 
 enum Look { HIDDEN, FLYING, FLOATING, UNDER, FIGHT, RETURNING }
@@ -21,8 +22,8 @@ const DIP := 0.4 * RADIUS * 2.0
 const LURE_LENGTH := 0.24
 ## Yem batınca inme (m; su opak: üstü suyun hemen altında kalır).
 const LURE_SINK := 0.045
-## Sineğin boyu (m; gerçeğinden çok iri).
-const FLY_LENGTH := 0.12
+## Sineğin boyu (m; gerçeğinden çok iri: şamandıra 0,3, yem 0,24).
+const FLY_LENGTH := 0.22
 
 var look: Look = Look.HIDDEN
 ## Çekişmede balığın yeri (FIGHT).
@@ -73,14 +74,17 @@ func _ready() -> void:
 	Props.sphere(_sinker_part, 0.05, Vector3.ZERO, Color("#5d646c"), 10, 5, Vector3(0.8, 1.15, 0.8))
 	Props.cylinder(_sinker_part, 0.012, 0.012, 0.03, Vector3(0, 0.07, 0), Color("#9aa3ad"), 5)
 	MeshBatch.merge(_sinker_part)
-	# Sinek: koyu gövde, açık sarı kanat (dik tüy), kırmızı kuyruk teli (tek ağ).
+	# Sinek: koyu gövde; üstünde çevresi açık kahve tüy halkalı beyaz dik tüy (yukarıdan beyaz bir
+	# nokta), kırmızı kuyruk teli (tek ağ).
 	_fly_part = Node3D.new()
 	_fly_part.name = "Fly"
 	add_child(_fly_part)
-	Props.sphere(_fly_part, FLY_LENGTH * 0.5, Vector3.ZERO, Color("#6b4423"), 10, 5, Vector3(0.32, 0.3, 1.0))
-	Props.sphere(_fly_part, FLY_LENGTH * 0.34, Vector3(0, FLY_LENGTH * 0.28, -FLY_LENGTH * 0.12), Color("#ffe066"), 10,
-			5, Vector3(0.9, 0.9, 0.35))
-	Props.cylinder(_fly_part, 0.006, 0.004, FLY_LENGTH * 0.7, Vector3(0, 0.0, FLY_LENGTH * 0.75), Color("#e63946"), 4,
+	Props.sphere(_fly_part, FLY_LENGTH * 0.5, Vector3.ZERO, Color("#5a3a1e"), 10, 5, Vector3(0.3, 0.28, 1.0))
+	Props.sphere(_fly_part, FLY_LENGTH * 0.34, Vector3(0, FLY_LENGTH * 0.1, -FLY_LENGTH * 0.12), Color("#d9a35b"), 12, 3,
+			Vector3(1.0, 0.2, 1.0))
+	Props.sphere(_fly_part, FLY_LENGTH * 0.2, Vector3(0, FLY_LENGTH * 0.3, -FLY_LENGTH * 0.12), Color("#fffaf0"), 10, 5,
+			Vector3(0.85, 1.3, 0.85))
+	Props.cylinder(_fly_part, 0.008, 0.005, FLY_LENGTH * 0.7, Vector3(0, 0.0, FLY_LENGTH * 0.75), Color("#e63946"), 4,
 			Vector3(deg_to_rad(90.0), 0, 0))
 	MeshBatch.merge(_fly_part)
 	_glint = Props.sphere(self, 0.05, Vector3(0, 0.05, 0), Color("#ffffff"), 8, 4)
