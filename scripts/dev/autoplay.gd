@@ -694,7 +694,7 @@ func _play_rarity() -> void:
 	await _wait(0.4)
 	await _shot("23_defter_alabalik")
 	var trout_text := _texts_in(book)
-	_check("alabalığın ipucu sineği söyler", trout_text.contains(tr("UI_BOOK_FLY_HINT") % tr("GEAR_fly_nymph"))
+	_check("alabalığın ipucu sineği söyler", trout_text.contains(tr("UI_BOOK_FLY_HINT").split("%")[0])
 			and trout_text.contains(tr("UI_TECH_fly")))
 	_check("defter ekrana sığar (%.2f)" % book.fit_scale(), book.fit_scale() > 0.75)
 	book.close_panel()

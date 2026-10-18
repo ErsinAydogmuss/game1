@@ -340,7 +340,7 @@ func _trap_table(db: ContentDB, zone: Dictionary, lines: PackedStringArray) -> v
 		var f := db.fish_by_id(id)
 		var span: Vector2i = f["size_cm"]
 		lines.append("| %s | %s | %s | %d–%d | %s |" % [_name("FISH_" + id), _name("RARITY_" + db.rarity_id(int(f["rarity"]))),
-				_percent(Dice.PPM * maxi(0, weights[i]) / maxi(1, total)), Economy.fish_value(db, id, span.x),
+				_percent(roundi(float(Dice.PPM) * maxi(0, weights[i]) / maxi(1, total))), Economy.fish_value(db, id, span.x),
 				Economy.fish_value(db, id, span.y), _number(_mean_value(db, id))])
 	lines.append("")
 

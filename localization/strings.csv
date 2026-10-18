@@ -62,7 +62,7 @@ UI_DEDE_TIP_4,A big shadow means a big fish.,"Büyük gölge, büyük balık dem
 UI_DEDE_TIP_5,This lake has a secret... I'll tell you one day.,Bu gölün bir sırrı var... Bir gün anlatırım.
 UI_DEDE_TIP_6,"Be patient, kid. The lake is generous.","Sabırlı ol evlat, göl cömerttir."
 UI_DEDE_TIP_SPIN,"Stop and go, kid: predators strike a lure that pauses.","Dur-kalk yap evlat: yırtıcı en çok duran yeme saldırır."
-UI_DEDE_TIP_TRAP,"A trap fills while you're away, but holds four crayfish at most.","Tuzak sen yokken de dolar, ama dört kereviti geçmez."
+UI_DEDE_TIP_TRAP,"A trap fills while you're away, but holds %d crayfish at most.","Tuzak sen yokken de dolar, ama %d kereviti geçmez."
 UI_DEDE_TIP_BOTTOM,A feeder draws fish to your bait faster.,Yem sepeti balığı yemin çevresine daha çabuk toplar.
 UI_DEDE_TIP_FLY,"Trout leap when they thrash. Let go then, or the line snaps.","Alabalık çırpınınca sudan sıçrar. O an bırak, misina kopmasın."
 UI_EARLY,Too early!,Erken davrandın!
@@ -347,7 +347,7 @@ UI_HINT_FLY_RISE,A ring! Strike now!,Halka! Hemen VUR!
 UI_DEDE_TECH_OPEN_fly,"Trout rise to flies, kid. Nana sells fly rods!","Alabalık sineğe çıkar evlat. Nine sinek kamışı satıyor!"
 UI_DEDE_TECH_FIRST_fly,"Cast on the current and let the fly drift. Strike at the ring!","Akıntıya at, sinek süzülsün. Halka çıkınca VUR!"
 UI_DEDE_SUGGEST_reeds,"Tench and carp feed on the bottom here, kid. Try ledgering!","Sazlıkta kadife ile sazan dipte beslenir evlat. Dip dene!"
-UI_DEDE_SUGGEST_lily_cove,"Pike lurk among the lilies, kid. They strike a moving lure!","Nilüferlerde turna pusuda evlat. Oynayan yeme saldırır!"
+UI_DEDE_SUGGEST_lily_cove,"Pike lurk among the lilies, kid. Try spinning!","Nilüferlerde turna pusuda evlat. Spin dene!"
 UI_DEDE_SUGGEST_rocky_point,"Zander hunt by the rocks, kid. Spin a lure, stop and go!","Kayalıkta sudak avlanır evlat. Spin dene, dur-kalk yap!"
 UI_DEDE_SUGGEST_deep_water,"Catfish and sturgeon roam the deep, kid. Try ledgering!","Yayın ile mersin derinin dibinde gezer evlat. Dip dene!"
 UI_DEDE_SUGGEST_stream_mouth,"Try a fly here, kid. Trout rise in the current.","Burada sinek dene evlat. Alabalık akıntıda çıkar."

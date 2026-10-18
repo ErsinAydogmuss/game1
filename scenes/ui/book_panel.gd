@@ -295,7 +295,7 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, 
 	for t: String in ContentDB.TECHNIQUES:
 		if db.has_technique(t) and db.affinity(fish_id, t) > 0.0:
 			techniques.append(t)
-	var favourite := _favourite(db, fish_id, techniques)
+	var favourite := _favourite(db, spot, fish_id, techniques)
 	if not favourite.is_empty():
 		out.append(UiKit.translate(FAVOURITE_KEYS[str(db.gear_item(favourite)["category"])]) \
 				% UiKit.translate("GEAR_" + favourite))
@@ -333,22 +333,28 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, 
 	return out
 
 
-## Türü en çok çeken yem, yapay yem ya da sinek (türün tekniklerinin kullandığı; eşitlikte teknik ve
-## gear.json sırasıyla ilki; çeken yoksa "").
-static func _favourite(db: ContentDB, fish_id: String, techniques: PackedStringArray) -> String:
+## Türün en sevdiği yem, yapay yem ya da sinek: türün tekniklerinin kullandığı yuvalardan, türü en sık
+## getiren (gölün bölgelerinde, o teknikle, CatchOdds ile: başka türleri de çeken yem türün payını
+## düşürebilir). Yemsiz en iyi orandan yüksek değilse "" (eşitlikte teknik ve gear.json sırasıyla ilki).
+static func _favourite(db: ContentDB, spot: String, fish_id: String, techniques: PackedStringArray) -> String:
+	var places := db.zones_of(spot)
+	if places.size() <= 1:
+		places = [db.spot(spot)]
 	var best_id := ""
-	var best := 1.0
-	var seen := PackedStringArray()
+	var best := 0
+	for t in techniques:
+		for place in places:
+			best = maxi(best, int(CatchOdds.species_ppm(db, place, { "technique": t }).get(fish_id, 0)))
 	for t in techniques:
 		for slot in db.slots_for(t):
-			if not FAVOURITE_KEYS.has(slot) or slot in seen:
+			if not FAVOURITE_KEYS.has(slot):
 				continue
-			seen.append(slot)
 			for g in db.gear_in(slot):
-				var mult := float((g["attract"] as Dictionary).get(fish_id, 1.0))
-				if mult > best:
-					best = mult
-					best_id = str(g["id"])
+				for place in places:
+					var ppm := int(CatchOdds.species_ppm(db, place, { "attract": g["attract"], "technique": t }).get(fish_id, 0))
+					if ppm > best:
+						best = ppm
+						best_id = str(g["id"])
 	return best_id
 
 

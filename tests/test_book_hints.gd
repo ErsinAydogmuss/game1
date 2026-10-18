@@ -40,16 +40,38 @@ func test_trap_fish_names_the_trap_zones() -> void:
 			"yaşadığı yer tuzağınkiyle aynı, yinelenmez: %s" % text)
 
 
-## Sevdiği yem türün tekniklerinin yuvalarından: alabalık için sinek (nimf), tatlısu kefali için yapay
-## yem (su üstü yemi, karidesten çok çeker), sazan için yem.
-func test_favourite_comes_from_the_fish_techniques() -> void:
+## Sevdiği yem türün tekniklerinin yuvalarından ve türü en sık getireni: alabalık için sinek, sudak için
+## yapay yem (spinle, sudağı karidesli şamandıradan sık getirir), sazan için yem; kereviti çeken yok.
+## Başka türleri de çeken yem türün payını düşürebilir: seçilen, o yuvadaki her yemden en az onun kadar
+## getirir.
+func test_favourite_brings_the_fish_most() -> void:
 	var db := content()
-	var save := SaveData.create_new(0)
-	var cases := {
-		"trout": UiKit.translate("UI_BOOK_FLY_HINT") % UiKit.translate("GEAR_fly_nymph"),
-		"chub": UiKit.translate("UI_BOOK_LURE_HINT") % UiKit.translate("GEAR_lure_popper"),
-		"carp": UiKit.translate("UI_BOOK_BAIT_HINT") % UiKit.translate("GEAR_bait_corn"),
-	}
-	for id: String in cases:
-		var text := "\n".join(BookPanel.hints(db, save, db.main_spot, id))
-		assert_true(text.contains(str(cases[id])), "%s: %s" % [id, text])
+	var spot := db.main_spot
+	var categories := { "trout": "fly", "zander": "lure", "carp": "bait" }
+	for id: String in categories:
+		var favourite := BookPanel._favourite(db, spot, id, _techniques(db, id))
+		assert_eq(str(db.gear_item(favourite).get("category", "")), str(categories[id]), "%s: %s" % [id, favourite])
+	assert_eq(BookPanel._favourite(db, spot, "crayfish", _techniques(db, "crayfish")), "", "kereviti çeken yem yok")
+	var trout := BookPanel._favourite(db, spot, "trout", _techniques(db, "trout"))
+	for g in db.gear_in("fly"):
+		assert_true(_best_ppm(db, spot, "trout", g) <= _best_ppm(db, spot, "trout", db.gear_item(trout)),
+				"%s alabalığı %s'dan sık getirmez" % [g["id"], trout])
+	var text := "\n".join(BookPanel.hints(db, SaveData.create_new(0), spot, "trout"))
+	assert_true(text.contains(UiKit.translate("UI_BOOK_FLY_HINT") % UiKit.translate("GEAR_" + trout)), text)
+
+
+static func _techniques(db: ContentDB, fish_id: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	for t: String in ContentDB.TECHNIQUES:
+		if db.affinity(fish_id, t) > 0.0:
+			out.append(t)
+	return out
+
+
+## Yemle türün gölün bölgelerindeki en yüksek oranı (yemin tekniğiyle).
+static func _best_ppm(db: ContentDB, spot: String, fish_id: String, item: Dictionary) -> int:
+	var best := 0
+	var technique := db.slot_technique(str(item["category"]))
+	for z in db.zones_of(spot):
+		best = maxi(best, int(CatchOdds.species_ppm(db, z, { "attract": item["attract"], "technique": technique }).get(fish_id, 0)))
+	return best

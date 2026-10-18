@@ -783,7 +783,10 @@ func _on_catch() -> void:
 	# Rütbe atlama, kova dolu gibi bildirimler balığın etiketi sönünce (üst üste binmesin).
 	hud.hold_toasts(CatchFx.HOLD_TIME)
 	zone_news = _after_rank(ranked)
-	# Bölgenin önerdiği teknik (Dede bir kez; yeni haber varsa sonraki balıkta).
+	# Bölgenin önerdiği teknik (Dede bir kez; yeni haber varsa sonraki balıkta). Oyuncu orada o teknikle
+	# tuttuysa öneriye gerek kalmadı.
+	if technique == str(db.zone(spot_id, zone_id).get("suggest", "")):
+		save.flags[Elder.SUGGEST_FLAG % zone_id] = true
 	var suggestion := "" if zone_news else Elder.suggestion(db, save, spot_id, zone_id, technique)
 	if protected:
 		hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
@@ -1745,7 +1748,7 @@ func _on_talk() -> void:
 		return
 	var tips := Elder.tips(GameState.db, GameState.save)
 	_tip_index = _tip_index % tips.size() + 1
-	_say(tips[_tip_index - 1])
+	_say(tips[_tip_index - 1], "dede", Elder.tip_args(GameState.db, tips[_tip_index - 1]))
 	Sounds.haptic(10)
 
 

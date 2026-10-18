@@ -152,7 +152,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
   İyi ve yavaş oyuncu her balığı tutar. Kolay modda hep basılı tutan da tutar.
 - **Sinek takımıyla** (balık 3–5,5 m'de takılır; `test_reel_model` sinek korkuluğu): iyi oyuncu alabalığı ilk sinek kamışıyla ~6 sn'de, dere alabalığını ~8 sn'de tutar. Balık yakında takıldığı için hep basılı tutmak kolay olurdu; bu yüzden alabalıklar takılır takılmaz çırpınır (`fight.first_burst` 0,8–1,1 sn, öteki balıklarda 1,6–2,4). Hep basılı tutan en iyi sinek takımıyla alabalığı en çok ~%10 tutar, dere alabalığını tutamaz (ilk ayarda %62 ve %52'ydi).
-- **Tekniklere göre** (v0.4; `tools/reel_report.gd -- --technique=spin|bottom|fly`): balık oyunda ölçülen uzaklıkta takılır (`sim.json` `start_m`; `session_timing.gd` ölçer): şamandırada 4–9 m, spinde 3,3–8 m, dipte 9,3–15,7 m, sinekte 3,2–5,6 m. Tekniğin ilk kamışı, başlangıç makarası ve misinası; iyi oyuncu (0,4 sn tepki), 1–3★, ortalama süre:
+- **Tekniklere göre** (v0.4; `tools/reel_report.gd -- --technique=spin|bottom|fly`): öteki tekniklerde balık oyunda ölçülen uzaklıkta takılır (`sim.json` `start_m`; `session_timing.gd` ölçer): spinde 3,3–8 m, dipte 9,3–15,7 m, sinekte 3,2–5,6 m. Şamandıra sütunu yukarıdaki tablonun (raporun Dalga 1'den beri sabit 4–9 m'si; oyunda ölçülen 2,7–7,5 m). Tekniğin ilk kamışı, başlangıç makarası ve misinası; iyi oyuncu (0,4 sn tepki), 1–3★, ortalama süre:
 
 | Balık | Şamandıra | Spin | Dip | Sinek |
 |---|---|---|---|---|
@@ -175,7 +175,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
   - İyi ve yavaş oyuncu takımın taşıdığı her balığı her teknikte tutar. En iyi takımla süreler ~%35–40 kısalır (spinde turna 6,4, yayın 8,0 sn; dipte sazan 12,3, yayın 16,7, mersin 17,8 sn; sinekte alabalık 4,4, dere alabalığı 5,8 sn).
   - Hep basılı tutan ilk kamışla iri türleri tutamaz; spinde levrek %66, tatlısu kefali %94; dipte uzak takılma yüzünden levrek %26, çapak %49.
-  - **Değerlendirme:** spin ve sinek şamandıradan biraz kısa (balık yakında takılır). Dipte balık uzakta takılır, çekişme şamandıradakinin ~1,7 katı: yayın 26 sn, mersin 28 sn (hedef 14–20 sn'nin üstünde). 8. adımda (Denge) dip kamışlarının sarması ya da takılma uzaklığı gözden geçirilecek.
+  - **Değerlendirme:** spin ve sinek şamandıra sütunundan biraz kısa; bunun bir kısmı uzaklık farkından (şamandıra sütunu 4–9 m'den, oyunda şamandırada balık 2,7–7,5 m'de takılır). Dipte balık uzakta takılır, çekişme şamandıradakinin ~1,7 katı: yayın 26 sn, mersin 28 sn (hedef 14–20 sn'nin üstünde). 8. adımda (Denge) dip kamışlarının sarması ya da takılma uzaklığı gözden geçirilecek.
 - **Takımla** (H2, `GearStats`): başlangıç takımı yukarıdaki bambu oltayla aynıdır. En iyi şamandıra takımıyla (`tools/reel_report.gd -- --gear=top`):
 
 | Balık | İyi oyuncu (0,4 sn): başlangıç → en iyi takım | Hep basılı, en iyi takım (Normal) |
@@ -277,7 +277,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 **Doğma ağırlıkları** bölgenin (`data/spots.json`). İskele koyu: kızılkanat 26, gümüş balığı 14, çapak 10, sazan 20, levrek 18, turna 8, yayın 4 (Ersin'in seçimi: turna ve yayın kalsın ama az çıksın). Bölgelerin yıldız balıkları (sudak, altın sazan, mersin) başlangıç koylarında çıkmaz. Testlerin gölünde 35/25/17/15/8.
 
-**Sevdiği yem:** kurtçuk levrek ve gümüş balığı, ekmek hamuru sazan, levrek ve çapak, mısır sazan, kadife ve altın sazan, boili sazan, yayın, altın sazan ve çapak, karides yayın, turna, sudak ve tatlısu kefali. Mersin hiçbir yeme gelmez, ama dipte 1,5 kat sık gelir. **Sevdiği yapay yem** (spin): kaşık ve döner kaşık levrek (döner kaşık tatlısu kefali de), silikon yem sudak, maket balık turna, su üstü yemi tatlısu kefali ve turna, altın kaşık turna, sudak ve yayın. **Sevdiği sinek:** kuru sinek ve nimf alabalık (nimf tatlısu kefali de), streamer dere alabalığı. Defter tutulmamış türün en sevdiğini (türün tekniklerinin yemi, yapay yemi ya da sineği) ipucu olarak söyler.
+**Sevdiği yem:** kurtçuk levrek ve gümüş balığı, ekmek hamuru sazan, levrek ve çapak, mısır sazan, kadife ve altın sazan, boili sazan, yayın, altın sazan ve çapak, karides yayın, turna, sudak ve tatlısu kefali. Mersin hiçbir yeme gelmez, ama dipte 1,5 kat sık gelir. **Yapay yemlerin çektiği** (spin): kaşık levrek ×1,3; döner kaşık levrek ×2, tatlısu kefali ×1,6; silikon yem sudak ×2,2, levrek ×1,4; maket balık turna ×2,2, sudak ×1,5; su üstü yemi tatlısu kefali ×2,2, turna ×1,8; altın kaşık turna ×2,5, sudak ×2, yayın ×1,6. **Sineklerin çektiği:** kuru sinek alabalık ×1,2; nimf alabalık ×1,6, tatlısu kefali ×1,5; streamer dere alabalığı ×2,2, alabalık ×1,2. Defter tutulmamış türün en sevdiğini ipucu olarak söyler: türün tekniklerinin yemlerinden, yapay yemlerinden ve sineklerinden türü gölde en sık getireni (başka türleri de çeken yem türün payını düşürebilir: en büyük çarpan her zaman en iyisi değil).
 
 **Dalga 3 türleri** sona eklenir ve şamandırayla gelmez: şamandıranın oranları, kataloğu ve altın testi değişmez. ✅ Aynalı sazan yalnızca dipte (sazlıkta 6, derin ortada 60 ağırlık). ✅ Alabalık ve dere alabalığı dere ağzında (30 ve 4 ağırlık): sinekle (yatkınlık 1), az da spinle (0,6 ve 0,4). Çekişmede çırpınınca sudan sıçrarlar (`fight.jumps`; yalnızca görünüş). ✅ Kerevit tuzakta (sazlık ve kayalık burun) ve az da dipte (yatkınlık 0,5; 8 ağırlık).
 
@@ -503,18 +503,18 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - **Kerevit:** Sıradan, 6 para, 6–14 cm. Tuzak tablosu sazlıkta ve kayalık burunda; dipte de arada gelir (sazlık ve kayalık burunda %3–15), şamandırayla gelmez.
   - **Açılış:** rütbe 3'te bildirim ("Yeni: kerevit tuzağı!", tuzağın ikonuyla), Dede "Kerevit tuzağa kendi girer evlat. Nine tuzak satıyor!" der, teknik düğmesi nabız gibi atar. Aynı anda bir bölge (rütbe 3'te nilüferli koy) ya da teknik açılırsa Dede önce onu söyler; tuzağın sözü sonraki balıkta (tuzak o zamana dek alınmadıysa).
   - **Sesler:** bırakma (iri plop, tel kafes tıkırtısı, batan kabarcıklar) ve toplama (şıpırtı, damlalar, kerevitlerin tıkırtısı); her birinin titreşimi var.
-- ✅ **Dede'nin bölge önerileri** (v0.4; `spots.json` `suggest`): her bölgenin öne çıkan tekniği. Orada başka bir teknikle balık tutana Dede bir kez söyler (tekniğin rütbesi gelmişse; kamışı henüz alınmadıysa da: Nine'ye yönlendirir):
+- ✅ **Dede'nin bölge önerileri** (v0.4; `spots.json` `suggest`): her bölgenin öne çıkan tekniği. Orada başka bir teknikle balık tutana Dede bir kez söyler (tekniğin rütbesi gelmişse; kamışı henüz alınmadıysa oyuncu Nine'den alır). Oyuncu orada önerilen teknikle balık tuttuysa öneri söylenmez:
 
 | Bölge | Öneri | Dede |
 |---|---|---|
 | Sazlık | dip | "Sazlıkta kadife ile sazan dipte beslenir evlat. Dip dene!" |
-| Nilüferli koy | spin | "Nilüferlerde turna pusuda evlat. Oynayan yeme saldırır!" |
+| Nilüferli koy | spin | "Nilüferlerde turna pusuda evlat. Spin dene!" |
 | Kayalık burun | spin | "Kayalıkta sudak avlanır evlat. Spin dene, dur-kalk yap!" |
 | Dere ağzı | sinek | "Burada sinek dene evlat. Alabalık akıntıda çıkar." |
 | Derin orta | dip | "Yayın ile mersin derinin dibinde gezer evlat. Dip dene!" |
 
   İskele koyunun önerisi yok (her şeyden biraz). Öneri, yakalayıştan sonraki sözlerin sırasında kova ve yeni bölge haberinden sonra gelir.
-- ✅ **Dede'nin teknik öğütleri** (v0.4): Dede'ye dokununca söylediği 6 öğüdün arasına, rütbesi gelmiş tekniklerin öğütleri açıldıkları sırayla girer (`Elder.tips`): spin "Dur-kalk yap evlat: yırtıcı en çok duran yeme saldırır.", tuzak "Tuzak sen yokken de dolar, ama dört kereviti geçmez.", dip "Yem sepeti balığı yemin çevresine daha çabuk toplar.", sinek "Alabalık çırpınınca sudan sıçrar. O an bırak, misina kopmasın." Rütbe 1'de öğütler eskisi gibi.
+- ✅ **Dede'nin teknik öğütleri** (v0.4): Dede'ye dokununca söylediği 6 öğüdün arasına, rütbesi gelmiş tekniklerin öğütleri açıldıkları sırayla girer (`Elder.tips`): spin "Dur-kalk yap evlat: yırtıcı en çok duran yeme saldırır.", tuzak "Tuzak sen yokken de dolar, ama 4 kereviti geçmez." (sayı kurallardan), dip "Yem sepeti balığı yemin çevresine daha çabuk toplar.", sinek "Alabalık çırpınınca sudan sıçrar. O an bırak, misina kopmasın." Rütbe 1'de öğütler eskisi gibi.
 - ✅ **Takım Çantası** (teknik düğmesi): her teknik bir karo: ikonu, adı, nasıl oynandığı, kuşanılmış kamışı ve küçük takımı (makara ve misina her teknikte ortak). Karonun düğmesi: ELİNDE, SEÇ, NİNE'DE (dükkân o tekniğin Kamış sekmesinde açılır), rütbe kilidi ya da (kamışı var ama bu bölgede avlanılmıyorsa) "Dere ağzında". Teknik seçilince bildirim çıkar; gölgeler panel açıkken yeniden doğar.
 
 ### 10.4 Dükkân, takım ve para

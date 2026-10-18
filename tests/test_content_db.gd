@@ -278,7 +278,8 @@ func test_translation_rows_are_complete() -> void:
 		assert_true(row.size() >= 3 and not row[1].is_empty() and not row[2].is_empty(), "EN/TR metni boş: " + key)
 
 
-## Biçimli metinlerde İngilizcesi ve Türkçesi aynı yer tutucuları taşır (%s, %d; sırası dilde değişebilir).
+## Biçimli metinlerde İngilizcesi ve Türkçesi aynı yer tutucuları aynı sırayla taşır (%s, %d): GDScript'in
+## % işlecinde sıra numarası yok, yer değiştiren yer tutucu çalışırken hata verir.
 func test_translation_placeholders_match() -> void:
 	var table := _read_translations()
 	var regex := RegEx.create_from_string("%[sd%]")
@@ -292,8 +293,6 @@ func test_translation_placeholders_match() -> void:
 		var tr_marks := PackedStringArray()
 		for m in regex.search_all(row[2]):
 			tr_marks.append(m.get_string())
-		en.sort()
-		tr_marks.sort()
 		assert_eq(tr_marks, en, "yer tutucular aynı değil: " + key)
 
 

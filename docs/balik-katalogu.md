@@ -278,7 +278,7 @@ belli olur. Tuzaktan gelen balık şans garantisi sayaçlarını ilerletmez.
 
 ### Nilüferli Koy (`lily_cove`; rütbe 3)
 
-Dede'nin önerisi: spin ("Nilüferlerde turna pusuda evlat. Oynayan yeme saldırır!").
+Dede'nin önerisi: spin ("Nilüferlerde turna pusuda evlat. Spin dene!").
 
 #### Şamandıra
 

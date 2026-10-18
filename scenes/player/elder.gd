@@ -51,17 +51,29 @@ static func tips(db: ContentDB, save: SaveData) -> PackedStringArray:
 	return out
 
 
+## Öğüdün değerleri (biçimli söz): tuzağınki en çok kaç kerevit biriktiğini söyler (rules.json trap.max).
+static func tip_args(db: ContentDB, key: String) -> Array:
+	return [db.rules.trap_max] if key == str(TECH_TIPS["trap"]) else []
+
+
 ## Bölgenin önerdiği teknik (spots.json suggest: sazlıkta ve derin ortada dip, nilüferli koyda ve
 ## kayalıkta spin, dere ağzında sinek): orada başka bir teknikle balık tutana Dede bir kez söyler.
-## Tekniğin rütbesi gelmiş (kamışı alınmamış olsa da: Nine'ye yönlendirir), bölgede avlanılıyor, o
-## bölgede söylenmemiş. Sözün anahtarı ya da "".
+## Tekniğin rütbesi gelmiş (kamışı alınmamışsa oyuncu Nine'den alır), bölgede avlanılıyor, o bölgede
+## söylenmemiş ve oyuncu orada o teknikle balık tutmamış (main bayrağı o zaman da koyar). Sözün
+## anahtarı ya da "".
 static func suggestion(db: ContentDB, save: SaveData, spot_id: String, zone_id: String, technique: String) -> String:
 	var suggest := str(db.zone(spot_id, zone_id).get("suggest", ""))
-	if suggest.is_empty() or suggest == technique or not db.has_technique(suggest) \
-			or save.flags.has(SUGGEST_FLAG % zone_id) or Rank.rank(db, save) < db.technique_rank(suggest) \
+	if suggest.is_empty() or suggest == technique or not db.has_technique(suggest) or told(save, zone_id) \
+			or Rank.rank(db, save) < db.technique_rank(suggest) \
 			or not Economy.technique_allowed(db, spot_id, zone_id, suggest):
 		return ""
 	return SUGGEST_KEY % zone_id
+
+
+## Bölgenin önerisi söylendi mi (ya da gerek kalmadı mı)? Eski sürümün dere ağzı bayrağı
+## (told_fly_here, v0.4 öncesi) da sayılır: aynı söz yinelenmesin.
+static func told(save: SaveData, zone_id: String) -> bool:
+	return save.flags.has(SUGGEST_FLAG % zone_id) or (zone_id == "stream_mouth" and save.flags.has("told_fly_here"))
 
 
 func _make_body() -> Node3D:
