@@ -176,11 +176,14 @@ func press() -> void:
 		technique.press(self)
 
 
+## Parmak kalktı. Basılı değilken gelen bırakma (ayarlar, odak kaybı) tekniğe gitmez: spinde
+## duruş sayılmasın.
 func release() -> void:
+	var was := holding
 	holding = false
 	if state == State.FIGHTING:
 		reel.holding = false
-	else:
+	elif was:
 		technique.release(self)
 
 

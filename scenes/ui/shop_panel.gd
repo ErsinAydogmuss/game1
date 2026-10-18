@@ -103,6 +103,8 @@ var spot_id: String = ""
 var zone_id: String = ""
 ## Bakılan teknik (Kamış ve tekniğe özel sekme; açılışta elindeki teknik).
 var technique: String = "float"
+## Uzaktan açıldı (takım çantası): kova satılmaz.
+var _remote: bool = false
 
 
 func _build() -> void:
@@ -172,9 +174,11 @@ func _show_line() -> void:
 
 
 ## Açar: kovada balık varsa Kova sekmesi, yoksa en son bakılan takım sekmesi (ilk açılışta Kamış).
-## look: bakılacak teknik (boşsa elindeki).
-func open_shop(tab: String = "", look: String = "") -> void:
+## look: bakılacak teknik (boşsa elindeki). remote: uzaktan açıldı (takım çantası): kova
+## satılmaz, Kova sekmesinde tezgâha gelinmesi söylenir.
+func open_shop(tab: String = "", look: String = "", remote: bool = false) -> void:
 	technique = look if not look.is_empty() else GameState.save.technique
+	_remote = remote
 	if not tab.is_empty():
 		_tab = tab
 	elif not GameState.save.bucket.is_empty():
@@ -546,6 +550,10 @@ func _build_sell() -> void:
 	foot.add_child(UiKit.ink(tr("UI_SHOP_TOTAL"), UiKit.SIZE_BODY))
 	foot.add_child(GameIcon.make("coin", 64))
 	foot.add_child(UiKit.title(UiKit.format_int(Economy.bucket_value(db, save)), UiKit.SIZE_TITLE, UiKit.ACCENT))
+	if _remote:
+		# Takım çantasından (uzaktan) açıldı: satış tezgâhta.
+		foot.add_child(UiKit.ink(tr("UI_SHOP_SELL_AT_STALL"), 26, UiKit.INK_SOFT))
+		return
 	var sell := _button(tr("UI_SHOP_SELL_ALL"), UiKit.SUCCESS, _sell, Vector2(380, ACTION.y))
 	sell.name = "SellAll"
 	sell.icon = ItemArt.ui("sell")

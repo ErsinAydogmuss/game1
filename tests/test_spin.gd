@@ -187,6 +187,70 @@ func test_strike_while_released_needs_a_tap() -> void:
 	assert_eq(str(_first(lost, "lost").get("reason", "")), "missed", "neden: kaçırıldı")
 
 
+## Bırakılmışken gelen bırakma (ayarlar, odak kaybı) ve basılıyken gelen ikinci parmak ritim
+## değişimi sayılmaz: yalnızca gerçek duruş ve kalkış.
+func test_only_real_stops_and_goes_count() -> void:
+	var session := _session()
+	_to_following(session)
+	var spin := _spin(session)
+	spin.stop_ppm = Dice.PPM
+	spin.go_ppm = Dice.PPM
+	spin.steady_ppm = 0
+	_steps(session, int(0.7 * HZ))
+	# Basılıyken ikinci parmak: kalkış sayılmaz.
+	session.press()
+	assert_eq(spin.get("_changes"), 0, "ikinci parmak kalkış değil")
+	assert_eq(session.state, FishingSession.State.FOLLOWING, "saldırı yok")
+	session.release()
+	assert_eq(session.state, FishingSession.State.BITING, "gerçek duruş saldırı getirir (zar kesin)")
+	var again := _session(false, 5)
+	_to_following(again)
+	var spin2 := _spin(again)
+	spin2.stop_ppm = Dice.PPM
+	spin2.steady_ppm = 0
+	_steps(again, int(0.7 * HZ))
+	again.release()
+	var changes: int = spin2.get("_changes")
+	_steps(again, int(0.4 * HZ))
+	# Bırakılmışken yine bırakma (ayarlar düğmesi): duruş sayılmaz.
+	if again.state == FishingSession.State.FOLLOWING:
+		again.release()
+		assert_eq(spin2.get("_changes"), changes, "bırakılmışken bırakma duruş değil")
+
+
+## İlk av senaryolu: spinde VUR anı kaçsa da balık gitmez, biraz sonra yine izler (oturum kilitlenmez).
+func test_missed_first_fish_follows_again() -> void:
+	var session := FishingSession.new(content(), "home_lake", _spin_gear(), 77, false, true)
+	var scripted: FishShadow = null
+	for fish in session.sim.shadows:
+		if fish.scripted:
+			scripted = fish
+	assert_true(scripted != null, "senaryolu ilk balık var")
+	_park_all(session, scripted)
+	assert_true(session.cast(TARGET), "atış")
+	assert_true(_run_until(session, FishingSession.State.WAITING, 2.0), "yem suda")
+	scripted.pos = session.bobber + Vector2(0, 1.6)
+	scripted.heading = Vector2(0, -1)
+	session.press()
+	assert_true(_run_until(session, FishingSession.State.FOLLOWING, 8.0), "ilk balık izler")
+	var spin := _spin(session)
+	spin.stop_ppm = Dice.PPM
+	spin.steady_ppm = 0
+	_steps(session, int(0.7 * HZ))
+	session.release()
+	assert_eq(session.state, FishingSession.State.BITING, "duruşta saldırır")
+	var log: Array[Dictionary] = []
+	_steps(session, session.window + 2, log)
+	assert_true(_has(log, "retry"), "VUR kaçtı: ilk balık gitmez")
+	assert_true(_run_until(session, FishingSession.State.FOLLOWING, 3.0), "biraz sonra yine izler")
+	session.press()
+	_steps(session, int(0.7 * HZ))
+	session.release()
+	assert_eq(session.state, FishingSession.State.BITING, "yine saldırır")
+	session.press()
+	assert_eq(session.state, FishingSession.State.FIGHTING, "VUR ile takılır")
+
+
 func test_strike_while_holding_hooks_by_itself() -> void:
 	var session := _session()
 	_to_following(session)

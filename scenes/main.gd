@@ -41,6 +41,8 @@ const LEGEND_NOTICE_M := 9.0
 const LEGEND_LOOK_TIME := 3.0
 ## Çekilen yapay yemin arkasındaki iz halkalarının aralığı (sn).
 const WAKE_EVERY := 0.2
+## Takım çantasından açılan dükkânda balıkçı Nine'ye bundan uzaksa kova satılmaz (tezgâha gelinir).
+const SHOP_NEAR := 6.0
 
 var session: FishingSession
 var lake: LakeShape
@@ -156,6 +158,8 @@ func _ready() -> void:
 	_build_input()
 	_start_session()
 	_refresh_status()
+	# Eski kayıt: rütbesi çoktan gelmiş teknik de bir kez haber verilir.
+	_announce_techniques()
 	GameState.changed.connect(_on_state_changed)
 	GameState.focus_lost.connect(_on_focus_lost)
 	GameState.focus_gained.connect(func() -> void: _paused = false)
@@ -221,6 +225,7 @@ func _on_state_changed() -> void:
 		_access_rank = rank
 		session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id, in_boat))
 		_update_gates()
+		_announce_techniques()
 	session.easy = bool(GameState.setting("easy", false))
 	# Ayar çekişmenin ortasında değişirse (Ayarlar açıkken oyun donuk) süren çekişmeye de geçer.
 	if session.reel != null and session.hooked != null:
@@ -411,7 +416,7 @@ func _try_cast(target: Vector2) -> void:
 	# Çok yakına (en kısa atıştan az) dokunulduysa o yönde biraz öteye atılır: suya dokunan
 	# oyuncu "suya dokun" hatası almasın.
 	var offset := target - angler.pos2()
-	var near := session.rules.min_cast + 0.3
+	var near := session.technique.min_cast(session) + 0.3
 	if offset.length() > 0.001 and offset.length() < near:
 		target = angler.pos2() + offset.normalized() * near
 	angler.face(target - angler.pos2())
@@ -434,13 +439,16 @@ func _on_action_down() -> void:
 ## bakılır, baktığı yöne yakın ve suya iyi düşen yön seçilir.
 func _cast_dir() -> Vector2:
 	var from := angler.pos2()
+	session.angler = from
+	var shortest := session.technique.min_cast(session)
 	var best := angler.facing
 	var best_score := -INF
 	for k in 25:
 		var angle := deg_to_rad(15.0 * ((k + 1) >> 1)) * (1.0 if k % 2 == 1 else -1.0)
 		var dir := angler.facing.rotated(angle)
-		var landing := lake.landing_point(from, from + dir * FORWARD_CAST, session.range_m(), session.rules.min_shore)
-		if not Dice.is_point(landing):
+		# Takımın düşeceği yer tekniğin kuralıyla (spinde en kısa atış daha uzun).
+		var landing := session.technique.landing_point(session, from + dir * FORWARD_CAST)
+		if not Dice.is_point(landing) or from.distance_to(landing) < shortest:
 			continue
 		# Önce baktığı yöne yakın, sonra suya iyi düşen yön.
 		var score := lake.shore_distance(landing) - absf(angle)
@@ -655,16 +663,9 @@ func _on_catch() -> void:
 			zone_news = true
 			_say("UI_DEDE_ZONE_OPEN")
 			hud.pulse_map()
-		# Yeni teknik açıldı: adı ikonuyla, Dede söyler (bölgenin sözünden önemli: Nine'nin sattığı
-		# kamış), teknik düğmesi nabız gibi atar.
-		for t: String in ContentDB.TECHNIQUES:
-			var at := db.technique_rank(t)
-			if t == "float" or not db.has_technique(t) or at <= int(ranked["old_rank"]) or at > rank:
-				continue
-			hud.toast_later(tr("UI_TECH_OPEN") % tr("UI_TECH_" + t), UiKit.ACCENT, "", "tech_" + t)
+		# Yeni teknik açıldı (Dede'nin sözü bölgeninkinden önemli: Nine'nin sattığı kamış).
+		if _announce_techniques():
 			zone_news = true
-			_say("UI_DEDE_TECH_OPEN_" + t)
-			hud.pulse_technique()
 	if protected:
 		hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
 	elif not kept:
@@ -928,6 +929,9 @@ func _hint_key() -> String:
 		if not TechniqueHints.active(GameState.save, technique):
 			return ""
 		var key := TechniqueHints.key(technique, session.state)
+		# Fazla iri balıkta "basılı tut" misinayı koparır (Kolay modda yalnızca yavaş gelir).
+		if key == "UI_HINT_REEL" and session.too_big > 0 and not session.easy:
+			key = "UI_HINT_TOO_BIG"
 		if not key.is_empty():
 			return key
 		return "" if _hint_shown == _line else _hint_shown
@@ -1000,6 +1004,28 @@ func _refresh_status() -> void:
 			Rank.progress(db, save))
 	hud.map_allowed = save.catches > 0 and db.zones_of(spot_id).size() > 1
 	hud.technique_allowed = _other_technique_open()
+
+
+## Rütbesi gelmiş ama haber verilmemiş teknik (rütbe atladı ya da eski kayıt): adı ikonuyla, Dede
+## söyler, teknik düğmesi nabız gibi atar. Her teknik bir kez (flags["told_open_<teknik>"]); kamışı
+## zaten alınmışsa haber verilmez. Haber verildiyse true.
+func _announce_techniques() -> bool:
+	var db := GameState.db
+	var save := GameState.save
+	var rank := Rank.rank(db, save)
+	var told := false
+	for t: String in ContentDB.TECHNIQUES:
+		var flag := "told_open_" + t
+		if t == "float" or not db.has_technique(t) or rank < db.technique_rank(t) or save.flags.has(flag):
+			continue
+		save.flags[flag] = true
+		if Economy.technique_ready(db, save, t):
+			continue
+		hud.toast_later(tr("UI_TECH_OPEN") % tr("UI_TECH_" + t), UiKit.ACCENT, "", "tech_" + t)
+		_say("UI_DEDE_TECH_OPEN_" + t)
+		hud.pulse_technique()
+		told = true
+	return told
 
 
 ## Şamandıradan başka bir teknik açıldı mı (rütbesi geldi ya da kamışı alındı): teknik düğmesi.
@@ -1242,7 +1268,9 @@ func _on_shop_closed() -> void:
 ## Takım değişti (dükkânda satın alma ya da kuşanma; bir tekniğin ilk kamışı o tekniği ele verir):
 ## oturumun takımı ve oranları yenilenir (teknik değiştiyse gölgeler yeniden doğar).
 func _on_gear_changed() -> void:
-	session.set_gear(_gear())
+	var gear := _gear()
+	_technique_pity(gear.technique)
+	session.set_gear(gear)
 	_refresh_status()
 
 
@@ -1253,8 +1281,17 @@ func _on_technique_selected(technique: String) -> void:
 		return
 	GameState.save.technique = technique
 	GameState.save_game()
-	session.set_gear(_gear())
+	var gear := _gear()
+	_technique_pity(gear.technique)
+	session.set_gear(gear)
 	hud.toast(tr("UI_TECH_" + technique), UiKit.TEXT, "tech_" + technique)
+
+
+## Şans garantisi elindeki tekniğe göre (o teknikle gelebilen kademeler): teknik değişmeden önce
+## verilir, gölgeler bu garantiyle yeniden doğar.
+func _technique_pity(technique: String) -> void:
+	session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save, Zones.place(GameState.db, spot_id, zone_id),
+			Techniques.resolve(technique)))
 
 
 ## Elindeki tekniğin kuşanılmış takımı (teknik hazır değilse şamandıranınki).
@@ -1313,7 +1350,8 @@ func _build_ui() -> void:
 	technique_panel = TechniquePanel.new()
 	layer.add_child(technique_panel)
 	technique_panel.technique_selected.connect(_on_technique_selected)
-	technique_panel.shop_requested.connect(func(technique: String) -> void: shop_panel.open_shop("rod", technique))
+	technique_panel.shop_requested.connect(func(technique: String) -> void:
+		shop_panel.open_shop("rod", technique, in_boat or angler.global_position.distance_to(nine.global_position) > SHOP_NEAR))
 	var top := CanvasLayer.new()
 	top.layer = 20
 	add_child(top)

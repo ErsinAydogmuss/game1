@@ -43,6 +43,9 @@ var _phase: int = 0
 var _follow: int = 0
 var _changes: int = 0
 var _steady: int = 0
+## Parmak basılı mı (ritim değişimi yalnızca gerçek basışta ve bırakışta: ikinci parmak ya da
+## bırakılmışken gelen bırakma sayılmaz).
+var _down: bool = false
 
 
 func _init(fishing_rules: FishingRules) -> void:
@@ -74,6 +77,7 @@ func land(s: FishingSession) -> void:
 	_since_move = grace_steps + 1
 	_rest = 0
 	_phase = 0
+	_down = s.holding
 	_reset_follow()
 
 
@@ -87,6 +91,12 @@ func step(s: FishingSession) -> void:
 			s.waiting_steps += 1
 			if _reel_lure(s):
 				_follow_step(s)
+		FishingSession.State.NIBBLING:
+			# Senaryolu ilk balığın VUR anı kaçtı (FishingSession.missed): biraz sonra yine izler.
+			s.timer -= 1
+			if s.timer <= 0:
+				s.state = FishingSession.State.FOLLOWING
+				_reset_follow()
 		FishingSession.State.BITING:
 			s.bite_steps += 1
 			if s.bite_steps >= s.window:
@@ -111,17 +121,22 @@ func on_arrive(s: FishingSession, fish: FishShadow, _e: Dictionary) -> void:
 func press(s: FishingSession) -> void:
 	match s.state:
 		FishingSession.State.FOLLOWING:
-			_change(s, go_ppm)
+			if not _down:
+				_change(s, go_ppm)
 		FishingSession.State.BITING:
 			s.hook_fish()
-	_phase = 0
+	if not _down:
+		_phase = 0
+	_down = true
 
 
 ## Duruş (yem batar): izleyen balık için bir ritim değişimi.
 func release(s: FishingSession) -> void:
-	if s.state == FishingSession.State.FOLLOWING:
+	if _down and s.state == FishingSession.State.FOLLOWING:
 		_change(s, stop_ppm)
-	_phase = 0
+	if _down:
+		_phase = 0
+	_down = false
 
 
 func action_kind(s: FishingSession) -> String:
