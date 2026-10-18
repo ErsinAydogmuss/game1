@@ -42,7 +42,7 @@ extends Node
 ##     (uçar, sığ suya düşer); boş tuzağa dokun → panel; saat ileri alınır → rozet, dokun → kovaya ve
 ##     yeni tür kartı; üst sınır; kova dolunca kalanı tuzakta; saat geri alınınca kayıp yok; uzaktaki
 ##     tuzağa dokununca balıkçı yürür ve toplar; haritada tuzak; boş tuzak kaldırılır.
-##   tour: gezi (hız ölçümü): ayarlarda "Bütün bölgeleri aç" (geliştirme düğmesi) ve sürüm yazısına 5
+##   tour: gezi (hız ölçümü): ayarlarda "Bölgeleri ve teknikleri aç" (geliştirme düğmesi) ve sürüm yazısına 5
 ##     dokunuş (ölçüm açılır: sol üstte FPS, çizim, üçgen); sonra her bölgenin atış noktasına ve
 ##     sandalla derin ortaya geçer; her yerde ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü;
 ##     KONTROL: her yerde en çok TOUR_DRAWS çizim.
@@ -1734,7 +1734,7 @@ func _play_tour() -> void:
 	var all_open := true
 	for z in db.zones_of(spot):
 		all_open = all_open and Zones.unlocked(db, save, z)
-	_check("ölçüm açıkken \"Bütün bölgeleri aç\" → rütbe %d ve sandal, bütün bölgeler açık" % Rank.rank(db, save),
+	_check("ölçüm açıkken \"Bölgeleri ve teknikleri aç\" → rütbe %d ve sandal, bütün bölgeler açık" % Rank.rank(db, save),
 			found and all_open and Economy.owns(db, save, Zones.BOAT) and int(main.get("_access_rank")) == Rank.rank(db, save))
 	await _shot("00_ayarlar")
 	settings.close_panel()
