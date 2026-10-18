@@ -94,6 +94,17 @@ var over_drift: float = 3.0
 ## Kolay modda fazla iri balığın sarma hızı çarpanı (kopmaz, yalnızca yavaş gelir).
 var over_easy_reel: float = 0.9
 
+# --- Kerevit tuzağı (Dalga 3) ------------------------------------------------------------
+## Gerçek saatle bu kadar sn'de bir kerevit girer; en çok trap_max birikir (boşta biriken üst
+## sınırda durur: gelir kuralı 7).
+var trap_fill_s: int = 1200
+var trap_max: int = 4
+## Tuzak en çok trap_depth (m) derin suya, balıkçıya trap_near aralığında (m), öteki tuzaklara en az
+## trap_spacing (m) uzağa kurulur.
+var trap_depth: float = 1.2
+var trap_near := Vector2(1.2, 3.5)
+var trap_spacing: float = 2.0
+
 
 ## Tekniklerin profilleri (kimlik → TechniqueRules). Şamandıranınki üst düzey bölümlerden.
 var _techniques: Dictionary = {}
@@ -174,6 +185,12 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 	r.over_burst = float(reel.get("over_burst", r.over_burst))
 	r.over_drift = float(reel.get("over_drift", r.over_drift))
 	r.over_easy_reel = float(reel.get("over_easy_reel", r.over_easy_reel))
+	var trap: Dictionary = d.get("trap", {})
+	r.trap_fill_s = int(trap.get("fill_s", r.trap_fill_s))
+	r.trap_max = int(trap.get("max", r.trap_max))
+	r.trap_depth = float(trap.get("depth_max_m", r.trap_depth))
+	r.trap_near = _vec2(trap.get("near_m"), r.trap_near)
+	r.trap_spacing = float(trap.get("spacing_m", r.trap_spacing))
 	r._validate(errors)
 	# Teknikler: şamandıra üst düzey bölümlerden; ötekiler "techniques" bölümünden.
 	var base := r.technique("float")
@@ -207,6 +224,9 @@ func _validate(errors: PackedStringArray) -> void:
 		"iri balık (taşıma 1–5, fazla iri sınırın üstünde, Kolay'da yavaş ama gelir)": carry >= 1 and carry <= 5 \
 				and size_pull >= 0.0 and over_pull > 0.0 and over_burst >= 0.0 and over_drift >= 0.0 \
 				and over_easy_reel > 0.0 and over_easy_reel <= 1.0,
+		"tuzak (dolma süresi, en çok kayıt sınırı kadar, sığ su, yakın aralık)": trap_fill_s > 0 and trap_max >= 1 \
+				and trap_max <= SaveData.MAX_TRAP_ITEMS and trap_depth > 0.0 and trap_near.x > 0.0 \
+				and trap_near.y > trap_near.x and trap_spacing >= 0.0,
 	}
 	for label: String in checks:
 		if not bool(checks[label]):

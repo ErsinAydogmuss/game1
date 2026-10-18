@@ -50,7 +50,7 @@ var errors: PackedStringArray = []
 ## sırasıdır (şamandırada v0.3'teki gibi kamış, makara, misina, iğne, şamandıra, yem); yeni yuvalar
 ## sona eklenir: lure (yapay yem, spin), rig (kurşun ya da yem sepeti, dip), fly (sinek).
 const GEAR_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bait", "lure", "rig", "fly",
-		"extra", "bucket", "boat"]
+		"extra", "bucket", "boat", "trap"]
 const GEAR_SLOTS: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bait", "lure", "rig", "fly"]
 const TECHNIQUES: Array[String] = ["float", "spin", "bottom", "fly"]
 ## Bölgede yazılmayan teknikler (sinek yalnızca akıntılı bölgede, açıkça yazılır).
@@ -497,7 +497,8 @@ func _basin_def(raw: Variant, zone: String, deepest: float, shelf_m: float) -> D
 ## şamandıralar), current (akıntı yönü; görsel ve sinek), map (haritada rozetin yeri; yoksa
 ## Dice.NO_POINT: bölgenin suyunun ortası), techniques (bölgede avlanılan teknikler; yazılmazsa
 ## ZONE_TECHNIQUES, sinek yalnızca akıntılı bölgede açıkça), snag_s (otlu ya da kayalık bölgede
-## bu kadar sn bekleyen yapay yem takılır; 0 = takılmaz).
+## bu kadar sn bekleyen yapay yem takılır; 0 = takılmaz), trap (kerevit tuzağının tablosu: tür ->
+## ağırlık; yazılmazsa bölgeye tuzak kurulmaz; trap_ids, trap_weights).
 func _zone_def(raw: Variant) -> Dictionary:
 	var z: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
 	var techniques := PackedStringArray()
@@ -509,6 +510,13 @@ func _zone_def(raw: Variant) -> Dictionary:
 	for fid: Variant in raw_fish:
 		ids.append(str(fid))
 		weights.append(int(raw_fish[fid]))
+	var trap_ids := PackedStringArray()
+	var trap_weights := PackedInt32Array()
+	var raw_trap: Variant = z.get("trap", {})
+	if typeof(raw_trap) == TYPE_DICTIONARY:
+		for fid: Variant in raw_trap:
+			trap_ids.append(str(fid))
+			trap_weights.append(int((raw_trap as Dictionary)[fid]))
 	var stands: Array[Vector2] = []
 	for p: Variant in z.get("stands", []):
 		stands.append(_vec2(p, Vector2.ZERO))
@@ -537,6 +545,8 @@ func _zone_def(raw: Variant) -> Dictionary:
 		"map": _vec2(z.get("map"), Dice.NO_POINT),
 		"techniques": techniques,
 		"snag_s": float(z.get("snag_s", 0.0)),
+		"trap_ids": trap_ids,
+		"trap_weights": trap_weights,
 	}
 
 
@@ -829,6 +839,15 @@ func _validate_zone(spot_id: String, z: Dictionary, known: Dictionary) -> void:
 			reach += float(maxi(0, weights[i])) * affinity(ids[i], t)
 		if reach <= 0.0:
 			errors.append("spots.json: %s: %s: %s tekniğiyle gelen tür yok" % [spot_id, id, t])
+	# Tuzak tablosu (kerevit tuzağı kurulan bölge): bilinen türler, pozitif ağırlık, sandalsız kıyı.
+	var trap_ids: PackedStringArray = z["trap_ids"]
+	var trap_weights: PackedInt32Array = z["trap_weights"]
+	for i in trap_ids.size():
+		if fish_index(trap_ids[i]) < 0 or trap_weights[i] <= 0:
+			errors.append("spots.json: %s: %s: tuzak tablosunda bilinmeyen tür ya da ağırlık: %s" % [spot_id, id,
+					trap_ids[i]])
+	if not trap_ids.is_empty() and bool(z["boat"]):
+		errors.append("spots.json: %s: %s: tuzak sandal bölgesine kurulmaz" % [spot_id, id])
 
 
 ## Bölge oyunun başında açık mı (rütbe 1, sandalsız)?

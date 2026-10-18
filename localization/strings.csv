@@ -343,3 +343,17 @@ UI_TECH_FLY_ONLY,Flies only at the stream mouth,Sinek yalnızca dere ağzında
 UI_NINE_FLY_ZONE,"Use it at the stream mouth, dear: the trout are there.","Dere ağzında kullan evladım, alabalık orada."
 UI_FLY_STILL,Still water,Durgun su
 UI_DEDE_FLY_STILL,"A fly won't drift on still water, kid. Cast on the current!","Durgun suda sinek kımıldamaz evlat. Akıntıya at!"
+FISH_crayfish,Crayfish,Kerevit
+FISH_crayfish_DESC,"Lives among stones in the shallows. Walks into traps.","Sığlıkta taşların arasında yaşar. Tuzağa kendi girer."
+GEAR_trap_1,Crayfish trap,Kerevit tuzağı
+GEAR_trap_1_DESC,"Leave it in the shallows; it fills by itself, even while you are away.","Sığ suya bırak; sen yokken de kendi dolar."
+GEAR_trap_2,Second trap,İkinci tuzak
+GEAR_trap_2_DESC,Two traps fill twice as fast.,İki tuzak iki kat kerevit toplar.
+GEAR_trap_3,Third trap,Üçüncü tuzak
+GEAR_trap_3_DESC,"Three traps: the reeds and the rocks are yours.","Üç tuzak: sazlık da kayalık da senin."
+UI_TRAP_NONE,"No trap yet: Nana sells them.","Tuzağın yok: Nine satıyor."
+UI_TRAP_ALL_SET,All your traps are set,Bütün tuzakların kurulu
+UI_TRAP_ZONE,Traps go in the reeds or at the rocks,Tuzak sazlıkta ya da kayalıkta kurulur
+UI_TRAP_NO_SPOT,No shallow water close by,Yakında sığ su yok
+UI_TRAP_DEEP,Too deep for a trap,Tuzak için çok derin
+UI_TRAP_CLOSE,Too close to another trap,Öteki tuzağa çok yakın

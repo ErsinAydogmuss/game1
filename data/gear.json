@@ -62,6 +62,9 @@
 		{ "id": "fly_streamer", "category": "fly", "kind": "bait", "price": 900, "rank": 8, "attract": { "brook_trout": 2.2, "trout": 1.2 } },
 
 		{ "id": "net", "category": "extra", "kind": "net", "price": 700, "rank": 3, "catch_m": 0.85 },
+		{ "id": "trap_1", "category": "trap", "icon": "trap", "kind": "trap", "price": 250, "rank": 3 },
+		{ "id": "trap_2", "category": "trap", "icon": "trap", "kind": "trap", "price": 600, "rank": 3 },
+		{ "id": "trap_3", "category": "trap", "icon": "trap", "kind": "trap", "price": 1500, "rank": 5 },
 		{ "id": "boat", "category": "boat", "kind": "boat", "price": 3500, "rank": 9 },
 
 		{ "id": "bucket", "category": "bucket", "icon": "bucket", "kind": "bucket", "price": 0, "rank": 1, "capacity": 6 },

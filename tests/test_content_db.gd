@@ -6,7 +6,7 @@ func test_loads_without_errors() -> void:
 	var db := content()
 	assert_eq(db.errors.size(), 0, "içerik hataları: " + ", ".join(db.errors))
 	assert_eq(db.rarities.size(), 6, "6 nadirlik (Masalsı eklendi)")
-	assert_eq(db.fish.size(), 15, "15 balık (Dalga 2'de 7 tür, Dalga 3'te aynalı sazan ve iki alabalık)")
+	assert_eq(db.fish.size(), 16, "16 balık (Dalga 2'de 7 tür, Dalga 3'te aynalı sazan, iki alabalık ve kerevit)")
 	assert_true(not db.spot("home_lake").is_empty(), "testlerin gölü")
 	assert_eq(db.main_spot, "big_lake", "oyun Köy Gölü'nde açılır")
 	assert_true(db.gear.size() >= 30, "dükkân takımı okundu")

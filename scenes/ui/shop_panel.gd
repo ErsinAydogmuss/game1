@@ -31,7 +31,7 @@ const TABS: Array[Array] = [
 	["line", "line", "UI_SHOP_TAB_LINE", ["line"]],
 	["tackle", "hook", "UI_SHOP_TAB_TACKLE", ["hook", "bobber"]],
 	["bait", "bait", "UI_SHOP_TAB_BAIT", ["bait"]],
-	["extra", "net", "UI_SHOP_TAB_EXTRA", ["extra", "boat", "bucket"]],
+	["extra", "net", "UI_SHOP_TAB_EXTRA", ["extra", "boat", "bucket", "trap"]],
 ]
 ## Kategori başına gösterilen değerler: [gear.json alanı, çeviri anahtarı, birim ("" = sayı yok,
 ## "★" = çubuk yerine 5 yıldızdan dolu olanlar)]. Kamışta ve misinada "İri balık": kaç yıldızlı iri
@@ -215,12 +215,18 @@ func refresh() -> void:
 
 ## Bir sekmenin kartları (gear.json'daki sıra) bakılan teknikte: Kamış sekmesinde o tekniğin
 ## kamışları, tekniğe özel sekmede o tekniğin takımı. Kovalardan yalnızca sıradaki
-## (Bucket.next_bucket; kayıt verilmezse yeni oyuncununki). Sekme başına en çok CARDS (test denetler).
+## (Bucket.next_bucket; kayıt verilmezse yeni oyuncununki), tuzaklardan da (TrapSim.next_trap). Sekme
+## başına en çok CARDS (test denetler).
 static func items_for(db: ContentDB, tab: String, save: SaveData = null, look: String = "float") -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for category: String in tab_categories(tab, look):
 		if category == "bucket":
 			out.append(Bucket.next_bucket(db, save if save != null else SaveData.create_new(0)))
+			continue
+		if category == "trap":
+			var trap := TrapSim.next_trap(db, save if save != null else SaveData.create_new(0))
+			if not trap.is_empty():
+				out.append(trap)
 			continue
 		for g in db.gear_in(category):
 			if category == "rod" and str(g["technique"]) != look:

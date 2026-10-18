@@ -15,7 +15,7 @@ extends Control
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release", "pin", "boat"]
+		"release", "pin", "boat", "trap"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -30,7 +30,7 @@ const ART_NAMES := {
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem, Ekstra ve tekniğe özel sekmeleri (yapay yem, kurşun, sinek).
 const GEAR_ART := {"line": "line_braid", "bait": "bait_worm", "net": "net", "boat": "boat", "lure": "lure_spoon",
-		"rig": "sinker", "fly": "fly_dry"}
+		"rig": "sinker", "fly": "fly_dry", "trap": "trap"}
 ## Yalnızca görselle çizilen adların görseli yokken kodla çizilen yedeği (teknik düğmeleri,
 ## takım çantası, tekniğe özel sekmeler).
 const FALLBACK := {"lure": "bait", "rig": "bait", "fly": "bait", "tech_float": "bobber", "tech_spin": "rod",
@@ -171,6 +171,8 @@ func _draw() -> void:
 			_pin()
 		"boat":
 			_boat()
+		"trap":
+			_trap()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -369,6 +371,19 @@ func _net() -> void:
 		draw_line(center + Vector2(-half, k), center + Vector2(half, k), Color(1, 1, 1, 0.65), 2.0, true)
 		draw_line(center + Vector2(k, -half), center + Vector2(k, half), Color(1, 1, 1, 0.65), 2.0, true)
 	draw_arc(center, r, 0.0, TAU, 32, STEEL_DARK, 6.0, true)
+
+
+## Kerevit tuzağı: yan yatmış, ağlı, halkalı silindir ve ipine bağlı turuncu şamandıra.
+func _trap() -> void:
+	var body := Rect2(16, 26, 56, 40)
+	_round_rect(body, Color("#3f5b3a"), 18)
+	for x: float in [24.0, 34.0, 44.0, 54.0, 64.0]:
+		draw_line(Vector2(x, 28), Vector2(x - 6, 64), Color(1, 1, 1, 0.35), 2.0, true)
+	for x: float in [20.0, 44.0, 68.0]:
+		draw_line(Vector2(x, 26), Vector2(x, 66), STEEL_DARK, 4.0, true)
+	draw_line(Vector2(70, 50), Vector2(80, 76), Color("#b08a5a"), 3.0, true)
+	draw_circle(Vector2(82, 80), 12, Color("#f26b1d"))
+	draw_circle(Vector2(78, 76), 4, Color(1, 1, 1, 0.7))
 
 
 func _bobber() -> void:

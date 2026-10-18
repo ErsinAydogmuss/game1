@@ -31,10 +31,11 @@ func test_every_gear_item_has_a_tab() -> void:
 				here[str(g["id"])] = true
 				shown[str(g["id"])] = true
 	for g in content().gear:
-		# Kovalar sırası gelince (aşağıda).
-		if str(g["category"]) == "bucket":
+		# Kovalar ve tuzaklar sırası gelince (aşağıda; test_trap_sim).
+		if str(g["category"]) in ["bucket", "trap"]:
 			continue
 		assert_true(shown.has(str(g["id"])), "dükkânda yok: " + str(g["id"]))
+	assert_true(shown.has("trap_1"), "Ekstra sekmesinde ilk tuzak")
 
 
 ## Ekstra sekmesinde kovalardan yalnızca sıradaki: alındıkça bir üstü gelir; hepsi alınınca en büyüğü.
