@@ -113,6 +113,52 @@ func test_fly_comes_back_by_itself() -> void:
 	assert_true(_run_until(session, FishingSession.State.IDLE, 2.0), "sonra boşa döner")
 
 
+## Sinek menzilin ötesine sürüklenmez: orada takılan balık çekişme payı (menzil + 2 m) olmadan hemen
+## kaçardı. Balıkçı dere ağzı şeridinin batı ucunda, akıntı sineği ondan uzaklaştırır.
+func test_fly_never_drifts_out_of_reach() -> void:
+	var session := _session()
+	session.relocate(Vector2(-29.0, -11.0))
+	session.poll_events()
+	_park_all(session)
+	assert_true(session.cast(Vector2(-21.4, -17.0)), "derenin yukarısına atış")
+	assert_true(_run_until(session, FishingSession.State.WAITING, 3.0), "sinek suda")
+	var log: Array[Dictionary] = []
+	var farthest := 0.0
+	for i in 16 * HZ:
+		if session.state != FishingSession.State.WAITING:
+			break
+		session.step()
+		log.append_array(session.poll_events())
+		farthest = maxf(farthest, session.bobber.distance_to(session.angler))
+	assert_eq(session.state, FishingSession.State.RETRIEVING, "sinek kendiliğinden döner")
+	assert_true(farthest <= session.range_m() + 0.001, "menzilin içinde (en uzak %.2f m, menzil %.1f)" % [farthest,
+			session.range_m()])
+	assert_eq(str(_first(log, "retrieve").get("reason", "")), "drift", "nedeni sürüklenme")
+
+
+## Sinek balıkçının dibine gelmez: dibinde çıkan balık çekişmeden tutulurdu (end_m'de döner).
+func test_fly_stops_before_the_angler() -> void:
+	var session := _session()
+	var target := Vector2(-21.4, -17.0)
+	var down := session.lake.flow_at(target).normalized()
+	session.relocate(target + down * 4.0)
+	session.poll_events()
+	_park_all(session)
+	assert_true(session.cast(target), "akıntı yukarısına atış")
+	assert_true(_run_until(session, FishingSession.State.WAITING, 3.0), "sinek suda")
+	var nearest := INF
+	for i in 16 * HZ:
+		if session.state != FishingSession.State.WAITING:
+			break
+		session.step()
+		session.poll_events()
+		nearest = minf(nearest, session.bobber.distance_to(session.angler))
+	var end_m := (session.technique as FlyTechnique).end_m
+	assert_eq(session.state, FishingSession.State.RETRIEVING, "sinek balıkçıya gelince döner")
+	assert_true(nearest >= end_m - 0.05 and nearest < end_m + 0.2, "balıkçıdan %.1f m'de (en yakın %.2f m)" % [end_m,
+			nearest])
+
+
 ## Hiç akmayan suya düşen sinek kımıldamaz, durgun sudaki süre dolunca döner ("still": main oyuncuya
 ## akıntıya atmasını söyler).
 func test_fly_on_still_water_comes_back_soon() -> void:

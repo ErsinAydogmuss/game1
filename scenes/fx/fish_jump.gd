@@ -21,18 +21,25 @@ var _height: float = HEIGHT
 var _age: float = -1.0
 
 
-## Balık at noktasından (xz) heading yönüne doğru sıçrar. def: türün tanımı; size_cm: boyu.
-func jump(def: Dictionary, size_cm: int, at: Vector2, heading: Vector2) -> void:
+## Sıçrayışta balığın yatayda aldığı yol (m; boyunun 1,4 katı): main dalışın suya düştüğünü denetler.
+static func reach_for(size_cm: int) -> float:
+	return FishMesh.display_length(size_cm) * SCALE * 1.4
+
+
+## Balık at noktasından (xz) heading yönüne doğru sıçrar; heading sıfırsa yerinde (aynı yere dalar).
+## def: türün tanımı; size_cm: boyu. Sıçrayış başladıysa true (bir anda tek sıçrayış).
+func jump(def: Dictionary, size_cm: int, at: Vector2, heading: Vector2) -> bool:
 	if _age >= 0.0:
-		return
+		return false
 	clear()
 	var length := FishMesh.display_length(size_cm) * SCALE
 	_fish = FishMesh.make(def, length)
 	_fish.set_wiggle(0.3, 16.0)
 	_fish.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_fish)
-	var dir := heading.normalized() if heading.length_squared() > 0.0001 else Vector2(0, -1)
-	var reach := length * 1.4
+	var still := heading.length_squared() <= 0.0001
+	var dir := Vector2(0, -1) if still else heading.normalized()
+	var reach := 0.0 if still else reach_for(size_cm)
 	_from = Vector3(at.x, -0.1, at.y)
 	_to = Vector3(at.x + dir.x * reach, -0.1, at.y + dir.y * reach)
 	_height = HEIGHT + length * 0.5
@@ -41,6 +48,7 @@ func jump(def: Dictionary, size_cm: int, at: Vector2, heading: Vector2) -> void:
 	_age = 0.0
 	_place()
 	left.emit(at)
+	return true
 
 
 func is_jumping() -> bool:

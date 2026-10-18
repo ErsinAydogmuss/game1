@@ -75,6 +75,10 @@ var ripples: Ripples
 var catch_fx: CatchFx
 ## Çekişmede sudan sıçrayan balık (alabalıklar).
 var fish_jump: FishJump
+## Bölgede avlanılmadığı için şamandıraya dönülen teknik (sinek dere ağzı dışında; _fit_technique)
+## ve oturumun bölgesinin bir kez belli olup olmadığı (ilk geçiş sessiz).
+var _held_technique: String = ""
+var _zone_known: bool = false
 var camera: FollowCamera
 var input: InputRouter
 var hud: Hud
@@ -214,6 +218,8 @@ func _start_session() -> void:
 			bool(GameState.setting("easy", false)), save.catches == 0,
 			CatchOdds.pity_floor(GameState.db, save, start, gear.technique), Zones.open_ids(GameState.db, save, spot_id))
 	zone_id = ""
+	_zone_known = false
+	_held_technique = ""
 	in_boat = false
 	_buoy = -1
 	_access_rank = Rank.rank(GameState.db, save)
@@ -451,7 +457,11 @@ func _try_cast(target: Vector2) -> void:
 	# Hangi yoldan gelirse gelsin (dokunuş, AT, bekleyen atış) önceki hedef unutulur, yürüme biter.
 	_pending_cast = Dice.NO_POINT
 	angler.stop()
-	session.angler = angler.pos2()
+	# Balıkçının yeri ve avlandığı bölge hemen (yürüyüş bu karede bittiyse): teknik bölgeye uyar
+	# (sinek dere ağzı dışında atılmasın), kamış ve takımın görünüşü de.
+	session.locate(angler.pos2())
+	_follow_zone()
+	_sync_technique()
 	# Çok yakına (en kısa atıştan az) dokunulduysa o yönde biraz öteye atılır: suya dokunan
 	# oyuncu "suya dokun" hatası almasın.
 	var offset := target - angler.pos2()
@@ -646,10 +656,11 @@ func _on_event(e: Dictionary) -> void:
 			Sounds.play("warn")
 			Sounds.haptic(35)
 		"burst":
-			ripples.spawn(session.fight_point(), 0.9, 0.5, Color(1, 1, 1, 0.8), 0.18)
-			Sounds.play("splash")
-			Sounds.haptic(20)
-			_jump_if_trout()
+			# Alabalık sudan sıçrar (şapırtısı ve halkası sıçrayışın); öteki balık yerinde çırpınır.
+			if not _jump_if_trout():
+				ripples.spawn(session.fight_point(), 0.9, 0.5, Color(1, 1, 1, 0.8), 0.18)
+				Sounds.play("splash")
+				Sounds.haptic(20)
 		"rise":
 			# Sinek: alabalık halka çıkarır, sinek suya çekilir: VUR anı.
 			bobber.go_under()
@@ -792,31 +803,55 @@ func _on_catch() -> void:
 ## garantisi o bölgede gelebilen kademeler için.
 func _follow_zone() -> void:
 	var now := session.zone_id()
-	if now == zone_id:
+	if now != zone_id:
+		# Başka bir bölgeye girildi (oturumun başı sayılmaz): adı kısa bir bildirimle. Gidilen bölge
+		# haritada artık "Yeni!" değil.
+		if not zone_id.is_empty() and not now.is_empty() and GameState.db.zones_of(spot_id).size() > 1:
+			hud.toast(tr("ZONE_" + now), UiKit.TEXT, "zone:" + now)
+		if not now.is_empty():
+			GameState.save.flags["visited_" + now] = true
+		zone_id = now
+		shop_panel.zone_id = now
+		book_panel.zone_id = now
+		technique_panel.zone_id = now
+		session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save, Zones.place(GameState.db, spot_id, now),
+				session.technique.id))
+	_fit_technique()
+	_zone_known = true
+
+
+## Elindeki teknik bu bölgede avlanılmıyorsa (sinek dere ağzı dışında) olta boşken şamandıraya
+## dönülür (bölgenin adından sonra bildirim; oturumun başında sessizce) ve teknik hatırlanır:
+## avlanıldığı bölgeye dönünce kendiliğinden yeniden ele geçer (oyuncu bu arada başka teknik
+## seçmediyse). Dere ağzının kıyı şeridi dar: sınırda gidip gelen balıkçı sineği yitirmez. Her kare.
+func _fit_technique() -> void:
+	if session.state != FishingSession.State.IDLE:
 		return
-	# Başka bir bölgeye girildi (oturumun başı sayılmaz): adı kısa bir bildirimle. Gidilen bölge
-	# haritada artık "Yeni!" değil.
-	if not zone_id.is_empty() and not now.is_empty() and GameState.db.zones_of(spot_id).size() > 1:
-		hud.toast(tr("ZONE_" + now), UiKit.TEXT, "zone:" + now)
-	if not now.is_empty():
-		GameState.save.flags["visited_" + now] = true
-	var entered := not zone_id.is_empty()
-	zone_id = now
-	shop_panel.zone_id = now
-	book_panel.zone_id = now
-	technique_panel.zone_id = now
-	# Bu bölgede avlanılmayan teknik (sinek dere ağzında) şamandıraya döner (oturumun başında sessizce).
+	var db := GameState.db
 	var save := GameState.save
-	if not Economy.technique_allowed(GameState.db, spot_id, now, save.technique) \
-			and session.state == FishingSession.State.IDLE:
-		save.technique = "float"
-		_technique_pity("float")
-		session.set_gear(_gear())
-		if entered:
-			# Bölgenin adından sonra (sırayla).
-			hud.toast_later(tr("UI_TECH_FLY_ONLY"), UiKit.ACCENT, "", "tech_float")
-	session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save, Zones.place(GameState.db, spot_id, now),
-			session.technique.id))
+	if save.technique != "float":
+		_held_technique = ""
+	if not _held_technique.is_empty() and Economy.technique_allowed(db, spot_id, zone_id, _held_technique) \
+			and Economy.technique_ready(db, save, _held_technique):
+		save.technique = _held_technique
+		_held_technique = ""
+		_use_technique_gear()
+		if _zone_known:
+			hud.toast_later(tr("UI_TECH_" + save.technique), UiKit.TEXT, "", "tech_" + save.technique)
+		return
+	if Economy.technique_allowed(db, spot_id, zone_id, save.technique):
+		return
+	_held_technique = save.technique
+	save.technique = "float"
+	_use_technique_gear()
+	if _zone_known:
+		hud.toast_later(tr("UI_TECH_FLY_ONLY"), UiKit.ACCENT, "", "tech_float")
+
+
+## Elindeki tekniğin (save.technique) takımı oturuma geçer; şans garantisi o tekniğe göre.
+func _use_technique_gear() -> void:
+	_technique_pity(GameState.save.technique)
+	session.set_gear(_gear())
 
 
 func _present(delta: float) -> void:
@@ -962,16 +997,25 @@ func _present_fly(delta: float) -> void:
 		ripples.spawn(session.bobber, 0.18, 0.5, Color(1, 1, 1, 0.4), 0.08)
 
 
-## Çekişmede çırpınan balık sıçrayan türdense (fish.json fight.jumps) sudan sıçrar.
-func _jump_if_trout() -> void:
+## Çekişmede çırpınan balık sıçrayan türdense (fish.json fight.jumps) sudan sıçrar: balıkçıdan uzağa,
+## orası su değilse (dar dere) suya düşen en yakın yöne, hiçbiri değilse yerinde. Sıçradıysa true.
+func _jump_if_trout() -> bool:
 	var fish := session.hooked
-	if fish == null or session.state != FishingSession.State.FIGHTING:
-		return
+	if fish == null or session.state != FishingSession.State.FIGHTING or fish_jump.is_jumping():
+		return false
 	var def := GameState.db.fish_by_id(fish.fish_id)
 	if not bool((def["fight"] as Dictionary).get("jumps", false)):
-		return
+		return false
 	var at := session.fight_point()
-	fish_jump.jump(def, fish.size_cm, at, at - angler.pos2())
+	var reach := FishJump.reach_for(fish.size_cm)
+	var away := (at - angler.pos2()).normalized()
+	var heading := Vector2.ZERO
+	for k in 7:
+		var dir := away.rotated(deg_to_rad(45.0 * ((k + 1) >> 1)) * (1.0 if k % 2 == 1 else -1.0))
+		if lake.is_water(at + dir * reach) and not lake.on_dock(at + dir * reach):
+			heading = dir
+			break
+	return fish_jump.jump(def, fish.size_cm, at, heading)
 
 
 ## Dip: kurşun suya düşünce kamış sehpaya konur (balıkçının yanında, atış yönüne bakar); koklamada
@@ -1491,6 +1535,7 @@ func _on_gear_changed() -> void:
 func _on_technique_selected(technique: String) -> void:
 	if session.state != FishingSession.State.IDLE or not Economy.technique_ready(GameState.db, GameState.save, technique):
 		return
+	_held_technique = ""
 	GameState.save.technique = technique
 	GameState.save_game()
 	var gear := _gear()

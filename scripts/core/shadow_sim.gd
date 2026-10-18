@@ -325,14 +325,21 @@ func _has_scripted() -> bool:
 	return false
 
 
+## Balıkçının yeri ve avlandığı bölge, adımı beklemeden (atıştan önce: takım avlanılan bölgenin
+## suyuna düşer, teknik bölgeye uyar). Bölgesiz gölde bir şey yapmaz.
+func locate(angler: Vector2) -> void:
+	if not _zoned or angler == _angler:
+		return
+	_afloat = _in_boat(angler)
+	_angler = angler
+	player_zone = _fishing_zone(angler)
+
+
 ## Bölgeli göl: balıkçının yeri ve avlandığı bölge; çok uzakta kalan ya da avlanılan bölgeden
 ## olmayan (balıkçı başka bölgeye yürüdü) dolaşan gölge çekilir (kaçar ve kaybolur, yerine yakında
 ## yenisi doğar).
 func _follow(angler: Vector2) -> void:
-	if angler != _angler:
-		_afloat = _in_boat(angler)
-		_angler = angler
-		player_zone = _fishing_zone(angler)
+	locate(angler)
 	_check -= 1
 	if _check > 0:
 		return

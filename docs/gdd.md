@@ -107,7 +107,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - **Süre:** iyi bir oyuncuyla çekişme Kızılkanat'ta 4–7 sn, Yayın'da 14–20 sn sürer.
 - **Kolay modda** patlamada basılı tutunca misina kayar: balık, kaçış hızının 2 katıyla uzaklaşır. Hep basılı tutan yine tutar; bırakmayı bilen daha hızlı tutar.
 - **İri balık takım ister** (v0.3.1; Ersin: "iskelede takım almadan bütün balıkları tutabiliyorum"):
-  - **İri türler:** sazan, turna, yayın, kadife, sudak, altın sazan, mersin (`fish.json` `fight.heavy`). Ötekiler (kızılkanat, gümüş balığı, levrek, çapak, tatlısu kefali) her boyda bambu oltayla tutulur.
+  - **İri türler:** sazan, turna, yayın, kadife, sudak, altın sazan, mersin, aynalı sazan, dere alabalığı (`fish.json` `fight.heavy`). Ötekiler (kızılkanat, gümüş balığı, levrek, çapak, tatlısu kefali, alabalık) her boyda bambu oltayla tutulur.
   - **Boy çekişi artırır:** iri türde sakin çekiş en irisinde 0,08 artar (`size_pull`). Yine sınırın altında kalır.
   - **Taşıma:** kamışın ve misinanın bir taşıması var (yıldız). Kuşanılan takımın taşıması ikisinin küçüğüdür.
     - Bambu kamış ve ince misina 3★ taşır.
@@ -146,8 +146,12 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Sudak | başını sallar (sık patlama) | 13,9 sn | 15,6 sn | koparır |
 | Altın sazan | ağır, güçlü | 14,0 sn | 15,3 sn | koparır |
 | Mersin | çok güçlü, uzun koşular | 17,4 sn | 18,7 sn | koparır |
+| Aynalı sazan | ağır, güçlü | 13,4 sn | 14,6 sn | koparır |
+| Alabalık | çevik, sıçrar; takılır takılmaz çırpınır | 11,3 sn | 12,4 sn | koparır |
+| Dere alabalığı | güçlü, sıçrar; takılır takılmaz çırpınır | 15,2 sn | 16,7 sn | koparır |
 
   İyi ve yavaş oyuncu her balığı tutar. Kolay modda hep basılı tutan da tutar.
+- **Sinek takımıyla** (balık 3–5,5 m'de takılır; `test_reel_model` sinek korkuluğu): iyi oyuncu alabalığı ilk sinek kamışıyla ~6 sn'de, dere alabalığını ~8 sn'de tutar. Balık yakında takıldığı için hep basılı tutmak kolay olurdu; bu yüzden alabalıklar takılır takılmaz çırpınır (`fight.first_burst` 0,8–1,1 sn, öteki balıklarda 1,6–2,4). Hep basılı tutan en iyi sinek takımıyla alabalığı en çok ~%10 tutar, dere alabalığını tutamaz (ilk ayarda %62 ve %52'ydi).
 - **Takımla** (H2, `GearStats`): başlangıç takımı yukarıdaki bambu oltayla aynıdır. En iyi şamandıra takımıyla (`tools/reel_report.gd -- --gear=top`):
 
 | Balık | İyi oyuncu (0,4 sn): başlangıç → en iyi takım | Hep basılı, en iyi takım (Normal) |
@@ -164,6 +168,9 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Sudak | 13,9 → 7,7 sn | %37 tutar |
 | Altın sazan | 14,0 → 8,5 sn | %2 tutar |
 | Mersin | 17,4 → 10,4 sn | koparır |
+| Aynalı sazan | 13,4 → 8,3 sn | %6 tutar |
+| Alabalık | 11,3 → 7,2 sn | %12 tutar |
+| Dere alabalığı | 15,2 → 9,5 sn | koparır |
 
   Korkuluklar (`test_reel_model`): en iyi takımla yavaş oyuncu her balığı tutar; hep basılı tutan Nadir balığı en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar; çekişme en çok %40 kısalır. Misinanın kopma süresi bu yüzden en çok 0,95 sn.
 - **İri balık raporu** (`tools/reel_report.gd`, `-- --gear=mid` cam elyafı kamış + naylon misina, `-- --gear=top`; iyi oyuncu 0,4 sn tepki; pompa: gerilimi sınırın hemen altında tutan kusursuz bot):
@@ -177,6 +184,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Sudak | %0 / %0 | 12,1 sn / %0 | 7,7 sn | 11,7 → 15,3 sn |
 | Altın sazan | %0 / %0 | 12,7 sn / %0 | 8,5 sn | 13,3 → 16,7 sn |
 | Mersin | %0 / %0 | 15,7 sn / %0 | 10,4 sn | 19,7 → 27,1 sn |
+| Aynalı sazan | %0 / %0 | 12,2 sn / %0 | 8,3 sn | 12,7 → 16,0 sn |
+| Dere alabalığı | %0 / %0 | 13,9 sn / %0 | 9,5 sn | 14,9 → 18,8 sn |
 
   Takımın taşıdığı balığı iyi oyuncu %100 tutar (süreler bu oranla). Kusursuz pompalayan fazla iri balığı bazen 2 dakika yerinde tutar ama getiremez (raporda "bitmedi"; cam elyafı + naylonla 5★ kadife %99, sazan %48); bırakınca kaçar. Kolay modda yavaş oyuncu (0,7 sn) için de fark en çok ~1,4 kat (sudak 18,9 → 27,1 sn). Korkuluklar (`test_reel_model`):
   - bambu olta 3★ iri balığı rahat tutar;
@@ -445,10 +454,10 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - **Kamera:** kurşun uzağa düştüğü için kamera biraz yatar (45°; şamandırada olta sudayken 60°) ve balıkçıyla takımı birlikte gösterecek kadar uzaklaşır (en çok 1,3 kat). Sınırlar ekran payıyla: balıkçının ayağı ipucu çubuğunun üstünde, kurşun üstteki göstergelerin altında kalır (bu iki çizgi arasına en çok 12,4 m sığar). Sığmazsa öncelik balıkçı ve sehpada: ekranın tam yukarısına atışta kurşun 14 m'de üst kenara yakın, 16 m'de üst kenarda, 18 m'de ekranın dışında kalır; çapraz atışta daha çoğu sığar. Çekişmede balık yaklaştıkça kamera çekişmenin yakınlığına döner (`FollowCamera.fit`).
   - **Açılış:** rütbe 4'te bildirim, Dede "İri sazanlar dipte beslenir evlat. Nine dip kamışı satıyor!" der, teknik düğmesi nabız gibi atar. İlk dip kamışı alınınca Dede "Uzağa at, sabret. Zil durmadan çalınca VUR!" der. İlk 3 dip atışında ipuçları: "Bekle... balıklar yemin çevresine toplanır.", "Zil tek tük çalıyor: kokluyor. Dokunma!", "Zil durmadan çalıyor! Hemen VUR!".
 - ✅ **Sinek (v0.4):**
-  - **Yer:** yalnızca akıntılı suda (dere ağzı; bölgenin `techniques`'i). Başka bölgede Takım Çantası'nda sineğin düğmesi "Dere ağzında" yazar, seçilmez. İlk sinek kamışı dere ağzı dışında alınırsa ele geçmez; Nine "Dere ağzında kullan evladım, alabalık orada." der. Dere ağzından çıkınca el oltası kendiliğinden şamandıraya döner: bölgenin adından sonra "Sinek dere ağzında olur: şamandıraya geçtin." bildirimi.
-  - **Sürüklenme:** sinek düştüğü yerden akıntıyla sürüklenir (akıntının %85'i; dar derede ~0,85 m/sn). Kıyıya ya da iskeleye varınca, durgun suda 1,5 sn kalınca ya da 15 sn sonra kendiliğinden döner (0,8 sn). Hiç akmayan suya düşen sinek kımıldamaz ve döner: "Durgun su" bildirimi, ilk kez Dede "Durgun suda sinek kımıldamaz evlat. Akıntıya at!" der. Beklerken dokunmak geri sarar.
-  - **Halka:** alabalık sineği önde 3 m, yanda 2 m'den (110°'lik koni) fark eder, 1,2 m/sn yaklaşır, altına gelir ve sinekle birlikte sürüklenir. 0,3–1 sn sonra halka çıkar: 0,5 sn içinde dokun (Kolay modda 0,9 sn). Halkadan önce dokunmak balığı kaçırır.
-  - **Çekişme:** ortak çekişme. Alabalıklar çırpınınca sudan sıçrar: balığın kendisi (elde gösterilen boyunun 1,5 katı) yay çizerek 0,8 m'den yükseğe sıçrar, havada kıvrılır, halka ve şapırtıyla geri dalar (`FishJump`). Dere ağzında fark etme ve yaklaşma hızlı olduğu için balık çabuk gelir.
+  - **Yer:** yalnızca akıntılı suda (dere ağzı; bölgenin `techniques`'i). Başka bölgede Takım Çantası'nda sineğin düğmesi "Dere ağzında" yazar, seçilmez. İlk sinek kamışı dere ağzı dışında alınırsa ele geçmez; Nine "Dere ağzında kullan evladım, alabalık orada." der. Dere ağzından çıkınca el oltası kendiliğinden şamandıraya döner (bölgenin adından sonra "Sinek yalnızca dere ağzında" bildirimi); dere ağzına dönünce sinek yine ele geçer (bildirim "Sinek"; arada başka teknik seçilmediyse). Dere ağzının kıyı şeridi dar: sınırda gidip gelen balıkçı sineği yitirmez. Bölge denetimi her karede ve atıştan hemen önce yapılır (sinek dere ağzı dışına atılmaz).
+  - **Sürüklenme:** sinek düştüğü yerden akıntıyla sürüklenir (akıntının %85'i; dar derede ~0,85 m/sn). Kıyıya ya da iskeleye varınca, menzilin sonuna ya da balıkçıya 1,2 m'den yakına gelince (balık hep menzilin içinde, çekişme payıyla takılır; dibinde çıkan balık çekişmesiz tutulmaz), durgun suda 1,5 sn kalınca ya da 15 sn sonra kendiliğinden döner (0,8 sn). Hiç akmayan suya düşen sinek kımıldamaz ve döner: "Durgun su" bildirimi, ilk kez Dede "Durgun suda sinek kımıldamaz evlat. Akıntıya at!" der. Beklerken dokunmak geri sarar.
+  - **Halka:** alabalık sineği önde 3 m, yanda 2 m'den (önünden iki yana 110°'ye kadar) fark eder, 1,2 m/sn yaklaşır, altına gelir ve sinekle birlikte sürüklenir. 0,3–1 sn sonra halka çıkar: 0,5 sn içinde dokun (Kolay modda 0,9 sn). Halkadan önce dokunmak balığı kaçırır.
+  - **Çekişme:** ortak çekişme; alabalıklar takılır takılmaz çırpınır (§5). Çırpınınca sudan sıçrarlar (şapırtı ve halka sıçrayışın; dar derede suya düşen yöne, yer yoksa yerinde): balığın kendisi (elde gösterilen boyunun 1,5 katı) yay çizerek 0,8 m'den yükseğe sıçrar, havada kıvrılır, halka ve şapırtıyla geri dalar (`FishJump`). Dere ağzında fark etme ve yaklaşma hızlı olduğu için balık çabuk gelir.
   - **Görünüm:** koyu gövdeli, beyaz dik tüylü (paraşüt sineği: yukarıdan suyun üstünde beyaz bir nokta), kırmızı kuyruklu kuru sinek; telefonda seçilsin diye 0,22 m (şamandıra 0,3, yem 0,24). Suyun yüzünde akıntıya dönük sallanır, sürüklenirken arkasında seyrek küçük halkalar. Halkada sinek suya çekilir; halka, ses, titreşim ve hafif sarsıntı. Elde uzun, ince, kızıl kahve sinek kamışı; misina az sarkar.
   - **Kamera:** dipteki gibi çerçeveler: balıkçı ipucu çubuğunun üstünde kalır, sinek uzaktaysa kamera en çok 1,15 kat uzaklaşır (sinek küçük; eğim şamandıradaki gibi 60°).
   - **Takım:** 3 sinek kamışı (sinek kamışı 1.500 para / rütbe 7 / 10 m / 3★; uzun 4.000 / 9 / 11 m / 4★; usta 9.000 / 12 / 12 m / 5★). 3 sinek (tükenmez): kuru sinek (bedava; alabalık ×1,2), nimf (300, r7; alabalık ×1,6, tatlısu kefali ×1,5), streamer (900, r8; dere alabalığı ×2,2, alabalık ×1,2). Dükkânda sinekte tekniğe özel sekme "Sinek".
@@ -529,7 +538,7 @@ Dakikalar v0.3.1 ölçümü; Dalga 3 satırları ve korkuluklar bugünkü (`test
 | makara, iğne, şamandıra (ilk kademe) | 10–26 | — |
 | cam kamış | 22–35 (Dalga 3: 48–62) | 10–75 (8. adımda daralır) |
 | büyük kova | 30–42 | 15–60 |
-| floro misina, hızlı makara, kepçe, büyük iğne | 40–85 (Dalga 3'te kepçe 170–186) | kepçe 40–220 (8. adımda daralır) |
+| floro misina, hızlı makara, kepçe, büyük iğne | 40–85 (Dalga 3'te kepçe 170–187) | kepçe 40–220 (8. adımda daralır) |
 | sandal (3.500) ve derin orta | 111–150 | 90–180 |
 | güçlü makara, parlak şamandıra, balık filesi | 126–185 | — |
 | örgü misina, karbon kamış, usta florokarbon | 171–250 | — |
@@ -562,15 +571,15 @@ Dakikalar v0.3.1 ölçümü; Dalga 3 satırları ve korkuluklar bugünkü (`test
   - **Değerlendirme:** bot dipte zamanının yalnızca %1–3'ünü geçiriyor: aynalı sazanı tutunca dakikada daha çok kazandıran spine dönüyor. Dipin balık başına değeri yüksek ama saatte avı yarı yarıya; 8. adımda (Denge) dipin süreleri ve yatkınlıkları tekniklerle birlikte ayarlanır.
 - ✅ **Dalga 3, sinek ölçümü:**
   - **Oturum süreleri** (`tools/session_timing.gd -- --technique=fly --zone=stream_mouth`; bot menzildeki en yakın gölgenin 2,5 m akıntı yukarısına atar, sinek balığa doğru sürüklenir; halkadan 0,45 sn sonra VUR):
-    - ısırmaya 5,0 sn (şamandırada 9,4, spinde 5,4): balığın gelişi 2,0 sn, halkaya 0,6 sn;
+    - ısırmaya 4,9 sn (şamandırada 9,4, spinde 5,4): balığın gelişi 1,9 sn, halkaya 0,7 sn;
     - çekişme 5,6 sn, takılma uzaklığı 4,4 m;
-    - satışsız saatte 285 av (şamandırada 208): bot halkayı hiç kaçırmıyor. Fark etmeyi daraltmak (140° / 3,5 m → 110° / 3 m) ölçümü değiştirmedi: sinek balığa doğru sürüklendiği için balık onu hep görüyor.
-    - İnsanın kaçırma payı sinekte %25 (öteki tekniklerde %15; tahmin: VUR anı 0,5 sn, halkadan önce dokunmak kaçırır; `sim.json` `techniques.fly.miss_ppm`).
+    - satışsız saatte 287 av (şamandırada 208): bot halkayı hiç kaçırmıyor. Fark etmeyi daraltmak (140° / 3,5 m → 110° / 3 m) ölçümü değiştirmedi: sinek balığa doğru sürüklendiği için balık onu hep görüyor.
+    - İnsanın kaçırma payı sinekte %25 (öteki tekniklerde %15; tahmin: VUR anı 0,5 sn, halkadan önce dokunmak kaçırır; `sim.json` `techniques.fly.miss_ppm`). Bot tekniği seçerken bu payı da hesaba katar.
   - **Sonuç** (`economy_report.gd -- --hours=12 --seeds=6`):
     - sinek kamışı ve ilk sinek atışı 83–99. dakikada (rütbe 7: 56–71; hedef 60–120);
-    - saatte ~5.900 para ve 190 av (önceki gibi); rütbe 20'ye 5,7–5,9 saatte (önce 6,3–6,8: alabalıklar Nadir, balık başına rütbe puanı çok);
-    - kepçe 170–186. dakikada (sinek kamışına da para ayrılıyor); bütün türler 153–274. dakikada.
-  - **Değerlendirme:** bot zamanının ~%43'ünü sinekte, ~%44'ünü spinde, %7–16'sını şamandırada, %1–3'ünü dipte geçiriyor. Dere ağzında sinekle balık başına değer şamandırayla aynı (~25 para), ama balık daha çabuk geliyor. 8. adımda (Denge) teknikler birbirine göre ayarlanır.
+    - saatte ~5.700–5.950 para ve ~187 av (önce ~5.600–5.900 ve 187); rütbe 20'ye 5,8–5,9 saatte (önce 6,3–6,8: alabalıklar Nadir, balık başına rütbe puanı çok);
+    - kepçe 170–187. dakikada (sinek kamışına da para ayrılıyor); bütün türler 153–276. dakikada.
+  - **Değerlendirme:** bot zamanının ~%44'ünü sinekte, ~%44'ünü spinde, %7–16'sını şamandırada, %1–3'ünü dipte geçiriyor. Dere ağzında sinekle balık başına değer şamandırayla aynı (~25 para), ama balık daha çabuk geliyor. 8. adımda (Denge) teknikler birbirine göre ayarlanır.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
 ### 10.5 Canlı dünya

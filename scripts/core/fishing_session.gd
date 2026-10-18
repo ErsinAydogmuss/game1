@@ -23,8 +23,10 @@ extends RefCounted
 ## nibble {shadow, index} · bite {shadow} · early {shadow, startle} · retry {shadow} (ilk av
 ## kaçırılınca yeniden ısıracak) · hook {shadow, fish, distance, too_big} · warn · burst · burst_end ·
 ## strain · strain_end · lost {reason: early | missed | snapped | escaped, too_big} ·
-## catch {fish, fish_index, size_cm, stars, rarity, percentile, shadow, zone} · retrieve · idle ·
-## spawn {shadow} · despawn {shadow}
+## catch {fish, fish_index, size_cm, stars, rarity, percentile, shadow, zone} · retrieve {reason} ·
+## idle · spawn {shadow} · despawn {shadow}. Tekniklerin olayları (Dalga 3): spinde strike {auto} ·
+## turn_away · snag; dipte sniff (koklama) · run (koşu: VUR); sinekte rise (halka: VUR); retrieve
+## nedenleri: spinde home / snag, sinekte drift / still.
 ##
 ## Bölgeli gölde gölgeler balıkçının çevresinde doğar (ShadowSim); balıkçının bölgesi zone().
 ## access: gölge doğabilen bölgeler (Zones.open_ids; boşsa sandalsız bütün bölgeler).
@@ -156,6 +158,7 @@ func poll_events() -> Array[Dictionary]:
 func cast(target: Vector2) -> bool:
 	if state != State.IDLE:
 		return false
+	sim.locate(angler)
 	var point := technique.landing_point(self, target)
 	if not Dice.is_point(point) or angler.distance_to(point) < technique.min_cast(self):
 		return false
@@ -240,6 +243,12 @@ func set_access(open: PackedStringArray) -> void:
 
 
 ## Balıkçı başka yere geçti (harita, sandal): yalnızca boştayken; gölgeler yeni yerin çevresinde.
+## Balıkçı yürüdü: yeri ve avlandığı bölge hemen (atıştan önce; oturumun adımı beklenmeden).
+func locate(p: Vector2) -> void:
+	angler = p
+	sim.locate(p)
+
+
 func relocate(p: Vector2) -> void:
 	angler = p
 	for e in sim.relocate(p):

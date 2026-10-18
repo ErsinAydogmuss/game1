@@ -14,7 +14,9 @@ const PPM := 1_000_000
 var rarities: Array[Dictionary] = []
 ## Balıklar: id, rarity (sıra), value (para), release_only (koruma altında: yalnızca bırakılır),
 ## shadow_m, size_cm (Vector2i), weight, color, back, accent, fight { reel, pull, burst_pull,
-## burst_every, burst_len (sn, Vector2), *_steps (Vector2i), run, heavy (iri tür) },
+## burst_every, burst_len (sn, Vector2), *_steps (Vector2i), run, heavy (iri tür), jumps (çırpınınca
+## sudan sıçrar; yalnızca görünüş), first_burst_steps (varsa türün ilk çırpınması: alabalık takılır
+## takılmaz sıçrar; yoksa kuralların) },
 ## affinity { teknik: çarpan } (türün teknik yatkınlığı; yazılmayan teknikte 0, alan hiç yoksa
 ## yalnızca şamandıra 1).
 var fish: Array[Dictionary] = []
@@ -303,6 +305,10 @@ func _load_fish(raw: Dictionary) -> void:
 			# Çırpınınca sudan sıçrar (alabalıklar; yalnızca görünüş: FishJump).
 			"jumps": bool(raw_fight.get("jumps", false)),
 		}
+		# Türün ilk çırpınması (alabalık takılır takılmaz sıçrar); yazılmazsa kuralların reel.first_burst'ü.
+		if raw_fight.has("first_burst"):
+			var first := _vec2(raw_fight["first_burst"], Vector2(1.6, 2.4))
+			fight["first_burst_steps"] = Vector2i(FishingRules.to_steps(first.x), FishingRules.to_steps(first.y))
 		var affinity := {}
 		var raw_affinity: Variant = d.get("affinity", { "float": 1.0 })
 		if typeof(raw_affinity) == TYPE_DICTIONARY:
@@ -703,6 +709,10 @@ func _validate_fish(f: Dictionary) -> void:
 		errors.append("fish.json: %s: burst_every uyarıdan uzun olmalı" % id)
 	if burst_len.x <= 0 or burst_len.y < burst_len.x:
 		errors.append("fish.json: %s: burst_len geçersiz" % id)
+	if fight.has("first_burst_steps"):
+		var first: Vector2i = fight["first_burst_steps"]
+		if first.x <= rules.warn_steps or first.y < first.x:
+			errors.append("fish.json: %s: first_burst uyarıdan uzun olmalı" % id)
 	if float(fight["reel"]) <= 0.0 or float(fight["run"]) < 0.0:
 		errors.append("fish.json: %s: reel ya da run geçersiz" % id)
 	var affinity: Dictionary = f["affinity"]

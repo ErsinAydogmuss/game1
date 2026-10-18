@@ -4,8 +4,10 @@ extends Technique
 ## techniques'i). Kuru sinek düştüğü yerden akıntıyla sürüklenir (LakeShape.flow_at × drift).
 ## Alabalık sineği altından fark eder, altına gelir ve bir süre bekler (NIBBLING: dürtme yok; bu
 ## sırada dokunmak balığı kaçırır), sonra halka çıkarır ("rise"): vuruş penceresinde dokunulur.
-## Sinek durgun suya, kıyıya ya da en uzun sürüklenmenin sonuna gelince kendiliğinden geri sarılır
-## (retrieve{drift}; hiç akmayan suya düştüyse retrieve{still}: oyuncuya akıntıya atması söylenir);
+## Sinek durgun suya, kıyıya, menzilin ötesine, balıkçının dibine (end_m) ya da en uzun sürüklenmenin
+## sonuna gelince kendiliğinden geri sarılır (retrieve{drift}; hiç akmayan suya düştüyse
+## retrieve{still}: oyuncuya akıntıya atması söylenir). Böylece balık hep menzilin içinde ve çekişme
+## payıyla takılır (menzil + escape_extra);
 ## beklerken dokunmak da geri sarar. Yem kullanmaz. Sayılar rules.json
 ## techniques.fly; zarlar balığın kendi zarından (aynı girdilerle aynı sonuç).
 
@@ -17,6 +19,8 @@ var still_steps: int = 90
 ## En uzun sürüklenme (bekleme adımı).
 var drift_max_steps: int = 900
 var min_cast_m: float = 3.0
+## Sinek balıkçıya bundan yakına gelince döner (dibinde çıkan balık çekişmesiz tutulmasın).
+var end_m: float = 1.2
 ## Geri sarma süresi (adım; sinek hafif, çabuk gelir).
 var retrieve_steps: int = 48
 
@@ -32,6 +36,7 @@ func _init(fishing_rules: FishingRules) -> void:
 	still_steps = rig.steps("still_s", 1.5)
 	drift_max_steps = rig.steps("drift_max_s", 15.0)
 	min_cast_m = rig.num("min_cast_m", min_cast_m)
+	end_m = rig.num("end_m", end_m)
 	retrieve_steps = rig.steps("retrieve", 0.8)
 
 
@@ -107,13 +112,15 @@ func uses_bait() -> bool:
 	return false
 
 
-## Sinek akıntıyla bir adım sürüklenir. Kıyıya (ya da iskeleye) varınca, durgun suda kalınca ya da
-## en uzun sürüklenmenin sonunda geri sarılır: false. Hiç akmayan suya düşen sinek "still" nedeniyle
-## döner.
+## Sinek akıntıyla bir adım sürüklenir. Kıyıya (ya da iskeleye), menzilin ötesine ya da balıkçının
+## dibine varınca, durgun suda kalınca ya da en uzun sürüklenmenin sonunda geri sarılır: false. Hiç
+## akmayan suya düşen sinek "still" nedeniyle döner.
 func _drift(s: FishingSession) -> bool:
 	var flow := s.lake.flow_at(s.bobber) * drift_share
 	var next := s.bobber + flow * FishingSession.STEP
-	if not s.lake.is_water(next) or s.lake.on_dock(next) or s.lake.shore_distance(next) < s.rules.min_shore:
+	var off := next.distance_to(s.angler)
+	if not s.lake.is_water(next) or s.lake.on_dock(next) or s.lake.shore_distance(next) < s.rules.min_shore \
+			or off > s.range_m() or off < end_m:
 		s.retrieve(retrieve_steps, "drift")
 		return false
 	s.bobber = next

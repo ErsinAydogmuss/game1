@@ -106,6 +106,8 @@ func _ready() -> void:
 			_play_tour.call_deferred()
 		"technique":
 			_play_technique.call_deferred()
+		"fly":
+			_play_fly_only.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -1083,6 +1085,25 @@ func _play_boat_bottom() -> void:
 	await _wait_state(FishingSession.State.IDLE, 5.0)
 
 
+## Yalnızca sinek bölümü (hızlı deneme): rütbe 6'nın kaydı; spin ve dipin haberi verilmiş (açılışta
+## Dede sineği söylesin).
+func _play_fly_only() -> void:
+	_use_save(5)
+	var db := GameState.db
+	var save := GameState.save
+	Records.add(save.records, "rudd", 999, 3, 0)
+	for t: String in ["spin", "bottom"]:
+		save.flags["told_open_" + t] = true
+	save.xp = db.rank_xp[5]
+	GameState.changed.emit()
+	await _wait(1.5)
+	await _play_fly()
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
 ## Sinek (rütbe 7): rütbe gelince haber; iskelede çantadan Nine'ye, sinek kamışı alınır ama ele
 ## geçmez (Nine dere ağzını söyler), Sinek sekmesi; çantada "Dere ağzında"; dere ağzında sinek
 ## seçilir; akıntıya atış: sinek sürüklenir, alabalık altına gelir, halka çıkınca VUR, çırpınırken
@@ -1159,8 +1180,8 @@ func _play_fly() -> void:
 	await _shot("23_sinek_elde")
 	# Akıntıya atış: sinek sürüklenir, alabalık altına gelir, halka çıkınca VUR; çırpınırken sıçrar.
 	var out := await _fly_cast("trout", true)
-	_check("sinek: akıntıyla sürüklenir (%.1f m), Dede halkayı bekletir" % float(out["drift"]),
-			float(out["drift"]) > 0.5 and bool(out["drift_hint"]))
+	_check("sinek: akıntıyla sürüklenir (%.1f m), misina sineğe uzanır, Dede halkayı bekletir" % float(out["drift"]),
+			float(out["drift"]) > 0.5 and bool(out["line"]) and bool(out["drift_hint"]))
 	_check("sinek: alabalık altına gelir, halka çıkar, VUR'la takılır", bool(out["under"]) and bool(out["rise"])
 			and bool(out["hooked"]))
 	_check("sinek: alabalık çırpınırken sudan sıçrar, tutulur", bool(out["jumped"]) and bool(out["caught"]))
@@ -1184,8 +1205,8 @@ func _play_fly() -> void:
 ## gelince dokunur (erken). Balık yoksa sinek kendiliğinden dönene kadar bekler. Her an bir kez
 ## görüntülenir.
 func _fly_cast(fish_id: String, strike: bool) -> Dictionary:
-	var out := { "drift": 0.0, "drift_hint": false, "under": false, "rise": false, "hooked": false, "jumped": false,
-			"caught": false, "early": false, "came_back": false }
+	var out := { "drift": 0.0, "drift_hint": false, "line": false, "under": false, "rise": false, "hooked": false,
+			"jumped": false, "caught": false, "early": false, "came_back": false }
 	var session := _session()
 	var finger := Vector2(260, 520)
 	var card: FishCard = main.get("card")
@@ -1208,6 +1229,8 @@ func _fly_cast(fish_id: String, strike: bool) -> Dictionary:
 	var landed := session.bobber
 	await _wait_frames(8)
 	out["drift_hint"] = str(main.get("_hint_shown")) == "UI_HINT_FLY_DRIFT"
+	var line: FishingLine = main.get("line")
+	out["line"] = line.visible and line.to.distance_to(_angler().rod_tip()) > 2.0
 	await _shot_once("24_sinek_akintida")
 	if fish_id.is_empty():
 		# Durgun suda sinek kımıldamaz: kısa bir süre sonra kendiliğinden döner.

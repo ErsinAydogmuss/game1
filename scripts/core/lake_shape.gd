@@ -242,8 +242,8 @@ func zone_index(id: String) -> int:
 
 ## Akıntı (yön ve güç): akıntılı bölgenin havzasında bölgenin akıntısı; dar havzada tam güç,
 ## geniş havzada (en kısa yarıçapı FLOW_NARROW'dan büyük) zayıf; havzanın dışında FLOW_FADE
-## metrede söner. Akıntısız yerde sıfır. Şimdilik görsel (suyun akışı); Dalga 3'te sinek
-## akıntıyla sürüklenir.
+## metrede söner. Akıntısız yerde sıfır. Suyun akışı (görsel) ve sinek (FlyTechnique) onunla
+## sürüklenir.
 func flow_at(p: Vector2) -> Vector2:
 	var best := Vector2.ZERO
 	for b in flows.size():

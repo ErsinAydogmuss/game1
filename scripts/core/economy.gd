@@ -179,7 +179,10 @@ static func technique_ready(db: ContentDB, save: SaveData, technique: String) ->
 ## Teknik bu bölgede avlanılır mı (bölgenin techniques'i; sinek yalnızca dere ağzında)?
 static func technique_allowed(db: ContentDB, spot_id: String, zone_id: String, technique: String) -> bool:
 	var z := db.zone(spot_id, zone_id)
-	return z.is_empty() or CatchOdds.allows(z, technique)
+	if z.is_empty():
+		# Bölgesiz yer (derin ortanın uzak kıyı şeridi): akıntısız bir bölgenin teknikleri (sinek yok).
+		return technique in ContentDB.ZONE_TECHNIQUES
+	return CatchOdds.allows(z, technique)
 
 
 ## Bu teknik için kuşanılmış takımın etkisi (oturum bunu kullanır). Tükenmiş yem solucana döner.

@@ -248,3 +248,5 @@ func test_technique_sets() -> void:
 	assert_true(Economy.technique_allowed(db, "big_lake", "stream_mouth", "fly"), "dere ağzında sinek")
 	assert_true(not Economy.technique_allowed(db, "big_lake", "dock_cove", "fly"), "iskelede sinek yok")
 	assert_true(Economy.technique_allowed(db, "big_lake", "dock_cove", "spin"), "iskelede spin")
+	assert_true(not Economy.technique_allowed(db, "big_lake", "", "fly"), "bölgesiz suda (derin ortanın kıyısı) sinek yok")
+	assert_true(Economy.technique_allowed(db, "big_lake", "", "float"), "bölgesiz suda şamandıra olur")

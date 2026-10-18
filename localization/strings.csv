@@ -332,14 +332,14 @@ GEAR_fly_streamer,Streamer,Streamer
 GEAR_fly_streamer_DESC,"Like a little fish: calls the brook trout.","Küçük balık gibi: dere alabalığını çağırır."
 UI_TECH_fly,Fly,Sinek
 UI_TECH_fly_HOW,"Cast on the current. When the ring appears, strike!","Akıntıya at. Halka çıkınca VUR!"
-UI_TECH_fly_WHERE,At the stream mouth,Dere ağzında
+UI_TECH_fly_WHERE,Stream mouth,Dere ağzında
 UI_HINT_FLY_DRIFT,The fly drifts with the current... watch for a ring.,Sinek akıntıyla süzülüyor... halkayı bekle.
-UI_HINT_FLY_UNDER,A trout is under it! Wait for the ring.,Altında bir alabalık var! Halkayı bekle.
+UI_HINT_FLY_UNDER,A fish is under it! Wait for the ring.,Altında bir balık var! Halkayı bekle.
 UI_HINT_FLY_RISE,A ring! Strike now!,Halka! Hemen VUR!
 UI_DEDE_TECH_OPEN_fly,"Trout rise to flies, kid. Nana sells fly rods!","Alabalık sineğe çıkar evlat. Nine sinek kamışı satıyor!"
 UI_DEDE_TECH_FIRST_fly,"Cast on the current and let the fly drift. Strike at the ring!","Akıntıya at, sinek süzülsün. Halka çıkınca VUR!"
 UI_DEDE_FLY_HERE,"Try a fly here, kid. Trout rise in the current.","Burada sinek dene evlat. Alabalık akıntıda çıkar."
-UI_TECH_FLY_ONLY,"Flies are for the stream mouth: back to the float.","Sinek dere ağzında olur: şamandıraya geçtin."
+UI_TECH_FLY_ONLY,Flies only at the stream mouth,Sinek yalnızca dere ağzında
 UI_NINE_FLY_ZONE,"Use it at the stream mouth, dear: the trout are there.","Dere ağzında kullan evladım, alabalık orada."
 UI_FLY_STILL,Still water,Durgun su
 UI_DEDE_FLY_STILL,"A fly won't drift on still water, kid. Cast on the current!","Durgun suda sinek kımıldamaz evlat. Akıntıya at!"

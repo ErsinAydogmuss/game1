@@ -111,8 +111,10 @@ func _init(rules: FishingRules, fight: Dictionary, reel_speed: float, start_dist
 	max_distance = max_dist
 	easy = easy_mode
 	phase = Phase.CALM
-	# first_burst uyarıyı da içerir: ilk patlama tam o anda başlar.
-	phase_steps = maxi(1, Dice.between(_rng, rules.first_burst_steps) - rules.warn_steps)
+	# first_burst uyarıyı da içerir: ilk patlama tam o anda başlar. Türün kendi ilk çırpınması varsa
+	# o (alabalık takılır takılmaz sıçrar).
+	var first: Vector2i = fight.get("first_burst_steps", rules.first_burst_steps)
+	phase_steps = maxi(1, Dice.between(_rng, first) - rules.warn_steps)
 
 
 ## Bir adım ilerler; bu adımda olanları döndürür: warn, burst, burst_end, strain (gerilim

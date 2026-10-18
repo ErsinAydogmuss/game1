@@ -256,7 +256,8 @@ func _choose_technique() -> void:
 
 ## Tekniğin çekiciliği: hiç denenmemişse merak; sonra dakikada "değer": balık başına ortalama değer
 ## ve defterde olmayan türün payı (NEW_SPECIES_WORTH: yeni tür kazançtan önce gelir), tekniğin atış,
-## geliş, ısırma ve çekişme süreleriyle (sim.json techniques; yoksa genel değerler).
+## geliş, ısırma ve çekişme süreleriyle ve kaçırılan ısırma payıyla (sim.json techniques; yoksa genel
+## değerler).
 func _technique_score(t: String) -> float:
 	var score := 0.0 if t == "float" or milestones.has("tech:" + t) else 1.0e12
 	var gear := Economy.gear_for(db, save, t)
@@ -276,7 +277,9 @@ func _technique_score(t: String) -> float:
 	for key: String in ["approach_s", "nibble_s"]:
 		var r: Variant = own.get(key, timing.get(key, [2.0, 6.0]))
 		cycle += (float(r[0]) + float(r[1])) * 0.5 if r is Array and (r as Array).size() >= 2 else 4.0
-	return score + worth * 60.0 / maxf(1.0, cycle)
+	# Kaçırılan ısırma kazandırmaz (tekniğin miss_ppm'i: sinekte VUR anı kısa, daha çok kaçırılır).
+	var miss := float(own.get("miss_ppm", timing.get("miss_ppm", 150000))) / ContentDB.PPM
+	return score + worth * (1.0 - miss) * 60.0 / maxf(1.0, cycle)
 
 
 ## Atışın süresi bölgenin ve tekniğin hanesine (rapor: bölgelerde ve tekniklerde geçen zaman).

@@ -6,6 +6,8 @@ const RUNS := 40
 const DISTANCES := [4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
 ## Dipte balık uzakta takılır (ölçüm: ortalama 12,5 m; tools/session_timing.gd --technique=bottom).
 const BOTTOM_DISTANCES := [8.0, 9.5, 11.0, 12.5, 14.0, 15.0]
+## Sinekte yakında (ölçüm: ortalama 4,4 m; tools/session_timing.gd --technique=fly).
+const FLY_DISTANCES := [3.0, 3.5, 4.0, 4.5, 5.0, 5.5]
 
 
 ## gear: kuşanılmış takım (yoksa başlangıç takımı, yani bambu olta); percentile: boy yüzdeliği (ppm).
@@ -327,3 +329,31 @@ func test_top_bottom_gear_keeps_skill_relevant() -> void:
 		var after: float = _rates(fish_id, ReelBot.Style.PERFECT, 0.0, false, top, 0, BOTTOM_DISTANCES)["mean"]
 		assert_true(after < before and after >= 0.6 * before, "%s: dipte en iyi takımla çekişme kısalır, yarıdan fazla sürer (%.1f → %.1f sn)" % [
 				fish_id, before, after])
+
+
+## Sinek takımıyla da (ilk sinek kamışı ve en iyisi) beceri gerekir: balık yakında takılır ama
+## alabalık takılır takılmaz çırpınır (fight.first_burst). Sinekle gelen her tür 0,7 sn tepkiyle
+## tutulur; hep basılı tutan Nadir türü en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar.
+func test_fly_gear_keeps_skill_relevant() -> void:
+	var db := content()
+	var items := db.gear_start.duplicate()
+	items["rod"] = "rod_fly_1"
+	items["fly"] = "fly_dry"
+	var none: Array[String] = []
+	var first := GearStats.from_items(db, items, none)
+	var top := GearStats.best(db, "fly")
+	for f in db.fish:
+		var id := str(f["id"])
+		if db.affinity(id, "fly") <= 0.0:
+			continue
+		for gear: GearStats in [first, top]:
+			var name := "en iyi sinek takımı" if gear == top else "sinek kamışı"
+			var slow := _rates(id, ReelBot.Style.REACT, 0.7, false, gear, 0, FLY_DISTANCES)
+			assert_true(slow["caught"] >= 0.98, "%s: %s, 0,7 sn tepkiyle tutulur (%.2f)" % [id, name, slow["caught"]])
+			var rarity := int(f["rarity"])
+			if rarity < db.rarity_index("rare"):
+				continue
+			var limit := 0.5 if rarity == db.rarity_index("rare") else 0.3
+			var hold := _rates(id, ReelBot.Style.ALWAYS, 0.0, false, gear, 0, FLY_DISTANCES)
+			assert_true(hold["caught"] <= limit, "%s: %s, hep basılı tutan en çok %%%d tutar (%.2f)" % [id, name,
+					roundi(limit * 100), hold["caught"]])
