@@ -37,6 +37,9 @@ func _initialize() -> void:
 		keys.append("rank_%d" % r)
 	for z in db.zones_of(db.main_spot):
 		keys.append("zone:" + str(z["id"]))
+	for t: String in ContentDB.TECHNIQUES:
+		if t != "float" and db.has_technique(t):
+			keys.append("tech:" + t)
 	keys.append("buy")
 	for g in db.gear:
 		if int(g["price"]) > 0 and str(g["category"]) != "bait":
@@ -64,4 +67,17 @@ func _initialize() -> void:
 					total += float(sim.zone_time[k])
 				cells.append("%5.1f" % (100.0 * float(sim.zone_time.get(id, 0.0)) / maxf(total, 1.0)))
 			print("  %-26s %s" % [id, "  ".join(cells)])
+	# Tekniklerde geçen zaman (atış ve çekişme).
+	print("")
+	print("tekniklerde geçen zaman (%):")
+	for t: String in ContentDB.TECHNIQUES:
+		if not db.has_technique(t):
+			continue
+		var cells := PackedStringArray()
+		for sim in sims:
+			var total := 0.0
+			for k: String in sim.technique_time:
+				total += float(sim.technique_time[k])
+			cells.append("%5.1f" % (100.0 * float(sim.technique_time.get(t, 0.0)) / maxf(total, 1.0)))
+		print("  %-26s %s" % [t, "  ".join(cells)])
 	quit()

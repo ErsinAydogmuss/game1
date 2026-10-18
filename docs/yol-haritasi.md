@@ -111,7 +111,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 
 - [x] Teknik soyutlaması: ısırmaya kadarki kısım tekniğin (`Technique`, şamandıra `FloatTechnique`); gölgeler tekniğin profilini okur (`TechniqueRules`). Şamandıra bit bit aynı (altın test).
 - [x] Takım çantasının temeli: makara ve misina her teknikte ortak, her tekniğin kendi yuvaları; türlerin teknik yatkınlığı (şamandırada oranlar ve katalog aynı); kayıt v4 (elindeki teknik, kerevit tuzakları).
-- [ ] Spin.
+- [x] Spin (rütbe 2): basılı tut, yem gelir; bırak, batar. Yırtıcı oynayan yemin peşine düşer, dur-kalk ritmiyle saldırır (basılıysa kendiliğinden takılır, değilse VUR). Otlu yerde bekleyen yem takılır. 3 spin kamışı, 6 yapay yem. Takım Çantası (sol alttaki teknik düğmesi), dükkânın başlığında teknik düğmeleri, Dede'nin spin sözleri ve ilk atış ipuçları; `technique` bot senaryosu; denge botu spini kullanır (spin takımı 4–10. dakikada).
 - [ ] Dip: sehpa ve zil.
 - [ ] Sinek (dere ağzı).
 - [ ] Kerevit tuzağı.

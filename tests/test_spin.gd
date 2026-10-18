@@ -328,6 +328,13 @@ func test_random_input_never_gets_stuck() -> void:
 				FishingSession.State.CAUGHT:
 					if rng.randf() < 0.05:
 						session.acknowledge()
+				FishingSession.State.FIGHTING:
+					# Çekişmede çoğunlukla basılı (yarı yarıya basan rastgele girdi iri bir turnayı
+					# dakikalarca çeker: takılma değil, yalnızca yavaş).
+					if rng.randf() < 0.06:
+						session.press()
+					if rng.randf() < 0.02:
+						session.release()
 				_:
 					if rng.randf() < 0.03:
 						session.press()

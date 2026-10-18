@@ -71,3 +71,29 @@ func test_stats_exist_on_items() -> void:
 		for g in content().gear_in(category):
 			for stat: Array in ShopPanel.STATS[category]:
 				assert_true(g.has(str(stat[0])), "%s: değer yok: %s" % [g["id"], stat[0]])
+
+
+## Sekme adları (her teknikte, iki dilde) sekmeye sığar: uzun ad (Yapay yem) küçülür, en küçük boyda
+## da sekme görselinin payları içinde kalır.
+func test_tab_titles_fit() -> void:
+	var rows := {}
+	var f := FileAccess.open("res://localization/strings.csv", FileAccess.READ)
+	while f != null and not f.eof_reached():
+		var row := f.get_csv_line()
+		if row.size() >= 3:
+			rows[row[0]] = row
+	var keys: Array[String] = []
+	for t: Array in ShopPanel.TABS:
+		keys.append(str(t[2]))
+	for look: String in ShopPanel.TECHNIQUE_TACKLE:
+		keys.append(str((ShopPanel.TECHNIQUE_TACKLE[look] as Array)[1]))
+	var font := UiKit.display_font()
+	var room := ShopPanel.tab_text_room()
+	assert_true(room > 100.0, "sekmede yazıya yer var (%.0f)" % room)
+	for key in keys:
+		for column: int in [1, 2]:
+			var text := UiKit.upper((rows[key] as PackedStringArray)[column])
+			var size := UiKit.fit_size(text, font, 26, room, ShopPanel.TAB_MIN_FONT)
+			var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+			assert_true(width <= room, "%s (%s) sekmeye sığmıyor: %.0f > %.0f" % [key, "en" if column == 1 else "tr",
+					width, room])

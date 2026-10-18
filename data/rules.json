@@ -12,7 +12,7 @@
 		"drift": 0.25, "catch_m": 0.6, "escape_extra_m": 2.0, "easy_slip": 2.0, "first_burst": [1.6, 2.4],
 		"carry": 3, "size_pull": 0.08, "over_pull": 0.12, "over_burst": 0.1, "over_drift": 3.0, "over_easy_reel": 0.9 },
 	"techniques": {
-		"spin": { "notice": { "cone_deg": 60.0, "front_m": 4.0, "side_m": 2.2 }, "approach_speed": 1.2, "give_up": 8.0,
+		"spin": { "notice": { "cone_deg": 60.0, "front_m": 4.0, "side_m": 2.2 }, "approach_speed": 2.0, "give_up": 8.0,
 			"gather_chance": 0.0, "follow_speed": 1.5, "lure_speed": 0.8, "moving_grace": 0.5, "min_cast_m": 2.0, "end_m": 1.2,
 			"strike": { "min_follow": 0.6, "min_phase": 0.25, "stop": 0.4, "go": 0.3, "steady_every": 1.0, "steady": 0.12,
 				"sure_after": 4, "rest_lose": 3.0, "follow_max": 10.0 },

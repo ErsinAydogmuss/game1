@@ -2,9 +2,17 @@ class_name RodModel
 extends Node3D
 ## Olta: tutamak, makara ve üç eklemli kamış (Props). Kökü bu düğümün yerinde; kamış -Z'ye uzanır.
 ## Ucundaki işaretçiden (tip) misina çıkar. bend (0..1): gerilimle uca doğru artan bükülme;
-## bekleyişte hafifçe esner. Kare başı hareket _process'te.
+## bekleyişte hafifçe esner. Kare başı hareket _process'te. Biçimi tekniğe göre (style, kurulmadan
+## önce verilir): şamandıra 2,3 m ahşap, spin kısa ve koyu, dip uzun ve yeşil, sinek uzun ve ince.
 
 const LENGTH := 2.3
+## Tekniğe göre biçim: boy (m), kamışın rengi, kalınlık çarpanı.
+const STYLES := {
+	"float": { "length": 2.3, "blank": Color("#7a4f2b"), "thick": 1.0 },
+	"spin": { "length": 1.9, "blank": Color("#2f3a45"), "thick": 0.9 },
+	"bottom": { "length": 2.6, "blank": Color("#3d5a3a"), "thick": 1.15 },
+	"fly": { "length": 2.7, "blank": Color("#9a5a32"), "thick": 0.75 },
+}
 ## Eklemlerin bükülme payı (kökten uca).
 const BEND := [0.1, 0.22, 0.38]
 const WOOD := Color("#7a4f2b")
@@ -14,6 +22,8 @@ const METAL := Color("#c9d2dc")
 ## Gerilim (0 = gevşek, 1 = çok gergin).
 var bend: float = 0.0
 var tip: Node3D
+## Tekniği (STYLES; _ready'den önce verilir).
+var style: String = "float"
 
 var _joints: Array[Node3D] = []
 var _clock: float = 0.0
@@ -26,12 +36,14 @@ func _ready() -> void:
 	reel.name = "Reel"
 	Props.cylinder(self, 0.012, 0.012, 0.09, Vector3(0.05, -0.07, 0.05), METAL, 5, Vector3(0, 0, deg_to_rad(90.0)))
 	var parent: Node3D = self
-	var segment := LENGTH / 3.0
+	var look: Dictionary = STYLES.get(style, STYLES["float"])
+	var segment := float(look["length"]) / 3.0
+	var thick := float(look["thick"])
 	for i in 3:
 		var joint := Props.pivot(parent, Vector3(0, 0, -segment if i > 0 else -0.08), "Joint%d" % i)
-		var r0 := 0.022 - 0.006 * i
-		var r1 := r0 - 0.006
-		Props.cylinder(joint, maxf(r1, 0.006), r0, segment, Vector3(0, 0, -segment * 0.5), WOOD, 5,
+		var r0 := (0.022 - 0.006 * i) * thick
+		var r1 := r0 - 0.006 * thick
+		Props.cylinder(joint, maxf(r1, 0.006), r0, segment, Vector3(0, 0, -segment * 0.5), look["blank"], 5,
 				Vector3(deg_to_rad(-90.0), 0, 0))
 		if i < 2:
 			Props.cylinder(joint, r1 + 0.005, r1 + 0.005, 0.025, Vector3(0, 0, -segment), METAL, 6,

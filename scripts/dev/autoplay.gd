@@ -27,6 +27,12 @@ extends Node
 ##   boat: sandal (KONTROL satırları): sandal yokken Dede Nine'yi söyler; Nine'den sandalı al; iskeledeki
 ##     sandala dokun → ekran kararır, derin ortada sandaldasın; yürünmez, dokunuş atıştır; yayını tut;
 ##     haritadan sıradaki şamandıra; "Kıyıya dön" → iskele.
+##   technique: teknikler (KONTROL satırları; telefon oranında ve --safe-inset=130 ile): rütbe 2'den
+##     önce teknik düğmesi yok; rütbe atlayınca spin açılır (bildirim, Dede, nabız); teknik düğmesi →
+##     Takım Çantası (spin "Nine'de") → dükkân spin kamışlarında; ilk spin kamışı → spin ele geçer,
+##     gölgeler yırtıcı, Dede nasıl oynandığını söyler; spinde basılı tut → yem gelir, yırtıcı peşine
+##     düşer, dur-kalk → saldırır (basılıyken kendiliğinden takılır, bırakılmışken VUR); sazlıkta
+##     bekleyen yem takılır; çantadan şamandıraya dönülür.
 ##   tour: gezi (hız ölçümü): ayarlarda "Bütün bölgeleri aç" (geliştirme düğmesi) ve sürüm yazısına 5
 ##     dokunuş (ölçüm açılır: sol üstte FPS, çizim, üçgen); sonra her bölgenin atış noktasına ve
 ##     sandalla derin ortaya geçer; her yerde ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü;
@@ -50,6 +56,8 @@ var _inset: float = 0.0
 var _overlay: Control
 var _finger_pos: Dictionary = {}
 var _results: Array[String] = []
+## Bir kez alınan ekran görüntüleri (_shot_once).
+var _taken: Dictionary = {}
 
 
 func _ready() -> void:
@@ -93,6 +101,8 @@ func _ready() -> void:
 			_play_boat.call_deferred()
 		"tour":
 			_play_tour.call_deferred()
+		"technique":
+			_play_technique.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -300,7 +310,9 @@ func _play_controls() -> void:
 			warned and red_calm and _session().last_loss == "snapped" and told and names)
 	await _wait(0.4)
 	await _shot("10_dede_takim")
-	# 13) Düğmeler yeterince büyük ve güvenli alanın içinde.
+	# 13) Rütbe 2'de (spin açık) sol altta teknik düğmesi; düğmeler yeterince büyük ve güvenli alanda.
+	await _wait_state(FishingSession.State.IDLE, 3.0)
+	_check("rütbe 2'de teknik düğmesi görünür", _hud().technique_button.visible)
 	_check_buttons()
 	for line in _results:
 		print("KONTROL ", line)
@@ -454,16 +466,35 @@ func _play_shop() -> void:
 		await _tap_control(shop.find_child("Tab_" + tab, true, false))
 		await _wait(0.3)
 		await _shot("06_%s" % tab)
-	# Kartlar ShopPanel.CARD boyunu aşmaz; panel sekmeden sekmeye büyüyüp küçülmez.
+	# 5b) Başlıktaki teknik düğmesi: spinin kamışları ve yapay yemleri görünür; rütbesi yetmiyorsa
+	# Nine söyler (kilitli teknik de görünür).
+	await _tap_control(shop.find_child("Tab_rod", true, false))
+	await _tap_control(shop.find_child("Tech_spin", true, false))
+	await _wait_frames(2)
+	_check("teknik düğmesi → spinin kamışları, rütbe kilidi", shop.technique == "spin"
+			and shop.find_child("Card_rod_spin_light", true, false) != null
+			and shop.find_child("Card_rod_bamboo", true, false) == null and str(shop.get("_line_key")) == "UI_NINE_RANK")
+	await _tap_control(shop.find_child("Tab_tackle", true, false))
+	await _wait_frames(2)
+	_check("spinde iğne sekmesi yapay yem", shop.find_child("Card_lure_spoon", true, false) != null
+			and shop.find_child("Card_hook_small", true, false) == null)
+	await _wait(0.3)
+	await _shot("06_spin_yapay_yem")
+	# Kartlar ShopPanel.CARD boyunu aşmaz; panel sekmeden sekmeye ve teknikten tekniğe büyüyüp küçülmez.
 	var biggest := Vector2.ZERO
 	var heights: Array[float] = []
 	var dialog: Control = shop.get("_panel")
-	for tab in ["rod", "reel", "line", "tackle", "bait", "extra", "sell"]:
-		await _tap_control(shop.find_child("Tab_" + tab, true, false))
-		await _wait_frames(3)
-		for node in shop.find_children("Card_*", "PanelContainer", true, false):
-			biggest = biggest.max((node as Control).get_combined_minimum_size())
-		heights.append(dialog.size.y)
+	for look: String in ContentDB.TECHNIQUES:
+		if not db.has_technique(look):
+			continue
+		await _tap_control(shop.find_child("Tech_" + look, true, false))
+		for tab in ["rod", "reel", "line", "tackle", "bait", "extra", "sell"]:
+			await _tap_control(shop.find_child("Tab_" + tab, true, false))
+			await _wait_frames(3)
+			for node in shop.find_children("Card_*", "PanelContainer", true, false):
+				biggest = biggest.max((node as Control).get_combined_minimum_size())
+			heights.append(dialog.size.y)
+	await _tap_control(shop.find_child("Tech_float", true, false))
 	_check("kartlar CARD boyunda (en büyüğü %dx%d), panel boyu sabit (%d-%d)" % [int(biggest.x), int(biggest.y),
 			int(heights.min()), int(heights.max())], biggest.x <= ShopPanel.CARD.x + 0.5
 			and biggest.y <= ShopPanel.CARD.y + 0.5 and float(heights.max()) - float(heights.min()) < 1.0)
@@ -825,6 +856,210 @@ func _play_boat() -> void:
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Teknikler: rütbe 2'de spin açılır, takım çantası, ilk spin kamışı, dur-kalk saldırısı (iki yolu da),
+## sazlıkta takılan yem, şamandıraya dönüş.
+func _play_technique() -> void:
+	_use_save(5)
+	var db := GameState.db
+	var save := GameState.save
+	var hud := _hud()
+	var shop: ShopPanel = main.get("shop_panel")
+	var bag: TechniquePanel = main.get("technique_panel")
+	var bobber: Bobber = main.get("bobber")
+	var fade: Fade = main.get("fade")
+	# Kızılkanat önceden büyük bir rekorla defterde: yeni tür ya da rekor kartı açılmasın.
+	Records.add(save.records, "rudd", 999, 3, 0)
+	save.xp = db.rank_xp[1] - 1
+	GameState.changed.emit()
+	await _wait(1.5)
+	# 1) Rütbe 2'den önce teknik düğmesi yok.
+	_check("rütbe 2'den önce teknik düğmesi yok", not hud.technique_button.visible)
+	# 2) Bir balık rütbe atlatır: spin açılır (bildirim tekniğin ikonuyla, Dede söyler, düğme nabız gibi atar).
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "rudd")
+	await _tap_world(Vector2(1.0, -1.0))
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait_state(FishingSession.State.CAUGHT, 25.0)
+	_touch(1, Vector2(260, 520), false)
+	await _wait_frames(3)
+	var told := str(main.get("_hint_shown")) == "UI_DEDE_TECH_OPEN_spin"
+	var toasted := await _wait_toast(UiKit.upper(tr("UI_TECH_OPEN") % tr("UI_TECH_spin")), 8.0)
+	_check("rütbe 2: spin açılır (bildirim, Dede, nabız)", told and toasted and hud.technique_button.visible
+			and float(hud.get("_tech_pulse")) > 0.0 and (hud.get("_toast_icon") as GameIcon).kind == "tech_spin")
+	await _shot("01_spin_acildi")
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	# 3) Teknik düğmesi → Takım Çantası: spin "Nine'de".
+	await _tap_control(hud.technique_button)
+	await _wait_frames(3)
+	await _wait(0.4)
+	_check("teknik düğmesi → takım çantası (spin Nine'de)", bag.visible and TechniquePanel.state_of(db, save, "spin") == "shop"
+			and bag.find_child("Button_spin", true, false) != null)
+	await _shot("02_canta")
+	_check_panel_buttons(bag, "takım çantası düğmeleri")
+	# 4) "Nine'de" → dükkân spin kamışlarında.
+	await _tap_control(bag.find_child("Button_spin", true, false))
+	await _wait_frames(3)
+	await _wait(0.4)
+	_check("Nine'de → dükkân spin kamışlarında", not bag.visible and shop.visible and shop.technique == "spin"
+			and shop.current_tab() == "rod" and shop.find_child("Card_rod_spin_light", true, false) != null)
+	await _shot("03_dukkan_spin")
+	# 5) İlk spin kamışı: spin ele geçer, gölgeler yeniden doğar (yalnızca spinle gelen türler).
+	save.coins = 500
+	shop.refresh()
+	await _wait_frames(2)
+	await _tap_card(shop, "rod_spin_light", -1)
+	await _wait_frames(3)
+	var predators := not _session().sim.shadows.is_empty()
+	for s in _session().sim.shadows:
+		predators = predators and db.affinity(s.fish_id, "spin") > 0.0
+	_check("ilk spin kamışı → spin elde, gölgeler yırtıcı", Economy.owns(db, save, "rod_spin_light")
+			and save.technique == "spin" and _session().technique.id == "spin" and predators)
+	await _wait(0.3)
+	await _shot("04_spin_kamisi")
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait_frames(4)
+	_check("spin elde: kamış, yem, düğme ve Dede'nin sözü", _angler().rod.style == "spin" and bobber.kind == "lure"
+			and (hud.technique_button.get("_icon") as GameIcon).kind == "tech_spin"
+			and str(main.get("_hint_shown")) == "UI_DEDE_TECH_FIRST_spin")
+	await _wait(0.5)
+	await _shot("05_spin_elde")
+	# 6) Spinde atışlar: basılı tut → yem gelir; yırtıcı peşine düşer; dur-kalk → saldırır. Saldırı
+	# basılıyken olduysa balık kendiliğinden takılır, bırakılmışken VUR anı açılır. İki yol da görülene
+	# kadar (en çok 6 atış).
+	var seen := { "auto": false, "tap": false }
+	var first := {}
+	for i in 6:
+		var out := await _spin_cast(Vector2(0.5, -2.5), Vector2(0.5, -5.0))
+		if i == 0:
+			first = out
+		if bool(out["caught"]) and seen.has(str(out["strike"])):
+			seen[str(out["strike"])] = true
+		if bool(seen["auto"]) and bool(seen["tap"]):
+			break
+	_check("spin: basılı tut → yem gelir (%.1f m), olta sudayken teknik düğmesi gizli" % float(first.get("moved", 0.0)),
+			float(first.get("moved", 0.0)) > 0.3 and bool(first.get("hidden", false)))
+	_check("spin: yırtıcı oynayan yemin peşine düşer, Dede yol gösterir", bool(first.get("followed", false))
+			and bool(first.get("reel_hint", false)) and bool(first.get("follow_hint", false)))
+	_check("spin: dur-kalk → basılıyken kendiliğinden takılır, tutulur", bool(seen["auto"]))
+	_check("spin: dur-kalk → bırakılmışken VUR, dokununca takılır, tutulur", bool(seen["tap"]))
+	# 7) Sazlıkta bekleyen yem otlara takılır: bildirim, Dede söyler, geri sarma uzun sürer.
+	main.call("_travel", "reeds")
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(0.5)
+	await _tap_control(hud.action_button)
+	await _wait_state(FishingSession.State.WAITING, 3.0)
+	var snagged := await _wait_state(FishingSession.State.RETRIEVING, 6.0)
+	var long_pull := _session().timer > _session().rules.retrieve_steps
+	await _wait_frames(2)
+	_check("sazlıkta bekleyen yem takılır (bildirim, Dede, uzun geri sarma)", snagged and long_pull
+			and str(main.get("_hint_shown")) == "UI_DEDE_SNAG"
+			and (hud.get("_toast") as Label).text == UiKit.upper(tr("UI_SNAGGED")))
+	await _shot("10_takildi")
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	# 8) Çantadan şamandıraya dön: kamış, takım ve düğme şamandıranın.
+	main.call("_travel", "dock_cove")
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(0.4)
+	await _tap_control(hud.technique_button)
+	await _wait_frames(3)
+	await _wait(0.4)
+	_check("takım çantasında spin elinde, şamandıra seçilebilir", bag.visible
+			and TechniquePanel.state_of(db, save, "spin") == "active" and TechniquePanel.state_of(db, save, "float") == "ready")
+	await _shot("11_canta_spin")
+	await _tap_control(bag.find_child("Button_float", true, false))
+	await _wait_frames(4)
+	_check("şamandıraya dönülür (kamış, takım, düğme)", not bag.visible and save.technique == "float"
+			and _session().technique.id == "float" and _angler().rod.style == "float" and bobber.kind == "float"
+			and (hud.technique_button.get("_icon") as GameIcon).kind == "tech_float")
+	await _wait(0.4)
+	await _shot("12_samandira")
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Spinde bir atış: bir levreği p'ye (balıkçıdan uzağa bakan) koyar, ötesine atar, basılı tutup yemi
+## getirir (yem balığın önünden gelir); balık peşine düşünce dur-kalk yapar (evreler kuraldaki en kısa
+## evreden uzun). Saldırı anında basılıysa balık kendiliğinden takılır ("auto"), değilse VUR'a dokunur
+## ("tap"); sonra bir oyuncu gibi çekişir. Her an bir kez görüntülenir.
+func _spin_cast(p: Vector2, cast_to: Vector2) -> Dictionary:
+	var out := { "moved": 0.0, "hidden": false, "followed": false, "reel_hint": false, "follow_hint": false,
+			"strike": "", "caught": false }
+	var finger := Vector2(260, 520)
+	var card: FishCard = main.get("card")
+	_shadow_at(p, Vector2(0, -1), "perch", 300000)
+	await _tap_world(cast_to)
+	if not await _wait_state(FishingSession.State.WAITING, 3.0):
+		return out
+	await _wait_frames(2)
+	out["hidden"] = not _hud().technique_button.visible
+	out["reel_hint"] = str(main.get("_hint_shown")) == "UI_HINT_SPIN_REEL"
+	var start := _session().bobber
+	_touch(1, finger, true)
+	var hold := true
+	await _wait_frames(12)
+	await _shot_once("06_yem_geliyor")
+	await _wait_until(func() -> bool: return _state() != FishingSession.State.WAITING, 6.0)
+	out["moved"] = _session().bobber.distance_to(start)
+	out["followed"] = _state() == FishingSession.State.FOLLOWING
+	await _wait_frames(2)
+	out["follow_hint"] = str(main.get("_hint_shown")) == "UI_HINT_SPIN_FOLLOW"
+	# Dur-kalk: 14 karede (30 fps'te ~0,47 sn) bir bırak ya da bas.
+	var frames := 0
+	while _state() == FishingSession.State.FOLLOWING:
+		await get_tree().process_frame
+		frames += 1
+		if frames == 20:
+			await _shot_once("07_pesinde")
+		if frames % 14 == 0:
+			hold = not hold
+			_touch(1, finger, hold)
+	await _wait_frames(1)
+	if _state() == FishingSession.State.BITING:
+		await _shot_once("08_vur")
+		out["strike"] = "tap"
+		_touch(1, finger, true)
+		hold = true
+		await _wait_frames(2)
+	elif _state() == FishingSession.State.FIGHTING:
+		out["strike"] = "auto"
+	if hold:
+		_touch(1, finger, false)
+		await _wait_frames(1)
+	if _state() == FishingSession.State.FIGHTING:
+		await _shot_once("09_cekisme")
+		await _reel_like_player(6, 25.0)
+	elif _state() == FishingSession.State.WAITING:
+		# Saldırı olmadı (balık vazgeçti): yem sonuna kadar getirilir.
+		_touch(1, finger, true)
+		await _wait_until(func() -> bool: return _state() != FishingSession.State.WAITING, 10.0)
+		_touch(1, finger, false)
+	out["caught"] = _state() == FishingSession.State.CAUGHT
+	# Kart (yeni tür, rekor) açıldıysa kapanır; olta boşa döner.
+	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE or card.visible, 4.0)
+	if card.visible:
+		await _close_card(card)
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	return out
+
+
+## Ortadaki bildirim bu yazıyla görünene kadar bekler.
+func _wait_toast(text: String, timeout: float) -> bool:
+	var toast: Label = _hud().get("_toast")
+	return await _wait_until(func() -> bool: return toast.is_visible_in_tree() and toast.text == text, timeout)
+
+
+## Bu adla ilk kez görüntü alınıyorsa alır (tekrarlanan atışlarda bir kez).
+func _shot_once(shot_name: String) -> void:
+	if _taken.has(shot_name):
+		return
+	_taken[shot_name] = true
+	await _shot(shot_name)
 
 
 ## Gezi: ayarlardan bütün bölgeler açılır ve ölçüm açılır (gerçek dokunuşlarla); her bölgenin atış

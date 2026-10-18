@@ -275,3 +275,20 @@ UI_BOOK_ZONE_ODDS,Odds at %s (with your gear),%s oranları (takımınla)
 UI_BOOK_PITY_TITLE,Lucky guarantee,Şans garantisi
 UI_BOOK_PITY,Guaranteed within %d catches,%d av içinde garanti
 UI_BOOK_PITY_NOW,The next shadow is guaranteed!,Sıradaki gölge garanti!
+UI_BAG_TITLE,Tackle Bag,Takım Çantası
+UI_BAG_ACTIVE,In hand,Elinde
+UI_BAG_SELECT,Pick,Seç
+UI_BAG_SHOP,At Nana's,Nine'de
+UI_TECH_float,Float,Şamandıra
+UI_TECH_spin,Spinning,Spin
+UI_TECH_float_HOW,"Wait for the bobber to dive, then strike.","Şamandıra dalınca VUR. Sabır ister."
+UI_TECH_spin_HOW,"Hold to reel the lure. Stop and go: predators strike!","Basılı tut, yem gelsin. Dur-kalk yap: yırtıcı saldırır!"
+UI_TECH_OPEN,New technique: %s!,Yeni teknik: %s!
+UI_TURNED_AWAY,It lost interest...,Vazgeçti...
+UI_SNAGGED,Snagged!,Yem takıldı!
+UI_HINT_SPIN_REEL,"Hold: the lure swims to you. Let go: it sinks.","Basılı tut, yem gelsin; bırak, batsın."
+UI_HINT_SPIN_FOLLOW,Something's following! Stop and go!,Peşinde biri var! Dur-kalk yap!
+UI_HINT_SPIN_STRIKE,It struck! Tap now!,Saldırdı! Hemen VUR!
+UI_DEDE_TECH_OPEN_spin,"Predators chase a moving lure, kid. Nana sells spinning rods!","Yırtıcılar oynayan yeme gelir evlat. Nine spin kamışı satıyor!"
+UI_DEDE_TECH_FIRST_spin,"Cast past a shadow, then reel the lure right by it!","Gölgenin ötesine at, yemi tam önünden geçir!"
+UI_DEDE_SNAG,"Snagged in the weeds! Don't let the lure rest here.","Yem otlara takıldı! Burada yemi bekletme."

@@ -39,6 +39,8 @@ const FIRST_CUE_EVERY := 1.6
 ## gölgeye bu kadar sn bakar.
 const LEGEND_NOTICE_M := 9.0
 const LEGEND_LOOK_TIME := 3.0
+## Çekilen yapay yemin arkasındaki iz halkalarının aralığı (sn).
+const WAKE_EVERY := 0.2
 
 var session: FishingSession
 var lake: LakeShape
@@ -60,6 +62,8 @@ var settings_panel: SettingsPanel
 var shop_panel: ShopPanel
 var book_panel: BookPanel
 var map_panel: MapPanel
+## Takım çantası (sol alttaki teknik düğmesi): teknik seçilir.
+var technique_panel: TechniquePanel
 ## Haritadan hızlı geçişte ekran kararır (en üstte).
 var fade: Fade
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
@@ -103,6 +107,9 @@ var _legend_look: float = 0.0
 ## Dede'nin son öğüdünün ve Nine'nin son uğurlama sözünün sırası.
 var _tip_index: int = 0
 var _nine_index: int = 0
+## Sahnede gösterilen teknik (elindeki kamış, suya atılan takım, teknik düğmesinin ikonu).
+var _shown_technique: String = ""
+var _wake_clock: float = 0.0
 
 
 func _ready() -> void:
@@ -143,7 +150,7 @@ func _ready() -> void:
 	line.camera = camera
 	line.visible = false
 	line.from_point = func() -> Vector3: return angler.rod_tip()
-	line.to_point = func() -> Vector3: return bobber.global_position + Vector3(0, Bobber.RADIUS * 1.4, 0)
+	line.to_point = func() -> Vector3: return bobber.line_point()
 	add_child(line)
 	_build_ui()
 	_build_input()
@@ -184,6 +191,7 @@ func _start_session() -> void:
 	angler.face(Vector2(0, -1))
 	bobber.hide_bobber()
 	line.visible = false
+	_sync_technique()
 	_pending_cast = Dice.NO_POINT
 	_quick_catch = -1.0
 	_announced.clear()
@@ -454,6 +462,7 @@ func _on_event(e: Dictionary) -> void:
 	match str(e["type"]):
 		"cast":
 			GameState.save.casts += 1
+			TechniqueHints.note_cast(GameState.save, session.technique.id)
 			# Dede'nin öğüdü (Nine'nin sözü) atışın ipuçlarına yer açar. Takım öğüdü kalır: hangi takımın
 			# gerektiğini söyleyen tek yer (kopunca hemen yeniden atan oyuncu da okuyabilsin).
 			if not _line.begins_with(TOO_BIG_PREFIX):
@@ -469,9 +478,42 @@ func _on_event(e: Dictionary) -> void:
 		"land":
 			var p: Vector2 = e["pos"]
 			bobber.land(Vector3(p.x, 0.0, p.y))
-			ripples.spawn(p, 0.7, 0.9)
-			Sounds.play("plop")
+			if bobber.kind == "lure":
+				ripples.spawn(p, 0.45, 0.7)
+				Sounds.play("lure")
+			else:
+				ripples.spawn(p, 0.7, 0.9)
+				Sounds.play("plop")
 			Sounds.haptic(12)
+		"follow":
+			# Yırtıcı oynayan yemin peşine düştü: arkasında bir halka, hafif titreşim.
+			var follower := session.sim.find(int(e["shadow"]))
+			if follower != null:
+				ripples.spawn(follower.pos, follower.length * 0.7, 0.6, Color(1, 1, 1, 0.55), 0.1)
+			Sounds.haptic(10)
+		"strike":
+			# Saldırı: su sıçrar. Basılıyken balık kendiliğinden takılır (ardından hook); değilse yemi
+			# alır, VUR anı.
+			if not bool(e.get("auto", false)):
+				bobber.go_under()
+			ripples.spawn(session.bobber, 1.0, 0.7, Color(1, 1, 1, 0.9), 0.16)
+			Sounds.play("strike")
+			Sounds.haptic(70)
+			camera.shake(0.07)
+		"turn_away":
+			var bored := session.sim.find(int(e["shadow"]))
+			if bored != null:
+				ripples.spawn(bored.pos, bored.length * 0.6, 0.5, Color(1, 1, 1, 0.45), 0.1)
+			hud.toast(tr("UI_TURNED_AWAY"), UiKit.MUTED)
+		"snag":
+			ripples.spawn(session.bobber, 0.5, 0.6, Color(1, 1, 1, 0.6), 0.12)
+			hud.toast(tr("UI_SNAGGED"), UiKit.ACCENT)
+			Sounds.play("snag")
+			Sounds.haptic(40)
+			# İlk takılmada Dede nedenini söyler (otlu yerde yem bekletilmez).
+			if not GameState.save.flags.has("told_snag"):
+				GameState.save.flags["told_snag"] = true
+				_say("UI_DEDE_SNAG")
 		"scare":
 			var s := session.sim.find(int(e["shadow"]))
 			if s != null:
@@ -538,7 +580,9 @@ func _on_event(e: Dictionary) -> void:
 		"catch":
 			_on_catch()
 		"retrieve":
-			bobber.fly_back(angler.rod_tip(), float(session.rules.retrieve_steps) / FishingRules.HZ)
+			# Süre oturumdan: takılan yemi kurtarmak uzun sürer.
+			var steps := session.timer if session.state == FishingSession.State.RETRIEVING else session.rules.retrieve_steps
+			bobber.fly_back(angler.rod_tip(), float(steps) / FishingRules.HZ)
 			Sounds.play("reel_in")
 		"idle":
 			if bobber.look != Bobber.Look.RETURNING:
@@ -611,6 +655,16 @@ func _on_catch() -> void:
 			zone_news = true
 			_say("UI_DEDE_ZONE_OPEN")
 			hud.pulse_map()
+		# Yeni teknik açıldı: adı ikonuyla, Dede söyler (bölgenin sözünden önemli: Nine'nin sattığı
+		# kamış), teknik düğmesi nabız gibi atar.
+		for t: String in ContentDB.TECHNIQUES:
+			var at := db.technique_rank(t)
+			if t == "float" or not db.has_technique(t) or at <= int(ranked["old_rank"]) or at > rank:
+				continue
+			hud.toast_later(tr("UI_TECH_OPEN") % tr("UI_TECH_" + t), UiKit.ACCENT, "", "tech_" + t)
+			zone_news = true
+			_say("UI_DEDE_TECH_OPEN_" + t)
+			hud.pulse_technique()
 	if protected:
 		hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
 	elif not kept:
@@ -669,12 +723,14 @@ func _follow_zone() -> void:
 
 func _present(delta: float) -> void:
 	_follow_zone()
+	_sync_technique()
 	var reel := session.reel
 	var fighting := session.state == FishingSession.State.FIGHTING and reel != null
 	shadows.sync(session.sim, angler.pos2(), fighting and reel.thrashing(), delta)
 	if fighting:
 		var fp := session.fight_point()
 		bobber.fight_point = Vector3(fp.x, 0.0, fp.y)
+	var lure_reeling := _present_lure(delta)
 	var show_line := session.line_out() or bobber.look == Bobber.Look.RETURNING
 	line.visible = show_line and bobber.visible
 	if line.visible:
@@ -684,7 +740,8 @@ func _present(delta: float) -> void:
 			FishingSession.State.FIGHTING:
 				line.sag = 0.03
 			_:
-				line.sag = 0.35
+				# Çekilen yemde misina gergin.
+				line.sag = 0.05 if lure_reeling else (0.25 if bobber.kind == "lure" else 0.35)
 		line.shake = 0.0
 		if fighting:
 			line.shake = clampf(reel.tension, 0.0, 1.3) * (1.6 if reel.thrashing() else 0.6)
@@ -710,11 +767,16 @@ func _present(delta: float) -> void:
 	match session.state:
 		FishingSession.State.FIGHTING:
 			angler.pose = "reel"
-		FishingSession.State.CASTING, FishingSession.State.WAITING, FishingSession.State.NIBBLING, FishingSession.State.BITING:
-			angler.pose = "hold"
+		FishingSession.State.CASTING, FishingSession.State.WAITING, FishingSession.State.NIBBLING, \
+				FishingSession.State.BITING, FishingSession.State.FOLLOWING:
+			angler.pose = "reel" if lure_reeling else "hold"
 		_:
 			angler.pose = "free"
-	Sounds.set_loop("reel", fighting and reel.holding, 0.0, 0.9 + 0.3 * tension)
+	if lure_reeling:
+		# Yem çekilirken makaranın tıkırtısı (çekişmedekinden kısık ve pes).
+		Sounds.set_loop("reel", true, -4.0, 0.8)
+	else:
+		Sounds.set_loop("reel", fighting and reel.holding, 0.0, 0.9 + 0.3 * tension)
 	Sounds.set_loop("strain", fighting and reel.in_red)
 	# Arayüz.
 	hud.set_action("" if card.visible else session.action_kind())
@@ -749,6 +811,40 @@ func _present(delta: float) -> void:
 	elif catch_fx.is_showing():
 		zoom = SHOW_ZOOM
 	camera.zoom = lerpf(camera.zoom, zoom, minf(1.0, delta * 2.5))
+
+
+## Yapay yem suda: oturumun yerinde (basılıyken balıkçıya gelir); oynarken arkasında iz halkaları
+## (üst üste binince V biçimli iz), bırakınca batar. Yem çekiliyorsa true.
+func _present_lure(delta: float) -> bool:
+	if bobber.kind != "lure" or bobber.look != Bobber.Look.FLOATING:
+		return false
+	bobber.drag_to(Vector3(session.bobber.x, 0.0, session.bobber.y))
+	var moving := session.holding and session.state in [FishingSession.State.WAITING, FishingSession.State.FOLLOWING]
+	bobber.sink = move_toward(bobber.sink, 0.0 if moving else 1.0, delta * (5.0 if moving else 1.2))
+	if moving:
+		_wake_clock += delta
+		if _wake_clock >= WAKE_EVERY:
+			_wake_clock = 0.0
+			ripples.spawn(session.bobber, 0.28, 0.6, Color(1, 1, 1, 0.5), 0.12)
+	return moving
+
+
+## Oturumun tekniği değişti (Takım Çantası, ilk kamış): elindeki kamış, suya atılan takımın görünüşü
+## ve teknik düğmesinin ikonu. Takım suda ya da dönerken beklenir. Yeni bir tekniğe ilk geçişte Dede
+## nasıl oynandığını söyler (ilk atışlarda ipuçları da: TechniqueHints).
+func _sync_technique() -> void:
+	var technique := session.technique.id
+	if technique == _shown_technique or bobber.look != Bobber.Look.HIDDEN:
+		return
+	_shown_technique = technique
+	angler.set_rod_style(technique)
+	bobber.set_kind(Bobber.kind_for(technique))
+	hud.set_technique(technique)
+	var intro := "told_tech_" + technique
+	if technique != "float" and not GameState.save.flags.has(intro):
+		GameState.save.flags[intro] = true
+		_say("UI_DEDE_TECH_FIRST_" + technique)
+		_line_time = ADVICE_TIME
 
 
 ## Yakalanan balığın gösterildiği yer: balıkçının önünde, kameraya doğru uzatılmış ve göğüs
@@ -820,12 +916,21 @@ func _update_hint() -> void:
 
 
 ## Gösterilecek ipucu: önce Dede'nin öğüdü ya da Nine'nin sözü (onlara dokununca), sonra ilk 3
-## balığa kadar oyunun durumuna göre ipucu. Kart açıkken ipucu yok.
+## balığa kadar oyunun durumuna göre ipucu; yeni bir teknikte ilk atışlarda o tekniğin ipuçları
+## (TechniqueHints). Kart açıkken ipucu yok.
 func _hint_key() -> String:
 	if card.visible:
 		return ""
 	if _line_time > 0.0:
 		return _line
+	var technique := session.technique.id
+	if technique != "float":
+		if not TechniqueHints.active(GameState.save, technique):
+			return ""
+		var key := TechniqueHints.key(technique, session.state)
+		if not key.is_empty():
+			return key
+		return "" if _hint_shown == _line else _hint_shown
 	if GameState.save.catches >= HINT_CATCHES:
 		return ""
 	match session.state:
@@ -894,6 +999,18 @@ func _refresh_status() -> void:
 	hud.set_status(save.coins, save.bucket.size(), Bucket.capacity(db, save), Rank.rank(db, save),
 			Rank.progress(db, save))
 	hud.map_allowed = save.catches > 0 and db.zones_of(spot_id).size() > 1
+	hud.technique_allowed = _other_technique_open()
+
+
+## Şamandıradan başka bir teknik açıldı mı (rütbesi geldi ya da kamışı alındı): teknik düğmesi.
+func _other_technique_open() -> bool:
+	var db := GameState.db
+	var save := GameState.save
+	for t: String in ContentDB.TECHNIQUES:
+		if t != "float" and db.has_technique(t) and (Rank.rank(db, save) >= db.technique_rank(t)
+				or Economy.technique_ready(db, save, t)):
+			return true
+	return false
 
 
 ## Haritadan hızlı geçiş (docs/gdd.md §10.1): ekran kararır, balıkçı bölgenin atış noktasına geçer
@@ -1122,10 +1239,22 @@ func _on_shop_closed() -> void:
 	_say(Nine.LINE_KEY % _nine_index, "nine")
 
 
-## Takım değişti (dükkânda satın alma ya da kuşanma): oturumun takımı ve oranları yenilenir.
+## Takım değişti (dükkânda satın alma ya da kuşanma; bir tekniğin ilk kamışı o tekniği ele verir):
+## oturumun takımı ve oranları yenilenir (teknik değiştiyse gölgeler yeniden doğar).
 func _on_gear_changed() -> void:
 	session.set_gear(_gear())
 	_refresh_status()
+
+
+## Takım çantasında bir teknik seçildi (olta boşta; panel kapanınca gölgeler yeni tekniğin oranıyla
+## doğmuş olur).
+func _on_technique_selected(technique: String) -> void:
+	if session.state != FishingSession.State.IDLE or not Economy.technique_ready(GameState.db, GameState.save, technique):
+		return
+	GameState.save.technique = technique
+	GameState.save_game()
+	session.set_gear(_gear())
+	hud.toast(tr("UI_TECH_" + technique), UiKit.TEXT, "tech_" + technique)
 
 
 ## Elindeki tekniğin kuşanılmış takımı (teknik hazır değilse şamandıranınki).
@@ -1181,6 +1310,10 @@ func _build_ui() -> void:
 	map_panel.spot_id = spot_id
 	layer.add_child(map_panel)
 	map_panel.travel_requested.connect(_travel)
+	technique_panel = TechniquePanel.new()
+	layer.add_child(technique_panel)
+	technique_panel.technique_selected.connect(_on_technique_selected)
+	technique_panel.shop_requested.connect(func(technique: String) -> void: shop_panel.open_shop("rod", technique))
 	var top := CanvasLayer.new()
 	top.layer = 20
 	add_child(top)
@@ -1199,6 +1332,13 @@ func _build_ui() -> void:
 		angler.stop()
 		_pending_cast = Dice.NO_POINT
 		map_panel.open_map(angler.pos2(), zone_id, _map_marks()))
+	hud.technique_pressed.connect(func() -> void:
+		if session.state != FishingSession.State.IDLE or card.visible:
+			return
+		input.release_all()
+		angler.stop()
+		_pending_cast = Dice.NO_POINT
+		technique_panel.open())
 	hud.settings_pressed.connect(func() -> void:
 		input.release_all()
 		session.release()

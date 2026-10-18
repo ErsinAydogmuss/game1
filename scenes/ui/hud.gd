@@ -20,6 +20,7 @@ signal settings_pressed
 signal book_pressed
 signal map_pressed
 signal shore_pressed
+signal technique_pressed
 signal action_down
 signal action_up
 
@@ -48,11 +49,22 @@ const MAP_COLOR := UiKit.SECONDARY
 ## Yeni bölge açılınca harita düğmesinin nabzı (sn).
 const MAP_PULSE := 4.0
 const SHORE_SIZE := Vector2(280, 132)
+## Teknik düğmesi (sol alt; sandalda "Kıyıya dön"ün üstünde) ve yeni teknik açılınca nabzı (sn).
+const TECH_SIZE := Vector2(132, 132)
+const TECH_PULSE := 4.0
 
 var settings_button: TouchButton
 var book_button: TouchButton
 var map_button: TouchButton
 var shore_button: TouchButton
+## Takım çantası: elindeki tekniğin ikonu; dokununca teknik seçilir.
+var technique_button: TouchButton
+## Teknik düğmesi gösterilsin mi (şamandıradan başka bir teknik açılınca; olta sudayken yine gizli).
+var technique_allowed: bool = false:
+	set(value):
+		technique_allowed = value
+		if technique_button != null:
+			technique_button.visible = value and not _line_out
 ## Harita düğmesi gösterilsin mi (ilk balıktan sonra ve bölgeli gölde; olta sudayken yine gizli).
 var map_allowed: bool = false:
 	set(value):
@@ -105,6 +117,7 @@ var _action_kind: String = "-"
 var _line_out: bool = false
 var _in_boat: bool = false
 var _map_pulse: float = 0.0
+var _tech_pulse: float = 0.0
 var _clock: float = 0.0
 var _fps_clock: float = 0.0
 
@@ -165,6 +178,11 @@ func _process(delta: float) -> void:
 			_map_pulse = maxf(0.0, _map_pulse - delta)
 		map_button.pivot_offset = map_button.size * 0.5
 		map_button.scale = Vector2.ONE * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _map_pulse))
+	if _tech_pulse > 0.0:
+		if _toast_hold <= 0.0:
+			_tech_pulse = maxf(0.0, _tech_pulse - delta)
+		technique_button.pivot_offset = technique_button.size * 0.5
+		technique_button.scale = Vector2.ONE * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _tech_pulse))
 	# VUR! anında eylem düğmesi nabız gibi atar.
 	if _action_kind == "hook":
 		action_button.pivot_offset = action_button.size * 0.5
@@ -261,7 +279,8 @@ func _show_queued() -> void:
 func set_line_out(on: bool) -> void:
 	_line_out = on
 	for c in line_out_hidden:
-		c.visible = not on and (c != map_button or map_allowed) and (c != shore_button or _in_boat)
+		c.visible = not on and (c != map_button or map_allowed) and (c != shore_button or _in_boat) \
+				and (c != technique_button or technique_allowed)
 
 
 ## Sandalda mı: "Kıyıya dön" düğmesi görünür.
@@ -273,6 +292,16 @@ func set_boat(on: bool) -> void:
 ## Yeni bölge açıldı: harita düğmesi bir süre nabız gibi atar.
 func pulse_map() -> void:
 	_map_pulse = MAP_PULSE
+
+
+## Yeni teknik açıldı: teknik düğmesi bir süre nabız gibi atar.
+func pulse_technique() -> void:
+	_tech_pulse = TECH_PULSE
+
+
+## Elindeki teknik: düğmenin ikonu.
+func set_technique(technique: String) -> void:
+	technique_button.set_icon("tech_" + technique)
 
 
 ## Ortada kısa bir bildirim (metin hazır çevrilmiş gelir). icon: yanında GameIcon ("" = yok).
@@ -340,7 +369,7 @@ func _set_button(text: String, icon_kind: String, color: Color) -> void:
 
 ## Ekrandaki düğmeler (bot denetimi: boyut ve güvenli alan).
 func buttons() -> Array[TouchButton]:
-	return [map_button, book_button, settings_button, action_button, shore_button]
+	return [map_button, book_button, settings_button, action_button, shore_button, technique_button]
 
 
 # --- Kurulum ---------------------------------------------------------------------
@@ -451,7 +480,21 @@ func _build_bottom() -> void:
 	shore_button.size_flags_vertical = Control.SIZE_SHRINK_END
 	shore_button.pressed.connect(func() -> void: shore_pressed.emit())
 	shore_button.visible = false
-	_frame().add_child(shore_button)
+	# Sol alt: teknik düğmesi, sandalda altında "Kıyıya dön".
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 16)
+	left.alignment = BoxContainer.ALIGNMENT_END
+	left.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	left.size_flags_vertical = Control.SIZE_SHRINK_END
+	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_frame().add_child(left)
+	technique_button = TouchButton.make("", "tech_float", UiKit.SUCCESS, TECH_SIZE, UiKit.SIZE_BODY, 104.0)
+	technique_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	technique_button.pressed.connect(func() -> void: technique_pressed.emit())
+	technique_button.visible = false
+	left.add_child(technique_button)
+	line_out_hidden.append(technique_button)
+	left.add_child(shore_button)
 	line_out_hidden.append(shore_button)
 	# FPS sol üstte, durum haplarının altında (sol alt "Kıyıya dön"ün yeri).
 	_fps = UiKit.label("", UiKit.SIZE_SMALL, UiKit.MUTED)

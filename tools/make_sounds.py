@@ -656,6 +656,33 @@ def equip():
     return finish(out, -1.0, 0.01)
 
 
+def lure_plop(seed):
+    """Yapay yem suya düşer: şamandıradan küçük ve keskin bir kabarcık, hafif metal tıkırtısı."""
+    r = rng(seed)
+    n = frames(0.3)
+    x = 0.8 * bubble(r.uniform(600, 700), r.uniform(1500, 1800), n, 0.04)
+    x += 0.25 * splash_noise(n, seed, 1500, 8000, 0.03)
+    x += 0.2 * unit(partials(r.uniform(3200, 3600), n, [(1.0, 1.0, 0.05), (2.7, 0.4, 0.03)], seed))
+    return finish(x + 0.1 * reverb(x, 0.4)[:n], -1.0, 0.04)
+
+
+def strike():
+    """Yırtıcının saldırısı (spin): suyun şaplaması ve kısa bir gümbürtü."""
+    n = frames(0.55)
+    slap = splash_noise(n, 761, 300, 7000, 0.09, 0.002)
+    x = 0.8 * slap + 0.7 * thump(150, n, 0.07, 0.7) + 0.3 * bubble(300, 900, n, 0.05)
+    return finish(x + 0.15 * reverb(x, 0.6)[:n], -1.0, 0.06)
+
+
+def snag():
+    """Yem takıldı (spin): gerilen misinanın titremesi ve ota takılan yemin boğuk vuruşu."""
+    n = frames(0.5)
+    twang = unit(partials(196, n, [(1.0, 1.0, 0.18), (2.0, 0.5, 0.12), (3.0, 0.3, 0.08)], 771))
+    x = 0.55 * twang + 0.6 * thump(90, n, 0.06, 0.3)
+    x += 0.25 * unit(band(noise(n, 772), 200, 1200)) * env_exp(n, 0.05)
+    return finish(x, -1.0, 0.08)
+
+
 # --- Liste ve çalıştırma ----------------------------------------------------------------
 
 def registry():
@@ -669,6 +696,8 @@ def registry():
         items.append(("sfx", "nibble_%d" % v, lambda v=v: nibble(520 + v)))
         items.append(("sfx", "splash_%d" % v, lambda v=v: splash(530 + v)))
         items.append(("sfx", "step_%d" % v, lambda v=v: wood_step(540 + v)))
+    for v in range(1, 3):
+        items.append(("sfx", "lure_%d" % v, lambda v=v: lure_plop(750 + v)))
     for rarity in range(1, 6):
         items.append(("sfx", "find_%d_1" % rarity, lambda r=rarity: find(r)))
     singles = {
@@ -676,7 +705,7 @@ def registry():
         "scare_1": scare, "reel_in_1": reel_in, "record_1": record, "error_1": lambda: buzz([50], 0.16),
         "panel_open_1": lambda: panel(True), "panel_close_1": lambda: panel(False), "card_1": card,
         "hint_1": tutorial, "coins_1": coins, "buy_1": buy, "equip_1": equip,
-        "sting_1": sting, "rank_up_1": rank_up, "travel_1": travel,
+        "sting_1": sting, "rank_up_1": rank_up, "travel_1": travel, "strike_1": strike, "snag_1": snag,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

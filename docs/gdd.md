@@ -46,12 +46,13 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 - ✅ **Harita** (sağ üst, ilk balıktan sonra): açık bir bölgenin rozetine dokun → ekran kararır, o bölgenin atış noktasındasın. Kilitli bölgede nedeni yazar.
 - ✅ **Sandal:** sandalı aldıysan iskeledeki sandala (ya da haritada Derin Orta'ya) dokun → ilk şamandıranın yanında sandaldasın; haritada Derin Orta'ya yeniden dokununca sıradaki şamandıraya geçilir. Sandalda suya dokunmak atıştır; sol alttaki "Kıyıya dön" iskeleye getirir.
 
+- ✅ **Teknik düğmesi** (sol alt; spin rütbe 2'de açılınca görünür, sandalda "Kıyıya dön"ün üstünde, olta sudayken gizli): elindeki tekniğin ikonu; dokununca Takım Çantası açılır (§10.3).
+- ✅ **Spin:** atınca yapay yem düşer. Basılı tut = yem sana gelir (makara tıkırdar, arkasında iz), bırak = durur ve batar. Yırtıcı peşine düşünce dur-kalk yap. Saldırı anında basılıysa balık kendiliğinden takılır, değilse VUR! (0,6 sn; Kolay modda 1 sn). Eylem düğmesi beklerken SAR yazar.
+
 **Mac:** tıkla (yürü, at), WASD (yürü), Space (VUR; basılı tutunca sar).
 
 **H2'de eklenecekler 🔜** (ayrıntı §10.3):
 
-- **Teknik düğmesi** (sol alt): geçerli tekniğin ikonu; dokununca şamandıra, spin, dip ya da sinek seçilir.
-- **Spin:** basılı tut = yem gelir, bırak = durur ve batar. Saldırı anında basılıysa balık kendiliğinden takılır, değilse kısa bir VUR anı açılır.
 - **Dip:** at, olta sehpaya konur; zil sürekli öterken ekranın her yerine dokun.
 - **Sinek:** halka çıkınca dokun.
 - **Tuzak:** kıyıdaki tuzak şamandırasına dokun → bırak ya da topla.
@@ -333,7 +334,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - arayüz sesleri;
   - göl ortam sesi (su, kuş, rüzgâr).
 - 🔜 Müzik: her vakit için kodla üretilen sakin döngüler (kalimba, ud) ve dükkân ezgisi.
-- 🔜 Yeni sesler: spin makarası ve yem şapırtısı, dip zili (bip ve sürekli bip), sinek halkası, tuzak, kedi mırlaması, yağmur, gece böcekleri.
+- ✅ Spin: yem düşüşü (iki çeşit), saldırı şapırtısı, takılma (otlara sürtünme); yem çekilirken makara döngüsü kısık ve pes. Her birinin görseli (halka, sıçrama, iz) ve titreşimi var.
+- 🔜 Yeni sesler: dip zili (bip ve sürekli bip), sinek halkası, tuzak, kedi mırlaması, yağmur, gece böcekleri.
 - iPhone'un sessiz anahtarı açıkken oyunun sesi çıkmaz (Kazı deneyimi).
 
 ## 10. H2 sistemleri 🔜
@@ -414,6 +416,19 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | Sinek | Yalnızca dere ağzında. Akıntıya at, sinek sürüklenir; halka çıkınca 0,5 sn içinde dokun. Hafif, zıplayan çekişme. | sinek kamışı, sinek | rütbe 7 |
 | Kerevit tuzağı | Sığ kıyıya bırak. Oyunda değilken de dolar: 20 dk'da bir, en çok 4. İçi bırakılırken belirlenir. | tuzak (en çok 3) | rütbe 3 |
 
+- ✅ **Teknik altyapısı (Dalga 3):** tekniğin ısırmaya kadarki kuralları bir strateji sınıfında (`Technique`: şamandıra `FloatTechnique`, spin `SpinTechnique`); sayıları `rules.json` `techniques` (şamandıranınki üst bölümlerden). Teknik yalnızca olta boştayken değişir; değişince gölgeler yeni tekniğin oranıyla yeniden doğar. Şamandıra bit bit eskisi gibi (altın test).
+- ✅ **Tür yatkınlığı** (`fish.json` `affinity`): şamandırada bütün türler 1. Spin yalnızca yırtıcıları çağırır: levrek 1, sudak 0,9, turna 0,8, tatlısu kefali 0,7, yayın 0,25. Defter ve dükkân oranı elindeki tekniğe göre gösterir.
+- ✅ **Spin (v0.4):**
+  - **Fark etme:** yırtıcı yalnızca oynayan yemi (bırakınca 0,5 sn daha) fark eder: önde 4 m, yanda 2,2 m, 60°'lik koni. 2 m/sn kovalar (yem uzaklaşırken de yetişsin), 1,5 m/sn izler. Yem basılıyken 0,8 m/sn gelir (makaradan bağımsız: balık yetişebilsin).
+  - **Saldırı:** balık 0,6 sn izledikten sonra her ritim değişiminde zar: duruşta %40, kalkışta %30; bir evre en az 0,25 sn. 4. değişimde kesin. Hep basılı tutana saniyede %12.
+  - **VUR:** saldırı anında basılıysa balık kendiliğinden takılır; değilse 0,6 sn (Kolay 1 sn) VUR anı.
+  - **Vazgeçme ve takılma:** 3 sn bekletilen yemden ya da 10 sn izledikten sonra balık vazgeçer ("Vazgeçti..."). Otlu ve kayalık yerde bekleyen yem takılır: sazlık 4 sn, nilüferli koy 5 sn, kayalık burun 3,5 sn; geri sarma 2,5 sn sürer, kayıp yok. İlk takılmada Dede nedenini söyler.
+  - Yem balıkçıya 1,2 m kalınca atış biter.
+  - **Görünüm:** su opak; yem yüzeyde parlayan gümüş bir kıymık. Çekilirken titrer, parlar ve arkasında halkalar (V biçimli iz) bırakır; durunca batar. Saldırıda su sıçrar, telefon titrer. Elde kısa, koyu spin kamışı (`RodModel.STYLES`).
+  - **Takım:** 3 spin kamışı (hafif 150 para / rütbe 2 / 10 m / 3★; orta 1.100 / 4 / 12 m / 4★; ağır 3.000 / 8 / 13 m / 5★). 6 yapay yem (tükenmez): kaşık (bedava; levrek ×1,3), döner kaşık (120, r2; levrek ×2, kefal ×1,6), silikon yem (300, r3; sudak ×2,2), maket balık (700, r5; turna ×2,2), su üstü yemi (1.000, r6; kefal ×2,2, turna ×1,8), altın kaşık (2.500, r10; turna ×2,5, sudak ×2, yayın ×1,6).
+  - **Açılış:** rütbe 2'de bildirim (spinin ikonuyla), Dede "Yırtıcılar oynayan yeme gelir evlat. Nine spin kamışı satıyor!" der, teknik düğmesi nabız gibi atar. İlk spin kamışı alınınca spin ele geçer; Dede "Gölgenin ötesine at, yemi tam önünden geçir!" der. İlk 3 spin atışında ipuçları: "Basılı tut, yem gelsin; bırak, batsın.", "Peşinde biri var! Dur-kalk yap!", "Saldırdı! Hemen VUR!" (`TechniqueHints`).
+- ✅ **Takım Çantası** (teknik düğmesi): her teknik bir karo: ikonu, adı, nasıl oynandığı, kuşanılmış kamışı ve küçük takımı (makara ve misina her teknikte ortak). Karonun düğmesi: ELİNDE, SEÇ, NİNE'DE (dükkân o tekniğin Kamış sekmesinde açılır) ya da rütbe kilidi. Teknik seçilince bildirim çıkar; gölgeler panel açıkken yeniden doğar.
+
 ### 10.4 Dükkân, takım ve para
 
 - **Nine'nin dükkânı:** sekmeler: kamış, makara, misina, iğne, yem, yapay yem ve sinek, şamandıra, ekstra.
@@ -424,6 +439,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - ✅ Kart: ikon (Ersin'in ekipman görseli gelene kadar kodla çizilir), ad, kısa açıklama, değer çubukları (koyu çizgi kuşanılanın yeri; yeşil daha iyi, turuncu daha zayıf; menzil ve kova kapasitesinin sayısı da yazar; kamışta ve misinada çubuk yerine "İri balık" yıldızları: kaç yıldızlı iri balığı taşıdığı, v0.3.1) ve tek düğme: fiyat (al ve tak), TAK, TAKILI, SENDE ya da kilitli rütbe. Para yetmeyen ya da rütbesi tutmayan düğme gri kalır ama basılınca Nine nedenini söyler (kilit sessiz kalmaz). Kuşanılan kartın kenarı yeşil.
   - ✅ Yem kartında çektiği balıklar ve bir gölgenin o balık olma şansı solucanla ve bu yemle ("Levrek %22 → %41"; defterdeki oranın aynısı), elindeki sayı ve paket boyu. Takılı yem yeniden alınabilir.
   - ✅ Sesler: satın almada tezgâh zili, kuşanmada tıkırtı, satışta para şıkırtısı; her birinin titreşimi ve Nine'nin sözü var.
+  - ✅ **Dalga 3:** başlıkta, Nine'nin sözüyle para arasında teknik düğmeleri (şamandıra, spin; dip ve sinek gelince onlar da). Kamış sekmesi ve tekniğe özel sekme bakılan tekniği gösterir: şamandırada "İğne" (iğne ve şamandıra), spinde "Yapay yem". Makara ve misina her teknikte ortak. Kilitli teknik de görünür, düğmesinde rütbesi yazar; dokununca Nine ne zaman satacağını söyler. Bir tekniğin ilk kamışı alınınca teknik ele geçer. Uzun sekme adı (Yapay yem) küçülerek sığar. Panelin boyu değişmez (telefonda 993 birim).
 
 | Kategori | Ne yapar | Kademe |
 |---|---|---|
@@ -436,7 +452,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | Şamandıra | hassasiyet (VUR süresi +), görünürlük | 3 |
 | Ekstra | kepçe (son anda bir kaçışı kurtarır), sehpa + zil, sandal, tuzak, fener (gece), kova kapasitesi | — |
 
-- **Takım çantası:** her teknik için kuşanılmış bir set; teknik düğmesiyle geçilir. Dalga 1'de tek teknik (şamandıra) olduğundan kuşanma dükkânda yapılır; çanta teknik düğmesiyle Dalga 3'te gelir.
+- ✅ **Takım çantası:** her teknik için kuşanılmış bir set (kamış ve küçük takım); makara ve misina ortak (kayıt v4: `loadouts.shared`). Teknik düğmesiyle geçilir (§10.3).
 - **Kova ve satış:**
   - Tutulan balık kovaya girer; dükkânda "hepsini sat" yapılır (Kazı'nın sırt çantası düzeni). ✅ Kova sekmesinde tür başına bir satır (sayı, değer), altta toplam ve HEPSİNİ SAT.
   - Kova dolunca Dede uyarır ✅ (kova her dolduğunda; dolu kovaya gelen balık göle döner ve bildirim çıkar); kova kapasitesi dükkândan büyür.
@@ -453,7 +469,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | dere ağzı (rütbe 7) | 45–60 dk |
 | rütbe 9 (sandal Nine'de) | 80–110 dk |
 | sandal | 90–180 dk |
-| spin takımı | 4–10 dk |
+| spin takımı ✅ | 4–10 dk |
 | tuzak | 10–20 dk |
 | dip takımı | 15–35 dk |
 | sinek | 60–120 dk |
@@ -489,6 +505,18 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | altın makara (15.000) / dev file (15.000) | 528–559 / 665–703 | — |
 
 - **Değerlendirme:** ilk saat dolu: yeni bölge yaklaşık 12, 26 ve 50. dakikada, araya alışverişler giriyor. Sandal rütbe 9'dan sonra 35–50 dakikalık bir birikim hedefi; alınınca balık başına kazanç ~1,7 katına çıkıyor (derin ortada ~40 para, dere ağzında ~24). Rütbe 20'ye ~5,9 saatte varılıyor (Dalga 1'de 5). Şamandıra takımının hepsi 12 saatte alınıyor (dev file ~11. saatte); Dalga 3'te tekniklerin takımı gelince fiyatlar "bütün kademeler 8–15 saat" hedefine göre yeniden ayarlanır.
+- ✅ **Dalga 3, spin ölçümü:**
+  - **Oturum süreleri** (`tools/session_timing.gd -- --technique=spin`; bot gölgenin ötesine atar, basılı tutup yemi getirir, peşine düşünce 0,35–0,8 sn'lik dur-kalk yapar):
+    - ısırmaya 5,4 sn (şamandırada 9,4): yemin balığa gelişi 1,5 sn, izleme 1,7 sn;
+    - atışların %98'i saldırıyla biter, saldırıların %44'ünde balık kendiliğinden takılır;
+    - çekişme 8,1 sn (şamandırada 5,3: yırtıcılar daha uzaktan ve sert çeker), takılma uzaklığı 5,7 m;
+    - satışsız saatte 227 av (şamandırada 208).
+  - **Denge botu:** yeni tekniğin ilk kamışını öncelikle alır, sonra tekniği dener. Bölge seçiminden sonra elindeki tekniği seçer: önce defterde olmayan, o bölgede gelen türü en çabuk getiren teknik, sonra dakikada en çok kazandıran. Teknik değiştirmek 3 sn (`switch_s`). Süreler `sim.json` `techniques`.
+  - **Sonuç** (`economy_report.gd -- --hours=12 --seeds=6`):
+    - spin kamışı ve ilk spin atışı 4–10. dakikada;
+    - saatte ~5.900 para ve 192 av (v0.3.1'deki gibi); rütbe 20'ye 6,0–6,5 saatte;
+    - mersin 134–184. dakikada (bot derin ortada mersini şamandırayla arar).
+  - **Değerlendirme:** defter dolunca bot zamanının %70–80'ini spinde geçiriyor: yırtıcılar dakikada şamandıradan çok kazandırıyor. Dip ve sinek gelince 8. adımda (Denge) teknikler birbirine göre yeniden ayarlanır.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
 ### 10.5 Canlı dünya
@@ -535,7 +563,7 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 - **Sol üst:** para, kova (5/12), rütbe rozeti. Başlık ve sürüm yazısı ayarlara taşınır.
 - **Üst orta:** saat ve hava çipi. Çekişmede yerini gerilim çubuğu alır.
 - **Sağ üst:** harita, defter, ayarlar (her biri ≥122).
-- **Sol alt:** teknik düğmesi.
+- ✅ **Sol alt:** teknik düğmesi (132; sandalda altında "Kıyıya dön").
 - **Sağ alt:** eylem düğmesi (300).
 - **Alt orta:** Dede'nin ipucu çubuğu.
 - **Fotoğraf:** balık kartındaki ve ayarlardaki kamera düğmesi.

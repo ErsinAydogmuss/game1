@@ -77,6 +77,21 @@ func pos2() -> Vector2:
 	return Vector2(position.x, position.z)
 
 
+## Elindeki tekniğin kamışı (RodModel.STYLES): biçimi farklıysa olta değişir.
+func set_rod_style(technique: String) -> void:
+	if rod != null and rod.style == technique:
+		return
+	var mount := rod.get_parent() as Node3D
+	var old_transform := rod.transform
+	mount.remove_child(rod)
+	rod.queue_free()
+	rod = RodModel.new()
+	rod.name = "Rod"
+	rod.style = technique
+	mount.add_child(rod)
+	rod.transform = old_transform
+
+
 ## KayKit modeli mi kullanılıyor?
 func is_rigged() -> bool:
 	return _body is AnglerBody

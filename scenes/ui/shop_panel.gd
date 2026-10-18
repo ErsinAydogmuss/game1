@@ -68,6 +68,8 @@ const GAP := 6
 ## Satış satırının boyu (iki sütun).
 const SELL_ROW := Vector2(820, 96)
 const TAB := Vector2(232, 122)
+## Sekme adı sığmazsa en çok bu boya küçülür (test_shop_panel iki dilde ölçer).
+const TAB_MIN_FONT := 16
 ## Sekme görselinin köşe boyu (kemerli tabela).
 const TAB_CORNER := 30.0
 const ACTION := Vector2(236, 122)
@@ -191,10 +193,12 @@ func refresh() -> void:
 	_coins.add_child(Dialog.coin_pill(GameState.save.coins))
 	for id: String in _tab_buttons:
 		var b: Button = _tab_buttons[id]
-		b.text = UiKit.upper(tr(_tab_title(id, technique)))
-		b.add_theme_font_size_override("font_size", UiKit.fit_size(b.text, b.get_theme_font("font"), 26, TAB.x - 104.0, 18))
-		(_tab_icons[id] as GameIcon).kind = _tab_icon(id, technique)
 		_style_tab(b, id == _tab)
+		b.text = UiKit.upper(tr(_tab_title(id, technique)))
+		# Uzun ad (Yapay yem) sekmeye sığsın (gerekirse küçülür).
+		b.add_theme_font_size_override("font_size", UiKit.fit_size(b.text, b.get_theme_font("font"), 26,
+				tab_text_room(), TAB_MIN_FONT))
+		(_tab_icons[id] as GameIcon).kind = _tab_icon(id, technique)
 	for id: String in _tech_buttons:
 		_style_tech(_tech_buttons[id], id)
 	Dialog.clear(_content)
@@ -256,7 +260,7 @@ func _build_gear() -> void:
 	grid.add_theme_constant_override("h_separation", 16)
 	grid.add_theme_constant_override("v_separation", ROW_GAP)
 	_content.add_child(grid)
-	for item in items_for(GameState.db, _tab, GameState.save):
+	for item in items_for(GameState.db, _tab, GameState.save, technique):
 		grid.add_child(_gear_card(item))
 
 
@@ -675,21 +679,32 @@ func _tab_button(id: String, icon_kind: String) -> Button:
 
 
 func _style_tab(b: Button, selected: bool) -> void:
-	var fill := UiKit.CREAM_CARD if selected else Color("#ead8b5")
-	var edge := UiKit.PRIMARY if selected else UiKit.CREAM_EDGE
 	for state: String in ["normal", "hover", "pressed", "hover_pressed"]:
-		var flat := UiKit.card_style(edge, 24, fill, 6 if selected else 3)
-		flat.content_margin_left = 88
-		flat.content_margin_right = 12
-		# Arayüz kitinin kemerli sekmesi: seçili olan parlak, ötekiler biraz koyu.
-		var sb := UiKit.framed("tab", flat, TAB_CORNER)
-		if sb is StyleBoxTexture and not selected:
-			sb = sb.duplicate() as StyleBox
-			(sb as StyleBoxTexture).modulate_color = Color(0.86, 0.82, 0.76)
-		b.add_theme_stylebox_override(state, sb)
+		b.add_theme_stylebox_override(state, _tab_style(selected))
 	for state: String in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
 		b.add_theme_color_override(state, UiKit.INK if selected else UiKit.INK_SOFT)
 	b.add_theme_constant_override("outline_size", 0)
+
+
+## Sekmenin kutusu: arayüz kitinin kemerli sekmesi (seçili olan parlak, ötekiler biraz koyu); görsel
+## yoksa düz kutu. Solda ikonun payı.
+static func _tab_style(selected: bool) -> StyleBox:
+	var fill := UiKit.CREAM_CARD if selected else Color("#ead8b5")
+	var edge := UiKit.PRIMARY if selected else UiKit.CREAM_EDGE
+	var flat := UiKit.card_style(edge, 24, fill, 6 if selected else 3)
+	flat.content_margin_left = 88
+	flat.content_margin_right = 12
+	var sb := UiKit.framed("tab", flat, TAB_CORNER)
+	if sb is StyleBoxTexture and not selected:
+		sb = sb.duplicate() as StyleBox
+		(sb as StyleBoxTexture).modulate_color = Color(0.86, 0.82, 0.76)
+	return sb
+
+
+## Sekmede yazıya kalan genişlik: sekme görselinin (ya da yedek kutunun) payları çıkınca.
+static func tab_text_room() -> float:
+	var sb := _tab_style(true)
+	return TAB.x - sb.get_margin(SIDE_LEFT) - sb.get_margin(SIDE_RIGHT) - 4.0
 
 
 static func _tab_title(id: String, look: String = "float") -> String:

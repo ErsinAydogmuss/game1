@@ -32,6 +32,8 @@
 10. **Bölgeler ve harita:** göl altı bölgeye ayrılmış (iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı, derin orta); her birinin kendi balıkları ve süsleri var. Yeni bölge rütbeyle açılır (3, 5, 7; derin orta 9 ve sandal). İlk balıktan sonra sağ üstte harita düğmesi çıkar: bir bölgenin rozetine dokun, ekran kararır ve oradasın. Gölgeler bulunduğun bölgede doğar, defterdeki oran o bölgenin.
 11. **Sandal:** rütbe 9'da Nine'den alınır (Ekstra sekmesi). İskeledeki sandala ya da haritada Derin Orta'ya dokun: derin ortada şamandıranın yanındasın; iri yayın ve mersin orada. Sol alttaki "Kıyıya dön" iskeleye getirir.
 12. **Mersin** koruma altında: kovaya girmez, kartında Dede'nin sözüyle göle bırakılır (rütbe puanı ve göl sevgisi verir).
+13. **Teknikler ve Takım Çantası:** rütbe 2'de spin açılır; sol altta teknik düğmesi çıkar. Dokununca Takım Çantası açılır: elindeki tekniği seçersin ya da Nine'den o tekniğin kamışını alırsın. Makara ve misina her teknikte ortaktır; her tekniğin kendi kamışı ve küçük takımı var. Dükkânın başlığındaki teknik düğmeleriyle her tekniğin takımına bakılır.
+14. **Spin:** yapay yemi bir gölgenin ötesine at. **Basılı tut:** yem sana gelir. **Bırak:** durur ve batar. Yırtıcı (levrek, sudak, turna, kefal, yayın) yalnızca oynayan yeme gelir. Peşine düşünce **dur-kalk** yap: o an basılıysan balık kendiliğinden takılır, bırakmışsan "VUR!" çıkar. Uzun bekletilen yemden balık vazgeçer; sazlıkta ve kayalıkta bekleyen yem takılır.
 
 - **Yürü:** karaya ya da iskeleye dokun. Önü su ise balıkçı kıyı yolundan dolaşır; kilitli bölgenin çitinde durur, Dede ne zaman geçileceğini söyler.
 - **Dede:** ilk 3 balığa kadar ipucu verir. Ona dokununca her zaman bir öğüt söyler.
