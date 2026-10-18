@@ -1878,7 +1878,8 @@ func _play_video() -> void:
 	for f: Array in [["rudd", 26, 4], ["carp", 52, 3], ["perch", 31, 2], ["silverside", 14, 2], ["bream", 40, 3],
 			["tench", 38, 3], ["crayfish", 11, 3]]:
 		Records.add(save.records, f[0], f[1], f[2], 0)
-	for id: String in ["rod_spin_light", "rod_carp_1", "rod_fly_1", "line_mono", "trap_1"]:
+	# Büyük kova: turna, dört kerevit, aynalı sazan ve alabalık sığsın (kova dolu bildirimi videoda yok).
+	for id: String in ["rod_spin_light", "rod_carp_1", "rod_fly_1", "line_mono", "trap_1", "bucket_big"]:
 		if not id in save.owned:
 			save.owned.append(id)
 		Economy.equip(db, save, id)
@@ -1917,7 +1918,8 @@ func _play_video() -> void:
 	await _wait(0.6)
 	# Haritadan sazlığa: dolu tuzak (yeşil, nabız gibi atan 4/4 rozeti).
 	await _map_to(panel, fade, "reeds")
-	await _wait(1.2)
+	# Bölgenin adı sönsün: rozet (4/4, nabız gibi atan yeşil) açıkça görünsün.
+	await _wait(2.6)
 	await _shot("v2_tuzak_dolu")
 	var trap_id := int(save.traps[0]["id"]) if not save.traps.is_empty() else -1
 	_check("video: sazlıkta dolu tuzak (%d)" % traps.shown_count(trap_id), trap_id >= 0
