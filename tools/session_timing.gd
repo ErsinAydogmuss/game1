@@ -3,7 +3,7 @@ extends SceneTree
 ## data/sim.json için önerilen değerleri yazar. Denge botu (SessionSim) zamanı bu dosyadan alır;
 ## kurallar (gölge, fark etme, dürtme) değişince bu araç yeniden çalıştırılır.
 ##   godot --headless --path . -s res://tools/session_timing.gd [-- --casts=600 --seeds=3 --gear=top --zone=reeds
-##       --technique=spin]
+##       --technique=spin] (sinek: -- --technique=fly --zone=stream_mouth)
 ## --zone: balıkçı o bölgenin atış noktasında (sandal bölgesinde ilk şamandıranın yanında, sandalda)
 ## durur; gölgeler yalnızca o bölgede doğar (denge botu bölge başına süre kullanır: sim.json "zones").
 ## --technique: o teknikle (tekniğin ilk kamışı; --gear=top en iyi takımı) oynar; öneri sim.json
@@ -34,6 +34,10 @@ const SPIN_PAST_M := 2.5
 const RHYTHM_S := Vector2(0.35, 0.8)
 ## Dip: gelen balık yokken bu kadar sn sonra geri sarar (dip sabır ister).
 const BOTTOM_PATIENCE_S := 30.0
+## Sinek: gölgenin akıntı yukarısına (FLY_UP_M) atar, sinek ona doğru sürüklensin; sinek kendiliğinden
+## döndüğü için geri sarmaz (sabır en uzun sürüklenmeden uzun); halkada REACTION_S sonra VUR.
+const FLY_UP_M := 2.5
+const FLY_PATIENCE_S := 20.0
 
 var _casts: int = 600
 var _seeds: int = 3
@@ -154,15 +158,19 @@ func _play(db: ContentDB, gear: GearStats, seed_value: int) -> void:
 	var casts := 0
 	var spin := _technique == "spin"
 	var bottom := _technique == "bottom"
+	var fly := _technique == "fly"
 	if bottom:
 		patience = FishingRules.to_steps(BOTTOM_PATIENCE_S)
+	if fly:
+		patience = FishingRules.to_steps(FLY_PATIENCE_S)
 	var phase_end := 0
 	while casts < _casts:
 		match session.state:
 			FishingSession.State.IDLE:
 				cooldown -= 1
 				if cooldown <= 0:
-					if session.cast(_spin_point(session, rng) if spin else _aim_point(session, rng)):
+					var target := _spin_point(session, rng) if spin else (_fly_point(session, rng) if fly else _aim_point(session, rng))
+					if session.cast(target):
 						casts += 1
 					cooldown = aim
 			FishingSession.State.WAITING:
@@ -213,7 +221,7 @@ func _play(db: ContentDB, gear: GearStats, seed_value: int) -> void:
 						arrive_at = session.steps
 						_wait.append(_sec(arrive_at - landed_at))
 						phase_end = session.steps + FishingRules.to_steps(rng.randf_range(RHYTHM_S.x, RHYTHM_S.y))
-				"bite", "strike", "run":
+				"bite", "strike", "run", "rise":
 					bite_at = session.steps
 					_add("bite")
 					if bool(e.get("auto", false)):
@@ -269,6 +277,30 @@ func _spin_point(session: FishingSession, rng: RandomNumberGenerator) -> Vector2
 		var away := (best.pos - session.angler).normalized()
 		return best.pos + away * SPIN_PAST_M + Dice.in_disc(rng, AIM_NOISE_M)
 	return session.angler + Dice.direction(rng) * rng.randf_range(4.0, session.range_m())
+
+
+## Sinek: menzildeki en yakın dolaşan gölgenin akıntı yukarısı (sinek ona doğru sürüklenir); yoksa
+## rastgele, akıntılı bir yer.
+func _fly_point(session: FishingSession, rng: RandomNumberGenerator) -> Vector2:
+	var best: FishShadow = null
+	var best_d := INF
+	for s in session.sim.shadows:
+		if s.mode != FishShadow.Mode.WANDER and s.mode != FishShadow.Mode.PAUSE:
+			continue
+		var d := session.angler.distance_to(s.pos)
+		if d < session.technique.min_cast(session) or d > session.range_m():
+			continue
+		if d < best_d:
+			best = s
+			best_d = d
+	if best != null:
+		var down := session.lake.flow_at(best.pos).normalized()
+		return best.pos - down * FLY_UP_M + Dice.in_disc(rng, AIM_NOISE_M)
+	for i in 12:
+		var p := session.angler + Dice.direction(rng) * rng.randf_range(3.0, session.range_m())
+		if session.lake.flow_at(p).length() > 0.3:
+			return p
+	return session.angler + Dice.direction(rng) * rng.randf_range(3.0, session.range_m())
 
 
 ## Menzildeki (en az min_cast uzaktaki) en yakın dolaşan gölgenin önü; yoksa rastgele bir yön.

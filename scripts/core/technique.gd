@@ -5,7 +5,7 @@ extends RefCounted
 ## eylem düğmesi. Çekişme (ReelModel) her teknikte ortaktır: balık takıldıktan sonrası
 ## FishingSession'da. Teknik oturumu saklamaz, her işlev onu parametre olarak alır (RefCounted
 ## döngüsü olmasın). Teknikler: şamandıra (FloatTechnique), spin (SpinTechnique), dip
-## (BottomTechnique); sinek Dalga 3'te (docs/gdd.md §10.3).
+## (BottomTechnique), sinek (FlyTechnique; docs/gdd.md §10.3).
 
 var id: String = "float"
 var rules: FishingRules

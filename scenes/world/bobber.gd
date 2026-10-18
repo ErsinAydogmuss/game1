@@ -1,6 +1,6 @@
 class_name Bobber
 extends Node3D
-## Suyun üstündeki takım: şamandıra ya da yapay yem (spin; set_kind).
+## Suyun üstündeki takım: şamandıra, yapay yem (spin), kurşun (dip) ya da sinek (set_kind).
 ## - Şamandıra: kırmızı-beyaz top (0,3 m; telefonda okunsun diye iri). Atışta yay çizerek uçar,
 ##   suda hafifçe sallanır, dürtmede boyunun %40'ı kadar dalıp çıkar, ısırmada suya gömülür,
 ##   çekişmede balığın peşinden sürüklenir, geri sarılınca oltanın ucuna döner.
@@ -8,6 +8,8 @@ extends Node3D
 ##   (drag_to) titreşir ve parlar, durunca (sink) batar: yalnızca soluk izi kalır.
 ## - Kurşun (dip): uçarken ve geri sarılırken küçük koyu bir ağırlık; suda dipte durur, görünmez:
 ##   misina suya girdiği yerde biter (line_point).
+## - Sinek: kahve gövdeli, sarı kanatlı küçük kuru sinek (telefonda seçilsin diye iri); suyun yüzünde
+##   hafifçe sallanarak akıntıyla sürüklenir (drag_to), halkada suya çekilir (go_under).
 ## Kare başı konum _process'te hesaplanır (Tween yok).
 
 enum Look { HIDDEN, FLYING, FLOATING, UNDER, FIGHT, RETURNING }
@@ -19,6 +21,8 @@ const DIP := 0.4 * RADIUS * 2.0
 const LURE_LENGTH := 0.24
 ## Yem batınca inme (m; su opak: üstü suyun hemen altında kalır).
 const LURE_SINK := 0.045
+## Sineğin boyu (m; gerçeğinden çok iri).
+const FLY_LENGTH := 0.12
 
 var look: Look = Look.HIDDEN
 ## Çekişmede balığın yeri (FIGHT).
@@ -39,6 +43,7 @@ var _rest := Vector3.ZERO
 var _float_part: Node3D
 var _lure_part: Node3D
 var _sinker_part: Node3D
+var _fly_part: Node3D
 var _glint: MeshInstance3D
 var _heading: float = 0.0
 
@@ -68,10 +73,20 @@ func _ready() -> void:
 	Props.sphere(_sinker_part, 0.05, Vector3.ZERO, Color("#5d646c"), 10, 5, Vector3(0.8, 1.15, 0.8))
 	Props.cylinder(_sinker_part, 0.012, 0.012, 0.03, Vector3(0, 0.07, 0), Color("#9aa3ad"), 5)
 	MeshBatch.merge(_sinker_part)
+	# Sinek: koyu gövde, açık sarı kanat (dik tüy), kırmızı kuyruk teli (tek ağ).
+	_fly_part = Node3D.new()
+	_fly_part.name = "Fly"
+	add_child(_fly_part)
+	Props.sphere(_fly_part, FLY_LENGTH * 0.5, Vector3.ZERO, Color("#6b4423"), 10, 5, Vector3(0.32, 0.3, 1.0))
+	Props.sphere(_fly_part, FLY_LENGTH * 0.34, Vector3(0, FLY_LENGTH * 0.28, -FLY_LENGTH * 0.12), Color("#ffe066"), 10,
+			5, Vector3(0.9, 0.9, 0.35))
+	Props.cylinder(_fly_part, 0.006, 0.004, FLY_LENGTH * 0.7, Vector3(0, 0.0, FLY_LENGTH * 0.75), Color("#e63946"), 4,
+			Vector3(deg_to_rad(90.0), 0, 0))
+	MeshBatch.merge(_fly_part)
 	_glint = Props.sphere(self, 0.05, Vector3(0, 0.05, 0), Color("#ffffff"), 8, 4)
 	_glint.material_override = Props.material(Color("#ffffff"), 0.2, 2.5)
 	_glint.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	for part: Node3D in [_lure_part, _sinker_part]:
+	for part: Node3D in [_lure_part, _sinker_part, _fly_part]:
 		for mesh in part.find_children("*", "GeometryInstance3D", true, false):
 			(mesh as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	set_kind("float")
@@ -85,22 +100,25 @@ static func kind_for(technique: String) -> String:
 			return "lure"
 		"bottom":
 			return "sinker"
+		"fly":
+			return "fly"
 	return "float"
 
 
-## Misinanın bağlandığı yer: şamandıranın tepesi, yemin burnu ya da (dipte) suya girdiği yer.
+## Misinanın bağlandığı yer: şamandıranın tepesi, yemin ve sineğin burnu ya da (dipte) suya girdiği yer.
 func line_point() -> Vector3:
-	if kind == "lure" or kind == "sinker":
+	if kind == "lure" or kind == "sinker" or kind == "fly":
 		return global_position + Vector3(0, 0.01, 0)
 	return global_position + Vector3(0, RADIUS * 1.4, 0)
 
 
-## Takımın görünüşü: "float" (şamandıra), "lure" (yapay yem) ya da "sinker" (dipte kurşun: yalnızca
-## havadayken görünür).
+## Takımın görünüşü: "float" (şamandıra), "lure" (yapay yem), "sinker" (dipte kurşun: yalnızca
+## havadayken görünür) ya da "fly" (sinek).
 func set_kind(value: String) -> void:
 	kind = value
 	_float_part.visible = kind == "float"
 	_lure_part.visible = kind == "lure"
+	_fly_part.visible = kind == "fly"
 	_sinker_part.visible = false
 	_glint.visible = false
 	sink = 0.0
@@ -187,6 +205,9 @@ func _process(delta: float) -> void:
 			if kind == "sinker":
 				position = _rest
 				return
+			if kind == "fly":
+				_fly_float()
+				return
 			_dip = move_toward(_dip, 0.0, delta * 3.5)
 			var bob := sin(_clock * 2.3) * 0.015
 			position = _rest + Vector3(0, bob - DIP * sin(_dip * PI * 0.5), 0)
@@ -208,3 +229,9 @@ func _lure_float() -> void:
 	var flash := maxf(0.0, sin(_clock * 7.0)) * live
 	_glint.visible = flash > 0.55
 	_glint.scale = Vector3.ONE * (0.6 + flash)
+
+
+## Sinek suyun yüzünde: akıntının yönüne dönük, hafifçe sallanır.
+func _fly_float() -> void:
+	rotation = Vector3(0.0, _heading, sin(_clock * 5.0) * 0.12)
+	position = _rest + Vector3(0, 0.012 + sin(_clock * 3.1) * 0.006, 0)

@@ -22,15 +22,18 @@ const PACING := [
 	["species_5", 0.0, 30.0],
 	# Dalga 3: spin ve dip takımları da alışverişte (yeni tekniğin ilk kamışına biriktirir): cam kamış
 	# ve kepçe gecikti (economy_report, 6 seed: 48–62 ve 138–172 dk; önce 32–42 ve 71–83). Sınırlar
-	# ölçüme pay bırakır; fiyatlar 8. adımda (Denge) yeniden ayarlanınca daralır.
+	# ölçüme pay bırakır; sinek kamışı da (1.500, rütbe 7) öncelikli olunca kepçe biraz daha gecikti.
+	# Fiyatlar 8. adımda (Denge) yeniden ayarlanınca daralır.
 	["buy:rod_float_glass", 10.0, 75.0],
 	["buy:bucket_big", 15.0, 60.0],
-	["buy:net", 40.0, 190.0],
+	["buy:net", 40.0, 220.0],
 	["buy:boat", 90.0, 180.0],     # rütbe 9 + biriktirme (90–180)
 	["buy:rod_spin_light", 4.0, 10.0], # spin rütbe 2'de: ilk kamışı (150) öncelikli
 	["tech:spin", 4.0, 12.0],      # spinle ilk atış
 	["buy:rod_carp_1", 15.0, 35.0], # dip rütbe 4'te: ilk kamışı (500) öncelikli
 	["tech:bottom", 15.0, 40.0],   # dipte ilk atış
+	["buy:rod_fly_1", 60.0, 120.0], # sinek rütbe 7'de: ilk kamışı (1.500) öncelikli
+	["tech:fly", 60.0, 125.0],     # dere ağzında sinekle ilk atış
 	# Mersin: sandalla derin ortada, Efsanevi; ilk tutuluşu şansa çok bağlı (v0.3.1, 20 seed: 125–276
 	# dk; eski kodda da bir seed 288). Zarların sırası değişince bir seed kolayca kayar: pay geniş.
 	# Dalga 3'te türler 12'yi aştı (aynalı sazan): 12. tür artık erken; mersin Efsanevinin ilki.

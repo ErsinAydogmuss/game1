@@ -614,13 +614,15 @@ func _buy(id: String) -> void:
 			var item := db.gear_item(id)
 			var first_rod := str(item["category"]) == "rod" and not Economy.technique_ready(db, save, str(item["technique"]))
 			Economy.buy(db, save, id, technique)
-			# Tekniğin ilk kamışı: teknik ele geçer (takım çantasında da seçili).
-			if first_rod:
+			# Tekniğin ilk kamışı: teknik ele geçer (takım çantasında da seçili). Bu bölgede avlanılmayan
+			# teknik (sinek dere ağzında) ele geçmez: Nine nerede kullanılacağını söyler.
+			var here := Economy.technique_allowed(db, spot_id, zone_id, str(item.get("technique", "")))
+			if first_rod and here:
 				save.technique = str(item["technique"])
 			GameState.save_game()
 			Sounds.play("buy")
 			Sounds.haptic(18)
-			_say("UI_NINE_BOUGHT")
+			_say("UI_NINE_BOUGHT" if not first_rod or here else "UI_NINE_FLY_ZONE")
 			gear_changed.emit()
 			refresh()
 		"coins":

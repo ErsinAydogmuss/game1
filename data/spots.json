@@ -37,7 +37,7 @@
 					"fish": { "chub": 30, "perch": 28, "zander": 16, "rudd": 10, "pike": 10, "wels": 6 } },
 				{ "id": "stream_mouth", "rank": 7, "min_depth": 0.5, "techniques": ["float", "spin", "bottom", "fly"], "stands": [[-16.0, -10.2]], "gates": [[[-24.0, -3.0], [-30.5, -3.0]]],
 					"current": [0.82, 0.57],
-					"fish": { "chub": 36, "pike": 26, "perch": 20, "rudd": 10, "wels": 8 } },
+					"fish": { "chub": 36, "pike": 26, "perch": 20, "rudd": 10, "wels": 8, "trout": 30, "brook_trout": 4 } },
 				{ "id": "deep_water", "rank": 9, "boat": true, "boat_from": 4.0,
 					"buoys": [[-9.0, -15.0], [-3.0, -17.0], [3.0, -14.5]],
 					"fish": { "wels": 220, "carp": 200, "bream": 190, "zander": 140, "pike": 120, "perch": 115, "sturgeon": 15, "mirror_carp": 60 } }

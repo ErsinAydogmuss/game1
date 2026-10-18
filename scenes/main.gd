@@ -39,8 +39,9 @@ const FIRST_CUE_EVERY := 1.6
 ## gölgeye bu kadar sn bakar.
 const LEGEND_NOTICE_M := 9.0
 const LEGEND_LOOK_TIME := 3.0
-## Çekilen yapay yemin arkasındaki iz halkalarının aralığı (sn).
+## Çekilen yapay yemin arkasındaki iz halkalarının aralığı (sn); sürüklenen sineğinki.
 const WAKE_EVERY := 0.2
+const FLY_TRAIL_EVERY := 0.45
 ## Takım çantasından açılan dükkânda balıkçı Nine'ye bundan uzaksa kova satılmaz (tezgâha gelinir).
 const SHOP_NEAR := 6.0
 ## Olta sudayken kameranın odağı balıkçıyla takımın arasında, yolun bu kadarında.
@@ -69,6 +70,8 @@ var stand: RodStand
 var shadows: ShadowLayer
 var ripples: Ripples
 var catch_fx: CatchFx
+## Çekişmede sudan sıçrayan balık (alabalıklar).
+var fish_jump: FishJump
 var camera: FollowCamera
 var input: InputRouter
 var hud: Hud
@@ -143,6 +146,16 @@ func _ready() -> void:
 	shadows.ripples = ripples
 	catch_fx = CatchFx.new()
 	add_child(catch_fx)
+	fish_jump = FishJump.new()
+	add_child(fish_jump)
+	fish_jump.left.connect(func(at: Vector2) -> void:
+		ripples.spawn(at, 0.8, 0.6, Color(1, 1, 1, 0.85), 0.16)
+		Sounds.play("splash", 2.0, 1.15)
+		Sounds.haptic(30))
+	fish_jump.landed.connect(func(at: Vector2) -> void:
+		ripples.spawn(at, 1.1, 0.7, Color(1, 1, 1, 0.9), 0.18)
+		Sounds.play("splash")
+		Sounds.haptic(20))
 	angler = Angler.new()
 	angler.lake = lake
 	angler.height_at = scene.stand_height
@@ -527,6 +540,10 @@ func _on_event(e: Dictionary) -> void:
 					# Ağır kurşun: büyük halka, pes şapırtı.
 					ripples.spawn(p, 0.9, 1.0)
 					Sounds.play("plop", 0.0, 0.8)
+				"fly":
+					# Sinek tüy gibi konar: küçük halka, kısık tıkırtı.
+					ripples.spawn(p, 0.3, 0.6, Color(1, 1, 1, 0.6), 0.1)
+					Sounds.play("lure", -8.0, 1.4)
 				_:
 					ripples.spawn(p, 0.7, 0.9)
 					Sounds.play("plop")
@@ -629,6 +646,14 @@ func _on_event(e: Dictionary) -> void:
 			ripples.spawn(session.fight_point(), 0.9, 0.5, Color(1, 1, 1, 0.8), 0.18)
 			Sounds.play("splash")
 			Sounds.haptic(20)
+			_jump_if_trout()
+		"rise":
+			# Sinek: alabalık halka çıkarır, sinek suya çekilir: VUR anı.
+			bobber.go_under()
+			ripples.spawn(session.bobber, 0.8, 0.8, Color(1, 1, 1, 0.9), 0.12)
+			Sounds.play("rise")
+			Sounds.haptic(50)
+			camera.shake(0.04)
 		"strain":
 			# Gıcırtı döngüsü _present'te her kare (duraklamadan sonra da) açılır.
 			Sounds.haptic(25)
@@ -641,6 +666,13 @@ func _on_event(e: Dictionary) -> void:
 			var steps := session.timer if session.state == FishingSession.State.RETRIEVING else session.rules.retrieve_steps
 			bobber.fly_back(angler.rod_tip(), float(steps) / FishingRules.HZ)
 			Sounds.play("reel_in")
+			if str(e.get("reason", "")) == "still":
+				# Sinek akmayan suya düştü: kımıldamadan döndü. İlk kez Dede nedenini söyler.
+				hud.toast(tr("UI_FLY_STILL"), UiKit.ACCENT, "tech_fly")
+				Sounds.haptic(20)
+				if not GameState.save.flags.has("told_fly_still"):
+					GameState.save.flags["told_fly_still"] = true
+					_say("UI_DEDE_FLY_STILL")
 		"idle":
 			if bobber.look != Bobber.Look.RETURNING:
 				bobber.hide_bobber()
@@ -721,6 +753,9 @@ func _on_catch() -> void:
 		# Kova bu balıkla doldu: Dede hatırlatır (Nine'ye sat ki yenileri de sığsın). Aynı balıkla
 		# yeni bölge açıldıysa Dede onu söyler; kova, sonraki balıkta "Kova dolu" bildirimiyle hatırlanır.
 		_say("UI_DEDE_BUCKET")
+	elif not zone_news and technique == "float" and _suggest_fly():
+		save.flags["told_fly_here"] = true
+		_say("UI_DEDE_FLY_HERE")
 	bobber.hide_bobber()
 	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)
 	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
@@ -762,9 +797,21 @@ func _follow_zone() -> void:
 		hud.toast(tr("ZONE_" + now), UiKit.TEXT, "zone:" + now)
 	if not now.is_empty():
 		GameState.save.flags["visited_" + now] = true
+	var entered := not zone_id.is_empty()
 	zone_id = now
 	shop_panel.zone_id = now
 	book_panel.zone_id = now
+	technique_panel.zone_id = now
+	# Bu bölgede avlanılmayan teknik (sinek dere ağzında) şamandıraya döner (oturumun başında sessizce).
+	var save := GameState.save
+	if not Economy.technique_allowed(GameState.db, spot_id, now, save.technique) \
+			and session.state == FishingSession.State.IDLE:
+		save.technique = "float"
+		_technique_pity("float")
+		session.set_gear(_gear())
+		if entered:
+			# Bölgenin adından sonra (sırayla).
+			hud.toast_later(tr("UI_TECH_FLY_ONLY"), UiKit.ACCENT, "", "tech_float")
 	session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save, Zones.place(GameState.db, spot_id, now),
 			session.technique.id))
 
@@ -779,6 +826,7 @@ func _present(delta: float) -> void:
 		var fp := session.fight_point()
 		bobber.fight_point = Vector3(fp.x, 0.0, fp.y)
 	var lure_reeling := _present_lure(delta)
+	_present_fly(delta)
 	var on_stand := _present_bottom()
 	var show_line := session.line_out() or bobber.look == Bobber.Look.RETURNING
 	line.visible = show_line and bobber.visible
@@ -794,6 +842,8 @@ func _present(delta: float) -> void:
 					line.sag = 0.05
 				elif bobber.kind == "sinker":
 					line.sag = 0.1
+				elif bobber.kind == "fly":
+					line.sag = 0.22
 				else:
 					line.sag = 0.25 if bobber.kind == "lure" else 0.35
 		line.shake = 0.0
@@ -896,6 +946,29 @@ func _present_lure(delta: float) -> bool:
 			_wake_clock = 0.0
 			ripples.spawn(session.bobber, 0.28, 0.6, Color(1, 1, 1, 0.5), 0.12)
 	return moving
+
+
+## Sinek suda: oturumun yerinde (akıntıyla sürüklenir), arkasında seyrek, küçük iz halkaları.
+func _present_fly(delta: float) -> void:
+	if bobber.kind != "fly" or bobber.look != Bobber.Look.FLOATING:
+		return
+	bobber.drag_to(Vector3(session.bobber.x, 0.0, session.bobber.y))
+	_wake_clock += delta
+	if _wake_clock >= FLY_TRAIL_EVERY:
+		_wake_clock = 0.0
+		ripples.spawn(session.bobber, 0.18, 0.5, Color(1, 1, 1, 0.4), 0.08)
+
+
+## Çekişmede çırpınan balık sıçrayan türdense (fish.json fight.jumps) sudan sıçrar.
+func _jump_if_trout() -> void:
+	var fish := session.hooked
+	if fish == null or session.state != FishingSession.State.FIGHTING:
+		return
+	var def := GameState.db.fish_by_id(fish.fish_id)
+	if not bool((def["fight"] as Dictionary).get("jumps", false)):
+		return
+	var at := session.fight_point()
+	fish_jump.jump(def, fish.size_cm, at, at - angler.pos2())
 
 
 ## Dip: kurşun suya düşünce kamış sehpaya konur (balıkçının yanında, atış yönüne bakar); koklamada
@@ -1145,6 +1218,15 @@ func _announce_techniques() -> bool:
 		hud.pulse_technique()
 		told = true
 	return told
+
+
+## Dere ağzında (sineğin avlanıldığı yerde) şamandırayla tutan oyuncuya Dede bir kez sineği önerir:
+## sineğin rütbesi gelmiş, söylenmemiş.
+func _suggest_fly() -> bool:
+	var db := GameState.db
+	var save := GameState.save
+	return db.has_technique("fly") and not save.flags.has("told_fly_here") \
+			and Rank.rank(db, save) >= db.technique_rank("fly") and Economy.technique_allowed(db, spot_id, zone_id, "fly")
 
 
 ## Şamandıradan başka bir teknik açıldı mı (rütbesi geldi ya da kamışı alındı): teknik düğmesi.
@@ -1467,6 +1549,7 @@ func _build_ui() -> void:
 	layer.add_child(map_panel)
 	map_panel.travel_requested.connect(_travel)
 	technique_panel = TechniquePanel.new()
+	technique_panel.spot_id = spot_id
 	layer.add_child(technique_panel)
 	technique_panel.technique_selected.connect(_on_technique_selected)
 	technique_panel.shop_requested.connect(func(technique: String) -> void:

@@ -59,6 +59,8 @@ var _finger_pos: Dictionary = {}
 var _results: Array[String] = []
 ## Bir kez alınan ekran görüntüleri (_shot_once).
 var _taken: Dictionary = {}
+## Son çekişmede balık sudan sıçradı mı (_reel_like_player).
+var _seen_jump: bool = false
 
 
 func _ready() -> void:
@@ -869,7 +871,6 @@ func _play_technique() -> void:
 	var shop: ShopPanel = main.get("shop_panel")
 	var bag: TechniquePanel = main.get("technique_panel")
 	var bobber: Bobber = main.get("bobber")
-	var fade: Fade = main.get("fade")
 	# Kızılkanat önceden büyük bir rekorla defterde: yeni tür ya da rekor kartı açılmasın.
 	Records.add(save.records, "rudd", 999, 3, 0)
 	save.xp = db.rank_xp[1] - 1
@@ -946,10 +947,7 @@ func _play_technique() -> void:
 	_check("spin: dur-kalk → basılıyken kendiliğinden takılır, tutulur", bool(seen["auto"]))
 	_check("spin: dur-kalk → bırakılmışken VUR, dokununca takılır, tutulur", bool(seen["tap"]))
 	# 7) Sazlıkta bekleyen yem otlara takılır: bildirim, Dede söyler, geri sarma uzun sürer.
-	main.call("_travel", "reeds")
-	await _wait_frames(2)
-	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
-	await _wait(0.5)
+	await _travel_to("reeds")
 	await _tap_control(hud.action_button)
 	await _wait_state(FishingSession.State.WAITING, 3.0)
 	var snagged := await _wait_state(FishingSession.State.RETRIEVING, 6.0)
@@ -961,10 +959,7 @@ func _play_technique() -> void:
 	await _shot("10_takildi")
 	await _wait_state(FishingSession.State.IDLE, 4.0)
 	# 8) Çantadan şamandıraya dön: kamış, takım ve düğme şamandıranın.
-	main.call("_travel", "dock_cove")
-	await _wait_frames(2)
-	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
-	await _wait(0.4)
+	await _travel_to("dock_cove")
 	await _tap_control(hud.technique_button)
 	await _wait_frames(3)
 	await _wait(0.4)
@@ -979,6 +974,8 @@ func _play_technique() -> void:
 	await _wait(0.4)
 	await _shot("12_samandira")
 	await _play_bottom()
+	await _play_fly()
+	await _play_boat_bottom()
 	_check_buttons()
 	for line in _results:
 		print("KONTROL ", line)
@@ -995,7 +992,6 @@ func _play_bottom() -> void:
 	var shop: ShopPanel = main.get("shop_panel")
 	var bag: TechniquePanel = main.get("technique_panel")
 	var stand: RodStand = main.get("stand")
-	var fade: Fade = main.get("fade")
 	save.xp = maxi(save.xp, db.rank_xp[3])
 	GameState.changed.emit()
 	await _wait_frames(3)
@@ -1039,10 +1035,7 @@ func _play_bottom() -> void:
 	var early := await _bottom_cast(false)
 	_check("dip: koklarken dokunmak kaçırır", bool(early["early"]))
 	# Sazlıkta aynalı sazan (yalnızca dip).
-	main.call("_travel", "reeds")
-	await _wait_frames(2)
-	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
-	await _wait(0.4)
+	await _travel_to("reeds")
 	var mirror := await _bottom_cast(true, "mirror_carp")
 	_check("sazlıkta dipte aynalı sazan (botun koyduğu gölge) tutulur", bool(mirror["caught"])
 			and str(_session().last_catch.get("fish", "")) == "mirror_carp")
@@ -1052,7 +1045,23 @@ func _play_bottom() -> void:
 		await _close_card(card)
 	await _wait_state(FishingSession.State.IDLE, 5.0)
 	_check("dip bitince sehpa kalkar", not stand.visible and not _angler().rod_on_stand)
-	# Sandalda dip: sehpa teknenin içinde, küpeştede (suyun üstünde).
+
+
+## Sandalda dip (rütbe 9; sinekten sonra, rütbe atlayışı sineği erken açmasın): çantadan dip seçilir,
+## sandal alınır, binilir; sehpa teknenin içinde, küpeştede (suyun üstünde).
+func _play_boat_bottom() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var hud := _hud()
+	var bag: TechniquePanel = main.get("technique_panel")
+	var stand: RodStand = main.get("stand")
+	var fade: Fade = main.get("fade")
+	await _tap_control(hud.technique_button)
+	await _wait_frames(3)
+	await _wait(0.3)
+	await _tap_control(bag.find_child("Button_bottom", true, false))
+	await _wait_frames(4)
+	_check("çantadan dip seçilir", not bag.visible and _session().technique.id == "bottom")
 	save.xp = maxi(save.xp, db.rank_xp[8])
 	save.coins = maxi(save.coins, int(db.gear_item(Zones.BOAT)["price"]))
 	Economy.buy(db, save, Zones.BOAT)
@@ -1064,12 +1073,211 @@ func _play_bottom() -> void:
 	await _tap_control(hud.action_button)
 	var cast_out := await _wait_state(FishingSession.State.WAITING, 3.0)
 	await _wait(1.0)
+	# Sandalın tabanı su hizasında (LakeScene.BOAT_Y + BOAT_FLOOR): sehpa balıkçıyla aynı tabanda.
 	var on_board := Vector2(stand.global_position.x, stand.global_position.z).distance_to(_angler().pos2())
-	_check("sandalda dip: sehpa teknede (yanda %.2f m, %.2f m yukarıda)" % [on_board, stand.global_position.y],
-			cast_out and stand.visible and on_board < 0.45 and stand.global_position.y > 0.05)
+	var floor_gap := absf(stand.global_position.y - _angler().global_position.y)
+	_check("sandalda dip: sehpa teknede (yanda %.2f m, tabandan %.2f m)" % [on_board, floor_gap],
+			cast_out and stand.visible and on_board < 0.45 and floor_gap < 0.06)
 	await _shot("19_sandalda_dip")
 	await _tap(Vector2(260, 520))
 	await _wait_state(FishingSession.State.IDLE, 5.0)
+
+
+## Sinek (rütbe 7): rütbe gelince haber; iskelede çantadan Nine'ye, sinek kamışı alınır ama ele
+## geçmez (Nine dere ağzını söyler), Sinek sekmesi; çantada "Dere ağzında"; dere ağzında sinek
+## seçilir; akıntıya atış: sinek sürüklenir, alabalık altına gelir, halka çıkınca VUR, çırpınırken
+## sudan sıçrar, tutulur; halkadan önce dokunmak kaçırır; durgun suda sinek kendiliğinden döner (Dede
+## söyler); dere ağzından çıkınca şamandıraya dönülür (bildirim).
+func _play_fly() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var spot := str(main.get("spot_id"))
+	var hud := _hud()
+	var shop: ShopPanel = main.get("shop_panel")
+	var bag: TechniquePanel = main.get("technique_panel")
+	var bobber: Bobber = main.get("bobber")
+	await _travel_to("dock_cove")
+	save.xp = maxi(save.xp, db.rank_xp[6])
+	GameState.changed.emit()
+	await _wait_frames(3)
+	var told := str(main.get("_hint_shown")) == "UI_DEDE_TECH_OPEN_fly"
+	var toasted := await _wait_toast(UiKit.upper(tr("UI_TECH_OPEN") % tr("UI_TECH_fly")), 6.0)
+	_check("rütbe 7: sinek açılır (bildirim, Dede, nabız)", told and toasted and float(hud.get("_tech_pulse")) > 0.0)
+	await _shot("20_sinek_acildi")
+	# İskelede: çantada sinek Nine'de; sinek kamışı alınır ama ele geçmez.
+	await _tap_control(hud.technique_button)
+	await _wait_frames(3)
+	await _wait(0.3)
+	var at_nine := bag.visible and TechniquePanel.state_of(db, save, "fly", spot, "dock_cove") == "shop"
+	await _tap_control(bag.find_child("Button_fly", true, false))
+	await _wait_frames(3)
+	save.coins = maxi(save.coins, 2000)
+	shop.refresh()
+	await _wait_frames(2)
+	_check("çantada sinek Nine'de → dükkân sinek kamışlarında", at_nine and shop.visible and shop.technique == "fly"
+			and shop.current_tab() == "rod" and shop.find_child("Card_rod_fly_1", true, false) != null)
+	var before := save.technique
+	await _tap_card(shop, "rod_fly_1", -1)
+	await _wait_frames(3)
+	_check("iskelede sinek kamışı: teknik ele geçmez, Nine dere ağzını söyler", Economy.owns(db, save, "rod_fly_1")
+			and save.technique == before and _session().technique.id == before
+			and str(shop.get("_line_key")) == "UI_NINE_FLY_ZONE")
+	await _tap_control(shop.find_child("Tab_tackle", true, false))
+	await _wait(0.3)
+	_check("sinekte iğne sekmesi Sinek (kuru sinek, nimf, streamer)", shop.find_child("Card_fly_dry", true, false) != null
+			and shop.find_child("Card_fly_nymph", true, false) != null
+			and shop.find_child("Card_fly_streamer", true, false) != null)
+	await _shot("21_dukkan_sinek")
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait_frames(4)
+	# Çantada sinek "Dere ağzında": seçilmez.
+	await _tap_control(hud.technique_button)
+	await _wait_frames(3)
+	await _wait(0.3)
+	var where := bag.find_child("Button_fly", true, false) as Button
+	var where_ok := where != null and where.text == tr("UI_TECH_fly_WHERE")
+	if where != null:
+		await _tap_control(where)
+		await _wait_frames(3)
+	_check("iskelede çantada sinek \"Dere ağzında\", seçilmez", where_ok and bag.visible and save.technique == before)
+	await _shot("22_canta_dere_agzinda")
+	await _tap(bag.close_button.get_global_rect().get_center())
+	await _wait_frames(4)
+	# Dere ağzında sinek seçilir: kamış, sinek, düğme ve Dede'nin sözü.
+	await _travel_to("stream_mouth")
+	await _tap_control(hud.technique_button)
+	await _wait_frames(3)
+	await _wait(0.3)
+	var ready := TechniquePanel.state_of(db, save, "fly", spot, "stream_mouth") == "ready"
+	await _tap_control(bag.find_child("Button_fly", true, false))
+	await _wait_frames(4)
+	_check("dere ağzında sinek seçilir: kamış, sinek, düğme, Dede'nin sözü", ready and not bag.visible
+			and save.technique == "fly" and _session().technique.id == "fly" and _angler().rod.style == "fly"
+			and bobber.kind == "fly" and (hud.technique_button.get("_icon") as GameIcon).kind == "tech_fly"
+			and str(main.get("_hint_shown")) == "UI_DEDE_TECH_FIRST_fly")
+	await _wait(0.5)
+	await _shot("23_sinek_elde")
+	# Akıntıya atış: sinek sürüklenir, alabalık altına gelir, halka çıkınca VUR; çırpınırken sıçrar.
+	var out := await _fly_cast("trout", true)
+	_check("sinek: akıntıyla sürüklenir (%.1f m), Dede halkayı bekletir" % float(out["drift"]),
+			float(out["drift"]) > 0.5 and bool(out["drift_hint"]))
+	_check("sinek: alabalık altına gelir, halka çıkar, VUR'la takılır", bool(out["under"]) and bool(out["rise"])
+			and bool(out["hooked"]))
+	_check("sinek: alabalık çırpınırken sudan sıçrar, tutulur", bool(out["jumped"]) and bool(out["caught"]))
+	var early := await _fly_cast("trout", false)
+	_check("sinek: halkadan önce dokunmak kaçırır", bool(early["early"]))
+	var still := await _fly_cast("", false)
+	_check("sinek: durgun suda kendiliğinden döner, Dede akıntıyı söyler", bool(still["came_back"])
+			and str(main.get("_hint_shown")) == "UI_DEDE_FLY_STILL")
+	# Dere ağzından çıkınca şamandıraya dönülür (bölgenin adından sonra bildirim).
+	main.call("_travel", "dock_cove")
+	var switched := await _wait_toast(UiKit.upper(tr("UI_TECH_FLY_ONLY")), 8.0)
+	_check("dere ağzından çıkınca şamandıraya dönülür (bildirim, kamış, takım)", switched and save.technique == "float"
+			and _session().technique.id == "float" and _angler().rod.style == "float" and bobber.kind == "float")
+	await _shot("27_samandiraya_dondu")
+	await _wait_until(func() -> bool: return not (main.get("fade") as Fade).busy(), 4.0)
+
+
+## Sinekte bir atış: atış noktasından akıntının güçlü olduğu suya (fish_id boşsa durgun suya) atar.
+## fish_id verilirse o türden bir gölge sineğin akıntı aşağısında ona bakar (ötekiler uzakta).
+## strike: halka çıkınca VUR'a dokunur ve bir oyuncu gibi çekişir; değilse balık sineğin altına
+## gelince dokunur (erken). Balık yoksa sinek kendiliğinden dönene kadar bekler. Her an bir kez
+## görüntülenir.
+func _fly_cast(fish_id: String, strike: bool) -> Dictionary:
+	var out := { "drift": 0.0, "drift_hint": false, "under": false, "rise": false, "hooked": false, "jumped": false,
+			"caught": false, "early": false, "came_back": false }
+	var session := _session()
+	var finger := Vector2(260, 520)
+	var card: FishCard = main.get("card")
+	var target := _fly_target(session, not fish_id.is_empty())
+	if not target.is_finite():
+		_results.append("sinek: atılacak su bulunamadı")
+		return out
+	if fish_id.is_empty():
+		for s in session.sim.shadows:
+			s.pos = target + Vector2(30.0, 30.0)
+			s.mode = FishShadow.Mode.PAUSE
+			s.timer = 1_000_000
+	else:
+		var down := session.lake.flow_at(target).normalized()
+		_shadow_at(target + down * 2.0, -down, fish_id, 300000)
+	_seen_jump = false
+	await _tap_world(target)
+	if not await _wait_state(FishingSession.State.WAITING, 3.0):
+		return out
+	var landed := session.bobber
+	await _wait_frames(8)
+	out["drift_hint"] = str(main.get("_hint_shown")) == "UI_HINT_FLY_DRIFT"
+	await _shot_once("24_sinek_akintida")
+	if fish_id.is_empty():
+		# Durgun suda sinek kımıldamaz: kısa bir süre sonra kendiliğinden döner.
+		out["came_back"] = await _wait_state(FishingSession.State.RETRIEVING, 4.0)
+		await _wait_frames(3)
+		await _wait_state(FishingSession.State.IDLE, 4.0)
+		return out
+	out["under"] = await _wait_state(FishingSession.State.NIBBLING, 8.0)
+	out["drift"] = session.bobber.distance_to(landed)
+	if not out["under"]:
+		return out
+	await _wait_frames(2)
+	await _shot_once("25_altinda_alabalik")
+	if not strike:
+		await _tap(finger)
+		await _wait_frames(2)
+		out["early"] = _state() == FishingSession.State.LOST and session.last_loss == "early"
+		await _wait_state(FishingSession.State.IDLE, 4.0)
+		return out
+	out["rise"] = await _wait_state(FishingSession.State.BITING, 4.0) and str(main.get("_hint_shown")) == "UI_HINT_FLY_RISE"
+	if _state() != FishingSession.State.BITING:
+		return out
+	await _shot_once("26_halka")
+	_touch(1, finger, true)
+	await _wait_frames(2)
+	out["hooked"] = _state() == FishingSession.State.FIGHTING
+	_touch(1, finger, false)
+	await _wait_frames(1)
+	if _state() == FishingSession.State.FIGHTING:
+		await _reel_like_player(6, 40.0)
+	out["jumped"] = _seen_jump
+	out["caught"] = _state() == FishingSession.State.CAUGHT
+	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE or card.visible, 4.0)
+	if card.visible:
+		await _close_card(card)
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	return out
+
+
+## Sinek için hedef: atış noktasından menzilde, akıntının güçlü olduğu su (akıntı yukarısına bakan
+## yönlerden; akıntı aşağısında 2 m de su, balık oraya konur) ya da (flowing false) durgun su.
+## Bulunamazsa sonsuz.
+func _fly_target(session: FishingSession, flowing: bool) -> Vector2:
+	var lake := session.lake
+	var up := -lake.strongest_flow().normalized()
+	var reach := session.range_m() - 0.5
+	for k in 24:
+		var dir := up.rotated(deg_to_rad(15.0 * ((k + 1) >> 1)) * (1.0 if k % 2 == 1 else -1.0))
+		for d: float in [6.0, 5.0, 7.0, 4.0, 8.0]:
+			if d > reach:
+				continue
+			var p := session.angler + dir * d
+			if not lake.is_water(p) or lake.shore_distance(p) < 0.8:
+				continue
+			var flow := lake.flow_at(p)
+			if flowing and flow.length() > 0.6 and lake.is_water(p + flow.normalized() * 2.0) \
+					and lake.flow_at(p + flow.normalized() * 2.0).length() > 0.3:
+				return p
+			if not flowing and flow.length() < 0.02:
+				return p
+	return Vector2.INF
+
+
+## Haritadan geçer (main._travel) ve kararmanın bitmesini bekler.
+func _travel_to(zone: String) -> void:
+	var fade: Fade = main.get("fade")
+	main.call("_travel", zone)
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(0.4)
 
 
 ## Dipte bir atış: balıkçının baktığı yöne atar (takım menzilin sonuna düşer); bir balığı (fish_id)
@@ -1533,6 +1741,7 @@ func _close_card(card: FishCard) -> void:
 
 ## Çekişmeyi bir oyuncu gibi oynar: eylem düğmesine basar (VUR), sakinken basılı tutar, balık
 ## çırpınınca (uyarı) reaction kare sonra bırakır, sakinleşince yeniden basar. Sonuç gelene kadar.
+## Balık sudan sıçrarsa (alabalıklar) _seen_jump olur, ilk sıçrayış görüntülenir.
 func _reel_like_player(reaction: int, timeout: float) -> void:
 	var finger := _hud().action_button.get_global_rect().get_center()
 	_touch(1, finger, true)
@@ -1540,6 +1749,7 @@ func _reel_like_player(reaction: int, timeout: float) -> void:
 	var hold := true
 	var lag := 0
 	var elapsed := 0.0
+	var jump: FishJump = main.get("fish_jump")
 	while _state() == FishingSession.State.FIGHTING and elapsed < timeout:
 		var reel := _session().reel
 		var want := reel != null and not reel.thrashing()
@@ -1548,6 +1758,9 @@ func _reel_like_player(reaction: int, timeout: float) -> void:
 			hold = want
 			lag = 0
 			_touch(1, finger, hold)
+		if jump.is_jumping() and not _seen_jump:
+			_seen_jump = true
+			await _shot_once("26b_sicrayis")
 		await get_tree().process_frame
 		elapsed += get_process_delta_time()
 	if hold:

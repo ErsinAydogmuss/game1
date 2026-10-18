@@ -683,6 +683,15 @@ def snag():
     return finish(x, -1.0, 0.08)
 
 
+def rise(seed):
+    """Alabalık sineği alır (sinek, halka): yüzeyde küçük bir şapırtı ve kısa emme kabarcığı."""
+    r = rng(seed)
+    n = frames(0.35)
+    x = 0.7 * bubble(r.uniform(480, 560), r.uniform(1300, 1600), n, 0.03)
+    x += 0.35 * splash_noise(n, seed, 900, 6000, 0.05, 0.003)
+    return finish(x + 0.1 * reverb(x, 0.4)[:n], -1.0, 0.04)
+
+
 def bell_tink(seed):
     """Dip zili tek tük (koklama): küçük pirinç zilin kısa çınlaması ve dilinin tıkırtısı."""
     r = rng(seed)
@@ -726,6 +735,7 @@ def registry():
     for v in range(1, 3):
         items.append(("sfx", "lure_%d" % v, lambda v=v: lure_plop(750 + v)))
         items.append(("sfx", "bell_%d" % v, lambda v=v: bell_tink(780 + v)))
+        items.append(("sfx", "rise_%d" % v, lambda v=v: rise(800 + v)))
     for rarity in range(1, 6):
         items.append(("sfx", "find_%d_1" % rarity, lambda r=rarity: find(r)))
     singles = {

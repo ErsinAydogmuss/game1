@@ -202,10 +202,10 @@ UI_DEDE_BOAT,"That boat's for deep water, kid. Your time will come!","Sandalla d
 UI_DEDE_BOAT_SHOP,"You're ready for deep water, kid! Nana sells a boat.",Derin sulara hazırsın evlat! Nine sandal satıyor.
 UI_DEDE_BOAT_DEEP,"Deep water! Big fish live here, kid. Hold tight!",Derin sular! Burada iri balıklar yaşar evlat. Sıkı tut!
 UI_DEDE_GATE,"We'll go there later, kid. Let's fish here first!","Oraya sonra gideriz evlat. Önce burada balık tutalım!"
-UI_DEDE_TOO_BIG_BUY,Too big! Nana sells the %s.,Çok iriydi! Nine'den %s al.
-UI_DEDE_TOO_BIG_EQUIP,Too big! Equip your %s.,Çok iriydi! Dükkânda tak: %s.
-UI_DEDE_TOO_BIG_BOTH,Too big! Nana sells the %s; equip your %s.,"Çok iriydi! Nine'den %s al; %s sende, tak."
-UI_DEDE_TOO_BIG_RANK,Too big! Nana sells gear for it at rank %d.,Çok iriydi! Onu taşıyan takımı Nine rütbe %d olunca satar.
+UI_DEDE_TOO_BIG_BUY,Too big! Nana sells the %s.,Çok iri! Nine'den %s al.
+UI_DEDE_TOO_BIG_EQUIP,Too big! Equip your %s.,Çok iri! Dükkânda tak: %s.
+UI_DEDE_TOO_BIG_BOTH,Too big! Nana sells the %s; equip your %s.,"Çok iri! Nine'den %s al; %s sende, tak."
+UI_DEDE_TOO_BIG_RANK,Too big! Nana sells gear for it at rank %d.,Çok iri! Onu taşıyan takımı Nine rütbe %d olunca satar.
 UI_LIST_AND,%s and %s,%s ve %s
 UI_DEDE_ZONE_OPEN,"A new spot is open, kid! Take a look at the map.",Yeni bir yer açıldı evlat! Haritaya bir bak.
 UI_SHOP_SIGN,Nana's shop,Nine'nin dükkânı
@@ -314,3 +314,32 @@ UI_HINT_BOTTOM_SNIFF,"The bell tinkles: it's sniffing. Don't touch!","Zil tek t�
 UI_HINT_BOTTOM_RUN,The bell won't stop! Strike now!,Zil durmadan çalıyor! Hemen VUR!
 UI_DEDE_TECH_OPEN_bottom,"Big carp feed on the bottom, kid. Nana sells carp rods!","İri sazanlar dipte beslenir evlat. Nine dip kamışı satıyor!"
 UI_DEDE_TECH_FIRST_bottom,"Cast far and be patient. Strike when the bell rings nonstop!","Uzağa at, sabret. Zil durmadan çalınca VUR!"
+FISH_trout,Trout,Alabalık
+FISH_trout_DESC,"Spotted, with a pink stripe. Rises to a drifting fly.","Benekli, pembe yan şeritli. Akıntıda sürüklenen sineğe çıkar."
+FISH_brook_trout,Brook Trout,Dere Alabalığı
+FISH_brook_trout_DESC,"Brown with red spots. Strong, and leaps high.","Kahverengi, kırmızı benekli. Güçlüdür, yüksek sıçrar."
+GEAR_rod_fly_1,Fly rod,Sinek kamışı
+GEAR_rod_fly_1_DESC,Light and long. Lays the fly softly on the current.,Hafif ve uzun. Sineği akıntıya yumuşacık bırakır.
+GEAR_rod_fly_2,Long fly rod,Uzun sinek kamışı
+GEAR_rod_fly_2_DESC,"Casts farther, holds big trout.","Daha uzağa atar, iri alabalığı taşır."
+GEAR_rod_fly_3,Master fly rod,Usta sinek kamışı
+GEAR_rod_fly_3_DESC,For the biggest brook trout.,En iri dere alabalığı için.
+GEAR_fly_dry,Dry fly,Kuru sinek
+GEAR_fly_dry_DESC,Floats on the current. Trout love it.,Akıntıda yüzer. Alabalıklar bayılır.
+GEAR_fly_nymph,Nymph,Nimf
+GEAR_fly_nymph_DESC,"Looks like a larva: more trout and chub.","Kurtçuğa benzer: daha çok alabalık ve tatlısu kefali."
+GEAR_fly_streamer,Streamer,Streamer
+GEAR_fly_streamer_DESC,"Like a little fish: calls the brook trout.","Küçük balık gibi: dere alabalığını çağırır."
+UI_TECH_fly,Fly,Sinek
+UI_TECH_fly_HOW,"Cast on the current. When the ring appears, strike!","Akıntıya at. Halka çıkınca VUR!"
+UI_TECH_fly_WHERE,At the stream mouth,Dere ağzında
+UI_HINT_FLY_DRIFT,The fly drifts with the current... watch for a ring.,Sinek akıntıyla süzülüyor... halkayı bekle.
+UI_HINT_FLY_UNDER,A trout is under it! Wait for the ring.,Altında bir alabalık var! Halkayı bekle.
+UI_HINT_FLY_RISE,A ring! Strike now!,Halka! Hemen VUR!
+UI_DEDE_TECH_OPEN_fly,"Trout rise to flies, kid. Nana sells fly rods!","Alabalık sineğe çıkar evlat. Nine sinek kamışı satıyor!"
+UI_DEDE_TECH_FIRST_fly,"Cast on the current and let the fly drift. Strike at the ring!","Akıntıya at, sinek süzülsün. Halka çıkınca VUR!"
+UI_DEDE_FLY_HERE,"Try a fly here, kid. Trout rise in the current.","Burada sinek dene evlat. Alabalık akıntıda çıkar."
+UI_TECH_FLY_ONLY,"Flies are for the stream mouth: back to the float.","Sinek dere ağzında olur: şamandıraya geçtin."
+UI_NINE_FLY_ZONE,"Use it at the stream mouth, dear: the trout are there.","Dere ağzında kullan evladım, alabalık orada."
+UI_FLY_STILL,Still water,Durgun su
+UI_DEDE_FLY_STILL,"A fly won't drift on still water, kid. Cast on the current!","Durgun suda sinek kımıldamaz evlat. Akıntıya at!"

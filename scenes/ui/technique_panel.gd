@@ -7,7 +7,8 @@ extends Dialog
 ## - SEÇ: hazır (kamışı alınmış): teknik ele geçer (technique_selected);
 ## - NİNE'DE: rütbesi yetiyor ama kamışı yok: dükkân o tekniğin Kamış sekmesinde açılır
 ##   (shop_requested);
-## - rütbe kilidi: açıldığı rütbe yazar.
+## - rütbe kilidi: açıldığı rütbe yazar;
+## - yer: kamışı var ama bu bölgede avlanılmaz (sinek yalnızca dere ağzında): nerede olduğu yazar.
 ## Kamışı oyunda olmayan teknik (henüz yazılmamış) gösterilmez.
 
 signal technique_selected(id: String)
@@ -17,6 +18,10 @@ signal shop_requested(id: String)
 const TILE := Vector2(360, 470)
 const WIDTH := 1640.0
 const BUTTON := Vector2(300, 122)
+
+## Balıkçının gölü ve avlandığı bölge (main verir): bölgede avlanılmayan teknik seçilmez.
+var spot_id: String = ""
+var zone_id: String = ""
 
 var _row: HBoxContainer
 
@@ -37,10 +42,15 @@ func refresh() -> void:
 			_row.add_child(_tile(id))
 
 
-## Teknik karosunun durumu: active, ready, shop, rank.
-static func state_of(db: ContentDB, save: SaveData, id: String) -> String:
+## Teknik karosunun durumu: active, ready, shop, rank ya da zone (kamışı var ama bu bölgede
+## avlanılmaz; spot verilmezse bakılmaz).
+static func state_of(db: ContentDB, save: SaveData, id: String, spot: String = "", zone: String = "") -> String:
 	if Economy.technique_ready(db, save, id):
-		return "active" if save.technique == id else "ready"
+		if save.technique == id:
+			return "active"
+		if not spot.is_empty() and not Economy.technique_allowed(db, spot, zone, id):
+			return "zone"
+		return "ready"
 	if Rank.rank(db, save) < db.technique_rank(id):
 		return "rank"
 	return "shop"
@@ -49,7 +59,7 @@ static func state_of(db: ContentDB, save: SaveData, id: String) -> String:
 func _tile(id: String) -> Control:
 	var db := GameState.db
 	var save := GameState.save
-	var state := state_of(db, save, id)
+	var state := state_of(db, save, id, spot_id, zone_id)
 	var panel := PanelContainer.new()
 	panel.name = "Tile_" + id
 	panel.custom_minimum_size = TILE
@@ -137,6 +147,9 @@ func _button(id: String, state: String) -> Button:
 				Sounds.play("ui_tap")
 				close_panel()
 				shop_requested.emit(id))
+		"zone":
+			b = UiKit.button(tr("UI_TECH_%s_WHERE" % id), UiKit.NEUTRAL, UiKit.SIZE_SMALL, BUTTON)
+			b.pressed.connect(func() -> void: Sounds.play("error"))
 		_:
 			b = UiKit.button(tr("UI_SHOP_RANK") % GameState.db.technique_rank(id), UiKit.NEUTRAL, UiKit.SIZE_SMALL + 4, BUTTON)
 			b.icon = ItemArt.ui("lock")

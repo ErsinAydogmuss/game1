@@ -300,6 +300,8 @@ func _load_fish(raw: Dictionary) -> void:
 			"burst_len_steps": Vector2i(FishingRules.to_steps(burst_len.x), FishingRules.to_steps(burst_len.y)),
 			"run": float(raw_fight.get("run", 1.0)),
 			"heavy": bool(raw_fight.get("heavy", false)),
+			# Çırpınınca sudan sıçrar (alabalıklar; yalnızca görünüş: FishJump).
+			"jumps": bool(raw_fight.get("jumps", false)),
 		}
 		var affinity := {}
 		var raw_affinity: Variant = d.get("affinity", { "float": 1.0 })

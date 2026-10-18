@@ -20,6 +20,10 @@
 		"bottom": { "notice": { "cone_deg": 180.0, "front_m": 4.5, "side_m": 4.5 }, "approach_speed": 0.5, "give_up": 20.0,
 			"gather_after": 2.0, "gather_chance": 0.85, "gather_radius": 2.0, "gather_speed": 2.5, "nibbles": [0, 50, 35, 15],
 			"gap": [0.8, 1.8],
-			"window": 2.5, "window_easy": 3.5, "min_cast_m": 4.0, "retrieve": 1.0 }
+			"window": 2.5, "window_easy": 3.5, "min_cast_m": 4.0, "retrieve": 1.0 },
+		"fly": { "notice": { "cone_deg": 110.0, "front_m": 3.0, "side_m": 2.0 }, "approach_speed": 1.2, "give_up": 8.0,
+			"gather_chance": 0.0, "follow_speed": 1.4, "nibbles": [1, 0, 0, 0], "gap": [0.3, 1.0],
+			"window": 0.5, "window_easy": 0.9, "drift": 0.85, "still_speed": 0.08, "still_s": 1.5, "drift_max_s": 15.0,
+			"min_cast_m": 3.0, "retrieve": 0.8 }
 	}
 }

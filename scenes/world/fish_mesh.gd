@@ -17,11 +17,11 @@ const NOSE_X := 0.5
 ## burun), eye (göz yarıçapı / boy), iris (gözün rengi; yoksa beyaz), stripes (dikey çizgi sayısı) ve
 ## stripe_strength (koyuluğu), whiskers (bıyık), barbels (burnun altından sarkan dört kısa bıyık),
 ## flat (baş basıklığı), thin (genişlik / yükseklik), stem (kuyruk sapının yüksekliği), lateral (yan
-## şeridin rengi), patches (lekelerin rengi), scutes (sırt ve yan plakaların rengi), mirror (aynalı
-## sazanın iri, yassı pullarının rengi), dorsals (sırt
-## yüzgeci sayısı), dorsal ([baş, son, tepe, yükseklik]: sırt yüzgecinin yeri), anal (uzun anal
-## yüzgeç), low_fins (alt yüzgeçlerin rengi), fork (kuyruğun çatal derinliği), tail_tilt (üst lobu
-## uzun kuyruk).
+## şeridin rengi), patches (lekelerin rengi), scutes (sırt ve yan plakaların rengi), spots (sırt ve
+## yanlardaki küçük beneklerin rengi: alabalıklar), mirror (aynalı sazanın iri, yassı pullarının
+## rengi), dorsals (sırt yüzgeci sayısı), dorsal ([baş, son, tepe, yükseklik]: sırt yüzgecinin yeri),
+## anal (uzun anal yüzgeç), low_fins (alt yüzgeçlerin rengi), fork (kuyruğun çatal derinliği),
+## tail_tilt (üst lobu uzun kuyruk).
 const SHAPES := {
 	"rudd": { "ratio": 2.4, "nose": 2.4, "eye": 0.075 },
 	"carp": { "ratio": 2.2, "nose": 2.6, "eye": 0.065, "whiskers": 0.12 },
@@ -38,6 +38,9 @@ const SHAPES := {
 	"sturgeon": { "ratio": 4.4, "nose": 0.85, "eye": 0.034, "flat": 0.4, "scutes": "#ece7d8", "barbels": 0.08,
 		"dorsal": [0.72, 0.9, 0.78, 0.6], "tail_tilt": 0.55, "fork": 0.12 },
 	"mirror_carp": { "ratio": 2.0, "nose": 2.6, "eye": 0.06, "whiskers": 0.12, "thin": 0.68, "mirror": "#f3d58a" },
+	"trout": { "ratio": 3.3, "nose": 2.0, "eye": 0.07, "lateral": "#ef8fa6", "spots": "#2e2a1e", "fork": 0.04 },
+	"brook_trout": { "ratio": 3.1, "nose": 2.1, "eye": 0.068, "flat": 0.08, "spots": "#e04a2f", "low_fins": "#e8743a",
+		"fork": 0.03 },
 }
 const DEFAULT_SHAPE := { "ratio": 2.2, "nose": 2.4, "eye": 0.075 }
 ## Dış çizginin dünyadaki kalınlığı (m).
@@ -128,6 +131,7 @@ class _Builder:
 	var patches := Color(0, 0, 0, 0)
 	var scutes := Color(0, 0, 0, 0)
 	var mirror := Color(0, 0, 0, 0)
+	var spots := Color(0, 0, 0, 0)
 	var dorsals: int
 	var dorsal: Array
 	var anal: bool
@@ -159,6 +163,8 @@ class _Builder:
 			scutes = Color(str(shape["scutes"]))
 		if shape.has("mirror"):
 			mirror = Color(str(shape["mirror"]))
+		if shape.has("spots"):
+			spots = Color(str(shape["spots"]))
 		dorsals = int(shape.get("dorsals", 1))
 		dorsal = shape.get("dorsal", [0.32, 0.62, 0.4, 0.45])
 		anal = bool(shape.get("anal", false))
@@ -182,6 +188,8 @@ class _Builder:
 			_scutes()
 		if mirror.a > 0.0:
 			_mirror_scales()
+		if spots.a > 0.0:
+			_spots()
 		st.generate_normals()
 		return st.commit()
 
@@ -338,6 +346,16 @@ class _Builder:
 			var a: float = row[0]
 			for t: float in row[1]:
 				_disc(ring_point(t, a), Vector3(0.0, cos(a), sin(a)), height_scaled(t) * 0.24, mirror)
+
+	## Alabalığın benekleri: sırtta ve yanların üst yarısında, burundan kuyruk sapına seyrek, sabit bir
+	## düzende (her balıkta aynı; zar yok) küçük yassı lekeler.
+	func _spots() -> void:
+		var rows: Array = [[PI * 0.14, [0.34, 0.5, 0.66]], [PI * 0.3, [0.26, 0.41, 0.56, 0.71]],
+				[PI * 0.46, [0.22, 0.36, 0.5, 0.64, 0.78]], [PI * 0.62, [0.3, 0.46, 0.62]]]
+		for row: Array in rows:
+			for a: float in [float(row[0]), TAU - float(row[0])]:
+				for t: float in row[1]:
+					_disc(ring_point(t, a), Vector3(0.0, cos(a), sin(a)), height_scaled(t) * 0.075, spots)
 
 	## Yassı pul: n yönünde basık küre (dışı saat yönünde: küre noktalarıyla aynı el).
 	func _disc(center: Vector3, n: Vector3, r: float, color: Color) -> void:

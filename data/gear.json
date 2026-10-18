@@ -5,7 +5,7 @@
 	"slots": { "shared": ["reel", "line"], "float": ["rod", "hook", "bobber", "bait"], "spin": ["rod", "lure"],
 		"bottom": ["rod", "rig", "bait"], "fly": ["rod", "fly"] },
 	"start": { "rod": "rod_bamboo", "reel": "reel_basic", "line": "line_mono_thin", "hook": "hook_small",
-		"bobber": "bobber_basic", "bait": "bait_worm", "lure": "lure_spoon", "rig": "sinker", "bucket": "bucket" },
+		"bobber": "bobber_basic", "bait": "bait_worm", "lure": "lure_spoon", "rig": "sinker", "fly": "fly_dry", "bucket": "bucket" },
 	"gear": [
 		{ "id": "rod_bamboo", "category": "rod", "technique": "float", "price": 0, "rank": 1, "range_m": 9.0, "power": 0.0, "carry": 3 },
 		{ "id": "rod_float_glass", "category": "rod", "technique": "float", "price": 300, "rank": 2, "range_m": 11.0, "power": 0.05, "carry": 4 },
@@ -16,6 +16,9 @@
 		{ "id": "rod_carp_1", "category": "rod", "technique": "bottom", "price": 500, "rank": 4, "range_m": 14.0, "power": 0.15, "carry": 4 },
 		{ "id": "rod_carp_2", "category": "rod", "technique": "bottom", "price": 1800, "rank": 6, "range_m": 16.0, "power": 0.2, "carry": 5 },
 		{ "id": "rod_carp_3", "category": "rod", "technique": "bottom", "price": 4500, "rank": 10, "range_m": 18.0, "power": 0.25, "carry": 5 },
+		{ "id": "rod_fly_1", "category": "rod", "technique": "fly", "price": 1500, "rank": 7, "range_m": 10.0, "power": 0.05, "carry": 3 },
+		{ "id": "rod_fly_2", "category": "rod", "technique": "fly", "price": 4000, "rank": 9, "range_m": 11.0, "power": 0.08, "carry": 4 },
+		{ "id": "rod_fly_3", "category": "rod", "technique": "fly", "price": 9000, "rank": 12, "range_m": 12.0, "power": 0.1, "carry": 5 },
 
 		{ "id": "reel_basic", "category": "reel", "price": 0, "rank": 1, "reel_speed": 1.6, "drag": 0.0 },
 		{ "id": "reel_smooth", "category": "reel", "price": 150, "rank": 1, "reel_speed": 1.7, "drag": 0.02 },
@@ -54,6 +57,9 @@
 		{ "id": "lure_gold", "category": "lure", "kind": "bait", "price": 2500, "rank": 10, "attract": { "pike": 2.5, "zander": 2.0, "wels": 1.6 } },
 		{ "id": "sinker", "category": "rig", "kind": "rig", "price": 0, "rank": 1, "range_add": 0.0, "pull": 0.0 },
 		{ "id": "feeder", "category": "rig", "kind": "rig", "price": 400, "rank": 4, "range_add": -1.0, "pull": 0.5 },
+		{ "id": "fly_dry", "category": "fly", "kind": "bait", "price": 0, "rank": 1, "attract": { "trout": 1.2 } },
+		{ "id": "fly_nymph", "category": "fly", "kind": "bait", "price": 300, "rank": 7, "attract": { "trout": 1.6, "chub": 1.5 } },
+		{ "id": "fly_streamer", "category": "fly", "kind": "bait", "price": 900, "rank": 8, "attract": { "brook_trout": 2.2, "trout": 1.2 } },
 
 		{ "id": "net", "category": "extra", "kind": "net", "price": 700, "rank": 3, "catch_m": 0.85 },
 		{ "id": "boat", "category": "boat", "kind": "boat", "price": 3500, "rank": 9 },
