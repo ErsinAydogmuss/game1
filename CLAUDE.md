@@ -126,6 +126,7 @@ python3 -I tools/reels_ad.py --avi /mutlak/yol/reels.avi --log /mutlak/yol/reels
 #   --edl liste.json: deneme için başka bir kurgu listesi (müziği de ondan). Kuru çekim: aynı bot komutu --resolution
 #   1170x540 ile, --write-movie'siz (tabanı ve dokunuş yerleri aynı); --shots= her işaretin görüntüsü;
 #   --reels-only=gold,reeds yalnızca o çekimler (dock, gold, spin, reeds, fly, legend, book).
+# Süreler (bu ortamda): asıl kayıt ~20 dk (3750 kare, ~2 GB AVI), kuru çekim ~7 dk, son kalite kurgu ~13 dk.
 ```
 
 Sesler kodla üretilir: `python3 -I tools/make_sounds.py` (numpy; .ogg için ffmpeg). Ses adları `Sounds.BANK` ve `LOOPS` ile aynı olmalı (`test_sounds.gd`).
