@@ -1,22 +1,22 @@
 {
-	"_note": "Reels reklamının kurgu listesi (tools/reels_ad.py ve tools/reels_music.py okur). Zaman vuruşla: 112,5 BPM'de bir vuruş tam 16 kare (30 fps). shots: sırayla parçalar; src kaydın günlüğündeki işaret (REELS MARK <kare> <çekim>.<olay>; ad@last sonuncusu, ad@2 ikincisi), offset işaretten kaç kare önce/sonra başlar, beats uzunluk. crop: center (kaydın ortasındaki kare: yükseklik kadar genişlik; dx/dy kaydırma, zoom < 1 daha dar kare, aspect > 1 geniş dikdörtgen: uzun sözlü balık kartı gibi ortadaki kareden taşan arayüz; karta sığdırılır, boşluğu aynı görüntünün bulanığı doldurur) ya da panel:<ad> (REELS PANEL satırındaki dikdörtgen, pad payıyla; rect [x, y, w, h] o dikdörtgenin 0–1 arası bir parçası). through_cut: parça bilerek bir kesimden geçer (harita kararmayla biter). captions: from/to vuruş, title (Luckiest Guy; | satır böler), sub (Baloo 2). music: bölüm başına akor ve tarz (reels_music.py). end: son kartın başladığı vuruş; end_background son kartın arkasındaki görüntü, cover kapağın karesi.",
+	"_note": "Reels reklamının kurgu listesi (tools/reels_ad.py ve tools/reels_music.py okur). Zaman vuruşla (bpm, beat_frames): 100 BPM'de bir vuruş tam 18 kare (30 fps, 0,6 sn). cuts: kesimler; adı çıktı dosyasının adıdır (45 → olta_reels_45.mp4). Okunsun diye: tek satırlık başlık en az 4 vuruş, başlık ve alt satır 4–5 vuruş, iki satırlık yazı 6 vuruş ekranda. shots: sırayla parçalar; src kaydın günlüğündeki işaret (REELS MARK <kare> <çekim>.<olay>; ad@last sonuncusu, ad@2 ikincisi), offset işaretten kaç kare önce/sonra başlar, beats uzunluk. crop: center (kaydın ortasındaki kare: yükseklik kadar genişlik; dx/dy kaydırma, zoom < 1 daha dar kare, aspect > 1 geniş dikdörtgen: uzun sözlü balık kartı gibi ortadaki kareden taşan arayüz; karta sığdırılır, boşluğu aynı görüntünün bulanığı doldurur) ya da panel:<ad> (REELS PANEL satırındaki dikdörtgen, pad payıyla; rect [x, y, w, h] o dikdörtgenin 0–1 arası bir parçası). through_cut: parça bilerek bir kesimden geçer (harita kararmayla biter). captions: from/to vuruş (bir yazı birkaç parçanın üstünde ya da bir parçanın ortasında değişebilir), title (Luckiest Guy; | satır böler), sub (Baloo 2). music: bölüm başına akor ve tarz (reels_music.py). end: son kartın başladığı vuruş; end_background son kartın arkasındaki görüntü, cover kapağın karesi.",
 	"fps": 30,
-	"bpm": 112.5,
-	"beat_frames": 16,
+	"bpm": 100,
+	"beat_frames": 18,
 	"cuts": {
-		"30": {
-			"frames": 900,
-			"end": 50,
+		"45": {
+			"frames": 1350,
+			"end": 69,
 			"shots": [
 				{
 					"id": "hook",
-					"beats": 3,
+					"beats": 6,
 					"src": "gold.nibbling",
-					"offset": -40
+					"offset": -100
 				},
 				{
 					"id": "vur",
-					"beats": 3,
+					"beats": 4,
 					"src": "gold.biting",
 					"offset": 0
 				},
@@ -28,7 +28,7 @@
 				},
 				{
 					"id": "spin",
-					"beats": 4,
+					"beats": 5,
 					"src": "spin.fighting",
 					"offset": -32
 				},
@@ -46,15 +46,15 @@
 				},
 				{
 					"id": "trap",
-					"beats": 3,
+					"beats": 4,
 					"src": "trap.tap",
 					"offset": -16
 				},
 				{
 					"id": "map",
-					"beats": 2,
-					"src": "map.tap",
-					"offset": -20,
+					"beats": 3,
+					"src": "map.open",
+					"offset": 0,
 					"crop": "panel:map",
 					"pad": 10,
 					"through_cut": true
@@ -67,13 +67,13 @@
 				},
 				{
 					"id": "legend",
-					"beats": 3,
+					"beats": 5,
 					"src": "legend.legend",
 					"offset": -10
 				},
 				{
 					"id": "fight",
-					"beats": 3,
+					"beats": 4,
 					"src": "legend.red",
 					"offset": -20
 				},
@@ -81,33 +81,26 @@
 					"id": "mersin",
 					"beats": 2,
 					"src": "legend.show",
-					"offset": -4
+					"offset": -12
 				},
 				{
 					"id": "mersin_kart",
-					"beats": 3,
+					"beats": 7,
 					"src": "legend.card",
-					"offset": 1,
-					"aspect": 1.26
-				},
-				{
-					"id": "release",
-					"beats": 2,
-					"src": "legend.ok",
-					"offset": -20,
+					"offset": -3,
 					"aspect": 1.26
 				},
 				{
 					"id": "nine",
-					"beats": 2,
+					"beats": 5,
 					"src": "dock.nine",
-					"offset": -4
+					"offset": -32
 				},
 				{
 					"id": "book",
-					"beats": 2,
+					"beats": 4,
 					"src": "book.page2",
-					"offset": -14,
+					"offset": -35,
 					"crop": "panel:book",
 					"pad": 24,
 					"rect": [
@@ -119,95 +112,95 @@
 				},
 				{
 					"id": "dede",
-					"beats": 3,
+					"beats": 5,
 					"src": "dock.dede",
-					"offset": -6
+					"offset": -14
 				}
 			],
 			"captions": [
 				{
 					"from": 0,
-					"to": 3,
+					"to": 6,
 					"title": "ŞU PARLAYAN GÖLGEYİ|GÖRDÜN MÜ?"
 				},
 				{
-					"from": 3,
-					"to": 6,
+					"from": 6,
+					"to": 10,
 					"title": "DALINCA VUR!"
 				},
 				{
-					"from": 6,
-					"to": 11,
+					"from": 10,
+					"to": 15,
 					"title": "DESTANSI BİR AV!",
 					"sub": "Altın sazan"
 				},
 				{
-					"from": 11,
-					"to": 15,
+					"from": 15,
+					"to": 20,
 					"title": "SPİN",
 					"sub": "Dur-kalk yap, turna saldırsın"
 				},
 				{
-					"from": 15,
-					"to": 19,
+					"from": 20,
+					"to": 24,
 					"title": "DİP",
 					"sub": "Zil durmadan çalınca VUR"
 				},
 				{
-					"from": 19,
-					"to": 23,
+					"from": 24,
+					"to": 28,
 					"title": "SİNEK",
 					"sub": "Halka çıkınca VUR"
 				},
 				{
-					"from": 23,
-					"to": 26,
+					"from": 28,
+					"to": 32,
 					"title": "TUZAK",
 					"sub": "Sen yokken dolar"
 				},
 				{
-					"from": 26,
-					"to": 30,
+					"from": 32,
+					"to": 37,
 					"title": "6 BÖLGE",
 					"sub": "Sandalla derin sulara"
 				},
 				{
-					"from": 30,
-					"to": 33,
+					"from": 37,
+					"to": 42,
 					"title": "EFSANEVİ BİR GÖLGE…",
 					"sub": "Dede: “Şşş! Efsanevi olabilir!”"
 				},
 				{
-					"from": 33,
-					"to": 36,
+					"from": 42,
+					"to": 46,
 					"title": "ÇIRPININCA BIRAK!"
 				},
 				{
-					"from": 36,
-					"to": 41,
+					"from": 46,
+					"to": 51,
 					"title": "EFSANEVİ MERSİN!"
 				},
 				{
-					"from": 41,
-					"to": 43,
+					"from": 51,
+					"to": 55,
 					"title": "GÖLE BIRAK!",
 					"sub": "Mersin koruma altında"
 				},
 				{
-					"from": 43,
-					"to": 45,
+					"from": 55,
+					"to": 60,
 					"title": "NİNE'NİN DÜKKÂNI",
 					"sub": "Tuttuğunu sat, takımını büyüt"
 				},
 				{
-					"from": 45,
-					"to": 47,
+					"from": 60,
+					"to": 64,
 					"title": "16 TÜR",
 					"sub": "Defterini doldur"
 				},
 				{
-					"from": 47,
-					"to": 50,
+					"from": 64,
+					"to": 69,
 					"title": "BU GÖLÜN BİR|SIRRI VAR…",
 					"sub": "Dede"
 				}
@@ -215,97 +208,97 @@
 			"music": [
 				{
 					"at": 0,
-					"beats": 3,
+					"beats": 6,
 					"chord": "Em9",
 					"style": "intro"
 				},
 				{
-					"at": 3,
-					"beats": 3,
+					"at": 6,
+					"beats": 4,
 					"chord": "Cmaj7",
 					"style": "build"
 				},
 				{
-					"at": 6,
+					"at": 10,
 					"beats": 5,
 					"chord": "C",
 					"style": "hit"
 				},
 				{
-					"at": 11,
-					"beats": 4,
+					"at": 15,
+					"beats": 5,
 					"chord": "Em",
 					"style": "groove"
 				},
 				{
-					"at": 15,
+					"at": 20,
 					"beats": 4,
 					"chord": "Am7",
 					"style": "groove"
 				},
 				{
-					"at": 19,
+					"at": 24,
 					"beats": 4,
 					"chord": "D",
 					"style": "groove"
 				},
 				{
-					"at": 23,
-					"beats": 3,
+					"at": 28,
+					"beats": 4,
 					"chord": "C",
 					"style": "groove"
 				},
 				{
-					"at": 26,
-					"beats": 4,
+					"at": 32,
+					"beats": 5,
 					"chord": "D",
 					"style": "rise"
 				},
 				{
-					"at": 30,
-					"beats": 3,
+					"at": 37,
+					"beats": 5,
 					"chord": "Bm7",
 					"style": "break"
 				},
 				{
-					"at": 33,
-					"beats": 3,
+					"at": 42,
+					"beats": 4,
 					"chord": "Am7",
 					"style": "tension"
 				},
 				{
-					"at": 36,
+					"at": 46,
 					"beats": 5,
 					"chord": "C",
 					"style": "hit"
 				},
 				{
-					"at": 41,
-					"beats": 2,
+					"at": 51,
+					"beats": 4,
 					"chord": "Am",
 					"style": "groove"
 				},
 				{
-					"at": 43,
-					"beats": 2,
+					"at": 55,
+					"beats": 5,
 					"chord": "Em",
 					"style": "groove"
 				},
 				{
-					"at": 45,
-					"beats": 2,
+					"at": 60,
+					"beats": 4,
 					"chord": "C",
 					"style": "groove"
 				},
 				{
-					"at": 47,
-					"beats": 3,
+					"at": 64,
+					"beats": 5,
 					"chord": "Dsus4",
 					"style": "hush"
 				},
 				{
-					"at": 50,
-					"beats": 6.25,
+					"at": 69,
+					"beats": 6,
 					"chord": "G",
 					"style": "outro"
 				}
@@ -313,13 +306,13 @@
 		},
 		"15": {
 			"frames": 450,
-			"end": 23,
+			"end": 19,
 			"shots": [
 				{
 					"id": "hook",
-					"beats": 3,
+					"beats": 6,
 					"src": "gold.nibbling",
-					"offset": -40
+					"offset": -100
 				},
 				{
 					"id": "vur",
@@ -334,158 +327,71 @@
 					"offset": -4
 				},
 				{
-					"id": "spin",
-					"beats": 1,
-					"src": "spin.fighting",
-					"offset": -10
-				},
-				{
-					"id": "dip",
-					"beats": 1,
-					"src": "dip.biting",
-					"offset": -2
-				},
-				{
-					"id": "fly",
-					"beats": 1,
-					"src": "fly.jump",
-					"offset": -6
-				},
-				{
-					"id": "trap",
-					"beats": 1,
-					"src": "trap.tap",
-					"offset": -2
-				},
-				{
-					"id": "legend",
-					"beats": 2,
-					"src": "legend.legend",
-					"offset": -4
-				},
-				{
-					"id": "fight",
-					"beats": 2,
-					"src": "legend.red",
-					"offset": -12
-				},
-				{
 					"id": "mersin",
 					"beats": 2,
 					"src": "legend.show",
-					"offset": -4
+					"offset": -12
 				},
 				{
 					"id": "mersin_kart",
-					"beats": 2,
+					"beats": 3,
 					"src": "legend.card",
-					"offset": 1,
+					"offset": -3,
 					"aspect": 1.26
 				}
 			],
 			"captions": [
 				{
 					"from": 0,
-					"to": 3,
+					"to": 6,
 					"title": "ŞU PARLAYAN GÖLGEYİ|GÖRDÜN MÜ?"
 				},
 				{
-					"from": 3,
-					"to": 6,
+					"from": 6,
+					"to": 9,
 					"title": "DALINCA VUR!"
 				},
 				{
-					"from": 6,
-					"to": 11,
+					"from": 9,
+					"to": 14,
 					"title": "DESTANSI BİR AV!",
 					"sub": "Altın sazan"
 				},
 				{
-					"from": 11,
-					"to": 15,
-					"title": "SPİN · DİP · SİNEK",
-					"sub": "ve kerevit tuzağı"
-				},
-				{
-					"from": 15,
-					"to": 17,
-					"title": "EFSANEVİ BİR GÖLGE…"
-				},
-				{
-					"from": 17,
+					"from": 14,
 					"to": 19,
-					"title": "ÇIRPININCA BIRAK!"
-				},
-				{
-					"from": 19,
-					"to": 23,
-					"title": "EFSANEVİ MERSİN!"
+					"title": "EFSANEVİ MERSİN!",
+					"sub": "Koruma altında, göle döner"
 				}
 			],
 			"music": [
 				{
 					"at": 0,
-					"beats": 3,
+					"beats": 6,
 					"chord": "Em9",
 					"style": "intro"
 				},
 				{
-					"at": 3,
+					"at": 6,
 					"beats": 3,
 					"chord": "Cmaj7",
 					"style": "build"
 				},
 				{
-					"at": 6,
+					"at": 9,
 					"beats": 5,
 					"chord": "C",
 					"style": "hit"
 				},
 				{
-					"at": 11,
-					"beats": 1,
-					"chord": "Em",
-					"style": "montage"
-				},
-				{
-					"at": 12,
-					"beats": 1,
-					"chord": "Am7",
-					"style": "montage"
-				},
-				{
-					"at": 13,
-					"beats": 1,
-					"chord": "D",
-					"style": "montage"
-				},
-				{
 					"at": 14,
-					"beats": 1,
-					"chord": "C",
-					"style": "montage"
-				},
-				{
-					"at": 15,
-					"beats": 2,
-					"chord": "Bm7",
-					"style": "break"
-				},
-				{
-					"at": 17,
-					"beats": 2,
+					"beats": 5,
 					"chord": "D",
-					"style": "tension"
-				},
-				{
-					"at": 19,
-					"beats": 4,
-					"chord": "C",
 					"style": "hit"
 				},
 				{
-					"at": 23,
-					"beats": 5.125,
+					"at": 19,
+					"beats": 6,
 					"chord": "G",
 					"style": "outro"
 				}

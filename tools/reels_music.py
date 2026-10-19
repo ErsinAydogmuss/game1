@@ -2,13 +2,14 @@
 """Reels reklamının özgün müziği: kodla sentez (dışarıdan ses ya da örnek yok; telif sorunu yok).
 
 Ritim ve bölümler kurgunun vuruşlarına oturur: tools/reels_edl.json "music" (bölüm başına akor ve
-tarz). 112,5 BPM'de bir vuruş tam 16 video karesi (30 fps). Sol majör; oyunun buluntu sesleriyle
+tarz); tempo da oradan (bpm, beat_frames): 100 BPM'de bir vuruş tam 18 video karesi (30 fps). Sol majör; oyunun buluntu sesleriyle
 uyumlu (Destansı ve Efsanevi avda Do akoru), efsanevi gölgede yalnızca çan ve tını, son kartta ilk kez
 Sol'a oturur. Sazlar: marimba, çelesta ve çan, tel (Karplus-Strong), bas, pad, bakır vuruş, davul,
 el çırpma, shaker, timpani, yükselen süpürme. Yapı taşları tools/make_sounds.py'den (48 kHz).
 
-Kullanım:  python3 -I tools/reels_music.py --out /mutlak/klasör [--cut 30|15|all] [--edl liste.json]
-Çıktı:     music_30.wav (tam 30,00 sn), music_15.wav (15,00 sn); 48 kHz, stereo, 16 bit.
+Kullanım:  python3 -I tools/reels_music.py --out /mutlak/klasör [--cut <kesim>|all] [--edl liste.json]
+Çıktı:     kurgu listesindeki her kesim için music_<kesim>.wav (kesimin süresi kadar: 45,00 ve 15,00 sn);
+           48 kHz, stereo, 16 bit.
 Rastgelelik sabit tohumlu: her çalıştırmada aynı müzik.
 """
 
@@ -31,7 +32,7 @@ SR = ms.SR
 
 EDL = json.load(open(os.path.join(HERE, "reels_edl.json"), encoding="utf-8"))
 FPS = EDL["fps"]
-BEAT_N = SR * EDL["beat_frames"] // FPS  # 25600 örnek = 0,5333 sn
+BEAT_N = SR * EDL["beat_frames"] // FPS  # 100 BPM'de 28800 örnek = 0,6 sn
 BEAT = BEAT_N / SR
 
 # Akorlar: bas notası ve ses dağılımı (MIDI).
@@ -398,7 +399,7 @@ def render(cut):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", required=True)
-    parser.add_argument("--cut", default="all", choices=["30", "15", "all"])
+    parser.add_argument("--cut", default="all", help="kurgu listesindeki bir kesim (45, 15) ya da all")
     parser.add_argument("--edl", help="başka bir kurgu listesi (varsayılan tools/reels_edl.json)")
     args = parser.parse_args()
     if args.edl:
@@ -407,8 +408,11 @@ def main():
         FPS = EDL["fps"]
         BEAT_N = SR * EDL["beat_frames"] // FPS
         BEAT = BEAT_N / SR
+    cuts = list(EDL["cuts"]) if args.cut == "all" else [args.cut]
+    if any(c not in EDL["cuts"] for c in cuts):
+        sys.exit("kesim yok: %s (kurgu listesinde: %s)" % (args.cut, ", ".join(EDL["cuts"])))
     os.makedirs(args.out, exist_ok=True)
-    for cut in (["30", "15"] if args.cut == "all" else [args.cut]):
+    for cut in cuts:
         left, right = render(cut)
         path = os.path.join(args.out, "music_%s.wav" % cut)
         ms.write_wav(path, ms.stereo(left, right), 2)

@@ -19,12 +19,12 @@ geldikçe kısılır); müziksiz kopyada müzik yok. Hepsi -14 LUFS; tepe kodlam
 sonra en çok -1 dBTP (ölçülür). Oyun seslerinin tepeleri yüksek olduğu için loudnorm genellikle dinamik
 modda çalışır (kısa süreli ses düzeyi hedefe çekilir; mod günlüğe yazılır).
 
-Çıktı (--out): olta_reels_30.mp4, olta_reels_30_muziksiz.mp4, olta_reels_15.mp4,
-olta_reels_15_muziksiz.mp4 (H.264 High, yuv420p BT.709, 30 fps, AAC 48 kHz, faststart),
-olta_reels_kapak.jpg, kontrol resimleri (kontrol_30.jpg, kontrol_15.jpg).
+Çıktı (--out): kurgu listesindeki her kesim için (45 ve 15 sn) olta_reels_<kesim>.mp4 ve
+olta_reels_<kesim>_muziksiz.mp4 (H.264 High, yuv420p BT.709, 30 fps, AAC 48 kHz, faststart),
+olta_reels_kapak.jpg, kontrol resimleri (kontrol_<kesim>.jpg).
 
 Kullanım:
-  python3 -I tools/reels_ad.py --avi kayit.avi --log kayit.log --out klasor [--music klasor] [--cut 30|15|all]
+  python3 -I tools/reels_ad.py --avi kayit.avi --log kayit.log --out klasor [--music klasor] [--cut <kesim>|all]
           [--check] (yalnızca kurgu listesini denetle) [--preview] (hızlı, düşük kalite)
           [--edl liste.json] (başka bir kurgu listesi: deneme; müziği de o listeden üretilir)
 Müzik klasöründeki music_spec.json kurgu listesinin müzik bölümünü saklar: bölüm değişince müzik yeniden üretilir.
@@ -474,8 +474,8 @@ def end_card_images(fonts):
 
 
 def overlay_frames(cut, fonts, folder):
-    """Kurgunun bütün kareleri için saydam katman: yazılar (vuruşta büyüyüp oturur, vuruşta hafifçe
-    kıpırdar), kartın notu, son kart."""
+    """Kurgunun bütün kareleri için saydam katman: yazılar (vuruşta büyüyüp yerine oturur, sonra
+    kıpırdamaz: okunsun), kartın notu, son kart."""
     spec = EDL["cuts"][cut]
     total = spec["frames"]
     end_at = int(round(float(spec["end"]) * BEAT))
@@ -495,9 +495,6 @@ def overlay_frames(cut, fonts, folder):
                 if start <= n < stop:
                     age = n - start
                     scale = 0.55 + 0.45 * ease_back(age / 7.0)
-                    # Vuruşta küçük nabız (yazı müzikle kıpırdar).
-                    beat_age = (n % BEAT) / float(BEAT)
-                    scale *= 1.0 + 0.025 * max(0.0, 1.0 - beat_age * 3.0) * (1 if age >= 7 else 0)
                     alpha = min(1.0, age / 3.0) * min(1.0, (stop - n) / 2.0)
                     cy = (SAFE_TOP + CARD_Y - 6) // 2 + 10 - img.info["lift"] / 2.0
                     paste_scaled(canvas, img, W // 2, cy, scale, alpha)
@@ -767,7 +764,7 @@ def main():
     parser.add_argument("--log", required=True)
     parser.add_argument("--music")
     parser.add_argument("--out")
-    parser.add_argument("--cut", default="all", choices=["30", "15", "all"])
+    parser.add_argument("--cut", default="all", help="kurgu listesindeki bir kesim (45, 15) ya da all")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--preview", action="store_true")
     parser.add_argument("--edl", help="başka bir kurgu listesi (deneme; varsayılan tools/reels_edl.json)")
@@ -780,7 +777,9 @@ def main():
         FPS, BEAT = EDL["fps"], EDL["beat_frames"]
         SPF = SR // FPS
     info = parse_log(args.log)
-    cuts = ["30", "15"] if args.cut == "all" else [args.cut]
+    cuts = list(EDL["cuts"]) if args.cut == "all" else [args.cut]
+    if any(c not in EDL["cuts"] for c in cuts):
+        sys.exit("kesim yok: %s (kurgu listesinde: %s)" % (args.cut, ", ".join(EDL["cuts"])))
     offset = 0
     if args.avi and not args.check:
         flash = find_flash(args.avi, info["sync"])
