@@ -1,0 +1,482 @@
+{
+	"_note": "Reels reklamının kurgu listesi (tools/reels_ad.py ve tools/reels_music.py okur). Zaman vuruşla: 112,5 BPM'de bir vuruş tam 16 kare (30 fps). shots: sırayla parçalar; src kaydın günlüğündeki işaret (REELS MARK <kare> <çekim>.<olay>; ad@last sonuncusu, ad@2 ikincisi), offset işaretten kaç kare önce/sonra başlar, beats uzunluk, crop center (kaydın ortasındaki kare: yükseklik kadar genişlik; dx yatay kaydırma, zoom < 1 daha dar kare) ya da panel:<ad> (REELS PANEL satırındaki dikdörtgen, pad payıyla). captions: from/to vuruş, title (Luckiest Guy; | satır böler), sub (Baloo 2). music: bölüm başına akor ve tarz (reels_music.py). end: son kartın başladığı vuruş.",
+	"fps": 30,
+	"bpm": 112.5,
+	"beat_frames": 16,
+	"cuts": {
+		"30": {
+			"frames": 900,
+			"end": 50,
+			"shots": [
+				{
+					"id": "hook",
+					"beats": 3,
+					"src": "gold.nibbling",
+					"offset": -40
+				},
+				{
+					"id": "vur",
+					"beats": 3,
+					"src": "gold.biting",
+					"offset": 0
+				},
+				{
+					"id": "gold",
+					"beats": 5,
+					"src": "gold.show",
+					"offset": -4
+				},
+				{
+					"id": "spin",
+					"beats": 4,
+					"src": "spin.fighting",
+					"offset": -32
+				},
+				{
+					"id": "dip",
+					"beats": 4,
+					"src": "dip.biting",
+					"offset": -32
+				},
+				{
+					"id": "fly",
+					"beats": 4,
+					"src": "fly.biting",
+					"offset": -16
+				},
+				{
+					"id": "trap",
+					"beats": 3,
+					"src": "trap.tap",
+					"offset": -16
+				},
+				{
+					"id": "map",
+					"beats": 2,
+					"src": "map.tap",
+					"offset": -20,
+					"crop": "panel:map",
+					"pad": 10,
+					"through_cut": true
+				},
+				{
+					"id": "boat",
+					"beats": 2,
+					"src": "legend.casting",
+					"offset": -36
+				},
+				{
+					"id": "legend",
+					"beats": 3,
+					"src": "legend.legend",
+					"offset": -10
+				},
+				{
+					"id": "fight",
+					"beats": 3,
+					"src": "legend.red",
+					"offset": -20
+				},
+				{
+					"id": "mersin",
+					"beats": 5,
+					"src": "legend.show",
+					"offset": -4
+				},
+				{
+					"id": "release",
+					"beats": 2,
+					"src": "legend.ok",
+					"offset": -4
+				},
+				{
+					"id": "nine",
+					"beats": 2,
+					"src": "dock.nine",
+					"offset": -4
+				},
+				{
+					"id": "book",
+					"beats": 2,
+					"src": "book.page2",
+					"offset": -14,
+					"crop": "panel:book_grid",
+					"pad": 30
+				},
+				{
+					"id": "dede",
+					"beats": 3,
+					"src": "dock.dede",
+					"offset": -6
+				}
+			],
+			"captions": [
+				{
+					"from": 0,
+					"to": 3,
+					"title": "ŞU PARLAYAN GÖLGEYİ|GÖRDÜN MÜ?"
+				},
+				{
+					"from": 3,
+					"to": 6,
+					"title": "DALINCA VUR!"
+				},
+				{
+					"from": 6,
+					"to": 11,
+					"title": "DESTANSI BİR AV!",
+					"sub": "Altın sazan"
+				},
+				{
+					"from": 11,
+					"to": 15,
+					"title": "SPİN",
+					"sub": "Dur-kalk yap, turna saldırsın"
+				},
+				{
+					"from": 15,
+					"to": 19,
+					"title": "DİP",
+					"sub": "Zil durmadan çalınca VUR"
+				},
+				{
+					"from": 19,
+					"to": 23,
+					"title": "SİNEK",
+					"sub": "Halka çıkınca VUR"
+				},
+				{
+					"from": 23,
+					"to": 26,
+					"title": "TUZAK",
+					"sub": "Sen yokken dolar"
+				},
+				{
+					"from": 26,
+					"to": 30,
+					"title": "6 BÖLGE",
+					"sub": "Sandalla derin sulara"
+				},
+				{
+					"from": 30,
+					"to": 33,
+					"title": "EFSANEVİ BİR GÖLGE…",
+					"sub": "Dede: “Şşş! Efsanevi olabilir!”"
+				},
+				{
+					"from": 33,
+					"to": 36,
+					"title": "ÇIRPININCA BIRAK!"
+				},
+				{
+					"from": 36,
+					"to": 41,
+					"title": "EFSANEVİ MERSİN!"
+				},
+				{
+					"from": 41,
+					"to": 43,
+					"title": "GÖLE BIRAK!",
+					"sub": "Mersin koruma altında"
+				},
+				{
+					"from": 43,
+					"to": 45,
+					"title": "NİNE'NİN DÜKKÂNI",
+					"sub": "Tuttuğunu sat, takımını büyüt"
+				},
+				{
+					"from": 45,
+					"to": 47,
+					"title": "16 TÜR",
+					"sub": "Defterini doldur"
+				},
+				{
+					"from": 47,
+					"to": 50,
+					"title": "BU GÖLÜN BİR|SIRRI VAR…",
+					"sub": "Dede"
+				}
+			],
+			"music": [
+				{
+					"at": 0,
+					"beats": 3,
+					"chord": "Em9",
+					"style": "intro"
+				},
+				{
+					"at": 3,
+					"beats": 3,
+					"chord": "Cmaj7",
+					"style": "build"
+				},
+				{
+					"at": 6,
+					"beats": 5,
+					"chord": "C",
+					"style": "hit"
+				},
+				{
+					"at": 11,
+					"beats": 4,
+					"chord": "Em",
+					"style": "groove"
+				},
+				{
+					"at": 15,
+					"beats": 4,
+					"chord": "Am7",
+					"style": "groove"
+				},
+				{
+					"at": 19,
+					"beats": 4,
+					"chord": "D",
+					"style": "groove"
+				},
+				{
+					"at": 23,
+					"beats": 3,
+					"chord": "C",
+					"style": "groove"
+				},
+				{
+					"at": 26,
+					"beats": 4,
+					"chord": "D",
+					"style": "rise"
+				},
+				{
+					"at": 30,
+					"beats": 3,
+					"chord": "Bm7",
+					"style": "break"
+				},
+				{
+					"at": 33,
+					"beats": 3,
+					"chord": "Am7",
+					"style": "tension"
+				},
+				{
+					"at": 36,
+					"beats": 5,
+					"chord": "C",
+					"style": "hit"
+				},
+				{
+					"at": 41,
+					"beats": 2,
+					"chord": "Am",
+					"style": "groove"
+				},
+				{
+					"at": 43,
+					"beats": 2,
+					"chord": "Em",
+					"style": "groove"
+				},
+				{
+					"at": 45,
+					"beats": 2,
+					"chord": "C",
+					"style": "groove"
+				},
+				{
+					"at": 47,
+					"beats": 3,
+					"chord": "Dsus4",
+					"style": "hush"
+				},
+				{
+					"at": 50,
+					"beats": 6.25,
+					"chord": "G",
+					"style": "outro"
+				}
+			]
+		},
+		"15": {
+			"frames": 450,
+			"end": 23,
+			"shots": [
+				{
+					"id": "hook",
+					"beats": 3,
+					"src": "gold.nibbling",
+					"offset": -40
+				},
+				{
+					"id": "vur",
+					"beats": 3,
+					"src": "gold.biting",
+					"offset": 0
+				},
+				{
+					"id": "gold",
+					"beats": 5,
+					"src": "gold.show",
+					"offset": -4
+				},
+				{
+					"id": "spin",
+					"beats": 1,
+					"src": "spin.fighting",
+					"offset": -10
+				},
+				{
+					"id": "dip",
+					"beats": 1,
+					"src": "dip.biting",
+					"offset": -2
+				},
+				{
+					"id": "fly",
+					"beats": 1,
+					"src": "fly.jump",
+					"offset": -6
+				},
+				{
+					"id": "trap",
+					"beats": 1,
+					"src": "trap.tap",
+					"offset": -2
+				},
+				{
+					"id": "legend",
+					"beats": 2,
+					"src": "legend.legend",
+					"offset": -4
+				},
+				{
+					"id": "fight",
+					"beats": 2,
+					"src": "legend.red",
+					"offset": -12
+				},
+				{
+					"id": "mersin",
+					"beats": 4,
+					"src": "legend.show",
+					"offset": -4
+				}
+			],
+			"captions": [
+				{
+					"from": 0,
+					"to": 3,
+					"title": "ŞU PARLAYAN GÖLGEYİ|GÖRDÜN MÜ?"
+				},
+				{
+					"from": 3,
+					"to": 6,
+					"title": "DALINCA VUR!"
+				},
+				{
+					"from": 6,
+					"to": 11,
+					"title": "DESTANSI BİR AV!",
+					"sub": "Altın sazan"
+				},
+				{
+					"from": 11,
+					"to": 15,
+					"title": "SPİN · DİP · SİNEK",
+					"sub": "ve kerevit tuzağı"
+				},
+				{
+					"from": 15,
+					"to": 17,
+					"title": "EFSANEVİ BİR GÖLGE…"
+				},
+				{
+					"from": 17,
+					"to": 19,
+					"title": "ÇIRPININCA BIRAK!"
+				},
+				{
+					"from": 19,
+					"to": 23,
+					"title": "EFSANEVİ MERSİN!"
+				}
+			],
+			"music": [
+				{
+					"at": 0,
+					"beats": 3,
+					"chord": "Em9",
+					"style": "intro"
+				},
+				{
+					"at": 3,
+					"beats": 3,
+					"chord": "Cmaj7",
+					"style": "build"
+				},
+				{
+					"at": 6,
+					"beats": 5,
+					"chord": "C",
+					"style": "hit"
+				},
+				{
+					"at": 11,
+					"beats": 1,
+					"chord": "Em",
+					"style": "montage"
+				},
+				{
+					"at": 12,
+					"beats": 1,
+					"chord": "Am7",
+					"style": "montage"
+				},
+				{
+					"at": 13,
+					"beats": 1,
+					"chord": "D",
+					"style": "montage"
+				},
+				{
+					"at": 14,
+					"beats": 1,
+					"chord": "C",
+					"style": "montage"
+				},
+				{
+					"at": 15,
+					"beats": 2,
+					"chord": "Bm7",
+					"style": "break"
+				},
+				{
+					"at": 17,
+					"beats": 2,
+					"chord": "D",
+					"style": "tension"
+				},
+				{
+					"at": 19,
+					"beats": 4,
+					"chord": "C",
+					"style": "hit"
+				},
+				{
+					"at": 23,
+					"beats": 5.125,
+					"chord": "G",
+					"style": "outro"
+				}
+			]
+		}
+	},
+	"end_background": {
+		"src": "dock.outro",
+		"offset": 20
+	},
+	"cover": {
+		"src": "legend.show",
+		"offset": 16
+	}
+}
