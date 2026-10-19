@@ -87,7 +87,7 @@
 					"id": "release",
 					"beats": 2,
 					"src": "legend.ok",
-					"offset": -4
+					"offset": -20
 				},
 				{
 					"id": "nine",
@@ -100,8 +100,14 @@
 					"beats": 2,
 					"src": "book.page2",
 					"offset": -14,
-					"crop": "panel:book_grid",
-					"pad": 30
+					"crop": "panel:book",
+					"pad": 24,
+					"rect": [
+						0.0,
+						0.0,
+						0.615,
+						1.0
+					]
 				},
 				{
 					"id": "dede",

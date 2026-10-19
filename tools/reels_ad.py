@@ -249,10 +249,11 @@ def source_rect(shot, info, video_w, video_h):
 def render_shot(shot, info, avi, video, tmp, path, quality):
     vw, vh = video
     seconds = shot["frames"] / FPS
-    # Kayıttaki kareler zaman damgasıyla seçilir (MJPEG: her kare ana kare; -copyts damgaları korur).
+    # Kayıttaki kareler damgasıyla seçilir (MJPEG: her kare ana kare; -copyts damgaları korur). Damga
+    # birimi 1/30 sn = kare numarası: tamsayıyla (saniyeyle verilen bitiş yuvarlanıp son kareyi atıyordu).
     t0 = shot["avi_start"] / FPS
     seek = max(0.0, t0 - 1.0)
-    trim = "trim=start=%.5f:end=%.5f,setpts=PTS-STARTPTS" % (t0 - 0.5 / FPS, t0 + (shot["frames"] - 0.5) / FPS)
+    trim = "trim=start_pts=%d:end_pts=%d,setpts=PTS-STARTPTS" % (shot["avi_start"], shot["avi_start"] + shot["frames"])
     x, y, w, h = source_rect(shot, info, vw, vh)
     crop = shot.get("crop", "center")
     bg_cx = int(x + w / 2)
@@ -543,7 +544,8 @@ def mixes(cut, shots, avi_audio, music_dir, tmp):
     tail = np.ones(n)
     tail[end:] = np.linspace(1.0, 0.15, n - end)
     sfx *= tail[:, None]
-    music = duck(music, sfx) * 10 ** (-4.0 / 20.0)
+    # Müzik oyunun seslerinin altında (şamandıranın plop'u, makara, buluntu ezgisi önde duyulsun).
+    music = duck(music, sfx) * 10 ** (-6.0 / 20.0)
 
     def db(x):
         return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-9)
@@ -635,6 +637,8 @@ def contact_sheet(cut, path, out_dir, shots):
 
 
 def main():
+    # İlerleme satırları dosyaya yönlendirilince de hemen görünsün.
+    sys.stdout.reconfigure(line_buffering=True)
     parser = argparse.ArgumentParser(description="Reels reklamının kurgusu")
     parser.add_argument("--avi")
     parser.add_argument("--log", required=True)
@@ -643,7 +647,11 @@ def main():
     parser.add_argument("--cut", default="all", choices=["30", "15", "all"])
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--preview", action="store_true")
+    parser.add_argument("--edl", help="başka bir kurgu listesi (deneme; varsayılan tools/reels_edl.json)")
     args = parser.parse_args()
+    if args.edl:
+        global EDL
+        EDL = json.load(open(args.edl, encoding="utf-8"))
     info = parse_log(args.log)
     cuts = ["30", "15"] if args.cut == "all" else [args.cut]
     offset = 0
@@ -678,6 +686,8 @@ def main():
     streams = probe(args.avi)
     vs = [s for s in streams if s["codec_type"] == "video"][0]
     video = (int(vs["width"]), int(vs["height"]))
+    if vs.get("time_base") != "1/%d" % FPS:
+        sys.exit("kaydın zaman birimi %s: 1/%d bekleniyor (damga = kare numarası)" % (vs.get("time_base"), FPS))
     quality = "preview" if args.preview else "final"
     fonts = Fonts()
     tmp = tempfile.mkdtemp(prefix="reels_", dir=args.out)

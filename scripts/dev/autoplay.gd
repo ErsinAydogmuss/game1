@@ -85,9 +85,11 @@ var _park_fn: Callable = Callable()
 
 ## Reels: çekimler sırasıyla (--reels-only= ile bir kısmı), yakın çekimlerin eğimi (yüzler görünsün)
 ## ve efsanevi çekişmede bırakma gecikmesi (kare; geç bırakan oyuncu: gerilim kırmızıya çıkar, "BIRAK!").
+## Çırpınma 0,5 sn'lik uyarıyla başlar (ReelModel WARN): 24 kare patlamanın 0,3 sn'sinde bırakır,
+## gerilim yarım saniye kırmızıda kalır (kopma sayacı yarıya gelir, sonraki patlamaya kadar söner).
 const REELS_TAKES: Array[String] = ["dock", "gold", "spin", "reeds", "fly", "legend", "book"]
 const REELS_CLOSE_PITCH := deg_to_rad(42.0)
-const REELS_LEGEND_REACTION := 14
+const REELS_LEGEND_REACTION := 24
 ## Defterde önceden olan türler [tür, boy, yıldız]: bot onlardan küçüğünü tutar (rekor kartı açılmaz);
 ## altın sazan ve mersin yeni tür, yayın ve dere alabalığı silüet kalır.
 const REELS_RECORDS := [["rudd", 27, 3], ["carp", 66, 4], ["perch", 38, 3], ["silverside", 15, 3], ["bream", 48, 3],
@@ -2106,7 +2108,9 @@ func _reels_setup() -> void:
 	# Dipteki sehpa yakın çekimini (bir kez, kamera sıçraması) yönetmen yapar.
 	_taken["15b_sehpa_yakin"] = true
 	_park_fn = _reels_park_point
+	# İpucu çubuğu ve sol üstteki durum hapları (para, kova, rütbe çubuğu) ortadaki kareye taşar, gizlenir.
 	(_hud().get("_hint") as Control).modulate.a = 0.0
+	(_hud().get("_status") as Control).modulate.a = 0.0
 	for player: AudioStreamPlayer in (Sounds.get("_ambience") as Array):
 		player.stop()
 	var view := get_viewport().get_visible_rect().size
