@@ -2,6 +2,9 @@ extends Control
 ## Geliştirici aracı (yalnızca debug): tanıtım videosunda parmakların nereye dokunduğunu,
 ## başlık kartlarını ve alt yazıları çizer. Oyunun kendisi bunu kullanmaz.
 
+## Senk parlamasının beyazı çizilirken (o karede) yayılır: reels botu SYNC satırını burada yazar.
+signal flashed
+
 const FINGER_RADIUS := 44.0
 
 var _fingers: Dictionary = {}
@@ -14,9 +17,10 @@ var _fast: Label
 var _caption_tween: Tween
 var _title_tweens: Array[Tween] = []
 ## Senk parlaması: kalan kare sayısı ve bu karede ekranın tamamı beyaz mı (reels: kurgu aracı kaydın
-## karelerini günlükle bununla eşler).
+## karelerini günlükle bununla eşler); ilk beyaz çizildi mi (flashed bir kez).
 var _flash: int = 0
 var _flashing: bool = false
+var _flash_told: bool = false
 
 
 func _ready() -> void:
@@ -86,9 +90,14 @@ func show_caption(text: String, duration: float) -> void:
 	_caption_tween.tween_property(_caption, "modulate:a", 0.0, 0.4)
 
 
-## Sonraki frames kare (çağrıldığı kare dahil) ekranın tamamı beyaz.
+## Ekranın tamamı yaklaşık frames kare beyaz; beyaz ilk çizildiği karede flashed yayılır. Bir zamanlayıcıdan
+## dönen kod çağırınca o karenin _process'i geçmiştir: beyaz hemen istenir (yoksa bir kare sonra çizilir,
+## günlüğe yazılan kareyle kayıttaki beyaz kare kayardı).
 func flash(frames: int) -> void:
-	_flash = frames
+	_flash = maxi(0, frames - 1)
+	_flashing = true
+	_flash_told = false
+	queue_redraw()
 
 
 func finger_down(index: int, pos: Vector2) -> void:
@@ -122,6 +131,9 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if _flashing:
 		draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)
+		if not _flash_told:
+			_flash_told = true
+			flashed.emit()
 		return
 	if _fast.visible:
 		# İki üçgen: hızlı sarma simgesi.

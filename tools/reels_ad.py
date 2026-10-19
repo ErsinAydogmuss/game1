@@ -22,8 +22,10 @@ olta_reels_15_muziksiz.mp4 (H.264 High, yuv420p BT.709, 30 fps, AAC 48 kHz, fast
 olta_reels_kapak.jpg, kontrol resimleri (kontrol_30.jpg, kontrol_15.jpg).
 
 Kullanım:
-  python3 -I tools/reels_ad.py --avi kayit.avi --log kayit.log --out klasor [--cut 30|15|all]
+  python3 -I tools/reels_ad.py --avi kayit.avi --log kayit.log --out klasor [--music klasor] [--cut 30|15|all]
           [--check] (yalnızca kurgu listesini denetle) [--preview] (hızlı, düşük kalite)
+          [--edl liste.json] (başka bir kurgu listesi: deneme; müziği de o listeden üretilir)
+Müzik klasöründeki music_spec.json kurgu listesinin müzik bölümünü saklar: bölüm değişince müzik yeniden üretilir.
 Gerekenler: ffmpeg (libx264, libx264rgb), numpy, Pillow.
 """
 
@@ -41,7 +43,8 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-EDL = json.load(open(os.path.join(HERE, "reels_edl.json"), encoding="utf-8"))
+EDL_PATH = os.path.join(HERE, "reels_edl.json")
+EDL = json.load(open(EDL_PATH, encoding="utf-8"))
 DISPLAY_FONT = os.path.join(ROOT, "assets", "fonts", "LuckiestGuy-Regular.ttf")
 BODY_FONT = os.path.join(ROOT, "assets", "fonts", "Baloo2-Variable.ttf")
 LOGO = os.path.join(ROOT, "assets", "ui", "art", "logo.png")
@@ -117,13 +120,40 @@ def mark_frame(info, expr):
         return frames[0]
     if which == "last":
         return frames[-1]
-    return frames[int(which) - 1]
+    k = int(which)
+    if not 1 <= k <= len(frames):
+        raise KeyError("işaret yok: %s (%d tane var)" % (expr, len(frames)))
+    return frames[k - 1]
 
 
 # --- Kurgu listesi --------------------------------------------------------------------------
 
+def check_range(name, start, end, info, through_cut=False):
+    """Kayıttan alınacak [start, end) aralığının sorunları: kamera sıçraması ya da kararma içinde mi,
+    senkten önce ya da kaydın sonundan sonra mı. through_cut: kesimden bilerek geçen parça (yalnızca
+    kesim denetimi atlanır)."""
+    problems = []
+    if not through_cut:
+        for f, reason in info["cuts"]:
+            if reason == "camera" and start < f < end:
+                problems.append("%s: %d–%d kamera sıçramasından (%d) geçiyor" % (name, start, end, f))
+        # Kararma bir aralık: parçanın bir karesi bile içine düşmesin (yalnızca uçlara bakmak yetmez).
+        fades = [f for f, reason in info["cuts"] if reason == "fade"]
+        ends = [f for f, reason in info["cuts"] if reason == "fade_end"]
+        for a in fades:
+            b = min([e for e in ends if e >= a], default=info["end"])
+            if start < b and end > a:
+                problems.append("%s: %d–%d kararmaya (%d–%d) değiyor" % (name, start, end, a, b))
+    if start < info["sync"] + 3:
+        problems.append("%s: senk parlamasından önce" % name)
+    if end > info["end"]:
+        problems.append("%s: kaydın sonundan sonra" % name)
+    return problems
+
+
 def resolve(cut, info, offset):
-    """Parçaların kayıttaki kare aralığı (günlük karesi + senk farkı). Sorunları da döner."""
+    """Parçaların kayıttaki kare aralığı (günlük karesi + senk farkı). Sorunları da döner: parçalar,
+    son kartın arka planı."""
     spec = EDL["cuts"][cut]
     shots = []
     problems = []
@@ -134,30 +164,38 @@ def resolve(cut, info, offset):
             start = mark_frame(info, shot["src"]) + int(shot.get("offset", 0))
         except KeyError as e:
             problems.append("%s: %s" % (shot["id"], e))
-            start = 0
-        shots.append({**shot, "at": at, "frames": length, "start": start, "end": start + length,
-                      "avi_start": start + offset})
+            at += length
+            continue
+        s = {**shot, "at": at, "frames": length, "start": start, "end": start + length, "avi_start": start + offset}
+        shots.append(s)
+        problems += check_range(s["id"], s["start"], s["end"], info, bool(s.get("through_cut")))
+        crop = s.get("crop", "center")
+        if crop.startswith("panel:") and crop[6:] not in info["panels"]:
+            problems.append("%s: panel yok (%s)" % (s["id"], crop))
         at += length
     end_at = int(round(float(spec["end"]) * BEAT))
     if at != end_at:
         problems.append("parçalar %d kare, son kart %d. karede başlamalı" % (at, end_at))
     if spec["frames"] - end_at <= 0:
         problems.append("son karta yer yok")
-    cut_frames = [f for f, reason in info["cuts"] if reason in ("camera", "fade", "fade_end")]
-    for s in shots:
-        if s.get("through_cut"):
-            continue
-        for f in cut_frames:
-            if s["start"] < f < s["end"]:
-                problems.append("%s: %d–%d kesimden (%d) geçiyor" % (s["id"], s["start"], s["end"], f))
-        if s["start"] < info["sync"] + 3:
-            problems.append("%s: senk parlamasından önce" % s["id"])
-        if s["end"] > info["end"]:
-            problems.append("%s: kaydın sonundan sonra" % s["id"])
-        crop = s.get("crop", "center")
-        if crop.startswith("panel:") and crop[6:] not in info["panels"]:
-            problems.append("%s: panel yok (%s)" % (s["id"], crop))
+    else:
+        end_src = EDL["end_background"]
+        try:
+            start = mark_frame(info, end_src["src"]) + int(end_src.get("offset", 0))
+            problems += check_range("son kart", start, start + spec["frames"] - end_at, info)
+        except KeyError as e:
+            problems.append("son kart: %s" % e)
     return shots, problems
+
+
+def cover_problems(info):
+    """Kapağın karesi kayıtta var mı (işaret, senk, kaydın sonu)."""
+    spec = EDL.get("cover", {"src": "legend.show", "offset": 12})
+    try:
+        frame = mark_frame(info, spec["src"]) + int(spec.get("offset", 0))
+    except KeyError as e:
+        return ["kapak: %s" % e]
+    return check_range("kapak", frame, frame + 4, info)
 
 
 def toasts_in(info, shots):
@@ -172,7 +210,8 @@ def toasts_in(info, shots):
 # --- Senk ----------------------------------------------------------------------------------
 
 def find_flash(avi, around):
-    """Kayıttaki ilk beyaz kare (günlükteki SYNC karesinin çevresinde, baştan çözülür)."""
+    """Kayıttaki ilk beyaz kare: kaydın başından SYNC karesinin 120 kare sonrasına kadar çözülür. Bot SYNC'i
+    beyazın çizildiği karede yazar: fark kaydın günlükten kaymasıdır (Movie Maker'da 0)."""
     count = around + 120
     cmd = ["ffmpeg", "-v", "error", "-i", avi, "-frames:v", str(count), "-vf", "scale=32:18,format=gray",
            "-f", "rawvideo", "-"]
@@ -241,9 +280,12 @@ def source_rect(shot, info, video_w, video_h):
         return int(x) & ~1, int(y) & ~1, int(w) & ~1, int(h) & ~1
     zoom = float(shot.get("zoom", 1.0))
     side = int(video_h * zoom) & ~1
-    x = (video_w - side) / 2.0 + float(shot.get("dx", 0)) * sx
+    # aspect > 1: kare yerine geniş dikdörtgen (ortadaki kareden taşan arayüz: uzun sözlü balık kartı);
+    # karta sığdırılır, kalan yeri aynı görüntünün bulanığı doldurur.
+    width = min(video_w, int(side * float(shot.get("aspect", 1.0)))) & ~1
+    x = (video_w - width) / 2.0 + float(shot.get("dx", 0)) * sx
     y = (video_h - side) / 2.0 + float(shot.get("dy", 0)) * sx
-    return int(max(0, min(video_w - side, x))) & ~1, int(max(0, min(video_h - side, y))) & ~1, side, side
+    return int(max(0, min(video_w - width, x))) & ~1, int(max(0, min(video_h - side, y))) & ~1, width, side
 
 
 def render_shot(shot, info, avi, video, tmp, path, quality):
@@ -269,12 +311,16 @@ def render_shot(shot, info, avi, video, tmp, path, quality):
         graph.append("[s2]nullsink")
         graph.append("[bg]copy[out]")
     else:
-        if crop.startswith("panel:"):
+        if crop.startswith("panel:") or w != h:
+            # Kare olmayan kırpma karta sığdırılır; boşluğu aynı kırpmanın karta yayılmış, bulanık ve
+            # kararmış kopyası doldurur (düz renk bant yerine).
             scale = min(CARD / float(w), CARD / float(h))
             pw, ph = int(w * scale) & ~1, int(h * scale) & ~1
-            graph.append("[s2]crop=%d:%d:%d:%d,scale=%d:%d:flags=lanczos[pan]" % (w, h, x, y, pw, ph))
-            graph.append("color=c=0x1c1712:s=%dx%d:r=%d:d=%.4f,format=gbrp[base]" % (CARD, CARD, FPS, seconds))
-            graph.append("[base][pan]overlay=%d:%d:shortest=1[card]" % ((CARD - pw) // 2, (CARD - ph) // 2))
+            graph.append("[s2]crop=%d:%d:%d:%d,split=2[p1][p2]" % (w, h, x, y))
+            graph.append("[p1]scale=%d:%d:force_original_aspect_ratio=increase,crop=%d:%d,gblur=sigma=16,"
+                         "eq=brightness=-0.2[base]" % (CARD, CARD, CARD, CARD))
+            graph.append("[p2]scale=%d:%d:flags=lanczos[pan]" % (pw, ph))
+            graph.append("[base][pan]overlay=%d:%d[card]" % ((CARD - pw) // 2, (CARD - ph) // 2))
         else:
             graph.append("[s2]crop=%d:%d:%d:%d,scale=%d:%d:flags=lanczos[card]" % (w, h, x, y, CARD, CARD))
         graph += [
@@ -345,21 +391,26 @@ def text_block(fonts, title, sub):
     sub_font = fit_font(fonts, "body", sub, 54, TEXT_W) if sub else None
     line_h = int(font.size * 1.06)
     sub_h = int(sub_font.size * 1.3) if sub_font else 0
-    height = line_h * len(lines) + sub_h + 40
+    stroke = max(6, font.size // 13)
+    # Luckiest Guy'da İ, Ü, Â'nın noktası ve şapkası üst çizginin (anchor "ma") epey üstüne çıkar: üst pay
+    # en yüksek harfin dış çizgisine göre (sabit pay onları resmin dışında bırakıp kesiyordu).
+    top = max(14, 4 - min(font.getbbox(line, anchor="ma", stroke_width=stroke)[1] for line in lines))
+    height = top + line_h * len(lines) + sub_h + 40
     img = Image.new("RGBA", (W, height), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    stroke = max(6, font.size // 13)
     for k, line in enumerate(lines):
-        y = 14 + k * line_h
+        y = top + k * line_h
         # Gölge, sonra dış çizgili yazı.
         d.text((W // 2 + 5, y + 7), line, font=font, fill=(0, 0, 0, 110), anchor="ma", stroke_width=stroke,
                stroke_fill=(0, 0, 0, 110))
         d.text((W // 2, y), line, font=font, fill=(255, 255, 255, 255) if k == 0 else ACCENT + (255,), anchor="ma",
                stroke_width=stroke, stroke_fill=INK + (255,))
     if sub_font:
-        y = 14 + len(lines) * line_h + 6
+        y = top + len(lines) * line_h + 6
         d.text((W // 2, y), sub, font=sub_font, fill=CREAM + (255,), anchor="ma", stroke_width=5,
                stroke_fill=INK + (255,))
+    # Yerleştiren yazının yerini korusun diye: eskiden üst pay 14'tü (fazlası yalnızca harflerin üstüne).
+    img.info["lift"] = top - 14
     return img
 
 
@@ -395,10 +446,13 @@ def note_image(fonts, size=28):
 def end_card_images(fonts):
     logo = Image.open(LOGO).convert("RGBA")
     logo = logo.resize((880, int(880 * logo.height / logo.width)), Image.LANCZOS)
-    soon_font = fit_font(fonts, "display", "YAKINDA APP STORE'DA", 80, TEXT_W)
-    soon = Image.new("RGBA", (W, soon_font.size + 40), (0, 0, 0, 0))
-    ImageDraw.Draw(soon).text((W // 2, 12), "YAKINDA APP STORE'DA", font=soon_font, fill=(255, 255, 255, 255),
+    soon_text = "YAKINDA APP STORE'DA"
+    soon_font = fit_font(fonts, "display", soon_text, 80, TEXT_W)
+    top = max(12, 4 - soon_font.getbbox(soon_text, anchor="ma", stroke_width=7)[1])
+    soon = Image.new("RGBA", (W, top + soon_font.size + 28), (0, 0, 0, 0))
+    ImageDraw.Draw(soon).text((W // 2, top), soon_text, font=soon_font, fill=(255, 255, 255, 255),
                               anchor="ma", stroke_width=7, stroke_fill=INK + (255,))
+    soon.info["lift"] = top - 12
     follow_font = fonts.display(86)
     tw = follow_font.getbbox("TAKİP ET")[2]
     bw, bh = tw + 150, 150
@@ -442,13 +496,14 @@ def overlay_frames(cut, fonts, folder):
                     beat_age = (n % BEAT) / float(BEAT)
                     scale *= 1.0 + 0.025 * max(0.0, 1.0 - beat_age * 3.0) * (1 if age >= 7 else 0)
                     alpha = min(1.0, age / 3.0) * min(1.0, (stop - n) / 2.0)
-                    cy = (SAFE_TOP + CARD_Y - 6) // 2 + 10
+                    cy = (SAFE_TOP + CARD_Y - 6) // 2 + 10 - img.info["lift"] / 2.0
                     paste_scaled(canvas, img, W // 2, cy, scale, alpha)
         else:
             age = n - end_at
             paste_scaled(canvas, logo, W // 2, 560, 0.5 + 0.5 * ease_back(age / 9.0), min(1.0, age / 4.0))
             if age >= 7:
-                paste_scaled(canvas, soon, W // 2, 925 + max(0, 12 - age) * 3, 1.0, min(1.0, (age - 7) / 5.0))
+                paste_scaled(canvas, soon, W // 2, 925 - soon.info["lift"] / 2.0 + max(0, 12 - age) * 3, 1.0,
+                             min(1.0, (age - 7) / 5.0))
             if age >= 13:
                 pulse = 1.0 + 0.06 * (0.5 + 0.5 * math.cos(2 * math.pi * (age - 13) / BEAT))
                 pop = 0.6 + 0.4 * ease_back((age - 13) / 7.0)
@@ -506,16 +561,23 @@ def duck(music, key, depth_db=9.0):
 
 
 def loudnorm(path_in, path_out, target=-14.0):
-    """İki geçişli EBU R128 (ffmpeg loudnorm, doğrusal): -14 LUFS, tepe -1,5 dBTP."""
+    """İki geçişli EBU R128 (ffmpeg loudnorm): -14 LUFS, tepe -1,5 dBTP. Doğrusal ister; ffmpeg'in
+    kullandığı modu döner ("linear" ya da "dynamic")."""
     first = subprocess.run(["ffmpeg", "-v", "info", "-nostats", "-i", path_in, "-af",
                             "loudnorm=I=%.1f:TP=-1.5:LRA=11:print_format=json" % target, "-f", "null", "-"],
                            capture_output=True, text=True)
     text = first.stderr[first.stderr.rfind("{"): first.stderr.rfind("}") + 1]
     m = json.loads(text)
     af = ("loudnorm=I=%.1f:TP=-1.5:LRA=11:measured_I=%s:measured_TP=%s:measured_LRA=%s:measured_thresh=%s:"
-          "offset=%s:linear=true" % (target, m["input_i"], m["input_tp"], m["input_lra"], m["input_thresh"],
-                                     m["target_offset"]))
-    run(["ffmpeg", "-v", "error", "-y", "-i", path_in, "-af", af + ",aresample=%d" % SR, "-ar", str(SR), path_out])
+          "offset=%s:linear=true:print_format=json" % (target, m["input_i"], m["input_tp"], m["input_lra"],
+                                                       m["input_thresh"], m["target_offset"]))
+    second = subprocess.run(["ffmpeg", "-v", "info", "-nostats", "-y", "-i", path_in, "-af",
+                             af + ",aresample=%d" % SR, "-ar", str(SR), path_out], capture_output=True, text=True)
+    if second.returncode != 0:
+        sys.exit("loudnorm: " + second.stderr[-2000:])
+    # Doğrusal mod tutmazsa (kazançtan sonra tepe sınırı aşar) ffmpeg sessizce dinamik moda geçer: yazılsın.
+    result = json.loads(second.stderr[second.stderr.rfind("{"): second.stderr.rfind("}") + 1])
+    return result.get("normalization_type", "?")
 
 
 def write_wav(path, x):
@@ -560,7 +622,8 @@ def mixes(cut, shots, avi_audio, music_dir, tmp):
         raw = os.path.join(tmp, "%s_%s_raw.wav" % (cut, name))
         write_wav(raw, mix / max(1.0, np.max(np.abs(mix)) / 0.98))
         final = os.path.join(tmp, "%s_%s.wav" % (cut, name))
-        loudnorm(raw, final)
+        mode = loudnorm(raw, final)
+        print("    ses düzeyi %s: %s" % (name, "doğrusal" if mode == "linear" else mode))
         out[name] = final
     return out
 
@@ -598,12 +661,14 @@ def cover(info, offset, avi, video, fonts, out_dir, tmp):
     title = text_block(fonts, "EFSANEVİ MERSİN!", "")
     base.alpha_composite(title, (0, CARD_Y + CARD - title.height - 20))
     note = note_image(fonts)
-    base.alpha_composite(note, ((W - note.width) // 2, CARD_Y + CARD - title.height - 60))
+    # Not, başlığın resminin hemen üstünde (resmin üst payı İ'nin noktasını da kapsar: üst üste binmez).
+    base.alpha_composite(note, ((W - note.width) // 2, CARD_Y + CARD - title.height - 24 - note.height))
     base.convert("RGB").save(os.path.join(out_dir, "olta_reels_kapak.jpg"), quality=93)
 
 
-def contact_sheet(cut, path, out_dir, shots):
+def contact_sheet(cut, path, out_dir, shots, fonts):
     """Her parçanın ortası ve her yazının başı: küçük resimler, güvenli alan çizgileriyle."""
+    label_font = fonts.body(18, "Bold")
     spec = EDL["cuts"][cut]
     picks = [(s["at"] + s["frames"] // 2, s["id"]) for s in shots]
     picks += [(int(round(c["from"] * BEAT)) + 9, "yazı " + c["title"].split("|")[0][:14]) for c in spec["captions"]]
@@ -625,7 +690,9 @@ def contact_sheet(cut, path, out_dir, shots):
         for x in (int(W * 0.06), int(W * 0.94)):
             d.line([x, 0, x, H], fill=(255, 0, 80), width=4)
         im = im.resize((270, 480))
-        ImageDraw.Draw(im).text((6, 4), "%d %s" % (frame, label), fill=(255, 255, 0))
+        # Türkçe harfler için oyunun yazı tipi (PIL'in varsayılanında ş, ı, İ yok).
+        ImageDraw.Draw(im).text((6, 2), "%d %s" % (frame, label), font=label_font, fill=(255, 255, 0),
+                                stroke_width=2, stroke_fill=(0, 0, 0))
         thumbs.append(im)
         os.remove(png)
     cols = 8
@@ -634,6 +701,30 @@ def contact_sheet(cut, path, out_dir, shots):
     for k, im in enumerate(thumbs):
         sheet.paste(im, ((k % cols) * 276, (k // cols) * 486))
     sheet.save(os.path.join(out_dir, "kontrol_%s.jpg" % cut), quality=85)
+
+
+def music_spec(cuts):
+    """Müziği belirleyen kurgu bilgisi (kare hızı, tempo, kesimlerin uzunluğu ve müzik bölümleri)."""
+    return {"fps": EDL["fps"], "bpm": EDL["bpm"], "beat_frames": EDL["beat_frames"],
+            "cuts": {c: {"frames": EDL["cuts"][c]["frames"], "music": EDL["cuts"][c]["music"]} for c in cuts}}
+
+
+def ensure_music(music_dir, cuts):
+    """music_<kesim>.wav yoksa ya da kurgu listesinin müziği belirleyen kısmı değiştiyse (music_spec.json
+    damgasıyla karşılaştırılır) reels_music.py ile aynı listeden yeniden üretir."""
+    stamp = os.path.join(music_dir, "music_spec.json")
+    want = music_spec(cuts)
+    have = json.load(open(stamp, encoding="utf-8")) if os.path.exists(stamp) else {}
+    files = all(os.path.exists(os.path.join(music_dir, "music_%s.wav" % c)) for c in cuts)
+    same = all(have.get(k) == want[k] for k in ("fps", "bpm", "beat_frames")) and \
+        all(have.get("cuts", {}).get(c) == want["cuts"][c] for c in cuts)
+    if files and same:
+        return
+    print("müzik üretiliyor (%s)" % ("kurgu listesinin müziği değişti" if files else "müzik yok"))
+    run([sys.executable, "-I", os.path.join(HERE, "reels_music.py"), "--out", music_dir, "--edl", EDL_PATH])
+    # reels_music.py bütün kesimleri üretir: damga da hepsi için.
+    with open(stamp, "w", encoding="utf-8") as f:
+        json.dump(music_spec(list(EDL["cuts"])), f, ensure_ascii=False, indent=1)
 
 
 def main():
@@ -650,8 +741,12 @@ def main():
     parser.add_argument("--edl", help="başka bir kurgu listesi (deneme; varsayılan tools/reels_edl.json)")
     args = parser.parse_args()
     if args.edl:
-        global EDL
-        EDL = json.load(open(args.edl, encoding="utf-8"))
+        # Kare hızı ve vuruş da o listeden (müzik de onunla üretilir: ensure_music).
+        global EDL, EDL_PATH, FPS, BEAT, SPF
+        EDL_PATH = os.path.abspath(args.edl)
+        EDL = json.load(open(EDL_PATH, encoding="utf-8"))
+        FPS, BEAT = EDL["fps"], EDL["beat_frames"]
+        SPF = SR // FPS
     info = parse_log(args.log)
     cuts = ["30", "15"] if args.cut == "all" else [args.cut]
     offset = 0
@@ -673,6 +768,9 @@ def main():
         for t in toasts_in(info, shots):
             print("  bildirim: " + t)
         failed = failed or bool(problems)
+    for p in cover_problems(info):
+        print("  SORUN: " + p)
+        failed = True
     if failed:
         sys.exit(1)
     if args.check:
@@ -681,8 +779,7 @@ def main():
         sys.exit("--avi ve --out gerekli")
     os.makedirs(args.out, exist_ok=True)
     music_dir = args.music or os.path.join(args.out, "music")
-    if not all(os.path.exists(os.path.join(music_dir, "music_%s.wav" % c)) for c in cuts):
-        run([sys.executable, "-I", os.path.join(HERE, "reels_music.py"), "--out", music_dir])
+    ensure_music(music_dir, cuts)
     streams = probe(args.avi)
     vs = [s for s in streams if s["codec_type"] == "video"][0]
     video = (int(vs["width"]), int(vs["height"]))
@@ -726,7 +823,7 @@ def main():
                 out = os.path.join(args.out, "olta_reels_%s%s.mp4" % (cut, suffix))
                 encode(cut, base, overlay_dir, audio[name], out, quality)
                 print("yazıldı: " + out)
-            contact_sheet(cut, os.path.join(args.out, "olta_reels_%s.mp4" % cut), args.out, shots)
+            contact_sheet(cut, os.path.join(args.out, "olta_reels_%s.mp4" % cut), args.out, shots, fonts)
         cover(info, offset, args.avi, video, fonts, args.out, tmp)
         print("yazıldı: " + os.path.join(args.out, "olta_reels_kapak.jpg"))
     finally:

@@ -7,7 +7,7 @@ uyumlu (Destansı ve Efsanevi avda Do akoru), efsanevi gölgede yalnızca çan v
 Sol'a oturur. Sazlar: marimba, çelesta ve çan, tel (Karplus-Strong), bas, pad, bakır vuruş, davul,
 el çırpma, shaker, timpani, yükselen süpürme. Yapı taşları tools/make_sounds.py'den (48 kHz).
 
-Kullanım:  python3 -I tools/reels_music.py --out /mutlak/klasör [--cut 30|15|all]
+Kullanım:  python3 -I tools/reels_music.py --out /mutlak/klasör [--cut 30|15|all] [--edl liste.json]
 Çıktı:     music_30.wav (tam 30,00 sn), music_15.wav (15,00 sn); 48 kHz, stereo, 16 bit.
 Rastgelelik sabit tohumlu: her çalıştırmada aynı müzik.
 """
@@ -385,7 +385,8 @@ def render(cut):
     # 35 Hz altı atılır: telefon hoparlörü çalamaz, yalnızca yer kaplar.
     left = ms.spectral(left[:total], 35.0, None, 2.0)
     right = ms.spectral(right[:total], 35.0, None, 2.0)
-    # Tepe -1,5 dBFS; sonda yumuşak bitiş (Reels döngüsü).
+    # Sonda yumuşak bitiş (Reels döngüsü). Tepe -1,5 dBFS'e çekilir, yumuşak doyum (soft_clip) onu yaklaşık
+    # -0,8 dBFS'e çıkarır; son ses düzeyini kurgu (reels_ad.py, loudnorm) ayarlar.
     fade = ms.frames(0.35)
     left[-fade:] *= np.linspace(1.0, 0.0, fade)
     right[-fade:] *= np.linspace(1.0, 0.0, fade)
@@ -398,7 +399,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", required=True)
     parser.add_argument("--cut", default="all", choices=["30", "15", "all"])
+    parser.add_argument("--edl", help="başka bir kurgu listesi (varsayılan tools/reels_edl.json)")
     args = parser.parse_args()
+    if args.edl:
+        global EDL, FPS, BEAT_N, BEAT
+        EDL = json.load(open(args.edl, encoding="utf-8"))
+        FPS = EDL["fps"]
+        BEAT_N = SR * EDL["beat_frames"] // FPS
+        BEAT = BEAT_N / SR
     os.makedirs(args.out, exist_ok=True)
     for cut in (["30", "15"] if args.cut == "all" else [args.cut]):
         left, right = render(cut)

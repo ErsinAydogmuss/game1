@@ -1499,10 +1499,11 @@ func _play_fly() -> void:
 ## fish_id verilirse o türden bir gölge sineğin akıntı aşağısında ona bakar (ötekiler uzakta).
 ## strike: halka çıkınca VUR'a dokunur ve bir oyuncu gibi çekişir; değilse balık sineğin altına
 ## gelince dokunur (erken). Balık yoksa sinek kendiliğinden dönene kadar bekler. Her an bir kez
-## görüntülenir. finger: dokunulan yer (ekranın her yeri eylem).
-func _fly_cast(fish_id: String, strike: bool, finger: Vector2 = Vector2(260, 520)) -> Dictionary:
+## görüntülenir. at: dokunulan yer (ekranın her yeri eylem); verilmezse sol kenar, çekişmede eylem düğmesi.
+func _fly_cast(fish_id: String, strike: bool, at: Vector2 = Vector2.INF) -> Dictionary:
 	var out := { "drift": 0.0, "drift_hint": false, "line": false, "under": false, "rise": false, "hooked": false,
 			"jumped": false, "caught": false, "early": false, "came_back": false }
+	var finger := at if at.is_finite() else Vector2(260, 520)
 	var session := _session()
 	var card: FishCard = main.get("card")
 	var target := _fly_target(session, not fish_id.is_empty())
@@ -1555,7 +1556,7 @@ func _fly_cast(fish_id: String, strike: bool, finger: Vector2 = Vector2(260, 520
 	_touch(1, finger, false)
 	await _wait_frames(1)
 	if _state() == FishingSession.State.FIGHTING:
-		await _reel_like_player(6, 40.0, finger)
+		await _reel_like_player(6, 40.0, at)
 	out["jumped"] = _seen_jump
 	out["caught"] = _state() == FishingSession.State.CAUGHT
 	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE or card.visible, 4.0)
@@ -1600,10 +1601,12 @@ func _travel_to(zone: String) -> void:
 
 ## Dipte bir atış: balıkçının baktığı yöne atar (takım menzilin sonuna düşer); bir balığı (fish_id)
 ## takımla balıkçının arasına koyar; koklamada dokunmaz (strike false ise ilk koklamada dokunur:
-## erken), koşuda (tap_delay kare sonra) VUR'a dokunur ve bir oyuncu gibi çekişir. finger: dokunulan yer.
-func _bottom_cast(strike: bool, fish_id: String = "carp", finger: Vector2 = Vector2(260, 520), tap_delay: int = 6) -> Dictionary:
+## erken), koşuda (tap_delay kare sonra) VUR'a dokunur ve bir oyuncu gibi çekişir. at: dokunulan yer;
+## verilmezse sol kenar, çekişmede eylem düğmesi.
+func _bottom_cast(strike: bool, fish_id: String = "carp", at: Vector2 = Vector2.INF, tap_delay: int = 6) -> Dictionary:
 	var out := { "reach": 0.0, "on_stand": false, "line_from_stand": false, "sniffed": false, "ran": false,
 			"picked_up": false, "caught": false, "early": false, "draws": 0 }
+	var finger := at if at.is_finite() else Vector2(260, 520)
 	var stand: RodStand = main.get("stand")
 	var card: FishCard = main.get("card")
 	var fish := _shadow_at(_angler().pos2() + _angler().facing * 3.0, Vector2(0, 1), fish_id, 300000)
@@ -1655,7 +1658,7 @@ func _bottom_cast(strike: bool, fish_id: String = "carp", finger: Vector2 = Vect
 	_touch(1, finger, false)
 	await _wait_frames(1)
 	if _state() == FishingSession.State.FIGHTING:
-		await _reel_like_player(6, 40.0, finger)
+		await _reel_like_player(6, 40.0, at)
 	out["caught"] = _state() == FishingSession.State.CAUGHT
 	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE or card.visible, 4.0)
 	if card.visible and fish_id != "mirror_carp":
@@ -1669,11 +1672,12 @@ func _bottom_cast(strike: bool, fish_id: String = "carp", finger: Vector2 = Vect
 ## getirir (yem balığın önünden gelir); balık peşine düşünce dur-kalk yapar (evreler kuraldaki en kısa
 ## evreden uzun). Saldırı anında basılıysa balık kendiliğinden takılır ("auto"), değilse VUR'a dokunur
 ## ("tap"); sonra bir oyuncu gibi çekişir. Her an bir kez görüntülenir. heading: balığın baktığı yön
-## (atışın yönü); finger: dokunulan yer.
+## (atışın yönü); at: dokunulan yer (verilmezse sol kenar, çekişmede eylem düğmesi).
 func _spin_cast(p: Vector2, cast_to: Vector2, fish_id: String = "perch", heading: Vector2 = Vector2(0, -1),
-		finger: Vector2 = Vector2(260, 520)) -> Dictionary:
+		at: Vector2 = Vector2.INF) -> Dictionary:
 	var out := { "moved": 0.0, "hidden": false, "followed": false, "reel_hint": false, "follow_hint": false,
 			"strike": "", "caught": false, "draws": 0 }
+	var finger := at if at.is_finite() else Vector2(260, 520)
 	var card: FishCard = main.get("card")
 	_shadow_at(p, heading, fish_id, 300000)
 	await _tap_world(cast_to)
@@ -1718,7 +1722,7 @@ func _spin_cast(p: Vector2, cast_to: Vector2, fish_id: String = "perch", heading
 		await _wait_frames(1)
 	if _state() == FishingSession.State.FIGHTING:
 		await _shot_once("09_cekisme")
-		await _reel_like_player(6, 25.0, finger)
+		await _reel_like_player(6, 25.0, at)
 	elif _state() == FishingSession.State.WAITING:
 		# Saldırı olmadı (balık vazgeçti): yem sonuna kadar getirilir.
 		_touch(1, finger, true)
@@ -2026,14 +2030,16 @@ func _play_video() -> void:
 ## (rütbe 9, en iyi takımın çoğu, sandal, sazlıkta dolu tuzak); her çekim bir bölgede. Kamerayı bot
 ## yönetir (_cam_shot): aksiyon ortadaki kare kırpmada kalır. Sözler kurguda yazıyla verilir: ipucu çubuğu
 ## kırpmaya sığmaz, gizlenir. Nadir balıkları bot sahneler (türü ve boyu); kurallar aynen işler.
-## Günlük: REELS SYNC (kayıtta 2 karelik beyaz parlama), TAKE, MARK, CUT (kamera sıçraması, kararma),
+## Günlük: REELS SYNC (kayıtta beyaz parlama; satır beyazın çizildiği karede), TAKE, MARK, CUT (kamera sıçraması, kararma),
 ## PANEL (panelin ekrandaki yeri), TOAST, AIM, END; kare numarası Engine.get_frames_drawn().
 func _play_reels() -> void:
 	_reels_setup()
 	await _wait(1.2)
-	# Kurgu aracı kaydın karelerini günlükle bu parlamayla eşler.
-	_overlay.call("flash", 2)
+	# Kurgu aracı kaydın karelerini günlükle bu parlamayla eşler: SYNC beyazın çizildiği karede yazılır.
 	var view := get_viewport().get_visible_rect().size
+	var flashed := Signal(_overlay, "flashed")
+	_overlay.call("flash", 2)
+	await flashed
 	_reels_log("SYNC", "%d %d" % [int(view.x), int(view.y)])
 	await _wait(0.4)
 	var db := GameState.db
