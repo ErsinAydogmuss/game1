@@ -13,6 +13,10 @@ var _caption_label: Label
 var _fast: Label
 var _caption_tween: Tween
 var _title_tweens: Array[Tween] = []
+## Senk parlaması: kalan kare sayısı ve bu karede ekranın tamamı beyaz mı (reels: kurgu aracı kaydın
+## karelerini günlükle bununla eşler).
+var _flash: int = 0
+var _flashing: bool = false
 
 
 func _ready() -> void:
@@ -82,6 +86,11 @@ func show_caption(text: String, duration: float) -> void:
 	_caption_tween.tween_property(_caption, "modulate:a", 0.0, 0.4)
 
 
+## Sonraki frames kare (çağrıldığı kare dahil) ekranın tamamı beyaz.
+func flash(frames: int) -> void:
+	_flash = frames
+
+
 func finger_down(index: int, pos: Vector2) -> void:
 	_fingers[index] = pos
 
@@ -98,6 +107,9 @@ func finger_up(index: int) -> void:
 
 
 func _process(delta: float) -> void:
+	_flashing = _flash > 0
+	if _flash > 0:
+		_flash -= 1
 	for ripple in _ripples:
 		ripple["t"] = float(ripple["t"]) + delta
 	_ripples = _ripples.filter(func(r: Dictionary) -> bool: return float(r["t"]) < 0.45)
@@ -108,6 +120,9 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if _flashing:
+		draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)
+		return
 	if _fast.visible:
 		# İki üçgen: hızlı sarma simgesi.
 		var o := _fast.position + Vector2(-150.0, 18.0)

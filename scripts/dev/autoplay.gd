@@ -50,6 +50,12 @@ extends Node
 ##     çantasından spin, dur-kalk ve turna; haritadan sazlığa geç, dolu tuzağı topla (kerevitler);
 ##     çantadan dip, sehpa, zil ve koşu, aynalı sazan; haritadan dere ağzına geç, çantadan sinek,
 ##     sürüklenme, halka ve sıçrayan alabalık.
+##   reels: Instagram Reels reklamının çekimi (--write-movie ile; tools/reels_ad.py dikey videoyu kurgular):
+##     rütbe 9'un oyuncusu. İskelede Nine ve Dede yakın çekim, uzaklaşan geniş çekim; nilüferli koyda
+##     altın sazan, kayalık burunda spinle turna, sazlıkta dolu tuzak ve dipte aynalı sazan, dere ağzında
+##     sinekle alabalık, haritadan sandalla derin ortaya, efsanevi mersin (Dede haber verir) ve "Göle
+##     bırak", defter. Kamerayı bot yönetir (aksiyon ortadaki kare kırpmada kalır); önemli anlar
+##     günlüğe "REELS MARK <kare> <çekim>.<olay>" diye yazılır. --reels-only=gold,legend: yalnızca o çekimler.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -71,6 +77,44 @@ var _results: Array[String] = []
 var _taken: Dictionary = {}
 ## Son çekişmede balık sudan sıçradı mı (_reel_like_player).
 var _seen_jump: bool = false
+## true iken dokunuşların izi çizilmez (yakın çekimde Dede'ye dokunmak, son kartın arka planı).
+var _hide_fingers: bool = false
+## _shadow_at öteki gölgeleri buraya bırakır (sıra, konulan balığın yeri → nokta); geçersizse iskelenin
+## çevresindeki sabit yerlere.
+var _park_fn: Callable = Callable()
+
+## Reels: çekimler sırasıyla (--reels-only= ile bir kısmı), yakın çekimlerin eğimi (yüzler görünsün)
+## ve efsanevi çekişmede bırakma gecikmesi (kare; geç bırakan oyuncu: gerilim kırmızıya çıkar, "BIRAK!").
+const REELS_TAKES: Array[String] = ["dock", "gold", "spin", "reeds", "fly", "legend", "book"]
+const REELS_CLOSE_PITCH := deg_to_rad(42.0)
+const REELS_LEGEND_REACTION := 14
+## Defterde önceden olan türler [tür, boy, yıldız]: bot onlardan küçüğünü tutar (rekor kartı açılmaz);
+## altın sazan ve mersin yeni tür, yayın ve dere alabalığı silüet kalır.
+const REELS_RECORDS := [["rudd", 27, 3], ["carp", 66, 4], ["perch", 38, 3], ["silverside", 15, 3], ["bream", 48, 3],
+		["tench", 44, 3], ["chub", 41, 3], ["crayfish", 14, 3], ["pike", 98, 4], ["mirror_carp", 80, 4],
+		["trout", 50, 4], ["zander", 70, 3]]
+## Rütbe 9'un takımı: iri balık (4★ altın sazan ve mersin) kopmasın; tekniklerin kamışları, tuzak, büyük
+## file (kova dolmasın), sandal.
+const REELS_GEAR := ["rod_float_carbon", "line_braid", "reel_pro", "hook_large", "bobber_bright", "rod_spin_heavy",
+		"lure_crank", "rod_carp_2", "feeder", "rod_fly_2", "fly_streamer", "trap_1", "keepnet_big", "boat", "net"]
+var _reels_only: PackedStringArray = PackedStringArray()
+## Reels'te parmağın yeri: kırpmanın içinde, sağ altta (aksiyonu örtmez).
+var _finger := Vector2(260, 520)
+## Kamera yönetmeni: her kare istenen çerçeve ({point, zoom, pitch}); geçersizse oyunun kamerası.
+var _cam_shot: Callable = Callable()
+var _shot_rate: float = 2.5
+## Çekimin kurulduğundan ve oturumun son durum değişikliğinden beri geçen süre (sn).
+var _shot_t: float = 0.0
+var _state_t: float = 0.0
+## İşaretlerin öneki (çekimin adı), izlenen olayların son hâli, işaret sayıları ve bildirimler.
+var _mark_tag: String = "setup"
+var _watch: Dictionary = {}
+var _marks: Dictionary = {}
+var _toasts: Array[String] = []
+## _shadow_at'in son yerleştirdiği balık: reels'te takıma yalnızca o gelir (öteki gölge fark ederse
+## geri çekilir; dipte uzağa atılan kurşunun yanında bekleyen gölge 20 sn yolu kapatıyordu).
+var _placed: FishShadow = null
+var _no_bites: bool = false
 
 
 func _ready() -> void:
@@ -85,6 +129,10 @@ func _ready() -> void:
 			_inset = float(arg.get_slice("=", 1))
 		elif arg.begins_with("--fish="):
 			_only_fish = arg.get_slice("=", 1)
+		elif arg.begins_with("--reels-only="):
+			_reels_only = arg.get_slice("=", 1).split(",", false)
+	# Kamera yönetmeni ve olay günlüğü yalnızca reels'te (_process).
+	set_process(_scenario == "reels")
 	if not _shots_dir.is_empty():
 		DirAccess.make_dir_recursive_absolute(_shots_dir)
 	GameState.persist = false
@@ -122,6 +170,8 @@ func _ready() -> void:
 			_play_fly_only.call_deferred()
 		"trap":
 			_play_trap_only.call_deferred()
+		"reels":
+			_play_reels.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -1447,12 +1497,11 @@ func _play_fly() -> void:
 ## fish_id verilirse o türden bir gölge sineğin akıntı aşağısında ona bakar (ötekiler uzakta).
 ## strike: halka çıkınca VUR'a dokunur ve bir oyuncu gibi çekişir; değilse balık sineğin altına
 ## gelince dokunur (erken). Balık yoksa sinek kendiliğinden dönene kadar bekler. Her an bir kez
-## görüntülenir.
-func _fly_cast(fish_id: String, strike: bool) -> Dictionary:
+## görüntülenir. finger: dokunulan yer (ekranın her yeri eylem).
+func _fly_cast(fish_id: String, strike: bool, finger: Vector2 = Vector2(260, 520)) -> Dictionary:
 	var out := { "drift": 0.0, "drift_hint": false, "line": false, "under": false, "rise": false, "hooked": false,
 			"jumped": false, "caught": false, "early": false, "came_back": false }
 	var session := _session()
-	var finger := Vector2(260, 520)
 	var card: FishCard = main.get("card")
 	var target := _fly_target(session, not fish_id.is_empty())
 	if not target.is_finite():
@@ -1504,7 +1553,7 @@ func _fly_cast(fish_id: String, strike: bool) -> Dictionary:
 	_touch(1, finger, false)
 	await _wait_frames(1)
 	if _state() == FishingSession.State.FIGHTING:
-		await _reel_like_player(6, 40.0)
+		await _reel_like_player(6, 40.0, finger)
 	out["jumped"] = _seen_jump
 	out["caught"] = _state() == FishingSession.State.CAUGHT
 	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE or card.visible, 4.0)
@@ -1549,13 +1598,12 @@ func _travel_to(zone: String) -> void:
 
 ## Dipte bir atış: balıkçının baktığı yöne atar (takım menzilin sonuna düşer); bir balığı (fish_id)
 ## takımla balıkçının arasına koyar; koklamada dokunmaz (strike false ise ilk koklamada dokunur:
-## erken), koşuda VUR'a dokunur ve bir oyuncu gibi çekişir.
-func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
+## erken), koşuda (tap_delay kare sonra) VUR'a dokunur ve bir oyuncu gibi çekişir. finger: dokunulan yer.
+func _bottom_cast(strike: bool, fish_id: String = "carp", finger: Vector2 = Vector2(260, 520), tap_delay: int = 6) -> Dictionary:
 	var out := { "reach": 0.0, "on_stand": false, "line_from_stand": false, "sniffed": false, "ran": false,
 			"picked_up": false, "caught": false, "early": false, "draws": 0 }
 	var stand: RodStand = main.get("stand")
 	var card: FishCard = main.get("card")
-	var finger := Vector2(260, 520)
 	var fish := _shadow_at(_angler().pos2() + _angler().facing * 3.0, Vector2(0, 1), fish_id, 300000)
 	await _tap_control(_hud().action_button)
 	if not await _wait_state(FishingSession.State.WAITING, 3.0):
@@ -1570,6 +1618,8 @@ func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
 	if fish != null:
 		var toward := (session.angler - session.bobber).normalized()
 		fish.pos = session.bobber + toward * 2.0
+		# Kurşuna dönük: tam ters bakan gölge dönemez (yönün karışımı aynı doğruda kalır), uzaklaşırdı.
+		fish.heading = -toward
 		fish.mode = FishShadow.Mode.PAUSE
 		fish.timer = 1_000_000
 	await _shot_once("15_dip_sehpa")
@@ -1594,7 +1644,7 @@ func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
 		return out
 	if not await _wait_state(FishingSession.State.BITING, 12.0):
 		return out
-	await _wait_frames(6)
+	await _wait_frames(tap_delay)
 	out["ran"] = stand.get("_running") == true
 	await _shot_once("17_kosu")
 	_touch(1, finger, true)
@@ -1603,7 +1653,7 @@ func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
 	_touch(1, finger, false)
 	await _wait_frames(1)
 	if _state() == FishingSession.State.FIGHTING:
-		await _reel_like_player(6, 40.0)
+		await _reel_like_player(6, 40.0, finger)
 	out["caught"] = _state() == FishingSession.State.CAUGHT
 	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE or card.visible, 4.0)
 	if card.visible and fish_id != "mirror_carp":
@@ -1616,13 +1666,14 @@ func _bottom_cast(strike: bool, fish_id: String = "carp") -> Dictionary:
 ## Spinde bir atış: bir levreği (fish_id) p'ye (balıkçıdan uzağa bakan) koyar, ötesine atar, basılı tutup yemi
 ## getirir (yem balığın önünden gelir); balık peşine düşünce dur-kalk yapar (evreler kuraldaki en kısa
 ## evreden uzun). Saldırı anında basılıysa balık kendiliğinden takılır ("auto"), değilse VUR'a dokunur
-## ("tap"); sonra bir oyuncu gibi çekişir. Her an bir kez görüntülenir.
-func _spin_cast(p: Vector2, cast_to: Vector2, fish_id: String = "perch") -> Dictionary:
+## ("tap"); sonra bir oyuncu gibi çekişir. Her an bir kez görüntülenir. heading: balığın baktığı yön
+## (atışın yönü); finger: dokunulan yer.
+func _spin_cast(p: Vector2, cast_to: Vector2, fish_id: String = "perch", heading: Vector2 = Vector2(0, -1),
+		finger: Vector2 = Vector2(260, 520)) -> Dictionary:
 	var out := { "moved": 0.0, "hidden": false, "followed": false, "reel_hint": false, "follow_hint": false,
 			"strike": "", "caught": false, "draws": 0 }
-	var finger := Vector2(260, 520)
 	var card: FishCard = main.get("card")
-	_shadow_at(p, Vector2(0, -1), fish_id, 300000)
+	_shadow_at(p, heading, fish_id, 300000)
 	await _tap_world(cast_to)
 	if not await _wait_state(FishingSession.State.WAITING, 3.0):
 		return out
@@ -1665,7 +1716,7 @@ func _spin_cast(p: Vector2, cast_to: Vector2, fish_id: String = "perch") -> Dict
 		await _wait_frames(1)
 	if _state() == FishingSession.State.FIGHTING:
 		await _shot_once("09_cekisme")
-		await _reel_like_player(6, 25.0)
+		await _reel_like_player(6, 25.0, finger)
 	elif _state() == FishingSession.State.WAITING:
 		# Saldırı olmadı (balık vazgeçti): yem sonuna kadar getirilir.
 		_touch(1, finger, true)
@@ -1967,6 +2018,680 @@ func _play_video() -> void:
 	_quit()
 
 
+# --- Reels: Instagram reklamının çekimi -------------------------------------------------
+
+## Reels reklamının çekimi (kurgu: tools/reels_ad.py; CLAUDE.md "Reels videosu"). Dönen bir oyuncu
+## (rütbe 9, en iyi takımın çoğu, sandal, sazlıkta dolu tuzak); her çekim bir bölgede. Kamerayı bot
+## yönetir (_cam_shot): aksiyon ortadaki kare kırpmada kalır. Sözler kurguda yazıyla verilir: ipucu çubuğu
+## kırpmaya sığmaz, gizlenir. Nadir balıkları bot sahneler (türü ve boyu); kurallar aynen işler.
+## Günlük: REELS SYNC (kayıtta 2 karelik beyaz parlama), TAKE, MARK, CUT (kamera sıçraması, kararma),
+## PANEL (panelin ekrandaki yeri), TOAST, AIM, END; kare numarası Engine.get_frames_drawn().
+func _play_reels() -> void:
+	_reels_setup()
+	await _wait(1.2)
+	# Kurgu aracı kaydın karelerini günlükle bu parlamayla eşler.
+	_overlay.call("flash", 2)
+	var view := get_viewport().get_visible_rect().size
+	_reels_log("SYNC", "%d %d" % [int(view.x), int(view.y)])
+	await _wait(0.4)
+	var db := GameState.db
+	var save := GameState.save
+	var start_rank := Rank.rank(db, save)
+	for take in REELS_TAKES:
+		if not _reels_only.is_empty() and not take in _reels_only:
+			continue
+		match take:
+			"dock":
+				await _reels_dock()
+			"gold":
+				await _reels_gold()
+			"spin":
+				await _reels_spin()
+			"reeds":
+				await _reels_reeds()
+			"fly":
+				await _reels_fly()
+			"legend":
+				await _reels_legend()
+			"book":
+				await _reels_book()
+	_set_shot(Callable())
+	_check("reels: rütbe değişmedi (%d), kova dolmadı (%d/%d)" % [Rank.rank(db, save), save.bucket.size(),
+			Bucket.capacity(db, save)], Rank.rank(db, save) == start_rank and not Bucket.is_full(db, save))
+	_reels_log("END", "")
+	GameState.clock.fixed_unix = -1
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Reels oyuncusu: rütbe 9 (rütbe 10'a çekimdeki balıklar yetmez), defterde 12 tür, takım (REELS_GEAR),
+## Dede'nin ve Nine'nin ilk kez söylenen sözleri, bölge önerileri ve tekniklerin ipuçları çoktan
+## görülmüş; sazlıkta oyun kapalıyken dolmuş bir tuzak. Ortam sesi kapalı (kurguda kesintisiz eklenir).
+func _reels_setup() -> void:
+	_use_save(40)
+	var db := GameState.db
+	var save := GameState.save
+	var spot := str(main.get("spot_id"))
+	save.coins = 2450
+	save.xp = db.rank_xp[8] + 100
+	save.settings["easy"] = false
+	save.settings["perf"] = false
+	for f: Array in REELS_RECORDS:
+		Records.add(save.records, f[0], f[1], f[2], 0)
+	for id: String in REELS_GEAR:
+		if not id in save.owned:
+			save.owned.append(id)
+		Economy.equip(db, save, id)
+	for t: String in ContentDB.TECHNIQUES:
+		save.flags["told_open_" + t] = true
+		save.flags["told_tech_" + t] = true
+		save.flags["tech_casts_" + t] = 9
+	for key: String in ["told_open_trap", "told_trap_line", "told_trap_first", "told_snag", "told_fly_still"]:
+		save.flags[key] = true
+	for z in db.zones_of(spot):
+		save.flags["visited_" + str(z["id"])] = true
+		save.flags[Elder.SUGGEST_FLAG % str(z["id"])] = true
+	var reeds := db.zone(spot, "reeds")
+	var stand: Vector2 = (reeds["stands"] as Array)[0]
+	var clock := GameState.clock
+	var t0 := clock.now_unix()
+	clock.fixed_unix = t0
+	var at := TrapSim.spot_near(db, save, spot, "reeds", stand, Vector2(0.0, -1.0))
+	if at != Dice.NO_POINT:
+		TrapSim.place(db, save, spot, "reeds", at, t0 - (db.rules.trap_max + 1) * db.rules.trap_fill_s)
+		TrapSim.update_all(db.rules, save, t0)
+	GameState.changed.emit()
+	main.call("_on_gear_changed")
+	# Dipteki sehpa yakın çekimini (bir kez, kamera sıçraması) yönetmen yapar.
+	_taken["15b_sehpa_yakin"] = true
+	_park_fn = _reels_park_point
+	(_hud().get("_hint") as Control).modulate.a = 0.0
+	for player: AudioStreamPlayer in (Sounds.get("_ambience") as Array):
+		player.stop()
+	var view := get_viewport().get_visible_rect().size
+	_finger = Vector2(view.x * 0.5 + 360.0, view.y * 0.7)
+
+
+## İskele: Nine tezgâhında selam verir, Dede gölün sırrını söyler (yakın çekimler, yavaşça yaklaşan
+## kamera); son kartın arka planı için uzaklaşan geniş çekim (balıkçı atar, Dede şamandırayı izler).
+func _reels_dock() -> void:
+	var nine := _nine()
+	var elder := _elder()
+	var nine_at := nine.head_point() + Vector3(0.1, -0.35, 0.1)
+	_set_shot(func() -> Dictionary: return _frame(nine_at, _ease(0.4, 0.31, 2.6, _shot_t), REELS_CLOSE_PITCH))
+	await _reels_go("dock_cove")
+	await _reels_technique("float")
+	_take("dock")
+	await _wait(0.8)
+	nine.greet()
+	_mark("nine")
+	var greeted := nine.bubble.is_showing()
+	await _wait(2.0)
+	_check("reels: iskele: Nine selam verir", greeted)
+	var elder_at := elder.head_point() + Vector3(0.0, -0.3, 0.0)
+	_set_shot(func() -> Dictionary: return _frame(elder_at, _ease(0.42, 0.32, 3.0, _shot_t), REELS_CLOSE_PITCH))
+	_snap_shot()
+	await _wait(0.7)
+	# Sıradaki öğüt gölün sırrı (UI_DEDE_TIP_5): Dede'ye gerçek bir dokunuş (iz çizilmez: yakın çekim).
+	var tips := Elder.tips(GameState.db, GameState.save)
+	main.set("_tip_index", tips.find(Elder.TIP_KEY % 5))
+	_hide_fingers = true
+	await _tap(_screen(elder.head_point()))
+	_hide_fingers = false
+	_mark("dede")
+	_check("reels: iskele: Dede gölün sırrını söyler", str(main.get("_hint_shown")) == Elder.TIP_KEY % 5
+			and elder.bubble.is_showing())
+	await _wait(2.6)
+	# Uzaklaşan geniş çekim: balıkçı atar; gölgeler uzakta (balık gelmez, "Kaçırdın" çıkmaz).
+	var up := FollowCamera.screen_up()
+	var wide := _angler().global_position.lerp(elder.global_position, 0.5) + Vector3(up.x, 0.0, up.y) * 1.5
+	_set_shot(func() -> Dictionary: return _frame(wide, _ease(0.85, 1.5, 5.5, _shot_t), deg_to_rad(52.0)))
+	_snap_shot()
+	_mark("outro")
+	_park_all()
+	var spot := _reels_spot(5.0, 0.0)
+	await _wait(0.8)
+	_hide_fingers = true
+	if not spot.is_empty():
+		await _tap_world(spot[0])
+	await _wait(5.2)
+	if _session().line_out():
+		await _tap(_finger)
+	_hide_fingers = false
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+
+
+## Nilüferli koy: Destansı altın sazan şamandıraya süzülür (yaklaşan kamera), dalar, bir vuruş sonra
+## VUR, çekişme (kamera geri çekilir); elde mor ışık sütunu, kart.
+func _reels_gold() -> void:
+	_set_shot(func() -> Dictionary: return _game_frame(0.9))
+	await _reels_go("lily_cove")
+	await _reels_technique("float")
+	_take("gold")
+	await _wait(0.6)
+	# Koy küçük: nilüfersiz su (kıyıdan 3,2 m'den uzak) dar. Şamandıra en açık yere, balık oraya en
+	# nilüfersiz yoldan gelir (nilüfer gölgenin üstünde çizilir).
+	var spot := _reels_spot(5.0, 0.0, 3.8)
+	if spot.is_empty():
+		_check("reels: nilüferli koy: atılacak su", false)
+		return
+	var land: Vector2 = spot[0]
+	var from := _reels_open_path(land, 2.6)
+	var fish := _shadow_at(from, land - from, "golden_carp", 800000)
+	await _tap_world(land)
+	if fish == null or not await _wait_state(FishingSession.State.WAITING, 3.0):
+		_check("reels: nilüferli koy: atış", false)
+		return
+	_set_shot(func() -> Dictionary:
+		if _state() in [FishingSession.State.WAITING, FishingSession.State.NIBBLING, FishingSession.State.BITING]:
+			var b := _session().bobber
+			var near := Vector3(b.x, 0.0, b.y).lerp(Vector3(fish.pos.x, 0.0, fish.pos.y), 0.3)
+			return _frame(near, _ease(0.9, 0.5, 4.5, _shot_t), float(main.get("LINE_PITCH")))
+		return _game_frame(0.88))
+	var caught := await _reels_bite("altın sazan", 6)
+	var shown := await _reels_show("altın sazan", 2.2)
+	_check("reels: nilüferli koy: altın sazan tutulur, ışık sütunu ve kart", caught and shown
+			and str(_session().last_catch.get("fish", "")) == "golden_carp")
+
+
+## Kayalık burun: spinle turna (yem gelir, turna peşine düşer, dur-kalk, saldırı), kartı.
+func _reels_spin() -> void:
+	_set_shot(func() -> Dictionary: return _game_frame(0.85))
+	await _reels_go("rocky_point")
+	await _reels_technique("spin")
+	_take("spin")
+	await _wait(0.6)
+	var spot := _reels_spot(5.6, 0.0)
+	if spot.is_empty():
+		_check("reels: kayalık burun: atılacak su", false)
+		return
+	var dir: Vector2 = spot[1]
+	# Yem gelirken kamera yemle turnaya yakın (turna peşinde, dur-kalk, saldırı); çekişmede geri çekilir.
+	_set_shot(func() -> Dictionary:
+		if _state() in [FishingSession.State.WAITING, FishingSession.State.FOLLOWING, FishingSession.State.BITING]:
+			var lure := _session().bobber
+			return _frame(_angler().global_position.lerp(Vector3(lure.x, 0.0, lure.y), 0.62), 0.6,
+					float(main.get("LINE_PITCH")))
+		return _game_frame(0.82))
+	var out := await _spin_cast(_session().angler + dir * 2.8, spot[0], "pike", dir, _finger)
+	_check("reels: kayalık burun: spinle turna tutulur (%s)" % out["strike"], bool(out["followed"])
+			and bool(out["caught"]) and str(_session().last_catch.get("fish", "")) == "pike")
+
+
+## Sazlık: dolu tuzak (4/4, nabız gibi atan yeşil rozet) toplanır; dip: sehpa yakın çekim, zil tek tük
+## (koklama), sonra durmadan (koşu): bir vuruş sonra VUR, aynalı sazan.
+func _reels_reeds() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var traps: TrapMarkers = main.get("traps")
+	var catch_fx: CatchFx = main.get("catch_fx")
+	var trap_id := int(save.traps[0]["id"]) if not save.traps.is_empty() else -1
+	var at := traps.mark_point(trap_id) if trap_id >= 0 and traps.has_mark(trap_id) else Vector3.INF
+	_set_shot(func() -> Dictionary:
+		if catch_fx.is_showing() or not at.is_finite():
+			return _game_frame(0.85)
+		return _frame(_angler().global_position.lerp(at, 0.7), _ease(0.74, 0.64, 2.2, _shot_t), FollowCamera.PITCH))
+	await _reels_go("reeds")
+	await _reels_technique("float")
+	_take("trap")
+	if not at.is_finite():
+		_check("reels: sazlık: dolu tuzak", false)
+	else:
+		var full := traps.shown_count(trap_id) == db.rules.trap_max
+		await _wait(1.8)
+		_aim("trap.full", at)
+		_mark("tap")
+		await _tap(_screen(at))
+		await _wait(2.6)
+		var kept := save.bucket.filter(func(b: Dictionary) -> bool: return str(b["fish"]) == "crayfish").size()
+		_check("reels: sazlık: dolu tuzak (%s) toplanır, kerevit ×%d kovada" % [full, kept], full
+				and kept == db.rules.trap_max)
+	await _reels_technique("bottom")
+	_take("dip")
+	var stand: RodStand = main.get("stand")
+	var card: FishCard = main.get("card")
+	_set_shot(func() -> Dictionary:
+		if stand.visible and _state() in [FishingSession.State.WAITING, FishingSession.State.NIBBLING,
+				FishingSession.State.BITING]:
+			# Sehpa, yatan kamış ve ucundaki zil (balıkçının şapkası kadrajın kenarında).
+			return _frame(stand.global_position.lerp(stand.tip_point(), 0.45) + Vector3(0.0, 0.2, 0.0), 0.5,
+					deg_to_rad(48.0))
+		return _game_frame(0.9))
+	await _wait(0.6)
+	var out := await _bottom_cast(true, "mirror_carp", _finger, 15)
+	_check("reels: sazlık: dipte zil tek tük, sonra durmadan; aynalı sazan tutulur", bool(out["sniffed"])
+			and bool(out["ran"]) and bool(out["caught"]))
+	if await _wait_until(func() -> bool: return card.visible, 3.0):
+		await _wait(1.4)
+		if card.visible and card.ok_button != null:
+			await _tap(card.ok_button.get_global_rect().get_center())
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+
+
+## Dere ağzı: sinek akıntıda süzülür, alabalık altına gelir, halka: VUR, sudan sıçrar; sonra şamandıra
+## (sinek derin ortada avlanılmaz).
+func _reels_fly() -> void:
+	var bobber: Bobber = main.get("bobber")
+	# Sinek ve altına gelen alabalık yakından; takılınca ilk sıçrayış da (çekişmenin ilk 1,4 sn'si) yakın.
+	_set_shot(func() -> Dictionary:
+		var state := _state()
+		var session := _session()
+		if bobber.visible and state in [FishingSession.State.WAITING, FishingSession.State.NIBBLING,
+				FishingSession.State.BITING]:
+			var f := session.bobber
+			return _frame(_angler().global_position.lerp(Vector3(f.x, 0.0, f.y), 0.85),
+					0.62 if state == FishingSession.State.WAITING else 0.52, float(main.get("LINE_PITCH")))
+		if state == FishingSession.State.FIGHTING and _state_t < 1.4:
+			var p := session.fight_point()
+			return _frame(_angler().global_position.lerp(Vector3(p.x, 0.0, p.y), 0.75), 0.6, float(main.get("LINE_PITCH")))
+		return _game_frame(0.82))
+	await _reels_go("stream_mouth")
+	await _reels_technique("fly")
+	_take("fly")
+	await _wait(0.6)
+	var out := await _fly_cast("trout", true, _finger)
+	# Halka (rise) Dede'nin ipucuyla denetlenir; ipuçları bu kayıtta susturuldu: halkayı işaret (fly.biting) gösterir.
+	_check("reels: dere ağzı: sinekle alabalık, halka, sudan sıçrar", bool(out["under"]) and _marks.has("fly.biting")
+			and bool(out["hooked"]) and bool(out["jumped"]) and bool(out["caught"]))
+	await _reels_technique("float")
+
+
+## Haritadan sandalla derin ortaya; efsanevi mersin: altın izli gölge şamandıraya yüzer, balıkçıya 9 m
+## kalınca Dede haber verir; çekişmede geç bırakılınca kırmızı ("BIRAK!"); elde altın ışık sütunu, kart,
+## "Göle bırak" ve bildirim.
+func _reels_legend() -> void:
+	await _reels_technique("float")
+	_set_shot(func() -> Dictionary: return _game_frame(1.0))
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	_take("map")
+	var panel: MapPanel = main.get("map_panel")
+	var fade: Fade = main.get("fade")
+	await _tap_control(_hud().map_button)
+	if not await _wait_until(func() -> bool: return panel.visible, 2.0):
+		_check("reels: harita açılır", false)
+		return
+	await _wait(0.4)
+	_panel_log("map", panel.get("_panel"))
+	_mark("open")
+	await _wait(1.2)
+	_mark("tap")
+	await _tap_control(panel.view.badge("deep_water"))
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	_take("legend")
+	_check("reels: haritadan sandalla derin ortaya", bool(main.get("in_boat")))
+	await _wait(1.4)
+	var spot := _reels_spot(5.5, 5.1)
+	if spot.is_empty():
+		_check("reels: derin orta: atılacak su", false)
+		return
+	var land: Vector2 = spot[0]
+	var dir: Vector2 = spot[1]
+	_park_all()
+	await _tap_world(land)
+	if not await _wait_state(FishingSession.State.WAITING, 3.0):
+		_check("reels: derin orta: atış", false)
+		return
+	await _wait(0.5)
+	# Mersin balıkçıdan 10,6 m uzakta, şamandıranın ötesinde; şamandıraya yüzer, 3 m kalınca fark eder.
+	var fish := _shadow_at(_session().angler + dir * 10.6, -dir, "sturgeon", 750000)
+	if fish == null:
+		_check("reels: derin orta: mersin", false)
+		return
+	fish.mode = FishShadow.Mode.WANDER
+	fish.target = land
+	fish.speed = 0.5
+	_set_shot(func() -> Dictionary:
+		if _state() in [FishingSession.State.WAITING, FishingSession.State.NIBBLING, FishingSession.State.BITING]:
+			var b := _session().bobber
+			var near := Vector3(b.x, 0.0, b.y).lerp(Vector3(fish.pos.x, 0.0, fish.pos.y), 0.45)
+			return _frame(near, _ease(0.95, 0.62, 6.0, _shot_t), float(main.get("LINE_PITCH")))
+		return _game_frame(0.85))
+	var sim := _session().sim
+	var noticed := await _wait_until(func() -> bool: return (main.get("_announced") as Dictionary).has(fish.id), 10.0)
+	_check("reels: derin orta: efsanevi gölge, Dede haber verir", noticed
+			and str(main.get("_hint_shown")) == "UI_DEDE_LEGEND_NEAR")
+	await _wait_until(func() -> bool: return sim.approacher == fish, 10.0)
+	var caught := await _reels_bite("mersin", REELS_LEGEND_REACTION)
+	var red := int(_marks.get("legend.red", 0))
+	_check("reels: derin orta: mersin tutulur (kırmızı %d kez)" % red, caught and red > 0
+			and str(_session().last_catch.get("fish", "")) == "sturgeon")
+	var shown := await _reels_show("mersin", 2.4)
+	await _wait(1.6)
+	var told := UiKit.upper(tr("UI_RELEASED") % tr("FISH_sturgeon"))
+	_check("reels: mersin göle bırakılır (kart, bildirim)", shown and told in _toasts)
+
+
+## Balık Defteri: ilk sayfa (12 tür), ikinci sayfa (altın sazan ve mersin, yayın ve dere alabalığı silüet).
+func _reels_book() -> void:
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	_take("book")
+	var book: BookPanel = main.get("book_panel")
+	await _tap_control(_hud().book_button)
+	if not await _wait_until(func() -> bool: return book.visible, 2.0):
+		_check("reels: defter açılır", false)
+		return
+	await _wait(0.4)
+	_panel_log("book", book.get("_panel"))
+	_panel_log("book_grid", book.get("_grid"))
+	_mark("open")
+	await _wait(1.8)
+	var pager: HBoxContainer = book.get("_pager")
+	if pager.get_child_count() > 1:
+		_mark("page2")
+		await _tap_control(pager.get_child(1) as Control)
+	await _wait(1.8)
+	_check("reels: defter açılır, iki sayfa (%d tür)" % Records.species_count(GameState.save.records),
+			pager.get_child_count() > 1)
+	await _tap(book.close_button.get_global_rect().get_center())
+	await _wait(0.6)
+
+
+## Şamandıra ısırması: dalınca bir vuruş (16 kare) sonra VUR, sonra bir oyuncu gibi çekişir (reaction
+## kare gecikmeyle bırakır). Tutulduysa true.
+func _reels_bite(label: String, reaction: int) -> bool:
+	if not await _wait_state(FishingSession.State.BITING, 40.0):
+		_check("reels: %s ısırmadı" % label, false)
+		return false
+	await _wait_frames(15)
+	_touch(1, _finger, true)
+	await _wait_frames(2)
+	_touch(1, _finger, false)
+	await _wait_frames(1)
+	if _state() == FishingSession.State.FIGHTING:
+		await _reel_like_player(reaction, 60.0, _finger)
+	return _state() == FishingSession.State.CAUGHT
+
+
+## Balık elde (ışık sütunu) ve kartı: kart hold sn açık kalır, sonra düğmesine dokunulur ("Harika!" ya
+## da koruma altındaki türde "Göle bırak"; MARK <çekim>.ok). Kart açıldıysa true.
+func _reels_show(label: String, hold: float) -> bool:
+	var catch_fx: CatchFx = main.get("catch_fx")
+	var card: FishCard = main.get("card")
+	if not await _wait_until(func() -> bool: return catch_fx.is_showing(), 3.0):
+		_check("reels: %s elde gösterilmedi" % label, false)
+		return false
+	if not await _wait_until(func() -> bool: return card.visible, 3.0):
+		return false
+	await _wait(hold)
+	if card.visible and card.ok_button != null:
+		_mark("ok")
+		await _tap(card.ok_button.get_global_rect().get_center())
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	return true
+
+
+## Haritadan geçer; geçiş olmadıysa (zaten oradaydı) kamera istenen çerçeveye hemen geçer. Kararmada
+## yönetmen yeni yeri hemen çerçeveler (_direct).
+func _reels_go(zone: String) -> void:
+	var fade: Fade = main.get("fade")
+	main.call("_travel", zone)
+	await _wait_frames(2)
+	if fade.busy():
+		await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	else:
+		_snap_shot()
+	await _wait(0.4)
+
+
+## Elindeki teknik (Takım Çantası'ndaki seçimin yolu); kamış ve takım değişene kadar bekler.
+func _reels_technique(technique: String) -> void:
+	if GameState.save.technique == technique and _session().technique.id == technique:
+		return
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	main.call("_on_technique_selected", technique)
+	var bobber: Bobber = main.get("bobber")
+	await _wait_until(func() -> bool:
+		return _session().technique.id == technique and bobber.kind == Bobber.kind_for(technique), 2.0)
+	await _wait(0.3)
+
+
+## Atış noktasından suya bir hedef: ekranın yukarısına en yakın yön (±15° adımlarla; dikey kırpmada
+## balıkçı ile takım alt alta), dist m önde (bulunmazsa biraz uzak ya da yakın; menzilde), kıyıdan en
+## az shore m (nilüferler kıyıdan 3,2 m'ye kadar: balık altlarında görünmez) ve iskeleden uzak; ötesinde
+## beyond m de öyle su (balık oraya konur). [nokta, yön] ya da bulunamazsa boş.
+func _reels_spot(dist: float, beyond: float, shore: float = 1.0) -> Array:
+	var session := _session()
+	var lake := session.lake
+	for k in 24:
+		var dir := FollowCamera.screen_up().rotated(deg_to_rad(15.0 * ((k + 1) >> 1)) * (1.0 if k % 2 == 1 else -1.0))
+		for d: float in [dist, dist + 1.0, dist - 0.5, dist + 2.0]:
+			var p := session.angler + dir * minf(d, session.range_m() - 0.5)
+			var q := p + dir * beyond
+			if lake.is_water(p) and lake.shore_distance(p) > shore and not lake.on_dock(p) and lake.is_deep(q, 1.0) \
+					and lake.shore_distance(q) > shore and not lake.on_dock(q):
+				return [p, dir]
+	return []
+
+
+## Takıma radius m uzaktan gelen balığın başlangıcı: yolu kıyıdan en uzak kalan yön (nilüferler ve sığ
+## kıyı şeridi yolun üstünde olmasın).
+func _reels_open_path(to: Vector2, radius: float) -> Vector2:
+	var lake := _session().lake
+	var best := to + FollowCamera.screen_up() * radius
+	var best_score := -INF
+	for k in 36:
+		var start := to + Vector2.from_angle(TAU * k / 36.0) * radius
+		var score := INF
+		for i in 6:
+			var p := start.lerp(to, i / 5.0)
+			score = minf(score, lake.shore_distance(p) if lake.is_water(p) else -1.0)
+		if score > best_score:
+			best_score = score
+			best = start
+	return best
+
+
+## Öteki gölgelerin bırakıldığı yer: balıkçının çevresinde 9–14 m'de derin su; konulan balıktan ve
+## takımdan uzak (fark etmez), kadrajın dışında. Çok uzağa konan gölge çekilir, yenisi yakında doğardı.
+func _reels_park_point(i: int, avoid: Vector2) -> Vector2:
+	var session := _session()
+	var lake := session.lake
+	var rig := session.bobber if session.line_out() else avoid
+	for r: float in [12.0, 10.0, 14.0, 9.0]:
+		for k in 16:
+			var p := session.angler + Vector2.from_angle(TAU * float((k * 5 + i * 3) % 16) / 16.0) * r
+			if lake.is_deep(p, 0.8) and p.distance_to(avoid) >= 7.0 and p.distance_to(rig) >= 7.0:
+				return p
+	return session.angler + Vector2(40.0, 40.0)
+
+
+## Bütün gölgeler kenara (çekişmedeki dışında); sonraki _shadow_at'e kadar takıma balık gelmez.
+func _park_all() -> void:
+	_placed = null
+	_no_bites = true
+	var i := 0
+	for s in _session().sim.shadows:
+		if s.mode == FishShadow.Mode.HOOKED:
+			continue
+		s.pos = _reels_park_point(i, _session().angler)
+		s.mode = FishShadow.Mode.PAUSE
+		s.timer = 1_000_000
+		i += 1
+
+
+## Bot kendi _process'inde: kamera yönetmeni ve reels günlüğü (yalnızca reels'te açık).
+func _process(delta: float) -> void:
+	_shot_t += delta
+	_state_t += delta
+	_reels_watch()
+	if _cam_shot.is_valid():
+		_direct(delta)
+
+
+## Kamera _cam_shot'ın istediği çerçeveye gider: zoom ve eğim yumuşakça; kararma sürerken hemen (main'in
+## _snap_camera'sı zoom'u 1'e çeker; yeni yer hazır çerçevelenmiş açılsın).
+func _direct(delta: float) -> void:
+	var camera: FollowCamera = main.get("camera")
+	var want: Dictionary = _cam_shot.call()
+	var point: Vector3 = want["point"]
+	camera.target = point
+	if (main.get("fade") as Fade).busy():
+		camera.zoom = float(want["zoom"])
+		camera.pitch = float(want["pitch"])
+		camera.snap(point)
+		return
+	var k := minf(1.0, delta * _shot_rate)
+	camera.zoom = lerpf(camera.zoom, float(want["zoom"]), k)
+	camera.pitch = lerpf(camera.pitch, float(want["pitch"]), k)
+
+
+## Yönetmenin çekimi (geçersiz Callable: kamera oyuna döner; main yumuşakça devralır).
+func _set_shot(shot: Callable) -> void:
+	_cam_shot = shot
+	_shot_t = 0.0
+	main.set("bot_camera", shot.is_valid())
+
+
+## Kamera istenen çerçeveye hemen geçer (kesme: CUT).
+func _snap_shot() -> void:
+	if not _cam_shot.is_valid():
+		return
+	var camera: FollowCamera = main.get("camera")
+	var want: Dictionary = _cam_shot.call()
+	camera.zoom = float(want["zoom"])
+	camera.pitch = float(want["pitch"])
+	camera.snap(want["point"])
+	_reels_log("CUT", "camera")
+
+
+## Oyunun kendi çerçevesi (main._present'teki gibi: olta sudayken eğim, dipte ve sinekte uzak çerçeve,
+## çekişmede ve balık elde yakınlaşma), zoom scale katı (dikey kırpma için biraz yakın).
+func _game_frame(scale: float) -> Dictionary:
+	var session := _session()
+	var far: Vector2 = main.call("_far_frame")
+	var pitch := FollowCamera.PITCH
+	if far.x >= 0.0:
+		pitch = float(main.call("_far_pitch"))
+	elif session.line_out() or session.state == FishingSession.State.LOST:
+		pitch = float(main.get("LINE_PITCH"))
+	var zoom := 1.0
+	if far.x >= 0.0:
+		zoom = far.y
+	elif session.state == FishingSession.State.FIGHTING and session.reel != null:
+		zoom = float(main.get("FIGHT_ZOOM"))
+	elif (main.get("catch_fx") as CatchFx).is_showing():
+		zoom = float(main.get("SHOW_ZOOM"))
+	return _frame(main.call("_focus"), zoom * scale, pitch)
+
+
+func _frame(point: Vector3, zoom: float, pitch: float) -> Dictionary:
+	return { "point": point, "zoom": zoom, "pitch": pitch }
+
+
+## a'dan b'ye seconds sn'de yumuşak geçiş (t: geçen süre): yavaşça yaklaşan ya da uzaklaşan kamera.
+static func _ease(a: float, b: float, seconds: float, t: float) -> float:
+	return lerpf(a, b, smoothstep(0.0, seconds, t))
+
+
+## Reels günlüğü: olayların karesi (MARK <çekim>.<olay>): oturumun durumu (waiting, nibbling, biting,
+## fighting, caught...), balık elde (show), kart (card, card_off), çırpınma (burst), kırmızı (red),
+## sıçrayış (jump), dipte koklama (sniff) ve koşu (bell_run), Dede'nin efsanevi gölge haberi (legend);
+## kararma (CUT fade, fade_end) ve bildirimler (TOAST). Kırpma denetimi (AIM): ısırmada takım, dipte
+## sehpa, elde balık, efsanevi gölge.
+func _reels_watch() -> void:
+	var session := _session()
+	if session == null:
+		return
+	# Takıma yalnızca botun koyduğu balık gelir (son kartın geniş çekiminde hiçbiri): öteki gölge fark
+	# ederse ilgisini kaybeder ve kenara çekilir.
+	var sim := session.sim
+	var intruder := sim.approacher
+	if intruder != null and (_no_bites or (_placed != null and intruder != _placed and _placed in sim.shadows)):
+		sim.lose_interest(intruder)
+		intruder.pos = _reels_park_point(0, _placed.pos if _placed != null else session.angler)
+		intruder.timer = 1_000_000
+	var stand: RodStand = main.get("stand")
+	var state := int(session.state)
+	if state != int(_watch.get("state", -1)):
+		_watch["state"] = state
+		_state_t = 0.0
+		_mark(str(FishingSession.State.find_key(state)).to_lower())
+		if session.state in [FishingSession.State.BITING, FishingSession.State.FOLLOWING]:
+			if session.technique.id == "bottom":
+				_aim(_mark_tag + ".stand", stand.global_position + Vector3(0.0, 0.45, 0.0))
+			else:
+				_aim(_mark_tag + ".rig", Vector3(session.bobber.x, 0.0, session.bobber.y))
+	var reel := session.reel
+	var fighting := session.state == FishingSession.State.FIGHTING and reel != null
+	if _edge("show", (main.get("catch_fx") as CatchFx).is_showing()):
+		_aim(_mark_tag + ".show", main.call("_show_point"))
+	_edge("card", (main.get("card") as FishCard).visible, "card_off")
+	_edge("burst", fighting and reel.thrashing())
+	_edge("red", fighting and reel.in_red)
+	_edge("jump", (main.get("fish_jump") as FishJump).is_jumping())
+	_edge("sniff", stand.visible and float(stand.get("_twitch")) > 0.0)
+	_edge("bell_run", stand.visible and bool(stand.get("_running")))
+	var legends := (main.get("_announced") as Dictionary).size()
+	if legends > int(_watch.get("legends", 0)):
+		_mark("legend")
+		var point := (main.get("shadows") as ShadowLayer).shadow_point(int(main.get("_legend_id")))
+		if point.is_finite():
+			_aim(_mark_tag + ".legend", point)
+	_watch["legends"] = legends
+	var fading := (main.get("fade") as Fade).busy()
+	if fading != bool(_watch.get("fade", false)):
+		_reels_log("CUT", "fade" if fading else "fade_end")
+	_watch["fade"] = fading
+	var hud := _hud()
+	var age := float(hud.get("_toast_age"))
+	var last := float(_watch.get("toast_age", -1.0))
+	if age >= 0.0 and (last < 0.0 or age < last):
+		var text := (hud.get("_toast") as Label).text
+		_toasts.append(text)
+		_reels_log("TOAST", text)
+	_watch["toast_age"] = age
+
+
+## Bir olayın başlangıcı (ve istenirse bitişi) işaretlenir. Başladıysa true.
+func _edge(event: String, on: bool, off_event: String = "") -> bool:
+	var was := bool(_watch.get(event, false))
+	_watch[event] = on
+	if on and not was:
+		_mark(event)
+		return true
+	if was and not on and not off_event.is_empty():
+		_mark(off_event)
+	return false
+
+
+func _take(take: String) -> void:
+	_mark_tag = take
+	_reels_log("TAKE", take)
+
+
+## Olay işareti; --shots verildiyse o anın görüntüsü de (kuru çekimde denetim; bir önceki kare).
+func _mark(event: String) -> void:
+	var key := "%s.%s" % [_mark_tag, event]
+	_marks[key] = int(_marks.get(key, 0)) + 1
+	_reels_log("MARK", key)
+	if not _shots_dir.is_empty():
+		var image := get_viewport().get_texture().get_image()
+		if image != null:
+			image.save_jpg(_shots_dir.path_join("%05d_%s.jpg" % [Engine.get_frames_drawn(), key]), 0.85)
+
+
+func _reels_log(kind: String, text: String) -> void:
+	print("REELS %s %d %s" % [kind, Engine.get_frames_drawn(), text])
+
+
+## Bir kontrolün ekrandaki yeri (kurguda panel kırpması).
+func _panel_log(panel: String, control: Control) -> void:
+	var r := control.get_global_rect()
+	_reels_log("PANEL", "%s %.0f %.0f %.0f %.0f" % [panel, r.position.x, r.position.y, r.size.x, r.size.y])
+
+
+## Dikey kurgu ekranın ortasındaki kareyi (yükseklik kadar genişlik) kırpar: nokta onun içinde mi?
+func _aim(label: String, world: Vector3, margin: float = 70.0) -> void:
+	var p := _screen(world)
+	var view := get_viewport().get_visible_rect().size
+	var dx := p.x - view.x * 0.5
+	_reels_log("AIM", "%s %.0f %.0f" % [label, p.x, p.y])
+	_check("reels: %s kırpmada (dx %.0f, y %.0f)" % [label, dx, p.y], absf(dx) <= view.y * 0.5 - margin
+			and p.y >= margin and p.y <= view.y - margin)
+
+
 ## Harita düğmesine dokunur, bölgenin rozetine dokunur ve kararmanın bitmesini bekler (videoda
 ## haritanın kendisi görünsün diye _travel_to yerine).
 func _map_to(panel: MapPanel, fade: Fade, zone: String) -> void:
@@ -1986,11 +2711,12 @@ func _close_card(card: FishCard) -> void:
 		await _tap(card.ok_button.get_global_rect().get_center())
 
 
-## Çekişmeyi bir oyuncu gibi oynar: eylem düğmesine basar (VUR), sakinken basılı tutar, balık
-## çırpınınca (uyarı) reaction kare sonra bırakır, sakinleşince yeniden basar. Sonuç gelene kadar.
-## Balık sudan sıçrarsa (alabalıklar) _seen_jump olur, ilk sıçrayış görüntülenir.
-func _reel_like_player(reaction: int, timeout: float) -> void:
-	var finger := _hud().action_button.get_global_rect().get_center()
+## Çekişmeyi bir oyuncu gibi oynar: eylem düğmesine (finger verilirse oraya: olta sudayken ekranın
+## her yeri eylem) basar (VUR), sakinken basılı tutar, balık çırpınınca (uyarı) reaction kare sonra
+## bırakır, sakinleşince yeniden basar. Sonuç gelene kadar. Balık sudan sıçrarsa (alabalıklar)
+## _seen_jump olur, ilk sıçrayış görüntülenir.
+func _reel_like_player(reaction: int, timeout: float, at: Vector2 = Vector2.INF) -> void:
+	var finger := at if at.is_finite() else _hud().action_button.get_global_rect().get_center()
 	_touch(1, finger, true)
 	await _wait_frames(2)
 	var hold := true
@@ -2074,7 +2800,7 @@ func _shadow_at(p: Vector2, heading: Vector2, fish_id: String, percentile: int =
 		if chosen == null:
 			chosen = s
 			continue
-		s.pos = parks[i % parks.size()]
+		s.pos = _park_fn.call(i, p) if _park_fn.is_valid() else parks[i % parks.size()]
 		s.mode = FishShadow.Mode.PAUSE
 		s.timer = 1_000_000
 		i += 1
@@ -2084,6 +2810,8 @@ func _shadow_at(p: Vector2, heading: Vector2, fish_id: String, percentile: int =
 	chosen.heading = heading.normalized()
 	chosen.mode = FishShadow.Mode.PAUSE
 	chosen.timer = 1_000_000
+	_placed = chosen
+	_no_bites = false
 	if percentile >= 0:
 		chosen.percentile = percentile
 	if not fish_id.is_empty() or percentile >= 0:
@@ -2146,7 +2874,8 @@ func _touch(index: int, pos: Vector2, pressed: bool) -> void:
 	Input.parse_input_event(ev)
 	if pressed:
 		_finger_pos[index] = pos
-		_overlay.call("finger_down", index, pos)
+		if not _hide_fingers:
+			_overlay.call("finger_down", index, pos)
 	else:
 		_finger_pos.erase(index)
 		_overlay.call("finger_up", index)
