@@ -15,7 +15,9 @@ kenarında "Oyun içi görüntüler · geliştirme sürümü". Son kart: logo, "
 gibi atan "TAKİP ET" (mağaza bağlantısı, rozet ya da indirme sözü yok).
 
 Ses: oyunun sesleri (parçaların kendi sesi) + kesintisiz göl ortam sesi + müzik (oyun sesi
-geldikçe kısılır); müziksiz kopyada müzik yok. Hepsi -14 LUFS, tepe -1,5 dBTP.
+geldikçe kısılır); müziksiz kopyada müzik yok. Hepsi -14 LUFS; tepe kodlamadan önce -1,5 dBTP, AAC'den
+sonra en çok -1 dBTP (ölçülür). Oyun seslerinin tepeleri yüksek olduğu için loudnorm genellikle dinamik
+modda çalışır (kısa süreli ses düzeyi hedefe çekilir; mod günlüğe yazılır).
 
 Çıktı (--out): olta_reels_30.mp4, olta_reels_30_muziksiz.mp4, olta_reels_15.mp4,
 olta_reels_15_muziksiz.mp4 (H.264 High, yuv420p BT.709, 30 fps, AAC 48 kHz, faststart),
@@ -33,6 +35,7 @@ import argparse
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -630,17 +633,46 @@ def mixes(cut, shots, avi_audio, music_dir, tmp):
 
 # --- Çıktı ----------------------------------------------------------------------------------------
 
-def encode(cut, video, overlay_dir, audio, path, quality):
+def encode_video(cut, video, overlay_dir, path, quality):
+    """Görüntü: yazı katmanı + H.264, BT.709 sınırlı aralık. Bir kez kodlanır; müzikli ve müziksiz kopya
+    aynı görüntüyü paylaşır (mux)."""
     spec = EDL["cuts"][cut]
     graph = ("[0:v]format=gbrp[v];[1:v]format=rgba[o];[v][o]overlay=0:0:format=gbrp,"
              "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p[out]")
     run(["ffmpeg", "-v", "error", "-y", "-i", video, "-framerate", str(FPS), "-i",
-         os.path.join(overlay_dir, "o_%04d.png"), "-i", audio, "-filter_complex", graph, "-map", "[out]",
-         "-map", "2:a", "-frames:v", str(spec["frames"]), "-c:v", "libx264", "-profile:v", "high",
+         os.path.join(overlay_dir, "o_%04d.png"), "-filter_complex", graph, "-map", "[out]",
+         "-frames:v", str(spec["frames"]), "-c:v", "libx264", "-profile:v", "high",
          "-preset", "veryfast" if quality == "preview" else "slow", "-crf", "24" if quality == "preview" else "17",
          "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
-         "-r", str(FPS), "-c:a", "aac", "-b:a", "192k", "-ar", str(SR), "-ac", "2", "-shortest",
+         "-r", str(FPS), "-an", path])
+
+
+def mux(video_path, audio, path, cutoff):
+    """Ses AAC'ye kodlanır, görüntü kopyalanır; moov başta (faststart). cutoff: AAC'nin üst frekans sınırı."""
+    run(["ffmpeg", "-v", "error", "-y", "-i", video_path, "-i", audio, "-map", "0:v", "-map", "1:a", "-c:v", "copy",
+         "-c:a", "aac", "-b:a", "192k", "-cutoff", str(cutoff), "-ar", str(SR), "-ac", "2", "-shortest",
          "-movflags", "+faststart", path])
+
+
+def true_peak(path):
+    """Dosyanın gerçek tepesi (dBTP, ebur128; 4 kat örneklemeyle örnekler arası tepe de)."""
+    err = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-vn", "-af", "ebur128=peak=true",
+                          "-f", "null", "-"], capture_output=True, text=True).stderr
+    m = re.search(r"True peak:\s*Peak:\s*(-?inf|-?[\d.]+)\s*dBFS", err[err.rfind("Summary:"):])
+    return float(m.group(1)) if m else 0.0
+
+
+def write_video(video_path, audio, path):
+    """Müzikli ya da müziksiz son dosya. AAC kodlayıcı keskin bir geçişte tepeyi 2 dB'den çok aşırabiliyor
+    (varsayılan sınırda sinek sahnesinde -1,5 dBTP'lik ses +0,9 oldu): 18 kHz'de keser, tepe yine -1 dBTP'yi
+    aşarsa 16 kHz ile yeniden kodlar. Tepeyi döner."""
+    for cutoff in (18000, 16000):
+        mux(video_path, audio, path, cutoff)
+        peak = true_peak(path)
+        if peak <= -1.0:
+            break
+        print("    tepe %.1f dBTP (AAC aşımı): daha düşük sınırla yeniden" % peak)
+    return peak
 
 
 def cover(info, offset, avi, video, fonts, out_dir, tmp):
@@ -819,10 +851,12 @@ def main():
             overlay_frames(cut, fonts, overlay_dir)
             all_shots = shots + [{**end_shot, "at": end_at}]
             audio = mixes(cut, all_shots, avi_audio, music_dir, tmp)
+            video_only = os.path.join(tmp, "%s_video.mp4" % cut)
+            encode_video(cut, base, overlay_dir, video_only, quality)
             for name, suffix in (("music", ""), ("dry", "_muziksiz")):
                 out = os.path.join(args.out, "olta_reels_%s%s.mp4" % (cut, suffix))
-                encode(cut, base, overlay_dir, audio[name], out, quality)
-                print("yazıldı: " + out)
+                peak = write_video(video_only, audio[name], out)
+                print("yazıldı: %s (tepe %.1f dBTP)" % (out, peak))
             contact_sheet(cut, os.path.join(args.out, "olta_reels_%s.mp4" % cut), args.out, shots, fonts)
         cover(info, offset, args.avi, video, fonts, args.out, tmp)
         print("yazıldı: " + os.path.join(args.out, "olta_reels_kapak.jpg"))
