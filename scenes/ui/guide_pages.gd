@@ -252,10 +252,10 @@ static func category_rank(db: ContentDB, category: String) -> int:
 	return low
 
 
-## Takım Çantası'nın açıldığı rütbe: şamandıradan sonraki ilk teknik ya da tuzak (çantanın düğmesi
-## o zaman görünür).
+## Takım Çantası'nın açıldığı rütbe: şamandıradan sonraki ilk tekniğinki (çantanın düğmesi o zaman
+## görünür: main._other_technique_open; tuzak düğmeyi açmaz).
 static func bag_rank(db: ContentDB) -> int:
-	var low := TrapSim.rank(db)
+	var low := 0
 	for t: String in ContentDB.TECHNIQUES:
 		if t != "float" and db.has_technique(t):
 			low = db.technique_rank(t) if low == 0 else mini(low, db.technique_rank(t))

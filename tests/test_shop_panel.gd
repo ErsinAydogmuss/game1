@@ -130,9 +130,11 @@ func test_header_fits_with_help_button() -> void:
 	var style := UiKit.framed("panel", UiKit.dialog_style(), 64.0)
 	var inner := ShopPanel.WIDTH - style.get_margin(SIDE_LEFT) - style.get_margin(SIDE_RIGHT)
 	var techs := _techniques().size()
-	var pill := Dialog.coin_pill(999_999)
-	var coins := pill.get_combined_minimum_size().x
-	pill.free()
+	# Para hapı fontla ölçülür (ağaçta olmayan Control'ün temadan gelen boyları hesaplanmaz):
+	# Dialog.coin_pill'in sikkesi (58), arası (10), 52 boyda sayı ve hapın payları.
+	var style_pill := UiKit.pill_style()
+	var coins := 58.0 + 10.0 + UiKit.display_font().get_string_size(UiKit.format_int(999_999), HORIZONTAL_ALIGNMENT_LEFT,
+			-1, 52).x + style_pill.get_margin(SIDE_LEFT) + style_pill.get_margin(SIDE_RIGHT)
 	var gap := float(ShopPanel.HEADER_GAP)
 	var extra := techs * ShopPanel.TECH_BUTTON.x + (techs - 1) * 8.0 + coins + 122.0 + 2.0 * gap
 	var width := ShopPanel.FACE + ShopPanel.LINE_MIN + extra + 122.0 + 4.0 * gap

@@ -1944,6 +1944,19 @@ func _play_guide() -> void:
 	_check("dükkân \"?\" ile küçülmeden sığar (%.2f)" % shop.fit_scale(), shop.visible and not shop.is_remote()
 			and shop.fit_scale() > 0.999)
 	_check_panel_buttons(shop, "dükkânın düğmeleri")
+	# En geniş başlık: 6 basamaklı para, teknik düğmeleri ve "?" ile dükkân küçülmeden sığar.
+	var coins := save.coins
+	save.coins = 999_999
+	shop.refresh()
+	await _wait_frames(3)
+	var header := (shop.get("_icon") as Control).get_parent() as Control
+	_check("999.999 parayla başlık sığar (%.0f / %.0f), dükkân küçülmez (%.3f)" % [header.get_combined_minimum_size().x,
+			header.size.x, shop.fit_scale()], header.get_combined_minimum_size().x <= header.size.x + 0.5
+			and shop.fit_scale() > 0.999)
+	await _shot("12_dukkan_para")
+	save.coins = coins
+	shop.refresh()
+	await _wait_frames(2)
 	line = str(main.get("_line"))
 	for pair: Array in [["rod", "rods"], ["extra", "extras"], ["tackle", "tackle"], ["sell", "loop"]]:
 		await _tap_control(shop.find_child("Tab_" + str(pair[0]), true, false) as Control)

@@ -366,8 +366,8 @@ static func _pill(node_name: String, text: String, icon: String, color: Color) -
 class LetGoChip:
 	extends Control
 
-	## Çubukta sınırın yeri (oyunda gerilim sınırı / çubuğun gösterdiği en yüksek gerilim).
-	const LIMIT := 0.65
+	## Çubukta sınırın yeri: oyundaki gibi gerilim sınırı / çubuğun gösterdiği en yüksek gerilim.
+	var _limit: float = GameState.db.rules.limit / Hud.TensionBar.SHOWN_MAX
 
 	func _init(text: String, width: float) -> void:
 		name = "Chip"
@@ -381,7 +381,7 @@ class LetGoChip:
 	func _draw() -> void:
 		var bar := Rect2(Vector2(14, 10), Vector2(size.x - 28, 34))
 		draw_style_box(UiKit.flat(Color(0.05, 0.06, 0.1, 0.72), 20), bar.grow(5))
-		var red_from := bar.position.x + bar.size.x * LIMIT
+		var red_from := bar.position.x + bar.size.x * _limit
 		draw_rect(Rect2(Vector2(red_from, bar.position.y), Vector2(bar.end.x - red_from, bar.size.y)), Color(0.9, 0.2, 0.22, 0.35))
 		draw_style_box(UiKit.flat(UiKit.BAD, 16), Rect2(bar.position, Vector2(bar.size.x * 0.9, bar.size.y)))
 		draw_line(Vector2(red_from, bar.position.y - 7), Vector2(red_from, bar.end.y + 7), UiKit.TEXT, 4.0)

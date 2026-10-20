@@ -264,7 +264,12 @@ func test_locks_open_at_their_rank() -> void:
 				save.owned.append(Zones.BOAT)
 				assert_eq(GuidePages.lock_state(db, save, tile), "", "%s/%s sandalla açık" % [p["id"], tile["id"]])
 	assert_true(locked >= 8, "kilitli karolar var (%d)" % locked)
-	assert_eq(GuidePages.bag_rank(db), db.technique_rank("spin"), "Takım Çantası ilk teknikle açılır")
+	# Takım Çantası'nın düğmesi şamandıradan sonraki ilk teknikle görünür (tuzak açmaz).
+	var first := 0
+	for t: String in ContentDB.TECHNIQUES:
+		if t != "float" and db.has_technique(t):
+			first = db.technique_rank(t) if first == 0 else mini(first, db.technique_rank(t))
+	assert_eq(GuidePages.bag_rank(db), first, "Takım Çantası ilk teknikle açılır")
 	assert_eq(GuidePages.category_rank(db, "fly"), db.technique_rank("fly"), "sinek: tekniğin rütbesi")
 	assert_eq(GuidePages.category_rank(db, "extra"), int(db.gear_item("net")["rank"]), "kepçe: kendi rütbesi")
 	assert_eq(GuidePages.category_rank(db, "bait"), 1, "yem başta var")
