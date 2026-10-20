@@ -718,6 +718,21 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 - **Sağ alt:** eylem düğmesi (300).
 - **Alt orta:** Dede'nin ipucu çubuğu.
 - **Fotoğraf:** balık kartındaki ve ayarlardaki kamera düğmesi.
+- ✅ **"Nasıl oynanır?" rehberi:** oyunun baştan sona anlatımı, 9 sayfa.
+  - **Sayfalar:**
+    1. balık tutmak (AT, BEKLE, VUR!, SAR, BIRAK!);
+    2. oyunun döngüsü;
+    3. nadirlik;
+    4. teknikler ve tuzak;
+    5. kamış, makara, misina (iri balık yıldızları);
+    6. küçük takım;
+    7. ekstralar;
+    8. bölgeler;
+    9. Dede, Nine, defter ve hedef.
+  - **Girişler:** Ayarlar'ın başlığındaki "Nasıl oynanır?". Takım Çantası'ndaki "?" Teknikler'i, dükkândaki "?" açık sekmenin sayfasını açar.
+  - **Kilitler:** henüz açılmamış teknik, bölge ve takım da görünür; kilidinde açıldığı rütbe, derin ortada sandal yazar.
+  - **Sayılar veriden gelir:** rütbeler, tuzağın süresi, kovalar, şans garantisi, yıldızlar. Oyun değişince rehber eskimez.
+  - **Dede:** son genel öğüdü rehberi söyler.
 
 ### 10.8 Sonraya kalanlar
 
