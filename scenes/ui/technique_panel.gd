@@ -97,7 +97,9 @@ func _tile(id: String) -> Control:
 	var style := UiKit.framed("card", UiKit.card_style(edge, 28, UiKit.CREAM_CARD, 6 if state == "active" else 4), UiKit.CARD_CORNER)
 	panel.add_theme_stylebox_override("panel", style)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
+	# Aralar dar: İngilizcede üç satırlık "nasıl" yazısıyla da panel telefonda küçülmeden sığsın
+	# (10'da 999 birimdi, yer 997,5; guide botu ölçer).
+	column.add_theme_constant_override("separation", 8)
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_child(column)
 	var icon := GameIcon.make("tech_" + id, 130)

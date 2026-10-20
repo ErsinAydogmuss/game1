@@ -98,3 +98,42 @@ func test_tab_titles_fit() -> void:
 			var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 			assert_true(width <= room, "%s (%s) sekmeye sığmıyor: %.0f > %.0f" % [key, "en" if column == 1 else "tr",
 					width, room])
+
+
+## Nine'nin başlıktaki her sözü (sayılı olanlar en geniş sayıyla: en yüksek rütbe, 6 basamaklı satış)
+## söz satırının en dar hâlinde iki dilde en çok iki satır: başlık kapat düğmesinin boyunu (122)
+## aşmaz, dükkân telefonda küçülmeden sığar ("?" düğmesine yer açmak için satır daraldı).
+func test_nine_lines_fit_two_lines() -> void:
+	var rows := {}
+	var f := FileAccess.open("res://localization/strings.csv", FileAccess.READ)
+	while f != null and not f.eof_reached():
+		var row := f.get_csv_line()
+		if row.size() >= 3:
+			rows[row[0]] = row
+	var font := UiKit.body_font()
+	var flags := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
+	var line_h := font.get_height(UiKit.SIZE_BODY)
+	for key: String in ShopPanel.LINE_KEYS:
+		assert_true(rows.has(key), "çeviri yok: " + key)
+		if not rows.has(key):
+			continue
+		for column: int in [1, 2]:
+			var text := (rows[key] as PackedStringArray)[column].replace("%d", str(content().max_rank())).replace("%s", "999.999")
+			var lines := roundi(font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, ShopPanel.LINE_MIN,
+					UiKit.SIZE_BODY, -1, flags).y / line_h)
+			assert_true(lines <= 2, "%s (%s) %d satır: %s" % [key, "en" if column == 1 else "tr", lines, text])
+
+
+## Başlık en geniş hâliyle panele sığar: Nine'nin yüzü, en dar söz satırı, bütün teknik düğmeleri,
+## 6 basamaklı para, "?" ve kapat düğmesi.
+func test_header_fits_with_help_button() -> void:
+	var style := UiKit.framed("panel", UiKit.dialog_style(), 64.0)
+	var inner := ShopPanel.WIDTH - style.get_margin(SIDE_LEFT) - style.get_margin(SIDE_RIGHT)
+	var techs := _techniques().size()
+	var pill := Dialog.coin_pill(999_999)
+	var coins := pill.get_combined_minimum_size().x
+	pill.free()
+	var gap := float(ShopPanel.HEADER_GAP)
+	var extra := techs * ShopPanel.TECH_BUTTON.x + (techs - 1) * 8.0 + coins + 122.0 + 2.0 * gap
+	var width := ShopPanel.FACE + ShopPanel.LINE_MIN + extra + 122.0 + 4.0 * gap
+	assert_true(width <= inner, "başlık sığmıyor: %.0f > %.0f (para hapı %.0f)" % [width, inner, coins])

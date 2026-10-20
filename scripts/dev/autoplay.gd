@@ -62,7 +62,9 @@ extends Node
 ##     güvenli alanda, panelin boyu aynı, karolar düzenin boyunda, metin, başlık ve alttaki satır karoya
 ##     sığar; ekran görüntüsü. Son sayfada İLERİ pasif; sekmeye dokununca o sayfa; kilitli teknik ve
 ##     bölgede rütbe hapı; rehber kapanınca ayarlar açık. Takım Çantası'nda "?" → Teknikler sayfası,
-##     rehber kapanınca çanta açık.
+##     rehber kapanınca çanta açık. Dükkân: çantadan uzaktan açılan dükkânın Kamış sekmesinde ve
+##     tezgâhtaki dükkânın Kamış, Ekstra, Takım ve Kova sekmelerinde "?" o sekmenin sayfası; rehber
+##     kapanınca dükkân açık, Nine veda etmez (dükkân kapanınca uğurlar; uzaktan açılmışsa susar).
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -1893,12 +1895,16 @@ func _play_guide() -> void:
 	_check("rehber kapanınca ayarlar açık", not guide.visible and settings.visible)
 	settings.close_panel()
 	await _wait(0.4)
+	# Sazlığa geç: Nine uzakta kalsın (çantadan açılan dükkân uzaktan açılır).
+	await _guide_travel("reeds")
 	# Takım Çantası: "?" → Teknikler; rehber kapanınca çanta açık.
 	var bag: TechniquePanel = main.get("technique_panel")
 	await _tap_control(hud.technique_button)
 	await _wait_until(func() -> bool: return bag.visible, 2.0)
 	await _wait(0.4)
-	_check("çanta \"?\" ile küçülmeden sığar (%.2f)" % bag.fit_scale(), bag.visible and bag.fit_scale() > 0.999)
+	var bag_panel: Control = bag.get("_panel")
+	_check("çanta \"?\" ile küçülmeden sığar (%.3f, %s)" % [bag.fit_scale(), str(bag_panel.get_combined_minimum_size())],
+			bag.visible and bag.fit_scale() > 0.999)
 	_check_panel_buttons(bag, "çantanın düğmeleri")
 	var bag_help := bag.find_child("Help", true, false) as Control
 	if bag_help != null:
@@ -1912,9 +1918,70 @@ func _play_guide() -> void:
 	await _wait_frames(3)
 	_check("rehber kapanınca çanta açık", not guide.visible and bag.visible)
 	await _shot("11_canta")
-	bag.close_panel()
+	# Uzaktan açılan dükkân (çantada spin "Nine'de"): "?" → Kamış sayfası; rehber kapanınca dükkân açık,
+	# dükkân kapanınca Nine susar (yanında değil).
+	var shop: ShopPanel = main.get("shop_panel")
+	var line := str(main.get("_line"))
+	var spin := bag.find_child("Button_spin", true, false) as Control
+	if spin != null:
+		await _tap_control(spin)
+		await _wait_until(func() -> bool: return shop.visible, 2.0)
+		await _wait(0.4)
+	_check("çantada spin \"Nine'de\" → uzaktan dükkân, Kamış sekmesi", spin != null and shop.visible and shop.is_remote()
+			and shop.current_tab() == "rod")
+	await _guide_from_shop(shop, guide, "rod", "rods", line)
+	shop.close_panel()
+	await _wait_frames(3)
+	_check("uzaktan dükkân kapanınca Nine susar", str(main.get("_line")) == line)
+	await _wait(0.4)
+	await _guide_travel("dock_cove")
+	# Tezgâhtaki dükkân: Nine'ye dokun; Kamış, Ekstra ve Kova sekmelerinde "?" o sekmenin sayfası; rehber
+	# kapanınca dükkân açık, Nine veda etmez (yalnızca dükkân kapanınca).
+	await _tap(_screen(_nine().head_point()))
+	await _wait_until(func() -> bool: return shop.visible, 2.0)
+	await _wait(0.4)
+	_check("dükkân \"?\" ile küçülmeden sığar (%.2f)" % shop.fit_scale(), shop.visible and not shop.is_remote()
+			and shop.fit_scale() > 0.999)
+	_check_panel_buttons(shop, "dükkânın düğmeleri")
+	line = str(main.get("_line"))
+	for pair: Array in [["rod", "rods"], ["extra", "extras"], ["tackle", "tackle"], ["sell", "loop"]]:
+		await _tap_control(shop.find_child("Tab_" + str(pair[0]), true, false) as Control)
+		await _wait_frames(3)
+		await _guide_from_shop(shop, guide, str(pair[0]), str(pair[1]), line)
+	shop.close_panel()
+	await _wait_frames(3)
+	_check("dükkân kapanınca Nine uğurlar", str(main.get("_line")).begins_with("UI_NINE_LINE_"))
 	await _wait(0.4)
 	_finish_checks()
+
+
+## Haritadaki gibi bir bölgeye geçer (ekran kararır, balıkçı bölgenin atış noktasında).
+func _guide_travel(zone: String) -> void:
+	var fade: Fade = main.get("fade")
+	main.call("_travel", zone)
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	var arrived := await _wait_until(func() -> bool: return not fade.busy() and str(main.get("zone_id")) == zone, 5.0)
+	_check("%s bölgesine geçilir" % zone, arrived)
+	await _wait(0.8)
+
+
+## Dükkânın açık sekmesinde "?": rehber o sekmenin sayfasında, dükkânın üstünde açılır; kapanınca
+## dükkân açık kalır ve Nine veda etmez (main'in sözü line'da kalır).
+func _guide_from_shop(shop: ShopPanel, guide: GuidePanel, tab: String, page_id: String, line: String) -> void:
+	var help := shop.find_child("Help", true, false) as Control
+	if help == null:
+		_check("dükkânda \"?\" düğmesi", false)
+		return
+	await _tap_control(help)
+	await _wait_until(func() -> bool: return guide.visible, 2.0)
+	await _wait(0.3)
+	_check("dükkânda %s sekmesinde \"?\" → rehber %s sayfasında, dükkânın üstünde" % [tab, page_id], guide.visible
+			and shop.visible and shop.current_tab() == tab and guide.current_page() == page_id)
+	await _shot("12_dukkan_%s%s" % [tab, "_uzak" if shop.is_remote() else ""])
+	await _tap_control(guide.close_button)
+	await _wait_frames(3)
+	_check("rehber kapanınca dükkân açık (%s), Nine veda etmez" % tab, not guide.visible and shop.visible
+			and str(main.get("_line")) == line)
 
 
 ## Rehberin açık sayfasındaki karolar: düzenin boyunda; metin kutusuna, başlık ve alttaki satır karoya

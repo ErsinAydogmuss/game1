@@ -1906,6 +1906,7 @@ func _build_ui() -> void:
 	layer.add_child(guide_panel)
 	settings_panel.help_requested.connect(_open_guide)
 	technique_panel.help_requested.connect(_open_guide)
+	shop_panel.help_requested.connect(_open_guide)
 	var top := CanvasLayer.new()
 	top.layer = 20
 	add_child(top)

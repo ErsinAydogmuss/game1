@@ -14,6 +14,7 @@ extends Dialog
 ##   TAKILI, SENDE ya da rütbe kilidi. Yem kartında hangi balığı çektiği ve elindeki sayı; takılı
 ##   yem yeniden alınabilir (düğme fiyat olur, kart yeşil kenarlı).
 ## - Kova: tür başına bir satır (sayı, değer), altta toplam ve HEPSİNİ SAT.
+## - Başlığın sonunda "?": rehber açık sekmenin sayfasında açılır (GuidePages.page_for_shop_tab).
 ## Para yalnızca oynayarak kazanılır; satın alma oyun parasıyla (gelir kuralları, CLAUDE.md).
 ## Düğmeler normal Button (TouchButton değil): paneller tek parmakla kullanılır.
 
@@ -45,6 +46,15 @@ const TECHNIQUE_TACKLE := {
 }
 ## Teknik düğmesinin boyu (başlık satırında, kapat düğmesi kadar: panel uzamaz).
 const TECH_BUTTON := Vector2(122, 122)
+## Başlık: Nine'nin yüzü, söz satırının en küçük genişliği ve aralar. Söz satırı "?" düğmesine yer
+## açsın diye dar; her söz bu genişlikte iki dilde en çok iki satır (başlık 122 birimden uzamaz,
+## telefonda dükkân küçülmeden sığar: test_shop_panel ölçer).
+const FACE := 104.0
+const LINE_MIN := 490.0
+const HEADER_GAP := 12
+## Nine'nin başlıktaki sözleri (test_shop_panel her birini ölçer; sayılı olanlar en geniş sayıyla).
+const LINE_KEYS: Array[String] = ["UI_NINE_SHOP_HELLO", "UI_NINE_BOUGHT", "UI_NINE_FLY_ZONE", "UI_NINE_TRAP",
+		"UI_NINE_NO_COINS", "UI_NINE_EQUIP", "UI_NINE_RANK", "UI_NINE_SOLD"]
 const STATS := {
 	"rod": [["range_m", "UI_STAT_RANGE", "m"], ["carry", "UI_STAT_CARRY", "★"]],
 	"reel": [["reel_speed", "UI_STAT_SPEED", ""], ["drag", "UI_STAT_DRAG", ""]],
@@ -112,9 +122,11 @@ func _build() -> void:
 	set_header(tr("UI_SHOP_TITLE"), "shop", WIDTH)
 	# Başlık yerine Nine'nin yüzü ve sözü (tabelada dükkânın adı yazıyor).
 	var header := _icon.get_parent() as HBoxContainer
+	header.add_theme_constant_override("separation", HEADER_GAP)
+	header_extra.add_theme_constant_override("separation", HEADER_GAP)
 	_title.visible = false
 	_face = TextureRect.new()
-	_face.custom_minimum_size = Vector2(104, 104)
+	_face.custom_minimum_size = Vector2(FACE, FACE)
 	_face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -126,7 +138,7 @@ func _build() -> void:
 	_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_line.size_flags_stretch_ratio = 6.0
-	_line.custom_minimum_size = Vector2(600, 0)
+	_line.custom_minimum_size = Vector2(LINE_MIN, 0)
 	header.add_child(_line)
 	header.move_child(_line, _title.get_index() + 1)
 	var techs := HBoxContainer.new()
@@ -139,6 +151,8 @@ func _build() -> void:
 			_tech_buttons[id] = b
 	_coins = HBoxContainer.new()
 	header_extra.add_child(_coins)
+	# "?" en sonda, kapat düğmesinin yanında: rehber açık sekmenin sayfasında.
+	add_help_button(func() -> String: return GuidePages.page_for_shop_tab(_tab))
 	# Telefonda (çentik ve ev çubuğu payıyla ~997 birim) küçülmeden sığsın, düğmeler 122 birim
 	# kalsın: başlık, sekmeler ve kartlar arası dar (panel 993 birim).
 	(_panel.get_child(0) as VBoxContainer).add_theme_constant_override("separation", GAP)
