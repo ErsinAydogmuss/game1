@@ -99,6 +99,8 @@ var map_panel: MapPanel
 var technique_panel: TechniquePanel
 ## Boş tuzağın paneli (bekle ya da kaldır).
 var trap_panel: TrapPanel
+## "Nasıl oynanır?" rehberi: ayarlardan, takım çantasından ve dükkândan açılır, onların üstünde durur.
+var guide_panel: GuidePanel
 ## Haritadan hızlı geçişte ekran kararır (en üstte).
 var fade: Fade
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
@@ -1772,6 +1774,12 @@ func _on_talk() -> void:
 	Sounds.haptic(10)
 
 
+## Rehber o sayfada açılır (bir panelin "?"si ya da ayarlardaki "Nasıl oynanır?").
+func _open_guide(page: String) -> void:
+	input.release_all()
+	guide_panel.open_guide(page)
+
+
 ## Nine'ye ya da dükkânına dokunuldu: Nine selam verir (balon, baş sallama, tezgâha uzanma) ve
 ## dükkân açılır (kova doluysa Kova sekmesi). Olta suda değilken açılır: oturum zaten boşta.
 func _on_shop() -> void:
@@ -1893,6 +1901,10 @@ func _build_ui() -> void:
 	trap_panel = TrapPanel.new()
 	layer.add_child(trap_panel)
 	trap_panel.remove_requested.connect(_on_trap_remove)
+	# Rehber en son: açıldığı panelin (ayarlar, çanta, dükkân) üstünde çizilir; kapanınca o açık kalır.
+	guide_panel = GuidePanel.new()
+	layer.add_child(guide_panel)
+	settings_panel.help_requested.connect(_open_guide)
 	var top := CanvasLayer.new()
 	top.layer = 20
 	add_child(top)

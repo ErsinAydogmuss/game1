@@ -190,6 +190,8 @@ func _footer_width(db: ContentDB, tile: Dictionary, rows: Dictionary, column: in
 	var body := UiKit.body_font()
 	var icons := (tile["icons"] as PackedStringArray).size()
 	var width := icons * GuidePages.FOOT_ICON + maxi(0, icons - 1) * GuidePages.FOOT_SEP
+	if int(tile["step"]) > 0:
+		width += GuidePages.FOOT_H + GuidePages.FOOT_SEP
 	var stars: Array = tile["stars"]
 	if not stars.is_empty():
 		width += body.get_string_size(_text(rows, "UI_STAT_CARRY", column), HORIZONTAL_ALIGNMENT_LEFT, -1,

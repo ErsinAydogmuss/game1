@@ -24,8 +24,8 @@ const AREA := Vector2(1600, 495)
 const GAP := 16.0
 const PAD := 18.0
 const VISUAL := 110.0
-const TITLE_H := 44.0
-const FOOT_H := 48.0
+const TITLE_H := 40.0
+const FOOT_H := 52.0
 const SEP := 8.0
 ## Yazı boyları: karonun başlığı (Luckiest Guy; sığmazsa en çok TITLE_MIN'e küçülür), metni (Baloo 2),
 ## giriş cümlesi (tek satır, LEAD_W genişliğinde) ve haplar.
@@ -34,14 +34,14 @@ const TITLE_MIN := 22
 const TEXT_SIZE := 30
 const LEAD_SIZE := 32
 const LEAD_W := 1600.0
-const PILL_SIZE := 24
+const PILL_SIZE := 26
 ## Metnin satır aralığı (temanın Label'ınki; panel karonun metnine de bunu verir).
 const LINE_SPACING := -6
 ## Alttaki satır: küçük ikonların boyu ve arası, yıldızların boyu, hapın ikonu ve yatay payları.
-const FOOT_ICON := 44.0
+const FOOT_ICON := 50.0
 const FOOT_SEP := 6.0
-const STAR := 28.0
-const PILL_ICON := 34.0
+const STAR := 30.0
+const PILL_ICON := 36.0
 const PILL_MARGIN := Vector2(12, 16)
 
 ## Sayfalar, okuma sırasıyla. Bir karonun alanları:
@@ -51,10 +51,11 @@ const PILL_MARGIN := Vector2(12, 16)
 ## - kilit: lock "bag" (Takım Çantası, ilk teknikle açılır); takım kategorisinin kilidi
 ##   kategorisinden gelir;
 ## - stars: kategorinin başlangıç taşıması yıldızla gösterilir.
-## "from" alanı karoları veriden kurar: rarities, techniques ya da zones.
+## "from" alanı karoları veriden kurar: rarities, techniques ya da zones. "steps": karolar sıralı
+## adımlar (alttaki satırda numarası).
 const PAGES: Array[Dictionary] = [
 	{ "id": "basics", "icon": "hand", "title": "UI_GUIDE_BASICS", "lead": "UI_GUIDE_BASICS_LEAD", "layout": "row5",
-		"tiles": [
+		"steps": true, "tiles": [
 			{ "id": "cast", "action": "cast", "text": "UI_GUIDE_DO_CAST" },
 			{ "id": "wait", "action": "wait", "text": "UI_GUIDE_DO_WAIT" },
 			{ "id": "hook", "action": "hook", "text": "UI_GUIDE_DO_STRIKE" },
@@ -62,7 +63,7 @@ const PAGES: Array[Dictionary] = [
 			{ "id": "let_go", "action": "let_go", "text": "UI_GUIDE_DO_LET_GO" },
 		] },
 	{ "id": "loop", "icon": "bucket", "title": "UI_GUIDE_LOOP", "lead": "UI_GUIDE_LOOP_LEAD", "layout": "row5",
-		"tiles": [
+		"steps": true, "tiles": [
 			{ "id": "bucket", "icon": "bucket", "title": "UI_SHOP_TAB_SELL", "text": "UI_GUIDE_LOOP_BUCKET" },
 			{ "id": "shop", "icon": "shop", "title": "UI_SHOP_TITLE", "text": "UI_GUIDE_LOOP_SHOP" },
 			{ "id": "rank", "icon": "star", "title": "UI_GUIDE_RANK", "text": "UI_GUIDE_LOOP_RANK" },
@@ -209,6 +210,7 @@ static func page_for_shop_tab(tab: String) -> String:
 ## - icons: alttaki küçük ikonlar;
 ## - stars: [dolu, toplam] ya da boş;
 ## - where: yer hapının anahtarı ya da boş;
+## - step: sıralı sayfada adımın numarası (yoksa 0);
 ## - rank (kilit; 1 ve altı kilitsiz) ve boat (sandal ister);
 ## - kapsam için: category, technique, zone, rarity.
 static func tiles_of(db: ContentDB, page_id: String) -> Array[Dictionary]:
@@ -222,7 +224,10 @@ static func tiles_of(db: ContentDB, page_id: String) -> Array[Dictionary]:
 			return _zone_tiles(db)
 	var out: Array[Dictionary] = []
 	for raw: Dictionary in def["tiles"]:
-		out.append(_tile(db, raw))
+		var tile := _tile(db, raw)
+		if bool(def.get("steps", false)):
+			tile["step"] = out.size() + 1
+		out.append(tile)
 	return out
 
 
@@ -290,7 +295,7 @@ static func keys_of(db: ContentDB, page_id: String) -> PackedStringArray:
 
 static func _blank(id: String) -> Dictionary:
 	return { "id": id, "visual": "icon", "art": "question", "title": "", "text": [], "icons": PackedStringArray(),
-		"stars": [], "where": "", "rank": 0, "boat": false, "category": "", "technique": "", "zone": "", "rarity": -1 }
+		"stars": [], "where": "", "step": 0, "rank": 0, "boat": false, "category": "", "technique": "", "zone": "", "rarity": -1 }
 
 
 ## Sayfa listesindeki karo: görseli, kilidi ve metnin sayıları.

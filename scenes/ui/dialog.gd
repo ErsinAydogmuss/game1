@@ -6,6 +6,9 @@ extends Control
 ## Kutu ekrana (güvenli alan payıyla) sığmazsa küçültülür: dar ekranda (iPad) taşmasın.
 
 signal closed
+## Rehber bu sayfada açılsın: paneldeki "?" ya da "Nasıl oynanır?" düğmesi (GuidePages sayfası;
+## main GuidePanel'i açar).
+signal help_requested(page: String)
 
 ## İçerik buraya eklenir.
 var body: VBoxContainer
@@ -128,6 +131,30 @@ func close_panel() -> void:
 ## Alt sınıf: içeriği güncel kayda göre yeniden kurar.
 func refresh() -> void:
 	pass
+
+
+## Başlığa (kapat düğmesinin yanına) "?" düğmesi koyar: basınca rehber page_of()'un verdiği sayfada
+## açılır (açık sekmeye göre sayfa seçen panel için Callable). Görseli yoksa "?" yazılı düğme.
+func add_help_button(page_of: Callable) -> BaseButton:
+	var b: BaseButton
+	var art := ItemArt.ui("question")
+	if art != null:
+		var t := TextureButton.new()
+		t.texture_normal = art
+		t.ignore_texture_size = true
+		t.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+		t.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		b = t
+	else:
+		b = UiKit.button("?", UiKit.SECONDARY, UiKit.SIZE_BODY, Vector2(122, 122))
+	b.name = "Help"
+	b.custom_minimum_size = Vector2(122, 122)
+	b.focus_mode = Control.FOCUS_NONE
+	b.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		help_requested.emit(str(page_of.call())))
+	header_extra.add_child(b)
+	return b
 
 
 ## Kutunun ekrana sığma ölçeği (en çok 1): güvenli alan ve kenar payı çıkınca kalan yer.

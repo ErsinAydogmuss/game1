@@ -56,6 +56,12 @@ extends Node
 ##     sinekle alabalık, haritadan sandalla derin ortaya, efsanevi mersin (Dede haber verir) ve "Göle
 ##     bırak", defter. Kamerayı bot yönetir (aksiyon ortadaki kare kırpmada kalır); önemli anlar
 ##     günlüğe "REELS MARK <kare> <çekim>.<olay>" diye yazılır. --reels-only=gold,legend: yalnızca o çekimler.
+##   guide: "Nasıl oynanır?" rehberi (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN):
+##     rütbe 3'ün oyuncusu. Ayarlar "Nasıl oynanır?" düğmesiyle küçülmeden sığar; düğme → rehber ilk
+##     sayfada, ayarların üstünde. İLERİ ile baştan sona her sayfa: küçülmeden sığar, düğmeler büyük ve
+##     güvenli alanda, panelin boyu aynı, karolar düzenin boyunda, metin, başlık ve alttaki satır karoya
+##     sığar; ekran görüntüsü. Son sayfada İLERİ pasif; sekmeye dokununca o sayfa; kilitli teknik ve
+##     bölgede rütbe hapı; rehber kapanınca ayarlar açık.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -174,6 +180,8 @@ func _ready() -> void:
 			_play_trap_only.call_deferred()
 		"reels":
 			_play_reels.call_deferred()
+		"guide":
+			_play_guide.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -1821,6 +1829,112 @@ func _play_tour() -> void:
 		await _shot("%02d_%s" % [index, id])
 		index += 1
 	_check("her yerde en çok %d çizim (en çok %d: %s)" % [TOUR_DRAWS, worst, where], worst <= TOUR_DRAWS and worst > 0)
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## "Nasıl oynanır?" rehberi: ayarlardan girilir, İLERİ ile baştan sona okunur (KONTROL satırları;
+## senaryonun anlatımı dosyanın başında).
+func _play_guide() -> void:
+	_use_save(3)
+	var db := GameState.db
+	var save := GameState.save
+	# Rütbe 3: spin ve tuzak açık; dip, sinek, kayalık burun ve derin orta kilitli.
+	save.xp = db.rank_xp[2]
+	GameState.changed.emit()
+	await _wait(1.0)
+	var hud := _hud()
+	var settings: SettingsPanel = main.get("settings_panel")
+	var guide: GuidePanel = main.get("guide_panel")
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	await _wait(0.4)
+	_check("ayarlar \"Nasıl oynanır?\" düğmesiyle küçülmeden sığar (%.2f)" % settings.fit_scale(), settings.fit_scale() > 0.999)
+	var open := settings.find_child("Guide", true, false) as Button
+	_check("ayarlarda \"Nasıl oynanır?\" düğmesi", open != null and open.text == UiKit.upper(tr("UI_GUIDE_OPEN")))
+	_check_panel_buttons(settings, "ayarların düğmeleri")
+	await _shot("00_ayarlar")
+	if open == null:
+		_finish_checks()
+		return
+	await _tap_control(open)
+	await _wait_until(func() -> bool: return guide.visible, 2.0)
+	await _wait(0.5)
+	_check("\"Nasıl oynanır?\" → rehber ilk sayfada, ayarların üstünde", guide.visible and settings.visible
+			and guide.current_page() == "basics" and guide.get_index() > settings.get_index())
+	var panel: Control = guide.get("_panel")
+	var size := panel.size
+	var next := guide.find_child("Next", true, false) as Button
+	for i in GuidePages.PAGES.size():
+		var id := str(GuidePages.PAGES[i]["id"])
+		if i > 0:
+			await _tap_control(next)
+			await _wait_frames(3)
+		await _wait(0.15)
+		_check("%d. sayfa (%s): İLERİ ile gelir, küçülmeden sığar (%.2f), boy aynı" % [i + 1, id, guide.fit_scale()],
+				guide.current_page() == id and guide.fit_scale() > 0.999 and panel.size.is_equal_approx(size))
+		_check_panel_buttons(guide, "%s sayfasının düğmeleri" % id)
+		_check_guide_tiles(guide, id)
+		await _shot("%02d_%s" % [i + 1, id])
+	_check("son sayfada İLERİ pasif", next.disabled)
+	await _tap_control(guide.find_child("Page_techniques", true, false) as Control)
+	await _wait_frames(3)
+	_check("sekmeye dokun → Teknikler", guide.current_page() == "techniques")
+	_check("rütbe 3: dip ve sinek kilitli (rütbe hapı), spin ve tuzak açık", _guide_locked(guide, "bottom")
+			and _guide_locked(guide, "fly") and not _guide_locked(guide, "spin") and not _guide_locked(guide, "trap"))
+	await _tap_control(guide.find_child("Page_zones", true, false) as Control)
+	await _wait_frames(3)
+	_check("rütbe 3: nilüferli koy açık, kayalık burun ve derin orta kilitli", not _guide_locked(guide, "lily_cove")
+			and _guide_locked(guide, "rocky_point") and _guide_locked(guide, "deep_water"))
+	await _tap_control(guide.close_button)
+	await _wait_frames(3)
+	_check("rehber kapanınca ayarlar açık", not guide.visible and settings.visible)
+	settings.close_panel()
+	await _wait(0.4)
+	_finish_checks()
+
+
+## Rehberin açık sayfasındaki karolar: düzenin boyunda; metin kutusuna, başlık ve alttaki satır karoya
+## sığar (uzun yazı karoyu büyütmez, taşar: burada yakalanır).
+func _check_guide_tiles(guide: GuidePanel, page_id: String) -> void:
+	var layout := str(GuidePages.page(page_id)["layout"])
+	var want := GuidePages.tile_size(layout)
+	var notes := PackedStringArray()
+	var tiles := guide.find_children("Tile_*", "PanelContainer", true, false)
+	for node in tiles:
+		var tile := node as Control
+		if not tile.size.is_equal_approx(want):
+			notes.append("%s boyu %s" % [tile.name, str(tile.size)])
+		var holder := tile.find_child("Text", true, false) as Control
+		var text := holder.get_node("Label") as Label if holder != null else null
+		if text == null or text.get_combined_minimum_size().y > holder.size.y + 0.5:
+			notes.append("%s metni taşıyor" % tile.name)
+		var title := tile.find_child("Title", true, false) as Label
+		if title != null:
+			var font := title.get_theme_font("font")
+			var width := font.get_string_size(title.text, HORIZONTAL_ALIGNMENT_LEFT, -1, title.get_theme_font_size("font_size")).x
+			if width > title.size.x + 0.5:
+				notes.append("%s başlığı kısaldı" % tile.name)
+		var footer := tile.find_child("Footer", true, false) as Control
+		if footer != null and footer.get_combined_minimum_size().x > footer.size.x + 0.5:
+			notes.append("%s alt satırı taşıyor" % tile.name)
+	var lead: Label = guide.get("_lead")
+	if lead.get_theme_font("font").get_string_size(lead.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			lead.get_theme_font_size("font_size")).x > lead.size.x + 0.5:
+		notes.append("giriş tek satıra sığmıyor")
+	_check("%s karoları (%d) sığar%s" % [page_id, tiles.size(), "" if notes.is_empty() else ": " + ", ".join(notes)],
+			notes.is_empty() and tiles.size() == GuidePages.tiles_of(GameState.db, page_id).size())
+
+
+## Rehberde karonun kilit hapı var mı?
+static func _guide_locked(guide: GuidePanel, tile_id: String) -> bool:
+	var tile := guide.find_child("Tile_" + tile_id, true, false)
+	return tile != null and tile.find_child("Lock", true, false) != null
+
+
+## KONTROL satırlarını yazar ve çıkar.
+func _finish_checks() -> void:
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()

@@ -1,6 +1,7 @@
 class_name SettingsPanel
 extends Dialog
-## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil. (Kazı'dan uyarlandı.)
+## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil; başlıkta "Nasıl oynanır?" (rehber:
+## help_requested). (Kazı'dan uyarlandı.)
 ## Sürüm yazısına arka arkaya 5 kez dokununca ölçüm açılır ya da kapanır (HUD'da FPS, çizim ve
 ## üçgen sayısı; telefonda hız ölçümü: docs/iphone-kurulum.md). Ölçüm açıkken geliştirme sürümünde
 ## bütün bölgeleri açma ve kaydı sıfırlama satırları da görünür (normalde panel küçülmeden sığsın).
@@ -14,6 +15,8 @@ const PERF_TAPS := 5
 const TAP_GAP := 0.8
 
 var _rows: VBoxContainer
+## Başlıktaki "Nasıl oynanır?" düğmesi (rehberin ana girişi; yazısı refresh'te).
+var _guide: Button
 var _taps: int = 0
 var _since_tap: float = 0.0
 
@@ -33,6 +36,13 @@ func _build() -> void:
 		_icon.get_parent().add_child(rect)
 		_icon.get_parent().move_child(rect, _icon.get_index())
 		_icon.visible = false
+	# Rehber: başlıkta yazılı düğme (satır eklenince panel telefonda küçülürdü; başlıkta yer var).
+	_guide = UiKit.button("", UiKit.SECONDARY, UiKit.SIZE_SMALL, Vector2(0, 122))
+	_guide.name = "Guide"
+	_guide.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		help_requested.emit("basics"))
+	header_extra.add_child(_guide)
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 12)
 	body.add_child(_rows)
@@ -43,6 +53,7 @@ func _build() -> void:
 
 func refresh() -> void:
 	set_header(tr("UI_SETTINGS"), "settings", 1100.0)
+	_guide.text = UiKit.upper(tr("UI_GUIDE_OPEN"))
 	clear(_rows)
 	var settings := GameState.save.settings
 	_toggle(tr("UI_SET_SFX"), "sound", bool(settings.get("sfx", true)),
