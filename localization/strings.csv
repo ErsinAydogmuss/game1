@@ -388,3 +388,75 @@ UI_TRAP_REMOVED,Trap back in your bag,Tuzak çantana döndü
 UI_NINE_TRAP,"Set it from your tackle bag, in the shallows, dear.",Takım çantandan sığ suya bırak evladım.
 UI_TRAP_ENTERED,A crayfish just walked in!,Tuzağa bir kerevit girdi!
 UI_TRAP_COLLECT,Collect,Topla
+UI_GUIDE_OPEN,How to play?,Nasıl oynanır?
+UI_GUIDE_NEXT,Next,İleri
+UI_GUIDE_BASICS,Fishing,Balık tutmak
+UI_GUIDE_BASICS_LEAD,"Find a shadow, cast, wait, strike, reel. Too hard? Turn on Easy reeling in Settings.","Gölgeyi bul, at, bekle, VUR, sar. Zor gelirse Ayarlar'da Kolay çekmeyi aç."
+UI_GUIDE_DO_CAST,Shadows are fish. Tap just ahead of one to cast.,Sudaki gölge balıktır. Gölgenin biraz önüne dokun.
+UI_GUIDE_DO_WAIT,"A trembling bobber means a nibble. Don't tap, wait!","Şamandıra titrerse balık kokluyor. Dokunma, bekle!"
+UI_GUIDE_DO_STRIKE,"The moment the bobber dives, tap!",Şamandıra suya dalınca hemen dokun!
+UI_GUIDE_DO_REEL,Hold to wind the line and bring the fish in.,"Basılı tut, misina sarılır; balık sana gelir."
+UI_GUIDE_DO_LET_GO,"When the bar turns red, lift your finger or the line snaps.","Çubuk kırmızıysa parmağını kaldır, misina kopmasın."
+UI_GUIDE_LOOP,How it goes,Oyunun döngüsü
+UI_GUIDE_LOOP_LEAD,"Catch, sell, upgrade your tackle, rank up, open new places.","Tut, sat, takımını büyüt, rütbe atla, yeni yerler aç."
+UI_GUIDE_LOOP_BUCKET,"Your catch goes in the bucket. When it's full, visit Nana.",Tuttuğun balık kovaya girer. Dolunca Nine'ye git.
+UI_GUIDE_LOOP_SHOP,"Sell your fish, earn coins, buy new tackle.","Balıklarını sat, para kazan, yeni takım al."
+UI_GUIDE_RANK,Rank,Rütbe
+UI_GUIDE_LOOP_RANK,Every fish gives points. Rank up to open new things.,Her balık puan verir. Rütbe atlayınca yeni şeyler açılır.
+UI_GUIDE_LOOP_MAP,Tap an open spot to travel there at once.,"Açık bir bölgeye dokun, hemen oraya geçersin."
+UI_GUIDE_LOOP_BAG,"The button at bottom left: pick a technique, set a trap.","Sol alttaki düğme: tekniğini seç, tuzak bırak."
+UI_GUIDE_RARITY,Rarity,Nadirlik
+UI_GUIDE_RARITY_LEAD,Rare fish have telltale shadows. The guarantee brings one within that many catches.,Nadir balığın gölgesi belli olur. Garanti: gelmezse en geç o kadar avda gelir.
+UI_GUIDE_FX_NONE,Plain shadow,Sade gölge
+UI_GUIDE_FX_GLINT,Its shadow glints,Gölgesi pırıldar
+UI_GUIDE_FX_SHIMMER,Its shadow shimmers,Gölgesi ışıldar
+UI_GUIDE_FX_TRAIL,Its shadow leaves a trail,Gölgesi iz bırakır
+UI_GUIDE_FX_GUARDIAN,A guardian's shadow,Bekçi gölgesi
+UI_GUIDE_XP,+%d rank points,+%d rütbe puanı
+UI_GUIDE_TECHNIQUES,Techniques,Teknikler
+UI_GUIDE_TECHNIQUES_LEAD,"Buy a new technique's rod from Nana, then choose it in the Tackle Bag.","Yeni tekniğin kamışını Nine'den al, Takım Çantası'ndan seç."
+UI_GUIDE_TECH_FLOAT,Strike when the bobber dives. Most fish will bite.,Şamandıra dalınca VUR. Gölün çoğu balığı gelir.
+UI_GUIDE_TECH_SPIN,Hold to reel the lure. Stop and go: predators strike!,"Basılı tut, yem gelsin. Dur-kalk yap: yırtıcı saldırır!"
+UI_GUIDE_TECH_BOTTOM,"Cast far, rod on the stand. Strike when the bell keeps ringing!","Uzağa at, olta sehpada. Zil durmadan çalınca VUR!"
+UI_GUIDE_TECH_FLY,Cast into the current. Strike when a ring appears!,"Akıntıya at, sinek sürüklenir. Halka çıkınca VUR!"
+UI_GUIDE_TECH_TRAP,"A crayfish every %d minutes, up to %d at a time.","%d dakikada bir kerevit girer, en çok %d birikir."
+UI_GUIDE_RODS,"Rod, reel, line","Kamış, makara, misina"
+UI_GUIDE_RODS_LEAD,"To land a big fish easily, both your rod and your line need enough stars.",İri balığı rahat çekmek için kamışın da misinanın da yıldızı yetmeli.
+UI_GUIDE_GEAR_ROD,Each technique has its own rod. A better one casts farther and brings fish in faster.,"Her tekniğin kendi kamışı var. İyisi daha uzağa atar, balığı daha çabuk getirir."
+UI_GUIDE_GEAR_REEL,Winds the line. A better one winds faster; its drag eases strain when a fish thrashes. Works for every technique.,Misinayı sarar. İyisi daha hızlı sarar; freni çırpınan balıkta gerilimi düşürür. Her teknikte işe yarar.
+UI_GUIDE_GEAR_LINE,A strong line snaps later in the red; fluoro scares fish less. Works for every technique.,Güçlü misina kırmızıda daha geç kopar; floro misina balığı az korkutur. Her teknikte işe yarar.
+UI_GUIDE_TACKLE,Small tackle,Küçük takım
+UI_GUIDE_TACKLE_LEAD,"Each technique has its own small tackle. Buy it, then press EQUIP.","Her tekniğin küçük takımı ayrı. Dükkânda al, TAK'a bas."
+UI_GUIDE_T_HOOK,Hooks,İğne
+UI_GUIDE_T_BOBBER,Bobbers,Şamandıra
+UI_GUIDE_T_RIG,"Sinkers, feeders","Kurşun, yem sepeti"
+UI_GUIDE_GEAR_HOOK,A bigger hook makes escapes harder.,Büyük iğne balığın kaçmasını zorlaştırır.
+UI_GUIDE_GEAR_BOBBER,A sensitive bobber gives you more time to strike.,Hassas şamandıra VUR için süre kazandırır.
+UI_GUIDE_GEAR_BAIT,Draws certain fish. Worms never run out.,Bazı türleri çeker. Solucan hiç bitmez.
+UI_GUIDE_GEAR_LURE,For spinning; never runs out. Draws predators.,"Spinin yemi, bitmez. Yırtıcıları çeker."
+UI_GUIDE_GEAR_RIG,A feeder gathers fish around faster.,Yem sepeti balıkları daha çabuk toplar.
+UI_GUIDE_GEAR_FLY,Never runs out. Trout rise to flies.,Bitmez. Alabalıklar sineğe gelir.
+UI_GUIDE_EXTRAS,Extras,Ekstralar
+UI_GUIDE_EXTRAS_LEAD,You'll find these on the Extras tab at Nana's shop.,"Bunlar Nine'nin dükkânında, Ekstra sekmesinde."
+UI_GUIDE_T_BUCKET,Buckets and keepnets,Kova ve file
+UI_GUIDE_GEAR_NET,"Land fish from farther away, so they can't slip off at the end.",Balığı daha uzaktan alırsın; son anda kaçamaz.
+UI_GUIDE_GEAR_BUCKET,"Carry more fish: the smallest holds %d, the biggest %d.","Daha çok balık taşırsın: en küçüğü %d, en büyüğü %d balık alır."
+UI_GUIDE_GEAR_BOAT,"Row out to the deep middle of the lake, home of the biggest fish.",Gölün derin ortasına açılırsın; en iri balıklar orada.
+UI_GUIDE_GEAR_TRAP,Leave it in the shallows; it fills even while you're away.,"Sığ suya bırak, sen oyunda yokken de dolar."
+UI_GUIDE_ZONES,Fishing spots,Bölgeler
+UI_GUIDE_ZONES_LEAD,Travel with the map. The icon next to Grandpa is the technique he suggests there.,"Haritadan geçersin. Dede'nin yanındaki ikon, onun orada önerdiği teknik."
+UI_GUIDE_ZONE_DOCK_COVE,Where you start. A bit of everything.,Başladığın yer. Her türden biraz.
+UI_GUIDE_ZONE_REEDS,Shallow and weedy: lures can snag.,Sığ ve otlu: yapay yem otlara takılabilir.
+UI_GUIDE_ZONE_LILY_COVE,Predators hide under the lilies.,Nilüferlerin altında yırtıcılar saklanır.
+UI_GUIDE_ZONE_ROCKY_POINT,Rocky and deep: predator country.,Kayalık ve derin; yırtıcıların yeri.
+UI_GUIDE_ZONE_STREAM_MOUTH,Flowing water: the only place for flies.,Akıntılı su: sinek yalnızca burada.
+UI_GUIDE_ZONE_DEEP_WATER,The deepest water and the biggest fish.,Gölün en derin yeri; en iri balıklar.
+UI_GUIDE_PEOPLE,Friends and goal,Dostlar ve hedef
+UI_GUIDE_PEOPLE_LEAD,Stuck? Tap Grandpa. This guide is always in Settings.,Takılırsan Dede'ye dokun. Bu rehber hep Ayarlar'da.
+UI_GUIDE_DEDE,Grandpa,Dede
+UI_GUIDE_DEDE_TEXT,He sits on the dock. Tap him for advice; he tells you when something new opens.,"İskelede oturur. Dokun, öğüt verir; yeni bir şey açılınca anlatır."
+UI_GUIDE_NINE,Nana,Nine
+UI_GUIDE_NINE_TEXT,She runs the shop. Tap her to sell fish and buy tackle.,"Dükkânın sahibi. Dokun: balık satar, takım alırsın."
+UI_GUIDE_BOOK_TEXT,"%d species. The ones you haven't caught are silhouettes; hints, records and odds are inside.","%d tür var. Tutmadığın tür siluettir; ipucu, rekor ve oranlar defterde."
+UI_GUIDE_GOAL,Your goal,Hedef
+UI_GUIDE_GOAL_TEXT,Catch every species! The protected sturgeon goes back to the lake. And the lake has a secret…,Bütün türleri tut! Koruma altındaki mersin göle bırakılır. Bir de gölün bir sırrı var…
