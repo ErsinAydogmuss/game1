@@ -4,10 +4,16 @@ extends Dialog
 ## help_requested). (Kazı'dan uyarlandı.)
 ## Sürüm yazısına arka arkaya 5 kez dokununca ölçüm açılır ya da kapanır (HUD'da FPS, çizim ve
 ## üçgen sayısı; telefonda hız ölçümü: docs/iphone-kurulum.md). Ölçüm açıkken geliştirme sürümünde
-## bütün bölgeleri açma ve kaydı sıfırlama satırları da görünür (normalde panel küçülmeden sığsın).
+## iki satır daha görünür (normalde panel küçülmeden sığsın): deneme düğmeleri (hepsini aç, para,
+## rütbe atlama: rank_up_requested, main gerçek akışla atlatır) ve kaydı sıfırlama.
+
+## Bir rütbe atlatılsın (geliştirme sürümü; main gerçek akışla: bildirim, açılan yer, Dede).
+signal rank_up_requested
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
+## Geliştirme satırındaki para düğmeleri (dükkânda takım denemek için).
+const DEBUG_COINS: Array[int] = [1000, 10000]
 ## Başlıktaki oyun logosunun kutusu (kapat düğmesinin boyunda: başlık uzamasın).
 const LOGO := Vector2(170, 122)
 ## Ölçümü açan dokunuş sayısı ve iki dokunuş arasındaki en uzun süre (sn).
@@ -80,10 +86,7 @@ func refresh() -> void:
 	version.gui_input.connect(_on_version_input)
 	_rows.add_child(version)
 	if OS.is_debug_build() and bool(settings.get("perf", false)):
-		var unlock := _row(tr("UI_DEBUG_UNLOCK"), "map")
-		var unlock_button := UiKit.button(tr("UI_DEBUG_UNLOCK_GO"), UiKit.SECONDARY, UiKit.SIZE_SMALL, ROW_BUTTON)
-		unlock_button.pressed.connect(_unlock_zones)
-		unlock.add_child(unlock_button)
+		_debug_row()
 		var reset := _row(tr("UI_DEBUG_RESET"), "close")
 		var reset_button := UiKit.button(tr("UI_DEBUG_RESET"), UiKit.DANGER, UiKit.SIZE_SMALL, ROW_BUTTON)
 		# Tek dokunuş kaydı silmesin: ilk dokunuş sorar, 3 sn içinde ikincisi siler.
@@ -119,6 +122,41 @@ func _on_version_input(event: InputEvent) -> void:
 	Sounds.play("ui_tap")
 	Sounds.haptic(20)
 	GameState.set_setting("perf", not bool(GameState.setting("perf", false)))
+
+
+## Geliştirme sürümünün deneme düğmeleri, tek satırda: hepsini aç, para ekle, bir rütbe atla (en
+## yüksek rütbede pasif). Satır sayısı ölçüm açıkken de aynı kalsın diye etiketsiz.
+func _debug_row() -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	_rows.add_child(row)
+	_debug_button(row, "DebugUnlock", tr("UI_DEBUG_UNLOCK_GO")).pressed.connect(_unlock_zones)
+	for amount: int in DEBUG_COINS:
+		_debug_button(row, "DebugCoins%d" % amount, tr("UI_DEBUG_COINS") % UiKit.format_int(amount)).pressed.connect(
+				_add_coins.bind(amount))
+	var rank := _debug_button(row, "DebugRankUp", tr("UI_DEBUG_RANK_UP"))
+	rank.disabled = Rank.rank(GameState.db, GameState.save) >= GameState.db.max_rank()
+	rank.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		rank_up_requested.emit())
+
+
+## Satırı eşit paylaşan düğme (bot adıyla bulur: dokunuştan sonra satırlar yeniden kurulur).
+func _debug_button(row: HBoxContainer, id: String, text: String) -> Button:
+	var b := UiKit.button(text, UiKit.SECONDARY, UiKit.SIZE_SMALL, Vector2(0, ROW_BUTTON.y))
+	b.name = id
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(b)
+	return b
+
+
+## Geliştirme sürümü: para eklenir (dükkânda takım denemek için).
+func _add_coins(amount: int) -> void:
+	GameState.save.coins += amount
+	Sounds.play("coins")
+	Sounds.haptic(20)
+	GameState.save_game()
+	GameState.changed.emit()
 
 
 ## Geliştirme sürümü: rütbe en yüksek bölgenin rütbesine çıkar; sandal, tekniklerin ilk kamışları ve

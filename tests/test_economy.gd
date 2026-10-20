@@ -188,6 +188,22 @@ func test_rank_points() -> void:
 	s.xp = 999999
 	assert_eq(Rank.rank(db, s), db.max_rank(), "en yüksek rütbe")
 	assert_eq(Rank.progress(db, s), 1.0, "en yüksek rütbede dolu")
+	assert_eq(Rank.xp_to_next(db, s), 0, "en yüksek rütbede kalan puan yok")
+
+
+## Kalan puan tam bir sonraki rütbeye taşır (geliştirme düğmesi RÜTBE +1): her rütbede, eşikte ve
+## eşiğin biraz üstünde.
+func test_xp_to_next_reaches_the_next_rank() -> void:
+	var db := content()
+	for r in range(1, db.max_rank()):
+		for extra: int in [0, 3]:
+			var s := _save()
+			s.xp = db.rank_xp[r - 1] + extra
+			var need := Rank.xp_to_next(db, s)
+			assert_eq(need, db.rank_xp[r] - s.xp, "rütbe %d (+%d): kalan puan" % [r, extra])
+			var up := Rank.add_xp(db, s, need)
+			assert_eq(int(up["new_rank"]), r + 1, "rütbe %d (+%d): bir üst rütbeye" % [r, extra])
+			assert_eq(Rank.progress(db, s), 0.0 if r + 1 < db.max_rank() else 1.0, "yeni rütbenin başında")
 
 
 ## Bölgeli gölde yeni açılan bölge öncekilerden az kazandırmaz: her bölgede solucanla balık başına

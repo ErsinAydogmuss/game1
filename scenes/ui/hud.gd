@@ -170,7 +170,8 @@ func _process(delta: float) -> void:
 		if t >= 1.0:
 			_toast_age = -1.0
 			_toast_box.visible = false
-			if not _toast_queue.is_empty():
+			# Bekletiliyorsa (kart ya da panel açıldı) sıradaki, bekleme bitince gelir.
+			if not _toast_queue.is_empty() and _toast_hold <= 0.0:
 				_show_queued()
 	if _map_pulse > 0.0:
 		# Kart açıkken (bildirimler beklerken) nabız sayılmaz: kart kapanınca görülsün.

@@ -23,8 +23,10 @@ extends Node
 ##   rarity: nadirlik ipuçları (görsel denetim): her nadirlikten bir gölge yan yana (pırıltı, ışıltı,
 ##     kabarcık), sonra her nadirliğin rozeti; gri tonlamalı kopyayla renk körü denetimi yapılır.
 ##   map: harita ve hızlı geçiş (KONTROL satırları): ilk balıktan önce harita düğmesi yok; rütbe
-##     atlayınca yeni bölge açılır (bildirim, Dede, nabız); haritaya dokun → açılır; her açık bölgenin
-##     rozetine dokun → ekran kararır, balıkçı oraya geçer, gölgeler gelir; kilitli bölgeye geçilmez.
+##     atlayınca yeni bölge açılır (bildirim, Dede, nabız); haritaya dokun → açılır; ayarların
+##     geliştirme düğmeleri (+1.000, +10.000 para, RÜTBE +1 iki kez: panel açıkken bildirim yok,
+##     kapanınca rütbe ve kayalık burun); her açık bölgenin rozetine dokun → ekran kararır, balıkçı
+##     oraya geçer, gölgeler gelir; kilitli bölgeye geçilmez; en yüksek rütbede RÜTBE +1 pasif.
 ##   boat: sandal (KONTROL satırları): sandal yokken Dede Nine'yi söyler; Nine'den sandalı al; iskeledeki
 ##     sandala dokun → ekran kararır, derin ortada sandaldasın; yürünmez, dokunuş atıştır; yayını tut;
 ##     haritadan sıradaki şamandıra; "Kıyıya dön" → iskele.
@@ -824,6 +826,7 @@ func _play_map() -> void:
 	_check_map_badges(panel)
 	panel.close_panel()
 	await _wait(0.3)
+	await _check_debug_buttons()
 	# Rütbe 7: kayalık burun ve dere ağzı da açık (oturumun erişimi ve çitler).
 	save.xp = db.rank_xp[6]
 	_session().set_access(Zones.open_ids(db, save, spot))
@@ -867,10 +870,67 @@ func _play_map() -> void:
 	await _shot("%02d_kilitli" % index)
 	panel.close_panel()
 	await _wait(0.3)
+	# En yüksek rütbede RÜTBE +1 pasif.
+	save.xp = db.rank_xp[db.max_rank() - 1]
+	save.settings["perf"] = true
+	GameState.changed.emit()
+	var settings: SettingsPanel = main.get("settings_panel")
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	await _wait(0.3)
+	var top := settings.find_child("DebugRankUp", true, false) as Button
+	_check("en yüksek rütbede RÜTBE +1 pasif", top != null and top.disabled)
+	settings.close_panel()
+	save.settings["perf"] = false
+	GameState.changed.emit()
+	await _wait(0.3)
 	_check_buttons()
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Ayarların geliştirme düğmeleri (geliştirme sürümü, ölçüm açıkken): +1.000 ve +10.000 para; RÜTBE +1
+## iki kez rütbe 3'ten 5'e. Panel açıkken bildirim çıkmaz (karartmanın altında kalmasın); kapanınca
+## rütbe ve kayalık burun bildirimi, Dede söyler, harita düğmesi atar.
+func _check_debug_buttons() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var hud := _hud()
+	var settings: SettingsPanel = main.get("settings_panel")
+	save.settings["perf"] = true
+	GameState.changed.emit()
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	await _wait(0.4)
+	var coins := save.coins
+	for amount: int in SettingsPanel.DEBUG_COINS:
+		await _tap_control(settings.find_child("DebugCoins%d" % amount, true, false))
+		await _wait_frames(2)
+	_check("+1.000 ve +10.000: para %d → %d (sol üstte)" % [coins, save.coins], save.coins == coins + 11000
+			and (hud.get("_coins") as Label).text == UiKit.format_int(save.coins))
+	var rank := Rank.rank(db, save)
+	for i in 2:
+		await _tap_control(settings.find_child("DebugRankUp", true, false))
+		await _wait_frames(2)
+	await _wait(1.0)
+	var toast_box: Control = hud.get("_toast_box")
+	_check("RÜTBE +1 iki kez: rütbe %d → %d; panel açıkken bildirim yok" % [rank, Rank.rank(db, save)],
+			Rank.rank(db, save) == rank + 2 and settings.visible and not toast_box.visible)
+	await _shot("02b_gelistirici")
+	settings.close_panel()
+	await _wait_frames(3)
+	var said := str(main.get("_hint_shown"))
+	var pulsing := float(hud.get("_map_pulse")) > 0.0
+	var title := tr("RANK_" + db.rank_title(rank + 1))
+	var ranked := await _wait_toast(UiKit.upper(tr("UI_RANK_UP") % [rank + 1, title]), 4.0)
+	var opened := await _wait_toast(UiKit.upper(tr("UI_ZONE_OPENED") % tr("ZONE_rocky_point")), 10.0)
+	_check("panel kapanınca rütbe ve kayalık burun bildirimi, Dede söyler, harita düğmesi atar (%s, %s, %s, %s)" % [
+			ranked, opened, said, pulsing], ranked and opened and said == "UI_DEDE_ZONE_OPEN" and pulsing
+			and Zones.unlocked(db, save, db.zone(str(main.get("spot_id")), "rocky_point")))
+	save.settings["perf"] = false
+	GameState.changed.emit()
+	await _wait(0.3)
 
 
 ## Sandal: rütbe 9, parası var ama sandalı yok.
@@ -1803,7 +1863,7 @@ func _play_tour() -> void:
 	var all_open := true
 	for z in db.zones_of(spot):
 		all_open = all_open and Zones.unlocked(db, save, z)
-	_check("ölçüm açıkken \"Bölgeleri ve teknikleri aç\" → rütbe %d ve sandal, bütün bölgeler açık" % Rank.rank(db, save),
+	_check("ölçüm açıkken \"Hepsini aç\" → rütbe %d ve sandal, bütün bölgeler açık" % Rank.rank(db, save),
 			found and all_open and Economy.owns(db, save, Zones.BOAT) and int(main.get("_access_rank")) == Rank.rank(db, save))
 	await _shot("00_ayarlar")
 	settings.close_panel()

@@ -20,6 +20,8 @@ const FORWARD_CAST := 6.0
 const CARD_DELAY := 0.9
 ## Kart kapandıktan bu kadar sonra bekleyen bildirimler gelir (sn).
 const TOAST_AFTER_CARD := 0.5
+## Panel kapandıktan sonra sıradaki bildirimin beklediği süre (sn).
+const TOAST_AFTER_PANEL := 0.3
 ## Dede'nin ipuçları bu kadar balık tutulana kadar görünür.
 const HINT_CATCHES := 3
 ## Dede iskelenin +x kenarında, suya bakan uçtan bu kadar geride oturur; yüzü kameraya dönük
@@ -283,7 +285,7 @@ func _on_state_changed() -> void:
 		return
 	hud.perf = bool(GameState.setting("perf", false))
 	_refresh_traps()
-	# Rütbe dışarıdan değiştiyse (geliştirme sürümünde "Bütün bölgeleri aç"): erişim ve çitler.
+	# Rütbe dışarıdan değiştiyse (geliştirme sürümünde "Hepsini aç", bot): erişim ve çitler.
 	var rank := Rank.rank(GameState.db, GameState.save)
 	if rank != _access_rank:
 		_access_rank = rank
@@ -319,8 +321,10 @@ func _stop_loops() -> void:
 
 func _process(delta: float) -> void:
 	# Odak kaybında ve bir panel (ayarlar, dükkân, defter...) açıkken oyun donar (çekişmedeki
-	# balık kaçmasın). Balık kartı panel değildir: kart açıkken balık gösterimi sürer.
+	# balık kaçmasın). Balık kartı panel değildir: kart açıkken balık gösterimi sürer. Sıradaki
+	# bildirimler (rütbe, açılan yer) de bekler: karartmanın altında kalmasın, panel kapanınca çıkar.
 	if _paused or _panel_open():
+		hud.hold_toasts(TOAST_AFTER_PANEL)
 		return
 	if session.state == FishingSession.State.IDLE:
 		session.angler = angler.pos2()
@@ -862,6 +866,17 @@ func _after_rank(ranked: Dictionary) -> bool:
 	if _announce_techniques(not opened.is_empty()):
 		news = true
 	return news
+
+
+## Geliştirme sürümü (Ayarlar'da RÜTBE +1): bir sonraki rütbenin puanı verilir, gerçek rütbe atlama
+## akışıyla (bildirim, açılan bölge ve teknik, Dede'nin sözü, nabızlar; panel kapanınca görünür).
+func _debug_rank_up() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	_after_rank(Rank.add_xp(db, save, Rank.xp_to_next(db, save)))
+	GameState.save_game()
+	_refresh_status()
+	GameState.changed.emit()
 
 
 # --- Sunum ---------------------------------------------------------------------------
@@ -1873,6 +1888,7 @@ func _build_ui() -> void:
 	card.closed.connect(func() -> void: session.acknowledge())
 	settings_panel = SettingsPanel.new()
 	layer.add_child(settings_panel)
+	settings_panel.rank_up_requested.connect(_debug_rank_up)
 	shop_panel = ShopPanel.new()
 	layer.add_child(shop_panel)
 	shop_panel.spot_id = spot_id

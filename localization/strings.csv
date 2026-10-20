@@ -15,8 +15,9 @@ UI_ON,On,Açık
 UI_OFF,Off,Kapalı
 UI_DEBUG_RESET,Reset save,Kaydı sıfırla
 UI_DEBUG_RESET_SURE,Sure? Tap again,Emin misin? Yine dokun
-UI_DEBUG_UNLOCK,Unlock zones & techniques,Bölgeleri ve teknikleri aç
-UI_DEBUG_UNLOCK_GO,Unlock,Aç
+UI_DEBUG_UNLOCK_GO,Unlock all,Hepsini aç
+UI_DEBUG_COINS,+%s,+%s
+UI_DEBUG_RANK_UP,Rank +1,Rütbe +1
 RARITY_common,Common,Sıradan
 RARITY_fine,Fine,Güzel
 RARITY_rare,Rare,Nadir

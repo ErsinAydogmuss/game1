@@ -25,6 +25,14 @@ static func add_xp(db: ContentDB, save: SaveData, amount: int) -> Dictionary:
 	return { "old_rank": before, "new_rank": rank(db, save) }
 
 
+## Bir sonraki rütbeye kalan puan (en yüksek rütbede 0).
+static func xp_to_next(db: ContentDB, save: SaveData) -> int:
+	var r := rank(db, save)
+	if r >= db.max_rank():
+		return 0
+	return maxi(0, db.rank_xp[r] - save.xp)
+
+
 ## Bu rütbe içinde ne kadar ilerlendi (0..1; en yüksek rütbede 1).
 static func progress(db: ContentDB, save: SaveData) -> float:
 	var r := rank(db, save)
