@@ -61,6 +61,7 @@ UI_DEDE_TIP_3,"Let go when it thrashes, or the line snaps.","Balık çırpının
 UI_DEDE_TIP_4,A big shadow means a big fish.,"Büyük gölge, büyük balık demek."
 UI_DEDE_TIP_5,This lake has a secret... I'll tell you one day.,Bu gölün bir sırrı var... Bir gün anlatırım.
 UI_DEDE_TIP_6,"Be patient, kid. The lake is generous.","Sabırlı ol evlat, göl cömerttir."
+UI_DEDE_TIP_7,"Forgot something, kid? ""How to play?"" is in Settings.","Bir şey unutursan Ayarlar'a bak evlat: ""Nasıl oynanır?"" orada."
 UI_DEDE_TIP_SPIN,"Stop and go, kid: predators strike a lure that pauses.","Dur-kalk yap evlat: yırtıcı en çok duran yeme saldırır."
 UI_DEDE_TIP_TRAP,"A trap fills while you're away, but holds %d crayfish at most.","Tuzak sen yokken de dolar, ama %d kereviti geçmez."
 UI_DEDE_TIP_BOTTOM,A feeder draws fish to your bait faster.,Yem sepeti balığı yemin çevresine daha çabuk toplar.

@@ -3,7 +3,7 @@ extends BaseTest
 
 
 func test_tips_tell_and_excitement_wows() -> void:
-	for i in range(1, 7):
+	for i in range(1, Elder.TIP_COUNT + 1):
 		assert_eq(Moods.of("UI_DEDE_TIP_%d" % i), Moods.STORY, "öğüt %d anlatır" % i)
 	assert_eq(Moods.of("UI_HINT_CAST"), Moods.STORY, "talimat anlatır")
 	assert_eq(Moods.of("UI_HINT_BITE"), Moods.WOW, "VUR anı heyecanlı")

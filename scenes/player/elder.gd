@@ -8,7 +8,7 @@ extends Villager
 
 ## Dede'ye dokununca sırayla söylediği öğütler: çeviri anahtarı ve sayısı (strings.csv).
 const TIP_KEY := "UI_DEDE_TIP_%d"
-const TIP_COUNT := 6
+const TIP_COUNT := 7
 ## Teknik (ya da tuzak) açılınca öğütlere katılanlar: genel öğütlerin arasına, açıldıkları rütbe
 ## sırasıyla girer (tips).
 const TECH_TIPS := { "spin": "UI_DEDE_TIP_SPIN", "trap": "UI_DEDE_TIP_TRAP", "bottom": "UI_DEDE_TIP_BOTTOM",

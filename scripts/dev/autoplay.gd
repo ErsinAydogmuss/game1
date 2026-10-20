@@ -65,6 +65,7 @@ extends Node
 ##     rehber kapanınca çanta açık. Dükkân: çantadan uzaktan açılan dükkânın Kamış sekmesinde ve
 ##     tezgâhtaki dükkânın Kamış, Ekstra, Takım ve Kova sekmelerinde "?" o sekmenin sayfası; rehber
 ##     kapanınca dükkân açık, Nine veda etmez (dükkân kapanınca uğurlar; uzaktan açılmışsa susar).
+##     Dede'ye dokundukça öğütler; sonuncusu rehberi söyler.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -1952,6 +1953,15 @@ func _play_guide() -> void:
 	await _wait_frames(3)
 	_check("dükkân kapanınca Nine uğurlar", str(main.get("_line")).begins_with("UI_NINE_LINE_"))
 	await _wait(0.4)
+	# Dede'nin son genel öğüdü rehberi söyler: Dede'ye dokundukça sıradaki öğüt.
+	var last := Elder.TIP_KEY % Elder.TIP_COUNT
+	for i in Elder.TIP_COUNT + Elder.TECH_TIPS.size() + 1:
+		if str(main.get("_hint_shown")) == last:
+			break
+		await _tap(_screen(_elder().head_point()))
+		await _wait(0.3)
+	_check("Dede'nin son öğüdü rehberi söyler", str(main.get("_hint_shown")) == last)
+	await _shot("13_dede_rehber")
 	_finish_checks()
 
 
