@@ -61,7 +61,8 @@ extends Node
 ##     sayfada, ayarların üstünde. İLERİ ile baştan sona her sayfa: küçülmeden sığar, düğmeler büyük ve
 ##     güvenli alanda, panelin boyu aynı, karolar düzenin boyunda, metin, başlık ve alttaki satır karoya
 ##     sığar; ekran görüntüsü. Son sayfada İLERİ pasif; sekmeye dokununca o sayfa; kilitli teknik ve
-##     bölgede rütbe hapı; rehber kapanınca ayarlar açık.
+##     bölgede rütbe hapı; rehber kapanınca ayarlar açık. Takım Çantası'nda "?" → Teknikler sayfası,
+##     rehber kapanınca çanta açık.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -1891,6 +1892,27 @@ func _play_guide() -> void:
 	await _wait_frames(3)
 	_check("rehber kapanınca ayarlar açık", not guide.visible and settings.visible)
 	settings.close_panel()
+	await _wait(0.4)
+	# Takım Çantası: "?" → Teknikler; rehber kapanınca çanta açık.
+	var bag: TechniquePanel = main.get("technique_panel")
+	await _tap_control(hud.technique_button)
+	await _wait_until(func() -> bool: return bag.visible, 2.0)
+	await _wait(0.4)
+	_check("çanta \"?\" ile küçülmeden sığar (%.2f)" % bag.fit_scale(), bag.visible and bag.fit_scale() > 0.999)
+	_check_panel_buttons(bag, "çantanın düğmeleri")
+	var bag_help := bag.find_child("Help", true, false) as Control
+	if bag_help != null:
+		await _tap_control(bag_help)
+		await _wait_until(func() -> bool: return guide.visible, 2.0)
+		await _wait(0.4)
+	_check("çantada \"?\" → rehber Teknikler sayfasında, çantanın üstünde", bag_help != null and guide.visible
+			and bag.visible and guide.current_page() == "techniques")
+	await _shot("10_canta_rehber")
+	await _tap_control(guide.close_button)
+	await _wait_frames(3)
+	_check("rehber kapanınca çanta açık", not guide.visible and bag.visible)
+	await _shot("11_canta")
+	bag.close_panel()
 	await _wait(0.4)
 	_finish_checks()
 

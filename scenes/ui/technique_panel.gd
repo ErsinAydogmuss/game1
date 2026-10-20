@@ -14,6 +14,7 @@ extends Dialog
 ## olduğu, kaç tuzağın kurulu olduğu ve tek düğme: TUZAK BIRAK (trap_requested: balıkçının yakınındaki
 ## sığ suya), NİNE'DE (tuzağı yok: dükkân Ekstra sekmesinde; shop_requested("trap")), HEPSİ KURULU,
 ## yer (bu bölgeye kurulmaz: sazlıkta ve kayalıkta) ya da rütbe kilidi.
+## Başlıkta "?": rehber Teknikler sayfasında açılır (help_requested).
 
 signal technique_selected(id: String)
 signal shop_requested(id: String)
@@ -36,6 +37,8 @@ var _trap_box: VBoxContainer
 
 func _build() -> void:
 	set_header(tr("UI_BAG_TITLE"), "tackle_bag", WIDTH)
+	# "?": rehberin Teknikler sayfası.
+	add_help_button(func() -> String: return "techniques")
 	_row = HBoxContainer.new()
 	_row.add_theme_constant_override("separation", 16)
 	_row.alignment = BoxContainer.ALIGNMENT_CENTER
