@@ -59,6 +59,9 @@ extends Node
 ##     sinekle alabalık, haritadan sandalla derin ortaya, efsanevi mersin (Dede haber verir) ve "Göle
 ##     bırak", defter. Kamerayı bot yönetir (aksiyon ortadaki kare kırpmada kalır); önemli anlar
 ##     günlüğe "REELS MARK <kare> <çekim>.<olay>" diye yazılır. --reels-only=gold,legend: yalnızca o çekimler.
+##   rods: kamışlar ve makaralar (görsel denetim; KONTROL satırları): dükkândaki kamışlar teknik teknik
+##     adlarıyla yan yana, makaralar yakından (çıkrık ve sinek makarası); elde kuşanılan kamış ve
+##     makara, dipte sehpadaki kuşanılan dip kamışı (zil ucunda).
 ##   guide: "Nasıl oynanır?" rehberi (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN):
 ##     rütbe 3'ün oyuncusu. Ayarlar "Nasıl oynanır?" düğmesiyle küçülmeden sığar; düğme → rehber ilk
 ##     sayfada, ayarların üstünde. İLERİ ile baştan sona her sayfa: küçülmeden sığar, düğmeler büyük ve
@@ -191,6 +194,8 @@ func _ready() -> void:
 			_play_reels.call_deferred()
 		"guide":
 			_play_guide.call_deferred()
+		"rods":
+			_play_rods.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -1128,7 +1133,8 @@ func _play_technique() -> void:
 	await _shot("04_spin_kamisi")
 	await _tap(shop.close_button.get_global_rect().get_center())
 	await _wait_frames(4)
-	_check("spin elde: kamış, yem, düğme ve Dede'nin sözü", _angler().rod.style == "spin" and bobber.kind == "lure"
+	_check("spin elde: kamış, yem, düğme ve Dede'nin sözü", _angler().rod.style == "spin"
+			and _angler().rod.gear_id == "rod_spin_light" and bobber.kind == "lure"
 			and (hud.technique_button.get("_icon") as GameIcon).kind == "tech_spin"
 			and str(main.get("_hint_shown")) == "UI_DEDE_TECH_FIRST_spin")
 	await _wait(0.5)
@@ -1230,6 +1236,7 @@ func _play_bottom() -> void:
 	await _tap(shop.close_button.get_global_rect().get_center())
 	await _wait_frames(4)
 	_check("dip elde: kamış, düğme, Dede'nin sözü", _session().technique.id == "bottom" and _angler().rod.style == "bottom"
+			and _angler().rod.gear_id == "rod_carp_1"
 			and (hud.technique_button.get("_icon") as GameIcon).kind == "tech_bottom"
 			and str(main.get("_hint_shown")) == "UI_DEDE_TECH_FIRST_bottom")
 	# Uzağa atış: olta sehpaya konur; bir balık takımın yanına gelir, koklar (zil tek tük), koşar.
@@ -1582,6 +1589,7 @@ func _play_fly() -> void:
 	await _wait_frames(4)
 	_check("dere ağzında sinek seçilir: kamış, sinek, düğme, Dede'nin sözü", ready and not bag.visible
 			and save.technique == "fly" and _session().technique.id == "fly" and _angler().rod.style == "fly"
+			and _angler().rod.gear_id == "rod_fly_1"
 			and bobber.kind == "fly" and (hud.technique_button.get("_icon") as GameIcon).kind == "tech_fly"
 			and str(main.get("_hint_shown")) == "UI_DEDE_TECH_FIRST_fly")
 	await _wait(0.5)
@@ -1936,6 +1944,138 @@ func _play_tour() -> void:
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Kamışlar ve makaralar (görsel denetim; KONTROL satırları): dükkândaki kamışlar teknik teknik yan yana
+## ve adlarıyla, suyun üstünde kameraya dönük (kuşanılan görünüş RodModel.LOOKS); makaralar yakından
+## (çıkrık ve sinek makarası); sonra balıkçının elinde kuşanılan kamış ve dipte sehpadaki dip kamışı.
+func _play_rods() -> void:
+	_use_save(5)
+	await _wait(1.0)
+	var db := GameState.db
+	var save := GameState.save
+	var cam: FollowCamera = main.get("camera")
+	main.set("bot_camera", true)
+	_hide_fingers = true
+	var pitch := deg_to_rad(16.0)
+	var back := Vector3(sin(FollowCamera.YAW) * cos(pitch), sin(pitch), cos(FollowCamera.YAW) * cos(pitch))
+	var right := Vector3(cos(FollowCamera.YAW), 0.0, -sin(FollowCamera.YAW))
+	var up := back.cross(right).normalized()
+	var center := Vector3(3.0, 1.6, -1.0)
+	var groups := [["float", "spin"], ["bottom", "fly"]]
+	var index := 1
+	for pair: Array in groups:
+		var shelf := Node3D.new()
+		main.add_child(shelf)
+		var ids: Array[String] = []
+		for t: String in pair:
+			for g in db.rods_of(t):
+				ids.append(str(g["id"]))
+		for i in ids.size():
+			var id := ids[i]
+			var look: Dictionary = RodModel.LOOKS[id]
+			# Dükkândaki resimler gibi çapraz: kamışlar alt alta, ortaları aynı çizgide.
+			var dir := (right * cos(deg_to_rad(28.0)) + up * sin(deg_to_rad(28.0))).normalized()
+			var at := center + up * (0.95 - 0.38 * i) - dir * (float(look["length"]) * 0.5)
+			_rod_on_shelf(shelf, str(look["technique"]), id, "reel_basic", at, dir, back, "GEAR_" + id)
+		cam.pitch = pitch
+		cam.zoom = 0.42
+		cam.snap(center + right * 0.2 - up * 0.4)
+		await _wait_frames(4)
+		await _shot("%02d_kamislar_%s" % [index, "_".join(pair)])
+		index += 1
+		shelf.queue_free()
+		await _wait_frames(2)
+	# Makaralar yakından: her makara bir spin kamışında (çıkrık), iki sinek kamışında (sinek makarası).
+	# Kamışlar kameradan uzağa uzanır: makaralar önde, yan yana.
+	var reels := Node3D.new()
+	main.add_child(reels)
+	var reel_ids: Array[String] = []
+	for g in db.gear_in("reel"):
+		reel_ids.append(str(g["id"]))
+	var away := (-back * cos(deg_to_rad(25.0)) + up * sin(deg_to_rad(25.0))).normalized()
+	for i in reel_ids.size():
+		var at := center + right * (-1.05 + 0.42 * i) + up * 0.12
+		_rod_on_shelf(reels, "spin", "rod_spin_medium", reel_ids[i], at, away, right, "GEAR_" + reel_ids[i], true)
+	var side := (right * cos(deg_to_rad(15.0)) + up * sin(deg_to_rad(15.0))).normalized()
+	for i in 2:
+		var at := center + right * (-0.75 + 0.75 * i) - up * 0.34
+		var fly_reel: String = ["reel_smooth", "reel_master"][i]
+		_rod_on_shelf(reels, "fly", ["rod_fly_1", "rod_fly_3"][i], fly_reel, at, side, back, "GEAR_" + fly_reel, true)
+	cam.zoom = 0.21
+	cam.snap(center - up * 0.08)
+	await _wait_frames(4)
+	await _shot("%02d_makaralar" % index)
+	index += 1
+	reels.queue_free()
+	# Balıkçının elinde kuşanılan kamış ve makara: karbon kamış, altın makara.
+	main.set("bot_camera", false)
+	_hide_fingers = false
+	for id: String in ["rod_float_carbon", "reel_master"]:
+		save.owned.append(id)
+		Economy.equip(db, save, id)
+	main.call("_on_gear_changed")
+	await _wait_frames(3)
+	var rod: RodModel = _angler().rod
+	_check("elde kuşanılan kamış ve makara (%s, %s)" % [rod.gear_id, rod.reel_id],
+			rod.gear_id == "rod_float_carbon" and rod.reel_id == "reel_master" and rod.style == "float")
+	main.set("bot_camera", true)
+	_frame_on(_angler().global_position + Vector3(0.0, 1.0, 0.0), 0.3, deg_to_rad(35.0))
+	await _wait_frames(4)
+	await _shot("%02d_elde_karbon" % index)
+	index += 1
+	main.set("bot_camera", false)
+	# Dip: üçüncü dip kamışı kuşanılır, sehpadaki kamış o olur (zil ucunda).
+	save.xp = maxi(save.xp, db.rank_xp[9])
+	for id: String in ["rod_carp_3"]:
+		save.owned.append(id)
+		Economy.equip(db, save, id, "bottom")
+	save.technique = "bottom"
+	main.call("_use_technique_gear")
+	GameState.changed.emit()
+	await _wait_frames(3)
+	var stand: RodStand = main.get("stand")
+	_check("dipte elde ve sehpada kuşanılan dip kamışı (%s, %s)" % [_angler().rod.gear_id, stand.rod.gear_id],
+			_angler().rod.gear_id == "rod_carp_3" and stand.rod.gear_id == "rod_carp_3"
+			and stand.find_child("Bell", true, false).get_parent() == stand.rod.tip)
+	stand.place(_angler().global_position, _angler().facing, func(_p: Vector2) -> bool: return true)
+	stand.show_stand(true)
+	main.set("bot_camera", true)
+	_frame_on(stand.global_position + Vector3(0.0, 0.45, 0.0), 0.32, deg_to_rad(40.0))
+	await _wait_frames(4)
+	await _shot("%02d_sehpa_karbon" % index)
+	stand.show_stand(false)
+	main.set("bot_camera", false)
+	var draws := await _measure_draws()
+	print("ÇİZİM iskelede %d çizim (kamış 4 ağ)" % int(draws["draws"]))
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Rafta bir kamış: tekniği, kimliği ve makarası; at kökü, dir ucunun yönü, toward kameraya dönük yan
+## (sinek makarasının yüzü kameraya bakar). Yanında label anahtarının yazısı.
+func _rod_on_shelf(parent: Node3D, technique: String, id: String, reel_id: String, at: Vector3, dir: Vector3,
+		toward: Vector3, label_key: String, close: bool = false) -> void:
+	var rod := RodModel.new()
+	rod.style = technique
+	rod.gear_id = id
+	rod.reel_id = reel_id
+	parent.add_child(rod)
+	var z := -dir
+	var x := (toward - z * toward.dot(z)).normalized()
+	rod.global_transform = Transform3D(Basis(x, z.cross(x), z), at)
+	var label := Label3D.new()
+	label.text = tr(label_key)
+	label.font_size = 36
+	# Makara yakın çekiminde yazı küçük ve makaranın altında.
+	label.pixel_size = 0.0011 if close else 0.0028
+	label.outline_size = 10
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	parent.add_child(label)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if close else HORIZONTAL_ALIGNMENT_RIGHT
+	label.global_position = at - Vector3(0.0, 0.14, 0.0) if close else at - dir * 0.12 - Vector3(0.0, 0.1, 0.0)
 
 
 ## "Nasıl oynanır?" rehberi: ayarlardan girilir, İLERİ ile baştan sona okunur (KONTROL satırları;

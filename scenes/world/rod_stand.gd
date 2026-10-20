@@ -1,7 +1,8 @@
 class_name RodStand
 extends Node3D
 ## Dipte balıkçının yanındaki sehpa (docs/gdd.md §10.3): iki ayaklı ahşap sehpa (kodla, tek ağ),
-## üstünde yatan dip kamışı (RodModel "bottom") ve ucunda pirinç zil; hepsi gölgesiz. Koklamada
+## üstünde yatan dip kamışı (kuşanılan dip kamışı ve makara: set_rod; zil yeni ucuna taşınır) ve
+## ucunda pirinç zil; hepsi gölgesiz. Koklamada
 ## zil sallanır ve uç seğirir (sniff); koşuda zil durmadan çalar, uç eğilip titrer ve kamışın
 ## üstünde 2B zil işareti (BellMark) sallanır (set_running). Misina kamışın ucundan çıkar
 ## (tip_point). Yerel -Z ileri (atış yönü). Kare başı hareket _process'te.
@@ -33,6 +34,14 @@ var _clock: float = 0.0
 
 
 func _ready() -> void:
+	if rod == null:
+		build()
+
+
+## Sehpayı, kamışı ve zili kurar (bir kez; _ready kurar, testler doğrudan çağırabilir).
+func build() -> void:
+	if rod != null:
+		return
 	var frame := Node3D.new()
 	frame.name = "Frame"
 	add_child(frame)
@@ -49,12 +58,8 @@ func _ready() -> void:
 	for x: float in [-0.06, 0.06]:
 		Props.cylinder(frame, 0.008, 0.01, 0.07, Vector3(x, front + 0.047, FRONT_Z), WOOD, 5)
 	MeshBatch.merge(frame)
-	rod = RodModel.new()
-	rod.name = "Rod"
-	rod.style = "bottom"
+	rod = _make_rod("", "")
 	add_child(rod)
-	rod.position = ROD_AT
-	rod.rotation = Vector3(RISE, 0, 0)
 	_bell = Node3D.new()
 	_bell.name = "Bell"
 	rod.tip.add_child(_bell)
@@ -69,6 +74,35 @@ func _ready() -> void:
 	_mark = BellMark.new()
 	add_child(_mark)
 	visible = false
+
+
+## Sehpadaki kamış kuşanılan dip kamışı ve makarası (RodModel.LOOKS): değiştiyse kamış yeniden
+## kurulur, zil yeni ucuna taşınır.
+func set_rod(rod_id: String, reel_id: String) -> void:
+	if rod == null:
+		build()
+	if rod.gear_id == rod_id and rod.reel_id == reel_id:
+		return
+	var old := rod
+	rod = _make_rod(rod_id, reel_id)
+	_bell.get_parent().remove_child(_bell)
+	rod.tip.add_child(_bell)
+	remove_child(old)
+	old.queue_free()
+	add_child(rod)
+
+
+## Sehpada yatan dip kamışı (kurulmuş; çağıran ekler).
+func _make_rod(rod_id: String, reel_id: String) -> RodModel:
+	var r := RodModel.new()
+	r.name = "Rod"
+	r.style = "bottom"
+	r.gear_id = rod_id
+	r.reel_id = reel_id
+	r.build()
+	r.position = ROD_AT
+	r.rotation = Vector3(RISE, 0, 0)
+	return r
 
 
 ## Sehpa görünür ya da kalkar (kalkınca zil de susar).

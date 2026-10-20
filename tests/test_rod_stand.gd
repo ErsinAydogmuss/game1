@@ -42,6 +42,24 @@ func test_stand_behind_keeps_the_rod_clear_and_boat_is_closer() -> void:
 	stand.free()
 
 
+## Sehpadaki kamış kuşanılan dip kamışı: değişince yeniden kurulur, zil yeni kamışın ucunda.
+func test_stand_rod_follows_the_equipped_rod() -> void:
+	var stand := RodStand.new()
+	stand.build()
+	assert_eq(stand.rod.style, "bottom", "dip kamışı")
+	stand.set_rod("rod_carp_3", "reel_master")
+	assert_eq(stand.rod.gear_id, "rod_carp_3", "kuşanılan kamış")
+	assert_eq(stand.rod.reel_id, "reel_master", "kuşanılan makara")
+	var bell := stand.find_child("Bell", true, false)
+	assert_true(bell != null and bell.get_parent() == stand.rod.tip, "zil yeni kamışın ucunda")
+	var rods := 0
+	for child in stand.get_children():
+		if child is RodModel:
+			rods += 1
+	assert_eq(rods, 1, "sehpada tek kamış")
+	stand.free()
+
+
 func test_rod_rests_on_both_supports() -> void:
 	# Kamışın altı arka desteğin ve ön çatalın yüksekliğinde: ön çatal arkadan yüksek (kamış yükselir).
 	var rear := RodStand.rest_height(RodStand.REAR_Z, 0.03)

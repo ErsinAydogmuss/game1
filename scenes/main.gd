@@ -148,8 +148,10 @@ var _legend_look: float = 0.0
 ## Dede'nin son öğüdünün ve Nine'nin son uğurlama sözünün sırası.
 var _tip_index: int = 0
 var _nine_index: int = 0
-## Sahnede gösterilen teknik (elindeki kamış, suya atılan takım, teknik düğmesinin ikonu).
+## Sahnede gösterilen teknik (suya atılan takım, teknik düğmesinin ikonu) ve elindeki kamışın
+## görünüşü (teknik, kamış ve makara: _sync_technique).
 var _shown_technique: String = ""
+var _shown_look: String = ""
 var _wake_clock: float = 0.0
 ## Uzaktaki tuzağa dokunuldu: balıkçı yürür, varınca toplar (tuzağın kimliği; yoksa -1). Dokunma
 ## denetiminin bulduğu tuzak (hit_targets → _on_target) ve dolmanın yenilenme sayacı.
@@ -1214,15 +1216,27 @@ func _stand_room(p: Vector2) -> bool:
 	return in_boat or lake.is_walkable(p)
 
 
-## Oturumun tekniği değişti (Takım Çantası, ilk kamış): elindeki kamış, suya atılan takımın görünüşü
-## ve teknik düğmesinin ikonu. Takım suda ya da dönerken beklenir. Yeni bir tekniğe ilk geçişte Dede
-## nasıl oynandığını söyler (ilk atışlarda ipuçları da: TechniqueHints).
+## Elindeki kamış kuşanılan kamış ve makaranın görünüşünde (dükkânda yenisi alınınca, kuşanılınca;
+## dipte sehpadaki kamış da). Oturumun tekniği değiştiyse (Takım Çantası, ilk kamış) suya atılan
+## takımın görünüşü ve teknik düğmesinin ikonu da. Takım suda ya da dönerken beklenir. Yeni bir
+## tekniğe ilk geçişte Dede nasıl oynandığını söyler (ilk atışlarda ipuçları da: TechniqueHints).
 func _sync_technique() -> void:
+	if bobber.look != Bobber.Look.HIDDEN:
+		return
 	var technique := session.technique.id
-	if technique == _shown_technique or bobber.look != Bobber.Look.HIDDEN:
+	var db := GameState.db
+	var save := GameState.save
+	var rod_id := Economy.equipped(db, save, "rod", technique)
+	var reel_id := Economy.equipped(db, save, "reel", technique)
+	var look := "%s|%s|%s" % [technique, rod_id, reel_id]
+	if look != _shown_look:
+		_shown_look = look
+		angler.set_rod(technique, rod_id, reel_id)
+		if technique == "bottom":
+			stand.set_rod(rod_id, reel_id)
+	if technique == _shown_technique:
 		return
 	_shown_technique = technique
-	angler.set_rod_style(technique)
 	bobber.set_kind(Bobber.kind_for(technique))
 	hud.set_technique(technique)
 	var intro := "told_tech_" + technique
