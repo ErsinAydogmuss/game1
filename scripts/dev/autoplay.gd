@@ -8,7 +8,8 @@ extends Node
 ## Senaryolar:
 ##   controls: kontrollerin denemesi; KONTROL satırları TAMAM olmalı (Dede'ye dokun konuşsun,
 ##     Nine'ye dokun selam versin, sandala dokun Dede konuşsun (atış yok), yürü, kıyı yolundan dolaş,
-##     Dede'nin yanından ve dükkânın önünden geç,
+##     Dede'nin yanından ve dükkânın önünden geç, yürüme halkası (sürükle → yürür, az itince yavaş,
+##     bırakınca durur, dokunmak yürütmez, dışı oyuna geçer, defter açıkken çalışmaz, olta sudayken yok),
 ##     at, geri sar, gölgeyi korkut, gölgeyi çek, erken
 ##     dokunuş, ekranın her yeri VUR, basılı tut tut, kart açıkken atış yok, patlamada bırakmazsa
 ##     kopar, 8 sn'de yeni balık, düğme boyu ve güvenli alan).
@@ -294,12 +295,14 @@ func _play_controls() -> void:
 	angler.place(land)
 	(main.get("camera") as FollowCamera).snap(main.call("_focus"))
 	await _wait_frames(4)
+	await _check_joystick()
 	await _tap_world(Vector2(0.0, 4.0))
 	await _wait_until(func() -> bool: return not angler.is_walking(), 8.0)
-	# 3) Suya dokun: atmalı.
+	# 3) Suya dokun: atmalı. Olta sudayken yürüme halkası yok.
 	await _tap_world(Vector2(0.0, 0.0))
 	_check("suya dokun → atar", _state() == FishingSession.State.CASTING)
 	await _wait_state(FishingSession.State.WAITING, 3.0)
+	_check("olta sudayken yürüme halkası yok", not _hud().joystick.visible)
 	await _shot("02_atis")
 	# 4) Beklerken dokun: geri sarmalı.
 	await _tap(Vector2(400, 380))
@@ -991,9 +994,9 @@ func _play_boat() -> void:
 	await _wait_until(func() -> bool: return bool(main.get("in_boat")) and not fade.busy(), 4.0)
 	var buoys: Array = db.zone(spot, "deep_water")["buoys"]
 	var at := _angler().pos2()
-	_check("sandala dokun → ekran kararır, derin ortada sandaldasın", dark and bool(main.get("in_boat"))
+	_check("sandala dokun → ekran kararır, derin ortada sandaldasın (yürüme halkası yok)", dark and bool(main.get("in_boat"))
 			and str(main.get("zone_id")) == "deep_water" and at.distance_to(buoys[0]) < 3.5 and hud.shore_button.visible
-			and scene.boat_away())
+			and scene.boat_away() and not hud.joystick.visible)
 	await _wait(0.8)
 	await _shot("02_sandalda")
 	var deep := _session().lake.zone_index("deep_water")
@@ -3224,6 +3227,81 @@ func _reel_like_player(reaction: int, timeout: float, at: Vector2 = Vector2.INF)
 		_touch(1, finger, false)
 
 
+## Sol alttaki yürüme halkası (KONTROL satırları; balıkçı karada): sol altta ve güvenli alanda; halkaya
+## dokunmak yürütmez, atmaz; sağa sürükleyince ekranın sağına yürür, az itince yavaş, bırakınca durur;
+## halkanın kutusunun köşesine (halkanın dışı) dokunmak oyuna geçer; defter açıkken çalışmaz.
+func _check_joystick() -> void:
+	var hud := _hud()
+	var stick := hud.joystick
+	var angler := _angler()
+	var lake := _session().lake
+	angler.place(Vector2(-3.0, 11.3))
+	(main.get("camera") as FollowCamera).snap(main.call("_focus"))
+	await _wait_frames(4)
+	var rect := stick.get_global_rect()
+	var view := get_viewport().get_visible_rect()
+	var inset := UiKit.safe_insets(hud)
+	var safe := Rect2(view.position + Vector2(inset.x, inset.y), view.size - Vector2(inset.x + inset.z, inset.y + inset.w))
+	_check("yürüme halkası sol altta, büyük, güvenli alanda (%s)" % rect, stick.visible and safe.encloses(rect)
+			and rect.size.x >= 250.0 and rect.position.x < view.size.x * 0.25 and rect.end.y > view.size.y * 0.75)
+	var center := rect.get_center()
+	var k := rect.size.x / TouchJoystick.SIZE.x
+	var start := angler.pos2()
+	# Dokun ve bırak: yürümez, atılmaz.
+	await _tap(center)
+	await _wait_frames(4)
+	_check("halkaya dokunmak yürütmez, atmaz", angler.pos2().distance_to(start) < 0.05
+			and _state() == FishingSession.State.IDLE and not angler.is_walking())
+	# Sağa sürükle (tam): ekranın sağına yürür; yarım itince yavaş; bırakınca durur.
+	var screen_right := InputRouter.world_dir(Vector2(1, 0), FollowCamera.YAW)
+	var walked: Array[float] = []
+	for push: float in [1.0, 0.5]:
+		var from := angler.pos2()
+		_touch(3, center, true)
+		await _wait_frames(2)
+		_drag(3, center + Vector2(TouchJoystick.RING * k * push, 0.0))
+		await _wait_frames(15)
+		var moved := angler.pos2() - from
+		walked.append(moved.length())
+		_check("halkayı %%%d sağa it → ekranın sağına yürür (%.2f m)" % [int(push * 100), moved.length()],
+				moved.length() > 0.2 and moved.normalized().dot(screen_right) > 0.85)
+		_touch(3, center + Vector2(TouchJoystick.RING * k * push, 0.0), false)
+		await _wait_frames(3)
+		var stopped := angler.pos2()
+		await _wait_frames(6)
+		_check("bırakınca durur", angler.pos2().distance_to(stopped) < 0.02 and not stick.active())
+	_check("az itince yavaş yürür (%.2f < %.2f m)" % [walked[1], walked[0]], walked[1] < walked[0] * 0.75)
+	# Kutunun köşesi halkanın dışında: dokunuş oyuna geçer (karaysa yürür, suysa atar).
+	var corner := rect.position + Vector2(14.0, 14.0) * k
+	var p: Vector2 = main.call("ground_point", corner)
+	var before := angler.pos2()
+	await _tap(corner)
+	await _wait_frames(6)
+	var passed := angler.is_walking() or angler.pos2().distance_to(before) > 0.05 \
+			or _state() != FishingSession.State.IDLE
+	_check("halkanın dışına (kutunun köşesi) dokunmak oyuna geçer (%s)" % ("kara" if lake.is_walkable(p) else "su"),
+			passed)
+	await _wait_until(func() -> bool: return not angler.is_walking(), 6.0)
+	if _state() != FishingSession.State.IDLE:
+		await _tap(Vector2(400, 380))
+		await _wait_state(FishingSession.State.IDLE, 4.0)
+	# Defter açıkken halka çalışmaz.
+	var book: BookPanel = main.get("book_panel")
+	await _tap(hud.book_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	var held := angler.pos2()
+	_touch(3, center, true)
+	await _wait_frames(2)
+	_drag(3, center + Vector2(TouchJoystick.RING * k, 0.0))
+	await _wait_frames(10)
+	_touch(3, center + Vector2(TouchJoystick.RING * k, 0.0), false)
+	await _wait_frames(2)
+	_check("defter açıkken halka çalışmaz", book.visible and angler.pos2().distance_to(held) < 0.02)
+	await _tap(book.close_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	await _shot("01b_yurume_halkasi")
+
+
 func _check_buttons() -> void:
 	var view := get_viewport().get_visible_rect()
 	var inset := UiKit.safe_insets(_hud())
@@ -3376,6 +3454,18 @@ func _tap(pos: Vector2, index: int = 0) -> void:
 	await _wait_frames(2)
 	_touch(index, pos, false)
 	await _wait_frames(2)
+
+
+## Basılı parmağı pos'a kaydırır (sürükleme olayı).
+func _drag(index: int, pos: Vector2) -> void:
+	var ev := InputEventScreenDrag.new()
+	ev.index = index
+	ev.position = _to_window(pos)
+	ev.relative = ev.position - _to_window(_finger_pos.get(index, pos))
+	Input.parse_input_event(ev)
+	_finger_pos[index] = pos
+	if not _hide_fingers:
+		_overlay.call("finger_move", index, pos)
 
 
 ## Göldeki bir noktaya dokunur (iskelede güverte yüksekliğinde).

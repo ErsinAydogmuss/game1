@@ -370,6 +370,7 @@ func _build_input() -> void:
 	input = InputRouter.new()
 	input.lake = lake
 	input.action_button = hud.action_button
+	input.joystick = hud.joystick
 	input.ground_point = ground_point
 	input.line_out = func() -> bool: return session.line_out()
 	input.hit_targets = [
@@ -1116,6 +1117,8 @@ func _present(delta: float) -> void:
 	_update_hint()
 	_first_cue(delta)
 	input.walking_allowed = session.state == FishingSession.State.IDLE and not _card_up() and not in_boat
+	# Yürünemezken (kart, yakalama, geri sarma) halka soluk: görünür kalır, düğmeler zıplamasın.
+	hud.joystick.dimmed = not input.walking_allowed
 	# Yürürken adım sesi.
 	if angler.is_walking():
 		_step_clock += delta

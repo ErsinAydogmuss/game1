@@ -6,6 +6,8 @@ extends Node
 ## - Olta sudayken ekranın her yeri eylem düğmesidir: parmak değdiği an action_pressed,
 ##   son parmak kalkınca action_released (çekişmede basılı tutunca sarılır).
 ## - Olta suda değilken dünyadaki bir hedefe dokun (Dede, Nine'nin dükkânı) → target_tapped(kimlik).
+## - Sol alttaki yürüme halkası (TouchJoystick): halkada başlayan dokunuşu kendisi alır, buraya gelmez;
+##   yönü klavyenin yürümesi gibi kameraya göre (world_dir).
 ## - Mac: tıkla (yürü, at), WASD / oklar (yürü), Space (eylem; basılıyken sar).
 ## "modal" grubundaki görünür paneller (ayarlar, balık kartı) açıkken dokunuşlar oyuna geçmez.
 ## Ekrandaki TouchButton'lar dokunuşu kendileri alır (set_input_as_handled), buraya gelmez.
@@ -42,6 +44,8 @@ var view_yaw: float = FollowCamera.YAW
 var walking_allowed: bool = true
 ## HUD'daki eylem düğmesi (release_all basılı görünümünü söndürür).
 var action_button: TouchButton
+## Sol alttaki yürüme halkası (main verir): klavye basılı değilken yürüme yönü ondan.
+var joystick: TouchJoystick
 
 var _down: Dictionary = {}
 
@@ -65,11 +69,20 @@ func _process(_delta: float) -> void:
 		return
 	if not walking_allowed:
 		return
+	# Klavye öncelikli; basılı değilse yürüme halkası (az itince yavaş).
 	var input := Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back")
+	if input.length_squared() <= 0.0001 and joystick != null:
+		input = joystick.output
 	if input.length_squared() > 0.0001:
-		var forward := Vector2(-sin(view_yaw), -cos(view_yaw))
-		var right := Vector2(cos(view_yaw), -sin(view_yaw))
-		walk_step.emit(right * input.x - forward * input.y)
+		walk_step.emit(world_dir(input, view_yaw))
+
+
+## Ekrandaki yön (x sağ, y aşağı; klavye ya da halka) → dünyadaki yürüme yönü (xz), kameranın
+## yatay açısına göre: ekranın yukarısı kameradan uzağa. Uzunluk korunur.
+static func world_dir(input: Vector2, yaw: float) -> Vector2:
+	var forward := Vector2(-sin(yaw), -cos(yaw))
+	var right := Vector2(cos(yaw), -sin(yaw))
+	return right * input.x - forward * input.y
 
 
 ## Açık bir panel var mı?
@@ -93,6 +106,8 @@ func release_all() -> void:
 		action_released.emit()
 	if action_button != null:
 		action_button.cancel()
+	if joystick != null and joystick.active():
+		joystick.release()
 
 
 func _pointer(index: int, pos: Vector2, pressed: bool) -> void:

@@ -41,7 +41,7 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
   - **değdiği an:** ısırmada VUR; ısırmadan önce oltayı geri sarar;
   - **çekişmede basılı tutunca:** sarar.
   Sağ altta büyük bir eylem düğmesi de aynı işi yapar ve ne olacağını yazar: GERİ SAR / VUR! / SAR.
-- **Joystick yok,** çünkü soldaki dokunuşları yutuyordu (Kazı deneyimi).
+- ✅ **Yürüme halkası** (v0.4.1, Ersin: "solda yürüme mekanizması daha mantıklı olmaz mı"): sol alt köşede sabit bir joystick. Halkaya basıp sürükle: o yöne yürürsün, az itersen yavaş; bırakınca durursun. Yalnızca halkanın içinde başlayan dokunuşu alır: halkanın dışında dokunarak yürüme, atış ve köylüye dokunma aynen sürer (Kazı'daki joystick parmağın altında beliriyordu ve soldaki dokunuşları yutuyordu; bu yüzden ilk sürümde joystick yoktu). Olta sudayken ve sandalda gizli (sandalda yerinde "Kıyıya dön"); kart açıkken, yakalamada ve geri sararken soluk. Bir parmak halkadayken öbürüyle suya dokununca atılır.
 
 - ✅ **Harita** (sağ üst, ilk balıktan sonra): açık bir bölgenin rozetine dokun → ekran kararır, o bölgenin atış noktasındasın. Kilitli bölgede nedeni yazar.
 - ✅ **Sandal:** sandalı aldıysan iskeledeki sandala (ya da haritada Derin Orta'ya) dokun → ilk şamandıranın yanında sandaldasın; haritada Derin Orta'ya yeniden dokununca sıradaki şamandıraya geçilir. Sandalda suya dokunmak atıştır; sol alttaki "Kıyıya dön" iskeleye getirir.

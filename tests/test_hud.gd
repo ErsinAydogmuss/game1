@@ -88,3 +88,24 @@ func test_perf_label() -> void:
 	assert_eq(fps.visible, OS.is_debug_build() and not OS.has_feature("movie"), "kapalıyken yalnızca geliştirme sürümünde")
 	assert_eq(fps.get_theme_constant("outline_size"), 0, "kapalıyken dış çizgisiz")
 	hud.free()
+
+
+## Yürüme halkası sol alt köşede, ipucu çubuğunun payının solunda (ipucunun yeri değişmez: çubuk iki
+## yandaki eylem düğmesi payının arasında); dokunma için yeterince büyük. Sandalda ve olta sudayken
+## gizli, yerinde "Kıyıya dön".
+func test_joystick_left_of_the_hint() -> void:
+	assert_true(TouchJoystick.SIZE.x <= Hud.ACTION_SIZE.x + 24.0, "halka ipucu payının solunda (%.0f ≤ %.0f)" % [
+			TouchJoystick.SIZE.x, Hud.ACTION_SIZE.x + 24.0])
+	assert_true(TouchJoystick.RING * 2.0 >= 200.0 and TouchJoystick.RING * 2.0 <= TouchJoystick.SIZE.x,
+			"halka büyük ve kutusunda")
+	var hud := Hud.new()
+	hud.call("_build_bottom")
+	assert_true(hud.joystick != null and hud.joystick.visible, "karada görünür")
+	hud.set_boat(true)
+	assert_true(not hud.joystick.visible and hud.shore_button.visible, "sandalda gizli, Kıyıya dön görünür")
+	hud.set_boat(false)
+	hud.set_line_out(true)
+	assert_true(not hud.joystick.visible, "olta sudayken gizli")
+	hud.set_line_out(false)
+	assert_true(hud.joystick.visible, "olta dönünce görünür")
+	hud.free()

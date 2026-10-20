@@ -60,6 +60,9 @@ var map_button: TouchButton
 var shore_button: TouchButton
 ## Takım çantası: elindeki tekniğin ikonu; dokununca teknik seçilir.
 var technique_button: TouchButton
+## Sol alttaki yürüme halkası: olta sudayken ve sandalda gizli (sandalda yerinde "Kıyıya dön");
+## yürünemezken (kart, yakalama, geri sarma) soluk: main dimmed'i verir.
+var joystick: TouchJoystick
 ## Teknik düğmesi gösterilsin mi (şamandıradan başka bir teknik açılınca; olta sudayken yine gizli).
 var technique_allowed: bool = false:
 	set(value):
@@ -288,13 +291,14 @@ func set_line_out(on: bool) -> void:
 	_line_out = on
 	for c in line_out_hidden:
 		c.visible = not on and (c != map_button or map_allowed) and (c != shore_button or _in_boat) \
-				and (c != technique_button or technique_allowed)
+				and (c != technique_button or technique_allowed) and (c != joystick or not _in_boat)
 
 
-## Sandalda mı: "Kıyıya dön" düğmesi görünür.
+## Sandalda mı: "Kıyıya dön" düğmesi görünür, yürüme halkası gizlenir (sandalda yürünmez).
 func set_boat(on: bool) -> void:
 	_in_boat = on
 	shore_button.visible = on and not _line_out
+	joystick.visible = not on and not _line_out
 
 
 ## Yeni bölge açıldı: harita düğmesi bir süre nabız gibi atar.
@@ -504,6 +508,12 @@ func _build_bottom() -> void:
 	line_out_hidden.append(technique_button)
 	left.add_child(shore_button)
 	line_out_hidden.append(shore_button)
+	# Yürüme halkası sol alt köşede (teknik düğmesi üstünde); sağ kenarı ipucu çubuğunun payının solunda.
+	joystick = TouchJoystick.new()
+	joystick.name = "Joystick"
+	joystick.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	left.add_child(joystick)
+	line_out_hidden.append(joystick)
 	# FPS sol üstte, durum haplarının altında (sol alt "Kıyıya dön"ün yeri).
 	_fps = UiKit.label("", UiKit.SIZE_SMALL, UiKit.MUTED)
 	_fps.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN

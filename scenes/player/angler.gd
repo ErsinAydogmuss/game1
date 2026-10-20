@@ -143,7 +143,8 @@ func is_walking() -> bool:
 	return _walking
 
 
-## Klavyeyle bir adım (dir: dünya xz yönü, uzunluğu 0..1).
+## Klavyeyle ya da yürüme halkasıyla bir adım (dir: dünya xz yönü, uzunluğu 0..1: hız ve adımın
+## canlandırması onunla orantılı).
 func step_dir(dir: Vector2, delta: float) -> void:
 	if dir.length_squared() < 0.0001:
 		return
@@ -157,7 +158,8 @@ func step_dir(dir: Vector2, delta: float) -> void:
 			break
 		moved = true
 	if moved:
-		_speed = SPEED
+		# Az itilen yürüme halkasında yavaş yürür (adımı da yavaş).
+		_speed = SPEED * minf(dir.length(), 1.0)
 
 
 func face(dir: Vector2) -> void:
