@@ -18,8 +18,9 @@ extends Node
 ##   fish: bütün türler elde ve kartlarıyla, sonra ayarlar paneli (görsel denetim; kurallar işlemez);
 ##     --fish=<kimlik> yalnızca o tür.
 ##   shop: Nine'nin dükkânı (KONTROL satırları): dokununca açılır, para yetmezse ve rütbe tutmazsa
-##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, doluyken balık göle döner,
-##     hepsini sat, son yem bitince solucana döner; sekme görüntüleri.
+##     satın alınmaz, satın al ve kuşan, yem al, kova dolunca Dede uyarır, doluyken atılmaz (eylem
+##     düğmesi SAT): iskelede dükkân hemen açılır, sazlıktan ekran kararıp tezgâha gelinir; hepsini
+##     sat, son yem bitince solucana döner; sekme görüntüleri.
 ##   rarity: nadirlik ipuçları (görsel denetim): her nadirlikten bir gölge yan yana (pırıltı, ışıltı,
 ##     kabarcık), sonra her nadirliğin rozeti; gri tonlamalı kopyayla renk körü denetimi yapılır.
 ##   map: harita ve hızlı geçiş (KONTROL satırları): ilk balıktan önce harita düğmesi yok; rütbe
@@ -29,7 +30,7 @@ extends Node
 ##     oraya geçer, gölgeler gelir; kilitli bölgeye geçilmez; en yüksek rütbede RÜTBE +1 pasif.
 ##   boat: sandal (KONTROL satırları): sandal yokken Dede Nine'yi söyler; Nine'den sandalı al; iskeledeki
 ##     sandala dokun → ekran kararır, derin ortada sandaldasın; yürünmez, dokunuş atıştır; yayını tut;
-##     haritadan sıradaki şamandıra; "Kıyıya dön" → iskele.
+##     haritadan sıradaki şamandıra; "Kıyıya dön" → iskele; sandalda kova dolunca SAT → kıyı, dükkân.
 ##   technique: teknikler (KONTROL satırları; telefon oranında ve --safe-inset=130 ile): rütbe 2'den
 ##     önce teknik düğmesi yok; rütbe atlayınca spin açılır (bildirim, Dede, nabız); teknik düğmesi →
 ##     Takım Çantası (spin "Nine'de") → dükkân spin kamışlarında; ilk spin kamışı → spin ele geçer,
@@ -490,7 +491,8 @@ func _play_hero() -> void:
 
 ## Nine'nin dükkânı: Nine'ye dokun → dükkân açılır; parası yetmeyince satın alınmaz; satın al →
 ## kuşanılır ve oturumun takımı değişir; eskisini yeniden kuşan; rütbe kilidi; yem al ve tak; kova
-## dolunca Dede uyarır; hepsini sat → para; kapatınca Nine uğurlar. Her sekmenin ekran görüntüsü.
+## dolunca Dede uyarır; doluyken atılmaz, SAT Nine'ye götürür; hepsini sat → para; kapatınca Nine
+## uğurlar. Her sekmenin ekran görüntüsü.
 func _play_shop() -> void:
 	_use_save(3)
 	var db := GameState.db
@@ -605,33 +607,41 @@ func _play_shop() -> void:
 	await _wait(0.3)
 	await _shot("07a_kova_doldu")
 	await _wait_state(FishingSession.State.IDLE, 5.0)
-	# 7b) Kova doluyken bir balık daha: kovaya girmez, göle döner; bildirimi göle dönen balıkla.
-	var held := save.bucket.size()
-	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "rudd")
+	# 7b) Kova doluyken atılmaz: eylem düğmesi yeşil SAT; suya dokunmak atmaz (balıkçı yürümez), Dede
+	# SAT'ı söyler.
+	var hud := _hud()
+	var before := _angler().pos2()
+	_check("kova dolu → eylem düğmesi yeşil SAT", str(hud.get("_action_kind")) == "sell"
+			and hud.action_button.color == UiKit.SUCCESS)
 	await _tap_world(Vector2(1.0, -1.0))
-	await _wait_state(FishingSession.State.BITING, 20.0)
-	_touch(1, Vector2(260, 520), true)
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
-	var toast: Label = _hud().get("_toast")
-	var toast_icon: GameIcon = _hud().get("_toast_icon")
-	for i in 200:
-		if toast.is_visible_in_tree() and toast.text == UiKit.upper(tr("UI_BUCKET_FULL")):
-			break
-		await _wait_frames(1)
-	_check("kova doluyken balık göle döner (bildirim ikonlu)", save.bucket.size() == held
-			and toast.is_visible_in_tree() and toast_icon.visible and toast_icon.kind == "release")
-	await _wait(0.2)
-	await _shot("07b_kova_dolu_birak")
-	await _wait_state(FishingSession.State.IDLE, 5.0)
-	# 8) Nine'ye dokun: kova dolu, Kova sekmesi açılır; hepsini sat → para.
-	await _tap(_screen(nine.head_point()))
+	await _wait_frames(4)
+	_check("kova doluyken suya dokun → atılmaz, Dede SAT'ı söyler", _state() == FishingSession.State.IDLE
+			and str(main.get("_hint_shown")) == "UI_DEDE_BUCKET_CAST" and _angler().pos2().distance_to(before) < 0.05
+			and not _angler().is_walking())
+	await _wait(0.3)
+	await _shot("07b_kova_dolu_sat")
+	# 8) İskelede SAT: Nine yakında, dükkân hemen Kova sekmesinde açılır (kararmadan).
+	var fade: Fade = main.get("fade")
+	await _tap_control(hud.action_button)
 	await _wait_frames(3)
+	_check("iskelede SAT → dükkân hemen Kova sekmesinde (kararmadan)", shop.visible and shop.current_tab() == "sell"
+			and not fade.busy())
+	shop.close_panel()
 	await _wait(0.4)
+	# 8b) Sazlıktan SAT: ekran kararır, balıkçı tezgâhın önüne Nine'ye dönük gelir, dükkân Kova sekmesinde.
+	await _travel_to("reeds")
+	await _tap_control(hud.action_button)
+	var dark := await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return shop.visible, 6.0)
+	await _wait(0.4)
+	var at := _angler().pos2()
+	var nine_at := Vector2(nine.global_position.x, nine.global_position.z)
 	await _shot("07_kova_dolu")
 	var value := Economy.bucket_value(db, save)
 	coins = save.coins
-	_check("kova doluyken Kova sekmesi açılır", shop.visible and shop.current_tab() == "sell" and value > 0)
+	_check("sazlıktan SAT → ekran kararır, tezgâhın önünde (%.1f m), Kova sekmesi açık" % at.distance_to(nine_at),
+			dark and shop.visible and shop.current_tab() == "sell" and value > 0 and at.distance_to(nine_at) < 3.0
+			and _angler().facing.dot((nine_at - at).normalized()) > 0.9 and str(main.get("zone_id")) == "dock_cove")
 	await _tap_control(shop.find_child("SellAll", true, false))
 	await _wait_frames(3)
 	_check("hepsini sat → para", save.bucket.is_empty() and save.coins == coins + value
@@ -640,6 +650,8 @@ func _play_shop() -> void:
 	await _shot("08_satildi")
 	await _tap(shop.close_button.get_global_rect().get_center())
 	await _wait_frames(3)
+	_check("satınca eylem düğmesi yine AT", str(hud.get("_action_kind")) == "cast")
+	await _travel_to("dock_cove")
 	# 9) Son yem balık takılınca biter: oturum solucana döner (yeni gölgeler solucanın oranlarıyla,
 	# defterdeki gibi); olta dönünce Dede söyler.
 	save.baits["bait_maggot"] = 1
@@ -1030,6 +1042,25 @@ func _play_boat() -> void:
 			and not scene.boat_away() and not hud.shore_button.visible and str(main.get("zone_id")) == "dock_cove")
 	await _wait(0.5)
 	await _shot("07_kiyida")
+	# 8) Sandalda kova dolar: SAT → ekran kararır, kıyıya inilir, tezgâhın önünde dükkân Kova sekmesinde.
+	await _tap(_screen(scene.boat_point()))
+	await _wait_until(func() -> bool: return bool(main.get("in_boat")) and not fade.busy(), 5.0)
+	while not Bucket.is_full(db, save):
+		save.bucket.append({ "fish": "bream", "size_cm": 30, "stars": 1 })
+	GameState.changed.emit()
+	await _wait_frames(3)
+	_check("sandalda kova dolu → eylem düğmesi SAT", bool(main.get("in_boat")) and str(hud.get("_action_kind")) == "sell")
+	await _tap_control(hud.action_button)
+	var sold_dark := await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return shop.visible, 6.0)
+	await _wait(0.4)
+	var nine_at := Vector2(_nine().global_position.x, _nine().global_position.z)
+	_check("sandalda SAT → kıyıya inilir, tezgâhta dükkân Kova sekmesinde", sold_dark and not bool(main.get("in_boat"))
+			and not scene.boat_away() and shop.visible and shop.current_tab() == "sell"
+			and _angler().pos2().distance_to(nine_at) < 3.0)
+	await _shot("08_sandaldan_sat")
+	shop.close_panel()
+	await _wait(0.3)
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
@@ -1039,6 +1070,7 @@ func _play_boat() -> void:
 ## sazlıkta takılan yem, şamandıraya dönüş.
 func _play_technique() -> void:
 	_use_save(5)
+	_roomy_bucket()
 	var db := GameState.db
 	var save := GameState.save
 	var hud := _hud()
@@ -1269,6 +1301,7 @@ func _play_boat_bottom() -> void:
 ## Dede sineği söylesin).
 func _play_fly_only() -> void:
 	_use_save(5)
+	_roomy_bucket()
 	var db := GameState.db
 	var save := GameState.save
 	Records.add(save.records, "rudd", 999, 3, 0)
@@ -1287,6 +1320,7 @@ func _play_fly_only() -> void:
 ## Yalnızca tuzak bölümü (rütbe 2'nin kaydından; hızlı deneme).
 func _play_trap_only() -> void:
 	_use_save(5)
+	_roomy_bucket()
 	var db := GameState.db
 	var save := GameState.save
 	Records.add(save.records, "rudd", 999, 3, 0)
@@ -3094,6 +3128,12 @@ func _use_save(catches: int) -> void:
 	GameState.use_save(save)
 	GameState.apply_locale()
 	GameState.changed.emit()
+
+
+## Uzun senaryolarda kova dolmasın (dolu kovada atılmaz, eylem düğmesi SAT olur): en büyük file.
+func _roomy_bucket() -> void:
+	if not "keepnet_huge" in GameState.save.owned:
+		GameState.save.owned.append("keepnet_huge")
 
 
 ## Canlı bir gölgeyi p'ye koyar (heading'e bakarak, uyuyan), diğerlerini uzağa park eder.

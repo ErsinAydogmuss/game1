@@ -29,9 +29,10 @@ const MARGIN := 28.0
 const FPS_INTERVAL := 0.5
 const ACTION_SIZE := Vector2(300, 300)
 ## Eylem düğmesi: tür → [yazı anahtarı, ikon].
+## Eylem düğmesinin işleri: [yazı, ikon]. "sell": kova doluyken boşta (atılmaz, basınca Nine'ye).
 const ACTIONS := {
 	"cast": ["UI_ACT_CAST", "rod"], "retrieve": ["UI_ACT_RETRIEVE", "reel"], "wait": ["UI_ACT_WAIT", "hand"],
-	"hook": ["UI_ACT_HOOK", "hook"], "reel": ["UI_ACT_REEL", "reel"],
+	"hook": ["UI_ACT_HOOK", "hook"], "reel": ["UI_ACT_REEL", "reel"], "sell": ["UI_ACT_SELL", "sell"],
 }
 const TOAST_TIME := 1.7
 ## Bildirimin yanındaki ikonun boyu.
@@ -344,7 +345,7 @@ func set_action(kind: String) -> void:
 		_set_button(tr(str(action[0])), str(action[1]), action_color(kind))
 
 
-## Eylem düğmesinin rengi.
+## Eylem düğmesinin rengi (SAT dükkânın HEPSİNİ SAT'ı gibi yeşil).
 static func action_color(kind: String) -> Color:
 	match kind:
 		"retrieve":
@@ -353,7 +354,7 @@ static func action_color(kind: String) -> Color:
 			return UiKit.WAIT
 		"hook":
 			return UiKit.DANGER
-		"reel":
+		"reel", "sell":
 			return UiKit.SUCCESS
 	return UiKit.PRIMARY
 

@@ -151,6 +151,35 @@ func test_bot_sets_and_empties_traps() -> void:
 	assert_eq(int(sim.save.stats.get("trapped", 0)), sim.trapped, "sayaç")
 
 
+## Kova doluyken atılmaz (oyunda eylem düğmesi SAT olur): bot atıştan önce satar; satıştan sonra
+## tuzaktan gelen kerevitler kovayı doldursa da. Kova dolu diye göle bırakılan balık olmaz (yalnızca
+## koruma altındaki tür bırakılır).
+func test_full_bucket_is_sold_before_casting() -> void:
+	var db := content()
+	var sim := SessionSim.new(db, db.main_spot, SEEDS[0])
+	while sim.minutes() < 200.0:
+		sim.cast_once()
+	for fish_id: String in sim.save.records:
+		var released := int((sim.save.records[fish_id] as Dictionary).get("released", 0))
+		if released > 0:
+			assert_true(Bucket.release_only(db, fish_id), "%s kova dolu diye bırakıldı (%d)" % [fish_id, released])
+	while not Bucket.is_full(db, sim.save):
+		sim.save.bucket.append({ "fish": "rudd", "size_cm": 20, "stars": 1 })
+	var sold := sim.sells
+	sim.cast_once()
+	assert_true(sim.sells > sold, "dolu kovayla atıştan önce satılır")
+
+
+## Satılamayan (değeri 0) balık yalnızca koruma altındaki tür olabilir; o da kovaya girmez. Yoksa
+## kova satışla boşalmazdı: dolu kovada atılmadığı için oyuncu takılıp kalırdı.
+func test_every_kept_fish_can_be_sold() -> void:
+	var db := content()
+	for def in db.fish:
+		var id := str(def["id"])
+		if not Bucket.release_only(db, id):
+			assert_true(Economy.fish_value(db, id, 1) > 0, "%s kovaya girer ama satılmaz" % id)
+
+
 ## Yeni tekniğin ilk kamışı öncelikli: rütbesi yetince parası yetene kadar biriktirir, yetince önce
 ## o; yapay yemler ancak spin kamışı alınınca alışverişe girer. Kamış alınınca bot spini dener.
 func test_shop_buys_the_new_technique_first() -> void:

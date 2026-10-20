@@ -46,6 +46,8 @@ const WAKE_EVERY := 0.2
 const FLY_TRAIL_EVERY := 0.45
 ## Takım çantasından açılan dükkânda balıkçı Nine'ye bundan uzaksa kova satılmaz (tezgâha gelinir).
 const SHOP_NEAR := 6.0
+## SAT ile (kova dolu) tezgâha geçince balıkçının durduğu yer: tezgâhın önünden bu kadar ileride (m).
+const SELL_GAP := 1.3
 ## Olta sudayken kameranın odağı balıkçıyla takımın arasında, yolun bu kadarında.
 const FOCUS_SHARE := 0.45
 ## Dipte takım uzağa düşer (14–18 m): kamera biraz yatar (FAR_PITCH) ve ikisi de görünsün diye en
@@ -154,6 +156,8 @@ var _wake_clock: float = 0.0
 var _pending_trap: int = -1
 var _trap_tap: int = -1
 var _trap_clock: float = 0.0
+## SAT ile tezgâha geçildi: kararma bitince dükkân Kova sekmesinde açılır.
+var _pending_sell: bool = false
 
 
 func _ready() -> void:
@@ -331,6 +335,9 @@ func _process(delta: float) -> void:
 		return
 	if session.state == FishingSession.State.IDLE:
 		session.angler = angler.pos2()
+	if _pending_sell and not fade.busy():
+		_pending_sell = false
+		_on_shop()
 	_check_pending_cast()
 	_check_pending_trap()
 	_trap_clock += delta
@@ -425,6 +432,10 @@ func _on_cast_requested(target: Vector2) -> void:
 	# Tuzaktan ilk kerevitin kartı açılmak üzere (oturum boşta): dokunuş atış değil.
 	if session.state != FishingSession.State.IDLE or _card_up():
 		return
+	# Kova dolu: atılmaz, balıkçı suya yürümeye de başlamaz (eylem düğmesi SAT).
+	if _bucket_full():
+		_refuse_cast()
+		return
 	_pending_trap = -1
 	# Sandalda yürünmez: dokunulan yöne atılır (şamandıra menzilin içine düşer).
 	if in_boat or angler.pos2().distance_to(target) <= session.range_m() - 0.3:
@@ -509,6 +520,10 @@ func _try_cast(target: Vector2) -> void:
 	_pending_cast = Dice.NO_POINT
 	_pending_trap = -1
 	angler.stop()
+	# Kova doluyken hiçbir yoldan atılmaz (kural tek yerde): önce satılır.
+	if _bucket_full():
+		_refuse_cast()
+		return
 	# Balıkçının yeri ve avlandığı bölge hemen (yürüyüş bu karede bittiyse): teknik bölgeye uyar
 	# (sinek dere ağzı dışında atılmasın), kamış ve takımın görünüşü de.
 	session.locate(angler.pos2())
@@ -536,6 +551,10 @@ func _try_cast(target: Vector2) -> void:
 
 func _on_action_down() -> void:
 	if _card_up():
+		return
+	if session.state == FishingSession.State.IDLE and _bucket_full():
+		# SAT (kova dolu): Nine'ye.
+		_go_sell()
 		return
 	if session.state == FishingSession.State.IDLE:
 		# Space / AT: balıkçının önüne; önü kara ise suyun olduğu en yakın yöne.
@@ -574,6 +593,63 @@ func _cast_dir(base: Vector2 = Vector2.ZERO) -> Vector2:
 
 func _on_action_up() -> void:
 	session.release()
+
+
+## Kova dolu mu (atılmaz; eylem düğmesi SAT).
+func _bucket_full() -> bool:
+	return Bucket.is_full(GameState.db, GameState.save)
+
+
+## Kova doluyken atış istendi: atılmaz; hata sesi, titreşim, Dede SAT'ı söyler.
+func _refuse_cast() -> void:
+	_pending_cast = Dice.NO_POINT
+	Sounds.play("error")
+	Sounds.haptic(30)
+	_say("UI_DEDE_BUCKET_CAST")
+
+
+## Eylem düğmesinin işi: oturumunki; boştayken kova doluysa SAT. Kart açıkken düğme gizli.
+func _action_kind() -> String:
+	if _card_up():
+		return ""
+	if session.state == FishingSession.State.IDLE and _bucket_full():
+		return "sell"
+	return session.action_kind()
+
+
+## SAT (kova dolu): Nine yakındaysa (SHOP_NEAR, sandalda değil) dükkân hemen açılır. Değilse ekran
+## kararır; sandaldaysa kıyıya inilir; balıkçı tezgâhın önüne Nine'ye dönük gelir, gölgeler orada
+## doğar; kararma bitince dükkân Kova sekmesinde açılır (_pending_sell).
+func _go_sell() -> void:
+	if session.state != FishingSession.State.IDLE or _card_up() or fade.busy():
+		return
+	if not in_boat and angler.global_position.distance_to(nine.global_position) <= SHOP_NEAR:
+		_on_shop()
+		return
+	var db := GameState.db
+	var spot := _sell_spot()
+	_stop_for_travel()
+	fade.play(func() -> void:
+		_leave_boat()
+		angler.place(spot)
+		angler.face_now(Vector2(nine.global_position.x, nine.global_position.z) - spot)
+		session.set_pity_floor(CatchOdds.pity_floor(db, GameState.save,
+				Zones.place(db, spot_id, str(Zones.at(db, spot_id, spot).get("id", ""))), session.technique.id))
+		session.relocate(spot)
+		_follow_zone()
+		_snap_camera()
+		_pending_sell = true)
+
+
+## SAT'ta balıkçının geldiği yer: tezgâhın önünde, Nine'nin karşısında (yürünebilen ilk yer).
+func _sell_spot() -> Vector2:
+	var front := ShopStall.front_for(lake.dock)
+	var facing := ShopStall.facing_dir()
+	for gap: float in [SELL_GAP, SELL_GAP + 0.4, SELL_GAP + 0.8]:
+		var p := front + facing * gap
+		if lake.is_walkable(p):
+			return p
+	return front + facing * SELL_GAP
 
 
 # --- Olaylar -------------------------------------------------------------------------
@@ -786,8 +862,8 @@ func _on_catch() -> void:
 	session.set_pity_floor(CatchOdds.pity_floor(db, save, Zones.place(db, spot_id, zone_id), technique))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	var zone_news := false
-	# Balık kovaya girer; kova doluysa oyun durmaz: balık göle döner (göl sevgisi verir). Koruma
-	# altındaki tür (mersin) hep göle döner.
+	# Balık kovaya girer. Koruma altındaki tür (mersin) hep göle döner (göl sevgisi verir). Kova
+	# doluyken atılmaz (SAT); yine de dolu kovaya gelen balık (çekişmede kova dolduysa) göle döner.
 	var protected := Bucket.release_only(db, fish_id)
 	var was_full := Bucket.is_full(db, save)
 	var kept := Bucket.add(db, save, fish_id, size_cm, stars)
@@ -808,8 +884,9 @@ func _on_catch() -> void:
 	elif not kept:
 		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT, "", "release")
 	elif Bucket.is_full(db, save) and not was_full and not zone_news:
-		# Kova bu balıkla doldu: Dede hatırlatır (Nine'ye sat ki yenileri de sığsın). Aynı balıkla
-		# yeni bölge açıldıysa Dede onu söyler; kova, sonraki balıkta "Kova dolu" bildirimiyle hatırlanır.
+		# Kova bu balıkla doldu: Dede SAT'ı söyler (eylem düğmesi SAT olur, basınca Nine'ye gidilir).
+		# Aynı balıkla yeni bölge açıldıysa Dede onu söyler; kovayı yeşil SAT düğmesi ve atış denemesinde
+		# Dede'nin sözü hatırlatır.
 		_say("UI_DEDE_BUCKET")
 	elif not suggestion.is_empty():
 		save.flags[Elder.SUGGEST_FLAG % zone_id] = true
@@ -1023,7 +1100,7 @@ func _present(delta: float) -> void:
 		Sounds.set_loop("reel", fighting and reel.holding, 0.0, 0.9 + 0.3 * tension)
 	Sounds.set_loop("strain", fighting and reel.in_red)
 	# Arayüz.
-	hud.set_action("" if _card_up() else session.action_kind())
+	hud.set_action(_action_kind())
 	hud.tension_bar.visible = fighting
 	hud.set_fighting(fighting)
 	hud.set_line_out(session.line_out())

@@ -11,7 +11,8 @@ extends RefCounted
 ## 4. Çekişme: ReelModel kuşanılan takımla ve balığın boyuyla (fazla iri kaçar), ReelBot (tepkili
 ##    oyuncu, reaction_s) oynar.
 ## 5. Tutulan balık: defter, şans garantisi sayaçları, rütbe puanı, kova (doluysa bırakılır).
-## 6. Kova dolunca Nine'ye gider (sell_s), hepsini satar, alışveriş yapar (shop).
+## 6. Kova dolunca Nine'ye gider (sell_s), hepsini satar, alışveriş yapar (shop). Kova doluyken
+##    atmaz (oyunda SAT): tuzaktan gelen kerevitler kovayı doldurduysa atıştan önce yine satar.
 ## 7. Bölgeli göl: kıyı bölgesini oyuncu gibi seçer: önce gidilmemiş açık bölge (merak; yeni
 ##    bölge açılınca hemen gider), sonra defterde tutulmamış türü en çok olan, sonra balık başına
 ##    en çok kazandıran. Sandalı rütbesi yetince öncelikle alır (parası yetene kadar biriktirir),
@@ -102,6 +103,10 @@ func minutes() -> float:
 
 ## Bir atış döngüsü: atış, bekleme, ısırma, çekişme, sonuç; kova dolarsa satış ve alışveriş.
 func cast_once() -> void:
+	# Kova doluyken atılmaz (oyunda eylem düğmesi SAT olur): satıştan sonra toplanan tuzaklar kovayı
+	# yeniden doldurduysa önce yine satılır.
+	if Bucket.is_full(db, save):
+		_sell_and_shop()
 	casts += 1
 	var before := elapsed
 	if technique != "float":
