@@ -89,6 +89,8 @@ var _results: Array[String] = []
 var _taken: Dictionary = {}
 ## Son çekişmede balık sudan sıçradı mı (_reel_like_player).
 var _seen_jump: bool = false
+## Çekişmede balık (şamandıra, gölge) karaya ya da iskeleye çıktı mı (_reel_like_player; çağıran sıfırlar).
+var _fight_on_land: bool = false
 ## true iken dokunuşların izi çizilmez (yakın çekimde Dede'ye dokunmak, son kartın arka planı).
 var _hide_fingers: bool = false
 ## _shadow_at öteki gölgeleri buraya bırakır (sıra, konulan balığın yeri → nokta); geçersizse iskelenin
@@ -1210,11 +1212,15 @@ func _play_bottom() -> void:
 	# Koklarken dokunmak balığı kaçırır.
 	var early := await _bottom_cast(false)
 	_check("dip: koklarken dokunmak kaçırır", bool(early["early"]))
-	# Sazlıkta aynalı sazan (yalnızca dip).
+	# Sazlıkta aynalı sazan (yalnızca dip). Balıkçı kumda: çekişmede balık kuma çekilmez, suyun
+	# kenarında durur (Ersin: "kuma kadar gölgelik çıkıyor").
 	await _travel_to("reeds")
+	_fight_on_land = false
 	var mirror := await _bottom_cast(true, "mirror_carp")
 	_check("sazlıkta dipte aynalı sazan (botun koyduğu gölge) tutulur", bool(mirror["caught"])
 			and str(_session().last_catch.get("fish", "")) == "mirror_carp")
+	_check("sazlıkta çekişmede balık kumda değil, suyun kenarında durur (%.1f m)" % _session().fight_near,
+			not _fight_on_land and _session().fight_near > 0.5 and _taken.has("26c_son_metreler_reeds"))
 	await _shot_once("18_aynali_sazan")
 	var card: FishCard = main.get("card")
 	if card.visible:
@@ -3030,6 +3036,14 @@ func _reel_like_player(reaction: int, timeout: float, at: Vector2 = Vector2.INF)
 		if jump.is_jumping() and not _seen_jump:
 			_seen_jump = true
 			await _shot_once("26b_sicrayis")
+		var session := _session()
+		if session.state == FishingSession.State.FIGHTING and session.reel != null:
+			var p := session.fight_point()
+			if not session.lake.is_water(p) or session.lake.on_dock(p):
+				_fight_on_land = true
+			# Kıyıdan son metreler: balık suyun kenarında durur (kumun üstüne çekilmez). Bölge başına bir kez.
+			if session.fight_near > 0.5 and session.reel.distance <= session.fight_near + 0.2:
+				await _shot_once("26c_son_metreler_%s" % str(main.get("zone_id")))
 		await get_tree().process_frame
 		elapsed += get_process_delta_time()
 	if hold:

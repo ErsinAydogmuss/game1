@@ -59,6 +59,10 @@ var hooked: FishShadow
 var hook_dir := Vector2(0.0, -1.0)
 ## Çekişmede balığın hook_dir yönünde gidebileceği en uzak su (balıkçıdan uzaklık, m).
 var fight_reach: float = 0.0
+## Çekişmede balığın balıkçıya en çok yaklaştığı yer: o yönde suyun başladığı uzaklık (kıyıdan
+## FIGHT_SHORE içeride, iskelenin dışında; sandalda 0). Son metrelerde balık kuma ve iskelenin
+## altına çekilmez, suyun kenarında durur (çekişmenin kendisi değişmez: reel.distance).
+var fight_near: float = 0.0
 ## Son yakalanan balık (catch olayının içeriği) ve son kaçırma nedeni.
 var last_catch: Dictionary = {}
 var last_loss: String = ""
@@ -215,11 +219,11 @@ func action_kind() -> String:
 
 
 ## Çekişmede balığın yeri (balıkçıdan hook_dir yönünde, reel.distance uzakta; suyun bittiği
-## yerin ötesine çizilmez).
+## yerin ötesine ve suyun başladığı yerin berisine çizilmez: fight_reach, fight_near).
 func fight_point() -> Vector2:
 	if reel == null:
 		return bobber
-	return angler + hook_dir * minf(reel.distance, fight_reach)
+	return angler + hook_dir * clampf(reel.distance, fight_near, maxf(fight_near, fight_reach))
 
 
 func range_m() -> float:
@@ -398,6 +402,7 @@ func hook_fish() -> void:
 	var extra := rules.escape_extra + gear.escape_extra
 	var cap := range_m() + extra
 	fight_reach = _water_reach(dist, cap)
+	fight_near = _water_start(dist)
 	# Senaryolu ilk balık hiçbir zaman fazla iri sayılmaz (boyu çekişmeye girmez).
 	reel = ReelModel.new(rules, fight, gear.reel_speed, dist,
 			clampf(fight_reach, minf(dist + extra, cap), cap), easy or s.scripted, Dice.derive(s.seed, 1), gear,
@@ -431,6 +436,18 @@ func _water_reach(from_dist: float, cap: float) -> float:
 			break
 		d += 0.1
 	return d
+
+
+## Balıkçıdan hook_dir yönünde suyun başladığı uzaklık (kıyıdan FIGHT_SHORE içeride, iskelenin
+## dışında; en çok limit: şamandıranın uzaklığı). Balıkçı sudaysa (sandal) 0.
+func _water_start(limit: float) -> float:
+	var d := 0.0
+	while d < limit:
+		var p := angler + hook_dir * d
+		if lake.is_water(p) and not lake.on_dock(p) and lake.shore_distance(p) >= FIGHT_SHORE:
+			return d
+		d += 0.1
+	return limit
 
 
 func _step_fight() -> void:

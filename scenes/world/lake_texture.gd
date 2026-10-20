@@ -49,11 +49,17 @@ static func build_image(lake: LakeShape) -> Image:
 ## Dokuyu ve dönüşümü bir shader malzemesine verir (lake_data, lake_origin, lake_size,
 ## depth_scale, flow_dir).
 static func apply(material: ShaderMaterial, lake: LakeShape, texture: Texture2D) -> void:
+	apply_shore(material, lake, texture)
+	material.set_shader_parameter("depth_scale", lake.max_depth)
+	material.set_shader_parameter("flow_dir", lake.strongest_flow().normalized())
+
+
+## Kıyıda solan malzemelere (shore_clip.gdshaderinc: balık gölgesi, su halkası) yalnızca doku ve
+## dönüşüm (lake_data, lake_origin, lake_size).
+static func apply_shore(material: ShaderMaterial, lake: LakeShape, texture: Texture2D) -> void:
 	material.set_shader_parameter("lake_data", texture)
 	material.set_shader_parameter("lake_origin", lake.origin)
 	material.set_shader_parameter("lake_size", Vector2(lake.width, lake.height) * LakeShape.CELL)
-	material.set_shader_parameter("depth_scale", lake.max_depth)
-	material.set_shader_parameter("flow_dir", lake.strongest_flow().normalized())
 
 
 ## Zemin dokusu: area'yı GROUND_STEP aralıkla örter. stony: karası taşlık olan bölgelerin sırası

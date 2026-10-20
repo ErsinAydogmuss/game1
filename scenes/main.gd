@@ -170,6 +170,9 @@ func _ready() -> void:
 	ripples = Ripples.new()
 	add_child(ripples)
 	shadows.ripples = ripples
+	# Gölgeler ve halkalar kıyıda söner: kumun üstüne çizilmez (su gibi göl veri dokusundan).
+	shadows.set_lake(lake, scene.data_texture)
+	ripples.set_lake(lake, scene.data_texture)
 	catch_fx = CatchFx.new()
 	add_child(catch_fx)
 	fish_jump = FishJump.new()
@@ -814,7 +817,8 @@ func _on_catch() -> void:
 	elif not zone_news and _trap_line_due():
 		_say_trap_open()
 	bobber.hide_bobber()
-	ripples.spawn(angler.pos2() + angler.facing * 0.8, 1.0, 0.8)
+	# Balığın sudan çıktığı yerde halka: çekişmenin son noktası (kıyıda suyun kenarı).
+	ripples.spawn(Vector2(bobber.fight_point.x, bobber.fight_point.z), 1.0, 0.8)
 	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
 	var color := UiKit.rarity_color(GameState.db, rarity)
 	catch_fx.show_catch(GameState.db.fish_by_id(fish_id), int(info["size_cm"]), tr("FISH_" + fish_id), color,

@@ -69,6 +69,9 @@ func test_fight_from_the_boat() -> void:
 	assert_true(bit, "balık ısırır")
 	session.press()
 	assert_eq(session.state, FishingSession.State.FIGHTING, "takılır")
+	# Sandal suyun üstünde: balık sandala kadar gelir (kıyıdaki gibi suyun kenarında durmaz).
+	assert_eq(session.fight_near, 0.0, "sandalda su balıkçının dibinde başlar")
+	var nearest := INF
 	# İyi oyuncu gibi: uyarıda bırakır, patlama bitince yeniden basar.
 	for i in 90 * HZ:
 		if session.state != FishingSession.State.FIGHTING:
@@ -79,8 +82,11 @@ func test_fight_from_the_boat() -> void:
 		else:
 			session.press()
 		session.step()
+		if session.state == FishingSession.State.FIGHTING:
+			nearest = minf(nearest, session.fight_point().distance_to(at))
 		assert_true(db.lake(SPOT).is_water(session.fight_point()), "balık hep suda")
 	assert_eq(session.state, FishingSession.State.CAUGHT, "sandala çekilip tutulur (%s)" % session.state_name())
+	assert_true(nearest <= session.rules.catch_m + 0.2, "balık sandalın dibine gelir (%.2f m)" % nearest)
 
 
 ## Dolaşan gölgeler sandalın altına girmez (şamandıraya yaklaşmayan, kaçmayan gölge).

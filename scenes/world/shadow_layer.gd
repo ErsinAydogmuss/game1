@@ -2,7 +2,8 @@ class_name ShadowLayer
 extends Node3D
 ## Göldeki balık gölgelerini çizer: her karede sim.shadows ile eşlenir. Doğan gölge yavaşça
 ## belirir, kaçan solar; yüzerken hafifçe kıvrılır. Oltadaki balık çekişme noktasında çırpınır.
-## Gölge dörtgeni suyun 2 cm üstünde; -Z yönü balığın başı (shadow.gdshader).
+## Gölge dörtgeni suyun 2 cm üstünde; -Z yönü balığın başı (shadow.gdshader). Göl ve veri dokusu
+## verilirse (set_lake) gölge kıyıda söner: kıyıya çekilen iri balığın kuyruğu kuma çizilmez.
 ## Nadirlik tutmadan önce belli olur (rarities.json "shadow_fx"): Nadir arada pırıldar, Destansı
 ## kenarından mor ışıldar ve kabarcık çıkarır, Efsanevi altın parlar ve arkasında dalga izi bırakır.
 
@@ -33,12 +34,23 @@ var _fx_rarity: Dictionary = {}
 var _shader: Shader
 var _mesh: PlaneMesh
 var _clock: float = 0.0
+## Kıyıda solma: göl ve veri dokusu (set_lake; yoksa solmaz).
+var _lake: LakeShape
+var _lake_texture: Texture2D
 
 
 func _ready() -> void:
 	_shader = load("res://scenes/world/shadow.gdshader")
 	_mesh = PlaneMesh.new()
 	_mesh.size = Vector2.ONE
+
+
+## Gölgeler kıyıda sönsün (LakeTexture.apply_shore): göl ve onun veri dokusu.
+func set_lake(lake: LakeShape, texture: Texture2D) -> void:
+	_lake = lake
+	_lake_texture = texture
+	for node: MeshInstance3D in _nodes.values():
+		LakeTexture.apply_shore(node.material_override as ShaderMaterial, lake, texture)
 
 
 ## Gölgeleri oturumla eşler. angler: balıkçının yeri (oltadaki balık ona ters bakar);
@@ -131,6 +143,8 @@ func _make() -> MeshInstance3D:
 	var material := ShaderMaterial.new()
 	material.shader = _shader
 	material.render_priority = 1
+	if _lake != null:
+		LakeTexture.apply_shore(material, _lake, _lake_texture)
 	node.material_override = material
 	add_child(node)
 	return node

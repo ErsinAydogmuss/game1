@@ -7,7 +7,10 @@ shader_type spatial;
 //   fx 1 (Nadir): arada bir baştan kuyruğa kayan açık bir pırıltı;
 //   fx 2 (Destansı): kenarında nabız gibi atan ışıltı;
 //   fx 3 (Efsanevi) ve 4 (Masalsı): parlayan kenar ve göbek (iz bırakan dalgayı ShadowLayer kurar).
+// Kıyıda söner (shore_clip): kıyıya çekilen iri balığın kuyruğu kumun üstüne çizilmez.
 render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
+
+#include "res://scenes/world/shore_clip.gdshaderinc"
 
 uniform vec4 color : source_color = vec4(0.02, 0.07, 0.12, 0.62);
 uniform float fade = 1.0;
@@ -15,6 +18,10 @@ uniform int fx = 0;
 uniform vec4 tint : source_color = vec4(1.0);
 // Gölgeler aynı anda parlamasın.
 uniform float phase = 0.0;
+
+void vertex() {
+	shore_xz = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xz;
+}
 
 void fragment() {
 	vec2 p = UV * 2.0 - 1.0;
@@ -46,5 +53,6 @@ void fragment() {
 		a = max(a, glow * 0.95);
 	}
 	ALBEDO = col;
-	ALPHA = a * fade;
+	// Suyun kenarındaki köpüğün içinde söner (görünen kıyı çizgisi kıyı uzaklığı 0'da).
+	ALPHA = a * fade * shore_fade(0.05, 0.35);
 }

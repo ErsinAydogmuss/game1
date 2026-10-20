@@ -393,10 +393,11 @@ func test_random_input_never_gets_stuck() -> void:
 					problem = "dürtme/ısırmada balık yok"
 			if session.state == FishingSession.State.FIGHTING and (session.reel == null or session.hooked == null):
 				problem = "çekişmede model yok"
-			# Balık şamandıranın ötesine kaçarken karaya çıkmaz (balıkçının dibi kara olabilir).
-			if session.state == FishingSession.State.FIGHTING and session.reel != null and session.reel.distance >= 2.0 \
-					and not lake.is_water(session.fight_point()):
-				problem = "çekişmede balık karada: %s" % str(session.fight_point())
+			# Çekişmede balık karaya ve iskelenin altına çıkmaz: ne şamandıranın ötesine kaçarken ne de
+			# son metrelerde (balıkçının dibi kara ya da iskele olabilir; balık suyun kenarında durur).
+			if session.state == FishingSession.State.FIGHTING and session.reel != null \
+					and (not lake.is_water(session.fight_point()) or lake.on_dock(session.fight_point())):
+				problem = "çekişmede balık karada ya da iskelede: %s" % str(session.fight_point())
 			if session.sim.shadows.size() > 4:
 				problem = "4'ten çok gölge"
 			for s in session.sim.shadows:
@@ -455,6 +456,64 @@ func test_fight_stays_in_water() -> void:
 			assert_eq(session.state, FishingSession.State.FIGHTING, "Kolay: bırakan oyuncunun balığı kaçmaz")
 		else:
 			assert_eq(session.last_loss, "escaped", "Normal: bırakan oyuncunun balığı sonunda kaçar")
+
+
+## Sazlıkta balıkçı kumda durur (önünde ~1 m kum): çekişmenin her adımında balık suda, kıyıdan en
+## az FIGHT_SHORE içeride; son metrelerde kuma çekilmez, suyun kenarında durur (Ersin: "kuma kadar
+## gölgelik çıkıyor"). Çekişmenin kendisi değişmez: balık yine sarılıp tutulur.
+func test_fight_stops_at_the_water_edge_in_the_reeds() -> void:
+	var db := content()
+	var spot := "big_lake"
+	var lake := db.lake(spot)
+	var stand: Vector2 = (db.zone(spot, "reeds")["stands"] as Array)[0]
+	assert_true(not lake.is_water(stand), "sazlıkta balıkçı kumda durur")
+	for easy: bool in [true, false]:
+		var session := FishingSession.new(db, spot, GearStats.starter(db), 21, easy, false, -1,
+				PackedStringArray(["reeds"]))
+		session.relocate(stand)
+		session.poll_events()
+		var target := stand + Vector2(0.0, -4.5)
+		var s := session.sim.shadows[0]
+		for o in session.sim.shadows:
+			if o != s:
+				o.mode = FishShadow.Mode.PAUSE
+				o.timer = 1_000_000
+				o.pos = target + Vector2(-5.0, -2.5)
+		s.pos = target + Vector2(0.0, -2.0)
+		s.heading = Vector2(0, 1)
+		s.mode = FishShadow.Mode.PAUSE
+		s.timer = 1_000_000
+		assert_true(session.cast(target), "atılır")
+		assert_true(_run_until(session, FishingSession.State.BITING, 40.0), "balık ısırır")
+		s.fish_id = "rudd"
+		s.fish_index = db.fish_index("rudd")
+		session.press()
+		session.step()
+		assert_eq(session.state, FishingSession.State.FIGHTING, "takılır")
+		assert_true(session.fight_near > 0.5, "su balıkçının önünde başlar (%.1f m)" % session.fight_near)
+		var nearest := INF
+		var problem := ""
+		for i in 90 * HZ:
+			if session.state != FishingSession.State.FIGHTING:
+				break
+			# İyi oyuncu gibi: uyarıda bırakır, patlama bitince yeniden basar.
+			if session.reel.thrashing() or session.reel.in_red:
+				session.release()
+			else:
+				session.press()
+			session.step()
+			if session.state != FishingSession.State.FIGHTING:
+				break
+			var p := session.fight_point()
+			nearest = minf(nearest, p.distance_to(stand))
+			if not lake.is_water(p) or lake.on_dock(p) or lake.shore_distance(p) < FishingSession.FIGHT_SHORE - 0.001:
+				problem = "balık suyun kenarının berisinde: %s (kıyı %.2f m)" % [p, lake.shore_distance(p)]
+				break
+		var mode := "Kolay" if easy else "Normal"
+		assert_eq(problem, "", mode)
+		assert_eq(session.state, FishingSession.State.CAUGHT, "%s: balık tutulur (%s)" % [mode, session.state_name()])
+		assert_between(nearest, session.fight_near - 0.01, session.fight_near + 0.2,
+				"%s: son metrelerde balık suyun kenarında durur (%.2f m)" % [mode, nearest])
 
 
 ## Aynı girdiler 30, 60 ve 120 fps'te birebir aynı olayları üretir. Bot yalnızca çift adımlarda

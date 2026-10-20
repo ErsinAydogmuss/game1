@@ -1,7 +1,8 @@
 class_name Ripples
 extends Node3D
 ## Suda büyüyüp solan halkalar (şamandıra düşünce, dürtmede, ısırmada, balık çırpınınca).
-## Süreler _process(delta) toplamıyla ölçülür (video kaydında da doğru akar).
+## Süreler _process(delta) toplamıyla ölçülür (video kaydında da doğru akar). Göl ve veri dokusu
+## verilirse (set_lake) halkanın karaya düşen parçası çizilmez.
 
 const Y := 0.025
 
@@ -9,12 +10,21 @@ var _shader: Shader
 var _mesh: PlaneMesh
 ## Her biri: { node, age, duration }.
 var _live: Array[Dictionary] = []
+## Kıyıda solma: göl ve veri dokusu (set_lake; yoksa solmaz).
+var _lake: LakeShape
+var _lake_texture: Texture2D
 
 
 func _ready() -> void:
 	_shader = load("res://scenes/fx/ripple.gdshader")
 	_mesh = PlaneMesh.new()
 	_mesh.size = Vector2.ONE
+
+
+## Halkalar karada çizilmesin (LakeTexture.apply_shore): göl ve onun veri dokusu.
+func set_lake(lake: LakeShape, texture: Texture2D) -> void:
+	_lake = lake
+	_lake_texture = texture
 
 
 ## p noktasında radius (m) yarıçapa büyüyen, duration sn süren bir halka.
@@ -27,6 +37,8 @@ func spawn(p: Vector2, radius: float, duration: float, color: Color = Color(1, 1
 	material.render_priority = 2
 	material.set_shader_parameter("color", color)
 	material.set_shader_parameter("thickness", thickness)
+	if _lake != null:
+		LakeTexture.apply_shore(material, _lake, _lake_texture)
 	node.material_override = material
 	node.position = Vector3(p.x, Y, p.y)
 	node.scale = Vector3(radius * 2.0, 1.0, radius * 2.0)
