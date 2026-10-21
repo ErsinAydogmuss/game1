@@ -52,6 +52,20 @@
 		{ "file": "technique_icons", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
 			"names": ["tech_float", "tech_spin", "tech_bottom", "tech_fly", "tech_trap", "tackle_bag"] },
 		{ "file": "catch_items", "out": "res://assets/icons/items", "size": 256, "grid": [3, 2],
-			"names": ["crayfish", "boot", "tin_can", "plastic_bottle", "message_bottle", "rusty_key"] }
+			"names": ["crayfish", "boot", "tin_can", "plastic_bottle", "message_bottle", "rusty_key"] },
+		{ "file": "time_icons", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2], "despill": "edge",
+			"names": ["phase_morning", "phase_noon", "phase_evening", "phase_night", "tea", "love"] },
+		{ "file": "weather_icons", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
+			"names": ["weather_clear", "weather_cloudy", "weather_rain", "weather_fog", "weather_storm", "requests"] },
+		{ "file": "story_items", "out": "res://assets/icons/items", "size": 256, "grid": [3, 2],
+			"names": ["golden_dough", "map_piece", "ruler", "letter", "lantern_lit", "keeper_scale"] },
+		{ "file": "letter_paper", "out": "res://assets/ui/frames", "size": 1536, "fit": "trim", "grid": [1, 1],
+			"names": ["letter_paper"] },
+		{ "file": "secret_map", "out": "res://assets/ui/art", "size": 1536, "fit": "box", "names": ["secret_map"] },
+		{ "file": "keeper", "out": "res://assets/icons/items", "size": 384, "grid": [3, 1], "despill": "edge",
+			"names": ["keeper", "keeper_top", "keeper_leap"] },
+		{ "file": "portraits_young", "out": "res://assets/ui/portraits", "size": 320, "grid": [3, 1],
+			"names": ["young_nine", "young_dede", "young_both"] },
+		{ "file": "ending", "out": "res://assets/ui/art", "size": 1536, "fit": "box", "key": false, "names": ["ending"] }
 	]
 }

@@ -20,9 +20,10 @@ Görseller partiler hâlinde geliyor; her parti bir dalgadan önce. **Hepsini bi
 | 2. Ekipman | ✅ geldi, oyunda (v0.2.1) | 7 | Nine'nin dükkânındaki 42 eşya (bugün satılan 33'ü görünüyor; kalanı Dalga 2–4'te) |
 | 3. Göl | ✅ geldi, oyunda | 5 | bölge rozetleri, harita kâğıdı, harita çıkartmaları ve ikonları, zemin dokuları |
 | 4. Teknikler | ✅ geldi, oyunda (v0.4) | 4 | yapay yemler, sinekler ve dip takımı, teknik ikonları, takım çantası, kerevit (çöp ve hikâye eşyaları Dalga 4'te) |
-| 5. Hikâye ve yuva | Dalga 4'ten önce | ~8 | mektuplar, Gölün Bekçisi, hava ikonları, kedi, kıyafetler, tanıtım görseli |
+| 5a. Hikâye ve canlı dünya | Dalga 4 (promptlar aşağıda) | 6 + 2 isteğe bağlı | vakit ve hava ikonları, çay, göl sevgisi, istekler, altın hamur, mektup kâğıdı, sırrın haritası, Gölün Bekçisi |
+| 5b. Yuva | Dalga 5'ten önce | ~4 | kedi, kıyafetler, akvaryum, karakter seçimi, tanıtım görseli |
 
-5. partinin promptlarını Dalga 4'ten önce bu sayfaya eklerim.
+5a'nın promptları aşağıda; 5b'ninkileri (kedi, kıyafetler) Dalga 5'ten önce eklerim: kedinin modeli ve kıyafetlerin tasarımı o zaman belli olacak.
 
 ## Nasıl teslim edersin?
 
@@ -545,6 +546,173 @@ Kerevit kırmızımsı: macentaya yakın görünüp soluyorsa bu sayfayı düz *
 
 ---
 
+## Parti 5a — Hikâye ve canlı dünya
+
+Dalga 4'te göl yaşıyor:
+
+- **Vakit ve hava:** sabah, öğle, akşam ve gece; açık, bulutlu, yağmurlu ve sisli günler. Hangi balığın geleceğini değiştirirler.
+- **Göl sevgisi:** balığı göle bırakınca ve çöp toplayınca artar; göl güzelleşir.
+- **Dede'nin istekleri:** her oyun günü küçük istekler.
+- **Gölün Sırrı:** şişelerdeki mektuplar, dört harita parçası, altın hamur ve finalde Gölün Bekçisi.
+
+Bu sayfalar onları süsler. Görseller gelene kadar oyun kodla çizilen yedekleri kullanır; iş beklemez. Önce 1 ve 2 (üstteki saat çipinde hemen görünürler), sonra sırayla.
+
+**1. `time_icons.png`: vakit ikonları, çay ve göl sevgisi**
+
+Üst ortadaki saat çipinde ve "Bugün" panelinde görünürler.
+
+```
+(ui_1 ile aynı stil cümleleri.) Icons, left to right, top row then bottom row: a sun rising over
+a small calm lake with a soft pink-orange sky; a bright round midday sun in a small circle of
+blue sky; a big orange sun setting behind green reeds with two tiny birds; a yellow crescent moon
+with two small stars on a round patch of dark-blue night sky; a small tulip-shaped Turkish tea
+glass with red tea on a little white saucer with a curl of steam; a teal heart made of water
+with a small pink lotus flower on it.
+```
+
+| Kesilen ad | Nerede |
+|---|---|
+| `phase_morning` | sabah (saat çipi, "Bugün" paneli, "Sabah oldu" bildirimi) |
+| `phase_noon` | öğle |
+| `phase_evening` | akşam |
+| `phase_night` | gece |
+| `tea` | "Dede'yle çay" düğmesi (sonraki vakte geçer) |
+| `love` | göl sevgisi (Kova paneli, defter, "Göl sevgisi arttı" bildirimi) |
+
+**2. `weather_icons.png`: hava ikonları ve istekler**
+
+```
+(ui_1 ile aynı stil cümleleri.) Icons, left to right, top row then bottom row: a cheerful round
+sun with tiny sparkles; a fluffy white cloud partly covering a small sun; a soft gray cloud with
+blue rain drops; three soft wavy bands of white mist in front of a pale sun; a dark storm cloud
+with a yellow lightning bolt and rain drops; a rolled paper note tied with a red ribbon and a
+small fish stamp.
+```
+
+| Kesilen ad | Nerede |
+|---|---|
+| `weather_clear` | açık hava (bugünün ve yarının havası) |
+| `weather_cloudy` | bulutlu |
+| `weather_rain` | yağmur |
+| `weather_fog` | sis |
+| `weather_storm` | fırtına (yağmurlu gece) |
+| `requests` | Dede'nin istekleri ("Bugün" paneli, saat çipinin rozeti) |
+
+**3. `story_items.png`: hikâye eşyaları**
+
+Parti 4'teki `catch_items` ile aynı stil cümleleri.
+
+```
+Sheet of 6 cute cartoon items for a cozy fishing game in a 3x2 grid, exactly matching the
+attached style reference: chunky shapes, soft gradients, thick dark outline, warm top-left
+light, 3/4 view. Each item centered in its own cell with generous empty space, all at a similar
+size. No text, no labels, no shadows, no floor.
+Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
+Items, left to right, top row then bottom row: a round golden dough ball glowing softly with
+small sparkles, on a little checkered cloth; a single torn piece of old parchment map with a
+dotted line and half of a red X; a wooden fish measuring ruler with a small fish outline; an
+open old letter on cream paper with a red wax seal; a brass lantern glowing with warm yellow
+light; a big shiny turquoise fish scale with a soft glow.
+```
+
+| Kesilen ad | Nerede |
+|---|---|
+| `golden_dough` | altın hamur (göl sevgisi 6 olunca Nine verir; finalin yemi) |
+| `map_piece` | harita parçası (Dede'nin altın istekleri) |
+| `ruler` | boy isteği ("Kadife · 30 cm üstü") |
+| `letter` | mektup (defterin Gölün Sırrı sekmesi, "Yeni mektup" bildirimi) |
+| `lantern_lit` | yanan fener (ilk gece Nine'nin hediyesi) |
+| `keeper_scale` | Bekçi'nin pulu (finalden sonra defterde) |
+
+**4. `letter_paper.png`: mektup kâğıdı**
+
+Tek parça. Mektubun yazısını oyun bunun üstüne yazar; ortası boş kalmalı. Kâğıt mektubun boyuna göre gerilir, bu yüzden süsler yalnızca kenarda ve köşelerde olsun.
+
+```
+A single old letter paper for a cozy mobile game, flat front view, exactly matching the attached
+style reference: warm cream paper with slightly torn and curled edges, a faint brown water stain
+in one corner, a thin hand-drawn brown border line and a tiny fish doodle in the bottom-right
+corner. The middle is plain, empty and evenly lit, with nothing written or drawn on it, so the
+game can write the letter on top. Wide landscape shape filling most of the image. No text, no
+shadows.
+Solid flat pure magenta background (#FF00FF) everywhere around the paper.
+```
+
+Ortasına bir şey yazılmışsa: "Keep the paper exactly the same but make the middle completely empty".
+
+**5. `secret_map.png`: sırrın haritası**
+
+Tek parça. Oyun bu haritayı kodla dörde yırtar: Dede'nin altın isteklerinden gelen her parça defterde yerine oturur. Tamamlanınca Bekçi'nin yeri belli olur.
+
+```
+An old hand-drawn treasure map of a small U-shaped lake for a cozy fishing game, flat front view,
+exactly matching the attached style reference: brown ink and soft watercolor on warm parchment.
+The lake outline with tiny reeds, lily pads, mossy rocks, a little stream flowing in, a small
+wooden dock and a rowing boat; a dotted path from the dock across the water to a big red X in the
+deep middle of the lake; next to the X a tiny drawing of a big friendly fish. Wide landscape
+shape filling most of the image. No text, no letters, no numbers.
+Solid flat pure magenta background (#FF00FF) everywhere around the map.
+```
+
+Haritada yazı çıkarsa: "Keep the map exactly the same but remove all text and letters".
+
+**6. `keeper.png` (3×1): Gölün Bekçisi**
+
+"Balık görseli istemiyoruz" kuralının tek istisnası: Bekçi bir hikâye yaratığı, kartı ve bitiş sahnesi özel olsun. Görsel yoksa oyun onu da kendi 3D modelinden çizer.
+
+```
+Sheet of 3 images of the same creature in a 3x1 grid, exactly matching the attached style
+reference, stylized low-poly 3D look: the Lake Keeper, a huge ancient and gentle lake fish, a mix
+of a sturgeon and a carp, long and powerful, turquoise-and-silver scales with soft glowing wave
+patterns, long white whiskers, a kind wise eye, a few small water plants and a tiny pink lotus
+flower growing on its back, a faint turquoise glow. Left to right: the whole fish from the side,
+calm and friendly; the fish seen from straight above as a big glowing turquoise silhouette inside
+a round patch of dark-blue water with soft ripples; the fish leaping out of misty night water
+under a crescent moon with a turquoise splash, inside a round night scene. Same size and framing
+in each cell.
+Solid flat pure magenta background (#FF00FF). No text, no shadows.
+```
+
+| Kesilen ad | Nerede |
+|---|---|
+| `keeper` | Bekçi'nin kartı (Masalsı çerçeve) ve defterdeki resmi |
+| `keeper_top` | haritadaki X'in yanında, tamamlanan harita |
+| `keeper_leap` | bitiş sahnesi ve jenerik |
+
+**7. İsteğe bağlı: `portraits_young.png` (3×1): genç Nine ve Dede**
+
+Mektupları gençken yazdılar; imzanın yanında ve jenerikte görünürler. Parti 1'deki portrelerin stil cümleleri.
+
+```
+Sheet of 3 portrait busts in a 3x1 grid, exactly matching the attached style reference,
+stylized low-poly 3D look, the same two characters as the attached grandparent portraits but as
+teenagers, many years ago. Left to right: a cheerful teenage girl with two braids, rosy cheeks
+and freckles, a white headscarf with small blue flowers pushed back on her hair, a mustard-yellow
+knitted cardigan; a friendly teenage boy with a brown flat cap, short dark hair and freckles, a
+brick-red chunky knitted sweater; the two of them together on a muddy lake shore, smiling, she
+holds a bundle of green reeds and he holds a small sack of collected trash. Head and shoulders
+in the first two cells, waist up in the third. Same size and framing in each cell.
+Solid flat pure magenta background (#FF00FF). No text, no shadows.
+```
+
+Kesilen adlar: `young_nine`, `young_dede`, `young_both`.
+
+**8. İsteğe bağlı: `ending.png`: bitiş resmi**
+
+Tam resim, arka planı silinmez (uygulama ikonu gibi). Jeneriğin arkasında durur.
+
+```
+A wide landscape illustration for the ending of a cozy fishing game, exactly matching the
+attached style reference, stylized low-poly 3D look: a small U-shaped lake at sunrise in full
+bloom, pink and white lotus flowers and lily pads everywhere, butterflies and small birds,
+crystal-clear teal water. A grandfather in a brown flat cap and a grandmother in a white
+flowered headscarf wave happily from a small wooden dock. A young angler in a hat, seen from
+behind, sits in a small rowing boat on the water and waves back. Under the water a faint
+turquoise shimmer of a huge friendly fish. Warm golden morning light. No text.
+```
+
+---
+
 ## Teknik not (Claude için)
 
 Görseller `assets/incoming/` altına gelince:
@@ -556,7 +724,7 @@ godot --headless --path . --import
 
 Sayfa adları, kesim şekli (`fit`) ve kesilen adlar `data/art_sheets.json`'da. Oyuna bağlama:
 
-Mor ve pembe nesneli sayfalarda (`rarity_frames`, `rarity_badges`, `zone_badges`, `map_stickers`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru ve nilüferin pembesi solmaz. Zemin dokuları `"fit": "tile"`: kare örneğin içinden kesilir ve dikişsiz yapılır (`ArtSheet.make_tile`). Harita kâğıdı `"fit": "trim"`: saydam payı kırpılır, 9 dilimli çerçeve olarak `assets/ui/frames/`'e gider.
+Mor ve pembe nesneli sayfalarda (`rarity_frames`, `rarity_badges`, `zone_badges`, `map_stickers`, `time_icons`, `keeper`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru ve nilüferin pembesi solmaz. Zemin dokuları `"fit": "tile"`: kare örneğin içinden kesilir ve dikişsiz yapılır (`ArtSheet.make_tile`). Harita ve mektup kâğıdı `"fit": "trim"`: saydam payı kırpılır, 9 dilimli çerçeve olarak `assets/ui/frames/`'e gider.
 
 Oyuna bağlama (v0.4'teki durum):
 
@@ -580,3 +748,11 @@ Oyuna bağlama (v0.4'teki durum):
 | `gear_lures`, `gear_flies` | `assets/icons/gear/` | ✅ `ItemArt.gear`: dükkânın yapay yem, sinek ve kurşun kartları, yem sepeti, takım çantasının karoları; `bell` dipte koşuda sehpanın üstündeki 2B zil (`BellMark`). Yoksa kodla çizilen ikon. |
 | `technique_icons` | `assets/icons/ui/` | ✅ `GameIcon.ART_NAMES` (`tech_float`, `tech_spin`, `tech_bottom`, `tech_fly`, `tech_trap`, `tackle_bag`): sol alttaki teknik düğmesi, Takım Çantası'nın başlığı ve karoları, dükkânın başlığındaki teknik düğmeleri, "Yeni teknik" ve tuzak bildirimleri. Yoksa kodla çizilen ikon. |
 | `catch_items` | `assets/icons/items/` | ✅ `ItemArt.item`: kerevit (defter, kart, tuzak rozeti). Çöp (çizme, şişe) ve hikâye eşyaları (mesajlı şişe, anahtar) Dalga 4'te. |
+| `time_icons` | `assets/icons/ui/` (`despill: edge`: pembe gök ve nilüfer solmasın) | 🔜 `GameIcon.ART_NAMES`: saat çipi ve "Bugün" paneli (vakitler), çay düğmesi, göl sevgisi. Yoksa kodla çizilen ikon. |
+| `weather_icons` | `assets/icons/ui/` | 🔜 `GameIcon.ART_NAMES`: saat çipinin hava ikonu, bugünün ve yarının havası, isteklerin ikonu ve çipin rozeti. |
+| `story_items` | `assets/icons/items/` | 🔜 `ItemArt.item`: altın hamur, harita parçası, boy isteğinin cetveli, mektup, yanan fener, Bekçi'nin pulu. |
+| `letter_paper` | `assets/ui/frames/letter_paper.png` (`fit: trim`) | 🔜 Mektup panelinin çerçevesi (`UiKit.framed`, 9 dilim payları `FRAME_SLICES`). Yoksa kodla çizilen kâğıt. |
+| `secret_map` | `assets/ui/art/secret_map.png` (`fit: box`) | 🔜 Defterin Gölün Sırrı sekmesindeki harita yapbozu: kodla dörde yırtılır, gelen parça yerine oturur. Yoksa kodla çizilen parşömen. |
+| `keeper` | `assets/icons/items/` (`despill: edge`) | 🔜 `ItemArt.item` (`ItemArt.fish` önce ona bakar): Bekçi'nin kartı ve defteri, haritada X'in yanı, bitiş ve jenerik. |
+| `portraits_young` | `assets/ui/portraits/` | 🔜 İsteğe bağlı: mektupların imzası, jenerik. |
+| `ending` | `assets/ui/art/ending.png` (`fit: box`, `key: false`) | 🔜 İsteğe bağlı: jeneriğin arka planı. |
