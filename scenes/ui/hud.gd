@@ -10,7 +10,7 @@ extends Control
 ##   aynı işi yapar, düğme ne olacağını yazar. Sol alt: sandaldayken "Kıyıya dön" (olta sudayken
 ##   gizli).
 ## - Üst orta: oyun saati çipi (vaktin ikonu, saat, açık değilse havanın ikonu; Dalga 4); dokununca
-##   "Bugün" paneli (olta sudayken dokunuş almaz: ekranın her yeri eylem). Çekişmede onun yerinde gerilim
+##   "Bugün" paneli (yalnızca olta boşken dokunuş alır: set_world_touch). Çekişmede onun yerinde gerilim
 ##   çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü oyuncu da okusun).
 ## - Orta: kısa bildirimler ("Erken davrandın!"). Alt orta: ipucu çubuğu (konuşanın yüzü ve sözü:
 ##   Dede ya da Nine).
@@ -299,15 +299,19 @@ func _show_queued() -> void:
 		Sounds.haptic(30)
 
 
-## Olta suda mı: eylem ve ayarlar dışındaki düğmeler gizlenir (ekranın her yeri eylem); saat çipi
-## görünür kalır ama dokunuş almaz.
+## Olta suda mı: eylem ve ayarlar dışındaki düğmeler gizlenir (ekranın her yeri eylem).
 func set_line_out(on: bool) -> void:
 	_line_out = on
-	if world_button != null:
-		world_button.takes_touch = not on
 	for c in line_out_hidden:
 		c.visible = not on and (c != map_button or map_allowed) and (c != shore_button or _in_boat) \
 				and (c != technique_button or technique_allowed) and (c != joystick or not _in_boat)
+
+
+## Saat çipi dokunuş alsın mı (main her kare: yalnızca olta boşken ve kart yokken). Almazken görünür kalır
+## (saat okunur), dokunuş oyuna geçer: olta sudayken eylem, geri sararken saklanan atış.
+func set_world_touch(on: bool) -> void:
+	if world_button != null:
+		world_button.takes_touch = on
 
 
 ## Sandalda mı: "Kıyıya dön" düğmesi görünür, yürüme halkası gizlenir (sandalda yürünmez).

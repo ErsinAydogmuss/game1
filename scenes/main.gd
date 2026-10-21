@@ -69,6 +69,7 @@ const TRAP_SYNC_EVERY := 1.0
 ## Gece lambaların ışık havuzları (yarıçap m, güç): Nine'nin feneri balıkçının çevresinde (ilk gece
 ## hediye; bayrak LANTERN_FLAG), kamp ateşi, iskelenin başındaki fener direği, dükkân.
 const LANTERN_FLAG := "lantern"
+const LANTERN_TOLD := "told_lantern"
 const LANTERN_POOL := Vector2(6.0, 0.85)
 const CAMP_POOL := Vector2(4.0, 1.0)
 const POST_POOL := Vector2(3.2, 0.8)
@@ -179,8 +180,15 @@ var _line_args_fn: Callable = Callable()
 ## Yem bu atışta bitti: olta dönünce Dede söyler.
 var _bait_out: bool = false
 var _line_speaker: String = "dede"
-## Söylenen sözlerin sayacı: bir olay (çay) başka bir sözün söylenip söylenmediğini anlar.
-var _said: int = 0
+## Dede'nin saate bağlı sözleri (fener, vakte ve havaya ilk sözler) bekliyor: olta boşta, kart yokken ve
+## başka söz bitince söylenir (çekişmede ipucunu, anlatılan hikâyeyi ezmesin; _world_line).
+var _world_line_due: bool = false
+## Gölün görünüşünün önbelleği: saat (tam saniye) ve hava düğmesinin bayrakları değişmedikçe aynı
+## (DayLook.at her kare yeniden hesaplanmasın; _current_look).
+var _look_cache: Dictionary = {}
+var _look_clock: int = -1
+var _look_day: int = -1
+var _look_kind: String = ""
 ## Dede'nin haber verdiği efsanevi gölgeler (kimlik → true) ve o gölgeye bakma süresi.
 var _announced: Dictionary = {}
 var _legend_id: int = -1
@@ -275,8 +283,8 @@ func _ready() -> void:
 	# Eski kayıt: rütbesi çoktan gelmiş teknik de bir kez haber verilir; gece açılan kayıtta fener, yağmurlu
 	# günde Dede'nin yağmur sözü.
 	_announce_techniques()
-	if not _check_lantern():
-		_world_line()
+	_check_lantern()
+	_world_line_due = true
 	GameState.changed.connect(_on_state_changed)
 	GameState.focus_lost.connect(_on_focus_lost)
 	GameState.focus_gained.connect(_on_focus_gained)
@@ -300,6 +308,11 @@ func _start_session() -> void:
 	var cond := world_clock.conditions()
 	_sync_world_chip()
 	_sync_music()
+	# Gölün görünüşü hemen kaydın vaktinde ve havasında (sahne sabah ışığıyla kurulur; gece açılan oyun
+	# sabahtan kaymasın).
+	_look_clock = -1
+	scene.set_look(_current_look(), true)
+	_tea_shot = 0.0
 	session = FishingSession.new(GameState.db, spot_id, gear, Dice.derive(save.seed, save.session),
 			bool(GameState.setting("easy", false)), save.catches == 0,
 			CatchOdds.pity_floor(GameState.db, save, start, gear.technique, cond), Zones.open_ids(GameState.db, save, spot_id),
@@ -1115,12 +1128,12 @@ func _sync_world_chip() -> void:
 
 
 ## Vakit değişti: kısa bildirim (vaktin ikonuyla; sırada bekleyen vakit bildiriminin yerine geçer: panel
-## açıkken iki vakit atlanırsa yalnızca sonuncusu) ve kayıt. İlk gece Nine fener verir; yoksa Dede vakte
-## ya da havaya ilk sözünü söyler (bir kez).
+## açıkken iki vakit atlanırsa yalnızca sonuncusu) ve kayıt. İlk gece Nine fener verir; Dede fenerin, vaktin
+## ve havanın ilk sözünü olta boşa dönünce söyler (_world_line_due).
 func _on_phase_changed(phase: String) -> void:
 	hud.toast_later(tr("UI_PHASE_NOW_" + phase), UiKit.TEXT, "phase", "phase_" + phase, "phase")
-	if not _check_lantern():
-		_world_line()
+	_check_lantern()
+	_world_line_due = true
 	_sync_music()
 	GameState.save_game()
 
@@ -1130,11 +1143,15 @@ func _sync_music() -> void:
 	Sounds.set_music("shop" if shop_panel.visible else DayClock.phase(GameState.db.rules, GameState.save.clock_s))
 
 
-## Dede'nin vakte ve havaya ilk sözü (her biri bir kez; bayrak kayda): önce hava (bulut, yağmur, sis;
-## yağmurlu gece fırtına: Kocabaş'ın gecesi), sonra vakit (öğle, akşam, yeni günün sabahı; ilk gecenin
-## sözü Nine'nin feneri). Söylediyse true.
+## Dede'nin saate bağlı sözlerinden sıradaki (her biri bir kez; bayrak söylenince kayda): önce Nine'nin
+## feneri (ilk gece), sonra hava (bulut, yağmur, sis; yağmurlu gece fırtına: Kocabaş'ın gecesi), sonra vakit
+## (öğle, akşam, yeni günün sabahı). Söylediyse true (sırada başkası olabilir).
 func _world_line() -> bool:
 	var save := GameState.save
+	if bool(save.flags.get(LANTERN_FLAG, false)) and not save.flags.has(LANTERN_TOLD):
+		save.flags[LANTERN_TOLD] = true
+		_say("UI_DEDE_LANTERN")
+		return true
 	var cond := world_clock.conditions()
 	var phase := str(cond["phase"])
 	var weather := str(cond["weather"])
@@ -1151,12 +1168,25 @@ func _world_line() -> bool:
 	return false
 
 
+## Kaydın şimdiki görünüşü (DayLook.at): saat tam saniyeyle ilerlediği için ancak saat ya da hava düğmesinin
+## bayrakları değişince yeniden hesaplanır.
+func _current_look() -> Dictionary:
+	var save := GameState.save
+	var day := int(save.flags.get(Weather.DEBUG_DAY, -1))
+	var kind := str(save.flags.get(Weather.DEBUG_KIND, ""))
+	if save.clock_s != _look_clock or day != _look_day or kind != _look_kind or _look_cache.is_empty():
+		_look_clock = save.clock_s
+		_look_day = day
+		_look_kind = kind
+		_look_cache = DayLook.at(GameState.db.rules, save)
+	return _look_cache
+
+
 ## Gölün görünüşü (vakit ve hava: DayLook; vaktin son dakikasında sonrakine geçer), gece lambaların ışık
 ## havuzları, yağmur ya da ateşböcekleri, fırtınada şimşek.
 func _sync_look(delta: float) -> void:
 	var save := GameState.save
-	var rules := GameState.db.rules
-	var look := DayLook.at(rules, save)
+	var look := _current_look()
 	scene.set_look(look)
 	var lamps := float(look["lamps"])
 	var pools: Array[Vector4] = []
@@ -1202,22 +1232,21 @@ func _sync_look(delta: float) -> void:
 		_storm_wait = STORM_GAP.x
 
 
-## Nine'nin feneri: ilk gece hediye (bildirim, Dede'nin sözü); geceleri balıkçının çevresi aydınlanır.
-## Verildiyse true.
-func _check_lantern() -> bool:
+## Nine'nin feneri: ilk gece hediye (bildirim; Dede'nin sözü _world_line'da); geceleri balıkçının çevresi
+## aydınlanır.
+func _check_lantern() -> void:
 	var save := GameState.save
 	if bool(save.flags.get(LANTERN_FLAG, false)) or DayClock.phase(GameState.db.rules, save.clock_s) != "night":
-		return false
+		return
 	save.flags[LANTERN_FLAG] = true
 	hud.toast_later(tr("UI_LANTERN_GIFT"), UiKit.ACCENT, "lantern", "lantern")
-	_say("UI_DEDE_LANTERN")
-	return true
 
 
 ## Dede'yle çay ("Bugün" paneli; iki çay arasında en az bir balık: WorldState.can_tea): ekran kararır,
-## saat sonraki vaktin başına geçer (WorldClock.tea: vakit bildirimi, oranlar, garanti, Dede'nin vakte
-## ilk sözü), görünüş hemen yeni vaktin; Dede yakındaysa kamera kısa bir süre ona yaklaşır. Dede başka
-## bir söz söylemediyse çayın sözü; titreşim. Ücretsiz (zaman atlama parayla satılmaz).
+## saat sonraki vaktin başına geçer (WorldClock.tea: vakit bildirimi (ekran açılınca), oranlar, garanti),
+## görünüş hemen yeni vaktin; Dede yakındaysa kamera ekran açıldıktan sonra TEA_SHOT sn ona yakın kalır.
+## Dede'nin çay sözü, çay sesi, titreşim; vaktin ilk sözü ondan sonra. Ücretsiz (zaman atlama parayla
+## satılmaz).
 func _on_tea() -> void:
 	if session.state != FishingSession.State.IDLE or _card_up() or _film != null or fade.busy() \
 			or not WorldState.can_tea(GameState.save):
@@ -1228,20 +1257,21 @@ func _on_tea() -> void:
 	input.release_all()
 	fade.play(func() -> void:
 		var save := GameState.save
-		var said := _said
+		# Vaktin bildirimi ekran açılınca (karanlığın altında kalmasın, sesi çayınkine binmesin).
+		hud.hold_toasts(TEA_HOLD + Fade.TIME)
 		if not world_clock.tea(save):
 			return
-		scene.set_look(DayLook.at(GameState.db.rules, save), true)
+		scene.set_look(_current_look(), true)
 		GameState.save_game()
 		var to_elder := Vector2(elder.global_position.x, elder.global_position.z) - angler.pos2()
 		if not in_boat and to_elder.length() <= TEA_NEAR:
 			angler.face_now(to_elder)
-			_tea_shot = TEA_SHOT
+			# Yakın çekim karanlıkta başlar: ekran açıldıktan sonra da TEA_SHOT sn sürsün.
+			_tea_shot = TEA_SHOT + TEA_HOLD + Fade.TIME
 			camera.zoom = TEA_ZOOM
 			camera.snap(_focus())
 		elder.approve()
-		if _said == said:
-			_say("UI_DEDE_TEA")
+		_say("UI_DEDE_TEA")
 		Sounds.play("tea")
 		Sounds.haptic(20), TEA_HOLD)
 
@@ -1257,7 +1287,7 @@ func _debug_time() -> void:
 func _debug_weather() -> void:
 	Weather.cycle_debug(GameState.db.rules, GameState.save)
 	world_clock.refresh(GameState.save)
-	_world_line()
+	_world_line_due = true
 	GameState.save_game()
 	GameState.changed.emit()
 
@@ -1404,6 +1434,10 @@ func _present(delta: float) -> void:
 	if _bait_out and _line_time <= 0.0 and session.state == FishingSession.State.IDLE and not _card_up() and _film == null:
 		_bait_out = false
 		_say("UI_DEDE_BAIT_OUT")
+	# Saate bağlı sözler (fener, vaktin ve havanın ilk sözü) sırayla: olta boşta, kart yokken, başka söz bitince.
+	if _world_line_due and _line_time <= 0.0 and session.state == FishingSession.State.IDLE and not _card_up() \
+			and _film == null:
+		_world_line_due = _world_line()
 	match session.state:
 		FishingSession.State.FIGHTING:
 			angler.pose = "reel"
@@ -1427,6 +1461,8 @@ func _present(delta: float) -> void:
 	hud.tension_bar.visible = fighting
 	hud.set_fighting(fighting)
 	hud.set_line_out(session.line_out())
+	# Saat çipi yalnızca olta boşken dokunuş alır (geri sararken üst ortaya dokunuş atış olarak saklansın).
+	hud.set_world_touch(session.state == FishingSession.State.IDLE and not _card_up())
 	if fighting:
 		hud.tension_bar.tension = reel.tension
 		hud.tension_bar.limit = session.rules.limit
@@ -1454,10 +1490,10 @@ func _present(delta: float) -> void:
 		return
 	if bot_camera:
 		return
-	# Çaydan sonra kısa yakın çekim: balıkçı yürür ya da atarsa biter.
+	# Çaydan sonra kısa yakın çekim: balıkçı yürür, atar, sandala biner ya da elde balık gösterilirse biter.
 	if _tea_shot > 0.0:
 		_tea_shot = maxf(0.0, _tea_shot - delta)
-		if session.state != FishingSession.State.IDLE or angler.is_walking():
+		if session.state != FishingSession.State.IDLE or angler.is_walking() or in_boat or catch_fx.is_showing():
 			_tea_shot = 0.0
 	camera.target = _focus()
 	var line_view := session.line_out() or session.state == FishingSession.State.LOST
@@ -1881,8 +1917,9 @@ func _stop_for_travel() -> void:
 	Sounds.haptic(15)
 
 
-## Kamera yeni yere hemen gelir (geçişte ekran karanlıkken).
+## Kamera yeni yere hemen gelir (geçişte ekran karanlıkken; çayın yakın çekimi biter).
 func _snap_camera() -> void:
+	_tea_shot = 0.0
 	camera.pitch = FollowCamera.PITCH
 	camera.zoom = 1.0
 	camera.snap(_focus())
@@ -1921,7 +1958,6 @@ func _panel_open() -> bool:
 ## Dede (ya da Nine) bir söz söyler: ipucu çubuğunda, konuşanın yüzüyle (söz değişince
 ## _update_hint Dede'yi konuşturur). args: biçimli sözün değerleri (tr(key) % args).
 func _say(key: String, speaker: String = "dede", args: Array = []) -> void:
-	_said += 1
 	_line = key
 	_line_time = LINE_TIME
 	_line_speaker = speaker

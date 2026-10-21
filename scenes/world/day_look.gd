@@ -120,6 +120,27 @@ static func mix(a: Dictionary, b: Dictionary, t: float) -> Dictionary:
 	return out
 
 
+## İki görünüş birbirine bu kadar yakın mı (renk kanalı, yön ve sayı farkı en çok eps): LakeScene kaymayı
+## burada bitirir (üstel kayma hedefe hiç tam varmaz; yoksa ışıklar her kare yeniden uygulanırdı).
+static func close(a: Dictionary, b: Dictionary, eps: float = 0.002) -> bool:
+	for key: String in a:
+		if not b.has(key):
+			return false
+		var x: Variant = a[key]
+		var y: Variant = b[key]
+		if x is Color:
+			var c := (x as Color)
+			var d := (y as Color)
+			if maxf(maxf(absf(c.r - d.r), absf(c.g - d.g)), maxf(absf(c.b - d.b), absf(c.a - d.a))) > eps:
+				return false
+		elif x is Vector3:
+			if (x as Vector3).distance_to(y as Vector3) > eps:
+				return false
+		elif absf(float(x) - float(y)) > eps:
+			return false
+	return true
+
+
 ## Rengin doygunluğu amount kadar düşer (parlaklık kalır): bulutlu, yağmurlu ve sisli gök.
 static func _fade(color: Color, amount: float) -> Color:
 	if amount <= 0.0:

@@ -943,7 +943,7 @@ class Mix:
 
 
 # --- Müzik: vakitler ve dükkân (Dalga 4) -----------------------------------------------------
-# Sakin, dikişsiz döngüler (40–48 sn; dükkân ezgisi daha kısa): kalimba, ud (koyu Karplus-Strong),
+# Sakin, dikişsiz döngüler (40–46 sn; dükkân ezgisi daha kısa): kalimba, ud (koyu Karplus-Strong),
 # marimba, çelesta, pad ve bas. Ezgiler elle yazıldı: ölçü başına [(nota, vuruş)], None sus. Döngü
 # dairesel çizilir: sonda taşan çınlama ve yankı başa eklenir (dikiş yok). Her parça aynı RMS'e
 # çekilir (vakit değişince ses düzeyi zıplamasın), tepe -1 dBFS'i geçmez.

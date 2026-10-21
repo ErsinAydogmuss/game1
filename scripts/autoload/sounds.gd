@@ -62,6 +62,10 @@ var _clock: float = 0.0
 var _next_player: int = 0
 ## Ekransız (headless) çalışmada (testler, ana sahne denetimi) ses çalınmaz.
 var _silent: bool = false
+## stop_all'dan sonra (çıkış) hiçbir ses yeniden başlamaz: main her kare ortam sesini verir.
+var _halted: bool = false
+## Müzik parçalarının kaldığı yer (sn): dükkândan çıkınca vaktin müziği baştan başlamasın.
+var _music_pos: Dictionary = {}
 
 
 func _ready() -> void:
@@ -108,6 +112,7 @@ func _exit_tree() -> void:
 ## Bütün sesleri durdurur ve akışları bırakır. Çıkmadan bir iki kare önce çağrılırsa ses
 ## sunucusu çalanları bırakmaya fırsat bulur (yoksa motor çıkışta sızıntı uyarısı verir).
 func stop_all() -> void:
+	_halted = true
 	for tween: Tween in [_music_tween, _ambience_tween]:
 		if tween != null and tween.is_valid():
 			tween.kill()
@@ -131,7 +136,7 @@ func play(sound: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
 	if not BANK.has(sound):
 		push_warning("Bilinmeyen ses: " + sound)
 		return
-	if _silent:
+	if _silent or _halted:
 		return
 	var variants := _variants(sound)
 	if variants.is_empty():
@@ -163,7 +168,7 @@ func find(rarity: int) -> void:
 ## Bir döngüyü (makara, gerilim) açar / kapatır; açıkken sesi ve perdesi değiştirilebilir.
 func set_loop(loop_name: String, on: bool, volume_db: float = 0.0, pitch: float = 1.0) -> void:
 	var player: AudioStreamPlayer = _loops.get(loop_name)
-	if player == null or player.stream == null or _silent:
+	if player == null or player.stream == null or _silent or _halted:
 		return
 	if on:
 		player.volume_db = float(LOOPS[loop_name]) + volume_db
@@ -237,7 +242,7 @@ func _free_player() -> AudioStreamPlayer:
 ## İki oynatıcıyla yumuşak geçiş: yeni parça yükselirken eskisi söner.
 func _switch(pair: Array[AudioStreamPlayer], track: String, dir: String, volume_db: float, music: bool) -> void:
 	var current_name := _music_name if music else _ambience_name
-	if track == current_name:
+	if track == current_name or _halted:
 		return
 	var stream := _load_loop(dir + track + ".ogg")
 	if stream == null:
@@ -256,7 +261,10 @@ func _switch(pair: Array[AudioStreamPlayer], track: String, dir: String, volume_
 		previous.kill()
 	fresh.stream = stream
 	fresh.volume_db = -60.0
-	fresh.play()
+	# Müzik kaldığı yerden sürer (dükkândan dönünce vaktin müziği baştan başlamaz); ortam sesi baştan.
+	if music and old.playing and not current_name.is_empty():
+		_music_pos[current_name] = old.get_playback_position()
+	fresh.play(float(_music_pos.get(track, 0.0)) if music else 0.0)
 	var tween := create_tween().set_parallel(true)
 	tween.tween_property(fresh, "volume_db", volume_db, FADE_TIME).set_trans(Tween.TRANS_SINE)
 	if old.playing:

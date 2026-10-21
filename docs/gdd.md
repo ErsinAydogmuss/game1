@@ -346,7 +346,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ Açılış filminde Nine'yle birlikte gölün öyküsünü anlatır, Gölün Bekçisi'ni gösterir ve ilk oltasını
     balıkçıya verir (§10.5).
   - Her gün 3 küçük istekte bulunur ("bana 30 cm'lik bir kadife getir") ve "Gölün Sırrı"nı parça parça anlatır 🔜.
-  - ✅ Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir (§10.5). Vakte ve havaya ilk sözleri bir kez:
+  - ✅ Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir (§10.5). Vakte ve havaya ilk sözleri bir kez
+    (olta boşa dönünce; çekişmede ipucunu ezmez):
     öğle ("Altın Sazan öğle güneşini sever"), akşam (turna ile levrek), yeni günün sabahı, bulut, yağmur, sis
     (sudak), fırtına ("Kocabaş böyle gecelerde derinde gezer"); ilk gecenin sözü Nine'nin feneri. Öğütlerine çay
     da katıldı ("Saate dokun evlat, benimle bir çay iç").
@@ -761,8 +762,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     ekran kararırken durur, ceza yok. Kart açıkken akar.
   - Vakit değişince kısa bildirim ("Akşam oldu", vaktin ikonuyla) ve kayıt.
   - ✅ **Dede'yle çay** (2. adım; "Bugün" panelinde ÇAY İÇ): ekran kararır, saat sonraki vaktin başına geçer
-    (bildirim, oranlar ve garanti yeni vakitle), ekran açılır. Dede balıkçının 8 m yakınındaysa kamera 2 sn ona
-    yaklaşır; Dede çayın sözünü ya da yeni vaktin ilk sözünü söyler. Ücretsiz (zaman atlama parayla satılmaz,
+    (oranlar ve garanti yeni vakitle), ekran açılınca vaktin bildirimi. Dede balıkçının 8 m yakınındaysa kamera
+    2 sn ona yaklaşır; Dede çayın sözünü, ardından (ilk kezse) yeni vaktin sözünü söyler. Ücretsiz (zaman atlama parayla satılmaz,
     gelir kuralı 3). İki çay arasında en az bir balık (ilk çaydan önce de): yoksa düğme pasif, "Önce bir balık
     tut, sonra çay içeriz." Böylece vakit atlamak bir ritüel kalır; günler art arda atlanıp hava ve istekler
     çevrilemez (`WorldState.can_tea`, kayıtta `tea_at`).

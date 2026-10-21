@@ -123,8 +123,8 @@ const ZONE_KITS := {
 	# Derin orta: suyu kıyıya değmez; süsü şamandıralar.
 	"deep_water": {},
 }
-## Görünüş değişince (hava düğmesi, hızlı geçiş) ışıkların yeni görünüşe kayma hızı (1/sn; vaktin
-## kendi geçişi DayLook'ta 60 sn).
+## Görünüş birden değişince (hava ya da vakit düğmesi) ışıkların yeni görünüşe kayma hızı (1/sn; vaktin
+## kendi geçişi DayLook'ta 60 sn). Hedefe çok yaklaşınca (DayLook.close) kayma biter.
 const LOOK_RATE := 1.5
 ## Şimşek: ortam ışığına ve göğe eklenen parlaklık, yükselme ve sönme süresi (sn).
 const FLASH_LIGHT := 1.6
@@ -171,6 +171,9 @@ var _clock := 0.0
 var _look: Dictionary = {}
 var _look_target: Dictionary = {}
 var _flash_age: float = -1.0
+## Son verilen ışık havuzları (değişmedikçe yeniden verilmez) ve bir kez verildi mi.
+var _pools: Array[Vector4] = []
+var _pools_set: bool = false
 ## Kamp ateşinin ve fener direğinin yeri (ışık havuzları).
 var _campfire := Vector2.ZERO
 var _lamp_post := Vector2.ZERO
@@ -266,7 +269,12 @@ func flash() -> void:
 
 
 ## Lambaların ışık havuzları: her biri (x, z, yarıçap m, güç); en çok POOLS tanesi, fazlası atılır.
+## Değişmedikçe bir şey yapmaz (main her kare verir).
 func set_pools(pools: Array[Vector4]) -> void:
+	if _pools_set and pools == _pools:
+		return
+	_pools = pools.duplicate()
+	_pools_set = true
 	for i in POOLS:
 		RenderingServer.global_shader_parameter_set("pool_%d" % i, pools[i] if i < pools.size() else Vector4.ZERO)
 
@@ -1004,6 +1012,8 @@ func _process(delta: float) -> void:
 		var moving := _look != _look_target
 		if moving:
 			_look = DayLook.mix(_look, _look_target, 1.0 - exp(-delta * LOOK_RATE))
+			if DayLook.close(_look, _look_target):
+				_look = _look_target.duplicate()
 		if _flash_age >= 0.0:
 			_flash_age += delta
 			if _flash_age > FLASH_RISE + FLASH_FALL:

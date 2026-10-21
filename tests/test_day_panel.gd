@@ -24,8 +24,8 @@ func test_every_phase_and_weather_has_texts() -> void:
 	assert_eq(DayPanel.weather_detail("clear"), "", "açık havada açıklama yok")
 
 
-## Saat çipi: dokunma kutusu en az 122 (hap ince), ekrandaki düğmelerde; olta sudayken dokunuş almaz ama
-## görünür (saat okunur), çekişmede gizli.
+## Saat çipi: dokunma kutusu en az 122 (hap ince), ekrandaki düğmelerde; olta boşta değilken dokunuş almaz
+## ama görünür (saat okunur; main set_world_touch'ı her kare verir), olta sudayken de görünür, çekişmede gizli.
 func test_world_chip_is_a_button() -> void:
 	var hud := Hud.new()
 	hud.call("_build_top")
@@ -34,9 +34,11 @@ func test_world_chip_is_a_button() -> void:
 	assert_true(chip != null and chip.custom_minimum_size.y >= 122.0, "dokunma kutusu en az 122")
 	assert_true(chip in hud.buttons(), "ekrandaki düğmelerde (bot boyutu ve güvenli alanı denetler)")
 	hud.set_line_out(true)
+	hud.set_world_touch(false)
 	assert_true(chip.visible and not chip.takes_touch, "olta sudayken görünür, dokunuş almaz")
 	hud.set_line_out(false)
-	assert_true(chip.takes_touch, "olta dönünce dokunulur")
+	hud.set_world_touch(true)
+	assert_true(chip.takes_touch, "olta boşken dokunulur")
 	hud.set_fighting(true)
 	assert_true(not chip.visible, "çekişmede gizli")
 	hud.set_fighting(false)
