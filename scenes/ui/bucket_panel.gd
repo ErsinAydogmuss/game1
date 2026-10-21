@@ -13,9 +13,10 @@ signal release_requested(fish_id: String)
 signal release_all_requested
 signal sell_requested
 
-## Panelin genişliği (iki sütun satır; telefonda küçülmeden sığar), satırın boyu, satır sayısı.
+## Panelin genişliği (iki sütun satır; telefonda küçülmeden sığar), satırın boyu (yüksekliği BIRAK'ın 122'si ve
+## üstte, altta 4 pay), satır sayısı.
 const WIDTH := 1640.0
-const ROW := Vector2(770, 128)
+const ROW := Vector2(770, 130)
 const ROWS := 6
 ## Satırın parçaları: balığın resmi, adın en geniş hali (uzun ad küçülür, yine
 ## sığmazsa "…"), değer sütunu (satırlar hizalı), BIRAK.

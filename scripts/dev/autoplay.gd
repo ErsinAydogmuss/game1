@@ -2642,8 +2642,9 @@ func _play_release() -> void:
 	var rows := panel.find_children("Row_*", "PanelContainer", true, false)
 	var wide := PackedStringArray()
 	for row: Control in rows:
-		if row.get_combined_minimum_size().x > BucketPanel.ROW.x + 0.5:
-			wide.append("%s %.0f" % [row.name, row.get_combined_minimum_size().x])
+		var need := row.get_combined_minimum_size()
+		if need.x > BucketPanel.ROW.x + 0.5 or need.y > BucketPanel.ROW.y + 0.5:
+			wide.append("%s %.0f×%.0f" % [row.name, need.x, need.y])
 	var text := _texts_in(panel)
 	_check("kovaya dokun → Kova paneli küçülmeden sığar (%.3f, %s)" % [panel.fit_scale(), panel.panel_rect()],
 			panel.visible and panel.fit_scale() >= 0.999 and _panel_inside(panel))
