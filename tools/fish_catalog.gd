@@ -51,6 +51,7 @@ func _initialize() -> void:
 	_pity(db, lines)
 	_techniques(db, db.main_spot, lines)
 	_world(db, db.main_spot, lines)
+	_love(db, lines)
 	_spot(db, db.main_spot, lines)
 	var file := FileAccess.open(OUTPUT, FileAccess.WRITE)
 	if file == null:
@@ -360,6 +361,37 @@ func _world(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
 
 
 ## Yalnızca belli vakitte gelen türün vakti (katalog: "gece", "fırtınalı gece").
+## Göl sevgisi (Dalga 4): seviyeler ve Nadir+ payı; çöp eşyaları (pay ve sevgi).
+func _love(db: ContentDB, lines: PackedStringArray) -> void:
+	var rules := db.rules
+	lines.append("## Göl sevgisi ve çöp")
+	lines.append("")
+	lines.append("Göl sevgisi hiç azalmaz. Kaynakları: göle bırakılan balık (kademenin sevgisi: Nadirlikler tablosu), toplanan")
+	lines.append("çöp ve Dede'nin istekleri. Her seviye %s ve üstü kademelerin ağırlığını artırır (sonra oranlar yeniden" % \
+			_name("RARITY_" + rules.love_from))
+	lines.append("normalleştirilir; defterdeki oranlar bu payla). Göl de güzelleşir: daha çok çiçek ve nilüfer, daha berrak su,")
+	lines.append("3. seviyeden sonra gündüz kelebekler.")
+	lines.append("")
+	lines.append("| Seviye | Toplam sevgi | %s+ ağırlığı |" % _name("RARITY_" + rules.love_from))
+	lines.append("|---|---|---|")
+	for i in rules.love_levels.size():
+		lines.append("| %d | %d | ×%s |" % [i + 1, rules.love_levels[i], _number(LakeLove.rare_bonus_pm(rules, i + 1) / 1000.0)])
+	lines.append("")
+	lines.append("**Çöp:** dipte tutulan balığın yanında %s, tuzağın her yeni içeriğinde %s (ne çıkacağı önceden belli: balıkta" % [
+			_percent(rules.trash_bottom_ppm), _percent(rules.trash_trap_ppm)])
+	lines.append("gölgenin zarı, tuzakta içerik kurulurken). Kovaya girmez, satılmaz; toplanınca göl sevgisi verir.")
+	lines.append("")
+	lines.append("| Eşya | Pay | Göl sevgisi |")
+	lines.append("|---|---|---|")
+	var total := 0
+	for w in rules.trash_weights:
+		total += w
+	for i in rules.trash_ids.size():
+		lines.append("| %s | %s | %d |" % [_name("ITEM_" + rules.trash_ids[i]),
+				_percent(roundi(rules.trash_weights[i] * float(PPM) / total)), rules.trash_love[i]])
+	lines.append("")
+
+
 static func _when_label(own: Dictionary) -> String:
 	if str(own["weather"]) == "rain" and str(own["phase"]) == "night":
 		return "fırtınalı gece"

@@ -280,6 +280,36 @@ Fırtınalı gecede (yağmurlu gece) Kocabaş: %2,2.
 
 Fırtınalı gecede (yağmurlu gece) Kocabaş: %6,6.
 
+## Göl sevgisi ve çöp
+
+Göl sevgisi hiç azalmaz. Kaynakları: göle bırakılan balık (kademenin sevgisi: Nadirlikler tablosu), toplanan
+çöp ve Dede'nin istekleri. Her seviye Nadir ve üstü kademelerin ağırlığını artırır (sonra oranlar yeniden
+normalleştirilir; defterdeki oranlar bu payla). Göl de güzelleşir: daha çok çiçek ve nilüfer, daha berrak su,
+3. seviyeden sonra gündüz kelebekler.
+
+| Seviye | Toplam sevgi | Nadir+ ağırlığı |
+|---|---|---|
+| 1 | 0 | ×1 |
+| 2 | 12 | ×1,04 |
+| 3 | 30 | ×1,08 |
+| 4 | 60 | ×1,12 |
+| 5 | 110 | ×1,16 |
+| 6 | 180 | ×1,2 |
+| 7 | 270 | ×1,24 |
+| 8 | 380 | ×1,28 |
+| 9 | 520 | ×1,32 |
+| 10 | 700 | ×1,36 |
+
+**Çöp:** dipte tutulan balığın yanında %5, tuzağın her yeni içeriğinde %20 (ne çıkacağı önceden belli: balıkta
+gölgenin zarı, tuzakta içerik kurulurken). Kovaya girmez, satılmaz; toplanınca göl sevgisi verir.
+
+| Eşya | Pay | Göl sevgisi |
+|---|---|---|
+| Eski çizme | %35 | 3 |
+| Teneke kutu | %35 | 3 |
+| Plastik şişe | %25 | 3 |
+| Paslı anahtar | %5 | 5 |
+
 ## Köy Gölü (oyunun gölü, `big_lake`)
 
 - Aynı anda en çok 4 gölge; tutulan ya da kaçanın yerine birkaç saniyede yenisi doğar.

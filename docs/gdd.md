@@ -767,6 +767,14 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   `weather.rain_approach`). Sonuç: saatte 6.717–7.333 para (önce 6.557–6.836: ~+%4) ve 165–167 av (önce 166–168).
   Vakitlere zamanın ~%25'i. Ay Turnası ilk kez 26–119. dakikada. Rütbe 9'a cam kamıştan önce varan bot önce sandala
   biriktirir: cam kamış 54–150. dakikada (korkuluk 160'a genişledi; Dalga 3'te 52–87). Korkuluklar yeşil.
+- ✅ **Dalga 4, tut-bırak ve çöp ölçümü** (3. adım; `economy_report.gd -- --hours=16 --seeds=6`): denge botu rütbe 9'dan
+  sonra satıştan önce değeri 5 parayı geçmeyen balıkları göle bırakır (`sim.json` `release_value_max`,
+  `release_from_rank`), dipte ve tuzakta çıkan çöpü toplar. Baştan bırakan bot erken alışverişleri geciktiriyordu
+  (ilk satışların çoğu ucuz balık: bir seed'de büyük kova 103. dakikada, korkuluk 25–70); oyuncu da önce takım için
+  her şeyi satar. Sonuç: saatte 6.835–7.214 para (önce 6.717–7.333) ve 164–167 av; erken alışverişler ve rütbeler
+  aynı; 16 saatte 210–257 balık bırakıldı, 73–95 çöp toplandı. Göl sevgisi 2'si 26–119. dakikada (ilk Ay Turnası
+  ya da rütbe 9), 6'sı (altın hamur) 145–205. dakikada: rütbe 12–14 olurken, finalin hazır olduğu sıralarda;
+  10'u 302–426. dakikada. Dede'nin isteklerinin sevgisi (4. adım) bunu daha erkene çeker.
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 

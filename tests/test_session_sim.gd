@@ -5,7 +5,8 @@ extends BaseTest
 ## geçirilir. Dalga 2: bölgeler rütbeyle açılır, sandal. Dalga 3: teknikler (spin rütbe 2'de; ilk
 ## kamışı öncelikli alınır, Dede haber verir); sonraki teknikler kendi satırlarını ekler; kerevit
 ## tuzağı (rütbe 3; ilk tuzak öncelikli). Dalga 4: oyun saati ve hava (botun saati dükkânda, takım
-## çantasında ve haritada durur; vakit değişince bölgesini yeniden seçer), yalnızca gece gelen Ay Turnası.
+## çantasında ve haritada durur; vakit değişince bölgesini yeniden seçer), yalnızca gece gelen Ay Turnası;
+## ucuz balığı göle bırakma, çöp ve göl sevgisinin seviyeleri.
 
 const SEEDS := [1000, 1077, 1154]
 ## Korkulukların ölçüldüğü oyun süresi (dk).
@@ -48,6 +49,14 @@ const PACING := [
 	# Kocabaş (fırtınalı gece, derin ortada dip) daha geç.
 	["rarity_legendary", 20.0, 300.0],
 	["fish:moon_pike", 20.0, 300.0],
+	# Tut-bırak ve çöp (Dalga 4; sim.json: rütbe 9'dan sonra satıştan önce 5 paralık balık göle bırakılır;
+	# baştan bırakan bot erken alışverişleri geciktiriyordu, büyük kova 103 dk). 6 seed'de ilk bırakış 26–104 dk
+	# (koruma altındaki Ay Turnası ya da rütbe 9), ilk çöp 35–53 dk (dip açılınca), göl sevgisi 2'si 26–119 dk,
+	# 6'sı (altın hamur) 145–205 dk: final hazır olurken (rütbe 12–14). İsteklerin sevgisi (4. adım) daha erkene çeker.
+	["release", 15.0, 150.0],
+	["trash", 15.0, 90.0],
+	["love_2", 15.0, 150.0],
+	["love_6", 120.0, 240.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.
@@ -163,15 +172,38 @@ func test_full_bucket_is_sold_before_casting() -> void:
 	var sim := SessionSim.new(db, db.main_spot, SEEDS[0])
 	while sim.minutes() < 200.0:
 		sim.cast_once()
-	for fish_id: String in sim.save.records:
-		var released := int((sim.save.records[fish_id] as Dictionary).get("released", 0))
-		if released > 0:
-			assert_true(Bucket.release_only(db, fish_id), "%s kova dolu diye bırakıldı (%d)" % [fish_id, released])
+	# Bırakılanlar ucuz balık (rütbe 9'dan sonra satıştan önce) ve koruma altındakiler; kova dolu diye hiç.
+	assert_eq(sim.full_released, 0, "kova dolu diye balık bırakılmadı")
 	while not Bucket.is_full(db, sim.save):
 		sim.save.bucket.append({ "fish": "rudd", "size_cm": 20, "stars": 1 })
 	var sold := sim.sells
 	sim.cast_once()
 	assert_true(sim.sells > sold, "dolu kovayla atıştan önce satılır")
+
+
+## Tut-bırak (Dalga 4): rütbe 9'dan önce her şey satılır (takım için); sonra satıştan önce ucuz balık göle
+## bırakılır (göl sevgisi, para yok, defterde bırakılan), değerli balık satılır.
+func test_cheap_fish_are_released_after_rank_9() -> void:
+	var db := content()
+	var cheap := Economy.fish_value(db, "rudd", 15)
+	var dear := Economy.fish_value(db, "pike", 80)
+	assert_true(cheap <= int(SessionSim.load_timing().get("release_value_max", 0)), "15 cm kızılkanat ucuz (%d)" % cheap)
+	for late: bool in [false, true]:
+		var sim := SessionSim.new(db, db.main_spot, SEEDS[0])
+		sim.save.xp = db.rank_xp[8] if late else db.rank_xp[3]
+		for entry: Array in [["rudd", 15], ["pike", 80]]:
+			Records.add(sim.save.records, str(entry[0]), int(entry[1]), 1, 0)
+			sim.save.bucket.append({ "fish": str(entry[0]), "size_cm": int(entry[1]), "stars": 1 })
+		var love := sim.save.love
+		sim.call("_sell_and_shop")
+		if late:
+			assert_eq(sim.released, 1, "rütbe 9: ucuz balık bırakılır")
+			assert_eq(sim.earned, dear, "rütbe 9: yalnızca değerli balık satılır")
+			assert_eq(sim.save.love, love + 1, "rütbe 9: göl sevgisi +1")
+			assert_eq(int((sim.save.records["rudd"] as Dictionary)["released"]), 1, "defterde bırakılan")
+		else:
+			assert_eq(sim.released, 0, "rütbe 4: hepsi satılır")
+			assert_eq(sim.earned, cheap + dear, "rütbe 4: ikisi de satılır")
 
 
 ## Satılamayan (değeri 0) balık yalnızca koruma altındaki tür olabilir; o da kovaya girmez. Yoksa

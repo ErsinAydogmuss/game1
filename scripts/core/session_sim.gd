@@ -35,9 +35,16 @@ extends RefCounted
 ##    Turnası) o vakitte kovalar (bölge ve teknik seçimi); bölgenin balık başına değeri koşulsuz (vakit ve
 ##    hava kazancı ±%5'te tutar: test_economy); vakit değişince bölgeyi ve tekniği yeniden seçer. Vakitlerde
 ##    ve havalarda geçen süre: phase_time, weather_time.
+## 11. Tut-bırak ve çöp (Dalga 4): satıştan hemen önce değeri sim.json release_value_max'ı geçmeyen balıklar
+##    göle bırakılır (rütbe release_from_rank'ten sonra: oyuncu önce takım için her şeyi satar, sonra küçük
+##    balığı satmak yerine bırakır: göl sevgisi; 0 ise hiç); dolu kovaya gelen balık da bırakılır. Dipte tutulan balığın yanında ve tuzaktan gelen çöp toplanır (Trash; zarı botun
+##    kendi tuzlu zarı: oranları ve sırayı kaydırmaz). Göl sevgisi oranlara girer (Nadir+); seviyelerin ilk
+##    dakikası love_<seviye>.
 ## Aynı seed aynı sonucu verir.
 
 const SIM_PATH := "res://data/sim.json"
+## Botun çöp zarının tuzu (dipte balığın yanında; oyunda gölgenin seed'i).
+const TRASH_SALT := 9161
 ## Alışverişe giren kategoriler (yem alınmaz: bot solucanla avlanır). Öteki tekniklerin kamışları
 ## ("rod:<teknik>") ve küçük takımı ayrıca (_buy_categories).
 const BUY_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "bucket", "extra", "boat", "trap"]
@@ -63,9 +70,15 @@ var sells: int = 0
 var earned: int = 0
 ## Tuzaklardan toplanan kerevit.
 var trapped: int = 0
+## Göle bırakılan balık (satıştan önce ucuz olanlar, koruma altındakiler ve dolu kovaya gelenler), bunlardan
+## kova dolu olduğu için bırakılan (bot doluyken atmaz: hep 0 olmalı) ve toplanan çöp.
+var released: int = 0
+var full_released: int = 0
+var trash: int = 0
 ## Olayların ilk olduğu dakika: "rank_3", "buy" (ilk alışveriş), "buy:<takım>", "sell", "species_4",
 ## "rarity_<id>", "zone:<bölge>" (o bölgede ilk avlanış), "tech:<teknik>" (o teknikle ilk atış),
-## "trap_set" (ilk tuzak bırakıldı), "trap" (tuzaktan ilk kerevit).
+## "trap_set" (ilk tuzak bırakıldı), "trap" (tuzaktan ilk kerevit), "release" (ilk bırakılan balık), "trash"
+## (ilk çöp), "love_<seviye>" (göl sevgisinin seviyesi).
 var milestones: Dictionary = {}
 ## Botun elindeki teknik ve her teknikte geçen süre (sn).
 var technique: String = "float"
@@ -204,8 +217,11 @@ func _on_catch(def: Dictionary, percentile: int, cond: Dictionary = {}) -> void:
 			_choose_zone()
 			_choose_technique()
 	if not Bucket.add(db, save, fish_id, size_cm, stars):
-		Records.release(save.records, fish_id)
-		LakeLove.add(db.rules, save, int(db.rarity_def(rarity).get("love", 0)))
+		if not Bucket.release_only(db, fish_id):
+			full_released += 1
+		_released(fish_id)
+	# Dipte balığın yanında çöp (oyunda zarı gölgenin seed'inden; botta kendi tuzlu zarı).
+	_found(Trash.with_catch(db.rules, Dice.derive(save.seed, TRASH_SALT, catches), technique))
 	elapsed += _num("show_s", 2.4)
 	if Records.wants_card(rarity, outcome):
 		elapsed += _num("card_s", 2.5)
@@ -223,6 +239,7 @@ func _sell_and_shop() -> void:
 	elapsed += _num("sell_s", 30.0)
 	# Dükkân açıkken oyun saati durur.
 	_paused_s += _num("sell_s", 30.0)
+	_release_cheap()
 	earned += Economy.sell_all(db, save)
 	sells += 1
 	_mark("sell")
@@ -250,6 +267,7 @@ func _tend_traps() -> void:
 			trapped += got
 			_mark("trap")
 			_mark("species_%d" % save.records.size())
+		_found(str(result.get("trash", "")))
 		_note_rank(result["ranked"])
 	while TrapSim.spare(db, save) > 0:
 		var placed := false
@@ -270,6 +288,45 @@ func _tend_traps() -> void:
 			break
 		if not placed:
 			return
+
+
+## Satıştan önce ucuz balıklar göle (Kova panelinin BIRAK'ı): değeri release_value_max'ı geçmeyenler,
+## rütbe release_from_rank'ten sonra (oyuncu önce takım için her şeyi satar).
+func _release_cheap() -> void:
+	var limit := int(_num("release_value_max", 0.0))
+	if limit <= 0 or Rank.rank(db, save) < int(_num("release_from_rank", 1.0)):
+		return
+	var i := 0
+	while i < save.bucket.size():
+		var entry: Dictionary = save.bucket[i]
+		var fish_id := str(entry["fish"])
+		if Economy.fish_value(db, fish_id, int(entry["size_cm"])) <= limit:
+			save.bucket.remove_at(i)
+			_released(fish_id)
+		else:
+			i += 1
+
+
+## Balık göle döndü: defter, göl sevgisi ve sayaç (WorldState.release; oyundaki gibi).
+func _released(fish_id: String) -> void:
+	released += 1
+	_mark("release")
+	_note_love(WorldState.release(db, save, fish_id))
+
+
+## Çöp çıktı ("" yoksa): göl sevgisi ve sayaçlar (Trash.collect).
+func _found(item: String) -> void:
+	if item.is_empty():
+		return
+	trash += 1
+	_mark("trash")
+	_note_love(Trash.collect(db.rules, save, item))
+
+
+## Göl sevgisinin seviyesi arttıysa atlanan her seviyenin dakikası.
+func _note_love(result: Dictionary) -> void:
+	for level in range(int(result.get("old_level", 1)) + 1, int(result.get("new_level", 1)) + 1):
+		_mark("love_%d" % level)
 
 
 ## Haritadan geçiş (travel_s): harita açıkken ve ekran kararırken oyun saati durur.
