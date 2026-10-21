@@ -29,11 +29,24 @@ var dimmed: bool = false:
 var _touch: int = -1
 ## Topuzun halkanın ortasına göre yeri (birim).
 var _knob := Vector2.ZERO
+## Halka ve topuz yuvarlak StyleBox: zemin, kenar ve yumuşak kenar tek çizimde (draw_circle ve
+## kenar yumuşatmalı draw_arc ile halka karede 13 çizim tutuyordu; iskele 150 sınırını aştı).
+var _ring := StyleBoxFlat.new()
+var _knob_box := StyleBoxFlat.new()
 
 
 func _init() -> void:
 	custom_minimum_size = SIZE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for box: StyleBoxFlat in [_ring, _knob_box]:
+		box.anti_aliasing = true
+		box.corner_detail = 16
+	_ring.set_corner_radius_all(int(RING))
+	_ring.set_border_width_all(7)
+	_knob_box.set_corner_radius_all(int(KNOB))
+	_knob_box.set_border_width_all(4)
+	_knob_box.shadow_size = 2
+	_knob_box.shadow_offset = Vector2(0, 5)
 
 
 ## Halka basılı mı?
@@ -125,17 +138,25 @@ func _draw() -> void:
 	var alpha := 0.45 if dimmed else 1.0
 	var pressed := _touch != -1
 	# Halka: koyu yarı saydam zemin ve açık kenar (su ve kum üstünde de seçilsin); basılıyken parlak.
-	draw_circle(c, RING, Color(0.05, 0.12, 0.18, (0.36 if pressed else 0.28) * alpha))
-	draw_arc(c, RING, 0.0, TAU, 64, Color(1, 1, 1, (0.9 if pressed else 0.75) * alpha), 7.0, true)
-	# Dört yön işareti (küçük oklar).
+	_ring.bg_color = Color(0.05, 0.12, 0.18, (0.36 if pressed else 0.28) * alpha)
+	_ring.border_color = Color(1, 1, 1, (0.9 if pressed else 0.75) * alpha)
+	draw_style_box(_ring, Rect2(c - Vector2.ONE * RING, Vector2.ONE * RING * 2.0))
+	# Dört yön işareti (küçük oklar): tek üçgen dizisi.
+	var points := PackedVector2Array()
+	var colors := PackedColorArray()
+	var indices := PackedInt32Array()
 	for k in 4:
 		var dir := Vector2.from_angle(TAU * k / 4.0)
 		var tip := c + dir * (RING - 16.0)
 		var side := Vector2(-dir.y, dir.x) * 9.0
-		draw_colored_polygon(PackedVector2Array([tip, tip - dir * 14.0 + side, tip - dir * 14.0 - side]),
-				Color(1, 1, 1, 0.55 * alpha))
-	# Topuz.
+		points.append_array(PackedVector2Array([tip, tip - dir * 14.0 + side, tip - dir * 14.0 - side]))
+		indices.append_array(PackedInt32Array([k * 3, k * 3 + 1, k * 3 + 2]))
+		for i in 3:
+			colors.append(Color(1, 1, 1, 0.55 * alpha))
+	RenderingServer.canvas_item_add_triangle_array(get_canvas_item(), indices, points, colors)
+	# Topuz (gölgesiyle).
 	var knob := c + _knob
-	draw_circle(knob + Vector2(0, 5), KNOB, Color(0, 0, 0, 0.25 * alpha))
-	draw_circle(knob, KNOB, Color(1, 1, 1, (0.92 if pressed else 0.75) * alpha))
-	draw_arc(knob, KNOB, 0.0, TAU, 48, Color(0.16, 0.32, 0.4, 0.8 * alpha), 4.0, true)
+	_knob_box.bg_color = Color(1, 1, 1, (0.92 if pressed else 0.75) * alpha)
+	_knob_box.border_color = Color(0.16, 0.32, 0.4, 0.8 * alpha)
+	_knob_box.shadow_color = Color(0, 0, 0, 0.25 * alpha)
+	draw_style_box(_knob_box, Rect2(knob - Vector2.ONE * KNOB, Vector2.ONE * KNOB * 2.0))
