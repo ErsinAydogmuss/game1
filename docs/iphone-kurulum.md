@@ -201,7 +201,7 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 
 ### 11. Geri bildirim
 
-Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v0.3.1: berrak görüntü ve iri balık; v0.4: teknikler, 13–19). Eski kayıt kendiliğinden yeni biçime geçer: v2'den v3'e rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır; v3'ten v4'e şamandıra takımı aynen kalır, makara ve misina bütün tekniklerde ortak olur. Para, kova, takım ve defter aynen kalır.
+Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v0.3.1: berrak görüntü ve iri balık; v0.4: teknikler, 13–19; v0.4.1: Ersin'in telefon geri bildirimi, 20–26). Eski kayıt kendiliğinden yeni biçime geçer: v2'den v3'e rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır; v3'ten v4'e şamandıra takımı aynen kalır, makara ve misina bütün tekniklerde ortak olur. Para, kova, takım ve defter aynen kalır.
 
 1. Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
 2. Rütben güncellemeden önceki gibi mi? (Sayı değişebilir; rütbe ve çubuk aynı kalmalı.)
@@ -226,6 +226,13 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
 17. **v0.4: Kerevit tuzağı** (rütbe 3). Nine'den tuzak al (Ekstra), sazlıkta ya da kayalık burunda Takım Çantası'ndan **Tuzak bırak**. Turuncu şamandıra ve "0/4" rozeti çıkıyor mu? Oyunu kapat, 20–40 dakika sonra aç: rozet 1/4 ya da 2/4 mü? Şamandıraya dokun: kerevitler kovaya, elde kerevit. Boş tuzağa dokununca bekle ya da kaldır paneli. Dipte olta sudayken ekranın her yeri eylemdir: yakındaki tuzağa dokunmak tuzağı değil oltayı sarar. Bu kafa karıştırıyor mu?
 18. **v0.4: Defter ve Dede.** Defter iki sayfa (16 tür). Tutulmamış kerevitte "Tuzağa girer: Sazlık, Kayalık Burun", alabalıkta "Sevdiği sinek" yazıyor mu? Oranların başlığında elindeki teknik yazıyor mu? Rütbe 4'ten sonra sazlıkta şamandırayla bir balık tutunca Dede bir kez "Dip dene!" diyor mu? Dede'ye dokununca açtığın tekniklerin öğütleri de geliyor mu?
 19. **v0.4: Denge.** Spinle iskelede ve nilüferli koyda, dipte derin ortada, sinekle dere ağzında para şamandıradan çabuk geliyor mu? Bir tekniğin sıkıcı ya da çok zor geldiği yer var mı?
+20. **v0.4.1: Hikâye.** Kayıtta balık olduğu için film kendiliğinden açılmaz: Ayarlar'ın başlığındaki **HİKÂYE**'ye dokun. Ekran kararır, iskelede ~50 sn'lik film oynar (Nine, Dede, sazlık, derin orta, Gölün Bekçisi'nin dev gölgesi, Dede'nin ilk oltası). Dokununca sonraki söz geliyor mu, sağ üstteki ATLA hemen bitiriyor mu? Yazılar okunacak kadar ekranda kalıyor mu? Yeni oyunda (**Kaydı sıfırla**) film kendiliğinden açılır, bitince "Gölgeyi gördün mü?" ipucu çıkar; uygulamayı kapatıp açınca film yeniden oynamaz.
+21. **v0.4.1: Hikâyenin devamı.** **RÜTBE +1** ile 3, 6, 10, 15 ve 20'ye çık: sonraki balıkta ya da Dede'ye dokununca Dede hikâyeyi bir adım sürdürüyor mu (her biri bir kez)?
+22. **v0.4.1: Yürüme halkası** (sol altta). Halkaya basıp sürükle: o yöne yürür; az itersen yavaş; bırakınca durur. Halkanın dışına dokunmak eskisi gibi çalışıyor mu (yürü, at, Nine, Dede, sandal)? Olta sudayken ve sandalda halka yok. Bir parmak halkadayken öbürüyle suya dokununca atıyor mu?
+23. **v0.4.1: Kova dolunca SAT.** Kova dolunca eylem düğmesi yeşil SAT olur, Dede söyler. Suya dokun: atılmamalı. SAT'a bas: ekran kararır, tezgâhtasın, dükkân Kova sekmesinde. Sandaldayken SAT: önce kıyı, sonra tezgâh.
+24. **v0.4.1: Kumdaki gölge.** Sazlıkta kıyıdan iri bir balık çek: son metrelerde balık, gölgesi, şamandıra ve halkalar suyun kenarında kalıyor mu, kuma taşmıyor mu?
+25. **v0.4.1: Kamışlar.** Dükkândan farklı kamışlar al ve tak: her kamış dükkân resmindeki gibi mi (bambu boğumlu, karbon siyah ve altın, sinekte uzun mantar sap)? Makara rengi taktığın makaradan mı? Dipte sehpadaki kamış senin dip kamışın mı?
+26. **v0.4.1: Deneme düğmeleri** (12. adımdaki ölçüm açıkken): **+1.000** ve **+10.000** para sol üstte görünüyor mu? **RÜTBE +1**'den sonra ayarları kapatınca rütbe bildirimi, açılan yer ya da teknik ve Dede'nin sözü geliyor mu?
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
@@ -257,7 +264,7 @@ Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte
 | Çekişme anında | | | |
 
 - **Hedef:** her yerde 60 FPS, en az 50.
-- **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken): iskelede 140, öteki yerlerde 88–114, sandalda 98. Telefondaki sayı bundan çok farklıysa not et.
+- **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken; v0.4.1): iskelede 141, öteki yerlerde 89–115, sandalda 96. Telefondaki sayı bundan çok farklıysa not et.
 - FPS 50'nin altındaysa şunları da yaz: hangi yerde düştüğü, telefonun ısınıp ısınmadığı, ilk açılışta mı yoksa sürekli mi olduğu.
 
 İstersen bir de `--export-release` ile kur (8. adım) ve açık bölgelerde ölç. Release derlemede deneme düğmeleri (HEPSİNİ AÇ, para, RÜTBE +1) yoktur; sayılar debug'dan biraz daha iyi çıkar.

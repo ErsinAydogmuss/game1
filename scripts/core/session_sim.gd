@@ -38,6 +38,9 @@ const BUY_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", 
 const NEW_SPECIES_WORTH := 100000.0
 ## rate'in boy zarı: balığın ortalama değeri bu kadar eşit aralıklı örnekle hesaplanır.
 const RATE_SAMPLES := 50
+## Atıştan önce kova doluysa en çok bu kadar satış turu (satıştan sonra toplanan tuzaklar kovayı yine
+## doldurabilir; her turda tuzaklar boşalır).
+const SELL_ROUNDS := 4
 
 var db: ContentDB
 var save: SaveData
@@ -104,8 +107,10 @@ func minutes() -> float:
 ## Bir atış döngüsü: atış, bekleme, ısırma, çekişme, sonuç; kova dolarsa satış ve alışveriş.
 func cast_once() -> void:
 	# Kova doluyken atılmaz (oyunda eylem düğmesi SAT olur): satıştan sonra toplanan tuzaklar kovayı
-	# yeniden doldurduysa önce yine satılır.
-	if Bucket.is_full(db, save):
+	# yeniden doldurduysa yine satılır (her turda tuzaklar boşalır; birkaç turda biter).
+	for i in SELL_ROUNDS:
+		if not Bucket.is_full(db, save):
+			break
 		_sell_and_shop()
 	casts += 1
 	var before := elapsed

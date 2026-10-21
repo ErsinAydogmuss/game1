@@ -317,6 +317,9 @@ func _replay_story() -> void:
 		_leave_boat()
 		angler.place(start)
 		angler.face_now(Vector2(0.0, -1.0))
+		# İskeleye geçiş oturumun başı gibi sessiz (bölgenin adı ve teknik bildirimi filmin altında kalırdı).
+		zone_id = ""
+		_zone_known = false
 		var zone: Dictionary = Zones.at(db, spot_id, start)
 		session.set_pity_floor(CatchOdds.pity_floor(db, GameState.save, Zones.place(db, spot_id, str(zone.get("id", ""))),
 				session.technique.id))
@@ -1143,8 +1146,12 @@ func _present(delta: float) -> void:
 	var tension := reel.tension if fighting else 0.0
 	angler.tension = tension
 	# Dede olta sudayken şamandırayı izler (efsanevi gölgeyi haber verdiyse önce ona bakar); Nine
-	# yaklaşan balıkçıya bakar.
-	_notice_legends(delta)
+	# yaklaşan balıkçıya bakar. Filmde haber yok (arayüz gizli: söz ve bildirim kaybolurdu); sıradaki
+	# bildirimler film bitince çıkar.
+	if _film == null:
+		_notice_legends(delta)
+	else:
+		hud.hold_toasts(TOAST_AFTER_PANEL)
 	elder.has_focus = session.line_out() and bobber.visible
 	elder.focus = bobber.global_position
 	if _legend_look > 0.0:
@@ -1156,7 +1163,7 @@ func _present(delta: float) -> void:
 	# Köylünün sözü kart açıkken saymaz (ipucu çubuğu kartın altında gizli).
 	if not _card_up():
 		_line_time = maxf(0.0, _line_time - delta)
-	if _bait_out and _line_time <= 0.0 and session.state == FishingSession.State.IDLE and not _card_up():
+	if _bait_out and _line_time <= 0.0 and session.state == FishingSession.State.IDLE and not _card_up() and _film == null:
 		_bait_out = false
 		_say("UI_DEDE_BAIT_OUT")
 	match session.state:

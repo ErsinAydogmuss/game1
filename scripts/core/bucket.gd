@@ -1,8 +1,9 @@
 class_name Bucket
 extends RefCounted
 ## Kova (docs/gdd.md §10.4): tutulan balık kovaya girer, Nine'ye toptan satılır. Kapasite sahip
-## olunan en büyük kovadan gelir. Kova dolunca oyun durmaz: yeni balık göle bırakılır (çağıran
-## bırakma ödülünü verir). Koruma altındaki tür (mersin, fish.json release_only) kovaya hiç girmez.
+## olunan en büyük kovadan gelir. Kova doluyken oyunda olta atılmaz (main: eylem düğmesi SAT); yine
+## de dolu kovaya gelen balık göle bırakılır (çağıran bırakma ödülünü verir). Koruma altındaki tür
+## (mersin, fish.json release_only) kovaya hiç girmez.
 
 
 ## Sahip olunan en büyük kova (ya da file) kaç balık alır.

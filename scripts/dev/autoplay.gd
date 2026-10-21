@@ -202,6 +202,8 @@ func _ready() -> void:
 			_play_rods.call_deferred()
 		"story":
 			_play_story.call_deferred()
+		"film":
+			_play_film.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -476,14 +478,16 @@ func _play_story() -> void:
 	_check("yeni oyunda film oynar, arayüz gizli", story.visible and not hud.visible and main.get("_film") != null)
 	_check("oltası henüz elinde değil", not _angler().rod.visible)
 	_check_panel_buttons(story, "ATLA düğmesi")
+	var worst := { "draws": 0, "shot": "" }
+	await _story_draws(worst, "opening")
 	await _shot("01_logo")
 	await _wait_until(func() -> bool: return story.index() == 0, StoryPanel.LOGO_TIME + 1.0)
 	await _wait(StoryFilm.MOVE_TIME)
 	var face: TextureRect = story.get("_face")
 	_check("ilk söz Nine'nin, yüzüyle (%s)" % _story_text(story), story.index() == 0
 			and str(Story.LINES[0][1]) == "nine" and face.visible)
+	await _story_draws(worst, "nine")
 	await _shot("02_nine")
-	var worst := { "draws": 0, "shot": "" }
 	var lines_ok := true
 	var notes := PackedStringArray()
 	# Dokununca sonraki söz; olta atılmaz.
@@ -621,6 +625,18 @@ func _story_chapters() -> void:
 	await _wait_frames(3)
 	_check("yine dokun: öğüt, bölüm yinelenmez (%s)" % str(main.get("_hint_shown")),
 			str(main.get("_hint_shown")).begins_with("UI_DEDE_TIP_"))
+
+
+## Açılış filminin videosu (Movie Maker ile): yeni oyunda film kendi hızında baştan sona oynar (dokunuş
+## yok), bitince ilk ipucuyla birkaç saniye; sonra çıkılır.
+func _play_film() -> void:
+	_intro = true
+	_use_save(0)
+	var story: StoryPanel = main.get("story_panel")
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not story.visible, 120.0)
+	await _wait(3.5)
+	_quit()
 
 
 ## Filmdeki sözün yazısı (günlük için).

@@ -6,7 +6,9 @@ extends Control
 ## içinde kalır. output: ekrandaki yön (x sağ, y aşağı), uzunluğu 0..1; ölü bölgede 0, az itince
 ## yavaş yürünür. Çoklu dokunmaya uygun (bir parmak halkadayken öbürü suya atar); masaüstünde
 ## fareyle de sürülür. Açık bir panelin altında dokunuş almaz (TouchButton gibi). Soluk iken
-## (dimmed: kart, yakalama, geri sarma) görünür ama dokunuş almaz: düğmeler zıplamasın.
+## (dimmed: kart açılırken, yakalama, geri sarma) görünür (düğmeler zıplamasın); halkada başlayan
+## dokunuşu yine alır ama yürütmez (output 0): oyuna geçip bekleyen atış olmasın. Halka açılınca aynı
+## parmakla yürünür.
 
 ## Kutunun boyu; halkanın ve topuzun yarıçapı (birim); ölü bölge (halkanın oranı).
 const SIZE := Vector2(252, 252)
@@ -22,8 +24,7 @@ var dimmed: bool = false:
 		if value == dimmed:
 			return
 		dimmed = value
-		if dimmed:
-			release()
+		output = shape(_knob, RING) if _touch != -1 and not dimmed else Vector2.ZERO
 		queue_redraw()
 
 var _touch: int = -1
@@ -78,7 +79,7 @@ static func shape(offset: Vector2, radius: float) -> Vector2:
 
 
 func _input(event: InputEvent) -> void:
-	if not is_visible_in_tree() or dimmed:
+	if not is_visible_in_tree():
 		if _touch != -1:
 			release()
 		return
@@ -120,7 +121,7 @@ func _move(screen: Vector2) -> void:
 	var scale_to_local := SIZE.x / maxf(rect.size.x, 1.0)
 	var offset := (screen - rect.get_center()) * scale_to_local
 	_knob = offset.limit_length(RING)
-	output = shape(offset, RING)
+	output = Vector2.ZERO if dimmed else shape(offset, RING)
 	queue_redraw()
 
 

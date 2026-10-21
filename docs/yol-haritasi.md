@@ -122,6 +122,31 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
 - [x] Kapanış: üç inceleme ajanı (çekirdek, sunum, araçlar ve belgeler) ve düzeltmeleri; tanıtım videosu; telefon boyutunda README görüntüleri; iskelede en çok 150 çizim (`tour`); sürüm 0.4.
 - [ ] **5 kişiye oynat** (aşağıdaki sorular). Devam ya da vazgeç burada verilir; Dalga 4–5 beklemez.
 
+**Ara sürüm v0.4.1 — Ersin'in telefon geri bildirimi**
+
+Ersin oyunu telefonda oynadı, altı şey istedi; her birinde önerilen seçeneği seçti. Her madde ayrı commit.
+
+- [x] Deneme düğmeleri (Ayarlar'da sürüm yazısına 5 dokunuş, geliştirme sürümünde): HEPSİNİ AÇ, +1.000 ve
+  +10.000 para, RÜTBE +1 (gerçek rütbe atlama akışıyla; bildirimler panel kapanınca çıkar).
+- [x] Kumdaki gölge (Ersin: "kuma kadar gölgelik çıkıyor"): çekişmede balık suyun kenarında durur; gölge ve
+  halkalar kıyıda söner.
+- [x] Kova dolunca SAT (Ersin: "kova doluyken balık tutmaya izin vermeyelim"): dolu kovada atılmaz; eylem düğmesi
+  yeşil SAT olur, basınca Nine'nin tezgâhına gidilir (sandaldaysan önce kıyıya), dükkân Kova sekmesinde açılır.
+- [x] Kamış ve makara görünüşü (Ersin: "oltaları geliştirsek bile görünümü hep aynı"): her kamış dükkândaki
+  resmi gibi (bambu boğumlu, karbon siyah ve altın, sinekte uzun mantar sap), makara kuşanılan makaranın renginde;
+  dipteki sehpada da kuşanılan kamış. Olta 8 çizimden 4'e indi.
+- [x] Yürüme halkası (Ersin: "solda yürüme mekanizması"): sol altta sabit joystick, yalnızca halkada başlayan
+  dokunuşu alır; dokunarak yürüme de kaldı.
+- [x] Hikâye (Ersin: "oyunun başlangıcında bir hikâyesi yok"): yeni oyunda ~50 sn'lik açılış filmi (Nine ve Dede
+  gölün öyküsünü anlatır, Gölün Bekçisi'nin dev gölgesi geçer, Dede ilk oltasını verir); Ayarlar'da HİKÂYE ile
+  yeniden izlenir; rütbe 3, 6, 10, 15 ve 20'de Dede hikâyeyi sürdürür.
+- [x] Kapanış: inceleme ajanı (düzeltilenler: soluk yürüme halkasına basmak oyuna geçip geri sarılırken arkaya
+  atış kuyruklayabiliyordu; filmde Dede'nin efsane uyarısı ve bildirimler gizli arayüzde kayboluyordu; film
+  botu en geniş çekimi ölçmüyordu; denge botu satıştan sonra dolan kovada atabiliyordu; eski belge satırları),
+  bütün KONTROL botları telefon oranında ve çentik payıyla (controls, first, story, shop, map, boat, technique,
+  trap, fly, rods, guide, tour: iskele 141 çizim), belgeler, sürüm 0.4.1.
+- [ ] Ersin telefonda dener ([`iphone-kurulum.md`](iphone-kurulum.md) 20–26).
+
 **Dalga 4 — Canlı dünya → v0.5**
 
 - [ ] Oyun saati ve hava (çekirdek).

@@ -28,8 +28,8 @@ signal action_up
 const MARGIN := 28.0
 const FPS_INTERVAL := 0.5
 const ACTION_SIZE := Vector2(300, 300)
-## Eylem düğmesi: tür → [yazı anahtarı, ikon].
-## Eylem düğmesinin işleri: [yazı, ikon]. "sell": kova doluyken boşta (atılmaz, basınca Nine'ye).
+## Eylem düğmesinin işleri: tür → [yazı anahtarı, ikon]. "sell": kova doluyken boşta (atılmaz,
+## basınca Nine'ye).
 const ACTIONS := {
 	"cast": ["UI_ACT_CAST", "rod"], "retrieve": ["UI_ACT_RETRIEVE", "reel"], "wait": ["UI_ACT_WAIT", "hand"],
 	"hook": ["UI_ACT_HOOK", "hook"], "reel": ["UI_ACT_REEL", "reel"], "sell": ["UI_ACT_SELL", "sell"],

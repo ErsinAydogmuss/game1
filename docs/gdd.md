@@ -8,7 +8,7 @@
 
 Yazı Dede ile Nine'nin göl köyünde geçiren bir çocuk ya da genç balıkçısın. Gölde balık gölgeleri dolaşıyor. Gölgenin önüne oltanı atıyorsun; gölge fark edip yaklaşıyor, şamandırayı dürtüyor ve sonunda ısırıyor: VUR! Sonra gerilim çubuğunu kırmızıya kaçırmadan çekiyorsun.
 
-Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı ve sandalla açılınan derin orta. Her bölgenin kendi balıkları var; her balığın sevdiği bir teknik, yem, saat ve hava var. Nine'nin dükkânından aldığın takımla yeni tekniklere (spin, dip, sinek, tuzak) ve yeni sulara açılırsın. Tuttuğun balıkların kopyalarını Nine'ye satarsın; her türün en iyisi akvaryumda yaşar. İstersen balığı göle geri bırakırsın; bıraktıkça göl güzelleşir. Dede'nin anlattıkları ve şişelerden çıkan mektuplar seni gölün sırrına, Gölün Bekçisi'ne götürür.
+Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı ve sandalla açılınan derin orta. Her bölgenin kendi balıkları var; her balığın sevdiği bir teknik, yem, saat ve hava var. Nine'nin dükkânından aldığın takımla yeni tekniklere (spin, dip, sinek, tuzak) ve yeni sulara açılırsın. Tuttuğun balıkların kopyalarını Nine'ye satarsın; her türün en iyisi akvaryumda yaşar. İstersen balığı göle geri bırakırsın; bıraktıkça göl güzelleşir. Oyun kısa bir açılış filmiyle başlar: Nine ve Dede, gençken ölmek üzere olan gölü nasıl kurtardıklarını ve derinlerde yaşayan Gölün Bekçisi'ni anlatır, Dede ilk oltasını sana verir (§10.5). Dede'nin anlattıkları ve şişelerden çıkan mektuplar seni gölün sırrına, Gölün Bekçisi'ne götürür.
 
 - **Platform:** iOS + Android, yatay ekran, low-poly 3D.
 - **Model:** ücretsiz oyun; gelir kuralları [`CLAUDE.md`](../CLAUDE.md)'de.
@@ -41,7 +41,7 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
   - **değdiği an:** ısırmada VUR; ısırmadan önce oltayı geri sarar;
   - **çekişmede basılı tutunca:** sarar.
   Sağ altta büyük bir eylem düğmesi de aynı işi yapar ve ne olacağını yazar: GERİ SAR / VUR! / SAR.
-- ✅ **Yürüme halkası** (v0.4.1, Ersin: "solda yürüme mekanizması daha mantıklı olmaz mı"): sol alt köşede sabit bir joystick. Halkaya basıp sürükle: o yöne yürürsün, az itersen yavaş; bırakınca durursun. Yalnızca halkanın içinde başlayan dokunuşu alır: halkanın dışında dokunarak yürüme, atış ve köylüye dokunma aynen sürer (Kazı'daki joystick parmağın altında beliriyordu ve soldaki dokunuşları yutuyordu; bu yüzden ilk sürümde joystick yoktu). Olta sudayken ve sandalda gizli (sandalda yerinde "Kıyıya dön"); kart açıkken, yakalamada ve geri sararken soluk. Bir parmak halkadayken öbürüyle suya dokununca atılır.
+- ✅ **Yürüme halkası** (v0.4.1, Ersin: "solda yürüme mekanizması daha mantıklı olmaz mı"): sol alt köşede sabit bir joystick. Halkaya basıp sürükle: o yöne yürürsün, az itersen yavaş; bırakınca durursun. Yalnızca halkanın içinde başlayan dokunuşu alır: halkanın dışında dokunarak yürüme, atış ve köylüye dokunma aynen sürer (Kazı'daki joystick parmağın altında beliriyordu ve soldaki dokunuşları yutuyordu; bu yüzden ilk sürümde joystick yoktu). Olta sudayken ve sandalda gizli (sandalda yerinde "Kıyıya dön"); kart açılırken, yakalamada ve geri sararken soluk (soluk halkaya basmak yürütmez, oyuna da geçmez; halka açılınca aynı parmakla yürünür). Bir parmak halkadayken öbürüyle suya dokununca atılır.
 
 - ✅ **Harita** (sağ üst, ilk balıktan sonra): açık bir bölgenin rozetine dokun → ekran kararır, o bölgenin atış noktasındasın. Kilitli bölgede nedeni yazar.
 - ✅ **Sandal:** sandalı aldıysan iskeledeki sandala (ya da haritada Derin Orta'ya) dokun → ilk şamandıranın yanında sandaldasın; haritada Derin Orta'ya yeniden dokununca sıradaki şamandıraya geçilir. Sandalda suya dokunmak atıştır; sol alttaki "Kıyıya dön" iskeleye getirir.
@@ -547,7 +547,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 - ✅ **Takım çantası:** her teknik için kuşanılmış bir set (kamış ve küçük takım); makara ve misina ortak (kayıt v4: `loadouts.shared`). Teknik düğmesiyle geçilir (§10.3).
 - **Kova ve satış:**
   - Tutulan balık kovaya girer; dükkânda "hepsini sat" yapılır (Kazı'nın sırt çantası düzeni). ✅ Kova sekmesinde tür başına bir satır (sayı, değer), altta toplam ve HEPSİNİ SAT.
-  - Kova dolunca Dede uyarır ✅ (kova her dolduğunda; dolu kovaya gelen balık göle döner ve bildirim çıkar); kova kapasitesi dükkândan büyür.
+  - Kova dolunca Dede uyarır ✅ (kova her dolduğunda) ve olta atılmaz: eylem düğmesi yeşil SAT olur, basınca Nine'ye gidilir (v0.4.1); kova kapasitesi dükkândan büyür.
   - Her türün en iyisi akvaryuma konabilir (§10.6).
 - **Bırakma:** bırakılan balık para vermez; göl sevgisi ve rütbe puanı verir.
 - **Para:** yalnızca oynayarak kazanılır, gerçek parayla asla satılmaz. Bu yüzden oranı değiştiren yem ve yapay yem satılabilir (§11).
@@ -750,7 +750,7 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 - **Sol üst:** para, kova (5/12), rütbe rozeti. Başlık ve sürüm yazısı ayarlara taşınır.
 - **Üst orta:** saat ve hava çipi. Çekişmede yerini gerilim çubuğu alır.
 - **Sağ üst:** harita, defter, ayarlar (her biri ≥122).
-- ✅ **Sol alt:** teknik düğmesi (132; sandalda altında "Kıyıya dön").
+- ✅ **Sol alt:** yürüme halkası (252; sağ kenarı ipucu çubuğunun payının solunda; olta sudayken yok, sandalda yerinde "Kıyıya dön") ve üstünde teknik düğmesi (132).
 - **Sağ alt:** eylem düğmesi (300).
 - **Alt orta:** Dede'nin ipucu çubuğu.
 - **Fotoğraf:** balık kartındaki ve ayarlardaki kamera düğmesi.
@@ -765,7 +765,7 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
     7. ekstralar;
     8. bölgeler;
     9. Dede, Nine, defter ve hedef.
-  - **Girişler:** Ayarlar'ın başlığındaki "Nasıl oynanır?". Takım Çantası'ndaki "?" Teknikler'i, dükkândaki "?" açık sekmenin sayfasını açar.
+  - **Girişler:** Ayarlar'ın başlığındaki "Nasıl oynanır?" (yanında HİKÂYE: açılış filmi yeniden, §10.5). Takım Çantası'ndaki "?" Teknikler'i, dükkândaki "?" açık sekmenin sayfasını açar.
   - **Kilitler:** henüz açılmamış teknik, bölge ve takım da görünür; kilidinde açıldığı rütbe, derin ortada sandal yazar.
   - **Sayılar veriden gelir:** rütbeler, tuzağın süresi, kovalar, şans garantisi, yıldızlar. Oyun değişince rehber eskimez.
   - **Dede:** son genel öğüdü rehberi söyler.
