@@ -9,8 +9,9 @@ extends Control
 ## - Sağ alt: büyük eylem düğmesi (AT / GERİ SAR / BEKLE / VUR! / SAR); ekranın her yeri de
 ##   aynı işi yapar, düğme ne olacağını yazar. Sol alt: sandaldayken "Kıyıya dön" (olta sudayken
 ##   gizli).
-## - Üst orta: oyun saati çipi (vaktin ikonu, saat, açık değilse havanın ikonu; Dalga 4). Çekişmede
-##   onun yerinde gerilim çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü oyuncu da okusun).
+## - Üst orta: oyun saati çipi (vaktin ikonu, saat, açık değilse havanın ikonu; Dalga 4); dokununca
+##   "Bugün" paneli (olta sudayken dokunuş almaz: ekranın her yeri eylem). Çekişmede onun yerinde gerilim
+##   çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü oyuncu da okusun).
 ## - Orta: kısa bildirimler ("Erken davrandın!"). Alt orta: ipucu çubuğu (konuşanın yüzü ve sözü:
 ##   Dede ya da Nine).
 ## - Sol üstte durumun altında: geliştirme sürümünde FPS; ölçüm açıkken (ayarlarda sürüm yazısına
@@ -21,6 +22,8 @@ signal book_pressed
 signal map_pressed
 signal shore_pressed
 signal technique_pressed
+## Saat çipine dokunuldu ("Bugün" paneli).
+signal world_pressed
 signal action_down
 signal action_up
 
@@ -53,6 +56,8 @@ const SHORE_SIZE := Vector2(280, 132)
 ## Teknik düğmesi (sol alt; sandalda "Kıyıya dön"ün üstünde) ve yeni teknik açılınca nabzı (sn).
 const TECH_SIZE := Vector2(132, 132)
 const TECH_PULSE := 4.0
+## Saat çipinin dokunma kutusunun yüksekliği (en az 122): hap ince, kutu onun altına uzanır.
+const CHIP_TOUCH := 122.0
 
 var settings_button: TouchButton
 var book_button: TouchButton
@@ -60,6 +65,8 @@ var map_button: TouchButton
 var shore_button: TouchButton
 ## Takım çantası: elindeki tekniğin ikonu; dokununca teknik seçilir.
 var technique_button: TouchButton
+## Saat çipinin dokunma kutusu (görünmez; içinde hap): dokununca "Bugün" paneli.
+var world_button: TouchButton
 ## Sol alttaki yürüme halkası: olta sudayken ve sandalda gizli (sandalda yerinde "Kıyıya dön");
 ## yürünemezken (kart, yakalama, geri sarma) soluk: main dimmed'i verir.
 var joystick: TouchJoystick
@@ -93,7 +100,7 @@ var _coins: Label
 var _bucket: Label
 var _rank: Label
 var _rank_bar: RankBar
-## Üst ortadaki saat çipi (henüz dokunulmaz) ve gösterdiği vakit ile hava (değişince ikon yenilenir).
+## Üst ortadaki saat çipinin hapı ve gösterdiği vakit ile hava (değişince ikon yenilenir).
 var _world_chip: PanelContainer
 var _phase_icon: GameIcon
 var _time_label: Label
@@ -292,9 +299,12 @@ func _show_queued() -> void:
 		Sounds.haptic(30)
 
 
-## Olta suda mı: eylem ve ayarlar dışındaki düğmeler gizlenir (ekranın her yeri eylem).
+## Olta suda mı: eylem ve ayarlar dışındaki düğmeler gizlenir (ekranın her yeri eylem); saat çipi
+## görünür kalır ama dokunuş almaz.
 func set_line_out(on: bool) -> void:
 	_line_out = on
+	if world_button != null:
+		world_button.takes_touch = not on
 	for c in line_out_hidden:
 		c.visible = not on and (c != map_button or map_allowed) and (c != shore_button or _in_boat) \
 				and (c != technique_button or technique_allowed) and (c != joystick or not _in_boat)
@@ -342,7 +352,7 @@ func hold_toasts(seconds: float) -> void:
 ## Çekişmede durum ve saat çipi gizlenir (gerilim çubuğuna yer, dikkat balıkta).
 func set_fighting(on: bool) -> void:
 	_status.visible = not on
-	_world_chip.visible = not on
+	world_button.visible = not on
 
 
 ## Saat çipi: vakit (phase_* ikonu), saat yazısı ("18:24") ve havanın ikonu (weather_*; açık havada
@@ -359,7 +369,7 @@ func set_world(phase: String, weather_icon: String, time_text: String) -> void:
 		_weather_icon.kind = weather_icon
 
 
-## Saat çipinin yazısı ve ikonları (bot denetimi).
+## Saat çipinin hapı, yazısı ve ikonları (bot denetimi; dokunma kutusu world_button).
 func world_chip() -> Control:
 	return _world_chip
 
@@ -418,7 +428,7 @@ func _set_button(text: String, icon_kind: String, color: Color) -> void:
 
 ## Ekrandaki düğmeler (bot denetimi: boyut ve güvenli alan).
 func buttons() -> Array[TouchButton]:
-	return [map_button, book_button, settings_button, action_button, shore_button, technique_button]
+	return [map_button, book_button, settings_button, action_button, shore_button, technique_button, world_button]
 
 
 # --- Kurulum ---------------------------------------------------------------------
@@ -472,14 +482,21 @@ func _build_top() -> void:
 
 
 ## Saat çipi: durum haplarıyla aynı hap; ikonlar tek çizim (SkyIcons), saatin yazısı sabit genişlikte
-## (rakamlar değiştikçe çip kıpırdamasın).
+## (rakamlar değiştikçe çip kıpırdamasın). Hap, görünmez bir dokunma kutusunun (TouchButton, en az
+## CHIP_TOUCH yüksek; çizim eklemez) üst kenarında: durum haplarıyla aynı hizada.
 func _build_world_chip() -> void:
+	world_button = TouchButton.make_plain(StyleBoxEmpty.new(), StyleBoxEmpty.new())
+	world_button.name = "WorldChip"
+	world_button.custom_minimum_size = Vector2(CHIP_TOUCH, CHIP_TOUCH)
+	world_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	world_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	world_button.pressed.connect(func() -> void: world_pressed.emit())
+	_frame().add_child(world_button)
 	_world_chip = PanelContainer.new()
 	_world_chip.add_theme_stylebox_override("panel", UiKit.framed("pill", UiKit.pill_style(), 34.0))
 	_world_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_world_chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_world_chip.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_frame().add_child(_world_chip)
+	world_button.add_child(_world_chip)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER

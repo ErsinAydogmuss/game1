@@ -2217,9 +2217,10 @@ func _play_world() -> void:
 	if hud.map_button.visible:
 		right = right.merge(hud.map_button.get_global_rect())
 	var pills := (hud.get("_status") as Control).get_global_rect()
-	var box := chip.get_global_rect()
-	_check("saat çipi haplara ve sağ üstteki düğmelere binmez (çip %s, haplar %s, düğmeler %s)" % [box, pills, right],
-			not box.intersects(pills) and not box.intersects(right))
+	# Dokunma kutusu (hap onun üst kenarında, kutu 122 yüksek) haplara ve düğmelere binmez.
+	var box := hud.world_button.get_global_rect()
+	_check("saat çipi haplara ve sağ üstteki düğmelere binmez (çipin dokunma kutusu %s, haplar %s, düğmeler %s)" % [
+			box, pills, right], not box.intersects(pills) and not box.intersects(right) and box.encloses(chip.get_global_rect()))
 	await _shot("01_sabah")
 	var day_odds := BookPanel.odds(db, save, spot, "lily_cove")
 	var start := save.clock_s
@@ -2320,12 +2321,93 @@ func _play_world() -> void:
 	_check("iskelede saat çipi ve havanın ikonuyla en çok %d çizim (%d)" % [TOUR_DRAWS, info["draws"]],
 			int(info["draws"]) <= TOUR_DRAWS and int(info["draws"]) > 0)
 	await _shot("05_iskele_gece")
+	await _world_tea()
 	save.settings["perf"] = false
 	GameState.changed.emit()
 	await _wait(0.3)
 	_check_buttons()
 	await _world_looks()
 	_finish_checks()
+
+
+## "Bugün" paneli (gece, iskelede): çipe dokun → panel (vakit, saat, yarının havası; küçülmeden sığar,
+## açıkken saat durur), ÇAY İÇ → kararma, sonraki vakit (gece → yeni günün sabahı), bildirim, Dede'nin
+## sözü, Dede yakındaysa kamera ona yaklaşır; balık tutmadan ikinci çay pasif ("Önce bir balık tut").
+func _world_tea() -> void:
+	var db := GameState.db
+	var rules := db.rules
+	var save := GameState.save
+	var hud := _hud()
+	var fade: Fade = main.get("fade")
+	var day_panel: DayPanel = main.get("day_panel")
+	var toast: Label = hud.get("_toast")
+	var tomorrow := Weather.forecast(rules, save, 2)[1]
+	var today := DayClock.day(rules, save.clock_s)
+	await _tap_control(hud.world_button)
+	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
+	await _wait(0.5)
+	var text := _texts_in(day_panel)
+	_check("çipe dokun → Bugün paneli: gece, saat, yarının havası (%s)" % tr("WEATHER_" + tomorrow),
+			day_panel.visible and text.contains(UiKit.upper(tr("PHASE_night")))
+			and text.contains(DayClock.clock_text(rules, save.clock_s)) and text.contains(tr("WEATHER_" + tomorrow)))
+	_check("Bugün paneli telefonda küçülmeden sığar (%.2f, %s)" % [day_panel.fit_scale(), day_panel.panel_rect()],
+			day_panel.fit_scale() >= 0.999 and _panel_inside(day_panel))
+	var held := save.clock_s
+	await _wait(1.0)
+	_check("Bugün paneli açıkken saat durur (%d → %d)" % [held, save.clock_s], save.clock_s == held)
+	await _shot("06_bugun")
+	var tea := day_panel.tea_button()
+	_check("çay içilebilir (son çaydan beri balık var)", tea != null and not tea.disabled)
+	if tea == null:
+		day_panel.close_panel()
+		return
+	var angler: Angler = main.get("angler")
+	var elder: Elder = main.get("elder")
+	var near := angler.global_position.distance_to(elder.global_position) <= float(main.get("TEA_NEAR"))
+	var catches := save.catches
+	var seen := {}
+	var lines := {}
+	var closest := [99.0]
+	var watch := func() -> bool:
+		if toast.is_visible_in_tree():
+			seen[toast.text] = true
+		lines[str(main.get("_line"))] = true
+		return false
+	await _tap_control(tea)
+	await _wait_until(func() -> bool:
+		watch.call()
+		return fade.busy(), 1.0)
+	await _wait_until(func() -> bool:
+		watch.call()
+		return not fade.busy(), 4.0)
+	var landed := save.clock_s
+	var shot_left := float(main.get("_tea_shot"))
+	var camera: FollowCamera = main.get("camera")
+	closest[0] = Vector2(camera.target.x - elder.global_position.x, camera.target.z - elder.global_position.z).length()
+	await _shot("07_cay")
+	await _wait_until(watch, 2.5)
+	var dede_line := ""
+	for key: String in lines:
+		if key == "UI_DEDE_TEA" or key == "UI_DEDE_TIME_morning" or key.begins_with("UI_DEDE_WEATHER_"):
+			dede_line = key
+	_check("ÇAY → gece biter, %d. günün sabahı; \"%s\" bildirimi; son çay kayıtta" % [today + 2, tr("UI_PHASE_NOW_morning")],
+			DayClock.phase(rules, landed) == "morning" and DayClock.day(rules, landed) == today + 1
+			and landed - (today + 1) * DayClock.day_s(rules) <= 1 and save.tea_at == catches
+			and seen.has(UiKit.upper(tr("UI_PHASE_NOW_morning"))))
+	_check("çaydan sonra Dede konuşur (%s)" % dede_line, not dede_line.is_empty())
+	if near:
+		_check("Dede yakında: kamera ona yaklaşır (%.1f sn, Dede'ye %.1f m)" % [shot_left, closest[0]],
+				shot_left > 0.5 and closest[0] < 2.5)
+	await _tap_control(hud.world_button)
+	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
+	await _wait(0.4)
+	tea = day_panel.tea_button()
+	var note := day_panel.find_child("TeaNote", true, false) as Label
+	_check("balık tutmadan ikinci çay yok: düğme pasif, \"%s\"" % tr("UI_TEA_WAIT"),
+			tea != null and tea.disabled and note != null and note.text == tr("UI_TEA_WAIT"))
+	await _shot("08_cay_bekler")
+	day_panel.close_panel()
+	await _wait(0.4)
 
 
 ## İskelede her vakit × açık, yağmur ve sis (sisli günün öğle ve akşamı bulutlu): ekran görüntüsü, çizim

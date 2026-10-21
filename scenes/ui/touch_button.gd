@@ -16,6 +16,9 @@ var held: bool = false
 var color: Color = UiKit.PRIMARY
 ## Basınca arayüz tıkı çalsın mı (SAR gibi basılı tutulanlarda kapalı).
 var click: bool = true
+## false iken dokunuş almaz, görünüşü değişmez: ekranın o yeri oyuna geçer (saat çipi olta sudayken;
+## ekranın her yeri eylem).
+var takes_touch: bool = true
 
 var _touch: int = -1
 var _icon: GameIcon
@@ -131,7 +134,7 @@ class CooldownShade extends Control:
 
 
 func _input(event: InputEvent) -> void:
-	if not is_visible_in_tree():
+	if not is_visible_in_tree() or not takes_touch:
 		if held:
 			_set_held(false)
 		_touch = -1

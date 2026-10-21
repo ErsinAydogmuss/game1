@@ -50,10 +50,21 @@ func tick(delta: float, save: SaveData) -> void:
 	_apply(save, DayClock.advance(_db.rules, save, whole))
 
 
-## Sonraki vaktin başına geçer (Dede'yle çay, geliştirme sürümünün VAKİT + düğmesi).
+## Sonraki vaktin başına geçer (geliştirme sürümünün VAKİT + düğmesi).
 func skip(save: SaveData) -> void:
 	_acc = 0.0
 	_apply(save, DayClock.skip_phase(_db.rules, save))
+
+
+## Dede'yle çay: içilebiliyorsa (WorldState.can_tea) sonraki vaktin başına geçilir, sinyaller saatinki gibi.
+## İçildiyse true.
+func tea(save: SaveData) -> bool:
+	var change := WorldState.drink_tea(_db.rules, save)
+	if change.is_empty():
+		return false
+	_acc = 0.0
+	_apply(save, change)
+	return true
 
 
 ## Koşul saatten başka bir yoldan değişti (sevgi arttı, deneme düğmesiyle hava): yeniden bakılır.

@@ -65,7 +65,8 @@ UI_DEDE_TIP_3,"Let go when it thrashes, or the line snaps.","Balık çırpının
 UI_DEDE_TIP_4,A big shadow means a big fish.,"Büyük gölge, büyük balık demek."
 UI_DEDE_TIP_5,This lake has a secret... I'll tell you one day.,Bu gölün bir sırrı var... Bir gün anlatırım.
 UI_DEDE_TIP_6,"Be patient, kid. The lake is generous.","Sabırlı ol evlat, göl cömerttir."
-UI_DEDE_TIP_7,"Forgot something, kid? ""How to play?"" is in Settings.","Bir şey unutursan Ayarlar'a bak evlat: ""Nasıl oynanır?"" orada."
+UI_DEDE_TIP_7,"Tap the clock, kid, and have tea with me: time flies.","Saate dokun evlat, benimle bir çay iç: vakit geçer."
+UI_DEDE_TIP_8,"Forgot something, kid? ""How to play?"" is in Settings.","Bir şey unutursan Ayarlar'a bak evlat: ""Nasıl oynanır?"" orada."
 UI_DEDE_TIP_SPIN,"Stop and go, kid: predators strike a lure that pauses.","Dur-kalk yap evlat: yırtıcı en çok duran yeme saldırır."
 UI_DEDE_TIP_TRAP,"A trap fills while you're away, but holds %d crayfish at most.","Tuzak sen yokken de dolar, ama %d kereviti geçmez."
 UI_DEDE_TIP_BOTTOM,A feeder draws fish to your bait faster.,Yem sepeti balığı yemin çevresine daha çabuk toplar.
@@ -518,3 +519,30 @@ UI_DEDE_STORY_15,Nana says the Keeper rises on misty nights.,Nine der ki Bekçi 
 UI_DEDE_STORY_20,"You're the lake's legend now. The Keeper awaits you, kiddo.",Artık gölün efsanesisin. Bekçi seni bekliyor evlat.
 UI_LANTERN_GIFT,Nana gave you a lantern!,Nine sana bir fener verdi!
 UI_DEDE_LANTERN,"Nana sent you a lantern, kid! Night fishing is special.",Nine fener yolladı evlat! Gece balığı bir başkadır.
+UI_DAY_TITLE,Today,Bugün
+UI_DAY_NUMBER,Day %d,%d. gün
+UI_DAY_TODAY,Today,Bugün
+UI_DAY_TOMORROW,Tomorrow,Yarın
+UI_DAY_UNTIL_morning,Morning in %s,Sabaha %s
+UI_DAY_UNTIL_noon,Noon in %s,Öğleye %s
+UI_DAY_UNTIL_evening,Evening in %s,Akşama %s
+UI_DAY_UNTIL_night,Night in %s,Geceye %s
+UI_MINUTES,%d min,%d dk
+UI_SECONDS,%d s,%d sn
+UI_DAY_DETAIL_rain,Stormy at night,Gece fırtına
+UI_DAY_DETAIL_fog,Morning and night,Sabah ve gece
+UI_TEA_TITLE,Tea with Grandpa,Dede'yle çay
+UI_TEA_TO_morning,Morning comes while the tea brews.,Çay demlenirken sabah olur.
+UI_TEA_TO_noon,Noon comes while the tea brews.,Çay demlenirken öğle olur.
+UI_TEA_TO_evening,Evening comes while the tea brews.,Çay demlenirken akşam olur.
+UI_TEA_TO_night,Night falls while the tea brews.,Çay demlenirken gece olur.
+UI_TEA_WAIT,"Catch a fish first, then we'll have tea.","Önce bir balık tut, sonra çay içeriz."
+UI_TEA_BUTTON,Have tea,Çay iç
+UI_DEDE_TEA,"Ah, that tea hit the spot! Back to fishing, kid.","Oh be, çay iyi geldi! Hadi evlat, olta suya."
+UI_DEDE_TIME_morning,"A new day, kid! Fish are hungry in the morning.",Yeni bir gün evlat! Sabah balığı iştahlı olur.
+UI_DEDE_TIME_noon,Noon! The Golden Carp loves the midday sun.,Öğle oldu! Altın Sazan öğle güneşini sever.
+UI_DEDE_TIME_evening,"Evening, kid! Pike and perch wake up at dusk.",Akşam oldu evlat. Turna ile levrek akşam açılır!
+UI_DEDE_WEATHER_cloudy,"Clouds are good, kid. The hunters come out.","Bulut iyidir evlat, yırtıcı balık açılır."
+UI_DEDE_WEATHER_rain,Rain! Fish notice you from afar and come fast.,"Yağmur yağıyor! Balık uzaktan duyar, çabuk gelir."
+UI_DEDE_WEATHER_fog,Fog's rolling in. They say zander love it.,Sis bastı evlat. Sudak sisi sever derler.
+UI_DEDE_WEATHER_storm,A storm! Old Bighead roams the deep on such nights.,Fırtına! Kocabaş böyle gecelerde derinde gezer.

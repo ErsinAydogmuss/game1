@@ -346,7 +346,10 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ Açılış filminde Nine'yle birlikte gölün öyküsünü anlatır, Gölün Bekçisi'ni gösterir ve ilk oltasını
     balıkçıya verir (§10.5).
   - Her gün 3 küçük istekte bulunur ("bana 30 cm'lik bir kadife getir") ve "Gölün Sırrı"nı parça parça anlatır 🔜.
-  - Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir 🔜.
+  - ✅ Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir (§10.5). Vakte ve havaya ilk sözleri bir kez:
+    öğle ("Altın Sazan öğle güneşini sever"), akşam (turna ile levrek), yeni günün sabahı, bulut, yağmur, sis
+    (sudak), fırtına ("Kocabaş böyle gecelerde derinde gezer"); ilk gecenin sözü Nine'nin feneri. Öğütlerine çay
+    da katıldı ("Saate dokun evlat, benimle bir çay iç").
 - **Nine** (Dede'nin eşi):
   - ✅ İskelenin kara ucunun solundaki küçük ahşap dükkânı işletir: tezgâhın arkasında ayakta durur, yüzü iskeleye ve kameraya dönük. Balıkçı yaklaşınca ona bakar. Ona ya da dükkâna dokununca selam verir (balon, baş sallama, tezgâha uzanır); sözü ipucu çubuğunda kendi yüzüyle çıkar. Dükkân paneli 🔜 (Dalga 1, 6. adım).
   - ✅ KayKit Mage, yeniden boyanmış: gümüş saç, hardal sarısı hırka. Kodla beyaz, mavi çiçekli yazma (çenenin altında bağlı), turkuaz puantiyeli önlük, yuvarlak gözlük ve pembe yanaklar (Ersin'in portre tarifi). Büyücü şapkası, asa ve kitap gizli. Model yoksa kodla kurulan yedek çıkar.
@@ -749,7 +752,12 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - Saat yalnızca oynarken akar (kayıtta oynanan saniye `clock_s`); uygulama kapalıyken, bir panel açıkken, filmde ve
     ekran kararırken durur, ceza yok. Kart açıkken akar.
   - Vakit değişince kısa bildirim ("Akşam oldu", vaktin ikonuyla) ve kayıt.
-  - 🔜 Dede'yle çay = sonraki vakte geç (ücretsiz; iki çay arasında en az bir balık).
+  - ✅ **Dede'yle çay** (2. adım; "Bugün" panelinde ÇAY İÇ): ekran kararır, saat sonraki vaktin başına geçer
+    (bildirim, oranlar ve garanti yeni vakitle), ekran açılır. Dede balıkçının 8 m yakınındaysa kamera 2 sn ona
+    yaklaşır; Dede çayın sözünü ya da yeni vaktin ilk sözünü söyler. Ücretsiz (zaman atlama parayla satılmaz,
+    gelir kuralı 3). İki çay arasında en az bir balık (ilk çaydan önce de): yoksa düğme pasif, "Önce bir balık
+    tut, sonra çay içeriz." Böylece vakit atlamak bir ritüel kalır; günler art arda atlanıp hava ve istekler
+    çevrilemez (`WorldState.can_tea`, kayıtta `tea_at`).
   - Gerçek saat kullanılmaz: hep aynı saatlerde oynayan da her vakti görür, çocuk gece balığı için uyanık kalmaz.
 - **Hava** ✅ (`Weather`): her oyun günü için tohumlu (seed'li): açık %55, bulutlu %20, yağmur %15, sis %10.
   - İlk oyun günü hep açık. Sisli günde sis yalnızca sabah ve gece, öğle ve akşam bulutlu.
@@ -759,7 +767,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     balığı bir başkadır."): geceleri balıkçının çevresinde 6 m sıcak ışık. Dükkân ve denge değişmez.
   - Yağmur ısırmayı artırır: gölgeler takımı 1,3 kat uzaktan fark eder ve 1,25 kat hızlı yaklaşır (her teknikte;
     şamandıranın dürtme zamanlaması değişmez). Ölçüm: balık 0,83 kat sürede gelir.
-  - Hava önceden belli (gelir kuralı 4): bugün ve yarın gösterilir (2. adımda "Bugün" paneli).
+  - Hava önceden belli (gelir kuralı 4): "Bugün" panelinde bugünün ve yarının havası (yağmurlu günde "Gece
+    fırtına", sisli günde "Sabah ve gece").
   - Vakit ve hava türlerin oranını değiştirir (§6); gece Ay Turnası'nın, yağmurlu gece Kocabaş'ın tek zamanı.
 - **Göl sevgisi:**
   - **Kaynaklar:** bırakılan balık (kademeye göre 1–40) ✅, toplanan çöp (3), istekler.
@@ -828,7 +837,13 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 
 - **Sol üst:** para, kova (5/12), rütbe rozeti. Başlık ve sürüm yazısı ayarlara taşınır.
 - ✅ **Üst orta:** saat çipi (Dalga 4): vaktin ikonu, saat ("18:24") ve açık değilse havanın ikonu (yağmurlu gece
-  fırtına). Çekişmede yerini gerilim çubuğu alır. Henüz dokunulmaz; 2. adımda dokununca "Bugün" paneli açılır.
+  fırtına). Çekişmede yerini gerilim çubuğu alır. Dokununca "Bugün" paneli (dokunma kutusu 122; olta sudayken
+  görünür ama dokunuş almaz, ekranın her yeri eylem):
+  - **Şimdi:** vaktin ikonu ve adı, saat, sonraki vakte kalan ("Geceye 3 dk");
+  - **Hava:** bugün ve yarın;
+  - **Dede'yle çay** (ÇAY İÇ);
+  - başlıkta günün sırası ("3. gün"); ileride göl sevgisi (3. adım) ve Dede'nin istekleri (4. adım).
+  Panel açıkken saat durur; telefonda küçülmeden sığar.
 - **Sağ üst:** harita, defter, ayarlar (her biri ≥122).
 - ✅ **Sol alt:** yürüme halkası (252; sağ kenarı ipucu çubuğunun payının solunda; olta sudayken yok, sandalda yerinde "Kıyıya dön") ve üstünde teknik düğmesi (132).
 - **Sağ alt:** eylem düğmesi (300).

@@ -1,7 +1,8 @@
 class_name Fade
 extends ColorRect
-## Ekran kararıp açılır (haritadan hızlı geçiş): TIME sn'de kararır, tam karanlıkta verilen iş
-## yapılır (balıkçı yeni yerine geçer, kamera gelir), HOLD sn karanlık kalır, TIME sn'de açılır.
+## Ekran kararıp açılır (haritadan hızlı geçiş, Dede'yle çay): TIME sn'de kararır, tam karanlıkta verilen
+## iş yapılır (balıkçı yeni yerine geçer, kamera gelir; çayda vakit geçer), HOLD sn (ya da verilen süre)
+## karanlık kalır, TIME sn'de açılır.
 ## Sürerken dokunuşlar oyuna geçmez ("modal" grubu). Süre _process(delta) toplamıyla ölçülür.
 
 const TIME := 0.25
@@ -11,6 +12,7 @@ const DARK := Color(0.02, 0.03, 0.06)
 var _clock: float = -1.0
 var _job: Callable
 var _done: bool = false
+var _hold: float = HOLD
 
 
 func _ready() -> void:
@@ -21,11 +23,13 @@ func _ready() -> void:
 	hide()
 
 
-## Kararır, iş yapılır, açılır. Sürmekte olan bir geçiş varsa yenisi başlamaz (false).
-func play(job: Callable) -> bool:
+## Kararır, iş yapılır, hold sn karanlık kalır, açılır. Sürmekte olan bir geçiş varsa yenisi başlamaz
+## (false).
+func play(job: Callable, hold: float = HOLD) -> bool:
 	if busy():
 		return false
 	_job = job
+	_hold = maxf(0.0, hold)
 	_clock = 0.0
 	_done = false
 	color = Color(DARK, 0.0)
@@ -53,7 +57,7 @@ func _process(delta: float) -> void:
 		if _job.is_valid():
 			_job.call()
 		return
-	var light := _clock - TIME - HOLD
+	var light := _clock - TIME - _hold
 	if light < 0.0:
 		return
 	color.a = 1.0 - clampf(light / TIME, 0.0, 1.0)

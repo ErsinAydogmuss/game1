@@ -62,3 +62,26 @@ func test_tea_skips_to_the_next_phase_start() -> void:
 	assert_eq(DayClock.day(rules, save.clock_s), 1, "yeni gün")
 	var restored := SaveData.from_dict(save.to_dict())
 	assert_eq(restored.clock_s, 1440, "saat kayıtla saklanır")
+
+
+## Dede'yle çay (WorldState): son çaydan beri en az bir balık (ilk çaydan önce de); içilince saat
+## sonraki vaktin başına, son çay o anki balık sayısı. İçilemezse saat değişmez.
+func test_tea_needs_a_fish_since_the_last_tea() -> void:
+	var rules := content().rules
+	var save := SaveData.create_new(1_700_000_000)
+	save.clock_s = 100
+	assert_true(not WorldState.can_tea(save), "hiç balık yokken çay yok")
+	assert_true(WorldState.drink_tea(rules, save).is_empty() and save.clock_s == 100, "içilemezse saat aynı")
+	save.catches = 1
+	assert_true(WorldState.can_tea(save), "ilk balıktan sonra çay")
+	var change := WorldState.drink_tea(rules, save)
+	assert_eq(str(change.get("new_phase", "")), "noon", "çayla öğle")
+	assert_eq(save.clock_s, 360, "öğlenin tam başı")
+	assert_eq(save.tea_at, 1, "son çay kayıtta")
+	assert_true(not WorldState.can_tea(save), "art arda ikinci çay yok")
+	save.catches = 2
+	assert_true(WorldState.can_tea(save), "bir balık daha: yine çay")
+	WorldState.drink_tea(rules, save)
+	assert_eq(DayClock.phase(rules, save.clock_s), "evening", "akşam")
+	var restored := SaveData.from_dict(save.to_dict())
+	assert_true(restored.tea_at == 2 and not WorldState.can_tea(restored), "son çay kayıtla saklanır")
