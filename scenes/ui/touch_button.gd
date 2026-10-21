@@ -11,6 +11,8 @@ signal dragged(relative: Vector2)
 
 ## Fareyle basıldığında _touch bu değeri alır (dokunma indeksleri 0'dan başlar).
 const MOUSE_TOUCH := -2
+## reach_top kutusunun en az yüksekliği (düğmelerin en küçük boyu).
+const REACH_MIN := 122.0
 
 var held: bool = false
 var color: Color = UiKit.PRIMARY
@@ -19,6 +21,9 @@ var click: bool = true
 ## false iken dokunuş almaz, görünüşü değişmez: ekranın o yeri oyuna geçer (saat çipi olta sudayken;
 ## ekranın her yeri eylem).
 var takes_touch: bool = true
+## Üst kenardaki haplar (saat çipi, kova): dokunma kutusu ekranın üst kenarına kadar uzanır, en az
+## REACH_MIN yüksek; aşağıya, oyunun suyuna taşmaz (hapın altındaki suya atış yutulmasın).
+var reach_top: bool = false
 
 var _touch: int = -1
 var _icon: GameIcon
@@ -74,6 +79,15 @@ func set_color(button_color: Color) -> void:
 	_normal.content_margin_top = 6
 	_down.content_margin_top = 14
 	add_theme_stylebox_override("panel", _down if held else _normal)
+
+
+## Dokunuşu alan kutu (küresel): butonun kendisi; reach_top açıksa ekranın üst kenarından hapın altına
+## (en az REACH_MIN).
+func hit_rect() -> Rect2:
+	var r := get_global_rect()
+	if not reach_top:
+		return r
+	return Rect2(Vector2(r.position.x, 0.0), Vector2(r.size.x, maxf(r.end.y, REACH_MIN)))
 
 
 func set_text(text: String) -> void:
@@ -141,7 +155,7 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
-		if touch.pressed and _touch == -1 and get_global_rect().has_point(touch.position) and not _under_modal():
+		if touch.pressed and _touch == -1 and hit_rect().has_point(touch.position) and not _under_modal():
 			_touch = touch.index
 			_set_held(true)
 			get_viewport().set_input_as_handled()
@@ -163,7 +177,7 @@ func _input(event: InputEvent) -> void:
 		# Dokunmadan üretilen sahte fare olayları yukarıda zaten işlendi.
 		if mouse.device == InputEvent.DEVICE_ID_EMULATION or mouse.button_index != MOUSE_BUTTON_LEFT:
 			return
-		if mouse.pressed and _touch == -1 and get_global_rect().has_point(mouse.position) and not _under_modal():
+		if mouse.pressed and _touch == -1 and hit_rect().has_point(mouse.position) and not _under_modal():
 			_touch = MOUSE_TOUCH
 			_set_held(true)
 			get_viewport().set_input_as_handled()

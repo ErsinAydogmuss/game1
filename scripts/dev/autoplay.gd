@@ -1946,6 +1946,9 @@ func _fly_target(session: FishingSession, flowing: bool) -> Vector2:
 			if d > reach:
 				continue
 			var p := session.angler + dir * d
+			# Arayüzün altındaki noktaya dokunulmaz: atış kısalmasın, yön biraz döner.
+			if _under_hud(p):
+				break
 			if not lake.is_water(p) or lake.shore_distance(p) < 0.8:
 				continue
 			var flow := lake.flow_at(p)
@@ -1955,6 +1958,16 @@ func _fly_target(session: FishingSession, flowing: bool) -> Vector2:
 			if not flowing and flow.length() < 0.02:
 				return p
 	return Vector2.INF
+
+
+## Göldeki nokta ekranda arayüzün bir düğmesinin (saat çipi, kova, harita...) altında mı: bot düğmeye değil
+## suya dokunsun (oyuncu da düğmenin altındaki suya dokunamaz; Dalga 4'ten beri saat çipi bir düğme).
+func _under_hud(p: Vector2) -> bool:
+	var screen := _screen(Vector3(p.x, 0.0, p.y))
+	for b: TouchButton in _hud().buttons():
+		if b.is_visible_in_tree() and b.hit_rect().grow(12.0).has_point(screen):
+			return true
+	return false
 
 
 ## Haritadan geçer (main._travel) ve kararmanın bitmesini bekler.
@@ -2228,8 +2241,8 @@ func _play_world() -> void:
 	if hud.map_button.visible:
 		right = right.merge(hud.map_button.get_global_rect())
 	var pills := (hud.get("_status") as Control).get_global_rect()
-	# Dokunma kutusu (hap onun üst kenarında, kutu 122 yüksek) haplara ve düğmelere binmez.
-	var box := hud.world_button.get_global_rect()
+	# Dokunma kutusu (ekranın üst kenarından hapın altına, en az 122) haplara ve düğmelere binmez.
+	var box := hud.world_button.hit_rect()
 	_check("saat çipi haplara ve sağ üstteki düğmelere binmez (çipin dokunma kutusu %s, haplar %s, düğmeler %s)" % [
 			box, pills, right], not box.intersects(pills) and not box.intersects(right) and box.encloses(chip.get_global_rect()))
 	await _shot("01_sabah")
@@ -2613,9 +2626,9 @@ func _play_release() -> void:
 	_check("kova dolu (%d/%d): eylem düğmesi SAT" % [save.bucket.size(), cap],
 			save.bucket.size() == cap and str(main.call("_action_kind")) == "sell")
 	var pill := (hud.get("_bucket") as Control).get_parent().get_parent() as Control
-	var box := hud.bucket_button.get_global_rect()
+	var box := hud.bucket_button.hit_rect()
 	_check("kovanın dokunma kutusu hapı kapsar, saat çipine binmez (%s, hap %s)" % [box, pill.get_global_rect()],
-			box.encloses(pill.get_global_rect()) and not box.intersects(hud.world_button.get_global_rect()))
+			box.encloses(pill.get_global_rect()) and not box.intersects(hud.world_button.hit_rect()))
 	# 1) Kovaya dokun: panel açılır, telefonda küçülmeden sığar; 6 satır ve "+1 tür daha".
 	await _tap_control(hud.bucket_button)
 	await _wait_until(func() -> bool: return panel.visible, 2.0)
@@ -2711,8 +2724,27 @@ func _play_release() -> void:
 			not card.visible and save.bucket.is_empty() and save.love == love + 1 and said
 			and int((save.records["bream"] as Dictionary).get("released", 0)) == 1)
 	await _shot("06_birakildi")
-	# 6) Olta sudayken kovaya dokunmak oyuna geçer: panel açılmaz, olta geri sarılır.
+	# 6) Saat çipinin hemen altındaki suya dokunmak oyuna geçer (atış ya da suya yürüyüş): "Bugün" paneli
+	# açılmaz (dokunma kutusu aşağıya taşmaz; sinekte dere ağzının yukarısı oradaydı). Olta sudayken kovaya
+	# dokunmak da oyuna geçer: panel açılmaz, olta geri sarılır.
 	await _wait_state(FishingSession.State.IDLE, 3.0)
+	var day_panel: DayPanel = main.get("day_panel")
+	var chip_box := hud.world_button.hit_rect()
+	var below := Vector2(chip_box.get_center().x, chip_box.end.y + 12.0)
+	await _tap(below)
+	await _wait_frames(2)
+	var played := _state() != FishingSession.State.IDLE or _angler().is_walking()
+	_check("saat çipinin hemen altındaki suya dokun → panel açılmaz, oyuna geçer (%s, kutu %s)" % [below, chip_box],
+			not day_panel.visible and played)
+	if _state() == FishingSession.State.CASTING or _state() == FishingSession.State.WAITING:
+		await _wait_state(FishingSession.State.WAITING, 3.0)
+		await _tap(Vector2(400, 380))
+	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE and not _angler().is_walking(), 8.0)
+	if _angler().pos2().distance_to(Vector2(0.0, 4.0)) > 0.3:
+		_angler().place(Vector2(0.0, 4.0))
+		_angler().face_now(Vector2(0.0, -1.0))
+		(main.get("camera") as FollowCamera).snap(main.call("_focus"))
+		await _wait_frames(4)
 	await _tap_world(Vector2(0.0, 0.0))
 	await _wait_state(FishingSession.State.WAITING, 3.0)
 	await _tap_control(hud.bucket_button)
@@ -4140,7 +4172,7 @@ func _check_buttons() -> void:
 	for b: TouchButton in hud.buttons():
 		if not b.visible:
 			continue
-		var r := b.get_global_rect()
+		var r := b.hit_rect()
 		var min_side := 280.0 if b == hud.action_button else 122.0
 		if minf(r.size.x, r.size.y) < min_side - 0.5:
 			ok = false

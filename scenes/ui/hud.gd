@@ -461,10 +461,12 @@ func _build_top() -> void:
 	_status.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_frame().add_child(_status)
 	_coins = _pill("coin")
-	# Kova: hap, görünmez bir dokunma kutusunun (çizimsiz TouchButton, en az CHIP_TOUCH) üst kenarında.
+	# Kova: hap, görünmez bir dokunma kutusunda (çizimsiz TouchButton, en az CHIP_TOUCH; kutu ekranın üst
+	# kenarına uzanır, aşağıya taşmaz: reach_top).
 	bucket_button = TouchButton.make_plain(StyleBoxEmpty.new(), StyleBoxEmpty.new())
 	bucket_button.name = "BucketButton"
-	bucket_button.custom_minimum_size = Vector2(CHIP_TOUCH, CHIP_TOUCH)
+	bucket_button.custom_minimum_size = Vector2(CHIP_TOUCH, 0.0)
+	bucket_button.reach_top = true
 	bucket_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	bucket_button.pressed.connect(func() -> void: bucket_pressed.emit())
 	_status.add_child(bucket_button)
@@ -500,12 +502,14 @@ func _build_top() -> void:
 
 
 ## Saat çipi: durum haplarıyla aynı hap; ikonlar tek çizim (SkyIcons), saatin yazısı sabit genişlikte
-## (rakamlar değiştikçe çip kıpırdamasın). Hap, görünmez bir dokunma kutusunun (TouchButton, en az
-## CHIP_TOUCH yüksek; çizim eklemez) üst kenarında: durum haplarıyla aynı hizada.
+## (rakamlar değiştikçe çip kıpırdamasın). Hap, görünmez bir dokunma kutusunda (TouchButton, en az
+## CHIP_TOUCH; çizim eklemez): durum haplarıyla aynı hizada. Kutu ekranın üst kenarına uzanır, aşağıya
+## taşmaz (reach_top): çipin altındaki suya atış yutulmaz (sinekte dere ağzının yukarısı orada).
 func _build_world_chip() -> void:
 	world_button = TouchButton.make_plain(StyleBoxEmpty.new(), StyleBoxEmpty.new())
 	world_button.name = "WorldChip"
-	world_button.custom_minimum_size = Vector2(CHIP_TOUCH, CHIP_TOUCH)
+	world_button.custom_minimum_size = Vector2(CHIP_TOUCH, 0.0)
+	world_button.reach_top = true
 	world_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	world_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	world_button.pressed.connect(func() -> void: world_pressed.emit())
