@@ -354,7 +354,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ Her tekniği açılınca haber verir, ilk kullanımda nasıl oynandığını söyler (§10.3).
   - ✅ Açılış filminde Nine'yle birlikte gölün öyküsünü anlatır, Gölün Bekçisi'ni gösterir ve ilk oltasını
     balıkçıya verir (§10.5).
-  - Her gün 3 küçük istekte bulunur ("bana 30 cm'lik bir kadife getir") ve "Gölün Sırrı"nı parça parça anlatır 🔜.
+  - ✅ Her gün 3 küçük istekte bulunur ("3 Kadife tut", "Kadife · 35 cm üstü"; §10.5); "Gölün Sırrı"nı parça parça anlatır 🔜.
   - ✅ Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir (§10.5). Vakte ve havaya ilk sözleri bir kez
     (olta boşa dönünce; çekişmede ipucunu ezmez):
     öğle ("Altın Sazan öğle güneşini sever"), akşam (turna ile levrek), yeni günün sabahı, bulut, yağmur, sis
@@ -779,6 +779,15 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   toplayan bot 73–95 buluyordu). Göl sevgisi 2'si 26–119. dakikada (ilk Ay Turnası ya da rütbe 9), 6'sı (altın
   hamur) 145–226. dakikada (rütbe 13–16; korkuluk 120–240), 10'u 312–434. dakikada. Dede'nin isteklerinin sevgisi
   (4. adım) 6'yı finalin rütbesine (12–14) çekmeli: 4. adımda ölçülür.
+- ✅ **Dalga 4, isteklerin ölçümü** (4. adım; `economy_report.gd -- --hours=16 --seeds=6`): denge botu yeni günde boş
+  yuvaları doldurur (Bugün paneline bakmak `sim.json` `request_s` 5 sn, saat durur), istekleri kovalamaz (bölge ve
+  teknik seçimi aynı), takılan isteği ertesi gün değiştirir; ucuz balık bıraktığı rütbeden (9) sonra bırakma isteğini
+  kovadaki en ucuz balıklarla bitirir (her rütbede bırakan bot erken alışverişleri geciktiriyordu: büyük kova bir
+  seed'de 83. dakikada, ilk çöp 133. dakikada). Sonuç: saatte 4,0–4,7 istek (16 saatte 64–75, 21–29 değiştirme); ilki
+  6,6–17,5. dakikada, onuncusu 156–278. dakikada. İsteklerin parası kazancın %6,9–8,4'ü: saatte 7.294–7.672 para (önce
+  6.835–7.214), 310. dakikada 4.948–5.394 (korkuluk 6.500); 164–167 av. Erken rütbeler ve alışverişler aynı, rütbe 20
+  4,9–5,4 saatte. Göl sevgisi 6'sı 137–227. dakikada (önce 145–226): istekler onu az öne çeker; finalin öteki
+  şartları (mektuplar, harita parçaları, altın isteklerin sevgisi) 5. adımda.
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
@@ -825,11 +834,35 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     turkuaz derine iner, en yüksek seviyede %30); 3. seviyeden sonra gündüzleri (açık ve bulutlu havada) renkli
     kelebekler (yatay uçar, uçtuğu yöne bakar, kanat çırpar). Kuşlar sonraya.
   - Hiç azalmaz.
-- **Dede'nin istekleri:**
-  - Her oyun günü boş yuvalar dolar (3 yuva); süre sınırı yok, günde bir kez ücretsiz değiştirme hakkı var.
-  - Örnekler: "30 cm üstü kadife", "spinle 2 levrek", "gece bir balık", "3 balık bırak", "2 çöp topla".
-  - Ödül: para, rütbe puanı, göl sevgisi; bazıları harita parçası verir.
-  - Kazı'daki `quests.gd` uyarlanır.
+- **Dede'nin istekleri** ✅ (4. adım; `Requests`, `data/requests.json`):
+  - Rütbe 2'de açılır: o rütbeyi getiren balıktan sonra 3 yuva dolar; saat çipinin köşesinde kırmızı rozet, çip nabız
+    gibi atar, Dede: "Her gün sana küçük işlerim olacak evlat! Saate dokun."
+  - Her yeni oyun gününde yalnızca boş yuvalar dolar ("Yeni gün! Dede'nin yeni istekleri var", "Sabah oldu"dan sonra;
+    rozet). Süre sınırı yok (gelir kuralı 7): biten isteğin yuvası ertesi güne kadar boş ("Yarın yeni istek"), bitmeyen
+    istek kalır. Günde bir isteği ücretsiz değiştirebilirsin (eskisi ve ekrandakiler gelmez).
+  - İstek oluştuğu anda belli (gelir kuralı 4): zarı kaydın seed'i ve isteğin sıra numarası.
+  - Türler:
+
+    | İstek | Örnek | Ağırlık | Rütbe | Sayı | Sevgi | Çarpan |
+    |---|---|---|---|---|---|---|
+    | tür | "3 Kadife tut" | 6 | 2 | Sıradan 3–5, Güzel 2–3, Nadir 1–2 | 3 | 1,0 |
+    | boy | "Kadife · 35 cm üstü" (türün %35–60 yüzdeliği, 5'e yuvarlı, 3★ içinde) | 4 | 3 | 1 | 4 | 1,2 |
+    | teknik | "Spin ile 4 balık" (kamışı alınmış teknik) | 3 | 2 | 3–5 | 3 | 1,0 |
+    | bölge | "Sazlık: 5 balık" (açık bölge) | 3 | 3 | 4–6 | 3 | 1,0 |
+    | vakit | "Akşam vakti 2 balık" | 3 | 2 | 2–4 | 4 | 1,1 |
+    | nadir | "1 Nadir+ balık" | 2 | 4 | 1–2 | 5 | 1,4 |
+    | yağmur | "Yağmurda 2 balık" (yalnızca bugünün ya da yarının tahmini yağmursa) | 2 | 3 | 2–3 | 4 | 1,1 |
+    | bırakma | "3 balık bırak" | 3 | 2 | 3–5 | 5 | 0,8 |
+    | çöp | "1 çöp topla" (dip kamışı ya da tuzak varken) | 2 | 4 | 1–2 | 6 | 1,0 |
+    | tuzak | "Tuzaktan 4 kerevit" (tuzak alınmışken) | 2 | 3 | 3–6 | 3 | 0,9 |
+
+    Tür ve boy isteği bir açık bölgede elindeki bir teknikle en az %2 gelen türden (koruma altındaki tür yok).
+  - Ödül: para round5((15 + 6·rütbe) × çarpan × 0,75–1,25), rütbe puanı (10 + 4·rütbe) × çarpan, göl sevgisi. Biten
+    istek kendiliğinden öder: "İstek tamam! +45 para" (istek ikonuyla, para sesi), Dede: "Aferin evlat! Tam istediğim
+    gibi."
+  - Sayılanlar: av (tür, boy, nadirlik, teknik, bölge, vakit, hava), göle bırakılan balık (kovadan, karttan, koruma
+    altındaki tür), toplanan çöp, tuzaktan gelen kerevit (tuzak isteğine ve kerevit isteğine).
+  - Denge §10.4. Altın istekler (harita parçaları) 5. adımda: ayrı yuvada, değiştirilmez.
 - **Açılış filmi** ✅ (v0.4.1; Ersin: "oyunun başlangıcında bir hikâyesi yok, ilgi çekici bir hikâye ekle"):
   - Yeni oyunda bir kez, oyunun içinde oynar (~45–55 sn): göl arkada yaşar, kamera çekimden çekime kayar.
     Sinema şeritleri, başta logo, altta konuşanın yüzü, adı ve en çok iki satır söz.
@@ -893,14 +926,16 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
   - **Hava:** bugün ve yarın;
   - **Dede'yle çay** (ÇAY İÇ);
   - **Göl sevgisi** ✅ (çayın yanında; §10.5);
-  - başlıkta günün sırası ("3. gün"); ileride Dede'nin istekleri (4. adım).
+  - başlıkta günün sırası ("3. gün");
+  - ✅ en altta Dede'nin istekleri (rütbe 2'den sonra; §10.5): yuva başına kart (ikon, ne istendiği, ilerleme "1/3",
+    ödül, değiştir düğmesi; boş yuvada "Yarın yeni istek"). Yeni istek varsa çipte kırmızı rozet; panel açılınca söner.
   Panel açıkken saat durur; telefonda küçülmeden sığar.
 - **Sağ üst:** harita, defter, ayarlar (her biri ≥122).
 - ✅ **Sol alt:** yürüme halkası (252; sağ kenarı ipucu çubuğunun payının solunda; olta sudayken yok, sandalda yerinde "Kıyıya dön") ve üstünde teknik düğmesi (132).
 - **Sağ alt:** eylem düğmesi (300).
 - **Alt orta:** Dede'nin ipucu çubuğu.
 - **Fotoğraf:** balık kartındaki ve ayarlardaki kamera düğmesi.
-- ✅ **"Nasıl oynanır?" rehberi:** oyunun baştan sona anlatımı, 9 sayfa.
+- ✅ **"Nasıl oynanır?" rehberi:** oyunun baştan sona anlatımı, 10 sayfa.
   - **Sayfalar:**
     1. balık tutmak (AT, BEKLE, VUR!, SAR, BIRAK!);
     2. oyunun döngüsü;
@@ -910,7 +945,8 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
     6. küçük takım;
     7. ekstralar;
     8. bölgeler;
-    9. Dede, Nine, defter ve hedef.
+    9. göl yaşıyor (Dalga 4): vakit, hava, Dede'yle çay, göl sevgisi, Dede'nin istekleri (rütbe 2'ye kadar kilitli);
+    10. Dede, Nine, defter ve hedef.
   - **Girişler:** Ayarlar'ın başlığındaki "Nasıl oynanır?" (yanında HİKÂYE: açılış filmi yeniden, §10.5). Takım Çantası'ndaki "?" Teknikler'i, dükkândaki "?" açık sekmenin sayfasını açar.
   - **Kilitler:** henüz açılmamış teknik, bölge ve takım da görünür; kilidinde açıldığı rütbe, derin ortada sandal yazar.
   - **Sayılar veriden gelir:** rütbeler, tuzağın süresi, kovalar, şans garantisi, yıldızlar. Oyun değişince rehber eskimez.

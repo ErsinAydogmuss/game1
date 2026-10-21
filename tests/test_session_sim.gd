@@ -6,7 +6,7 @@ extends BaseTest
 ## kamışı öncelikli alınır, Dede haber verir); sonraki teknikler kendi satırlarını ekler; kerevit
 ## tuzağı (rütbe 3; ilk tuzak öncelikli). Dalga 4: oyun saati ve hava (botun saati dükkânda, takım
 ## çantasında ve haritada durur; vakit değişince bölgesini yeniden seçer), yalnızca gece gelen Ay Turnası;
-## ucuz balığı göle bırakma, çöp ve göl sevgisinin seviyeleri.
+## ucuz balığı göle bırakma, çöp ve göl sevgisinin seviyeleri; Dede'nin istekleri.
 
 const SEEDS := [1000, 1077, 1154]
 ## Korkulukların ölçüldüğü oyun süresi (dk).
@@ -57,6 +57,12 @@ const PACING := [
 	["trash", 15.0, 90.0],
 	["love_2", 15.0, 150.0],
 	["love_6", 120.0, 240.0],
+	# Dede'nin istekleri (4. adım; economy_report 16 sa × 6 seed): rütbe 2'de (0,6–3,2. dk) dolar, ilki 6,6–17,5. dakikada
+	# biter, onuncusu 156–278. dakikada (saatte 4,0–4,7 istek; bot istekleri kovalamaz, takılanı ertesi gün değiştirir).
+	# İsteklerin sevgisi göl sevgisi 6'yı az öne çeker (137–227. dk; önce 145–226).
+	["requests", 0.0, 5.0],
+	["request_1", 2.0, 30.0],
+	["requests_10", 100.0, 300.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.
@@ -96,6 +102,24 @@ func test_pacing_guard_rails() -> void:
 		var hours := sim.elapsed / 3600.0
 		assert_between(sim.earned / hours, 2500.0, 6500.0, "seed %d: saatte para" % seed_value)
 		assert_between(sim.catches / hours, 120.0, 280.0, "seed %d: saatte av" % seed_value)
+
+
+## Dede'nin istekleri: bot rütbe 2'de istek alır, biten istekler öder (para kazanca girer), günde en çok bir
+## istek değiştirilir; yuvalar hiç taşmaz.
+func test_bot_does_requests() -> void:
+	var db := content()
+	var sim := SessionSim.new(db, db.main_spot, SEEDS[0])
+	var top := 0
+	while sim.minutes() < 120.0:
+		sim.cast_once()
+		top = maxi(top, sim.save.requests.size())
+	var days := DayClock.day(db.rules, sim.save.clock_s) + 1
+	assert_true(sim.requests_done >= 5, "120 dk'da biten istek: %d" % sim.requests_done)
+	assert_eq(int(sim.save.stats.get("requests", 0)), sim.requests_done, "sayaç")
+	assert_true(sim.request_coins > 0 and sim.request_coins < sim.earned, "isteklerin parası kazancın içinde (%d / %d)" % [
+			sim.request_coins, sim.earned])
+	assert_true(sim.rerolls <= days, "günde en çok bir değiştirme (%d değiştirme, %d gün)" % [sim.rerolls, days])
+	assert_true(top <= db.requests.slots, "yuvalar taşmaz (%d)" % top)
 
 
 ## Bölgeli göl: bot yalnızca açık bölgede avlanır (rütbe, sandal); kıyı bölgelerini dolaşır,

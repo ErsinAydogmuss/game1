@@ -1,7 +1,8 @@
 extends SceneTree
 ## Ekonomi ve ilerleme raporu: denge botu (SessionSim) birkaç seed'le oynar; rütbelerin, takım
 ## alımlarının ve türlerin ilk görüldüğü dakikaları (belli vakitte gelen efsaneler dahil), saatlik
-## para ve av sayısını, bölgelerde, tekniklerde, vakitlerde ve havalarda geçen zamanı yazar.
+## para ve av sayısını, Dede'nin isteklerini (biten, para, değiştirme), bölgelerde, tekniklerde, vakitlerde
+## ve havalarda geçen zamanı yazar.
 ##   godot --headless --path . -s res://tools/economy_report.gd [-- --hours=8 --seeds=3]
 ## Hedefler docs/gdd.md §8 ve §10.4'te; korkuluklar tests/test_session_sim.gd'de.
 
@@ -28,10 +29,11 @@ func _initialize() -> void:
 			(Time.get_ticks_msec() - started) / 1000.0])
 	for sim in sims:
 		var hours := sim.elapsed / 3600.0
-		print("  seed %d: %d atış, %d av, %d kaçan, %d satış, %d para kazanıldı (saatte %.0f para, %.0f av), rütbe %d, tuzaktan %d kerevit (%d tuzak), %d bırakılan, %d çöp, göl sevgisi %d (seviye %d)" % [
+		print("  seed %d: %d atış, %d av, %d kaçan, %d satış, %d para kazanıldı (saatte %.0f para, %.0f av), rütbe %d, tuzaktan %d kerevit (%d tuzak), %d bırakılan, %d çöp, göl sevgisi %d (seviye %d), %d istek (saatte %.1f; %d para, kazançta payı %%%.1f; %d değiştirme)" % [
 				sim.rng.seed, sim.casts, sim.catches, sim.lost, sim.sells, sim.earned, sim.earned / hours,
 				sim.catches / hours, Rank.rank(db, sim.save), sim.trapped, sim.save.traps.size(), sim.released, sim.trash,
-				sim.save.love, LakeLove.level(db.rules, sim.save.love)])
+				sim.save.love, LakeLove.level(db.rules, sim.save.love), sim.requests_done, sim.requests_done / hours,
+				sim.request_coins, 100.0 * sim.request_coins / maxf(1.0, sim.earned), sim.rerolls])
 	print("")
 	print("%-28s %s" % ["olay (ilk kez, dakika)", "  ".join(range(_seeds).map(func(i: int) -> String: return "seed%d" % (i + 1)))])
 	var keys: Array[String] = []
@@ -53,6 +55,9 @@ func _initialize() -> void:
 	keys.append("trash")
 	for level in range(2, LakeLove.max_level(db.rules) + 1):
 		keys.append("love_%d" % level)
+	keys.append("requests")
+	keys.append("request_1")
+	keys.append("requests_10")
 	for n in range(1, db.fish.size() + 1):
 		keys.append("species_%d" % n)
 	for r in db.rarities:

@@ -40,6 +40,13 @@ extends RefCounted
 ##    balığı satmak yerine bırakır: göl sevgisi; 0 ise hiç); dolu kovaya gelen balık da bırakılır. Dipte tutulan balığın yanında ve tuzaktan gelen çöp toplanır (Trash; zarı botun
 ##    kendi tuzlu zarı: oranları ve sırayı kaydırmaz). Göl sevgisi oranlara girer (Nadir+); seviyelerin ilk
 ##    dakikası love_<seviye>.
+## 12. Dede'nin istekleri (Dalga 4): yeni günde boş yuvalar dolar (rütbe 2'den sonra; oyuncu Bugün paneline
+##    bakar: request_s, saat durur); günde bir, dünden kalan en eski bitmemiş istek değiştirilir (yağmur isteği
+##    gibi takılan). Oyunun olayları (av, bırakma, çöp, tuzak) isteklere sayılır; biten istek oyundaki gibi
+##    öder (para earned'e de girer: saatte para; rütbe puanı, göl sevgisi). Bot istekleri kovalamaz (bölge ve
+##    teknik seçimi aynı); ucuz balık bıraktığı rütbeden sonra bırakma isteği varken satıştan önce kalanı kadar
+##    en ucuz balığı bırakır (daha önce bırakma isteği takılır ve değiştirilir: erken bırakan bot erken
+##    alışverişleri geciktiriyordu). İlk biten istek request_1, onuncusu requests_10.
 ## Aynı seed aynı sonucu verir.
 
 const SIM_PATH := "res://data/sim.json"
@@ -75,10 +82,15 @@ var trapped: int = 0
 var released: int = 0
 var full_released: int = 0
 var trash: int = 0
+## Dede'nin istekleri: biten istek, isteklerden gelen para (earned'in içinde) ve değiştirilen istek.
+var requests_done: int = 0
+var request_coins: int = 0
+var rerolls: int = 0
 ## Olayların ilk olduğu dakika: "rank_3", "buy" (ilk alışveriş), "buy:<takım>", "sell", "species_4",
 ## "rarity_<id>", "zone:<bölge>" (o bölgede ilk avlanış), "tech:<teknik>" (o teknikle ilk atış),
 ## "trap_set" (ilk tuzak bırakıldı), "trap" (tuzaktan ilk kerevit), "release" (ilk bırakılan balık), "trash"
-## (ilk çöp), "love_<seviye>" (göl sevgisinin seviyesi).
+## (ilk çöp), "love_<seviye>" (göl sevgisinin seviyesi), "requests" (ilk istekler), "request_1" (ilk biten
+## istek), "requests_10" (onuncusu).
 var milestones: Dictionary = {}
 ## Botun elindeki teknik ve her teknikte geçen süre (sn).
 var technique: String = "float"
@@ -150,6 +162,7 @@ func cast_once() -> void:
 	var before := elapsed
 	if technique != "float":
 		_mark("tech:" + technique)
+	_tend_requests()
 	var cond := conditions()
 	var approach := _range("approach_s", Vector2(3, 9))
 	if str(cond["weather"]) == "rain":
@@ -210,6 +223,11 @@ func _on_catch(def: Dictionary, percentile: int, cond: Dictionary = {}) -> void:
 	save.catches += 1
 	CatchOdds.note_catch(db, save, rarity, _spot, technique, cond)
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
+	# Dede'nin istekleri: av sayılır (bölge botunki, vakit ve hava atışınki); biten isteğin puanı da rütbeye.
+	var paid := _note_request({ "type": "catch", "fish": fish_id, "size_cm": size_cm, "rarity": rarity,
+			"technique": technique, "zone": zone_id, "phase": str(cond.get("phase", "")),
+			"weather": str(cond.get("weather", "")) })
+	ranked["new_rank"] = paid["new_rank"]
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
 		_note_rank(ranked)
 		# Yeni bölge açıldı: oyuncu merak eder, hemen gider.
@@ -269,6 +287,12 @@ func _tend_traps() -> void:
 			_mark("species_%d" % save.records.size())
 		_found(str(result.get("trash", "")))
 		_note_rank(result["ranked"])
+		# Tuzaktan gelen kerevitler tuzak isteğine ve türün isteğine (tür başına).
+		var counts := {}
+		for item: Dictionary in result["items"]:
+			counts[str(item["fish"])] = int(counts.get(str(item["fish"]), 0)) + 1
+		for kind: String in counts:
+			_note_rank(_note_request({ "type": "trap", "fish": kind, "count": int(counts[kind]) }))
 	while TrapSim.spare(db, save) > 0:
 		var placed := false
 		for z in db.zones_of(spot_id):
@@ -291,11 +315,14 @@ func _tend_traps() -> void:
 
 
 ## Satıştan önce ucuz balıklar göle (Kova panelinin BIRAK'ı): değeri release_value_max'ı geçmeyenler,
-## rütbe release_from_rank'ten sonra (oyuncu önce takım için her şeyi satar).
+## rütbe release_from_rank'ten sonra (oyuncu önce takım için her şeyi satar). O rütbeden sonra Dede'nin
+## bırakma isteği varsa önce kalanı kadar en ucuz balık bırakılır (daha önce istek takılır, ertesi gün
+## değiştirilir: _tend_requests).
 func _release_cheap() -> void:
 	var limit := int(_num("release_value_max", 0.0))
 	if limit <= 0 or Rank.rank(db, save) < int(_num("release_from_rank", 1.0)):
 		return
+	_release_for_request()
 	var i := 0
 	while i < save.bucket.size():
 		var entry: Dictionary = save.bucket[i]
@@ -307,11 +334,33 @@ func _release_cheap() -> void:
 			i += 1
 
 
+## Dede'nin bitmemiş bırakma isteği: kalanı kadar en ucuz balık göle (oyuncu "3 balık bırak"ı görünce kovadan
+## küçükleri bırakır).
+func _release_for_request() -> void:
+	var left := 0
+	for r in Requests.daily(db, save):
+		if str(r["kind"]) == "release":
+			left = maxi(left, int(r["goal"]) - int(r["progress"]))
+	while left > 0 and not save.bucket.is_empty():
+		var cheapest := 0
+		for i in save.bucket.size():
+			var entry: Dictionary = save.bucket[i]
+			var best: Dictionary = save.bucket[cheapest]
+			if Economy.fish_value(db, str(entry["fish"]), int(entry["size_cm"])) \
+					< Economy.fish_value(db, str(best["fish"]), int(best["size_cm"])):
+				cheapest = i
+		var fish_id := str(save.bucket[cheapest]["fish"])
+		save.bucket.remove_at(cheapest)
+		_released(fish_id)
+		left -= 1
+
+
 ## Balık göle döndü: defter, göl sevgisi ve sayaç (WorldState.release; oyundaki gibi).
 func _released(fish_id: String) -> void:
 	released += 1
 	_mark("release")
 	_note_love(WorldState.release(db, save, fish_id))
+	_note_rank(_note_request({ "type": "release" }))
 
 
 ## Çöp çıktı ("" yoksa): göl sevgisi ve sayaçlar (Trash.collect).
@@ -321,6 +370,49 @@ func _found(item: String) -> void:
 	trash += 1
 	_mark("trash")
 	_note_love(Trash.collect(db.rules, save, item))
+	_note_rank(_note_request({ "type": "trash" }))
+
+
+## Dede'nin istekleri: yeni günde (ve istekler açılınca) boş yuvalar dolar; günde bir, dünden kalan en eski
+## bitmemiş istek değiştirilir. Bugün paneline bakmak request_s (saat durur).
+func _tend_requests() -> void:
+	conditions()
+	if not Requests.refill(db, save, spot_id).is_empty():
+		_mark("requests")
+		_look_at_requests()
+	var today := DayClock.day(db.rules, save.clock_s)
+	var oldest := {}
+	for r in Requests.daily(db, save):
+		if int(r["day"]) < today and Requests.can_reroll(db, save, int(r["slot"])) \
+				and (oldest.is_empty() or int(r["serial"]) < int(oldest["serial"])):
+			oldest = r
+	if not oldest.is_empty() and not Requests.reroll(db, save, spot_id, int(oldest["slot"])).is_empty():
+		rerolls += 1
+		_look_at_requests()
+
+
+## Bugün paneline bakılır (istekler, değiştirme): request_s geçer, oyun saati durur.
+func _look_at_requests() -> void:
+	elapsed += _num("request_s", 5.0)
+	_paused_s += _num("request_s", 5.0)
+
+
+## Olay Dede'nin isteklerine sayılır (Requests.note); biten istek oyundaki gibi öder (Requests.pay: para,
+## rütbe puanı, göl sevgisi). Döner: { old_rank, new_rank } (isteklerin puanıyla rütbe değişimi).
+func _note_request(event: Dictionary) -> Dictionary:
+	var before := Rank.rank(db, save)
+	for r in Requests.note(save, event):
+		var paid := Requests.pay(db, save, r)
+		if paid.is_empty():
+			continue
+		requests_done += 1
+		request_coins += int(paid["coins"])
+		earned += int(paid["coins"])
+		_note_love(paid["loved"])
+		_mark("request_1")
+		if requests_done >= 10:
+			_mark("requests_10")
+	return { "old_rank": before, "new_rank": Rank.rank(db, save) }
 
 
 ## Göl sevgisinin seviyesi arttıysa atlanan her seviyenin dakikası.
