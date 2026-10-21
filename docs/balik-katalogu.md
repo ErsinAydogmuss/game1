@@ -300,8 +300,9 @@ normalleştirilir; defterdeki oranlar bu payla). Göl de güzelleşir: daha çok
 | 9 | 520 | ×1,32 |
 | 10 | 700 | ×1,36 |
 
-**Çöp:** dipte tutulan balığın yanında %5, tuzağın her yeni içeriğinde %20 (ne çıkacağı önceden belli: balıkta
-gölgenin zarı, tuzakta içerik kurulurken). Kovaya girmez, satılmaz; toplanınca göl sevgisi verir.
+**Çöp:** dipte tutulan balığın yanında %5, tuzakta kerevit başına %5 (içerik yenilenirken yeni kerevit
+sayısıyla: boş tuzak dolunca %20). Ne çıkacağı önceden belli: balıkta gölgenin zarı, tuzakta içerik kurulurken.
+Kovaya girmez, satılmaz; toplanınca göl sevgisi verir.
 
 | Eşya | Pay | Göl sevgisi |
 |---|---|---|

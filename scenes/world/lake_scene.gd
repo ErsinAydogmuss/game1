@@ -282,8 +282,6 @@ func flash() -> void:
 	_flash_age = 0.0
 
 
-## Lambaların ışık havuzları: her biri (x, z, yarıçap m, güç); en çok POOLS tanesi, fazlası atılır.
-## Değişmedikçe bir şey yapmaz (main her kare verir).
 ## Göl sevgisi (Dalga 4, docs/gdd.md §10.5): seviyeyle göl güzelleşir: kıyıda daha çok çiçek, suda çiçek
 ## açmış yeni nilüferler (bitkiler yine tek ağ: yeniden kurulur, çizim eklemez), su biraz daha berrak
 ## (world_love). Seviye 1'de bugünkü göl. Kelebekleri main seçer (AmbientParticles).
@@ -316,6 +314,8 @@ func plants_triangles() -> int:
 	return _plants_tris
 
 
+## Lambaların ışık havuzları: her biri (x, z, yarıçap m, güç); en çok POOLS tanesi, fazlası atılır.
+## Değişmedikçe bir şey yapmaz (main her kare verir).
 func set_pools(pools: Array[Vector4]) -> void:
 	if _pools_set and pools == _pools:
 		return

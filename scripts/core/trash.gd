@@ -4,7 +4,8 @@ extends RefCounted
 ## (rules.json trash). Dipte tutulan balığın yanında (trash_bottom_ppm: kurşun dibi tarar; şamandıra, spin
 ## ve sinek yüzeyde) ya da tuzağın içeriğiyle (trash_trap_ppm) çıkar. Ne çıkacağı önceden bellidir (gelir
 ## kuralı 4): balıkta gölgenin seed'inin kendi tuzu (gölgenin türü, boyu ve yolu kaymaz), tuzakta içerik
-## zarlanırken ayrı bir tuzla (kerevitler aynı kalır). Toplanınca göl sevgisi verir; kovaya girmez,
+## zarlanırken ayrı bir tuzla (kerevitler aynı kalır); tuzakta pay yeni kerevit sayısıyla (sık toplayan
+## kerevit başına daha çok çöp bulmasın). Toplanınca göl sevgisi verir; kovaya girmez,
 ## satılmaz; sayaçlar stats.trash ve stats.trash_<eşya>.
 
 ## Gölgenin seed'inden çöp zarının tuzu (2: tür, 3: boy: FishShadow).
@@ -23,9 +24,10 @@ static func with_catch(rules: FishingRules, shadow_seed: int, technique: String)
 
 
 ## Tuzağın yeni içeriğiyle gelen çöp ("" yoksa): kaydın seed'i ve içeriğin sıra numarası (trap_serial;
-## kerevitlerle aynı sayı, başka tuz).
-static func in_trap(rules: FishingRules, save_seed: int, serial: int) -> String:
-	return _roll(rules, Dice.derive(save_seed, TRAP_SALT, serial), rules.trash_trap_ppm)
+## kerevitlerle aynı sayı, başka tuz). share: yeni kerevitlerin tuzağın üst sınırına payı (boş tuzak dolunca 1,
+## bir kerevit toplanınca 1/trap_max): trash_trap_ppm dolu bir tuzağın payı, kerevit başına aynı çöp.
+static func in_trap(rules: FishingRules, save_seed: int, serial: int, share: float = 1.0) -> String:
+	return _roll(rules, Dice.derive(save_seed, TRAP_SALT, serial), roundi(rules.trash_trap_ppm * clampf(share, 0.0, 1.0)))
 
 
 static func _roll(rules: FishingRules, roll_seed: int, chance_ppm: int) -> String:

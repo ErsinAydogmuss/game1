@@ -56,14 +56,20 @@ func set_kind(value: String) -> void:
 		emitting = true
 
 
+## Kelebeğe özgü ayarlar geri alınır (aynı düğüm türden türe geçer).
+func _reset_butterfly() -> void:
+	color_initial_ramp = null
+	flatness = 0.0
+	particle_flag_align_y = false
+
+
 ## Kameranın baktığı yer (yerin hizasında): parçacıklar onun çevresinde doğar.
 func follow(point: Vector3) -> void:
 	global_position = Vector3(point.x, point.y + _height, point.z)
 
 
 func _rain() -> void:
-	split_scale = false
-	color_initial_ramp = null
+	_reset_butterfly()
 	_height = RAIN_HEIGHT
 	amount = RAIN_AMOUNT
 	lifetime = (RAIN_HEIGHT + 1.0) / RAIN_SPEED
@@ -93,8 +99,7 @@ func _rain() -> void:
 
 
 func _fireflies() -> void:
-	split_scale = false
-	color_initial_ramp = null
+	_reset_butterfly()
 	_height = FIREFLY_HEIGHT
 	amount = FIREFLY_AMOUNT
 	lifetime = 5.0
@@ -132,8 +137,9 @@ func _fireflies() -> void:
 	mesh = sphere
 
 
-## Kelebekler (gündüz, göl sevgisi 3'ten sonra): yavaşça dolaşan, kanat çırpan renkli kelebekler. Kanatlar yatay
-## (kamera yukarıdan bakar); çırpış kanadın eninin ömür boyunca daralıp açılması (split_scale).
+## Kelebekler (gündüz, göl sevgisi 3'ten sonra): yavaşça dolaşan, kanat çırpan renkli kelebekler. Yatay uçar
+## (flatness: suya dalmaz, göğe çıkmaz; yükseklikleri doğdukları kutudan), uçtuğu yöne döner (particle_flag_align_y:
+## yatay uçuşta kanatlar yatay, kamera yukarıdan bakar); kanat çırpışı butterfly.gdshader'da (yerel eksende).
 func _butterflies() -> void:
 	_height = BUTTERFLY_HEIGHT
 	amount = BUTTERFLY_AMOUNT
@@ -143,20 +149,15 @@ func _butterflies() -> void:
 	randomness = 0.6
 	emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	emission_box_extents = BUTTERFLY_BOX
-	direction = Vector3(1.0, 0.1, 0.0)
+	direction = Vector3(1.0, 0.0, 0.0)
 	spread = 180.0
+	flatness = 1.0
+	particle_flag_align_y = true
 	gravity = Vector3.ZERO
 	initial_velocity_min = 0.25
 	initial_velocity_max = 0.55
 	scale_amount_min = 0.8
 	scale_amount_max = 1.2
-	split_scale = true
-	var flap := Curve.new()
-	for i in BUTTERFLY_FLAPS * 2 + 1:
-		flap.add_point(Vector2(float(i) / (BUTTERFLY_FLAPS * 2), 1.0 if i % 2 == 0 else 0.2))
-	scale_curve_x = flap
-	scale_curve_y = _flat_curve()
-	scale_curve_z = _flat_curve()
 	# Her kelebek bir renk (sabit geçişli ramp: karışık renk çıkmaz); doğarken ve ölürken saydam.
 	var colors := Gradient.new()
 	colors.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
@@ -175,30 +176,25 @@ func _butterflies() -> void:
 	mesh = _butterfly_mesh()
 
 
-static func _flat_curve() -> Curve:
-	var curve := Curve.new()
-	curve.add_point(Vector2(0.0, 1.0))
-	curve.add_point(Vector2(1.0, 1.0))
-	return curve
-
-
-## Kelebeğin ağı: yatay iki kanat (önde büyük, arkada küçük; beyaz: rengi parçacıktan) ve ince koyu gövde.
+## Kelebeğin ağı: düz iki kanat (önde büyük, arkada küçük; beyaz: rengi parçacıktan) ve ince koyu gövde. Yerel
+## y ileri (parçacık y'sini uçtuğu yöne çevirir), kanatlar ±x; malzeme kanadı çırpar (butterfly.gdshader).
 static func _butterfly_mesh() -> ArrayMesh:
 	var w := BUTTERFLY_WING
 	var verts := PackedVector3Array()
 	var colors := PackedColorArray()
 	for side: float in [-1.0, 1.0]:
 		var root := Vector3(0.0, 0.0, 0.0)
-		var tip := Vector3(side * w.x, 0.0, -w.y)
-		var edge := Vector3(side * w.x * 0.95, 0.0, w.y * 0.15)
-		var tail := Vector3(side * w.x * 0.6, 0.0, w.y * 0.85)
+		var tip := Vector3(side * w.x, w.y, 0.0)
+		var edge := Vector3(side * w.x * 0.95, -w.y * 0.15, 0.0)
+		var tail := Vector3(side * w.x * 0.6, -w.y * 0.85, 0.0)
 		for p: Vector3 in [root, tip, edge, root, edge, tail]:
 			verts.append(p)
 			colors.append(Color.WHITE)
+	# Gövde kanatlardan sonra çizilir (saydam malzeme derinlik yazmaz): hep kanatların üstünde görünür.
 	var body := Color(0.22, 0.15, 0.1)
 	var half := w.x * 0.08
-	for p: Vector3 in [Vector3(-half, 0.002, -w.y * 0.5), Vector3(half, 0.002, -w.y * 0.5), Vector3(half, 0.002, w.y * 0.6),
-			Vector3(-half, 0.002, -w.y * 0.5), Vector3(half, 0.002, w.y * 0.6), Vector3(-half, 0.002, w.y * 0.6)]:
+	for p: Vector3 in [Vector3(-half, w.y * 0.5, 0.0), Vector3(half, w.y * 0.5, 0.0), Vector3(half, -w.y * 0.6, 0.0),
+			Vector3(-half, w.y * 0.5, 0.0), Vector3(half, -w.y * 0.6, 0.0), Vector3(-half, -w.y * 0.6, 0.0)]:
 		verts.append(p)
 		colors.append(body)
 	var arrays := []
@@ -207,12 +203,8 @@ static func _butterfly_mesh() -> ArrayMesh:
 	arrays[Mesh.ARRAY_COLOR] = colors
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.vertex_color_use_as_albedo = true
-	material.vertex_color_is_srgb = true
-	material.disable_receive_shadows = true
+	var material := ShaderMaterial.new()
+	material.shader = load("res://scenes/fx/butterfly.gdshader")
+	material.set_shader_parameter("flaps", float(BUTTERFLY_FLAPS))
 	mesh.surface_set_material(0, material)
 	return mesh

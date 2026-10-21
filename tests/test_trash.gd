@@ -59,6 +59,28 @@ func test_odds_follow_the_rules() -> void:
 		assert_between(share, want - 0.03, want + 0.03, "%s %%%.1f (ağırlık %%%.0f)" % [id, share * 100.0, want * 100.0])
 
 
+## Tuzakta çöpün payı yeni kerevit sayısıyla: her kerevitte toplayan, dördünü birden toplayandan kerevit başına
+## daha çok çöp bulmaz (trash_trap_ppm dolu bir tuzağın payı).
+func test_trap_trash_scales_with_new_crayfish() -> void:
+	var rules := content().rules
+	var full := 0
+	var single := 0
+	var none := 0
+	for k in ROLLS:
+		if not Trash.in_trap(rules, 4242, k).is_empty():
+			full += 1
+		if not Trash.in_trap(rules, 4242, k, 1.0 / rules.trap_max).is_empty():
+			single += 1
+		if not Trash.in_trap(rules, 4242, k, 0.0).is_empty():
+			none += 1
+	var per_crayfish := rules.trash_trap_ppm / float(Dice.PPM) / rules.trap_max
+	assert_between(float(single) / ROLLS, per_crayfish - 0.01, per_crayfish + 0.01,
+			"bir yeni kerevitte %%%.1f (dolu tuzağın %%%.0f'i / %d)" % [100.0 * single / ROLLS,
+			rules.trash_trap_ppm * 100.0 / Dice.PPM, rules.trap_max])
+	assert_true(single < full, "tek kerevitte dolu tuzaktan az")
+	assert_eq(none, 0, "yeni kerevit yoksa çöp yok")
+
+
 func test_collecting_gives_love_not_coins() -> void:
 	var db := content()
 	var rules := db.rules

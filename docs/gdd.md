@@ -327,7 +327,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   Kocabaş 146–596. dakikada (bir seed'de 16 saatte hiç): fırtınalı gece derin ortada dipte olmak şansa bağlı.
 - **Eşyalar:** eski çizme, teneke, mesajlı şişe (hikâye), paslı anahtar. Çöp toplamak göl sevgisi verir.
   - ✅ **Çöp** (Dalga 4; `rules.json` `trash`): dipte tutulan balığın yanında %5 (kurşun dibi tarar; şamandıra,
-    spin ve sinek yüzeyde: çöp yok), tuzağın her yeni içeriğinde %20 (ilk kerevitle birlikte çıkar). Hangisi:
+    spin ve sinek yüzeyde: çöp yok), tuzakta kerevit başına %5 (içerik yenilenirken yeni kerevit sayısıyla: boş
+    tuzak dolunca %20; sık toplayan çok çöp bulmaz; ilk kerevitle birlikte çıkar). Hangisi:
     çizme 35, teneke kutu 35, plastik şişe 25, paslı anahtar 5. Ne çıkacağı önceden belli (gelir kuralı 4):
     balıkta gölgenin zarı, tuzakta içerik kurulurken (kerevitler aynı kalır). Toplanınca göl sevgisi verir (3,
     paslı anahtar 5); kovaya girmez, satılmaz, para vermez. Eşyanın resmiyle bildirim ("Eski çizme çıktı! Göl
@@ -631,11 +632,13 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - Kova dolunca Dede uyarır ✅ (kova her dolduğunda: "Kovan doldu evlat! SAT'a bas ya da kovaya dokun, göle bırak.") ve olta atılmaz: eylem düğmesi yeşil SAT olur, basınca Nine'ye gidilir (v0.4.1); kova kapasitesi dükkândan büyür.
   - Her türün en iyisi akvaryuma konabilir (§10.6).
 - ✅ **Bırakma** (Dalga 4): bırakılan balık para vermez, yalnızca göl sevgisi verir (rütbe puanı balık tutulunca gelmiştir).
-  - **Kova paneli:** sol üstteki kovaya dokununca açılır (olta boştayken; dokunma kutusu 122, olta sudayken dokunuş
-    almaz). Tür başına bir satır: resmi, adı, altında "×3", nadirliği ve bir balığın sevgisi ("♥ +5"), değeri, BIRAK
-    (türün en küçüğü göle döner). En çok 6 satır, fazlası "+N tür daha". Altta HEPSİNİ BIRAK (çocuk yanlışlıkla
-    basmasın: ilk dokunuş "Emin misin?", 3 sn içinde ikincisi bırakır), toplam değer ve SAT (Nine'nin tezgâhı, Kova
-    sekmesi). Başlıkta göl sevgisinin seviyesi ve çubuğu: bıraktıkça dolar. Telefonda küçülmeden sığar.
+  - **Kova paneli:** sol üstteki kovaya dokununca açılır (olta boştayken ve balık eldeyken de; dokunma kutusu 122,
+    olta sudayken dokunuş almaz). Tür başına bir satır: resmi, adı, altında "×3", nadirliği ve bir balığın sevgisi
+    ("♥ +5"), değeri, BIRAK (türün en küçüğü göle döner). Bir sayfada 6 satır, fazlası sonraki sayfada ("Sayfa 1/2 »"
+    düğmesi; panelin boyu aynı). Altta HEPSİNİ BIRAK (çocuk yanlışlıkla basmasın: ilk dokunuş "Emin misin?", 3 sn
+    içinde ikincisi bırakır; hızlı çift dokunuş saymaz), toplam değer ve SAT (Nine'nin tezgâhı, Kova sekmesi).
+    Başlıkta göl sevgisinin seviyesi ve çubuğu: bıraktıkça dolar. Telefonda küçülmeden sığar. Kova boşalınca Dede'nin
+    "kovan doldu" sözü biter.
   - **Kartta "Göle bırak":** yeni tür, rekor ya da nadir balık kartında ikinci düğme (≥122): az önce kovaya giren
     balık göle döner, "Çapak göle döndü". Koruma altındaki türlerde tek düğme zaten "Göle bırak"; dolu kovaya gelen
     balık da göle döner (sevgi verir).
@@ -806,17 +809,20 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
 - **Göl sevgisi:**
   - **Kaynaklar:** bırakılan balık (kademeye göre 1/2/5/12/40/100) ✅, toplanan çöp (3; paslı anahtar 5; §6) ✅,
     istekler.
-  - ✅ Seviye atlayınca kalp ikonuyla "Göl sevgisi 2!", ses ve titreşim (panel ya da kart açıksa kapanınca). Dede
-    2., 6. ve 10. seviyede bir kez konuşur (olta boşa dönünce): "Göl seni tanıdı evlat! Nadir balık artacak.", "Göl
-    seni çok sevdi! Nine'ye uğra, sevinir." (altın hamur, 5. adım), "Gölün en sevdiği balıkçı sensin evlat!".
+  - ✅ Seviye atlayınca kalp ikonuyla "Göl sevgisi 2!", ses ve titreşim (panel ya da kart açıksa kapanınca; birkaç
+    seviye birden atlanırsa yalnızca sonuncusu). Dede 2. ve 10. seviyede bir kez konuşur (olta boşa dönünce): "Göl seni
+    tanıdı evlat! Nadir balık artacak.", "Gölün en sevdiği balıkçı sensin evlat!". 6. seviyenin sözü ("Göl seni çok
+    sevdi! Nine'ye uğra, sevinir.") altın hamurla gelir (5. adım; o zamana kadar Nine'de bir şey yok).
   - ✅ Görüldüğü yerler: Kova panelinin başlığı, "Bugün" panelindeki sevgi kartı (çayın yanında: seviye, çubuk;
-    seviye 1'de "Balık bırak, çöp topla: göl güzelleşir.", sonra "Nadir+ balık %4 daha sık"), defterin başlığı.
+    seviye 1'de "Balık bırak, çöp topla: göl güzelleşir.", sonra "Nadir+ balık en çok %4 daha sık"), defterin başlığı.
   - **Etki** ✅: 10 seviye (eşikler 0, 12, 30, 60, 110, 180, 270, 380, 520, 700); Nadir+ ağırlıkları seviye başına %4
-    artar, en çok %36. Defterdeki oranlara yansır (defterin başlığı: "Şimdi: Akşam · Yağmurlu · Göl sevgisi 2 (Nadir+ +%4)").
-  - ✅ Göl seviyeyle güzelleşir (çizim eklemez): seviye başına kıyıda %20 daha çok çiçek öbeği ve %3 daha çok
+    artar, en çok %36 ("en çok": ağırlığın payı; oranlar yeniden normalleşince Nadir+'nın payı biraz daha az artar).
+    Defterdeki oranlara yansır (defterin başlığı: "Şimdi: Akşam · Yağmurlu · Göl sevgisi 2 (Nadir+ en çok +%4)").
+  - ✅ Göl seviyeyle güzelleşir (bitkiler yine tek ağ; kelebekler yağmurun ve ateşböceğinin parçacık düğümünde: gündüz
+    +1 çizim, bütçede): seviye başına kıyıda %20 daha çok çiçek öbeği ve %3 daha çok
     nilüfer (yenilerin çoğu çiçekli; nilüfer az artar, gölgelerin üstünde çizilir), su biraz daha berrak (açık
     turkuaz derine iner, en yüksek seviyede %30); 3. seviyeden sonra gündüzleri (açık ve bulutlu havada) renkli
-    kelebekler. Kuşlar sonraya.
+    kelebekler (yatay uçar, uçtuğu yöne bakar, kanat çırpar). Kuşlar sonraya.
   - Hiç azalmaz.
 - **Dede'nin istekleri:**
   - Her oyun günü boş yuvalar dolar (3 yuva); süre sınırı yok, günde bir kez ücretsiz değiştirme hakkı var.

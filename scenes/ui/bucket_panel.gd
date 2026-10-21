@@ -2,9 +2,10 @@ class_name BucketPanel
 extends Dialog
 ## Kova paneli (Dalga 4; docs/gdd.md §10.4, §10.5): sol üstteki kovaya dokununca her yerde açılır (olta
 ## boştayken). Kovadaki balıklar tür başına bir satırda: resmi, adı, kaç tane, nadirliği, göle bırakınca
-## bir balığın verdiği göl sevgisi, değeri, BIRAK (o türün en küçüğü göle döner: release_requested). En çok ROWS
-## satır; fazlası "+N tür daha". Altta HEPSİNİ BIRAK (çocuk yanlışlıkla basmasın: ilk dokunuş "Emin
-## misin?", SURE_TIME sn içinde ikincisi bırakır: release_all_requested), kovanın toplam değeri ve SAT
+## bir balığın verdiği göl sevgisi, değeri, BIRAK (o türün en küçüğü göle döner: release_requested). Bir sayfada
+## en çok ROWS satır; fazlası sonraki sayfada (altta sayfa düğmesi; sıra aynı, panelin boyu sabit). Altta HEPSİNİ
+## BIRAK (çocuk yanlışlıkla basmasın: ilk dokunuş "Emin misin?", SURE_GUARD sn sonra ve SURE_TIME sn içinde
+## ikincisi bırakır: release_all_requested; hızlı çift dokunuş saymaz), kovanın toplam değeri ve SAT
 ## (sell_requested: main Nine'nin tezgâhına götürür). Başlıkta göl sevgisinin seviyesi ve çubuğu: bıraktıkça
 ## dolar. Bırakmak para vermez, göl sevgisi verir (gelir kuralı yok: bedava). Yazılar refresh'te.
 
@@ -23,8 +24,10 @@ const NAME_W := 300.0
 const VALUE_W := 130.0
 const RELEASE_BUTTON := Vector2(180, 122)
 const FOOT_BUTTON := Vector2(340, 122)
-## HEPSİNİ BIRAK'ın onay süresi (sn).
+const PAGE_BUTTON := Vector2(240, 122)
+## HEPSİNİ BIRAK'ın onay süresi (sn) ve ilk dokunuştan sonra ikincinin sayılmadığı süre (çift dokunuş).
 const SURE_TIME := 3.0
+const SURE_GUARD := 0.6
 
 var _love_bar: LoveBar
 var _love_label: Label
@@ -34,6 +37,7 @@ var _foot: HBoxContainer
 var _empty: Label
 var _release_all: Button
 var _sure: float = -1.0
+var _page: int = 0
 
 
 func _build() -> void:
@@ -73,6 +77,12 @@ func _build() -> void:
 	body.add_child(_foot)
 
 
+## Her açılışta ilk sayfa (bırakınca yenilenen panel sayfasında kalır).
+func open() -> void:
+	_page = 0
+	super.open()
+
+
 func refresh() -> void:
 	var db := GameState.db
 	var save := GameState.save
@@ -86,19 +96,36 @@ func refresh() -> void:
 	Dialog.clear(_foot)
 	_sure = -1.0
 	var rows := rows_of(db, save)
+	var pages := maxi(1, ceili(rows.size() / float(ROWS)))
+	_page = clampi(_page, 0, pages - 1)
 	_empty.visible = rows.is_empty()
 	_empty.text = tr("UI_BUCKET_EMPTY")
 	_rows.visible = not rows.is_empty()
-	for i in mini(rows.size(), ROWS):
+	var first := _page * ROWS
+	var last := mini(rows.size(), first + ROWS)
+	for i in range(first, last):
 		_rows.add_child(_row(db, rows[i]))
-	if rows.size() > ROWS:
-		_rows.add_child(UiKit.ink(tr("UI_SHOP_MORE_KINDS") % (rows.size() - ROWS), 26, UiKit.INK_SOFT))
+	# Sayfalı kovada son sayfanın boş yerleri tutulur: panelin boyu sayfadan sayfaya değişmez.
+	if pages > 1:
+		for i in first + ROWS - last:
+			var gap := Control.new()
+			gap.custom_minimum_size = ROW
+			_rows.add_child(gap)
 	if rows.is_empty():
 		return
 	_release_all = UiKit.button(tr("UI_BUCKET_RELEASE_ALL"), UiKit.SECONDARY, UiKit.SIZE_SMALL + 4, FOOT_BUTTON)
 	_release_all.name = "ReleaseAll"
 	_release_all.pressed.connect(_on_release_all)
 	_foot.add_child(_release_all)
+	if pages > 1:
+		var page := UiKit.button(tr("UI_BUCKET_PAGE") % [_page + 1, pages], UiKit.SECONDARY, UiKit.SIZE_SMALL + 4,
+				PAGE_BUTTON)
+		page.name = "Page"
+		page.pressed.connect(func() -> void:
+			Sounds.play("ui_tap")
+			_page = (_page + 1) % pages
+			refresh())
+		_foot.add_child(page)
 	_foot.add_child(UiKit.spacer())
 	_foot.add_child(UiKit.ink(tr("UI_SHOP_TOTAL"), UiKit.SIZE_BODY))
 	_foot.add_child(GameIcon.make("coin", 64))
@@ -122,12 +149,15 @@ func _process(delta: float) -> void:
 		_release_all.text = UiKit.upper(tr("UI_BUCKET_RELEASE_ALL"))
 
 
-## HEPSİNİ BIRAK: ilk dokunuş sorar ("Emin misin?"), SURE_TIME içinde ikincisi bırakır.
+## HEPSİNİ BIRAK: ilk dokunuş sorar ("Emin misin?"), SURE_TIME içinde ikincisi bırakır; ilk dokunuştan sonraki
+## SURE_GUARD içinde gelen dokunuş sayılmaz (hızlı çift dokunuş sormadan bırakmasın).
 func _on_release_all() -> void:
 	if _sure < 0.0:
 		_sure = SURE_TIME
 		_release_all.text = UiKit.upper(tr("UI_BUCKET_SURE"))
 		Sounds.haptic(10)
+		return
+	if _sure > SURE_TIME - SURE_GUARD:
 		return
 	_sure = -1.0
 	release_all_requested.emit()

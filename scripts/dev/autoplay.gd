@@ -2599,11 +2599,12 @@ static func _patch_lum(image: Image, at: Vector2) -> float:
 
 ## Tut-bırak ve göl sevgisi (Dalga 4, 3. adım; KONTROL satırları; telefon oranında ve --safe-inset=130 ile,
 ## TR ve EN): kova dolu (10'luk kova, 7 tür; eylem düğmesi SAT). Kovaya dokun → Kova paneli küçülmeden
-## sığar (6 satır, "+1 tür daha", nadirden sıradana); BIRAK → türün en küçüğü göle döner (sevgi +1, para
-## aynı, defterde ve sayaçta bırakılan); HEPSİNİ BIRAK önce "Emin misin?" (süre geçince eski yazı), iki
-## dokunuşla kova boşalır; panel kapanınca "Göl sevgisi 2!" (kalp) ve Dede'nin sözü, SAT gider. Yeni tür
-## kartında "Göle bırak" (büyük): balık kovadan çıkar, bildirim. Olta sudayken kovaya dokunmak oyuna geçer
-## (geri sarar). Dipte balığın yanında çöp (eski çizme: resmiyle bildirim, sevgi, kovaya girmez; Dede'nin
+## sığar (6 satır, nadirden sıradana, sayfa düğmesi: 7. tür ikinci sayfada, panelin boyu aynı); BIRAK → türün
+## en küçüğü göle döner (sevgi +1, para aynı, defterde ve sayaçta bırakılan); HEPSİNİ BIRAK önce "Emin misin?"
+## (süre geçince eski yazı), hızlı çift dokunuş saymaz, biraz sonraki ikinci dokunuşla kova boşalır; panel
+## kapanınca "Göl sevgisi 2!" (kalp) ve Dede'nin sözü, SAT gider. Yeni tür kartında "Göle bırak" (büyük): balık
+## kovadan çıkar, bildirim. Kartsız kısa yakalamada (balık elde) kovaya dokunmak paneli açar (olta boşa döner,
+## atış saklanmaz). Olta sudayken kovaya dokunmak oyuna geçer (geri sarar). Dipte balığın yanında çöp (eski çizme: resmiyle bildirim, sevgi, kovaya girmez; Dede'nin
 ## ilk sözü). Göl güzelleşir: sevgi 3'te daha çok bitki ve gündüz kelebekler, en yüksek sevgide çizim sınırı
 ## (ekran görüntüleri: seviye 1 ve 10). Paneldeki SAT Nine'nin Kova sekmesine götürür. Düğmeler büyük ve
 ## güvenli alanda.
@@ -2646,11 +2647,30 @@ func _play_release() -> void:
 	var text := _texts_in(panel)
 	_check("kovaya dokun → Kova paneli küçülmeden sığar (%.3f, %s)" % [panel.fit_scale(), panel.panel_rect()],
 			panel.visible and panel.fit_scale() >= 0.999 and _panel_inside(panel))
-	_check("panelde 6 satır, \"%s\", %d/%d, satırlar sığar%s" % [tr("UI_SHOP_MORE_KINDS") % 1, cap, cap,
+	var page_button := panel.find_child("Page", true, false) as Button
+	var page_text := UiKit.upper(tr("UI_BUCKET_PAGE") % [1, 2])
+	_check("panelde 6 satır, sayfa düğmesi \"%s\", %d/%d, satırlar sığar%s" % [page_text, cap, cap,
 			"" if wide.is_empty() else ": " + ", ".join(wide)], rows.size() == BucketPanel.ROWS
-			and text.contains(tr("UI_SHOP_MORE_KINDS") % 1) and text.contains("%d/%d" % [cap, cap]) and wide.is_empty()
-			and str(BucketPanel.rows_of(db, save)[0]["fish"]) == "pike")
+			and page_button != null and page_button.text == page_text and text.contains("%d/%d" % [cap, cap])
+			and wide.is_empty() and str(BucketPanel.rows_of(db, save)[0]["fish"]) == "pike")
 	await _shot("01_kova_paneli")
+	# 1b) Sayfa düğmesi: 7. tür ikinci sayfada (kendi BIRAK'ıyla), panelin boyu aynı; yine dokununca ilk sayfa.
+	var size_1 := panel.panel_rect().size
+	var seventh := str(BucketPanel.rows_of(db, save)[BucketPanel.ROWS]["fish"])
+	if page_button != null:
+		await _tap_control(page_button)
+	await _wait_frames(3)
+	var second := panel.find_children("Row_*", "PanelContainer", true, false).size() == 1 \
+			and panel.find_child("Release_" + seventh, true, false) != null
+	var size_2 := panel.panel_rect().size
+	await _shot("01b_kova_sayfa_2")
+	var back := panel.find_child("Page", true, false) as Button
+	if back != null:
+		await _tap_control(back)
+	await _wait_frames(3)
+	_check("sayfa düğmesi: 2. sayfada %s (BIRAK'ıyla), panelin boyu aynı (%s, %s), yine dokununca ilk sayfa" % [
+			seventh, size_1, size_2], second and size_1.is_equal_approx(size_2)
+			and panel.find_children("Row_*", "PanelContainer", true, false).size() == BucketPanel.ROWS)
 	# 2) BIRAK: kızılkanatın en küçüğü (16 cm) göle döner; sevgi +1 (seviye 2), para aynı.
 	var coins := save.coins
 	var love := save.love
@@ -2669,7 +2689,8 @@ func _play_release() -> void:
 			and int((save.records["rudd"] as Dictionary).get("released", 0)) == 1
 			and int(save.stats.get("released", 0)) == 1 and LakeLove.level(rules, save.love) == 2
 			and _texts_in(panel).contains("%d/%d" % [cap - 1, cap]))
-	# 3) HEPSİNİ BIRAK: ilk dokunuş sorar (kova aynı), süre geçince eski yazı; iki dokunuşla kova boşalır.
+	# 3) HEPSİNİ BIRAK: ilk dokunuş sorar (kova aynı), süre geçince eski yazı; hızlı çift dokunuş saymaz
+	# (SURE_GUARD), biraz sonraki ikinci dokunuşla kova boşalır.
 	var all := panel.find_child("ReleaseAll", true, false) as Button
 	var before := save.bucket.size()
 	var expect := save.love
@@ -2686,8 +2707,14 @@ func _play_release() -> void:
 		await _tap_control(all)
 		await _tap_control(all)
 	await _wait_frames(2)
-	_check("iki dokunuşla kova boşalır: sevgi %d → %d (beklenen %d), para aynı, panelde \"%s\"" % [love + 1, save.love,
-			expect, tr("UI_BUCKET_EMPTY")], save.bucket.is_empty() and save.love == expect and save.coins == coins
+	var guarded := all != null and all.text == UiKit.upper(tr("UI_BUCKET_SURE")) and save.bucket.size() == before
+	await _wait(BucketPanel.SURE_GUARD + 0.1)
+	if all != null:
+		await _tap_control(all)
+	await _wait_frames(2)
+	_check("hızlı çift dokunuş bırakmaz; biraz sonraki dokunuşla kova boşalır: sevgi %d → %d (beklenen %d), para aynı, " \
+			% [love + 1, save.love, expect] + "panelde \"%s\"" % tr("UI_BUCKET_EMPTY"), guarded and save.bucket.is_empty()
+			and save.love == expect and save.coins == coins
 			and int(save.stats.get("released", 0)) == fill.size() and _texts_in(panel).contains(tr("UI_BUCKET_EMPTY"))
 			and panel.find_child("ReleaseAll", true, false) == null)
 	await _shot("03_kova_bos")
@@ -2729,6 +2756,23 @@ func _play_release() -> void:
 			not card.visible and save.bucket.is_empty() and save.love == love + 1 and said
 			and int((save.records["bream"] as Dictionary).get("released", 0)) == 1)
 	await _shot("06_birakildi")
+	# 5b) Kartsız kısa yakalama (bilinen tür, rekor değil): balık eldeyken kovaya dokun → panel hemen açılır, olta
+	# boşa döner, dokunuş atış olarak saklanmaz.
+	await _wait_state(FishingSession.State.IDLE, 3.0)
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "rudd", 5)
+	await _tap_world(Vector2(1.0, -1.0))
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait_state(FishingSession.State.CAUGHT, 25.0)
+	_touch(1, Vector2(260, 520), false)
+	await _wait_frames(3)
+	var quick := float(main.get("_quick_catch")) >= 0.0 and not card.visible and _state() == FishingSession.State.CAUGHT
+	await _tap_control(hud.bucket_button)
+	var opened := await _wait_until(func() -> bool: return panel.visible, 1.0)
+	_check("kartsız kısa yakalamada kovaya dokun → Kova paneli hemen, olta boşta, atış saklanmadı",
+			quick and opened and _state() == FishingSession.State.IDLE and not Dice.is_point(main.get("_pending_cast")))
+	if panel.visible:
+		await _tap_control(panel.close_button)
 	# 6) Saat çipinin hemen altındaki suya dokunmak oyuna geçer (atış ya da suya yürüyüş): "Bugün" paneli
 	# açılmaz (dokunma kutusu aşağıya taşmaz; sinekte dere ağzının yukarısı oradaydı). Olta sudayken kovaya
 	# dokunmak da oyuna geçer: panel açılmaz, olta geri sarılır.

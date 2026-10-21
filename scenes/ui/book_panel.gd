@@ -93,7 +93,7 @@ func refresh() -> void:
 
 
 ## Başlıkta gölün şimdiki koşulu (oranlar ona göre): vaktin ve havanın ikonu, "Gece · Fırtınalı" (yağmurlu
-## gece fırtına) ve sevgi seviyesi 2'den büyükse sevginin Nadir+ payı.
+## gece fırtına) ve sevgi seviyesi 2 ve üstündeyse sevginin en çok Nadir+ payı.
 func _conditions_pill(db: ContentDB, save: SaveData) -> PanelContainer:
 	var cond := WorldState.conditions(db, save)
 	var phase := str(cond["phase"])

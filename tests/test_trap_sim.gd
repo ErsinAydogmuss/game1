@@ -121,7 +121,8 @@ func test_trash_does_not_change_the_crayfish() -> void:
 	assert_eq(str(with_trash["trash"]), Trash.in_trap(rules, a.seed, 0), "çöp kurulunca belli")
 
 
-## Tuzaktaki çöp ilk kerevitle birlikte çıkar (kerevit girmeden çıkmaz); yerine yeni içerikle yeni zar.
+## Tuzaktaki çöp ilk kerevitle birlikte çıkar (kerevit girmeden çıkmaz); yerine yeni içerikle yeni zar (payı
+## yeni kerevit sayısıyla: bir kerevit toplandı, 1/trap_max).
 func test_trash_comes_up_with_the_first_crayfish() -> void:
 	var db := content()
 	var rules := db.rules
@@ -140,7 +141,8 @@ func test_trash_comes_up_with_the_first_crayfish() -> void:
 	var got := TrapSim.collect(db, save, SPOT, index, T0 + rules.trap_fill_s)
 	assert_eq((got["items"] as Array).size(), 1, "bir kerevit")
 	assert_eq(str(got["trash"]), item, "çöp kerevitle çıkar")
-	assert_eq(str(save.traps[index]["trash"]), Trash.in_trap(rules, save.seed, serial + 1), "yeni içerikle yeni zar")
+	assert_eq(str(save.traps[index]["trash"]), Trash.in_trap(rules, save.seed, serial + 1, 1.0 / rules.trap_max),
+			"yeni içerikle yeni zar")
 
 
 func test_full_bucket_keeps_crayfish_in_the_trap() -> void:

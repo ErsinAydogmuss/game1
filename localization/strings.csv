@@ -298,7 +298,7 @@ UI_BOOK_HINT_LIKES_cloudy,Loves cloudy days.,Bulutlu havayı sever.
 UI_BOOK_HINT_LIKES_rain,Loves the rain.,Yağmuru sever.
 UI_BOOK_HINT_LIKES_fog,Loves misty days.,Sisi sever.
 UI_BOOK_NOW,%s · %s,%s · %s
-UI_BOOK_LOVE,Lake love %d (Rare+ +%s),Göl sevgisi %d (Nadir+ +%s)
+UI_BOOK_LOVE,Lake love %d (Rare+ up to +%s),Göl sevgisi %d (Nadir+ en çok +%s)
 UI_BOOK_HINT_SOMETIMES,Sometimes seen in this lake.,Bu gölde ara sıra görülür.
 UI_BOOK_HINT_RARELY,Rarely seen in this lake.,Bu gölde nadiren görülür.
 UI_BOOK_CHANCE,"Chance a shadow is this fish (with your gear): %s","Takımınla bir gölgenin bu balık olma şansı: %s"
@@ -551,10 +551,11 @@ UI_BUCKET_RELEASE,Release,Bırak
 UI_BUCKET_RELEASE_ALL,Release all,Hepsini bırak
 UI_BUCKET_SURE,Are you sure?,Emin misin?
 UI_BUCKET_EMPTY,Your bucket is empty. The fish you catch go here.,Kovan boş. Tuttuğun balıklar buraya girer.
+UI_BUCKET_PAGE,Page %d/%d »,Sayfa %d/%d »
 UI_LOVE_LEVEL,Lake love %d,Göl sevgisi %d
 UI_LOVE_UP,Lake love %d!,Göl sevgisi %d!
 UI_LOVE_HOW,"Release fish, pick up trash: the lake blooms.","Balık bırak, çöp topla: göl güzelleşir."
-UI_LOVE_BONUS,Rare+ fish %s more often,Nadir+ balık %s daha sık
+UI_LOVE_BONUS,Rare+ fish up to %s more often,Nadir+ balık en çok %s daha sık
 UI_DEDE_LOVE_2,"The lake knows you now, kid! More rare fish will come.",Göl seni tanıdı evlat! Nadir balık artacak.
 UI_DEDE_LOVE_6,"The lake loves you! Go see Nana, she'll be happy.","Göl seni çok sevdi! Nine'ye uğra, sevinir."
 UI_DEDE_LOVE_10,"You're the lake's favourite angler, kid!",Gölün en sevdiği balıkçı sensin evlat!

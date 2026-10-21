@@ -360,7 +360,6 @@ func _world(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
 			lines.append("")
 
 
-## Yalnızca belli vakitte gelen türün vakti (katalog: "gece", "fırtınalı gece").
 ## Göl sevgisi (Dalga 4): seviyeler ve Nadir+ payı; çöp eşyaları (pay ve sevgi).
 func _love(db: ContentDB, lines: PackedStringArray) -> void:
 	var rules := db.rules
@@ -377,9 +376,11 @@ func _love(db: ContentDB, lines: PackedStringArray) -> void:
 	for i in rules.love_levels.size():
 		lines.append("| %d | %d | ×%s |" % [i + 1, rules.love_levels[i], _number(LakeLove.rare_bonus_pm(rules, i + 1) / 1000.0)])
 	lines.append("")
-	lines.append("**Çöp:** dipte tutulan balığın yanında %s, tuzağın her yeni içeriğinde %s (ne çıkacağı önceden belli: balıkta" % [
-			_percent(rules.trash_bottom_ppm), _percent(rules.trash_trap_ppm)])
-	lines.append("gölgenin zarı, tuzakta içerik kurulurken). Kovaya girmez, satılmaz; toplanınca göl sevgisi verir.")
+	lines.append("**Çöp:** dipte tutulan balığın yanında %s, tuzakta kerevit başına %s (içerik yenilenirken yeni kerevit" % [
+			_percent(rules.trash_bottom_ppm), _percent(roundi(rules.trash_trap_ppm / float(rules.trap_max)))])
+	lines.append("sayısıyla: boş tuzak dolunca %s). Ne çıkacağı önceden belli: balıkta gölgenin zarı, tuzakta içerik kurulurken." % \
+			_percent(rules.trash_trap_ppm))
+	lines.append("Kovaya girmez, satılmaz; toplanınca göl sevgisi verir.")
 	lines.append("")
 	lines.append("| Eşya | Pay | Göl sevgisi |")
 	lines.append("|---|---|---|")
@@ -392,6 +393,7 @@ func _love(db: ContentDB, lines: PackedStringArray) -> void:
 	lines.append("")
 
 
+## Yalnızca belli vakitte gelen türün vakti (katalog: "gece", "fırtınalı gece").
 static func _when_label(own: Dictionary) -> String:
 	if str(own["weather"]) == "rain" and str(own["phase"]) == "night":
 		return "fırtınalı gece"

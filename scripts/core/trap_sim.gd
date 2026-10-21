@@ -240,7 +240,8 @@ static func remove(save: SaveData, index: int) -> void:
 
 ## Tuzağın bekleyen içeriği trap_max'a tamamlanır: bir zarlama, trap_serial'dan türeyen bir RNG ile
 ## (bölgenin trap tablosundan tür, FishTable'dan boy ve yıldız). Tuzakta bekleyen çöp yoksa aynı sıra
-## numarasıyla çöp de zarlanır (Trash.in_trap: başka tuz, kerevitlerin zarına dokunmaz).
+## numarasıyla çöp de zarlanır (Trash.in_trap: başka tuz, kerevitlerin zarına dokunmaz; payı yeni kerevit
+## sayısıyla: bir kerevit toplayıp yenileyen, dördünü birden toplayandan kerevit başına çok çöp bulmaz).
 static func _top_up(db: ContentDB, save: SaveData, spot_id: String, trap: Dictionary) -> void:
 	var items: Array = trap["items"]
 	if items.size() >= db.rules.trap_max:
@@ -253,7 +254,8 @@ static func _top_up(db: ContentDB, save: SaveData, spot_id: String, trap: Dictio
 	var rng := RandomNumberGenerator.new()
 	rng.seed = Dice.derive(save.seed, SALT, save.trap_serial)
 	if str(trap.get("trash", "")).is_empty():
-		trap["trash"] = Trash.in_trap(db.rules, save.seed, save.trap_serial)
+		var added := db.rules.trap_max - items.size()
+		trap["trash"] = Trash.in_trap(db.rules, save.seed, save.trap_serial, added / float(db.rules.trap_max))
 	save.trap_serial += 1
 	while items.size() < db.rules.trap_max:
 		var fish_id := ids[maxi(0, Dice.pick_weighted(rng, weights))]
