@@ -3,6 +3,8 @@ extends BaseTest
 ## günde ve yalnızca boşsa dolar; istekler oluşunca belli (aynı seed aynı istek) ve ekrandakilerden farklı;
 ## şablonların şartları (rütbe, takım, açık bölge, tahmin); olaylar ilerletir; biten istek bir kez öder;
 ## süresi dolmaz; günde bir değiştirme; ödül rütbeyle artar; kayıtta gidip gelir; yazıları iki dilde var.
+## Altın istekler (Gölün Sırrı): ayrı yuvada, sırayla, mektup ve rütbesi gelince; yalnızca bütün alanları
+## tutan olay sayılır; bitince harita parçası; değiştirilmez; günlük doldurma onlara dokunmaz.
 
 const SPOT := "big_lake"
 
@@ -278,9 +280,18 @@ func test_every_kind_has_a_text() -> void:
 		"zone": { "zone": "reeds" }, "phase": { "phase": "night" }, "rare": { "rarity": db.rarity_index("rare") },
 		"rain": { "weather": "rain" }, "release": {}, "trash": {}, "trap": {},
 	}
+	var requests: Array[Dictionary] = []
 	for kind: String in RequestRules.KINDS:
+		if kind == "secret":
+			# Altın istekler: her parçanın kendi yazısı.
+			for e in db.requests.special:
+				var golden := _req(kind, e["want"])
+				golden["reward"] = { "piece": int(e["piece"]) }
+				requests.append(golden)
+			continue
 		assert_true(samples.has(kind), "örnek: " + kind)
-		var r := _req(kind, samples.get(kind, {}))
+		requests.append(_req(kind, samples.get(kind, {})))
+	for r in requests:
 		r["goal"] = 3
 		var text := Requests.describe(db, r)
 		var key: String = text[0]
@@ -341,7 +352,112 @@ func test_texts_fit_two_lines() -> void:
 				var lines := roundi(measured.y / font.get_height(size))
 				assert_true(lines <= 2, "%s (%s): %d satır: %s" % [kind, "EN" if column == 1 else "TR", lines, text])
 				checked += 1
+	# Altın istekler (en büyük hedefleriyle): Bugün panelinin altın şeridinde tek satır (DayPanel.GOLDEN_TEXT_W).
+	for e in db.requests.special:
+		var golden := _req("secret", e["want"])
+		golden["goal"] = int(e["goal"])
+		golden["reward"] = { "piece": int(e["piece"]) }
+		var described := Requests.describe(db, golden)
+		for column: int in [1, 2]:
+			var text := (table[str(described[0])] as PackedStringArray)[column] % described[1]
+			var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, DayPanel.GOLDEN_TEXT_SIZE).x
+			assert_true(width <= DayPanel.GOLDEN_TEXT_W, "altın %d (%s): %d > %d: %s" % [int(e["piece"]),
+					"EN" if column == 1 else "TR", roundi(width), roundi(DayPanel.GOLDEN_TEXT_W), text])
+			checked += 1
 	assert_true(checked > 50, "yazılar ölçüldü (%d)" % checked)
+
+
+func test_golden_request_waits_for_letters_and_rank() -> void:
+	var db := content()
+	var save := _save(6)
+	save.letters = 2
+	assert_true(Requests.offer_golden(db, save).is_empty(), "üçüncü mektuptan önce yok")
+	save.letters = 3
+	_rank(save, 5)
+	assert_true(Requests.offer_golden(db, save).is_empty(), "rütbe 6'dan önce yok")
+	_rank(save, 6)
+	var serial := save.request_serial
+	var golden := Requests.offer_golden(db, save)
+	assert_true(not golden.is_empty(), "mektup 3 ve rütbe 6: ilk altın istek")
+	assert_eq(int(golden["slot"]), Requests.golden_slot(db), "altın yuvada")
+	assert_true(int(golden["slot"]) >= db.requests.slots and int(golden["slot"]) < SaveData.MAX_REQUESTS,
+			"günlük yuvaların dışında, kaydın içinde")
+	assert_eq(str(golden["kind"]), "secret", "altın istek")
+	assert_eq(int((golden["reward"] as Dictionary)["piece"]), 1, "ilk parça")
+	assert_eq(int((golden["reward"] as Dictionary)["coins"]), 210, "para: 150 + 10 × 6")
+	assert_eq(save.request_serial, serial + 1, "kendi sıra numarası")
+	assert_eq(Requests.golden(db, save), golden, "kayıtta")
+	assert_true(Requests.offer_golden(db, save).is_empty(), "yuva doluyken ikincisi gelmez")
+	assert_true(Requests.daily(db, save).is_empty(), "günlük isteklerden sayılmaz")
+
+
+func test_golden_request_counts_only_matching_events() -> void:
+	var db := content()
+	var save := _save(6)
+	save.letters = 3
+	var golden := Requests.offer_golden(db, save)
+	var event := { "type": "catch", "fish": "pike", "zone": "lily_cove", "phase": "noon", "technique": "spin",
+			"weather": "clear", "size_cm": 60, "rarity": 2 }
+	assert_true(Requests.note(save, event).is_empty(), "öğle sayılmaz")
+	event["phase"] = "evening"
+	event["zone"] = "dock_cove"
+	assert_true(Requests.note(save, event).is_empty(), "başka bölge sayılmaz")
+	event["zone"] = "lily_cove"
+	event["fish"] = "perch"
+	assert_true(Requests.note(save, event).is_empty(), "başka tür sayılmaz")
+	assert_true(Requests.note(save, { "type": "release" }).is_empty(), "bırakma sayılmaz")
+	event["fish"] = "pike"
+	var done := Requests.note(save, event)
+	assert_eq(done.size(), 1, "akşam nilüferli koyda turna")
+	assert_eq(int(golden["progress"]), 1, "tamam")
+	# Üçüncü parça: bırakılan balık sayısı.
+	var release := _req("secret", { "event": "release" })
+	assert_eq(Requests.counts_for(release, { "type": "release", "count": 2 }), 2, "bırakmada sayısı")
+	assert_eq(Requests.counts_for(release, event), 0, "av sayılmaz")
+
+
+func test_golden_request_pays_a_map_piece_and_the_next_follows() -> void:
+	var db := content()
+	var save := _save(6)
+	save.letters = 3
+	var golden := Requests.offer_golden(db, save)
+	golden["progress"] = int(golden["goal"])
+	var coins := save.coins
+	var paid := Requests.pay(db, save, golden)
+	assert_eq(int(paid["piece"]), 1, "parça")
+	assert_eq(save.map_pieces, 1, "kayıtta bir parça")
+	assert_eq(save.coins, coins + int(paid["coins"]), "para")
+	assert_true(Requests.golden(db, save).is_empty(), "yuva boşaldı")
+	assert_true(Requests.offer_golden(db, save).is_empty(), "ikinci parça dördüncü mektubu ve rütbe 8'i ister")
+	save.letters = 4
+	_rank(save, 8)
+	var next := Requests.offer_golden(db, save)
+	assert_eq(int((next["reward"] as Dictionary)["piece"]), 2, "ikinci parça")
+	# Hepsi bitince başka altın istek yok.
+	save.requests.clear()
+	save.map_pieces = SaveData.MAX_MAP_PIECES
+	save.letters = Secret.LETTERS.size()
+	_rank(save, 20)
+	assert_true(Requests.offer_golden(db, save).is_empty(), "dört parçadan sonra yok")
+
+
+func test_golden_request_is_never_rerolled_or_refilled() -> void:
+	var db := content()
+	var save := _save(10)
+	save.letters = 5
+	Requests.refill(db, save, SPOT)
+	var golden := Requests.offer_golden(db, save)
+	assert_true(not Requests.can_reroll(db, save, Requests.golden_slot(db)), "altın istek değiştirilmez")
+	assert_true(Requests.reroll(db, save, SPOT, Requests.golden_slot(db)).is_empty(), "değiştirme denemesi boş")
+	for slot in db.requests.slots:
+		Requests.find_slot(save, slot)["progress"] = 0
+		save.requests.erase(Requests.find_slot(save, slot))
+	save.clock_s += db.rules.phase_s * DayClock.PHASES.size()
+	Requests.refill(db, save, SPOT)
+	assert_eq(Requests.daily(db, save).size(), db.requests.slots, "yeni günde günlük yuvalar dolar")
+	assert_eq(Requests.golden(db, save), golden, "altın istek yerinde, aynı")
+	var back := SaveData.from_dict(save.to_dict())
+	assert_eq(Requests.golden(db, back), golden, "kayıtta gidip gelir")
 
 
 func _save(rank: int) -> SaveData:

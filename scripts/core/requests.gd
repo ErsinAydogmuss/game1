@@ -8,6 +8,9 @@ extends RefCounted
 ## İlerleme isteğin içinde: oyunun olayları (av, bırakma, çöp, tuzak) note'a gelir; biten istek pay ile
 ## bir kez öder (para, rütbe puanı, göl sevgisi) ve yuvası boşalır. Saf mantık: oyun, Bugün paneli ve
 ## denge botu aynı kuralı kullanır. Yazıyı UI kurar (describe: çeviri anahtarı ve değerler).
+## Altın istekler (Gölün Sırrı, 5. adım; requests.json "special"): günlük yuvaların sonrasındaki altın yuvada
+## (golden_slot), sırayla; yeterince mektup okununca ve rütbesi gelince hemen gelir (offer_golden; yeni günü
+## beklemez), değiştirilmez, süresi dolmaz; bitince harita parçası da verir. Zarı yok: içeriği veriden.
 @warning_ignore_start("integer_division")
 
 ## İsteğin zarının tuzu (Dice.derive(seed, SALT, request_serial)).
@@ -29,6 +32,44 @@ static func daily(db: ContentDB, save: SaveData) -> Array[Dictionary]:
 		if not r.is_empty():
 			out.append(r)
 	return out
+
+
+## Altın isteğin yuvası (günlük yuvalardan sonra; SaveData.MAX_REQUESTS'in içinde).
+static func golden_slot(db: ContentDB) -> int:
+	return db.requests.slots
+
+
+## Altın yuvadaki istek (yoksa boş).
+static func golden(db: ContentDB, save: SaveData) -> Dictionary:
+	return find_slot(save, golden_slot(db))
+
+
+## Sıradaki altın istek gelebiliyorsa altın yuvaya koyar: yuva boş, parçalar bitmedi, o parçanın mektubu
+## okundu ve rütbesi geldi. Ödülü o anki rütbeyle (para round5(taban + rütbe başına × rütbe), rütbe puanı,
+## sevgi, parça). Döner: yeni istek (gelmediyse boş).
+static func offer_golden(db: ContentDB, save: SaveData) -> Dictionary:
+	var rules := db.requests
+	if not golden(db, save).is_empty() or save.map_pieces >= SaveData.MAX_MAP_PIECES:
+		return {}
+	var piece := save.map_pieces + 1
+	var def := rules.special_for(piece)
+	var rank := Rank.rank(db, save)
+	if def.is_empty() or save.letters < int(def["letters"]) or rank < int(def["rank"]):
+		return {}
+	var coins := (rules.special_coins_base + rules.special_coins_per_rank * rank + 2) / 5 * 5
+	var r := {
+		"slot": golden_slot(db),
+		"kind": "secret",
+		"want": (def["want"] as Dictionary).duplicate(),
+		"goal": int(def["goal"]),
+		"progress": 0,
+		"day": DayClock.day(db.rules, save.clock_s),
+		"serial": save.request_serial,
+		"reward": { "coins": coins, "xp": rules.special_xp, "love": rules.special_love, "piece": piece },
+	}
+	save.request_serial += 1
+	save.requests.append(r)
+	return r
 
 
 ## Yuvadaki istek (yoksa boş).
@@ -272,12 +313,20 @@ static func counts_for(request: Dictionary, event: Dictionary) -> int:
 		"release", "trash", "trap":
 			if type == str(request["kind"]):
 				return n
+		"secret":
+			# Altın istek: olay ve istenen her alan tutmalı (akşam, nilüferli koyda, turna); bırakmada sayısı.
+			if type != str(want.get("event", "")):
+				return 0
+			for field: String in RequestRules.SPECIAL_FIELDS:
+				if want.has(field) and str(event.get(field, "")) != str(want[field]):
+					return 0
+			return n if type == "release" else 1
 	return 0
 
 
-## Biten isteği öder (bir kez: kayıttan çıkar, yuvası boşalır): para, rütbe puanı, göl sevgisi. Döner:
-## { request, coins, xp, love, ranked: Rank.add_xp, loved: LakeLove.add } (istek kayıtta yoksa ya da
-## bitmediyse boş).
+## Biten isteği öder (bir kez: kayıttan çıkar, yuvası boşalır): para, rütbe puanı, göl sevgisi; altın istekte
+## harita parçası. Döner: { request, coins, xp, love, piece (0: parça yok), ranked: Rank.add_xp, loved:
+## LakeLove.add } (istek kayıtta yoksa ya da bitmediyse boş).
 static func pay(db: ContentDB, save: SaveData, request: Dictionary) -> Dictionary:
 	var index := -1
 	for i in save.requests.size():
@@ -295,6 +344,9 @@ static func pay(db: ContentDB, save: SaveData, request: Dictionary) -> Dictionar
 	save.coins += coins
 	var xp := int(reward.get("xp", 0))
 	var love := int(reward.get("love", 0))
+	var piece := int(reward.get("piece", 0))
+	if piece > 0:
+		save.map_pieces = clampi(maxi(save.map_pieces, piece), 0, SaveData.MAX_MAP_PIECES)
 	save.stats["requests"] = int(save.stats.get("requests", 0)) + 1
 	save.stats["request_coins"] = int(save.stats.get("request_coins", 0)) + coins
 	return {
@@ -302,6 +354,7 @@ static func pay(db: ContentDB, save: SaveData, request: Dictionary) -> Dictionar
 		"coins": coins,
 		"xp": xp,
 		"love": love,
+		"piece": piece,
 		"ranked": Rank.add_xp(db, save, xp),
 		"loved": LakeLove.add(db.rules, save, love),
 	}
@@ -317,11 +370,12 @@ static func finished(save: SaveData) -> Array[Dictionary]:
 	return out
 
 
-## Bugün bu yuvanın isteği değiştirilebilir mi (günde bir, bitmemiş istek)?
+## Bugün bu yuvanın isteği değiştirilebilir mi (günde bir, bitmemiş, günlük yuvadaki istek; altın istek
+## değiştirilmez)?
 static func can_reroll(db: ContentDB, save: SaveData, slot: int) -> bool:
 	var r := find_slot(save, slot)
-	return unlocked(db, save) and not r.is_empty() and int(r["progress"]) < int(r["goal"]) \
-			and save.reroll_day < DayClock.day(db.rules, save.clock_s)
+	return unlocked(db, save) and slot < db.requests.slots and not r.is_empty() \
+			and int(r["progress"]) < int(r["goal"]) and save.reroll_day < DayClock.day(db.rules, save.clock_s)
 
 
 ## Bugünün değiştirme hakkı kullanıldı mı?
@@ -366,6 +420,9 @@ static func describe(db: ContentDB, request: Dictionary) -> Array:
 			return ["UI_REQ_phase", ["PHASE_" + str(want.get("phase", "")), goal]]
 		"rare":
 			return ["UI_REQ_rare", [goal, "RARITY_" + db.rarity_id(int(want.get("rarity", 0)))]]
+		"secret":
+			# Altın istek: parçanın kendi yazısı (alanları birleşik: "Akşam Nilüferli Koy'da 1 Turna tut").
+			return ["UI_REQ_secret_%d" % int((request["reward"] as Dictionary).get("piece", 0)), [goal]]
 		_:
 			return ["UI_REQ_" + str(request["kind"]), [goal]]
 

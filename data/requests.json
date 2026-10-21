@@ -1,5 +1,5 @@
 {
-	"_note": "Dede'nin istekleri (Dalga 4, docs/gdd.md §10.5). Rütbe unlock_rank'ta açılır; slots günlük yuva (her yeni oyun gününde yalnızca boş yuvalar dolar; süre sınırı yok, günde bir değiştirme ücretsiz). İstek oluşunca belli (gelir kuralı 4): zar kaydın seed'i ve isteğin sıra numarasıyla. Şablonlar: kind (kimlik değişmez: kayıtta), weight (seçilme ağırlığı), rank (en az rütbe), count [en az, en çok] (tür isteğinde nadirliğe göre species_count), love (bittiğinde göl sevgisi), mult (ödül çarpanı). Ödül: para round5((coins_base + coins_per_rank × rütbe) × mult × [spread_min, spread_max]), rütbe puanı (xp_base + xp_per_rank × rütbe) × mult. Tür ve boy isteği bir açık bölgede elindeki bir teknikle en az species_min_ppm gelen türden (Sıradan, Güzel, Nadir; koruma altındaki tür yok); boy türün size_percentile yüzdeliğinden 5 cm'ye yuvarlanır (3 yıldızın içinde); teknik isteği alınmış kamışla (şamandıra değil); bölge isteği açık bölge; yağmur isteği yalnızca bugünün ya da yarının havası yağmursa; çöp isteği dip kamışı ya da tuzak varken; tuzak isteği tuzak alınmışken.",
+	"_note": "Dede'nin istekleri (Dalga 4, docs/gdd.md §10.5). Rütbe unlock_rank'ta açılır; slots günlük yuva (her yeni oyun gününde yalnızca boş yuvalar dolar; süre sınırı yok, günde bir değiştirme ücretsiz). İstek oluşunca belli (gelir kuralı 4): zar kaydın seed'i ve isteğin sıra numarasıyla. Şablonlar: kind (kimlik değişmez: kayıtta), weight (seçilme ağırlığı), rank (en az rütbe), count [en az, en çok] (tür isteğinde nadirliğe göre species_count), love (bittiğinde göl sevgisi), mult (ödül çarpanı). Ödül: para round5((coins_base + coins_per_rank × rütbe) × mult × [spread_min, spread_max]), rütbe puanı (xp_base + xp_per_rank × rütbe) × mult. Tür ve boy isteği bir açık bölgede elindeki bir teknikle en az species_min_ppm gelen türden (Sıradan, Güzel, Nadir; koruma altındaki tür yok); boy türün size_percentile yüzdeliğinden 5 cm'ye yuvarlanır (3 yıldızın içinde); teknik isteği alınmış kamışla (şamandıra değil); bölge isteği açık bölge; yağmur isteği yalnızca bugünün ya da yarının havası yağmursa; çöp isteği dip kamışı ya da tuzak varken; tuzak isteği tuzak alınmışken. Altın istekler (special; Gölün Sırrı, 5. adım): ayrı bir yuvada (slots'un sonrası), sırayla, her biri bir harita parçası (piece); yeterince mektup okununca (letters) ve rütbesi gelince (rank) Dede verir; değiştirilmez, süresi dolmaz. want: event (catch ya da release) ve olayın tutması gereken alanlar (fish, zone, phase, technique, weather). Ödülü special_reward: para round5(coins_base + coins_per_rank × rütbe), rütbe puanı xp, göl sevgisi love ve parça.",
 	"slots": 3,
 	"unlock_rank": 2,
 	"reward": { "coins_base": 15, "coins_per_rank": 6, "spread_min": 0.75, "spread_max": 1.25, "xp_base": 10, "xp_per_rank": 4 },
@@ -17,5 +17,12 @@
 		{ "kind": "release", "weight": 3, "rank": 2, "count": [3, 5], "love": 5, "mult": 0.8 },
 		{ "kind": "trash", "weight": 2, "rank": 4, "count": [1, 2], "love": 6, "mult": 1.0 },
 		{ "kind": "trap", "weight": 2, "rank": 3, "count": [3, 6], "love": 3, "mult": 0.9 }
+	],
+	"special_reward": { "coins_base": 150, "coins_per_rank": 10, "xp": 100, "love": 8 },
+	"special": [
+		{ "piece": 1, "letters": 3, "rank": 6, "goal": 1, "want": { "event": "catch", "fish": "pike", "zone": "lily_cove", "phase": "evening" } },
+		{ "piece": 2, "letters": 4, "rank": 8, "goal": 3, "want": { "event": "catch", "phase": "night" } },
+		{ "piece": 3, "letters": 5, "rank": 10, "goal": 5, "want": { "event": "release" } },
+		{ "piece": 4, "letters": 6, "rank": 12, "goal": 1, "want": { "event": "catch", "fish": "wels", "zone": "deep_water", "phase": "night", "technique": "bottom" } }
 	]
 }

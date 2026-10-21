@@ -35,6 +35,10 @@ const REQUEST_TEXT_W := 200.0
 const REQUEST_TEXT_SIZE := 26
 const REROLL_BUTTON := Vector2(122, 122)
 const REROLL_ICON := 76.0
+## Dede'nin altın isteği (Gölün Sırrı): günlük kartların üstünde tek satırlık altın şerit; yazının en geniş
+## hâli (test_requests iki dilde ölçer) ve boyu.
+const GOLDEN_TEXT_W := 720.0
+const GOLDEN_TEXT_SIZE := 28
 
 var _cards: HBoxContainer
 var _tea_box: HBoxContainer
