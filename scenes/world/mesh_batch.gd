@@ -86,6 +86,22 @@ func is_empty() -> bool:
 	return _verts.is_empty()
 
 
+## Başka bir topluluğun parçalarını ekler (göl sevgisinin çiçekleri temel bitkilerle tek ağda).
+func append(other: MeshBatch) -> void:
+	var base := _verts.size()
+	_verts.append_array(other._verts)
+	_normals.append_array(other._normals)
+	_uvs.append_array(other._uvs)
+	_colors.append_array(other._colors)
+	for index in other._indices:
+		_indices.append(base + index)
+
+
+## Üçgen sayısı (ölçüm ve bot).
+func triangle_count() -> int:
+	return int(_indices.size() / 3.0)
+
+
 ## Birleşik ağ (tek yüzey; köşe renkli).
 func mesh() -> ArrayMesh:
 	var out := ArrayMesh.new()

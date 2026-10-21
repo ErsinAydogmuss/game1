@@ -181,6 +181,33 @@ func test_lake_scenery_keeps_clear_and_cheap() -> void:
 	scene.free()
 
 
+## Göl sevgisi (Dalga 4): seviyeyle bitkiler artar (çiçek, çiçekli nilüfer), hepsi yine tek ağda (çizim
+## eklemez); aynı seviye aynı bitkiler, seviye 1'de bugünkü göl.
+func test_lake_love_adds_plants_without_draws() -> void:
+	var db := content()
+	var lake := db.lake(db.main_spot)
+	var scene := LakeScene.new()
+	scene.keep_clear.append(ShopStall.clear_zone(lake.dock))
+	scene.setup(lake)
+	var start: Vector2 = db.spot(db.main_spot)["start"]
+	var base := scene.plants_triangles()
+	var draws := view_draws(scene, start)
+	var top := LakeLove.max_level(db.rules)
+	scene.set_love(5, top)
+	var five := scene.plants_triangles()
+	assert_true(five > base, "seviye 5'te daha çok bitki (%d → %d üçgen)" % [base, five])
+	assert_eq(view_draws(scene, start), draws, "çizim aynı (bitkiler tek ağ)")
+	assert_eq(scene.find_children("Plants*", "MeshInstance3D", true, false).size(), 1, "tek bitki ağı")
+	scene.set_love(top, top)
+	var full := scene.plants_triangles()
+	assert_true(full > five, "en yüksek seviyede daha da çok (%d)" % full)
+	scene.set_love(5, top)
+	assert_eq(scene.plants_triangles(), five, "aynı seviye aynı bitkiler")
+	scene.set_love(1, top)
+	assert_eq(scene.plants_triangles(), base, "seviye 1'de bugünkü göl")
+	scene.free()
+
+
 ## Oyun kamerasının (FollowCamera; balıkçı p'de) görüş alanına giren ağların çizimi: her ağ bir,
 ## gölgesi bir daha. Testte düğümler ağaçta değil: dünya dönüşümü ebeveynlerden hesaplanır.
 static func view_draws(root: Node3D, p: Vector2) -> int:

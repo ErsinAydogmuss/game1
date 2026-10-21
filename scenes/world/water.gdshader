@@ -7,7 +7,7 @@ shader_type spatial;
 // uzun çizgiler (dalgalar da akıntıyla kayar). Karada (kıyı uzaklığı < 0) çizilmez. Compatibility
 // renderer'da derinlik dokusu yok: her şey veri dokusundan.
 // Vakit ve hava (world_light.gdshaderinc): gece suyun kendi ışığı (koyu suda gölge seçilsin), yağmur
-// halkaları, kayan bulut gölgeleri, lambaların ışık havuzu.
+// halkaları, kayan bulut gölgeleri, lambaların ışık havuzu; göl sevgisiyle daha berrak renk.
 render_mode cull_back, diffuse_burley, specular_schlick_ggx;
 
 #include "res://scenes/world/noise.gdshaderinc"
@@ -43,9 +43,12 @@ void fragment() {
 	float meters = d.r * depth_scale;
 	float depth = clamp(meters / 3.5, 0.0, 1.0);
 	float flow = d.a;
-	vec3 water = mix(shallow_color.rgb, mid_color.rgb, smoothstep(0.0, 1.225, meters));
-	water = mix(water, deep_color.rgb, smoothstep(1.225, 3.325, meters));
-	water = mix(water, abyss_color.rgb, smoothstep(4.0, 9.0, meters));
+	// Göl sevgisiyle su berraklaşır: açık turkuaz biraz daha derine iner (yalnızca renk; dalga ve köpük
+	// metreyle).
+	float tint_m = meters / (1.0 + 0.3 * world_love);
+	vec3 water = mix(shallow_color.rgb, mid_color.rgb, smoothstep(0.0, 1.225, tint_m));
+	water = mix(water, deep_color.rgb, smoothstep(1.225, 3.325, tint_m));
+	water = mix(water, abyss_color.rgb, smoothstep(4.0, 9.0, tint_m));
 	vec2 p = world_xz;
 	water *= 1.0 - cloud_shade(p) * 0.2;
 	float t = TIME * wave_speed;

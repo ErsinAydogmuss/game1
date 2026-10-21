@@ -7,6 +7,8 @@ global uniform float world_glow;
 global uniform float world_night;
 global uniform float world_rain;
 global uniform float world_cloud;
+// Göl sevgisi (0: seviye 1, 1: en yüksek seviye; LakeScene.set_love): su biraz daha berrak.
+global uniform float world_love;
 global uniform vec4 world_light;
 global uniform vec4 pool_color;
 // Işık havuzları: (x, z, yarıçap m, güç); güç 0 ise yok.

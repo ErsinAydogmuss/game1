@@ -92,6 +92,8 @@ const LOVE_LINES: Array[int] = [2, 6, 10]
 const LOVE_FLAG := "told_love_%d"
 ## Dede her çöp eşyasının ilk gelişinde konuşur (bayrak; söz UI_DEDE_TRASH_<eşya>).
 const TRASH_FLAG := "told_trash_%s"
+## Göl sevgisinin bu seviyesinden sonra gündüzleri kelebekler uçar (göl güzelleşir: LakeScene.set_love).
+const BUTTERFLY_LOVE := 3
 
 var session: FishingSession
 var lake: LakeShape
@@ -319,6 +321,8 @@ func _start_session() -> void:
 	# sabahtan kaymasın).
 	_look_clock = -1
 	scene.set_look(_current_look(), true)
+	# Göl, kaydın göl sevgisiyle güzelleşmiş (çiçekler, nilüferler, berrak su; kayıt değişince de).
+	scene.set_love(LakeLove.level(GameState.db.rules, save.love), LakeLove.max_level(GameState.db.rules))
 	_tea_shot = 0.0
 	session = FishingSession.new(GameState.db, spot_id, gear, Dice.derive(save.seed, save.session),
 			bool(GameState.setting("easy", false)), save.catches == 0,
@@ -1229,6 +1233,9 @@ func _sync_look(delta: float) -> void:
 		kind = "rain"
 	elif float(look["night"]) > 0.5 and float(look["fog_begin"]) > 20.0:
 		kind = "fireflies"
+	elif float(look["night"]) < 0.3 and float(look["fog_begin"]) > 20.0 \
+			and scene.love_level() >= BUTTERFLY_LOVE:
+		kind = "butterflies"
 	ambient.set_kind(kind)
 	ambient.follow(Vector3(camera.target.x, 0.0, camera.target.z))
 	# Ortam sesi görünüşle: yağmur, gece (cırcır böceği, kurbağa) ya da göl (kuşlar).
@@ -1834,6 +1841,7 @@ func _after_love(result: Dictionary) -> void:
 	var level := int(result.get("new_level", 1))
 	if level <= int(result.get("old_level", 1)):
 		return
+	scene.set_love(level, LakeLove.max_level(GameState.db.rules))
 	hud.toast_later(tr("UI_LOVE_UP") % level, UiKit.ACCENT, "love_up", "love")
 	_world_line_due = true
 

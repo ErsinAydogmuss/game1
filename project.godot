@@ -72,6 +72,10 @@ world_cloud={
 "type": "float",
 "value": 0.0
 }
+world_love={
+"type": "float",
+"value": 0.0
+}
 world_light={
 "type": "color",
 "value": Color(1, 1, 1, 1)

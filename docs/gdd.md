@@ -805,7 +805,10 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     seviye 1'de "Balık bırak, çöp topla: göl güzelleşir.", sonra "Nadir+ balık %4 daha sık"), defterin başlığı.
   - **Etki** ✅: 10 seviye (eşikler 0, 12, 30, 60, 110, 180, 270, 380, 520, 700); Nadir+ ağırlıkları seviye başına %4
     artar, en çok %36. Defterdeki oranlara yansır (defterin başlığı: "Şimdi: Akşam · Yağmurlu · Göl sevgisi 2 (Nadir+ +%4)").
-  - Göl seviyeyle güzelleşir: çiçek, kuş, kelebek, daha berrak su.
+  - ✅ Göl seviyeyle güzelleşir (çizim eklemez): seviye başına kıyıda %20 daha çok çiçek öbeği ve %3 daha çok
+    nilüfer (yenilerin çoğu çiçekli; nilüfer az artar, gölgelerin üstünde çizilir), su biraz daha berrak (açık
+    turkuaz derine iner, en yüksek seviyede %30); 3. seviyeden sonra gündüzleri (açık ve bulutlu havada) renkli
+    kelebekler. Kuşlar sonraya.
   - Hiç azalmaz.
 - **Dede'nin istekleri:**
   - Her oyun günü boş yuvalar dolar (3 yuva); süre sınırı yok, günde bir kez ücretsiz değiştirme hakkı var.

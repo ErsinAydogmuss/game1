@@ -2604,7 +2604,9 @@ static func _patch_lum(image: Image, at: Vector2) -> float:
 ## dokunuşla kova boşalır; panel kapanınca "Göl sevgisi 2!" (kalp) ve Dede'nin sözü, SAT gider. Yeni tür
 ## kartında "Göle bırak" (büyük): balık kovadan çıkar, bildirim. Olta sudayken kovaya dokunmak oyuna geçer
 ## (geri sarar). Dipte balığın yanında çöp (eski çizme: resmiyle bildirim, sevgi, kovaya girmez; Dede'nin
-## ilk sözü). Paneldeki SAT Nine'nin Kova sekmesine götürür. Düğmeler büyük ve güvenli alanda.
+## ilk sözü). Göl güzelleşir: sevgi 3'te daha çok bitki ve gündüz kelebekler, en yüksek sevgide çizim sınırı
+## (ekran görüntüleri: seviye 1 ve 10). Paneldeki SAT Nine'nin Kova sekmesine götürür. Düğmeler büyük ve
+## güvenli alanda.
 func _play_release() -> void:
 	_use_save(3)
 	var db := GameState.db
@@ -2622,6 +2624,9 @@ func _play_release() -> void:
 	save.love = rules.love_levels[1] - 1
 	GameState.changed.emit()
 	await _wait(1.0)
+	var scene: LakeScene = main.get("scene")
+	var plants_1 := scene.plants_triangles()
+	await _shot("00_sevgi_1")
 	var cap := Bucket.capacity(db, save)
 	_check("kova dolu (%d/%d): eylem düğmesi SAT" % [save.bucket.size(), cap],
 			save.bucket.size() == cap and str(main.call("_action_kind")) == "sell")
@@ -2781,6 +2786,26 @@ func _play_release() -> void:
 	_check("Dede çizmeyi söyler (%s)" % main.get("_hint_shown"), talked)
 	await _shot("08_dede_cop")
 	await _wait_state(FishingSession.State.IDLE, 4.0)
+	# 7b) Göl güzelleşir: sevgi 3'te bitkiler arttı (yine tek ağ), gündüz kelebekler; en yüksek sevgide daha da
+	# çiçekli göl ve berrak su, iskelede çizim sınırı.
+	var ambient: AmbientParticles = main.get("ambient")
+	_check("göl sevgisi 3: bitkiler arttı (%d → %d üçgen), gündüz kelebekler (%s)" % [plants_1, scene.plants_triangles(),
+			ambient.kind], scene.love_level() == 3 and scene.plants_triangles() > plants_1 and ambient.kind == "butterflies")
+	var old_level := LakeLove.level(rules, save.love)
+	save.love = rules.love_levels[rules.love_levels.size() - 1]
+	main.call("_after_love", { "old_level": old_level, "new_level": LakeLove.level(rules, save.love) })
+	await _wait(1.5)
+	var busy_draws := int((await _measure_draws())["draws"])
+	# Geçici yazılar (bildirim, Dede'nin sözleri) sönünce ölçülür (gezi botu gibi).
+	var hint: Control = hud.get("_hint")
+	await _wait_until(func() -> bool: return not toast.is_visible_in_tree() and not hint.visible, 25.0)
+	await _wait(0.5)
+	var love_draws := int((await _measure_draws())["draws"])
+	print("ÇİZİM sevgi 10: yazılarla %d, yazısız %d" % [busy_draws, love_draws])
+	_check("en yüksek sevgide (seviye %d, %d üçgen bitki) iskelede en çok %d çizim (%d)" % [scene.love_level(),
+			scene.plants_triangles(), TOUR_DRAWS, love_draws], scene.love_level() == LakeLove.max_level(rules)
+			and love_draws > 0 and love_draws <= TOUR_DRAWS)
+	await _shot("08c_sevgi_10")
 	# 8) Paneldeki SAT: Nine'nin tezgâhı, dükkân Kova sekmesinde.
 	for cm in [18, 21, 24]:
 		Records.add(save.records, "rudd", cm, 1, 0)

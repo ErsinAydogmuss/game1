@@ -77,6 +77,14 @@ const LILY_CLUSTERS := 7
 const LILY_NOTCH := 0.3
 const LOTUS_CHANCE := 0.35
 const FLOWER_CLUSTERS := 18
+## Göl sevgisi (Dalga 4): seviye başına bölgenin çiçek öbeklerinin LOVE_FLOWERS katı ve nilüfer öbeklerinin
+## LOVE_LILIES katı kadar yenisi (yeni nilüferlerin çoğu çiçekli: LOVE_LOTUS). Kendi zarıyla (LOVE_SALT;
+## çiçek ve nilüfer ayrı): temel süsler kaymaz, seviye artınca eski yenileri yerinde kalır. Nilüfer az
+## artar: gölgenin üstünde çizilir.
+const LOVE_FLOWERS := 0.2
+const LOVE_LILIES := 0.03
+const LOVE_LOTUS := 0.8
+const LOVE_SALT := 5153
 const LILY := Color("#4f9a3c")
 const LILY_LIGHT := Color("#68b04a")
 const LOTUS := Color("#f48fb6")
@@ -151,6 +159,12 @@ var _rng := RandomNumberGenerator.new()
 var _batches: Dictionary = {}
 ## Yerleşmiş ağaç, kaya ve çalıların yerleri (x, z, yarıçap): üst üste binmesinler.
 var _occupied: Array[Vector3] = []
+## Bitkilerin (nilüfer, çiçek) temel topluluğu ve tek ağı: göl sevgisi değişince ağ, temel + sevginin
+## bitkileriyle yeniden kurulur (set_love).
+var _plants_base: MeshBatch
+var _plants_node: MeshInstance3D
+var _plants_tris: int = 0
+var _love_level: int = 1
 ## Kampın yeri (x, z, yarıçap).
 var _camp := Vector3.ZERO
 ## Gölün bölgeleri (ContentDB; çitler ve şamandıralar için): main setup'tan önce verir.
@@ -270,6 +284,38 @@ func flash() -> void:
 
 ## Lambaların ışık havuzları: her biri (x, z, yarıçap m, güç); en çok POOLS tanesi, fazlası atılır.
 ## Değişmedikçe bir şey yapmaz (main her kare verir).
+## Göl sevgisi (Dalga 4, docs/gdd.md §10.5): seviyeyle göl güzelleşir: kıyıda daha çok çiçek, suda çiçek
+## açmış yeni nilüferler (bitkiler yine tek ağ: yeniden kurulur, çizim eklemez), su biraz daha berrak
+## (world_love). Seviye 1'de bugünkü göl. Kelebekleri main seçer (AmbientParticles).
+func set_love(level: int, max_level: int) -> void:
+	var top := maxi(2, max_level)
+	level = clampi(level, 1, top)
+	RenderingServer.global_shader_parameter_set("world_love", float(level - 1) / float(top - 1))
+	if level == _love_level:
+		return
+	_love_level = level
+	if _plants_base == null:
+		return
+	var batch := MeshBatch.new()
+	batch.append(_plants_base)
+	batch.append(_love_plants(level))
+	_plants_tris = batch.triangle_count()
+	if _plants_node != null:
+		_plants_node.mesh = batch.mesh()
+	elif not batch.is_empty():
+		_plants_node = batch.build(self, "Plants")
+		_plants_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## Gölün sevgi seviyesi (set_love) ve bitkilerin üçgen sayısı (test ve bot).
+func love_level() -> int:
+	return _love_level
+
+
+func plants_triangles() -> int:
+	return _plants_tris
+
+
 func set_pools(pools: Array[Vector4]) -> void:
 	if _pools_set and pools == _pools:
 		return
@@ -593,9 +639,11 @@ func _build_scenery() -> void:
 	_zone = -1
 	_kit = DEFAULT_KIT
 	_flush_reeds(blades, heads)
+	_plants_base = plants
+	_plants_tris = plants.triangle_count()
 	if not plants.is_empty():
-		var node := plants.build(self, "Plants")
-		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_plants_node = plants.build(self, "Plants")
+		_plants_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if not forest:
 		_rng.seed = SCENERY_SEED
 		_build_fallback_trees()
@@ -812,12 +860,12 @@ func _rock(out: Array[Array], p: Vector2, id: String, radius: float) -> void:
 
 
 ## Kıyıya yakın sığda nilüfer öbekleri: çentikli yapraklar, bazılarında pembe nilüfer çiçeği.
-## İskelenin, sandalın ve oltanın sık düştüğü açıklığın dışında.
-func _build_lilies(batch: MeshBatch) -> void:
+## İskelenin, sandalın ve oltanın sık düştüğü açıklığın dışında. count ve lotus verilmezse bölgenin takımından.
+func _build_lilies(batch: MeshBatch, clusters_wanted: int = -1, lotus_chance: float = -1.0) -> void:
 	var bounds := _area(0.0)
-	var count := int(_kit.get("lilies", LILY_CLUSTERS))
+	var count := clusters_wanted if clusters_wanted >= 0 else int(_kit.get("lilies", LILY_CLUSTERS))
 	var band: Vector2 = _kit.get("lily_band", Vector2(0.7, 1.9))
-	var lotus := float(_kit.get("lotus", LOTUS_CHANCE))
+	var lotus := lotus_chance if lotus_chance >= 0.0 else float(_kit.get("lotus", LOTUS_CHANCE))
 	var clusters := 0
 	var tries := 0
 	while clusters < count and tries < count * 570:
@@ -894,10 +942,11 @@ static func _tri_up(out: PackedVector3Array, a: Vector3, b: Vector3, c: Vector3)
 		out.append_array(PackedVector3Array([a, c, b]))
 
 
-## Çimende küçük çiçek öbekleri (papatya, düğün çiçeği, pembe): beş yapraklı yıldız ve göbek.
-func _build_flowers(batch: MeshBatch) -> void:
+## Çimende küçük çiçek öbekleri (papatya, düğün çiçeği, pembe): beş yapraklı yıldız ve göbek. count
+## verilmezse bölgenin takımından.
+func _build_flowers(batch: MeshBatch, clusters_wanted: int = -1) -> void:
 	var area := _area(8.0)
-	var count := int(_kit.get("flowers", FLOWER_CLUSTERS))
+	var count := clusters_wanted if clusters_wanted >= 0 else int(_kit.get("flowers", FLOWER_CLUSTERS))
 	var clusters := 0
 	var tries := 0
 	while clusters < count and tries < count * 220:
@@ -920,6 +969,29 @@ func _build_flowers(batch: MeshBatch) -> void:
 			hearts.append_array(_disc(base + Vector3(0, 0.008, 0), size * 0.3, 6))
 		batch.triangles(petals, color)
 		batch.triangles(hearts, POLLEN if color != DAISY_COLORS[2] else Color("#e07b1f"))
+
+
+## Göl sevgisinin bitkileri (seviye 1'de yok): her bölgede seviye başına LOVE_FLOWERS kat çiçek öbeği ve
+## LOVE_LILIES kat nilüfer öbeği (çiçekli). Çiçek ve nilüfer kendi zarıyla: seviye artınca öncekiler aynı
+## yerde kalır, yenileri eklenir.
+func _love_plants(level: int) -> MeshBatch:
+	var batch := MeshBatch.new()
+	var steps := level - 1
+	if steps <= 0:
+		return batch
+	for k in lake.zone_ids.size():
+		_zone = k
+		_kit = ZONE_KITS.get(lake.zone_ids[k], DEFAULT_KIT)
+		if _kit.is_empty():
+			continue
+		var salt := lake.zone_ids[k].hash()
+		_rng.seed = Dice.derive(SCENERY_SEED + LOVE_SALT, salt, 1)
+		_build_flowers(batch, roundi(float(_kit.get("flowers", FLOWER_CLUSTERS)) * LOVE_FLOWERS * steps))
+		_rng.seed = Dice.derive(SCENERY_SEED + LOVE_SALT, salt, 2)
+		_build_lilies(batch, floori(float(_kit.get("lilies", LILY_CLUSTERS)) * LOVE_LILIES * steps), LOVE_LOTUS)
+	_zone = -1
+	_kit = DEFAULT_KIT
+	return batch
 
 
 ## İskelenin kara ucunun sağında küçük kamp (Dalga 4'te Dede'yle çay): ocak, iki kütük oturak,
