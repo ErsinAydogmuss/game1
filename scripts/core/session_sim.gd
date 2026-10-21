@@ -41,12 +41,13 @@ extends RefCounted
 ##    kendi tuzlu zarı: oranları ve sırayı kaydırmaz). Göl sevgisi oranlara girer (Nadir+); seviyelerin ilk
 ##    dakikası love_<seviye>.
 ## 12. Dede'nin istekleri (Dalga 4): yeni günde boş yuvalar dolar (rütbe 2'den sonra; oyuncu Bugün paneline
-##    bakar: request_s, saat durur); günde bir, dünden kalan en eski bitmemiş istek değiştirilir (yağmur isteği
-##    gibi takılan). Oyunun olayları (av, bırakma, çöp, tuzak) isteklere sayılır; biten istek oyundaki gibi
-##    öder (para earned'e de girer: saatte para; rütbe puanı, göl sevgisi). Bot istekleri kovalamaz (bölge ve
-##    teknik seçimi aynı); ucuz balık bıraktığı rütbeden sonra bırakma isteği varken satıştan önce kalanı kadar
-##    en ucuz balığı bırakır (daha önce bırakma isteği takılır ve değiştirilir: erken bırakan bot erken
-##    alışverişleri geciktiriyordu). İlk biten istek request_1, onuncusu requests_10.
+##    bakar: request_s, saat durur); günde bir, dünden kalan bir istek değiştirilir (önce hiç ilerlemeyen, sonra
+##    en eski; yağmurlu günde yağmur isteği değil). Oyunun olayları (av, bırakma, çöp, tuzaktan her kerevit) isteklere
+##    sayılır; biten istek oyundaki gibi öder (para earned'e de girer: saatte para; rütbe puanı, göl sevgisi).
+##    Bot istekleri kovalamaz (bölge ve teknik seçimi aynı); ucuz balık bıraktığı rütbeden sonra bırakma isteği
+##    varken satıştan önce kalanı kadar en ucuz balığı bırakır (daha önce bırakma isteği takılır ve değiştirilir:
+##    her rütbede bırakan bot erken alışverişleri geciktiriyordu). İlk biten istek request_1, onuncusu
+##    requests_10.
 ## Aynı seed aynı sonucu verir.
 
 const SIM_PATH := "res://data/sim.json"
@@ -287,12 +288,10 @@ func _tend_traps() -> void:
 			_mark("species_%d" % save.records.size())
 		_found(str(result.get("trash", "")))
 		_note_rank(result["ranked"])
-		# Tuzaktan gelen kerevitler tuzak isteğine ve türün isteğine (tür başına).
-		var counts := {}
+		# Tuzaktan gelen her kerevit tuzak isteğine, türün ve boyun isteğine (oyundaki gibi).
 		for item: Dictionary in result["items"]:
-			counts[str(item["fish"])] = int(counts.get(str(item["fish"]), 0)) + 1
-		for kind: String in counts:
-			_note_rank(_note_request({ "type": "trap", "fish": kind, "count": int(counts[kind]) }))
+			_note_rank(_note_request({ "type": "trap", "fish": str(item["fish"]), "size_cm": int(item["size_cm"]),
+					"count": 1 }))
 	while TrapSim.spare(db, save) > 0:
 		var placed := false
 		for z in db.zones_of(spot_id):
@@ -373,22 +372,34 @@ func _found(item: String) -> void:
 	_note_rank(_note_request({ "type": "trash" }))
 
 
-## Dede'nin istekleri: yeni günde (ve istekler açılınca) boş yuvalar dolar; günde bir, dünden kalan en eski
-## bitmemiş istek değiştirilir. Bugün paneline bakmak request_s (saat durur).
+## Dede'nin istekleri: yeni günde (ve istekler açılınca) boş yuvalar dolar; günde bir, dünden kalan bir istek
+## değiştirilir: önce hiç ilerlemeyen, sonra en eski (oyuncu takılanı değiştirir; yağmurlu günde yağmur isteği
+## kalır). Bugün paneline bakmak request_s (saat durur).
 func _tend_requests() -> void:
-	conditions()
+	var cond := conditions()
 	if not Requests.refill(db, save, spot_id).is_empty():
 		_mark("requests")
 		_look_at_requests()
 	var today := DayClock.day(db.rules, save.clock_s)
-	var oldest := {}
+	var pick := {}
 	for r in Requests.daily(db, save):
-		if int(r["day"]) < today and Requests.can_reroll(db, save, int(r["slot"])) \
-				and (oldest.is_empty() or int(r["serial"]) < int(oldest["serial"])):
-			oldest = r
-	if not oldest.is_empty() and not Requests.reroll(db, save, spot_id, int(oldest["slot"])).is_empty():
+		if int(r["day"]) >= today or not Requests.can_reroll(db, save, int(r["slot"])) \
+				or (str(r["kind"]) == "rain" and str(cond["weather"]) == "rain"):
+			continue
+		if pick.is_empty() or _reroll_first(r, pick):
+			pick = r
+	if not pick.is_empty() and not Requests.reroll(db, save, spot_id, int(pick["slot"])).is_empty():
 		rerolls += 1
 		_look_at_requests()
+
+
+## Değiştirme sırası: hiç ilerlemeyen istek önce, sonra eskisi (sıra numarası küçük).
+static func _reroll_first(a: Dictionary, b: Dictionary) -> bool:
+	var a_stuck := int(a["progress"]) == 0
+	var b_stuck := int(b["progress"]) == 0
+	if a_stuck != b_stuck:
+		return a_stuck
+	return int(a["serial"]) < int(b["serial"])
 
 
 ## Bugün paneline bakılır (istekler, değiştirme): request_s geçer, oyun saati durur.

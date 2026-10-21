@@ -622,7 +622,7 @@ light; a big shiny turquoise fish scale with a soft glow.
 |---|---|
 | `golden_dough` | altın hamur (göl sevgisi 6 olunca Nine verir; finalin yemi) |
 | `map_piece` | harita parçası (Dede'nin altın istekleri) |
-| `ruler` | boy isteği ("Kadife · 30 cm üstü") |
+| `ruler` | boy isteği ("Kadife · en az 30 cm") |
 | `letter` | mektup (defterin Gölün Sırrı sekmesi, "Yeni mektup" bildirimi) |
 | `lantern_lit` | yanan fener (ilk gece Nine'nin hediyesi) |
 | `keeper_scale` | Bekçi'nin pulu (finalden sonra defterde) |

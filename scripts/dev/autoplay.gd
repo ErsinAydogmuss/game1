@@ -4564,6 +4564,12 @@ func _use_save(catches: int) -> void:
 		save.settings["locale"] = _locale
 	if not _intro:
 		Story.mark_seen(save)
+	# Dede'nin istekleri yalnızca requests senaryosunda: ötekilerde yuvalar hiç dolmaz, Dede'nin istek sözü yok
+	# (rütbe 2'den sonra gelen istekler sözlerin sırasını, sevgiyi ve parayı değiştirip eski denetimleri
+	# şaşırtmasın).
+	if _scenario != "requests":
+		save.request_day = 1 << 30
+		save.flags["told_requests"] = true
 	# Oyun saati donuk: senaryolar sabah ve açık havada, görüntüler eskisi gibi (world saati kendisi sürer).
 	(main.get("world_clock") as WorldClock).frozen = true
 	GameState.use_save(save)

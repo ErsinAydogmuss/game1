@@ -564,7 +564,7 @@ UI_BUCKET_SURE,Are you sure?,Emin misin?
 UI_BUCKET_EMPTY,Your bucket is empty. The fish you catch go here.,Kovan boş. Tuttuğun balıklar buraya girer.
 UI_BUCKET_PAGE,Page %d/%d »,Sayfa %d/%d »
 UI_REQ_species,Catch %d %s,%d %s tut
-UI_REQ_size,%s over %d cm,%s · %d cm üstü
+UI_REQ_size,%s · at least %d cm,%s · en az %d cm
 UI_REQ_technique,%s: %d fish,%s ile %d balık
 UI_REQ_zone,%s: %d fish,%s: %d balık
 UI_REQ_phase,%s: %d fish,%s vakti %d balık

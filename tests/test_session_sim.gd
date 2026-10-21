@@ -58,7 +58,7 @@ const PACING := [
 	["love_2", 15.0, 150.0],
 	["love_6", 120.0, 240.0],
 	# Dede'nin istekleri (4. adım; economy_report 16 sa × 6 seed): rütbe 2'de (0,6–3,2. dk) dolar, ilki 6,6–17,5. dakikada
-	# biter, onuncusu 156–278. dakikada (saatte 4,0–4,7 istek; bot istekleri kovalamaz, takılanı ertesi gün değiştirir).
+	# biter, onuncusu 156–216. dakikada (saatte 4,0–4,5 istek; bot istekleri kovalamaz, günde bir dünden kalanı değiştirir).
 	# İsteklerin sevgisi göl sevgisi 6'yı az öne çeker (137–227. dk; önce 145–226).
 	["requests", 0.0, 5.0],
 	["request_1", 2.0, 30.0],

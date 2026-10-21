@@ -430,6 +430,17 @@ static func _requests(raw: Variant) -> Array[Dictionary]:
 			"serial": maxi(0, _int(e, "serial", 0)),
 			"reward": _counts(e.get("reward", {})),
 		})
+	# Sıra numarası eşsiz olmalı (ödeme isteği onunla bulur): bozuk kayıtta tekrarlanan numara en büyüğün
+	# üstünden yenilenir (zarı oluşurken atıldı: numara yalnızca kimlik).
+	var top := -1
+	for r in out:
+		top = maxi(top, int(r["serial"]))
+	var seen := {}
+	for r in out:
+		if seen.has(int(r["serial"])):
+			top += 1
+			r["serial"] = top
+		seen[int(r["serial"])] = true
 	return out
 
 

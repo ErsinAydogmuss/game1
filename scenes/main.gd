@@ -1059,10 +1059,11 @@ func _on_catch() -> void:
 		hud.toast_later(tr("UI_BUCKET_FULL"), UiKit.ACCENT, "", "release")
 	if not kept:
 		_release_fish(fish_id)
-	# Dipte balığın yanında çöp (zarı gölgenin: FishingSession.last_catch "trash").
+	# Dipte balığın yanında çöp (zarı gölgenin: FishingSession.last_catch "trash"). Çöp isteği bitip rütbe
+	# atlatırsa (yeni bölge) Dede onu söyler: aşağıdaki sözler onu ezmez.
 	var trash := str(info.get("trash", ""))
 	if not trash.is_empty():
-		_find_trash(trash)
+		zone_news = _find_trash(trash) or zone_news
 	GameState.save_game()
 	_refresh_status()
 	# Bölgenin önerdiği teknik (Dede bir kez; yeni haber varsa sonraki balıkta). Oyuncu orada o teknikle
@@ -1166,6 +1167,10 @@ static func _join_ranks(a: Dictionary, b: Dictionary) -> Dictionary:
 ## Bugün panelinde görülmemiş istek.
 func _refill_requests() -> void:
 	var save := GameState.save
+	# Hedefine varmış ama ödenmemiş istek (bozuk ya da yarıda kalmış kayıt) yuvasını tutmasın: önce öder.
+	var finished := Requests.finished(save)
+	if not finished.is_empty():
+		_after_rank(_pay_requests(finished))
 	var fresh := Requests.refill(GameState.db, save, spot_id)
 	if not fresh.is_empty():
 		if save.flags.has(REQ_TOLD_FLAG):
@@ -1186,9 +1191,13 @@ func _sync_request_badge() -> void:
 	hud.world_badge = unseen
 
 
-## Bugün paneli açıldı: istekler görüldü (rozet söner).
+## Bugün paneli açıldı: istekler görüldü (rozet söner). İstekler varken açıldıysa Dede'nin "saate dokun"u
+## gereksiz: söylenmiş sayılır.
 func _mark_requests_seen() -> void:
-	GameState.save.flags[REQ_SEEN_FLAG] = GameState.save.request_serial
+	var save := GameState.save
+	save.flags[REQ_SEEN_FLAG] = save.request_serial
+	if not Requests.daily(GameState.db, save).is_empty():
+		save.flags[REQ_TOLD_FLAG] = true
 	_sync_request_badge()
 
 
@@ -1222,7 +1231,7 @@ func _pay_requests(done: Array[Dictionary]) -> Dictionary:
 func _on_reroll(slot: int) -> void:
 	var save := GameState.save
 	if Requests.reroll(GameState.db, save, spot_id, slot).is_empty():
-		Sounds.play("error")
+		# Değiştirecek başka istek yok (bugünkü verilerle olmaz): yalnızca titreşim.
 		Sounds.haptic(30)
 		return
 	GameState.save_game()
@@ -1971,10 +1980,11 @@ func _place_shop() -> void:
 
 
 ## Balık göle bırakıldı: defterde bırakılan sayısı, göl sevgisi ve sayaç. Sevginin seviyesi
-## değişirse oranlar yenilenir (Nadir+ payı). Dede'nin bırakma isteğine sayılır.
-func _release_fish(fish_id: String) -> void:
+## değişirse oranlar yenilenir (Nadir+ payı). Dede'nin bırakma isteğine sayılır. Biten istek rütbe atlatıp
+## Dede'ye bir haber söylettiyse true.
+func _release_fish(fish_id: String) -> bool:
 	_after_love(WorldState.release(GameState.db, GameState.save, fish_id))
-	_after_rank(_note_request({ "type": "release" }))
+	return _after_rank(_note_request({ "type": "release" }))
 
 
 ## Göl sevgisi arttı (balık bırakıldı, çöp toplandı): oranlar sevgi seviyesiyle yenilenir; seviye atladıysa
@@ -2002,8 +2012,9 @@ func _sync_love_scene() -> void:
 
 ## Çöp çıktı (dipte balığın yanında ya da tuzakta): göl sevgisi ve sayaçlar (kovaya girmez, para vermez),
 ## eşyanın resmiyle bildirim, ses ve titreşim (sırada: balığın etiketi sönünce), sonra seviye atladıysa
-## sevginin bildirimi; Dede her eşyanın ilk gelişinde konuşur (olta boşa dönünce: _world_line).
-func _find_trash(item: String) -> void:
+## sevginin bildirimi; Dede her eşyanın ilk gelişinde konuşur (olta boşa dönünce: _world_line). Çöp isteği
+## bitip rütbe atlatarak Dede'ye bir haber söylettiyse true (çağıranın sözü onu ezmesin).
+func _find_trash(item: String) -> bool:
 	var save := GameState.save
 	var result := Trash.collect(GameState.db.rules, save, item)
 	hud.toast_later(tr("UI_TRASH_FOUND") % [tr("ITEM_" + item), int(result["love"])], UiKit.ACCENT, "trash",
@@ -2011,8 +2022,9 @@ func _find_trash(item: String) -> void:
 	_after_love(result)
 	if not save.flags.has(TRASH_FLAG % item):
 		_world_line_due = true
-	_after_rank(_note_request({ "type": "trash" }))
+	var news := _after_rank(_note_request({ "type": "trash" }))
 	GameState.save_game()
+	return news
 
 
 ## Kova panelinde BIRAK: o türün en küçük balığı göle döner (göl sevgisi), su sesi ve titreşim; panel
@@ -2401,7 +2413,6 @@ func _collect_trap(id: int) -> void:
 	var items: Array = result["items"]
 	if items.is_empty():
 		return
-	GameState.save_game()
 	_refresh_status()
 	_refresh_traps()
 	traps.bounce(id)
@@ -2427,18 +2438,18 @@ func _collect_trap(id: int) -> void:
 		elder.approve()
 	Sounds.find(rarity)
 	hud.hold_toasts(CatchFx.HOLD_TIME)
-	# Dede'nin istekleri: tuzaktan gelen kerevitler tuzak isteğine ve türün isteğine sayılır (tür başına).
-	var counts := {}
-	for item: Dictionary in items:
-		counts[str(item["fish"])] = int(counts.get(str(item["fish"]), 0)) + 1
+	# Dede'nin istekleri: tuzaktan gelen her kerevit tuzak isteğine, türün ve boyun isteğine sayılır.
 	var paid := {}
-	for kind: String in counts:
-		paid = _join_ranks(paid, _note_request({ "type": "trap", "fish": kind, "count": int(counts[kind]) }))
+	for item: Dictionary in items:
+		paid = _join_ranks(paid, _note_request({ "type": "trap", "fish": str(item["fish"]),
+				"size_cm": int(item["size_cm"]), "count": 1 }))
 	var news := _after_rank(_join_ranks(result["ranked"], paid))
+	# Kerevitler ve isteklerin ilerlemesi birlikte kayda.
+	GameState.save_game()
 	# Tuzakta çöp: kerevitlerle birlikte çıkar (içerikle zarlandı: TrapSim).
 	var trash := str(result.get("trash", ""))
 	if not trash.is_empty():
-		_find_trash(trash)
+		news = _find_trash(trash) or news
 	var left := int(result["left"])
 	if left > 0:
 		hud.toast_later(tr("UI_TRAP_LEFT") % left, UiKit.ACCENT, "", "tech_trap")

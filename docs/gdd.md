@@ -354,7 +354,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ Her tekniği açılınca haber verir, ilk kullanımda nasıl oynandığını söyler (§10.3).
   - ✅ Açılış filminde Nine'yle birlikte gölün öyküsünü anlatır, Gölün Bekçisi'ni gösterir ve ilk oltasını
     balıkçıya verir (§10.5).
-  - ✅ Her gün 3 küçük istekte bulunur ("3 Kadife tut", "Kadife · 35 cm üstü"; §10.5); "Gölün Sırrı"nı parça parça anlatır 🔜.
+  - ✅ Her gün 3 küçük istekte bulunur ("3 Kadife tut", "Kadife · en az 35 cm"; §10.5); "Gölün Sırrı"nı parça parça anlatır 🔜.
   - ✅ Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir (§10.5). Vakte ve havaya ilk sözleri bir kez
     (olta boşa dönünce; çekişmede ipucunu ezmez):
     öğle ("Altın Sazan öğle güneşini sever"), akşam (turna ile levrek), yeni günün sabahı, bulut, yağmur, sis
@@ -781,12 +781,14 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   (4. adım) 6'yı finalin rütbesine (12–14) çekmeli: 4. adımda ölçülür.
 - ✅ **Dalga 4, isteklerin ölçümü** (4. adım; `economy_report.gd -- --hours=16 --seeds=6`): denge botu yeni günde boş
   yuvaları doldurur (Bugün paneline bakmak `sim.json` `request_s` 5 sn, saat durur), istekleri kovalamaz (bölge ve
-  teknik seçimi aynı), takılan isteği ertesi gün değiştirir; ucuz balık bıraktığı rütbeden (9) sonra bırakma isteğini
-  kovadaki en ucuz balıklarla bitirir (her rütbede bırakan bot erken alışverişleri geciktiriyordu: büyük kova bir
-  seed'de 83. dakikada, ilk çöp 133. dakikada). Sonuç: saatte 4,0–4,7 istek (16 saatte 64–75, 21–29 değiştirme); ilki
-  6,6–17,5. dakikada, onuncusu 156–278. dakikada. İsteklerin parası kazancın %6,9–8,4'ü: saatte 7.294–7.672 para (önce
-  6.835–7.214), 310. dakikada 4.948–5.394 (korkuluk 6.500); 164–167 av. Erken rütbeler ve alışverişler aynı, rütbe 20
-  4,9–5,4 saatte. Göl sevgisi 6'sı 137–227. dakikada (önce 145–226): istekler onu az öne çeker; finalin öteki
+  teknik seçimi aynı), günde bir dünden kalan bir isteği değiştirir (önce hiç ilerlemeyeni, sonra en eskisini;
+  yağmurlu günde yağmur isteğini değil; yalnızca hiç ilerlemeyeni değiştiren bot bir seed'de yarım kalan isteklerle
+  tıkanıyordu: 16 saatte 22 istek); ucuz balık bıraktığı rütbeden (9) sonra bırakma isteğini kovadaki en ucuz
+  balıklarla bitirir (her rütbede bırakan bot erken alışverişleri geciktiriyordu: büyük kova bir seed'de 83.
+  dakikada, ilk çöp 133. dakikada). Sonuç: saatte 4,0–4,5 istek (16 saatte 64–72, 23–26 değiştirme); ilki 6,6–17,5.
+  dakikada, onuncusu 156–216. dakikada. İsteklerin parası kazancın %6,9–8,0'i: saatte 7.331–7.661 para (önce
+  6.835–7.214), 310. dakikada 4.948–5.394 (korkuluk 6.500); 163–166 av. Erken rütbeler ve alışverişler aynı, rütbe
+  20 4,9–5,3 saatte. Göl sevgisi 6'sı 137–227. dakikada (önce 145–226): istekler onu az öne çeker; finalin öteki
   şartları (mektuplar, harita parçaları, altın isteklerin sevgisi) 5. adımda.
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
@@ -846,7 +848,7 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     | İstek | Örnek | Ağırlık | Rütbe | Sayı | Sevgi | Çarpan |
     |---|---|---|---|---|---|---|
     | tür | "3 Kadife tut" | 6 | 2 | Sıradan 3–5, Güzel 2–3, Nadir 1–2 | 3 | 1,0 |
-    | boy | "Kadife · 35 cm üstü" (türün %35–60 yüzdeliği, 5'e yuvarlı, 3★ içinde) | 4 | 3 | 1 | 4 | 1,2 |
+    | boy | "Kadife · en az 35 cm" (türün %35–60 yüzdeliği, 5'e yuvarlı, 3★ içinde) | 4 | 3 | 1 | 4 | 1,2 |
     | teknik | "Spin ile 4 balık" (kamışı alınmış teknik) | 3 | 2 | 3–5 | 3 | 1,0 |
     | bölge | "Sazlık: 5 balık" (açık bölge) | 3 | 3 | 4–6 | 3 | 1,0 |
     | vakit | "Akşam vakti 2 balık" | 3 | 2 | 2–4 | 4 | 1,1 |
@@ -861,7 +863,7 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     istek kendiliğinden öder: "İstek tamam! +45 para" (istek ikonuyla, para sesi), Dede: "Aferin evlat! Tam istediğim
     gibi."
   - Sayılanlar: av (tür, boy, nadirlik, teknik, bölge, vakit, hava), göle bırakılan balık (kovadan, karttan, koruma
-    altındaki tür), toplanan çöp, tuzaktan gelen kerevit (tuzak isteğine ve kerevit isteğine).
+    altındaki tür), toplanan çöp, tuzaktan gelen her kerevit (tuzak isteğine, kerevitin tür ve boy isteğine).
   - Denge §10.4. Altın istekler (harita parçaları) 5. adımda: ayrı yuvada, değiştirilmez.
 - **Açılış filmi** ✅ (v0.4.1; Ersin: "oyunun başlangıcında bir hikâyesi yok, ilgi çekici bir hikâye ekle"):
   - Yeni oyunda bir kez, oyunun içinde oynar (~45–55 sn): göl arkada yaşar, kamera çekimden çekime kayar.

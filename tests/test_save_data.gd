@@ -327,7 +327,7 @@ func test_v5_bad_values_are_sanitized() -> void:
 	assert_eq(s.letter_at, 0, "eksi şişe sayacı sıfırlanır")
 	assert_eq(s.map_pieces, SaveData.MAX_MAP_PIECES, "parça sınırda")
 	assert_eq(s.keeper, 0, "eksi Bekçi sayısı sıfırlanır")
-	assert_eq(s.request_serial, 1, "eksi istek sayacı kayıttaki isteklerin sırasının üstünde (sırasız istek 0)")
+	assert_eq(s.request_serial, 2, "eksi istek sayacı kayıttaki isteklerin sırasının üstünde (sırasız istekler 0 ve tekrarlanan 1)")
 	assert_eq(s.request_day, -1, "gün en az -1")
 	assert_eq(s.reroll_day, -1, "yazı olan gün varsayılana döner")
 	assert_eq(s.requests.size(), 2, "yuvası tekrarlı, bozuk ya da türsüz istek düşer")
@@ -338,6 +338,7 @@ func test_v5_bad_values_are_sanitized() -> void:
 		assert_eq(first["reward"], { "coins": 30 }, "eksi ödül düşer")
 		assert_eq(int(s.requests[1]["goal"]), 1, "hedef en az 1")
 		assert_eq(s.requests[1]["want"], {}, "bozuk istek bilgisi boş")
+		assert_eq([int(first["serial"]), int(s.requests[1]["serial"])], [0, 1], "tekrarlanan sıra numarası yenilenir")
 	assert_eq(str(s.traps[0]["trash"]), "", "yazı olmayan çöp boş")
 
 

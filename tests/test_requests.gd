@@ -216,6 +216,8 @@ func test_events_count_towards_requests() -> void:
 		[_req("trash", {}), { "type": "trash", "count": 1 }, 1],
 		[_req("trap", {}), { "type": "trap", "fish": "crayfish", "count": 3 }, 3],
 		[_req("species", { "fish": "crayfish" }), { "type": "trap", "fish": "crayfish", "count": 2 }, 2],
+		[_req("size", { "fish": "crayfish", "min_cm": 10 }), { "type": "trap", "fish": "crayfish", "size_cm": 10, "count": 1 }, 1],
+		[_req("size", { "fish": "crayfish", "min_cm": 10 }), { "type": "trap", "fish": "crayfish", "size_cm": 9, "count": 1 }, 0],
 		[_req("zone", { "zone": "reeds" }), { "type": "trap", "fish": "crayfish", "count": 2 }, 0],
 		[_req("release", {}), catch_event, 0],
 	]

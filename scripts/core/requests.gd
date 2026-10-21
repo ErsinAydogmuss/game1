@@ -222,7 +222,8 @@ static func size_target(def: Dictionary, percentile: int) -> int:
 
 ## Oyunun bir olayı isteklere sayılır. event: { "type": "catch", "fish", "size_cm", "rarity", "technique",
 ## "zone", "phase", "weather" } | { "type": "release" | "trash", "count" } | { "type": "trap", "fish",
-## "count" }. Döner: bu olayla biten istekler (ödemesi pay ile).
+## "size_cm", "count" } (tuzaktan gelen her kerevit ayrı olay: boy isteği de sayar). Döner: bu olayla biten
+## istekler (ödemesi pay ile).
 static func note(save: SaveData, event: Dictionary) -> Array[Dictionary]:
 	var done: Array[Dictionary] = []
 	for r in save.requests:
@@ -238,8 +239,9 @@ static func note(save: SaveData, event: Dictionary) -> Array[Dictionary]:
 	return done
 
 
-## Olayın isteğe katkısı (kaç; sayılmıyorsa 0). Tuzaktaki kerevit tuzak isteğine ve kerevit türü
-## isteğine sayılır; bölge, vakit, hava ve nadirlik istekleri oltayla tutulan balığa bakar.
+## Olayın isteğe katkısı (kaç; sayılmıyorsa 0). Tuzaktaki kerevit tuzak isteğine, kerevit türü ve boy
+## isteğine sayılır; bölge, vakit, hava, teknik ve nadirlik istekleri oltayla tutulan balığa bakar. Boy
+## isteği "en az": sınırdaki boy da sayılır (sınır 3 yıldızın içinde: daha irisi takım isteyebilir).
 static func counts_for(request: Dictionary, event: Dictionary) -> int:
 	var want: Dictionary = request["want"]
 	var type := str(event.get("type", ""))
@@ -249,7 +251,7 @@ static func counts_for(request: Dictionary, event: Dictionary) -> int:
 			if type in ["catch", "trap"] and str(event.get("fish", "")) == str(want.get("fish", "")):
 				return n
 		"size":
-			if type == "catch" and str(event.get("fish", "")) == str(want.get("fish", "")) \
+			if type in ["catch", "trap"] and str(event.get("fish", "")) == str(want.get("fish", "")) \
 					and int(event.get("size_cm", 0)) >= int(want.get("min_cm", 0)):
 				return 1
 		"technique":
@@ -303,6 +305,16 @@ static func pay(db: ContentDB, save: SaveData, request: Dictionary) -> Dictionar
 		"ranked": Rank.add_xp(db, save, xp),
 		"loved": LakeLove.add(db.rules, save, love),
 	}
+
+
+## Hedefine varmış ama ödenmemiş istekler (normal oyunda olmaz: note ile pay aynı karede; bozuk ya da yarıda
+## kalmış kayıt). Yuvasını tutmasın diye çağıran öder.
+static func finished(save: SaveData) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for r in save.requests:
+		if int(r["progress"]) >= int(r["goal"]):
+			out.append(r)
+	return out
 
 
 ## Bugün bu yuvanın isteği değiştirilebilir mi (günde bir, bitmemiş istek)?
