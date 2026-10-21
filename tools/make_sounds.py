@@ -1336,6 +1336,43 @@ def trash():
     return finish(x + 0.15 * reverb(x, 0.6)[:n], -1.0, 0.1)
 
 
+def bottle():
+    """Şişe alındı (Gölün Sırrı): sudan kalkan şişe (şıpırtı, damlalar), camın iki ince tınısı ve mantarın
+    "pop"u; sonunda gizemli iki nota (sırrın sesi)."""
+    r = rng(171)
+    n = frames(1.5)
+    x = 0.35 * splash_noise(n, 172, 600, 6000, 0.08, 0.006)
+    for k, f0 in enumerate((2350.0, 3120.0)):
+        glass = partials(f0, frames(0.6), [(1.0, 1.0, 0.18), (2.7, 0.35, 0.1), (5.1, 0.15, 0.05)], 173 + k)
+        place(x, 0.3 * unit(glass) * (1.0 - 0.25 * k), frames(0.12 + 0.11 * k))
+    pop = unit(band(noise(frames(0.05), 175), 500, 2600)) * env_ar(frames(0.05), 0.002, 0.04)
+    place(x, 0.45 * pop, frames(0.42))
+    for i in range(3):
+        m = frames(0.1)
+        place(x, 0.18 * bubble(r.uniform(1000, 1400), r.uniform(1800, 2400), m, 0.02), frames(0.25 + 0.12 * i))
+    mystery = np.zeros(n)
+    for k, note in enumerate((76, 83)):
+        place(mystery, pluck(note, 0.9, 176 + k, 0.35) * (0.8 - 0.15 * k), frames(0.62 + 0.16 * k))
+    x = x + 0.35 * unit(mystery)
+    return finish(x + 0.3 * reverb(x, 1.2)[:n], -2.0, 0.15)
+
+
+def paper():
+    """Mektup açıldı: katlı kâğıdın üç kısa hışırtısı (açılan kat) ve hafif bir sürtünme."""
+    r = rng(181)
+    n = frames(0.9)
+    x = np.zeros(n)
+    for k, at in enumerate((0.0, 0.17, 0.36)):
+        m = frames(r.uniform(0.09, 0.14))
+        crinkle = band(noise(m, 182 + k), 1800, 7500) * env_ar(m, 0.006, 0.07)
+        crinkle *= 0.6 + 0.4 * np.abs(np.sin(2 * np.pi * r.uniform(60, 110) * tl(m)))
+        place(x, unit(crinkle) * (0.9 - 0.15 * k), frames(at))
+    m = frames(0.35)
+    slide = sweep_band(noise(m, 186), 2500.0, 900.0, 2.5) * env_ar(m, 0.05, 0.2)
+    place(x, 0.35 * unit(slide), frames(0.5))
+    return finish(x + 0.08 * reverb(x, 0.4)[:n], -4.0, 0.05)
+
+
 def find_mythic():
     """Masalsı buluntu (Gölün Bekçisi): Efsanevi'nin fanfarı daha geniş, koro gibi pad ve çanlar."""
     n = frames(3.6)
@@ -1386,6 +1423,8 @@ def registry():
         "trap_place_1": lambda: trap_place(830), "trap_collect_1": trap_collect,
         "find_6_1": find_mythic, "thunder_1": thunder, "tea_1": tea, "phase_1": phase_chime,
         "lantern_1": lantern, "love_up_1": love_up, "trash_1": trash,
+        # Gölün Sırrı (Dalga 4, 5. adım): şişe ve mektup.
+        "bottle_1": bottle, "paper_1": paper,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

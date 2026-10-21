@@ -68,6 +68,12 @@ const FAR_HIGH := 0.8
 ## (gerçek saatle) bu aralıkla (sn) yenilenir.
 const TRAP_REACH := 5.0
 const TRAP_SYNC_EVERY := 1.0
+## Gölün Sırrı (5. adım): şişeye bu kadar yakından (m) dokunulunca alınır; uzaktaysa balıkçı kıyı yolundan
+## yürür (derin ortadaki şişeye sandal ilk şamandıraya gider). Dede'nin şişeyi söylediği bayrak (mektubun
+## numarasıyla) ve altın isteklerin ilk sözünün bayrağı.
+const BOTTLE_REACH := 5.0
+const BOTTLE_FLAG := "told_bottle_%d"
+const GOLDEN_TOLD_FLAG := "told_golden"
 ## Gece lambaların ışık havuzları (yarıçap m, güç): Nine'nin feneri balıkçının çevresinde (ilk gece
 ## hediye; bayrak LANTERN_FLAG), kamp ateşi, iskelenin başındaki fener direği, dükkân.
 const LANTERN_FLAG := "lantern"
@@ -89,9 +95,9 @@ const TEA_ZOOM := 0.62
 ## Dede'nin vakte ve havaya ilk sözünün bayrağı (vaktin ya da havanın kimliğiyle; kayıtta).
 const TIME_FLAG := "told_time_%s"
 const WEATHER_FLAG := "told_weather_%s"
-## Göl sevgisinin Dede'nin konuştuğu seviyeleri (UI_DEDE_LOVE_<seviye>) ve sözün bayrağı. 6. seviyenin sözü
-## ("Nine'ye uğra") altın hamurla gelir (Dalga 4, 5. adım): o zamana kadar Nine'de ona bir şey yok.
-const LOVE_LINES: Array[int] = [2, 10]
+## Göl sevgisinin Dede'nin konuştuğu seviyeleri (UI_DEDE_LOVE_<seviye>) ve sözün bayrağı. 6. seviyede ("Nine'ye
+## uğra") Nine altın hamuru verir (Gölün Sırrı, Secret.DOUGH_LOVE).
+const LOVE_LINES: Array[int] = [2, 6, 10]
 const LOVE_FLAG := "told_love_%d"
 ## Dede her çöp eşyasının ilk gelişinde konuşur (bayrak; söz UI_DEDE_TRASH_<eşya>).
 const TRASH_FLAG := "told_trash_%s"
@@ -228,6 +234,14 @@ var _trap_tap: int = -1
 var _trap_clock: float = 0.0
 ## SAT ile tezgâha geçildi: kararma bitince dükkân Kova sekmesinde açılır.
 var _pending_sell: bool = false
+## Gölün Sırrı: suda şişe ve mektubun paneli; uzaktaki şişeye dokunuldu (balıkçı yürür ya da sandal gider, varınca
+## alır), az önce okunan mektup (panel kapanınca Dede konuşur; 0 = yok), biten altın isteğin Dede sözü (parça,
+## harita tamam).
+var bottle: BottleMarker
+var letter_panel: LetterPanel
+var _pending_bottle: bool = false
+var _letter_read: int = 0
+var _golden_line: String = ""
 
 
 func _ready() -> void:
@@ -278,6 +292,9 @@ func _ready() -> void:
 	traps = TrapMarkers.new()
 	add_child(traps)
 	traps.landed.connect(_on_trap_landed)
+	bottle = BottleMarker.new()
+	bottle.ripples = ripples
+	add_child(bottle)
 	camera = FollowCamera.new()
 	add_child(camera)
 	ambient = AmbientParticles.new()
@@ -363,9 +380,13 @@ func _start_session() -> void:
 	stand.show_stand(false)
 	_sync_technique()
 	_pending_cast = Dice.NO_POINT
-	_pending_trap = -1
+	_forget_pickups()
 	traps.clear()
 	_refresh_traps()
+	_letter_read = 0
+	_golden_line = ""
+	bottle.hide_bottle()
+	_sync_bottle()
 	fish_jump.clear()
 	_quick_catch = -1.0
 	_announced.clear()
@@ -458,6 +479,7 @@ func _on_state_changed() -> void:
 		return
 	hud.perf = bool(GameState.setting("perf", false))
 	_refresh_traps()
+	_sync_bottle()
 	# Rütbe dışarıdan değiştiyse (geliştirme sürümünde "Hepsini aç", bot): erişim ve çitler.
 	var rank := Rank.rank(GameState.db, GameState.save)
 	if rank != _access_rank:
@@ -509,6 +531,7 @@ func _process(delta: float) -> void:
 		_on_shop()
 	_check_pending_cast()
 	_check_pending_trap()
+	_check_pending_bottle()
 	# Oyun saati: filmde ve kararmada da durur (panel ve odak kaybı yukarıda).
 	if _film == null and not fade.busy():
 		world_clock.tick(delta, GameState.save)
@@ -548,6 +571,7 @@ func _build_input() -> void:
 		["dede", func(screen: Vector2) -> bool: return elder.hit(camera, screen)],
 		["shop", func(screen: Vector2) -> bool: return nine.hit(camera, screen) or shop.hit(camera, screen)],
 		["boat", func(screen: Vector2) -> bool: return not in_boat and scene.boat_hit(camera, screen)],
+		["bottle", func(screen: Vector2) -> bool: return bottle.hit(camera, screen)],
 		["trap", func(screen: Vector2) -> bool:
 			_trap_tap = -1 if in_boat else traps.hit(camera, screen)
 			return _trap_tap >= 0],
@@ -563,7 +587,7 @@ func _build_input() -> void:
 		if in_boat:
 			return
 		_pending_cast = Dice.NO_POINT
-		_pending_trap = -1
+		_forget_pickups()
 		angler.step_dir(dir, get_process_delta_time()))
 
 
@@ -590,7 +614,7 @@ func _on_walk_requested(target: Vector2) -> void:
 	if session.state != FishingSession.State.IDLE or in_boat or _card_up():
 		return
 	_pending_cast = Dice.NO_POINT
-	_pending_trap = -1
+	_forget_pickups()
 	_walk_route(target)
 
 
@@ -610,7 +634,7 @@ func _on_cast_requested(target: Vector2) -> void:
 	if _bucket_full():
 		_refuse_cast()
 		return
-	_pending_trap = -1
+	_forget_pickups()
 	# Sandalda yürünmez: dokunulan yöne atılır (şamandıra menzilin içine düşer).
 	if in_boat or angler.pos2().distance_to(target) <= session.range_m() - 0.3:
 		angler.stop()
@@ -692,7 +716,7 @@ func _try_cast(target: Vector2) -> void:
 	# Hangi yoldan gelirse gelsin (dokunuş, AT, bekleyen atış) önceki hedef (bekleyen tuzak da)
 	# unutulur, yürüme biter.
 	_pending_cast = Dice.NO_POINT
-	_pending_trap = -1
+	_forget_pickups()
 	angler.stop()
 	# Kova doluyken hiçbir yoldan atılmaz (kural tek yerde): önce satılır.
 	if _bucket_full():
@@ -1066,6 +1090,8 @@ func _on_catch() -> void:
 		zone_news = _find_trash(trash) or zone_news
 	GameState.save_game()
 	_refresh_status()
+	# Son mektuptan beri yeterince balık: sıradaki şişe suda belirir.
+	_sync_bottle()
 	# Bölgenin önerdiği teknik (Dede bir kez; yeni haber varsa sonraki balıkta). Oyuncu orada o teknikle
 	# tuttuysa öneriye gerek kalmadı.
 	if technique == str(db.zone(spot_id, zone_id).get("suggest", "")):
@@ -1079,9 +1105,9 @@ func _on_catch() -> void:
 			# Dede'nin sözü hatırlatır.
 			_say("UI_DEDE_BUCKET")
 		elif _request_done:
-			# Bu balıkla Dede'nin bir isteği bitti.
+			# Bu balıkla Dede'nin bir isteği bitti (altın istekte haritanın sözü).
 			_request_done = false
-			_say("UI_DEDE_REQ_DONE")
+			_say_request_done()
 		elif not suggestion.is_empty():
 			save.flags[Elder.SUGGEST_FLAG % zone_id] = true
 			_say(suggestion)
@@ -1145,8 +1171,9 @@ func _after_rank(ranked: Dictionary) -> bool:
 	if _announce_techniques(not opened.is_empty()):
 		news = true
 	# Dede'nin istekleri bu rütbede açıldıysa yuvalar hemen dolar (Dede saate dokunmayı olta boşa dönünce
-	# söyler: _world_line).
+	# söyler: _world_line); sıradaki altın istek ve şişe de rütbe bekliyor olabilir.
 	_refill_requests()
+	_sync_bottle()
 	return news
 
 
@@ -1163,8 +1190,9 @@ static func _join_ranks(a: Dictionary, b: Dictionary) -> Dictionary:
 # --- Dede'nin istekleri ---------------------------------------------------------------
 
 ## Yeni oyun gününde (ve istekler açılınca) boş yuvalar dolar (Requests.refill). İlk isteklerde Dede saate
-## dokunmayı söyler (_world_line: bir kez, çip nabız gibi atar); sonraki günlerde bildirim. Çipte rozet:
-## Bugün panelinde görülmemiş istek.
+## dokunmayı söyler (_world_line: bir kez, çip nabız gibi atar); sonraki günlerde bildirim. Sıradaki altın istek
+## (Gölün Sırrı: mektubu okununca ve rütbesi gelince; yeni günü beklemez) bildirimle; ilkinde Dede haritasını
+## anlatır. Çipte rozet: Bugün panelinde görülmemiş istek.
 func _refill_requests() -> void:
 	var save := GameState.save
 	# Hedefine varmış ama ödenmemiş istek (bozuk ya da yarıda kalmış kayıt) yuvasını tutmasın: önce öder.
@@ -1178,15 +1206,27 @@ func _refill_requests() -> void:
 		else:
 			_world_line_due = true
 		GameState.save_game()
+	_offer_golden()
 	_sync_request_badge()
 
 
-## Çipin rozeti: Bugün panelinin son açılışından sonra gelen (görülmemiş) bir istek var.
+## Sıradaki altın istek gelebiliyorsa gelir (Requests.offer_golden): bildirim (parçanın resmiyle), Dede'nin ilk
+## sözü sıraya (bir kez), çipte rozet.
+func _offer_golden() -> void:
+	if Requests.offer_golden(GameState.db, GameState.save).is_empty():
+		return
+	hud.toast_later(tr("UI_GOLDEN_NEW"), UiKit.ACCENT, "", "item:map_piece", "golden")
+	_world_line_due = true
+	GameState.save_game()
+	_sync_request_badge()
+
+
+## Çipin rozeti: Bugün panelinin son açılışından sonra gelen (görülmemiş) bir istek var (altın istek de).
 func _sync_request_badge() -> void:
 	var save := GameState.save
 	var seen := int(save.flags.get(REQ_SEEN_FLAG, 0))
 	var unseen := false
-	for r in Requests.daily(GameState.db, save):
+	for r in save.requests:
 		unseen = unseen or int(r["serial"]) >= seen
 	hud.world_badge = unseen
 
@@ -1207,23 +1247,43 @@ func _note_request(event: Dictionary) -> Dictionary:
 	return _pay_requests(Requests.note(GameState.save, event))
 
 
-## Biten istekler öder (Requests.pay; bir kez): para, rütbe puanı, göl sevgisi. Her biri bildirimle (para
-## sesiyle; sırada: balığın etiketi sönünce, panel ya da kart kapanınca), sevgi (_after_love), Dede'nin
-## "aferin"i sıraya. Döner: rütbe değişimi (ödeme yoksa boş).
+## Biten istekler öder (Requests.pay; bir kez): para, rütbe puanı, göl sevgisi; altın istek harita parçası
+## (bildirimi parçanın resmiyle, Dede'nin sözü haritanın: bir parça daha ya da harita tamam). Her biri
+## bildirimle (para sesiyle; sırada: balığın etiketi sönünce, panel ya da kart kapanınca), sevgi (_after_love),
+## Dede'nin "aferin"i sıraya. Döner: rütbe değişimi (ödeme yoksa boş).
 func _pay_requests(done: Array[Dictionary]) -> Dictionary:
 	var ranked := {}
 	for r in done:
 		var paid := Requests.pay(GameState.db, GameState.save, r)
 		if paid.is_empty():
 			continue
-		hud.toast_later(tr("UI_REQ_DONE") % UiKit.format_int(int(paid["coins"])), UiKit.ACCENT, "coins", "requests")
+		var piece := int(paid.get("piece", 0))
+		if piece > 0:
+			hud.toast_later(tr("UI_GOLDEN_DONE") % [piece, SaveData.MAX_MAP_PIECES, UiKit.format_int(int(paid["coins"]))],
+					UiKit.ACCENT, "coins", "item:map_piece")
+			_golden_line = "UI_DEDE_MAP_DONE" if GameState.save.map_pieces >= SaveData.MAX_MAP_PIECES \
+					else "UI_DEDE_GOLDEN_DONE"
+		else:
+			hud.toast_later(tr("UI_REQ_DONE") % UiKit.format_int(int(paid["coins"])), UiKit.ACCENT, "coins", "requests")
 		_after_love(paid["loved"])
 		ranked = _join_ranks(ranked, paid["ranked"])
 		_request_done = true
 		_world_line_due = true
 	if not ranked.is_empty():
 		_refresh_status()
+	# Biten altın isteğin ardından sıradaki (mektubu ve rütbesi zaten geldiyse) hemen gelir.
+	if not _golden_line.is_empty():
+		_offer_golden()
 	return ranked
+
+
+## Dede'nin "aferin"i: biten altın istekte haritanın sözü (bir parça daha, harita tamam), yoksa günlük isteğinki.
+func _say_request_done() -> void:
+	if not _golden_line.is_empty():
+		_say(_golden_line)
+		_golden_line = ""
+		return
+	_say("UI_DEDE_REQ_DONE")
 
 
 ## Bugün panelinde bir istek değiştirildi (günde bir; Requests.reroll): yuvada yenisi (görülmüş sayılır),
@@ -1244,12 +1304,40 @@ func _on_reroll(slot: int) -> void:
 ## (bildirim, sevgi, rütbe; panel kapanınca görünür).
 func _debug_finish_request() -> void:
 	var save := GameState.save
-	for r in Requests.daily(GameState.db, save):
+	var list := Requests.daily(GameState.db, save)
+	var golden := Requests.golden(GameState.db, save)
+	if not golden.is_empty():
+		list.append(golden)
+	for r in list:
 		if int(r["progress"]) < int(r["goal"]):
 			r["progress"] = int(r["goal"])
 			var done: Array[Dictionary] = [r]
 			_after_rank(_pay_requests(done))
 			break
+	GameState.save_game()
+	_refresh_status()
+	GameState.changed.emit()
+
+
+## Geliştirme sürümü (Ayarlar'da SIR +; telefonda Gölün Sırrı'nı denemek için): altın istek varsa biter ve gerçek
+## akışla öder (parça); yoksa sıradaki mektubun şişesi hemen çıkar (rütbesi ve balığı sayılır, derin ortada sandal
+## verilir).
+func _debug_secret() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var golden := Requests.golden(db, save)
+	if not golden.is_empty():
+		golden["progress"] = int(golden["goal"])
+		var done: Array[Dictionary] = [golden]
+		_after_rank(_pay_requests(done))
+	else:
+		var i := Secret.next_letter(save)
+		if i >= 0:
+			var letter := Secret.LETTERS[i]
+			save.xp = maxi(save.xp, db.rank_xp[int(letter["rank"]) - 1])
+			save.letter_at = mini(save.letter_at, save.catches - Secret.LETTER_GAP)
+			if bool(db.zone(spot_id, str(letter["zone"])).get("boat", false)) and not Zones.BOAT in save.owned:
+				save.owned.append(Zones.BOAT)
 	GameState.save_game()
 	_refresh_status()
 	GameState.changed.emit()
@@ -1315,7 +1403,22 @@ func _world_line() -> bool:
 		return true
 	if _request_done:
 		_request_done = false
-		_say("UI_DEDE_REQ_DONE")
+		_say_request_done()
+		return true
+	# Gölün Sırrı: ilk altın istek (Dede eski haritasını anlatır; çip nabız gibi atar), suda yeni bir şişe.
+	if not save.flags.has(GOLDEN_TOLD_FLAG) and not Requests.golden(db, save).is_empty():
+		save.flags[GOLDEN_TOLD_FLAG] = true
+		_say("UI_DEDE_GOLDEN_FIRST")
+		_line_time = ADVICE_TIME
+		hud.pulse_world()
+		return true
+	var letter := save.letters + 1
+	if bottle.visible and not save.flags.has(BOTTLE_FLAG % letter):
+		save.flags[BOTTLE_FLAG % letter] = true
+		if letter == 1:
+			_say("UI_DEDE_BOTTLE_FIRST")
+		else:
+			_say("UI_DEDE_BOTTLE", "dede", [tr("ZONE_" + Secret.bottle_zone(save))])
 		return true
 	if bool(save.flags.get(LANTERN_FLAG, false)) and not save.flags.has(LANTERN_TOLD):
 		save.flags[LANTERN_TOLD] = true
@@ -1436,7 +1539,7 @@ func _on_tea() -> void:
 		return
 	angler.stop()
 	_pending_cast = Dice.NO_POINT
-	_pending_trap = -1
+	_forget_pickups()
 	input.release_all()
 	fade.play(func() -> void:
 		var save := GameState.save
@@ -2177,7 +2280,7 @@ func _travel(target: String) -> void:
 func _stop_for_travel() -> void:
 	angler.stop()
 	_pending_cast = Dice.NO_POINT
-	_pending_trap = -1
+	_forget_pickups()
 	input.release_all()
 	Sounds.play("travel")
 	Sounds.haptic(15)
@@ -2192,7 +2295,7 @@ func _snap_camera() -> void:
 
 
 ## Haritadaki işaretler: Nine'nin dükkânı, Dede, iskeledeki sandal (sandaldayken sandal iğnenin
-## yerinde, işareti yok) ve kerevit tuzakları.
+## yerinde, işareti yok), kerevit tuzakları ve Gölün Sırrı'nın şişesi.
 func _map_marks() -> Array[Dictionary]:
 	var front := ShopStall.front_for(lake.dock)
 	var stall := front - ShopStall.facing_dir() * ShopStall.DEPTH * 0.5
@@ -2205,6 +2308,14 @@ func _map_marks() -> Array[Dictionary]:
 		marks.append({ "kind": "boat", "pos": Vector2(boat.x, boat.z) })
 	for t in GameState.save.traps:
 		marks.append({ "kind": "trap", "pos": TrapSim.position(t) })
+	if bottle.visible:
+		marks.append({ "kind": "bottle", "pos": bottle.spot() })
+	# Dört parça tamam: Bekçi'nin yeri (derin ortanın ilk şamandırası) haritada X.
+	var deep := _boat_zone()
+	if GameState.save.map_pieces >= SaveData.MAX_MAP_PIECES and not deep.is_empty():
+		var buoys: Array[Vector2] = deep["buoys"]
+		if not buoys.is_empty():
+			marks.append({ "kind": "secret_x", "pos": buoys[0] })
 	return marks
 
 
@@ -2286,6 +2397,8 @@ func _on_target(id: String) -> void:
 			_on_boat()
 		"trap":
 			_on_trap_tapped(_trap_tap)
+		"bottle":
+			_on_bottle_tapped()
 
 
 ## Sandala dokunuldu: sandal alındıysa binilir (derin ortanın ilk şamandırası); yoksa Dede söyler
@@ -2331,7 +2444,7 @@ func _place_trap() -> void:
 		return
 	angler.stop()
 	_pending_cast = Dice.NO_POINT
-	_pending_trap = -1
+	_forget_pickups()
 	angler.face(p - at)
 	angler.play_cast()
 	var trap := TrapSim.place(db, save, spot_id, zone_id, p, GameState.clock.now_unix())
@@ -2358,7 +2471,7 @@ func _on_trap_landed(at: Vector2) -> void:
 func _on_trap_tapped(id: int) -> void:
 	if session.state != FishingSession.State.IDLE or _card_up():
 		return
-	_pending_trap = -1
+	_forget_pickups()
 	var index := TrapSim.find(GameState.save, id)
 	if index < 0:
 		return
@@ -2378,7 +2491,7 @@ func _check_pending_trap() -> void:
 	if _pending_trap < 0 or angler.is_walking() or session.state != FishingSession.State.IDLE:
 		return
 	var id := _pending_trap
-	_pending_trap = -1
+	_forget_pickups()
 	var index := TrapSim.find(GameState.save, id)
 	if index >= 0 and angler.pos2().distance_to(TrapSim.position(GameState.save.traps[index])) <= TRAP_REACH + 0.5:
 		_collect_trap(id)
@@ -2485,6 +2598,106 @@ func _on_trap_remove(id: int) -> void:
 	hud.toast(tr("UI_TRAP_REMOVED"), UiKit.TEXT, "tech_trap")
 
 
+## Bekleyen toplamalar unutulur (yürüme, atış, geçiş, panel): uzaktaki tuzak ve şişe.
+func _forget_pickups() -> void:
+	_pending_trap = -1
+	_pending_bottle = false
+
+
+# --- Gölün Sırrı: şişe ve mektup ----------------------------------------------------
+
+## Şişe kayda uyar (Secret.bottle_due): sıradaki mektubun şişesi bölgesinin suyunda belirir; yoksa (mektup
+## okundu, rütbe ya da balık eksik, bölge kapalı) gizlenir. Yeni belirince bildirim (bölgenin adıyla) ve Dede'nin
+## sözü sıraya (bir kez; _world_line).
+func _sync_bottle() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	if not Secret.bottle_due(db, save, spot_id):
+		if bottle.visible and not bottle.is_picking():
+			bottle.hide_bottle()
+		return
+	var zone := Secret.bottle_zone(save)
+	var p := Secret.bottle_point(db, spot_id, zone)
+	if not Dice.is_point(p) or bottle.is_picking():
+		return
+	if bottle.visible and bottle.spot().distance_to(p) < 0.01:
+		return
+	bottle.show_at(p)
+	if not save.flags.has(BOTTLE_FLAG % (save.letters + 1)):
+		hud.toast_later(tr("UI_BOTTLE_SEEN") % tr("ZONE_" + zone), UiKit.ACCENT, "", "bottle", "bottle")
+		_world_line_due = true
+
+
+## Şişeye dokunuldu (olta boşken): yakındaysa alınır. Uzaktaysa kıyıda balıkçı kıyı yolundan yürür, varınca
+## alır; derin ortadaki şişeye sandaldayken sandal ilk şamandıraya gider, karadan Dede sandalı söyler.
+func _on_bottle_tapped() -> void:
+	if session.state != FishingSession.State.IDLE or _card_up() or not bottle.visible:
+		return
+	var p := bottle.spot()
+	_pending_cast = Dice.NO_POINT
+	_forget_pickups()
+	Sounds.haptic(10)
+	if angler.pos2().distance_to(p) <= BOTTLE_REACH:
+		angler.stop()
+		_take_bottle()
+		return
+	var zone := GameState.db.zone(spot_id, Secret.bottle_zone(GameState.save))
+	if bool(zone.get("boat", false)):
+		if in_boat:
+			# Geçiş bekleyen toplamaları unutur: şişe geçişten sonra beklenir.
+			_go_boat(0)
+			_pending_bottle = true
+		else:
+			_say("UI_DEDE_BOTTLE_FAR")
+		return
+	if in_boat:
+		_say("UI_DEDE_BOTTLE_FAR")
+		return
+	_pending_bottle = true
+	_walk_route(p)
+
+
+## Yürüyüş (ya da sandalın geçişi) bitti: şişeye yetişildiyse alınır.
+func _check_pending_bottle() -> void:
+	if not _pending_bottle or angler.is_walking() or fade.busy() or session.state != FishingSession.State.IDLE:
+		return
+	_pending_bottle = false
+	if bottle.visible and angler.pos2().distance_to(bottle.spot()) <= BOTTLE_REACH + 0.5:
+		_take_bottle()
+
+
+## Şişe alınır: balıkçı ona döner, şişe sudan kalkar (ses, titreşim, halka); mektup okunur (Secret.read_letter:
+## sıradaki şişe bundan sonraki balıklarla) ve paneli açılır. Panel kapanınca Dede konuşur (_on_letter_closed).
+func _take_bottle() -> void:
+	var p := bottle.spot()
+	var n := Secret.read_letter(GameState.db, GameState.save, spot_id)
+	if n == 0:
+		bottle.hide_bottle()
+		return
+	GameState.save_game()
+	angler.face(p - angler.pos2())
+	angler.show_fish()
+	bottle.pick_up()
+	Sounds.play("bottle")
+	Sounds.haptic(30)
+	input.release_all()
+	_letter_read = n
+	letter_panel.open_letter(n)
+
+
+## Mektubun paneli kapandı: şişeden yeni çıktıysa Dede'nin sözü (mektuba göre); sıradaki altın istek gelebilir
+## (üçüncü mektuptan sonra), sıradaki şişe bekler.
+func _on_letter_closed() -> void:
+	var n := _letter_read
+	_letter_read = 0
+	if n <= 0:
+		return
+	_say("UI_DEDE_LETTER_%d" % n)
+	_line_time = ADVICE_TIME
+	_refill_requests()
+	_sync_bottle()
+
+
 ## Gölün sandal bölgesi (derin orta; yoksa boş).
 func _boat_zone() -> Dictionary:
 	for z in GameState.db.zones_of(spot_id):
@@ -2561,7 +2774,8 @@ func _open_guide(page: String) -> void:
 
 
 ## Nine'ye ya da dükkânına dokunuldu: Nine selam verir (balon, baş sallama, tezgâha uzanma) ve
-## dükkân açılır (kova doluysa Kova sekmesi). Olta suda değilken açılır: oturum zaten boşta.
+## dükkân açılır (kova doluysa Kova sekmesi). Olta suda değilken açılır: oturum zaten boşta. Göl sevgisi 6'ya
+## geldiyse Nine önce altın hamuru verir (Gölün Sırrı; bir kez: bildirim, Nine'nin sözü dükkânın başlığında).
 func _on_shop() -> void:
 	if session.state != FishingSession.State.IDLE or _card_up():
 		return
@@ -2569,9 +2783,14 @@ func _on_shop() -> void:
 	Sounds.haptic(10)
 	angler.stop()
 	_pending_cast = Dice.NO_POINT
-	_pending_trap = -1
+	_forget_pickups()
 	input.release_all()
-	shop_panel.open_shop()
+	var dough := Secret.give_dough(GameState.db, GameState.save)
+	if dough:
+		GameState.save_game()
+		hud.toast_later(tr("UI_DOUGH_GIVEN"), UiKit.ACCENT, "buy", "item:golden_dough", "dough")
+		Sounds.haptic(30)
+	shop_panel.open_shop("", "", false, "UI_NINE_DOUGH" if dough else "")
 
 
 ## Dükkân kapandı: tezgâhta açıldıysa Nine uğurlar (ipucu çubuğunda, sırayla uğurlama ve öğüt
@@ -2658,6 +2877,7 @@ func _build_ui() -> void:
 	settings_panel.weather_requested.connect(_debug_weather)
 	settings_panel.love_requested.connect(_debug_love)
 	settings_panel.finish_request_requested.connect(_debug_finish_request)
+	settings_panel.secret_requested.connect(_debug_secret)
 	settings_panel.story_requested.connect(_replay_story)
 	shop_panel = ShopPanel.new()
 	layer.add_child(shop_panel)
@@ -2669,6 +2889,8 @@ func _build_ui() -> void:
 	book_panel = BookPanel.new()
 	book_panel.spot_id = spot_id
 	layer.add_child(book_panel)
+	# Defterin Gölün Sırrı görünüşünde okunan mektup yeniden açılır (Dede konuşmaz).
+	book_panel.letter_requested.connect(func(n: int) -> void: letter_panel.open_letter(n))
 	map_panel = MapPanel.new()
 	map_panel.spot_id = spot_id
 	layer.add_child(map_panel)
@@ -2697,6 +2919,10 @@ func _build_ui() -> void:
 	bucket_panel.release_requested.connect(_on_bucket_release)
 	bucket_panel.release_all_requested.connect(_on_bucket_release_all)
 	bucket_panel.sell_requested.connect(_go_sell)
+	# Mektup defterin üstünde (defterden yeniden okunur).
+	letter_panel = LetterPanel.new()
+	layer.add_child(letter_panel)
+	letter_panel.closed.connect(_on_letter_closed)
 	# Rehber en son: açıldığı panelin (ayarlar, çanta, dükkân) üstünde çizilir; kapanınca o açık kalır.
 	guide_panel = GuidePanel.new()
 	layer.add_child(guide_panel)
@@ -2727,7 +2953,7 @@ func _build_ui() -> void:
 		input.release_all()
 		angler.stop()
 		_pending_cast = Dice.NO_POINT
-		_pending_trap = -1
+		_forget_pickups()
 		map_panel.open_map(angler.pos2(), zone_id, _map_marks()))
 	hud.bucket_pressed.connect(func() -> void:
 		_end_quick_catch()
@@ -2736,7 +2962,7 @@ func _build_ui() -> void:
 		input.release_all()
 		angler.stop()
 		_pending_cast = Dice.NO_POINT
-		_pending_trap = -1
+		_forget_pickups()
 		bucket_panel.open())
 	hud.world_pressed.connect(func() -> void:
 		_end_quick_catch()
@@ -2745,7 +2971,7 @@ func _build_ui() -> void:
 		input.release_all()
 		angler.stop()
 		_pending_cast = Dice.NO_POINT
-		_pending_trap = -1
+		_forget_pickups()
 		day_panel.open()
 		_mark_requests_seen())
 	hud.technique_pressed.connect(func() -> void:
@@ -2754,7 +2980,7 @@ func _build_ui() -> void:
 		input.release_all()
 		angler.stop()
 		_pending_cast = Dice.NO_POINT
-		_pending_trap = -1
+		_forget_pickups()
 		technique_panel.open())
 	hud.settings_pressed.connect(func() -> void:
 		input.release_all()

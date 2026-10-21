@@ -22,6 +22,7 @@ UI_DEBUG_TIME,Time +,Vakit +
 UI_DEBUG_WEATHER,Weather,Hava
 UI_DEBUG_LOVE,Love +%s,Sevgi +%s
 UI_DEBUG_REQUEST,Finish request,İstek bitir
+UI_DEBUG_SECRET,Secret +,Sır +
 RARITY_common,Common,Sıradan
 RARITY_fine,Fine,Güzel
 RARITY_rare,Rare,Nadir
@@ -601,3 +602,56 @@ UI_DEDE_TRASH_boot,An old boot! A cleaner lake brings more fish.,Eski bir çizme
 UI_DEDE_TRASH_tin_can,A tin can! Every bit you pick up helps the lake.,Teneke kutu! Topladığın her çöp göle iyi gelir.
 UI_DEDE_TRASH_plastic_bottle,A plastic bottle! Fish can't live with these.,Plastik şişe! Balıklar bunlarla yaşayamaz evlat.
 UI_DEDE_TRASH_rusty_key,A rusty key! Might be from when I was young.,Paslı bir anahtar! Benim gençliğimden kalma olabilir.
+LETTER_1_TITLE,Dry reeds,Kuruyan sazlar
+LETTER_1,"To the fisher kid on the other shore,\nThe reeds dried up again this summer. The water is so murky I can't see my own feet. Dad says the lake is dying, but I don't believe it.\nToday I picked up two sacks of trash from the shore. Tomorrow I'll do it again. I planted new shoots among the reeds; let's see if they grow.\nI see you every morning across the water with your rod. I'm setting this bottle on the lake: may the current carry it to you. Maybe you'll help too?","Karşı yakadaki balıkçı çocuğa,\nSazlar bu yaz yine kurudu. Su öyle bulanık ki ayaklarımı göremiyorum. Babam “Bu göl ölüyor” diyor ama ben inanmıyorum.\nBugün kıyıdan iki çuval çöp topladım. Yarın yine toplayacağım. Sazların arasına yeni filizler diktim, bakalım tutacaklar mı.\nSeni her sabah karşı kıyıda oltanla görüyorum. Bu şişeyi suya bırakıyorum, akıntı onu sana götürsün. Belki sen de yardım edersin?"
+LETTER_1_FROM,The girl of the reeds,Sazlığın kızı
+LETTER_2_TITLE,Under the old dock,İskelenin altından
+LETTER_2,"To the girl of the reeds,\nYour bottle came! The current brought it right to my rod.\nYou're right, the lake must not die. Today I cleaned under the old dock. You should see what came out: two odd boots, a tin can and a rusty key. Nobody knows what the key opens.\nI hung the boots on the dock post, so everyone remembers: no trash in the lake.\nTomorrow morning I'll come to the reeds. We'll plant the shoots together.","Sazlığın kızına,\nŞişen geldi! Akıntı onu tam oltamın dibine getirdi.\nHaklısın, bu göl ölmesin. Bugün eski iskelenin altını temizledim. Neler çıktı bilsen: iki tek çizme, bir teneke ve paslı bir anahtar. Anahtar neyi açıyor, kimse bilmiyor.\nÇizmeleri iskelenin direğine astım. Gelen geçen görsün, kimse göle çöp atmasın.\nYarın sabah sazlığa geleceğim. Filizleri birlikte dikeriz."
+LETTER_2_FROM,The boy from the other shore,Karşı yakanın oğlanı
+LETTER_3_TITLE,The first lily,İlk nilüfer
+LETTER_3,"To the boy from the other shore,\nI'm writing in a hurry! The first water lily bloomed in the cove. Snow white, with a golden middle.\nThe water is a little clearer too. Today I saw a pike glide under the lilies. The fish are coming back!\nThe reeds we planted took root. Even Mum came down to the shore to help us.\nIn the evenings I see a glow in the water among the lilies. Moonlight, or something else? I don't know.","Karşı yakanın oğlanına,\nKoşa koşa yazıyorum! Koyda ilk nilüfer açtı. Bembeyaz, ortası sapsarı.\nSu da biraz berraklaştı. Bugün bir turnanın nilüferlerin altından süzüldüğünü gördüm. Balıklar geri dönüyor!\nDiktiğimiz sazlar tuttu. Annem bile kıyıya inip bize yardım etti.\nAkşamları nilüferlerin arasında suda bir parıltı görüyorum. Ay ışığı mı, başka bir şey mi, bilmiyorum."
+LETTER_3_FROM,The girl of the reeds,Sazlığın kızı
+LETTER_4_TITLE,The turquoise shadow,Turkuaz gölge
+LETTER_4,"To the girl of the reeds,\nLast night I was waiting for fish at the rocky point. No moon; the lake was pitch black.\nSuddenly a turquoise light appeared under the water. A shadow, bigger than my boat! It slid slowly past the rocks, then dove into the deep.\nI wasn't scared, honest. I felt warm inside. My grandpa used to say: “The lake has a Keeper. It shows itself to those who care for the lake.”\nSo the lake hears us. Let's keep cleaning!","Sazlığın kızına,\nDün gece kayalık burunda balık bekliyordum. Ay yoktu, göl simsiyahtı.\nBirden suyun altında turkuaz bir ışık belirdi. Bir gölge, sandalımdan da büyük! Yavaşça kayaların önünden geçti, sonra derinlere daldı.\nKorkmadım, inan. İçim ısındı sanki. Dedem anlatırdı: “Gölün bir Bekçisi vardır, göle iyi bakanlara görünür.”\nDemek göl bizi duyuyor. Temizlemeye devam!"
+LETTER_4_FROM,The boy from the other shore,Karşı yakanın oğlanı
+LETTER_5_TITLE,Golden dough,Altın hamur
+LETTER_5,"To the boy from the other shore,\nThe trout came back to the stream mouth! They leap in the current and their scales shine in the sun.\nWhen I told my grandma about the Keeper, she laughed. “It's the lake's friend,” she said. “Only golden dough is good enough for it.”\nShe taught me the recipe: corn flour, honey and a pinch of patience. But she said you can only knead it once the lake loves you very much.\nSo I'll wait patiently. Shall we see the Keeper together one day?","Karşı yakanın oğlanına,\nDere ağzında alabalıklar geri döndü! Akıntıda sıçrıyorlar, pulları güneşte parlıyor.\nBekçi'yi anlattığımda ninem güldü. “O gölün dostudur” dedi. “Ona yalnızca altın hamur yakışır.”\nTarifini bana öğretti: mısır unu, bal ve bir tutam sabır. Ama dedi ki hamur ancak göl seni çok sevince yoğrulur.\nBen de sabırla bekleyeceğim. Bir gün Bekçi'yi birlikte görelim mi?"
+LETTER_5_FROM,The girl of the reeds,Sazlığın kızı
+LETTER_6_TITLE,Four pieces,Dört parça
+LETTER_6,"To the girl of the reeds,\nI'm dropping this bottle from my boat, right in the middle of the lake.\nI drew the place where I saw the Keeper on a map. Then I tore the map into four and hid the pieces. This secret should belong only to those who care for the lake.\nIf we ever have grandchildren, let them find the pieces. On a foggy night, with golden dough, let them come here.\nWhen summer ends, shall we have tea on the dock? I'll brew it.","Sazlığın kızına,\nBu şişeyi sandalımdan, gölün tam ortasından bırakıyorum.\nBekçi'yi gördüğüm yeri bir haritaya çizdim. Sonra haritayı dörde yırttım, parçaları sakladım. Bu sır yalnızca göle iyi bakanların olmalı.\nBir gün torunlarımız olursa parçaları onlar bulsun. Sisli bir gece, altın hamurla buraya gelsinler.\nYaz bitince iskelede bir çay içelim mi? Ben demlerim."
+LETTER_6_FROM,The boy from the other shore,Karşı yakanın oğlanı
+UI_LETTER_N,Letter %d/%d,Mektup %d/%d
+UI_BOTTLE_SEEN,A bottle in the water: %s,Suda bir şişe var: %s
+UI_BOTTLE_BOAT,The bottle is by the first buoy,Şişe ilk şamandıranın yanında
+UI_GOLDEN_TITLE,Dede's golden request,Dede'nin altın isteği
+UI_GOLDEN_NEW,Dede's golden request! Tap the clock.,Dede'nin altın isteği! Saate dokun.
+UI_GOLDEN_DONE,Map piece %d/%d! +%s coins,Harita parçası %d/%d! +%s para
+UI_DEDE_BOTTLE_FIRST,"Something's shining in the reeds, kid! Go and see.",Sazlıkta suda bir şey parlıyor evlat! Git bir bak.
+UI_DEDE_BOTTLE,"Another bottle, kid: %s!",Bir şişe daha çıktı evlat: %s!
+UI_DEDE_BOTTLE_FAR,"Take the boat to the first buoy, kid.",Sandalla ilk şamandıraya git evlat.
+UI_DEDE_LETTER_1,"I know this writing, kid... It's Nana's!",Bu yazıyı tanıdım evlat... Nine'nin!
+UI_DEDE_LETTER_2,"I wrote this one, kid! What days those were...",Bunu ben yazmışım evlat! Ne günlerdi...
+UI_DEDE_LETTER_3,The first lily... Nana cried with joy that day.,İlk nilüfer... Nine o gün sevinçten ağlamıştı.
+UI_DEDE_LETTER_4,"That night I saw the Keeper, the only time ever.",O gece Bekçi'yi gördüm. İlk ve son kez.
+UI_DEDE_LETTER_5,"Golden dough! Nana still knows that recipe, kid.",Altın hamur! Nine o tarifi hâlâ bilir evlat.
+UI_DEDE_LETTER_6,"That's where I saw the Keeper. Finish the map, kid!",Bekçi'yi gördüğüm yer orası. Haritayı tamamla!
+UI_DEDE_GOLDEN_FIRST,"I once tore my old map in four. Tap the clock, kid!",Eski haritamı dörde yırtmıştım. Saate dokun evlat!
+UI_DEDE_GOLDEN_DONE,"Another map piece! Check your book, kid.",Bir harita parçası daha! Deftere bak evlat.
+UI_DEDE_MAP_DONE,The map is whole! The X is at the first buoy.,"Harita tamam! X, ilk şamandıranın orada."
+UI_BOOK_TAB_SECRET,Lake's Secret,Gölün Sırrı
+UI_BOOK_TAB_FISH,Fish,Balıklar
+UI_SECRET_TITLE,The Lake's Secret,Gölün Sırrı
+UI_SECRET_LETTERS,Letters %d/%d,Mektuplar %d/%d
+UI_SECRET_LETTER_N,Letter %d,Mektup %d
+UI_SECRET_BOTTLE_NOW,A bottle in the water: %s!,Şişe suda: %s!
+UI_SECRET_NEXT_RANK,%s · rank %d,%s · rütbe %d
+UI_SECRET_NEXT_BOAT,%s · by boat,%s · sandalla
+UI_SECRET_NEXT_FISH,%s · in %d fish,%s · %d balık sonra
+UI_SECRET_PIECES,Map pieces %d/%d,Harita parçaları %d/%d
+UI_SECRET_PIECES_HINT,Dede's golden requests give the pieces.,Dede'nin altın istekleri parça verir.
+UI_SECRET_GOLDEN,Golden request: %s,Altın istek: %s
+UI_SECRET_X,X: the first buoy in Deep Water. Wait for a foggy night!,X: derin ortanın ilk şamandırası. Sisli geceyi bekle!
+UI_SECRET_DOUGH_HAVE,Golden dough: yours (bottom fishing),Altın hamur: sende (dip takımında)
+UI_SECRET_DOUGH_WAIT,Golden dough: Nana gives it at lake love %d,Altın hamur: göl sevgisi %d olunca Nine verir
+UI_NINE_DOUGH,"Here's golden dough, dear! Use it bottom fishing.","Al evladım, ninemin altın hamuru! Dipte kullan."
+UI_DOUGH_GIVEN,Nana gave you golden dough!,Nine sana altın hamur verdi!

@@ -156,6 +156,11 @@ func _gear_row(id: String) -> Control:
 			row.add_child(rect)
 		else:
 			row.add_child(GameIcon.make(str(item.get("kind", slot)), 72))
+	# Gölün Sırrı: Nine'nin altın hamuru dip takımında (kendiliğinden kullanılır; finalde Bekçi'yi çağırır).
+	if id == "bottom" and Secret.has_dough(save):
+		var dough := GameIcon.make("item:golden_dough", 72)
+		dough.name = "Dough"
+		row.add_child(dough)
 	return row
 
 

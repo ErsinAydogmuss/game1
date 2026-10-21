@@ -11,6 +11,8 @@ extends Dialog
 ## - Dede'nin istekleri (rütbe 2'den sonra; Requests): yuva başına bir kart: ikon, ne istendiği, ilerleme
 ##   ("1/3"), ödül (para ve göl sevgisi), değiştir düğmesi (günde bir: reroll_requested); boş yuvada "Yarın yeni
 ##   istek". Biten istek kendiliğinden öder (main).
+## - Dede'nin altın isteği (Gölün Sırrı; varsa): günlük kartların üstünde tek satırlık altın şerit (harita parçası,
+##   ne istendiği, ilerleme, ödül); değiştirilmez.
 ## Yazılar refresh'te (her açılışta, o anki dilde); panel dil uygulanmadan önce kurulur.
 
 signal tea_requested
@@ -39,10 +41,14 @@ const REROLL_ICON := 76.0
 ## hâli (test_requests iki dilde ölçer) ve boyu.
 const GOLDEN_TEXT_W := 720.0
 const GOLDEN_TEXT_SIZE := 28
+const GOLDEN_ICON := 64.0
+const GOLDEN_EDGE := Color("#e0a015")
+const GOLDEN_FILL := Color("#fff3c8")
 
 var _cards: HBoxContainer
 var _tea_box: HBoxContainer
 var _requests_head: HBoxContainer
+var _golden_box: VBoxContainer
 var _requests_box: HBoxContainer
 ## Başlıktaki günün hapı (yazısı refresh'te).
 var _day_pill: PanelContainer
@@ -65,6 +71,8 @@ func _build() -> void:
 	_requests_head = HBoxContainer.new()
 	_requests_head.add_theme_constant_override("separation", 16)
 	body.add_child(_requests_head)
+	_golden_box = VBoxContainer.new()
+	body.add_child(_golden_box)
 	_requests_box = HBoxContainer.new()
 	_requests_box.name = "Requests"
 	_requests_box.add_theme_constant_override("separation", 20)
@@ -85,12 +93,17 @@ func refresh() -> void:
 	_tea_box.add_child(_tea_card(rules, save))
 	_tea_box.add_child(_love_card(db, save))
 	Dialog.clear(_requests_head)
+	Dialog.clear(_golden_box)
 	Dialog.clear(_requests_box)
 	var open := Requests.unlocked(db, save)
 	_requests_head.visible = open
 	_requests_box.visible = open
+	var golden := Requests.golden(db, save)
+	_golden_box.visible = open and not golden.is_empty()
 	if not open:
 		return
+	if not golden.is_empty():
+		_golden_box.add_child(_golden_card(db, golden))
 	_requests_head.add_child(GameIcon.make("requests", 52))
 	var title := _display(tr("UI_REQ_TITLE"), UiKit.SIZE_SMALL + 4, UiKit.INK)
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -294,6 +307,42 @@ func _request_card(db: ContentDB, save: SaveData, slot: int) -> Control:
 	return panel
 
 
+## Dede'nin altın isteği (Gölün Sırrı): tek satır: harita parçası, başlık, ne istendiği (GOLDEN_TEXT_W içinde;
+## test_requests ölçer), ilerleme, ödül (para ve parça). Değiştirme düğmesi yok.
+func _golden_card(db: ContentDB, r: Dictionary) -> Control:
+	var panel := PanelContainer.new()
+	panel.name = "Golden"
+	var style := UiKit.card_style(GOLDEN_EDGE, 28, GOLDEN_FILL, 5)
+	style.content_margin_left = 22.0
+	style.content_margin_right = 22.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	panel.add_theme_stylebox_override("panel", style)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	panel.add_child(row)
+	var icon := GameIcon.make("item:map_piece", GOLDEN_ICON)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(icon)
+	var title := _display(tr("UI_GOLDEN_TITLE"), UiKit.SIZE_SMALL, GOLDEN_EDGE.darkened(0.25))
+	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(title)
+	var text := UiKit.ink(text_of(db, r), GOLDEN_TEXT_SIZE, UiKit.INK)
+	text.name = "Text"
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	text.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	row.add_child(text)
+	var progress := _display("%d/%d" % [int(r["progress"]), int(r["goal"])], 30, UiKit.PRIMARY)
+	progress.name = "Progress"
+	progress.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(progress)
+	var reward: Dictionary = r["reward"]
+	row.add_child(UiKit.icon_text("coin", UiKit.format_int(int(reward.get("coins", 0))), 34, 26))
+	row.add_child(UiKit.icon_text("item:map_piece", "+1", 40, 26))
+	return panel
+
+
 ## İsteğin yazısı o anki dilde (Requests.describe: değerlerdeki yazılar da çevrilir).
 static func text_of(db: ContentDB, request: Dictionary) -> String:
 	var described := Requests.describe(db, request)
@@ -325,6 +374,8 @@ static func icon_of(db: ContentDB, request: Dictionary) -> String:
 			return "item:boot"
 		"trap":
 			return "tech_trap"
+		"secret":
+			return "item:map_piece"
 	return "requests"
 
 

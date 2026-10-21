@@ -6,6 +6,13 @@ extends Dialog
 ## nadirlik, rekor boy ve yıldız, sayılar ya da tutulmadıysa ipucu (sevdiği yem, ne sıklıkla
 ## görüldüğü); bu göldeki gerçek oranı (CatchOdds: gölgeyi doğuran işlevin aynısı, kuşanılan yemle),
 ## gölün nadirlik oranları ve şans garantisi sayaçları (gelir kuralı 10: oranlar ve garanti açık).
+## İlk mektuptan sonra ikinci görünüş "Gölün Sırrı" (Dalga 4, 5. adım; düğmesi sayfa düğmelerinin sağında, iki
+## görünüşte aynı yerde): 3×2 mektup kartı (okunan: bölgesi ve adı, dokununca yeniden okunur: letter_requested;
+## sıradaki: bölgesi ve ne zaman; ötekiler soru işareti), sağda dörde yırtılmış harita (SecretMap), parçalar,
+## altın istek ya da X'in yeri, altın hamur. Panelin boyu iki görünüşte aynı.
+
+## Okunan bir mektuba dokunuldu (main mektubu yeniden açar; Dede konuşmaz).
+signal letter_requested(n: int)
 
 ## Bir sayfadaki tür (6 sütun × 2 satır).
 const PAGE_SIZE := 12
@@ -26,6 +33,13 @@ const UNFOUND_MARK := Color(0.42, 0.33, 0.24, 0.7)
 ## Ayrıntıdaki balık resmi ve onu saran nadirlik çerçevesinin köşe boyu (balık kartı gibi).
 const DETAIL_ART := 110.0
 const DETAIL_FRAME_CORNER := 50.0
+## Gölün Sırrı: mektup kartları (3×2; balık ızgarasının yerini kaplar), haritanın boyu, görünüş düğmesi.
+const LETTER_COLUMNS := 3
+const LETTER_CARD := Vector2(348, 232)
+const SECRET_MAP := Vector2(500, 330)
+const VIEW_BUTTON := Vector2(330, 122)
+const LETTER_EDGE := Color("#c79f62")
+const LETTER_FILL := Color("#f7ecd0")
 
 ## Defterin gölü (main verir; spots.json kimliği) ve balıkçının bölgesi (oranlar o bölgenin).
 var spot_id: String = ""
@@ -36,48 +50,85 @@ var _pager: HBoxContainer
 var _detail: VBoxContainer
 var _page: int = 0
 var _selected: String = ""
+## Görünüşler: balıklar ya da Gölün Sırrı ("fish", "secret"); sırrın mektup kartları, alttaki satırı ve haritası.
+var _view: String = "fish"
+var _fish_view: HBoxContainer
+var _fish_foot: HBoxContainer
+var _secret_view: HBoxContainer
+var _letters: GridContainer
+var _secret_foot: HBoxContainer
+var _secret_info: VBoxContainer
+var _secret_lines: VBoxContainer
+var _map: SecretMap
 
 
 func _build() -> void:
 	set_header(tr("UI_BOOK"), "book", WIDTH)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 22)
-	body.add_child(row)
+	_fish_view = HBoxContainer.new()
+	_fish_view.add_theme_constant_override("separation", 22)
+	body.add_child(_fish_view)
 	var left := VBoxContainer.new()
 	left.add_theme_constant_override("separation", 12)
-	row.add_child(left)
+	_fish_view.add_child(left)
 	_grid = GridContainer.new()
 	_grid.columns = COLUMNS
 	_grid.add_theme_constant_override("h_separation", 12)
 	_grid.add_theme_constant_override("v_separation", 12)
 	_grid.custom_minimum_size = Vector2(COLUMNS * CARD.x + (COLUMNS - 1) * 12, CARD.y * 2 + 12)
 	left.add_child(_grid)
+	# Alttaki satır: sayfa düğmeleri ve sağda Gölün Sırrı düğmesi (sırrın görünüşünde aynı yerde Balıklar).
+	_fish_foot = HBoxContainer.new()
+	_fish_foot.add_theme_constant_override("separation", 14)
+	_fish_foot.custom_minimum_size.y = VIEW_BUTTON.y
+	left.add_child(_fish_foot)
 	_pager = HBoxContainer.new()
-	_pager.alignment = BoxContainer.ALIGNMENT_CENTER
 	_pager.add_theme_constant_override("separation", 14)
-	left.add_child(_pager)
+	_pager.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_fish_foot.add_child(_pager)
 	var detail_panel := PanelContainer.new()
 	detail_panel.add_theme_stylebox_override("panel", UiKit.framed("card", UiKit.card_style(), UiKit.CARD_CORNER))
 	detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(detail_panel)
+	_fish_view.add_child(detail_panel)
 	_detail = VBoxContainer.new()
 	_detail.add_theme_constant_override("separation", 8)
 	detail_panel.add_child(_detail)
+	_build_secret_view()
 
 
-## Açar; fish_id verilirse onu seçer (sayfası açılır).
+## Açar; fish_id verilirse onu seçer (sayfası açılır). Her açılış balıklarla başlar.
 func open_book(fish_id: String = "") -> void:
 	if not fish_id.is_empty():
 		_selected = fish_id
 	_page = -1
+	_view = "fish"
 	open()
+
+
+## Gölün Sırrı görünüşünde açar (bot ve testler; oyuncu düğmeyle geçer).
+func open_secret() -> void:
+	_page = -1
+	_view = "secret"
+	open()
+
+
+## Gösterilen görünüş ("fish" ya da "secret").
+func view() -> String:
+	return _view
 
 
 func refresh() -> void:
 	var db := GameState.db
 	var save := GameState.save
-	set_header(tr("UI_BOOK"), "book", WIDTH)
+	if save.letters <= 0:
+		_view = "fish"
+	_fish_view.visible = _view == "fish"
+	_secret_view.visible = _view == "secret"
 	clear(header_extra)
+	if _view == "secret":
+		set_header(tr("UI_SECRET_TITLE"), "item:map_piece", WIDTH)
+		_build_secret(db, save)
+		return
+	set_header(tr("UI_BOOK"), "book", WIDTH)
 	var count := PanelContainer.new()
 	count.add_theme_stylebox_override("panel", UiKit.pill_style(Color(0.18, 0.1, 0.04, 0.85)))
 	var fish := species(db, spot_id)
@@ -165,6 +216,7 @@ func _build_grid(db: ContentDB, save: SaveData, fish: Array[Dictionary]) -> void
 
 func _build_pager(pages: int, fish: Array[Dictionary]) -> void:
 	clear(_pager)
+	_set_view_button(_fish_foot, "secret")
 	if pages <= 1:
 		return
 	for page in pages:
@@ -487,3 +539,195 @@ func _add_lake_odds(db: ContentDB, save: SaveData, species_odds: Dictionary) -> 
 		_detail.add_child(row)
 		row.add_child(UiKit.rarity_badge(db, r, 22))
 		row.add_child(UiKit.ink(tr("UI_BOOK_PITY_NOW") if left == 0 else tr("UI_BOOK_PITY") % left, 26, UiKit.INK))
+
+
+# --- Gölün Sırrı ------------------------------------------------------------------
+
+## Sırrın görünüşü: solda mektup kartları (balık ızgarasının boyunda) ve alttaki satır, sağda haritanın kartı.
+func _build_secret_view() -> void:
+	_secret_view = HBoxContainer.new()
+	_secret_view.name = "Secret"
+	_secret_view.add_theme_constant_override("separation", 22)
+	_secret_view.visible = false
+	body.add_child(_secret_view)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 12)
+	_secret_view.add_child(left)
+	_letters = GridContainer.new()
+	_letters.name = "Letters"
+	_letters.columns = LETTER_COLUMNS
+	_letters.add_theme_constant_override("h_separation", 12)
+	_letters.add_theme_constant_override("v_separation", 12)
+	_letters.custom_minimum_size = _grid.custom_minimum_size
+	left.add_child(_letters)
+	_secret_foot = HBoxContainer.new()
+	_secret_foot.add_theme_constant_override("separation", 14)
+	_secret_foot.custom_minimum_size.y = VIEW_BUTTON.y
+	left.add_child(_secret_foot)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", UiKit.framed("card", UiKit.card_style(), UiKit.CARD_CORNER))
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_secret_view.add_child(card)
+	_secret_info = VBoxContainer.new()
+	_secret_info.add_theme_constant_override("separation", 10)
+	card.add_child(_secret_info)
+	_map = SecretMap.new()
+	_map.name = "Map"
+	_map.custom_minimum_size = SECRET_MAP
+	_map.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_map.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_secret_info.add_child(_map)
+	_secret_lines = VBoxContainer.new()
+	_secret_lines.add_theme_constant_override("separation", 10)
+	_secret_info.add_child(_secret_lines)
+
+
+## Sırrın görünüşünü kayda göre kurar: başlıkta mektup sayısı, kartlar, harita, parçalar, altın istek ya da X,
+## altın hamur.
+func _build_secret(db: ContentDB, save: SaveData) -> void:
+	var pill := PanelContainer.new()
+	pill.add_theme_stylebox_override("panel", UiKit.pill_style(Color(0.18, 0.1, 0.04, 0.85)))
+	pill.add_child(UiKit.title(tr("UI_SECRET_LETTERS") % [save.letters, Secret.LETTERS.size()], 40, UiKit.ACCENT,
+			HORIZONTAL_ALIGNMENT_CENTER, 10))
+	header_extra.add_child(pill)
+	clear(_letters)
+	for i in Secret.LETTERS.size():
+		_letters.add_child(_letter_card(db, save, i + 1))
+	clear(_secret_foot)
+	_secret_foot.add_child(UiKit.spacer())
+	_set_view_button(_secret_foot, "fish")
+	# Harita kartı: harita, parçalar, sıradaki parça ya da X, altın hamur.
+	clear(_secret_lines)
+	var deep := _boat_zone(db)
+	var buoys: Array[Vector2] = deep.get("buoys", [] as Array[Vector2])
+	var lake := db.lake(spot_id)
+	_map.setup(lake, lake.zone_index(str(deep.get("id", ""))), buoys[0] if not buoys.is_empty() else Dice.NO_POINT)
+	_map.pieces = save.map_pieces
+	var pieces := DayPanel._display(tr("UI_SECRET_PIECES") % [save.map_pieces, SaveData.MAX_MAP_PIECES], 34, UiKit.INK)
+	pieces.name = "Pieces"
+	_secret_lines.add_child(pieces)
+	var note := ""
+	var golden := Requests.golden(db, save)
+	if save.map_pieces >= SaveData.MAX_MAP_PIECES:
+		note = tr("UI_SECRET_X")
+	elif not golden.is_empty():
+		note = tr("UI_SECRET_GOLDEN") % DayPanel.text_of(db, golden)
+	else:
+		note = tr("UI_SECRET_PIECES_HINT")
+	_secret_lines.add_child(_wrapped(note, 26, UiKit.INK_SOFT))
+	var dough := HBoxContainer.new()
+	dough.add_theme_constant_override("separation", 10)
+	_secret_lines.add_child(dough)
+	var has := Secret.has_dough(save)
+	var icon := GameIcon.make("item:golden_dough", 52)
+	icon.modulate = Color.WHITE if has else Color(1, 1, 1, 0.45)
+	dough.add_child(icon)
+	var text := tr("UI_SECRET_DOUGH_HAVE") if has else tr("UI_SECRET_DOUGH_WAIT") % Secret.DOUGH_LOVE
+	var label := _wrapped(text, 26, UiKit.INK if has else UiKit.INK_SOFT)
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	dough.add_child(label)
+
+
+## Bir mektubun kartı: okunduysa bölgesi, adı ve numarası (dokununca yeniden okunur); sıradakiyse bölgesi ve ne
+## zaman (şişe suda, kaç balık sonra, hangi rütbede, sandalla); ötekiler soru işareti.
+func _letter_card(db: ContentDB, save: SaveData, n: int) -> Button:
+	var letter := Secret.LETTERS[n - 1]
+	var zone := str(letter["zone"])
+	var read := n <= save.letters
+	var next := n == save.letters + 1
+	var b := Button.new()
+	b.name = "Letter%d" % n
+	b.custom_minimum_size = LETTER_CARD
+	b.focus_mode = Control.FOCUS_NONE
+	var sb := UiKit.card_style(LETTER_EDGE if read else UNKNOWN_BORDER, 24, LETTER_FILL if read else Color("#efe2c6"),
+			5 if read else 3)
+	for state: String in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		b.add_theme_stylebox_override(state, sb)
+	b.disabled = not read
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 4)
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	column.offset_left = 12
+	column.offset_right = -12
+	column.offset_top = 10
+	column.offset_bottom = -10
+	b.add_child(column)
+	var top := HBoxContainer.new()
+	top.alignment = BoxContainer.ALIGNMENT_CENTER
+	top.add_theme_constant_override("separation", 10)
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_child(top)
+	var badge := GameIcon.make("zone:" + zone, 76)
+	if not read:
+		badge.modulate = Color(1, 1, 1, 0.6 if next else 0.3)
+	top.add_child(badge)
+	if read:
+		top.add_child(GameIcon.make("item:letter", 60))
+		var title := DayPanel._display(tr(Secret.letter_title_key(n)), 28, UiKit.INK)
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		title.max_lines_visible = 2
+		column.add_child(title)
+		var number := UiKit.ink(tr("UI_SECRET_LETTER_N") % n, 24, UiKit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+		column.add_child(number)
+		b.pressed.connect(func() -> void:
+			Sounds.play("ui_tap")
+			letter_requested.emit(n))
+		return b
+	top.add_child(DayPanel._display("?", 64, Color(UiKit.INK_SOFT, 0.7 if next else 0.4)))
+	if next:
+		var when := _wrapped(_next_text(db, save, n), 24, UiKit.INK_SOFT)
+		when.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		when.max_lines_visible = 2
+		column.add_child(when)
+	return b
+
+
+## Sıradaki mektubun ne zaman geleceği: şişe suda, kaç balık sonra, hangi rütbede ya da sandalla (bölgesinin adıyla).
+func _next_text(db: ContentDB, save: SaveData, n: int) -> String:
+	var letter := Secret.LETTERS[n - 1]
+	var zone_name := tr("ZONE_" + str(letter["zone"]))
+	if Secret.bottle_due(db, save, spot_id):
+		return tr("UI_SECRET_BOTTLE_NOW") % zone_name
+	if Rank.rank(db, save) < int(letter["rank"]):
+		return tr("UI_SECRET_NEXT_RANK") % [zone_name, int(letter["rank"])]
+	var zone := db.zone(spot_id, str(letter["zone"]))
+	if not zone.is_empty() and not Zones.unlocked(db, save, zone):
+		return tr("UI_SECRET_NEXT_BOAT") % zone_name
+	return tr("UI_SECRET_NEXT_FISH") % [zone_name, maxi(1, Secret.LETTER_GAP - (save.catches - save.letter_at))]
+
+
+## Görünüş düğmesi alttaki satırın sağında: "Gölün Sırrı" (ilk mektuptan sonra) ya da "Balıklar".
+func _set_view_button(foot: HBoxContainer, to: String) -> void:
+	var old := foot.get_node_or_null("ViewButton")
+	if old != null:
+		foot.remove_child(old)
+		old.queue_free()
+	if GameState.save.letters <= 0:
+		return
+	var b := UiKit.button(UiKit.upper(tr("UI_BOOK_TAB_SECRET" if to == "secret" else "UI_BOOK_TAB_FISH")),
+			UiKit.MYSTERY_BUTTON if to == "secret" else UiKit.SECONDARY, UiKit.SIZE_SMALL, VIEW_BUTTON)
+	b.name = "ViewButton"
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		_view = to
+		refresh())
+	foot.add_child(b)
+
+
+## Gölün sandal bölgesi (derin orta; X'in şamandırası).
+func _boat_zone(db: ContentDB) -> Dictionary:
+	for z in db.zones_of(spot_id):
+		if bool(z["boat"]):
+			return z
+	return {}
+
+
+static func _wrapped(text: String, size: int, color: Color) -> Label:
+	var label := UiKit.ink(text, size, color)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size = Vector2(SECRET_MAP.x - 20.0, 0)
+	return label

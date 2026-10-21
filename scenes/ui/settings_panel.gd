@@ -19,6 +19,8 @@ signal time_requested
 signal weather_requested
 signal love_requested
 signal finish_request_requested
+## Geliştirme sürümü (Gölün Sırrı): altın istek biter ya da sıradaki şişe hemen çıkar (main: gerçek akışla).
+signal secret_requested
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
@@ -168,9 +170,10 @@ func _debug_row() -> void:
 		rank_up_requested.emit())
 
 
-## Geliştirme sürümünün canlı dünya satırı (Dalga 4; telefonda vakit, hava, sevgi ve istekleri denemek için):
-## VAKİT + (sonraki vakit), HAVA (bugünün havası sıradakine), SEVGİ + (göl sevgisi), İSTEK BİTİR (Dede'nin ilk
-## bitmemiş isteği biter ve öder; istek yoksa pasif).
+## Geliştirme sürümünün canlı dünya satırı (Dalga 4; telefonda vakit, hava, sevgi, istekler ve sırrı denemek
+## için): VAKİT + (sonraki vakit), HAVA (bugünün havası sıradakine), SEVGİ + (göl sevgisi), İSTEK BİTİR (Dede'nin
+## ilk bitmemiş isteği biter ve öder; istek yoksa pasif), SIR + (altın istek biter ya da sıradaki şişe çıkar;
+## mektuplar ve parçalar bitince pasif).
 func _world_row() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
@@ -189,6 +192,11 @@ func _world_row() -> void:
 	finish.pressed.connect(func() -> void:
 		Sounds.play("ui_tap")
 		finish_request_requested.emit())
+	var secret := _debug_button(row, "DebugSecret", tr("UI_DEBUG_SECRET"))
+	secret.disabled = Secret.next_letter(GameState.save) < 0 and Requests.golden(GameState.db, GameState.save).is_empty()
+	secret.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		secret_requested.emit())
 
 
 ## Satırı eşit paylaşan düğme (bot adıyla bulur: dokunuştan sonra satırlar yeniden kurulur).

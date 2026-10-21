@@ -101,7 +101,7 @@ func _init() -> void:
 
 
 ## Haritayı kurar: göl ve bölgeleri, kilitler (kayda göre), balıkçının yeri (here), bulunulan
-## bölge ve işaretler ([{ "kind": "shop" | "dede" | "boat" | "trap", "pos": Vector2 }]; sandal çıkartmadır,
+## bölge ve işaretler ([{ "kind": "shop" | "dede" | "boat" | "trap" | "bottle" | "secret_x", "pos": Vector2 }]; sandal çıkartmadır,
 ## görseli yoksa çizilmez).
 func show_lake(db: ContentDB, save: SaveData, spot_id: String, here: Vector2, current: String,
 		marks: Array[Dictionary]) -> void:
@@ -429,8 +429,8 @@ func _new_tag() -> Control:
 	return pill
 
 
-## Dükkân, Dede ya da tuzak işareti: dükkân Ersin'in çıkartması (yoksa dükkân ikonu), Dede portresi
-## (yoksa yok), kerevit tuzağı küçük tuzak resmi. Sandal çıkartmadır (_add_stickers).
+## Dükkân, Dede, tuzak ya da şişe işareti: dükkân Ersin'in çıkartması (yoksa dükkân ikonu), Dede portresi
+## (yoksa yok), kerevit tuzağı küçük tuzak resmi, Gölün Sırrı'nın şişesi. Sandal çıkartmadır (_add_stickers).
 func _mark(kind: String) -> Control:
 	match kind:
 		"shop":
@@ -441,6 +441,11 @@ func _mark(kind: String) -> Control:
 			return _art_rect(face, MARK) if face != null else null
 		"trap":
 			return GameIcon.make("trap", TRAP_MARK)
+		"bottle":
+			return GameIcon.make("bottle", MARK)
+		"secret_x":
+			# Gölün Sırrı: dört parça tamam, Bekçi'nin yeri (derin ortanın ilk şamandırası).
+			return GameIcon.make("x_mark", MARK)
 	return null
 
 

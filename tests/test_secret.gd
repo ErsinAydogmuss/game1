@@ -128,6 +128,33 @@ func test_letters_alternate_writers() -> void:
 	assert_eq(Secret.letter_writer(1), "nine", "ilk mektup Nine'nin")
 
 
+## Her mektubun yazısı, adı ve imzası iki dilde var; yazı imzasıyla mektup kâğıdına kaydırmadan sığar (telefonda
+## panel küçülmeden: LetterPanel.TEXT_H; sütun panelin iki yanından TEXT_PAD içeride).
+func test_letters_are_written_and_fit_the_paper() -> void:
+	var rows := {}
+	var f := FileAccess.open("res://localization/strings.csv", FileAccess.READ)
+	while f != null and not f.eof_reached():
+		var row := f.get_csv_line()
+		if row.size() >= 3:
+			rows[row[0]] = row
+	for n in range(1, Secret.LETTERS.size() + 1):
+		for key: String in [Secret.letter_key(n), Secret.letter_title_key(n), Secret.letter_from_key(n),
+				"UI_DEDE_LETTER_%d" % n]:
+			var row: PackedStringArray = rows.get(key, PackedStringArray())
+			assert_true(row.size() >= 3 and not row[1].is_empty() and not row[2].is_empty(), "iki dilde: " + key)
+		var text_row: PackedStringArray = rows.get(Secret.letter_key(n), PackedStringArray())
+		if text_row.size() < 3:
+			continue
+		for column: int in [1, 2]:
+			var lang := "EN" if column == 1 else "TR"
+			var text := text_row[column].c_unescape()
+			var words := text.split(" ", false).size()
+			assert_between(words, 40, 130, "mektup %d (%s) kısa ve okunur: %d kelime" % [n, lang, words])
+			var height := LetterPanel.text_height(text)
+			assert_true(height <= LetterPanel.TEXT_H, "mektup %d (%s) kâğıda sığar: %.0f > %.0f" % [n, lang, height,
+					LetterPanel.TEXT_H])
+
+
 func _save(rank: int) -> SaveData:
 	var save := SaveData.create_new(0)
 	save.seed = 4242

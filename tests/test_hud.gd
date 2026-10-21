@@ -5,10 +5,12 @@ extends BaseTest
 ## İpucu çubuğunda görünen sözler: oyunun ipuçları, Dede'nin öğütleri ve uyarıları, Nine'nin sözleri
 ## (main._hint_key ve _say). Kartta ve dükkânda görünenler (UI_DEDE_CARD_, UI_NINE_SHOP_) değil.
 const HINT_PREFIXES: Array[String] = ["UI_HINT_", "UI_DEDE_TIP_", "UI_NINE_LINE_", "UI_DEDE_TECH_", "UI_DEDE_SUGGEST_",
-		"UI_DEDE_STORY_", "UI_DEDE_TIME_", "UI_DEDE_WEATHER_", "UI_DEDE_LOVE_", "UI_DEDE_TRASH_", "UI_DEDE_REQ_"]
+		"UI_DEDE_STORY_", "UI_DEDE_TIME_", "UI_DEDE_WEATHER_", "UI_DEDE_LOVE_", "UI_DEDE_TRASH_", "UI_DEDE_REQ_",
+		"UI_DEDE_LETTER_", "UI_DEDE_GOLDEN_"]
 const HINT_KEYS: Array[String] = ["UI_DEDE_BUCKET", "UI_DEDE_BUCKET_CAST", "UI_DEDE_BAIT_OUT", "UI_DEDE_BOAT", "UI_DEDE_BOAT_SHOP",
 		"UI_DEDE_BOAT_DEEP", "UI_DEDE_GATE", "UI_DEDE_LEGEND_NEAR", "UI_DEDE_ZONE_OPEN", "UI_DEDE_SNAG",
-		"UI_DEDE_FLY_STILL", "UI_DEDE_TRAP_OPEN", "UI_DEDE_TRAP_FIRST", "UI_DEDE_LANTERN", "UI_DEDE_TEA"]
+		"UI_DEDE_FLY_STILL", "UI_DEDE_TRAP_OPEN", "UI_DEDE_TRAP_FIRST", "UI_DEDE_LANTERN", "UI_DEDE_TEA",
+		"UI_DEDE_BOTTLE_FIRST", "UI_DEDE_BOTTLE_FAR", "UI_DEDE_MAP_DONE"]
 
 
 func test_hint_lines_fit_one_line() -> void:
@@ -61,6 +63,24 @@ func test_gear_advice_fits_one_line() -> void:
 			var size := UiKit.fit_size(text, font, UiKit.SIZE_BODY, room, Hud.HINT_MIN_SIZE)
 			assert_true(_width(font, text, size) <= room, "takım öğüdü %d boyda da sığmıyor (%s): %s (%.0f > %.0f)" % [
 					size, "en" if column == 1 else "tr", text, _width(font, text, size), room])
+
+
+## Gölün Sırrı: yeni şişede Dede bölgenin adını söyler ("Bir şişe daha çıktı evlat: Nilüferli Koy!"): en uzun
+## bölge adıyla iki dilde tek satır.
+func test_bottle_line_fits_one_line() -> void:
+	var room := Hud.hint_text_room()
+	var font := UiKit.body_font()
+	var rows := {}
+	var f := FileAccess.open("res://localization/strings.csv", FileAccess.READ)
+	while f != null and not f.eof_reached():
+		var row := f.get_csv_line()
+		if row.size() >= 3:
+			rows[row[0]] = row
+	for column: int in [1, 2]:
+		for letter in Secret.LETTERS:
+			var zone_name: String = (rows["ZONE_" + str(letter["zone"])] as PackedStringArray)[column]
+			var text: String = (rows["UI_DEDE_BOTTLE"] as PackedStringArray)[column] % zone_name
+			assert_true(_width(font, text) <= room, "şişenin sözü sığmıyor (%s): %s" % ["en" if column == 1 else "tr", text])
 
 
 static func _width(font: Font, text: String, size: int = UiKit.SIZE_BODY) -> float:

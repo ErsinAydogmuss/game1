@@ -229,6 +229,8 @@ func _ready() -> void:
 			_play_release.call_deferred()
 		"requests":
 			_play_requests.call_deferred()
+		"secret":
+			_play_secret.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -2869,6 +2871,240 @@ func _request_by_catch(db: ContentDB, save: SaveData) -> Array:
 	return []
 
 
+## Gölün Sırrı (Dalga 4, 5. adım; KONTROL satırları; telefon oranında ve --safe-inset=130 ile, TR ve EN): rütbe 2'de
+## şişe yok; rütbe 3'te sazlıkta şişe (bildirim, haritada işaret, Dede'nin sözü, iskelede ve sazlıkta ≤150 çizim);
+## yakından dokununca şişe kalkar, mektup 1 açılır (kâğıda kaydırmadan sığar, panel küçülmeden ve güvenli alanda),
+## kapanınca Dede yazanı tanır; uzaktaki şişeye dokununca balıkçı yürür ve alır (mektup 2, iskele koyu); mektup
+## 3'ten sonra Dede'nin altın isteği (bildirim, Dede'nin haritası, Bugün panelinde altın şerit; panel küçülmeden
+## sığar); akşam nilüferli koyda gerçek bir turnayla biter (harita parçası 1/4, para, Dede); derin ortanın şişesi:
+## sandal başka şamandıradayken şişeye dokununca sandal ilk şamandıraya gider ve alır (mektup 6).
+func _play_secret() -> void:
+	_use_save(40)
+	var db := GameState.db
+	var save := GameState.save
+	var spot := str(main.get("spot_id"))
+	var bottle: BottleMarker = main.get("bottle")
+	var letters: LetterPanel = main.get("letter_panel")
+	_roomy_bucket()
+	save.xp = db.rank_xp[1]
+	GameState.changed.emit()
+	await _wait(1.0)
+	_check("rütbe 2'de şişe yok", not bottle.visible)
+	# Rütbe 3: sazlıkta şişe.
+	save.xp = db.rank_xp[2]
+	GameState.changed.emit()
+	await _wait(0.5)
+	var p := bottle.spot()
+	var reeds := db.lake(spot).zone_index("reeds")
+	_check("rütbe 3'te sazlıkta suda şişe", bottle.visible and Dice.is_point(p) and db.lake(spot).zone_at(p) == reeds)
+	_check("bildirim: suda bir şişe var (Sazlık)", await _wait_toast(UiKit.upper(tr("UI_BOTTLE_SEEN") % tr("ZONE_reeds")), 6.0))
+	var marks: Array = main.call("_map_marks")
+	var marked := false
+	for m: Dictionary in marks:
+		marked = marked or str(m["kind"]) == "bottle"
+	_check("haritada şişenin işareti", marked)
+	_check("Dede şişeyi söyler", await _wait_until(func() -> bool: return str(main.get("_line")) == "UI_DEDE_BOTTLE_FIRST", 8.0))
+	await _travel_to("reeds")
+	await _wait(1.0)
+	var draws := await _measure_draws(20)
+	_check("ÇİZİM sazlıkta şişeyle: %d (≤150)" % int(draws["draws"]), int(draws["draws"]) <= 150)
+	await _shot("01_sazlikta_sise")
+	# Yakından dokun: şişe kalkar, mektup açılır.
+	var at := _screen(bottle.point())
+	_check("şişe ekranda ve düğmelerin altında değil", get_viewport().get_visible_rect().has_point(at) and not _under_hud(p))
+	await _tap(at)
+	_check("dokununca mektup 1 açılır", await _wait_until(func() -> bool: return letters.visible, 3.0)
+			and save.letters == 1 and letters.letter == 1)
+	await _wait(0.6)
+	_check("mektup kâğıda kaydırmadan sığar", letters.fits_without_scroll())
+	_check("mektup paneli küçülmeden ve güvenli alanda (%.2f)" % letters.fit_scale(), letters.fit_scale() > 0.999
+			and _panel_inside(letters))
+	await _shot("02_mektup_1")
+	_check("şişe gitti", await _wait_until(func() -> bool: return not bottle.visible, 2.0))
+	await _tap_control(letters.close_button)
+	_check("kapanınca Dede yazanı tanır", await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_LETTER_1", 3.0))
+	# Defter: ilk mektuptan sonra Gölün Sırrı görünüşü (düğmesi sayfa düğmelerinin sağında).
+	var book: BookPanel = main.get("book_panel")
+	await _tap_control(_hud().book_button)
+	await _wait_until(func() -> bool: return book.visible, 2.0)
+	await _wait(0.5)
+	var fish_size := book.panel_rect().size
+	var view_button := book.find_child("ViewButton", true, false) as Button
+	_check("defterde Gölün Sırrı düğmesi", view_button != null and view_button.is_visible_in_tree())
+	if view_button != null:
+		await _tap_control(view_button)
+	await _wait(0.5)
+	var card_1 := book.find_child("Letter1", true, false) as Button
+	var card_2 := book.find_child("Letter2", true, false) as Button
+	_check("Gölün Sırrı: mektup 1 okunmuş, 2 sıradaki", book.view() == "secret" and card_1 != null
+			and not card_1.disabled and card_2 != null and card_2.disabled)
+	# Balıkların görünüşü seçili türün ayrıntısıyla büyür (telefonda küçülerek sığar: rarity botu); sırrınki ondan
+	# büyük olmamalı.
+	_check("defterin sır görünüşü güvenli alanda, balıklarınkinden büyük değil (%s, %s)" % [fish_size,
+			book.panel_rect().size], _panel_inside(book) and book.panel_rect().size.y <= fish_size.y + 1.0)
+	await _shot("03_defter_sir")
+	if card_1 != null:
+		await _tap_control(card_1)
+	_check("defterden mektup yeniden okunur", await _wait_until(func() -> bool:
+			return letters.visible and letters.letter == 1, 2.0))
+	await _tap_control(letters.close_button)
+	await _wait(0.3)
+	_check("defter açık kalır", book.visible)
+	book.close_panel()
+	await _wait(0.4)
+	# Mektup 2: iskele koyunda; uzaktan dokununca balıkçı yürür ve alır.
+	save.xp = db.rank_xp[3]
+	save.catches += Secret.LETTER_GAP
+	GameState.changed.emit()
+	await _wait(0.5)
+	_check("rütbe 4 ve 15 balık: iskele koyunda şişe", bottle.visible and Secret.bottle_zone(save) == "dock_cove")
+	await _travel_to("dock_cove")
+	_angler().place(Vector2(0.0, 9.5))
+	await _wait(0.8)
+	var far := _angler().pos2().distance_to(bottle.spot())
+	await _tap(_screen(bottle.point()))
+	_check("uzaktaki şişe (%.1f m): balıkçı yürür" % far, far > 5.0 and
+			await _wait_until(func() -> bool: return _angler().is_walking(), 1.5))
+	_check("varınca alır: mektup 2", await _wait_until(func() -> bool: return letters.visible, 15.0) and save.letters == 2)
+	await _wait(0.4)
+	await _tap_control(letters.close_button)
+	await _wait(0.5)
+	# Mektup 3 ve ilk altın istek.
+	save.xp = db.rank_xp[5]
+	save.catches += Secret.LETTER_GAP
+	GameState.changed.emit()
+	await _travel_to("lily_cove")
+	await _wait(0.5)
+	await _tap(_screen(bottle.point()))
+	_check("nilüferli koyda mektup 3", await _wait_until(func() -> bool: return letters.visible, 3.0) and save.letters == 3)
+	await _wait(0.4)
+	await _tap_control(letters.close_button)
+	await _wait(0.3)
+	var golden := Requests.golden(db, save)
+	_check("mektup 3'ten sonra Dede'nin altın isteği (parça 1)", not golden.is_empty()
+			and int((golden["reward"] as Dictionary).get("piece", 0)) == 1)
+	_check("bildirim: altın istek", await _wait_toast(UiKit.upper(tr("UI_GOLDEN_NEW")), 6.0))
+	_check("Dede eski haritasını anlatır", await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_GOLDEN_FIRST", 12.0))
+	var day: DayPanel = main.get("day_panel")
+	await _tap_control(_hud().world_button)
+	await _wait_until(func() -> bool: return day.visible, 2.0)
+	await _wait(0.6)
+	_check("Bugün panelinde altın şerit", day.find_child("Golden", true, false) != null)
+	_check("Bugün paneli altın şeritle küçülmeden sığar (%.2f)" % day.fit_scale(), day.fit_scale() > 0.999
+			and _panel_inside(day))
+	await _shot("03_altin_istek")
+	day.close_panel()
+	await _wait(0.5)
+	# Akşam olur: nilüferli koyda bir turna tutulur.
+	main.call("_debug_time")
+	main.call("_debug_time")
+	await _wait(1.0)
+	var coins := save.coins
+	var caught := await _catch_here("pike")
+	_check("akşam nilüferli koyda turna tutuldu (%s)" % DayClock.phase(db.rules, save.clock_s), caught)
+	_check("altın istek biter: harita parçası 1/4", save.map_pieces == 1 and Requests.golden(db, save).is_empty()
+			and save.coins > coins)
+	_check("bildirim: harita parçası", await _wait_toast(UiKit.upper(tr("UI_GOLDEN_DONE") % [1, SaveData.MAX_MAP_PIECES,
+			UiKit.format_int(int((golden["reward"] as Dictionary)["coins"]))]), 8.0))
+	_check("Dede: bir parça daha", await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_GOLDEN_DONE", 10.0))
+	# Altın hamur: göl sevgisi 6 → Dede "Nine'ye uğra"; Nine'ye dokununca hamur, takım çantasında dipte.
+	var old_love := LakeLove.level(db.rules, save.love)
+	save.love = db.rules.love_levels[Secret.DOUGH_LOVE - 1]
+	main.call("_after_love", { "old_level": old_love, "new_level": Secret.DOUGH_LOVE })
+	_check("göl sevgisi 6: Dede Nine'yi söyler", await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_LOVE_6", 14.0))
+	var shop: ShopPanel = main.get("shop_panel")
+	main.call("_on_shop")
+	await _wait_until(func() -> bool: return shop.visible, 2.0)
+	await _wait(0.4)
+	_check("Nine altın hamuru verir (dükkânda Nine'nin sözü)", Secret.has_dough(save)
+			and str(shop.get("_line_key")) == "UI_NINE_DOUGH")
+	await _shot("05_altin_hamur")
+	shop.close_panel()
+	_check("bildirim: altın hamur", await _wait_toast(UiKit.upper(tr("UI_DOUGH_GIVEN")), 6.0))
+	var bag: TechniquePanel = main.get("technique_panel")
+	bag.open()
+	await _wait(0.5)
+	_check("takım çantasında dipte altın hamur", bag.find_child("Dough", true, false) != null)
+	bag.close_panel()
+	await _wait(0.3)
+	# Derin ortanın şişesi: sandal üçüncü şamandırada, şişeye dokununca ilk şamandıraya gider ve alır.
+	save.letters = Secret.LETTERS.size() - 1
+	save.letter_at = save.catches - Secret.LETTER_GAP
+	save.xp = db.rank_xp[11]
+	if not Zones.BOAT in save.owned:
+		save.owned.append(Zones.BOAT)
+	GameState.changed.emit()
+	await _wait(0.3)
+	var fade: Fade = main.get("fade")
+	main.call("_go_boat", 2)
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(0.5)
+	_check("derin ortada şişe ilk şamandıranın yanında", bottle.visible and Secret.bottle_zone(save) == "deep_water")
+	main.call("_on_bottle_tapped")
+	_check("sandal ilk şamandıraya gider ve alır: mektup 6", await _wait_until(func() -> bool:
+			return letters.visible, 8.0) and save.letters == Secret.LETTERS.size() and int(main.get("_buoy")) == 0)
+	await _wait(0.5)
+	await _shot("04_mektup_6")
+	await _tap_control(letters.close_button)
+	await _wait(0.5)
+	_check("mektuplar bitti: şişe yok", not bottle.visible and Secret.next_letter(save) == -1)
+	# Kalan altın istekler (geliştirme düğmesi SIR +: gerçek akışla öder): dördüncü parçada harita tamam.
+	_check("altıncı mektuptan sonra altın istek (parça 2)", int((Requests.golden(db, save).get("reward", {}) as Dictionary)
+			.get("piece", 0)) == 2)
+	for i in 3:
+		main.call("_debug_secret")
+		await _wait(0.3)
+	_check("dört parça: harita tamam", save.map_pieces == SaveData.MAX_MAP_PIECES and Requests.golden(db, save).is_empty())
+	_check("Dede: harita tamam", await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_MAP_DONE", 12.0))
+	var x_marked := false
+	for m: Dictionary in main.call("_map_marks"):
+		x_marked = x_marked or str(m["kind"]) == "secret_x"
+	_check("haritada Bekçi'nin X'i", x_marked)
+	var map_panel: MapPanel = main.get("map_panel")
+	main.call("_return_to_shore")
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(0.6)
+	await _tap_control(_hud().map_button)
+	await _wait_until(func() -> bool: return map_panel.visible, 2.0)
+	await _wait(0.6)
+	await _shot("06_haritada_x")
+	map_panel.close_panel()
+	await _wait(0.4)
+	book.open_secret()
+	await _wait(0.6)
+	_check("defterde harita dört parça", (book.find_child("Map", true, false) as SecretMap).pieces == SaveData.MAX_MAP_PIECES)
+	await _shot("07_harita_tamam")
+	book.close_panel()
+	_check("final hazır: 6 mektup, 4 parça, altın hamur", Secret.final_ready(save))
+	_finish_checks()
+
+
+## Bulunduğu atış noktasında şamandırayla bir balık tutar (fish_id): gölgeyi balıkçının önüne, ona bakarak
+## koyar, atar, VUR, oyuncu gibi çeker; kart açılırsa kapatır, olta boşa dönene kadar bekler. Tutulduysa true.
+func _catch_here(fish_id: String, percentile: int = 300_000) -> bool:
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	var a := _angler().pos2()
+	var f := _angler().facing.normalized()
+	_shadow_at(a + f * 4.4, -f, fish_id, percentile)
+	await _tap_world(a + f * 2.4)
+	if not await _wait_state(FishingSession.State.BITING, 25.0):
+		return false
+	await _reel_like_player(6, 40.0)
+	var caught := _state() == FishingSession.State.CAUGHT and str(_session().last_catch.get("fish", "")) == fish_id
+	var card: FishCard = main.get("card")
+	await _wait(FishCard.MIN_OPEN)
+	if card.visible or float(main.get("_card_wait")) >= 0.0:
+		await _close_card(card)
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	return caught
+
+
 ## İskelede şamandırayla bir balık tutar: gölgeyi koyar, atar, VUR, oyuncu gibi çeker; kart açılırsa kapatır,
 ## olta boşa dönene kadar bekler. Tutulduysa true.
 func _catch_at_dock(fish_id: String, percentile: int = -1) -> bool:
@@ -4570,6 +4806,10 @@ func _use_save(catches: int) -> void:
 	if _scenario != "requests":
 		save.request_day = 1 << 30
 		save.flags["told_requests"] = true
+	# Gölün Sırrı yalnızca secret senaryosunda: ötekilerde şişe hiç çıkmaz (sıradaki şişe çok uzak balıkta;
+	# bildirim, Dede'nin sözü ve çizim eski denetimleri şaşırtmasın).
+	if _scenario != "secret":
+		save.letter_at = 1 << 30
 	# Oyun saati donuk: senaryolar sabah ve açık havada, görüntüler eskisi gibi (world saati kendisi sürer).
 	(main.get("world_clock") as WorldClock).frozen = true
 	GameState.use_save(save)

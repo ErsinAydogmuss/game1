@@ -11,14 +11,15 @@ extends Control
 ## "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini (circle, triangle,
 ## diamond, star, sparkle, medallion; görseli yoksa şekil tint renginde), "zone:<bölge>" bölge
 ## rozetini (görseli yoksa kodla: iskele, kamış, nilüfer, kaya, dere, şamandıra), "item:<eşya>" eşyanın
-## görselini (çöp, kerevit; ItemArt.item, görseli yoksa soru işareti) çizer.
+## görselini (çöp, kerevit, Gölün Sırrı'nın eşyaları; ItemArt.item) çizer. Görseli yoksa sırrın eşyaları
+## (mektup, harita parçası, altın hamur) kodla, ötekiler soru işaretiyle. "bottle": şişe (haritada, bildirimde).
 
 ## Kodla çizilebilen ikonlar (görseli yoksa). Bilinmeyen ad soru işareti çizer (boş kalmasın);
 ## takımın "kind"ı bunlardan biri olmalı (test_content_db denetler).
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release", "pin", "boat", "trap", "reroll"]
+		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -124,6 +125,10 @@ func _draw() -> void:
 		_zone(kind.substr(5))
 		draw_set_transform(Vector2.ZERO)
 		return
+	if kind.begins_with("item:"):
+		_item(kind.substr(5))
+		draw_set_transform(Vector2.ZERO)
+		return
 	match str(FALLBACK.get(kind, kind)):
 		"coin", "sell":
 			_coin()
@@ -189,6 +194,10 @@ func _draw() -> void:
 			_trap()
 		"reroll":
 			_reroll()
+		"bottle":
+			_bottle()
+		"x_mark":
+			_x_mark()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -494,6 +503,82 @@ func _reroll() -> void:
 		var along := Vector2(-sin(a1), cos(a1))
 		var out := Vector2(cos(a1), sin(a1))
 		draw_colored_polygon(PackedVector2Array([tip + along * 16.0, tip + out * 14.0, tip - out * 14.0]), tint)
+
+
+## Görseli olmayan eşya: Gölün Sırrı'nın eşyaları kodla (mektup, harita parçası, altın hamur), ötekiler soru
+## işareti.
+func _item(id: String) -> void:
+	match id:
+		"letter":
+			_letter()
+		"map_piece":
+			_map_piece()
+		"golden_dough":
+			_dough()
+		_:
+			_question()
+
+
+## Yan yatmış mantarlı cam şişe, içinde mühürlü rulo mektup.
+func _bottle() -> void:
+	var glass := Color("#93e0cf")
+	var points := PackedVector2Array([Vector2(14, 58), Vector2(20, 42), Vector2(58, 34), Vector2(66, 30), Vector2(80, 26),
+			Vector2(84, 38), Vector2(70, 42), Vector2(64, 48), Vector2(26, 70)])
+	draw_colored_polygon(points, Color("#4f9f90"))
+	var inner := PackedVector2Array()
+	var center := Vector2(46, 48)
+	for q in points:
+		inner.append(center + (q - center) * 0.86)
+	draw_colored_polygon(inner, glass)
+	draw_colored_polygon(PackedVector2Array([Vector2(30, 52), Vector2(52, 44), Vector2(56, 54), Vector2(34, 62)]),
+			Color("#f5e8c6"))
+	draw_line(Vector2(42, 48), Vector2(46, 58), Color("#d8423a"), 4.0, true)
+	draw_colored_polygon(PackedVector2Array([Vector2(80, 26), Vector2(92, 22), Vector2(95, 33), Vector2(84, 38)]),
+			Color("#a8743f"))
+	draw_line(Vector2(24, 50), Vector2(56, 38), Color(1, 1, 1, 0.55), 3.0, true)
+	draw_line(Vector2(10, 80), Vector2(90, 80), WATER, 5.0, true)
+
+
+## Hazine haritasının kırmızı X'i (koyu kenarlı; haritada Bekçi'nin yeri).
+func _x_mark() -> void:
+	for d: Vector2 in [Vector2(30, 30), Vector2(30, -30)]:
+		draw_line(Vector2(50, 50) - d, Vector2(50, 50) + d, Color("#4a2a12"), 22.0, true)
+	for d: Vector2 in [Vector2(28, 28), Vector2(28, -28)]:
+		draw_line(Vector2(50, 50) - d, Vector2(50, 50) + d, RED, 14.0, true)
+
+
+## Mühürlü mektup: krem zarf, kapağı ve kırmızı mühür.
+func _letter() -> void:
+	_round_rect(Rect2(12, 26, 76, 52), Color("#c79f62"), 8)
+	_round_rect(Rect2(15, 29, 70, 46), Color("#f7ecd0"), 6)
+	draw_polyline(PackedVector2Array([Vector2(16, 31), Vector2(50, 56), Vector2(84, 31)]), Color("#c79f62"), 4.0, true)
+	draw_circle(Vector2(50, 56), 10, Color("#a8322c"))
+	draw_circle(Vector2(50, 56), 7, Color("#d8423a"))
+
+
+## Harita parçası: yırtık kenarlı parşömen, kesik çizgili yol ve kırmızı çarpı.
+func _map_piece() -> void:
+	var edge := PackedVector2Array([Vector2(16, 18), Vector2(84, 14), Vector2(80, 34), Vector2(88, 52), Vector2(78, 66),
+			Vector2(84, 86), Vector2(20, 84), Vector2(24, 62), Vector2(12, 44), Vector2(22, 30)])
+	draw_colored_polygon(edge, Color("#b98a4e"))
+	var inner := PackedVector2Array()
+	var center := Vector2(50, 50)
+	for q in edge:
+		inner.append(center + (q - center) * 0.9)
+	draw_colored_polygon(inner, Color("#eed9a6"))
+	for i in 5:
+		var a := Vector2(26 + i * 9.0, 70 - i * 7.0)
+		draw_line(a, a + Vector2(5, -4), Color("#8f6b47"), 3.0, true)
+	draw_line(Vector2(62, 28), Vector2(76, 42), Color("#d8423a"), 6.0, true)
+	draw_line(Vector2(76, 28), Vector2(62, 42), Color("#d8423a"), 6.0, true)
+
+
+## Altın hamur: parlak altın renkli yuvarlak hamur topu, üstünde parıltı.
+func _dough() -> void:
+	_ellipse(Vector2(50, 60), 34, 24, GOLD_DARK)
+	_ellipse(Vector2(50, 56), 32, 22, GOLD)
+	_ellipse(Vector2(40, 48), 10, 6, Color(1, 1, 1, 0.55))
+	draw_colored_polygon(_star_points(Vector2(76, 26), 12.0, 4.0, 4), Color.WHITE)
 
 
 ## Kürekli sandal (yandan): ahşap gövde, oturak ve kürek.

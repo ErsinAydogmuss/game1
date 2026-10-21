@@ -33,6 +33,8 @@ const BANK := {
 	# sevgisinin seviyesi, çöp.
 	"find_6": [-3.0, 0.0, 1], "thunder": [-7.0, 0.05, 1], "tea": [-9.0, 0.03, 1], "phase": [-12.0, 0.0, 1],
 	"lantern": [-9.0, 0.0, 1], "love_up": [-8.0, 0.0, 1], "trash": [-8.0, 0.04, 1],
+	# Gölün Sırrı: şişe alındı, mektup açıldı.
+	"bottle": [-7.0, 0.03, 1], "paper": [-9.0, 0.05, 1],
 }
 ## Döngüler: ad -> ses (dB).
 const LOOPS := { "reel": -12.0, "strain": -14.0, "bell_run": -9.0 }
