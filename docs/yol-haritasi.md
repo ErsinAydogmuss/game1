@@ -154,7 +154,7 @@ Ersin'in seçimleri (hepsi önerilen): balık kovadan ve yeni tür kartından g�
 - [x] Parti 5a görsel promptları ([`gorsel-istekleri.md`](gorsel-istekleri.md)): Ersin görselleri üretirken kod yazılır.
 - [x] Oyun saati ve hava: 24 dakikalık gün (4 vakit), her günün tohumlu havası, vakit ve havaya göre oranlar (defter ve dükkânda da), yağmurda balık çabuk gelir, Ay Turnası (gece) ve Kocabaş (yağmurlu gece), üst ortada saat çipi, kayıt v5 (dalganın bütün alanları), geliştirme düğmeleri VAKİT +, HAVA, SEVGİ +50, `world` botu.
 - [x] Vakit ışığı, gece, yağmur, sis; Dede'yle çay; vakit müziği: akşam, ay ışığı, yağmur, sis, bulut gölgeleri, fırtınada şimşek ve gök gürültüsü, Nine'nin feneri ve lambalar, ateşböcekleri; saat çipine dokununca "Bugün" paneli (bugünün ve yarının havası, Dede'yle çay), Dede'nin vakte ve havaya ilk sözleri; dört vaktin müziği ve dükkânın valsi, gece ve yağmur sesleri.
-- [ ] Tut-bırak, göl sevgisi, çöp toplama.
+- [x] Tut-bırak, göl sevgisi, çöp toplama: sol üstteki kovaya dokununca Kova paneli (BIRAK, HEPSİNİ BIRAK, SAT), yeni tür kartında "Göle bırak", göl sevgisinin seviyeleri (kalpli bildirim, Dede, "Bugün" panelinde sevgi kartı), dipte ve tuzakta çöp (çizme, teneke, plastik şişe, paslı anahtar), göl güzelleşir (çiçekler, çiçekli nilüferler, berrak su, gündüz kelebekler), denge botu bırakır ve çöp toplar (sevgi 6'sı rütbe 12–14 olurken), `release` botu; saat çipinin dokunma kutusu artık altındaki suya yapılan atışı yutmuyor.
 - [ ] Dede'nin istekleri.
 - [ ] Gölün Sırrı: mektuplar ve harita parçaları.
 - [ ] Gölün Sırrı: final, Gölün Bekçisi, bitiş sahnesi.
