@@ -6,9 +6,12 @@ shader_type spatial;
 // kıpırdayan köpük, kıyıya doğru gelip sönen ince dalga çizgileri; derede akıntı yönünde kayan
 // uzun çizgiler (dalgalar da akıntıyla kayar). Karada (kıyı uzaklığı < 0) çizilmez. Compatibility
 // renderer'da derinlik dokusu yok: her şey veri dokusundan.
+// Vakit ve hava (world_light.gdshaderinc): gece suyun kendi ışığı (koyu suda gölge seçilsin), yağmur
+// halkaları, kayan bulut gölgeleri, lambaların ışık havuzu.
 render_mode cull_back, diffuse_burley, specular_schlick_ggx;
 
 #include "res://scenes/world/noise.gdshaderinc"
+#include "res://scenes/world/world_light.gdshaderinc"
 
 uniform sampler2D lake_data : filter_linear, repeat_disable;
 uniform vec2 lake_origin = vec2(0.0);
@@ -44,6 +47,7 @@ void fragment() {
 	water = mix(water, deep_color.rgb, smoothstep(1.225, 3.325, meters));
 	water = mix(water, abyss_color.rgb, smoothstep(4.0, 9.0, meters));
 	vec2 p = world_xz;
+	water *= 1.0 - cloud_shade(p) * 0.2;
 	float t = TIME * wave_speed;
 	// Akıntılı yerde dalgalar akıntıyla kayar.
 	vec2 drift = flow_dir * flow * TIME * 0.5;
@@ -75,7 +79,9 @@ void fragment() {
 		float group = value_noise(vec2(f.x * 0.25, f.y * 0.9) + 5.0);
 		streak = smoothstep(0.72, 0.86, s) * smoothstep(0.4, 0.65, group) * flow * smoothstep(0.25, 0.6, shore);
 	}
-	ALBEDO = mix(water, foam_color.rgb, clamp(foam + lace * 0.45 + ring * 0.28 + streak * 0.4, 0.0, 1.0));
+	float drops = rain_rings(p) * smoothstep(0.1, 0.4, shore);
+	ALBEDO = mix(water, foam_color.rgb, clamp(foam + lace * 0.45 + ring * 0.28 + streak * 0.4 + drops * 0.38, 0.0, 1.0));
+	EMISSION = ALBEDO * world_glow + pool_glow(ALBEDO, p) * 1.3;
 	// Hafif dalgalı yüzey: iki katlı dalgacık, güneş parıltıları.
 	vec2 q = pw * 1.6 + vec2(t * 8.0, t * 5.0);
 	float h0 = value_noise(q);

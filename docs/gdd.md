@@ -392,6 +392,22 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
     - ✅ Dalga 2'deki hâli (kodla; Ersin'in zemin karoları gelince onlarla): açık ve koyu çimen öbekleri; yürünmeyen yerde (orman, dünyanın kenarı) koyu orman zemini; kıyıdan ~2,6 m'de gölü dolaşan, kıvrılan toprak kıyı yolu (çalı, çimen öbeği ve çiçek yola düşmez); kenarı dalgalı kumsal, suya değen yeri ıslak; kayalık burnun karasında öbek öbek yosunlu taş.
   - **Doğa:** Forest Nature ve Quaternius doğa modelleri, nilüferler.
   - **Işık:** vakte göre ışık, gök ve sis; gece ay, fenerler ve ateş böcekleri.
+    - ✅ Dalga 4'teki hâli (2. adım; `DayLook`, `LakeScene.set_look`): vakit × hava tablosu. Sabah ve açık hava
+      v0.4.1'in ışığı. Öğle beyaz ve biraz tepeden; akşam alçak, turuncu güneş, uzun gölgeler, pembe ortam
+      ışığı; gece mavi ay ışığı, koyu (3B görüntünün parlaklığı %72), suyun kendi ışığı (gölge koyu suda
+      seçilsin), gölgeler biraz koyu, ateşböcekleri. Bulutta güneş ve gölgesi zayıf, gök soluk, kayan bulut
+      gölgeleri; yağmurda koyu, ıslak (parlak) zemin, düşen damlalar ve suda damla halkaları; sisli sabahta
+      sis 11 m'de başlar (balıkçı ~12 m'de berrak, ekranın üstü ~18 m'de puslu), gün ışığında beyaz pus.
+      Yağmurlu gece fırtına: en az 12 sn arayla yumuşak şimşek (yanıp sönmez; ses 2. adımın sonunda).
+      Vaktin son 60 sn'sinde sonrakine (gün dönerken yarının havasına) kayar; hava düğmesi ve hızlı geçiş
+      yumuşakça. Çizim eklemeyenler global shader uniform'larıyla (`world_light.gdshaderinc`); yağmur ya da
+      ateşböceği tek parçacık düğümü (`AmbientParticles`, 1 çizim). Konumlu ışık yok (Compatibility'de her
+      nesneye ek çizim): lambaların ışığı shader'da ışık havuzu (en çok 4): Nine'nin feneri (ilk gece
+      hediye: balıkçının çevresinde 6 m), kamp ateşi, iskelenin başındaki fener direği, dükkân; akşam az,
+      gece tam.
+    - Ölçüm (`world` botu, iskele, 1560×720; ÖLÇÜ satırları): doygunluk sabah 0,61, akşam 0,71, gece 0,70,
+      sisli sabah 0,43; en koyu %5 sabah 0,35, akşam 0,18, gece 0,05; gölgenin suya karşıtlığı her görünüşte
+      0,61–0,96 (sınır 0,25); çizim en çok 143 (yağmurda).
   - **Nadirlik efektleri:** gölgede pırıltı, ışıltı, iz.
   - **Arayüz:** Ersin'in arayüz kiti (çerçeveler, düğmeler, nadirlik çerçeveleri).
   - **Ölçüt:** iPhone 14'te 60 fps.
@@ -731,7 +747,10 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - Gerçek saat kullanılmaz: hep aynı saatlerde oynayan da her vakti görür, çocuk gece balığı için uyanık kalmaz.
 - **Hava** ✅ (`Weather`): her oyun günü için tohumlu (seed'li): açık %55, bulutlu %20, yağmur %15, sis %10.
   - İlk oyun günü hep açık. Sisli günde sis yalnızca sabah ve gece, öğle ve akşam bulutlu.
-  - Yağmurlu gece fırtınadır (ayrı bir hava değil; görünüşü 2. adımda: gök gürültüsü, yumuşak şimşek).
+  - Yağmurlu gece fırtınadır (ayrı bir hava değil): en az 12 sn arayla yumuşak şimşek ✅ (yanıp sönmez; gök
+    gürültüsünün sesi 🔜). Vaktin ve havanın görünüşü §8.
+  - ✅ İlk gece Nine fener hediye eder ("Nine sana bir fener verdi!", Dede: "Nine fener yolladı evlat! Gece
+    balığı bir başkadır."): geceleri balıkçının çevresinde 6 m sıcak ışık. Dükkân ve denge değişmez.
   - Yağmur ısırmayı artırır: gölgeler takımı 1,3 kat uzaktan fark eder ve 1,25 kat hızlı yaklaşır (her teknikte;
     şamandıranın dürtme zamanlaması değişmez). Ölçüm: balık 0,83 kat sürede gelir.
   - Hava önceden belli (gelir kuralı 4): bugün ve yarın gösterilir (2. adımda "Bugün" paneli).

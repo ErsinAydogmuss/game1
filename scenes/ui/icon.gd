@@ -32,7 +32,7 @@ const ART_NAMES := {
 	"phase_morning": "phase_morning", "phase_noon": "phase_noon", "phase_evening": "phase_evening",
 	"phase_night": "phase_night", "weather_clear": "weather_clear", "weather_cloudy": "weather_cloudy",
 	"weather_rain": "weather_rain", "weather_fog": "weather_fog", "weather_storm": "weather_storm",
-	"tea": "tea", "love": "love", "requests": "requests",
+	"tea": "tea", "love": "love", "requests": "requests", "lantern": "lantern_lit",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem, Ekstra ve tekniğe özel sekmeleri (yapay yem, kurşun, sinek).

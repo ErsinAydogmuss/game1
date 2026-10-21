@@ -5,9 +5,12 @@ shader_type spatial;
 // dalgalı), taşlık (kayalık burnun karası: yosunlu taş plakalar), kıyı yolu (yürünebilen yerde
 // kıyıdan path_at metrede kıvrılan toprak), kum (kenarı dalgalı, suya değen yeri ıslak), suyun
 // altında göl tabanı. Ersin'in zemin karoları (Parti 3) varsa renkler onlardan (use_tiles).
+// Vakit ve hava (world_light.gdshaderinc): kayan bulut gölgeleri, yağmurda ıslak (koyu, parlak) zemin,
+// lambaların ışık havuzu.
 render_mode cull_back, diffuse_burley;
 
 #include "res://scenes/world/noise.gdshaderinc"
+#include "res://scenes/world/world_light.gdshaderinc"
 
 uniform sampler2D lake_data : filter_linear, repeat_disable;
 uniform vec2 lake_origin = vec2(0.0);
@@ -106,6 +109,9 @@ void fragment() {
 	float beach = smoothstep(-1.75 + edge, -1.2 + edge, shore);
 	color = mix(color, sand, beach);
 	color = mix(color, wet_sand_color.rgb * (0.95 + fine * 0.1), smoothstep(-0.45, -0.08, shore));
-	ALBEDO = mix(color, bed_color.rgb, step(0.0, shore));
-	ROUGHNESS = 0.95;
+	color = mix(color, bed_color.rgb, step(0.0, shore));
+	color *= (1.0 - cloud_shade(p) * 0.2) * (1.0 - world_rain * 0.14);
+	ALBEDO = color;
+	ROUGHNESS = mix(0.95, 0.55, world_rain);
+	EMISSION = pool_glow(color, p);
 }

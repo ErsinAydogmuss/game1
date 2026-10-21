@@ -14,6 +14,10 @@ extends Node3D
 ## Çizim sayısı az tutulur: iskele tek ağ (köşe renkli), bir paketin modelleri bölge parçalarında
 ## tek ağ (ModelLibrary.merge), nilüfer ve çiçekler tek ağ (MeshBatch), arazinin opak suyun
 ## altında kalan kareleri hiç kurulmaz.
+## Vakit ve hava (Dalga 4): main her kare DayLook'un görünüşünü verir (set_look); ışıklar, ortam, gök
+## ve sis yumuşakça ona kayar, çizim eklemeyen etkiler global shader uniform'larıyla (world_light.gdshaderinc).
+## Lambaların ışık havuzları set_pools ile (en çok 4: fener, kamp ateşi, dükkân, fener direği);
+## fırtınada yumuşak şimşek flash ile (yanıp sönme yok).
 
 ## İskele güvertesinin su üstündeki yüksekliği (m).
 const DOCK_HEIGHT := 0.35
@@ -119,6 +123,15 @@ const ZONE_KITS := {
 	# Derin orta: suyu kıyıya değmez; süsü şamandıralar.
 	"deep_water": {},
 }
+## Görünüş değişince (hava düğmesi, hızlı geçiş) ışıkların yeni görünüşe kayma hızı (1/sn; vaktin
+## kendi geçişi DayLook'ta 60 sn).
+const LOOK_RATE := 1.5
+## Şimşek: ortam ışığına ve göğe eklenen parlaklık, yükselme ve sönme süresi (sn).
+const FLASH_LIGHT := 1.6
+const FLASH_RISE := 0.12
+const FLASH_FALL := 0.7
+## Işık havuzlarının en çok sayısı (world_light.gdshaderinc pool_0..pool_3).
+const POOLS := 4
 ## Çit parçasının boyu (m; ModelLibrary "fence") ve şamandıraların suya göre yüksekliği.
 const FENCE_PIECE := 1.08
 const BUOY_Y := -0.05
@@ -126,6 +139,9 @@ const BUOY_Y := -0.05
 var lake: LakeShape
 var data_texture: ImageTexture
 var environment: Environment
+## Güneş (gece ay) ve dolgu ışığı (görünüşü set_look sürer).
+var sun: DirectionalLight3D
+var fill: DirectionalLight3D
 
 ## Süslerin girmeyeceği daireler (x, z, yarıçap): main dükkânın yerini setup'tan önce verir.
 var keep_clear: Array[Vector3] = []
@@ -151,6 +167,13 @@ var _boat_base := Vector3.ZERO
 ## Sandal iskeleden ayrıldı mı (balıkçı içinde, bir şamandıranın yanında)?
 var _boat_away: bool = false
 var _clock := 0.0
+## Uygulanan ve hedeflenen görünüş (DayLook), şimşeğin anı (sn; < 0 yok).
+var _look: Dictionary = {}
+var _look_target: Dictionary = {}
+var _flash_age: float = -1.0
+## Kamp ateşinin ve fener direğinin yeri (ışık havuzları).
+var _campfire := Vector2.ZERO
+var _lamp_post := Vector2.ZERO
 
 
 func setup(shape: LakeShape) -> void:
@@ -209,21 +232,76 @@ func _build_environment() -> void:
 	var world := WorldEnvironment.new()
 	world.environment = environment
 	add_child(world)
-	var sun := DirectionalLight3D.new()
-	sun.light_color = Color("#fff1db")
-	sun.light_energy = 1.15
+	sun = DirectionalLight3D.new()
 	sun.shadow_enabled = true
 	sun.shadow_blur = 1.5
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 30.0
 	add_child(sun)
-	# Işık kameranın arkasından, biraz soldan gelsin: görünen yüzler aydınlık olsun.
-	sun.look_at_from_position(Vector3.ZERO, Vector3(-0.35, -1.0, -0.55), Vector3.UP)
-	var fill := DirectionalLight3D.new()
-	fill.light_color = Color("#b9d4ff")
-	fill.light_energy = 0.35
+	fill = DirectionalLight3D.new()
 	add_child(fill)
 	fill.look_at_from_position(Vector3.ZERO, Vector3(0.6, -0.5, 0.4), Vector3.UP)
+	# Sabah ve açık hava (v0.4.1'in ışığı): güneş kameranın arkasından, biraz soldan gelir; görünen
+	# yüzler aydınlık olsun.
+	set_look(DayLook.of("morning", "clear"), true)
+	set_pools([])
+
+
+## Vaktin ve havanın görünüşü (DayLook): ışıklar, ortam, gök ve sis ona kayar (snap: hemen).
+func set_look(look: Dictionary, snap: bool = false) -> void:
+	_look_target = look
+	if snap or _look.is_empty():
+		_look = look.duplicate()
+		_apply_look()
+
+
+## Uygulanan görünüş (bot ölçümü).
+func look() -> Dictionary:
+	return _look
+
+
+## Fırtınada yumuşak şimşek: ortam ışığı ve gök kısa bir an parlar, yavaşça söner (yanıp sönmez).
+func flash() -> void:
+	_flash_age = 0.0
+
+
+## Lambaların ışık havuzları: her biri (x, z, yarıçap m, güç); en çok POOLS tanesi, fazlası atılır.
+func set_pools(pools: Array[Vector4]) -> void:
+	for i in POOLS:
+		RenderingServer.global_shader_parameter_set("pool_%d" % i, pools[i] if i < pools.size() else Vector4.ZERO)
+
+
+## Gece yanan lambalar: kamp ateşi ve iskelenin başındaki fener direği (x, z).
+func lamp_points() -> Array[Vector2]:
+	return [_campfire, _lamp_post]
+
+
+func _apply_look() -> void:
+	var flash_light := 0.0
+	if _flash_age >= 0.0:
+		flash_light = _flash_age / FLASH_RISE if _flash_age < FLASH_RISE \
+				else 1.0 - (_flash_age - FLASH_RISE) / FLASH_FALL
+		flash_light = clampf(flash_light, 0.0, 1.0)
+	sun.light_color = _look["sun"]
+	sun.light_energy = float(_look["sun_energy"])
+	sun.shadow_opacity = float(_look["shadow"])
+	sun.look_at_from_position(Vector3.ZERO, _look["sun_dir"], Vector3.UP)
+	fill.light_color = _look["fill"]
+	fill.light_energy = float(_look["fill_energy"])
+	environment.ambient_light_color = _look["ambient"]
+	environment.ambient_light_energy = float(_look["ambient_energy"]) + FLASH_LIGHT * flash_light
+	environment.background_color = (_look["sky"] as Color).lerp(Color.WHITE, flash_light * 0.35)
+	environment.fog_light_color = _look["fog"]
+	environment.fog_depth_begin = float(_look["fog_begin"])
+	environment.fog_depth_end = float(_look["fog_end"])
+	environment.fog_density = float(_look["fog_density"])
+	environment.adjustment_brightness = float(_look["exposure"])
+	RenderingServer.global_shader_parameter_set("world_glow", float(_look["glow"]) + flash_light * 0.3)
+	RenderingServer.global_shader_parameter_set("world_night", float(_look["night"]))
+	RenderingServer.global_shader_parameter_set("world_rain", float(_look["rain"]))
+	RenderingServer.global_shader_parameter_set("world_cloud", float(_look["cloud"]))
+	var effects := float(_look["effects"])
+	RenderingServer.global_shader_parameter_set("world_light", Color(effects, effects, effects, 1.0))
 
 
 # --- Arazi ve su -----------------------------------------------------------------------
@@ -854,6 +932,8 @@ func _build_camp(land: Vector2) -> void:
 	medieval.append(["bucket", Transform3D(Basis(Vector3.UP, 0.4), Vector3(dock.get_center().x - 0.45, DOCK_HEIGHT + 0.04, dock.position.y + 0.55))])
 	var lantern: Array[Array] = []
 	_prop(lantern, "lantern_post", land + Vector2(-1.15, -1.6), 0.0)
+	_campfire = camp
+	_lamp_post = land + Vector2(-1.15, -1.6)
 	for group: Array in [["CampKenney", kenney, true], ["CampMedieval", medieval, true], ["Lantern", lantern, false]]:
 		# İnce fener direğinin gölgesi görünmüyor: kapalı (bir çizim az).
 		for node in ModelLibrary.merge(self, str(group[0]), group[1]):
@@ -920,6 +1000,16 @@ func _near_boat(p: Vector2) -> bool:
 
 func _process(delta: float) -> void:
 	_clock += delta
+	if not _look_target.is_empty():
+		var moving := _look != _look_target
+		if moving:
+			_look = DayLook.mix(_look, _look_target, 1.0 - exp(-delta * LOOK_RATE))
+		if _flash_age >= 0.0:
+			_flash_age += delta
+			if _flash_age > FLASH_RISE + FLASH_FALL:
+				_flash_age = -1.0
+		if moving or _flash_age >= 0.0:
+			_apply_look()
 	for i in _buoys.size():
 		var phase := float(i) * 1.7
 		_buoys[i].position = _buoy_base[i] + Vector3(0, sin(_clock * 1.6 + phase) * 0.04, 0)

@@ -66,6 +66,15 @@ const FAR_HIGH := 0.8
 ## (gerçek saatle) bu aralıkla (sn) yenilenir.
 const TRAP_REACH := 5.0
 const TRAP_SYNC_EVERY := 1.0
+## Gece lambaların ışık havuzları (yarıçap m, güç): Nine'nin feneri balıkçının çevresinde (ilk gece
+## hediye; bayrak LANTERN_FLAG), kamp ateşi, iskelenin başındaki fener direği, dükkân.
+const LANTERN_FLAG := "lantern"
+const LANTERN_POOL := Vector2(6.0, 0.85)
+const CAMP_POOL := Vector2(4.0, 1.0)
+const POST_POOL := Vector2(3.2, 0.8)
+const SHOP_POOL := Vector2(3.5, 0.7)
+## Fırtınada şimşekler arası (sn; en az 12: yanıp sönme yok, çocuklar için yumuşak).
+const STORM_GAP := Vector2(12.0, 30.0)
 
 var session: FishingSession
 var lake: LakeShape
@@ -112,6 +121,9 @@ var _film: StoryFilm
 var fade: Fade
 ## Oyun saati (Dalga 4): vakit, gün ve hava; saat oyun akarken ilerler (botlarda donuk: frozen).
 var world_clock: WorldClock
+## Yağmur ya da ateşböcekleri (tek çizim) ve fırtınada sıradaki şimşeğe kalan süre (sn).
+var ambient: AmbientParticles
+var _storm_wait: float = STORM_GAP.x
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
 var bot_camera: bool = false
 
@@ -217,6 +229,8 @@ func _ready() -> void:
 	traps.landed.connect(_on_trap_landed)
 	camera = FollowCamera.new()
 	add_child(camera)
+	ambient = AmbientParticles.new()
+	add_child(ambient)
 	elder.camera = camera
 	nine.camera = camera
 	line = FishingLine.new()
@@ -235,8 +249,9 @@ func _ready() -> void:
 	world_clock.clock_moved.connect(_sync_world_chip)
 	_start_session()
 	_refresh_status()
-	# Eski kayıt: rütbesi çoktan gelmiş teknik de bir kez haber verilir.
+	# Eski kayıt: rütbesi çoktan gelmiş teknik de bir kez haber verilir; gece açılan kayıtta fener.
 	_announce_techniques()
+	_check_lantern()
 	GameState.changed.connect(_on_state_changed)
 	GameState.focus_lost.connect(_on_focus_lost)
 	GameState.focus_gained.connect(_on_focus_gained)
@@ -431,6 +446,7 @@ func _process(delta: float) -> void:
 	# Oyun saati: filmde ve kararmada da durur (panel ve odak kaybı yukarıda).
 	if _film == null and not fade.busy():
 		world_clock.tick(delta, GameState.save)
+	_sync_look(delta)
 	_trap_clock += delta
 	if _trap_clock >= TRAP_SYNC_EVERY:
 		_trap_clock = 0.0
@@ -1074,10 +1090,58 @@ func _sync_world_chip() -> void:
 
 
 ## Vakit değişti: kısa bildirim (vaktin ikonuyla; sırada bekleyen vakit bildiriminin yerine geçer: panel
-## açıkken iki vakit atlanırsa yalnızca sonuncusu) ve kayıt.
+## açıkken iki vakit atlanırsa yalnızca sonuncusu) ve kayıt. İlk gece Nine fener verir.
 func _on_phase_changed(phase: String) -> void:
 	hud.toast_later(tr("UI_PHASE_NOW_" + phase), UiKit.TEXT, "", "phase_" + phase, "phase")
+	_check_lantern()
 	GameState.save_game()
+
+
+## Gölün görünüşü (vakit ve hava: DayLook; vaktin son dakikasında sonrakine geçer), gece lambaların ışık
+## havuzları, yağmur ya da ateşböcekleri, fırtınada şimşek.
+func _sync_look(delta: float) -> void:
+	var save := GameState.save
+	var rules := GameState.db.rules
+	var look := DayLook.at(rules, save)
+	scene.set_look(look)
+	var lamps := float(look["lamps"])
+	var pools: Array[Vector4] = []
+	if lamps > 0.01:
+		if bool(save.flags.get(LANTERN_FLAG, false)):
+			var at := angler.pos2()
+			pools.append(Vector4(at.x, at.y, LANTERN_POOL.x, LANTERN_POOL.y * lamps))
+		var lamp_spots := scene.lamp_points()
+		pools.append(Vector4(lamp_spots[0].x, lamp_spots[0].y, CAMP_POOL.x, CAMP_POOL.y * lamps))
+		pools.append(Vector4(lamp_spots[1].x, lamp_spots[1].y, POST_POOL.x, POST_POOL.y * lamps))
+		pools.append(Vector4(shop.global_position.x, shop.global_position.z, SHOP_POOL.x, SHOP_POOL.y * lamps))
+	scene.set_pools(pools)
+	var kind := ""
+	if float(look["rain"]) > 0.5:
+		kind = "rain"
+	elif float(look["night"]) > 0.5 and float(look["fog_begin"]) > 20.0:
+		kind = "fireflies"
+	ambient.set_kind(kind)
+	ambient.follow(Vector3(camera.target.x, 0.0, camera.target.z))
+	# Fırtına (yağmurlu gece): en az STORM_GAP.x saniye arayla yumuşak şimşek.
+	var cond := world_clock.conditions()
+	if Weather.stormy(str(cond["weather"]), str(cond["phase"])) and _film == null:
+		_storm_wait -= delta
+		if _storm_wait <= 0.0:
+			_storm_wait = randf_range(STORM_GAP.x, STORM_GAP.y)
+			scene.flash()
+			Sounds.haptic(25)
+	else:
+		_storm_wait = STORM_GAP.x
+
+
+## Nine'nin feneri: ilk gece hediye (bildirim, Dede'nin sözü); geceleri balıkçının çevresi aydınlanır.
+func _check_lantern() -> void:
+	var save := GameState.save
+	if bool(save.flags.get(LANTERN_FLAG, false)) or DayClock.phase(GameState.db.rules, save.clock_s) != "night":
+		return
+	save.flags[LANTERN_FLAG] = true
+	hud.toast_later(tr("UI_LANTERN_GIFT"), UiKit.ACCENT, "equip", "lantern")
+	_say("UI_DEDE_LANTERN")
 
 
 ## Geliştirme sürümü (Ayarlar'da VAKİT +, HAVA, SEVGİ +): saat sonraki vakte, bugünün havası sıradakine,

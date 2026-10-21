@@ -7,7 +7,7 @@ extends RefCounted
 ## ikonu vaktin ikonunun yanında durur: bulut ve sis güneşsiz (gece de doğru görünsün).
 
 const KINDS: Array[String] = ["phase_morning", "phase_noon", "phase_evening", "phase_night", "weather_clear",
-		"weather_cloudy", "weather_rain", "weather_fog", "weather_storm", "tea", "love", "requests"]
+		"weather_cloudy", "weather_rain", "weather_fog", "weather_storm", "tea", "love", "requests", "lantern"]
 
 const SUN := Color("#ffd23f")
 const SUN_RAY := Color("#ffb000")
@@ -102,6 +102,17 @@ func build(kind: String) -> void:
 			_poly(PackedVector2Array([Vector2(21, 46), Vector2(79, 46), Vector2(50, 84)]), Color("#2fc6c0"))
 			_disc(Vector2(50, 50), 8.0, Color("#ff9ec4"))
 			_disc(Vector2(34, 34), 5.0, Color(1, 1, 1, 0.75))
+		"lantern":
+			# Nine'nin feneri: sıcak ışık halesi, camlı gövde, siyah çerçeve, tepede halka.
+			_disc(Vector2(50, 56), 34.0, Color(1.0, 0.82, 0.4, 0.28))
+			_rect(Rect2(36, 38, 28, 36), Color("#ffd86b"))
+			_disc(Vector2(50, 58), 9.0, Color("#fff4c8"))
+			_rect(Rect2(32, 32, 36, 7), Color("#3a3f47"))
+			_rect(Rect2(32, 73, 36, 7), Color("#3a3f47"))
+			_rect(Rect2(33, 38, 4, 36), Color("#3a3f47"))
+			_rect(Rect2(63, 38, 4, 36), Color("#3a3f47"))
+			_poly(PackedVector2Array([Vector2(36, 32), Vector2(64, 32), Vector2(56, 24), Vector2(44, 24)]), Color("#3a3f47"))
+			_poly(_arc_poly(Vector2(50, 20), 7.0, PI, TAU, 10), Color("#3a3f47"))
 		"requests":
 			_rect(Rect2(28, 26, 44, 50), Color("#f3e2b3"))
 			_ellipse(Vector2(50, 26), 24.0, 6.0, Color("#e2c98c"))

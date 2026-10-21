@@ -8,9 +8,12 @@ shader_type spatial;
 //   fx 2 (Destansı): kenarında nabız gibi atan ışıltı;
 //   fx 3 (Efsanevi) ve 4 (Masalsı): parlayan kenar ve göbek (iz bırakan dalgayı ShadowLayer kurar).
 // Kıyıda söner (shore_clip): kıyıya çekilen iri balığın kuyruğu kumun üstüne çizilmez.
+// Gece (world_night) biraz daha koyu: suyun kendi ışığıyla birlikte koyu suda da seçilsin.
 render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
 
 #include "res://scenes/world/shore_clip.gdshaderinc"
+
+global uniform float world_night;
 
 uniform vec4 color : source_color = vec4(0.02, 0.07, 0.12, 0.62);
 uniform float fade = 1.0;
@@ -30,7 +33,7 @@ void fragment() {
 	float r = length(vec2(p.x / max(width, 0.05), p.y));
 	float body = 1.0 - smoothstep(0.5, 1.0, r);
 	vec3 col = color.rgb;
-	float a = color.a * body;
+	float a = min(color.a * (1.0 + 0.3 * world_night), 0.92) * body;
 	if (fx == 1) {
 		// 2,5 sn'de bir: ilk %35'te baştan kuyruğa geçer, sonra bekler.
 		float t = fract(TIME * 0.4 + phase);

@@ -85,6 +85,8 @@ const WORLD_SEED := 4242
 const HZ := FishingRules.HZ
 ## Gezide bir bakıştaki çizim sınırı (telefon hedefi; CLAUDE.md "Çizim sayısı").
 const TOUR_DRAWS := 150
+## Balık gölgesinin suya en düşük parlaklık karşıtlığı (1 − gölge / su; world senaryosu, her vakit ve havada).
+const LOOK_CONTRAST := 0.25
 
 var main: Node
 var _shots_dir: String = ""
@@ -145,6 +147,8 @@ var _no_bites: bool = false
 ## Botun kayıtlarında açılış filmi görülmüş sayılır (oynasaydı dokunuşları yutardı); first ve story
 ## senaryoları filmi ister.
 var _intro: bool = false
+## world senaryosunda yalnızca bu bölüm (--world-part=looks: vakit × hava görünüşleri; boşsa hepsi).
+var _world_part: String = ""
 
 
 func _ready() -> void:
@@ -161,6 +165,8 @@ func _ready() -> void:
 			_only_fish = arg.get_slice("=", 1)
 		elif arg.begins_with("--reels-only="):
 			_reels_only = arg.get_slice("=", 1).split(",", false)
+		elif arg.begins_with("--world-part="):
+			_world_part = arg.get_slice("=", 1)
 	# Kamera yönetmeni ve olay günlüğü yalnızca reels'te (_process).
 	set_process(_scenario == "reels")
 	if not _shots_dir.is_empty():
@@ -2171,6 +2177,12 @@ func _play_tour() -> void:
 ## Canlı dünya (Dalga 4): rütbe 3'ün oyuncusu, saat akar. Saat çipi, saatin akışı ve durması, geliştirme
 ## düğmeleriyle vakit ve hava, Ay Turnası'nın gece oranı, iskelede çizim sayısı.
 func _play_world() -> void:
+	if _world_part == "looks":
+		_use_save(3)
+		await _wait(1.0)
+		await _world_looks()
+		_finish_checks()
+		return
 	_use_save(3)
 	var db := GameState.db
 	var rules := db.rules
@@ -2230,15 +2242,24 @@ func _play_world() -> void:
 		await _tap_control(settings.find_child("DebugTime", true, false))
 		await _wait_frames(3)
 	settings.close_panel()
-	var night := await _wait_toast(UiKit.upper(tr("UI_PHASE_NOW_night")), 4.0)
+	# Panel kapanınca çıkan bildirimler izlenir: akşamınki gecenin yerine geçti (yalnızca sonuncusu), ilk
+	# gece Nine fener verir (bildirim ve Dede'nin sözü).
 	var toast: Label = hud.get("_toast")
-	var evening_shown := func() -> bool:
-		return toast.is_visible_in_tree() and toast.text == UiKit.upper(tr("UI_PHASE_NOW_evening"))
-	var evening := await _wait_until(evening_shown, 3.0)
-	var only_last := night and not evening
+	var seen := {}
+	var lines := {}
+	var watch := func() -> bool:
+		if toast.is_visible_in_tree():
+			seen[toast.text] = true
+		lines[str(main.get("_line"))] = true
+		return false
+	await _wait_until(watch, 6.0)
+	var night := seen.has(UiKit.upper(tr("UI_PHASE_NOW_night")))
+	var only_last := night and not seen.has(UiKit.upper(tr("UI_PHASE_NOW_evening")))
 	_check("VAKİT + iki kez → gece (çipte %s); yalnızca \"%s\" bildirimi" % [hud.world_text(), tr("UI_PHASE_NOW_night")],
 			night and only_last and DayClock.phase(rules, save.clock_s) == "night"
 			and hud.world_icons()[0] == "phase_night" and hud.world_text().begins_with("00:"))
+	_check("ilk gece Nine fener verir (bildirim, Dede'nin sözü, kayıtta)", seen.has(UiKit.upper(tr("UI_LANTERN_GIFT")))
+			and lines.has("UI_DEDE_LANTERN") and bool(save.flags.get(main.get("LANTERN_FLAG"), false)))
 	# Gece nilüferli koy: Ay Turnası gelir (gündüz gelmez); defterde oranı ve "yalnızca gece".
 	var fade: Fade = main.get("fade")
 	main.call("_travel", "lily_cove")
@@ -2290,7 +2311,114 @@ func _play_world() -> void:
 	GameState.changed.emit()
 	await _wait(0.3)
 	_check_buttons()
+	await _world_looks()
 	_finish_checks()
+
+
+## İskelede her vakit × açık, yağmur ve sis (sisli günün öğle ve akşamı bulutlu): ekran görüntüsü, çizim
+## sayısı ve ÖLÇÜ satırları (doygunluk, en koyu %5'in parlaklığı, gölgenin suya karşıtlığı). Saat donuk,
+## görünüş hemen (geçişsiz). Gölge karşıtlığı her görünüşte (gece de) en az LOOK_CONTRAST.
+func _world_looks() -> void:
+	var db := GameState.db
+	var rules := db.rules
+	var save := GameState.save
+	var clock: WorldClock = main.get("world_clock")
+	var scene: LakeScene = main.get("scene")
+	var fade: Fade = main.get("fade")
+	clock.frozen = true
+	if str(main.get("zone_id")) != "dock_cove":
+		main.call("_travel", "dock_cove")
+		await _wait_until(func() -> bool: return fade.busy(), 1.0)
+		await _wait_until(func() -> bool: return not fade.busy(), 5.0)
+	save.settings["perf"] = true
+	# Nine'nin feneri (ilk gece hediyesi) var: gece balıkçının çevresinde ışık havuzu.
+	save.flags[main.get("LANTERN_FLAG")] = true
+	GameState.changed.emit()
+	var day := 3
+	var worst_contrast := 1.0
+	var worst_at := ""
+	var worst_draws := 0
+	var index := 10
+	for weather: String in ["clear", "rain", "fog"]:
+		for i in DayClock.PHASES.size():
+			var phase := DayClock.PHASES[i]
+			save.clock_s = day * DayClock.day_s(rules) + i * rules.phase_s + (rules.phase_s >> 1)
+			save.flags[Weather.DEBUG_DAY] = day
+			save.flags[Weather.DEBUG_KIND] = weather
+			clock.refresh(save)
+			main.call("_sync_world_chip")
+			scene.set_look(DayLook.at(rules, save), true)
+			var at := Vector2(1.0, -3.2)
+			_shadow_at(at, Vector2(0, 1), "carp", 900000)
+			await _wait(0.8)
+			scene.set_look(DayLook.at(rules, save), true)
+			var draws := await _measure_draws()
+			await RenderingServer.frame_post_draw
+			var image := get_viewport().get_texture().get_image()
+			var stats := _image_stats(image)
+			var contrast := _shadow_contrast(image, at, at + Vector2(1.6, 0.0))
+			var shown := Weather.at(rules, save)
+			var label := "%s/%s" % [phase, shown]
+			print("ÖLÇÜ %-14s doygunluk %.3f, en koyu %%5 %.3f, ortalama %.3f, gölge karşıtlığı %.2f, %d çizim" % [label,
+					stats["saturation"], stats["dark5"], stats["mean"], contrast, draws["draws"]])
+			if contrast < worst_contrast:
+				worst_contrast = contrast
+				worst_at = label
+			worst_draws = maxi(worst_draws, int(draws["draws"]))
+			await _shot("%d_%s_%s" % [index, phase, shown])
+			index += 1
+		day += 1
+	_check("her vakit ve havada gölge suda seçilir (en düşük karşıtlık %.2f: %s; en az %.2f)" % [worst_contrast, worst_at,
+			LOOK_CONTRAST], worst_contrast >= LOOK_CONTRAST)
+	_check("her vakit ve havada iskelede en çok %d çizim (%d)" % [TOUR_DRAWS, worst_draws], worst_draws <= TOUR_DRAWS)
+	save.settings["perf"] = false
+	GameState.changed.emit()
+
+
+## Görüntünün ölçüleri (küçültülmüş kopyasından): ortalama doygunluk, en koyu %5'in ve bütününün ortalama
+## parlaklığı (0..1).
+static func _image_stats(image: Image) -> Dictionary:
+	var small := image.duplicate() as Image
+	small.resize(maxi(1, image.get_width() >> 2), maxi(1, image.get_height() >> 2), Image.INTERPOLATE_BILINEAR)
+	var lum := PackedFloat32Array()
+	var saturation := 0.0
+	for y in small.get_height():
+		for x in small.get_width():
+			var c := small.get_pixel(x, y)
+			lum.append(0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b)
+			saturation += c.s
+	lum.sort()
+	var count := lum.size()
+	var dark := 0.0
+	var dark_n := maxi(1, count / 20)
+	for i in dark_n:
+		dark += lum[i]
+	var mean := 0.0
+	for v in lum:
+		mean += v
+	return { "saturation": saturation / count, "dark5": dark / dark_n, "mean": mean / count }
+
+
+## Gölgenin ortasıyla yanındaki suyun parlaklık karşıtlığı: 1 − gölge / su (0: seçilmez).
+## Noktalar görüntünün piksellerine çevrilir (görüntü pencerenin boyunda, _screen tuvalin biriminde).
+func _shadow_contrast(image: Image, shadow: Vector2, water: Vector2) -> float:
+	var scale := Vector2(image.get_size()) / get_viewport().get_visible_rect().size
+	var a := _patch_lum(image, _screen(Vector3(shadow.x, 0.0, shadow.y)) * scale)
+	var b := _patch_lum(image, _screen(Vector3(water.x, 0.0, water.y)) * scale)
+	return 1.0 - a / maxf(b, 0.001)
+
+
+static func _patch_lum(image: Image, at: Vector2) -> float:
+	var sum := 0.0
+	var n := 0
+	for dy in range(-3, 4):
+		for dx in range(-3, 4):
+			var x := clampi(int(at.x) + dx, 0, image.get_width() - 1)
+			var y := clampi(int(at.y) + dy, 0, image.get_height() - 1)
+			var c := image.get_pixel(x, y)
+			sum += 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+			n += 1
+	return sum / n
 
 
 ## Kamışlar ve makaralar (görsel denetim; KONTROL satırları): dükkândaki kamışlar teknik teknik yan yana
