@@ -17,7 +17,15 @@ func test_every_sound_has_a_file() -> void:
 	var loops: Dictionary = c["LOOPS"]
 	for loop_name: String in loops:
 		assert_true(ResourceLoader.exists("%s%s.wav" % [c["LOOP_DIR"], loop_name]), "döngü yok: " + loop_name)
-	assert_true(ResourceLoader.exists("%slake.ogg" % c["AMBIENCE_DIR"]), "göl ortam sesi yok")
+	for track: String in c["AMBIENCE"]:
+		assert_true(ResourceLoader.exists("%s%s.ogg" % [c["AMBIENCE_DIR"], track]), "ortam sesi yok: " + track)
+	# Müzik: her vaktin parçası ve dükkânın valsi (Dalga 4).
+	var music: Array = c["MUSIC"]
+	for phase: String in DayClock.PHASES:
+		assert_true(phase in music, "vaktin müziği listede: " + phase)
+	assert_true("shop" in music, "dükkânın müziği listede")
+	for track: String in music:
+		assert_true(ResourceLoader.exists("%s%s.ogg" % [c["MUSIC_DIR"], track]), "müzik yok: " + track)
 
 
 func test_code_plays_only_known_sounds() -> void:
@@ -35,8 +43,12 @@ func test_code_plays_only_known_sounds() -> void:
 		for m in loop.search_all(text):
 			assert_true(loops.has(m.get_string(1)), "%s: tanımsız döngü %s" % [path, m.get_string(1)])
 	assert_true(checked > 10, "ses çağrıları bulundu (%d)" % checked)
-	for rarity in range(1, 6):
+	# Her nadirliğin buluntu sesi (Sounds.find: 0 Sıradan .. 5 Masalsı → find_1..6).
+	for rarity in range(1, 7):
 		assert_true(bank.has("find_%d" % rarity), "buluntu sesi: %d" % rarity)
+	# Vakit değişimi ve fener bildirimle (toast_later) çalar.
+	for sound: String in ["phase", "lantern", "thunder", "tea"]:
+		assert_true(bank.has(sound), "Dalga 4 sesi: " + sound)
 
 
 static func _scripts(dir: String) -> Array[String]:

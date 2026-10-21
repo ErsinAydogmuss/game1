@@ -426,12 +426,20 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - nadirliğe göre buluntu;
   - arayüz sesleri;
   - göl ortam sesi (su, kuş, rüzgâr).
-- 🔜 Müzik: her vakit için kodla üretilen sakin döngüler (kalimba, ud) ve dükkân ezgisi.
+- ✅ Müzik (Dalga 4): her vaktin kodla üretilen sakin, dikişsiz döngüsü (40–46 sn; sabah kalimba ve marimba,
+  öğle marimba ve ud, akşam ud ve çelesta, gece çelesta, uzak çan ve kalimba; altında pad ve bas) ve Nine'nin
+  dükkânının neşeli valsi (dükkân açıkken). Vakit değişince 2 sn'de geçer. Ezgiler elle yazıldı; çalgılar
+  Reels müziğiyle ortak (`tools/make_sounds.py`).
+- ✅ Ortam sesi görünüşle değişir: gündüz göl (su, kuş, rüzgâr), gece cırcır böcekleri ve kurbağa, yağmurda
+  yağmur. Fırtınada her şimşekten 0,6–1,8 sn sonra uzak, yumuşak gök gürültüsü (titreşimiyle).
+- ✅ Dalga 4 efektleri: vakit değişimi (üç notalı çan, bildirimle), Dede'yle çay (bardağa akan çay, kaşık),
+  Nine'nin feneri (fitil ve sıcak akor), Masalsı buluntu (Gölün Bekçisi için). Her birinin görseli (bildirim,
+  kararma, şimşek, kart) ve titreşimi var.
 - ✅ Spin: yem düşüşü (iki çeşit), saldırı şapırtısı, takılma (otlara sürtünme); yem çekilirken makara döngüsü kısık ve pes. Her birinin görseli (halka, sıçrama, iz) ve titreşimi var.
 - ✅ Dip: zil (iki tınlama; koklamada tek tük), koşuda durmadan çalan zil döngüsü, kurşunun pes şapırtısı. Zilin görseli sehpada sallanan zil ve koşuda 2B zil işareti; her birinin titreşimi var.
 - ✅ Sinek: halka (yüzeyde küçük şapırtı ve emiş kabarcığı; iki çeşit), sineğin konuşu kısık tıkırtı, sıçrayan alabalığın çıkış ve dalış şapırtısı. Görseli halka, suya çekilen sinek ve sıçrayan balık; her birinin titreşimi var.
 - ✅ Tuzak: bırakma ve toplama (§10.3); her birinin görseli ve titreşimi var.
-- 🔜 Yeni sesler: kedi mırlaması, yağmur, gece böcekleri.
+- 🔜 Yeni sesler: kedi mırlaması.
 - iPhone'un sessiz anahtarı açıkken oyunun sesi çıkmaz (Kazı deneyimi).
 
 ## 10. H2 sistemleri 🔜
@@ -761,8 +769,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - Gerçek saat kullanılmaz: hep aynı saatlerde oynayan da her vakti görür, çocuk gece balığı için uyanık kalmaz.
 - **Hava** ✅ (`Weather`): her oyun günü için tohumlu (seed'li): açık %55, bulutlu %20, yağmur %15, sis %10.
   - İlk oyun günü hep açık. Sisli günde sis yalnızca sabah ve gece, öğle ve akşam bulutlu.
-  - Yağmurlu gece fırtınadır (ayrı bir hava değil): en az 12 sn arayla yumuşak şimşek ✅ (yanıp sönmez; gök
-    gürültüsünün sesi 🔜). Vaktin ve havanın görünüşü §8.
+  - Yağmurlu gece fırtınadır (ayrı bir hava değil): en az 12 sn arayla yumuşak şimşek ✅ (yanıp sönmez), biraz
+    sonra uzak gök gürültüsü ✅ (§9). Vaktin ve havanın görünüşü §8.
   - ✅ İlk gece Nine fener hediye eder ("Nine sana bir fener verdi!", Dede: "Nine fener yolladı evlat! Gece
     balığı bir başkadır."): geceleri balıkçının çevresinde 6 m sıcak ışık. Dükkân ve denge değişmez.
   - Yağmur ısırmayı artırır: gölgeler takımı 1,3 kat uzaktan fark eder ve 1,25 kat hızlı yaklaşır (her teknikte;

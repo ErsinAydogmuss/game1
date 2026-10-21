@@ -2213,6 +2213,8 @@ func _play_world() -> void:
 	_check("saat çipi sabahı gösterir (%s, %s)" % [hud.world_text(), ",".join(hud.world_icons())],
 			chip.is_visible_in_tree() and hud.world_text().begins_with("06:")
 			and hud.world_icons() == PackedStringArray(["phase_morning"]))
+	_check("sabah müziği ve göl sesi çalar (%s, %s)" % [Sounds.music_name(), Sounds.ambience_name()],
+			Sounds.music_name() == "morning" and Sounds.ambience_name() == "lake")
 	var right := hud.settings_button.get_global_rect().merge(hud.book_button.get_global_rect())
 	if hud.map_button.visible:
 		right = right.merge(hud.map_button.get_global_rect())
@@ -2240,9 +2242,9 @@ func _play_world() -> void:
 	_check("ayarlar açıkken saat durur (%d → %d)" % [held, save.clock_s], save.clock_s == held)
 	await _tap_control(settings.find_child("DebugTime", true, false))
 	await _wait_frames(3)
-	_check("VAKİT + → öğle, çipte %s; panel açıkken bildirim yok" % hud.world_text(),
+	_check("VAKİT + → öğle, çipte %s; panel açıkken bildirim yok; öğle müziği (%s)" % [hud.world_text(), Sounds.music_name()],
 			DayClock.phase(rules, save.clock_s) == "noon" and hud.world_text() == "12:00"
-			and hud.world_icons()[0] == "phase_noon" and not toast_box.visible)
+			and hud.world_icons()[0] == "phase_noon" and not toast_box.visible and Sounds.music_name() == "noon")
 	await _shot("02_gelistirici")
 	settings.close_panel()
 	var noon := await _wait_toast(UiKit.upper(tr("UI_PHASE_NOW_noon")), 4.0)
@@ -2273,6 +2275,8 @@ func _play_world() -> void:
 			and hud.world_icons()[0] == "phase_night" and hud.world_text().begins_with("00:"))
 	_check("ilk gece Nine fener verir (bildirim, Dede'nin sözü, kayıtta)", seen.has(UiKit.upper(tr("UI_LANTERN_GIFT")))
 			and lines.has("UI_DEDE_LANTERN") and bool(save.flags.get(main.get("LANTERN_FLAG"), false)))
+	_check("gece müziği ve gece sesi (cırcır böceği) çalar (%s, %s)" % [Sounds.music_name(), Sounds.ambience_name()],
+			Sounds.music_name() == "night" and Sounds.ambience_name() == "night")
 	# Gece nilüferli koy: Ay Turnası gelir (gündüz gelmez); defterde oranı ve "yalnızca gece".
 	var fade: Fade = main.get("fade")
 	main.call("_travel", "lily_cove")
@@ -2327,7 +2331,47 @@ func _play_world() -> void:
 	await _wait(0.3)
 	_check_buttons()
 	await _world_looks()
+	await _world_storm()
 	_finish_checks()
+
+
+## Fırtına (yağmurlu gece; saat donuk, oyun zamanı hızlı: Engine.time_scale): şimşekler en az
+## STORM_GAP.x arayla (yanıp sönme yok), her şimşeği uzak gök gürültüsü izler, ortam sesi yağmur.
+func _world_storm() -> void:
+	var rules := GameState.db.rules
+	var save := GameState.save
+	var clock: WorldClock = main.get("world_clock")
+	var scene: LakeScene = main.get("scene")
+	clock.frozen = true
+	var day := 9
+	save.clock_s = day * DayClock.day_s(rules) + 3 * rules.phase_s + (rules.phase_s >> 1)
+	save.flags[Weather.DEBUG_DAY] = day
+	save.flags[Weather.DEBUG_KIND] = "rain"
+	clock.refresh(save)
+	scene.set_look(DayLook.at(rules, save), true)
+	var flashes: Array[float] = main.get("storm_log")
+	flashes.clear()
+	main.set("thunder_count", 0)
+	Engine.time_scale = 8.0
+	var waited := 0
+	while flashes.size() < 3 and waited < 1500:
+		await get_tree().process_frame
+		waited += 1
+	# Son şimşeğin gök gürültüsü (en çok THUNDER_DELAY.y sonra).
+	await _wait_frames(30)
+	Engine.time_scale = 1.0
+	var gaps := PackedStringArray()
+	var shortest := 999.0
+	for i in range(1, flashes.size()):
+		gaps.append("%.1f" % (flashes[i] - flashes[i - 1]))
+		shortest = minf(shortest, flashes[i] - flashes[i - 1])
+	var gap_min := float((main.get("STORM_GAP") as Vector2).x)
+	var thunders := int(main.get("thunder_count"))
+	_check("fırtınada şimşekler en az %.0f sn arayla (%s sn), her birini gök gürültüsü izler (%d/%d), ortam sesi %s" % [
+			gap_min, ", ".join(gaps), thunders, flashes.size(), Sounds.ambience_name()],
+			flashes.size() >= 3 and shortest >= gap_min - 0.01 and thunders == flashes.size()
+			and Sounds.ambience_name() == "rain")
+	await _shot("40_firtina")
 
 
 ## "Bugün" paneli (gece, iskelede): çipe dokun → panel (vakit, saat, yarının havası; küçülmeden sığar,
@@ -2408,6 +2452,15 @@ func _world_tea() -> void:
 	await _shot("08_cay_bekler")
 	day_panel.close_panel()
 	await _wait(0.4)
+	# Dükkân açıkken Nine'nin valsi, kapanınca vaktin müziği.
+	var shop: ShopPanel = main.get("shop_panel")
+	main.call("_on_shop")
+	await _wait_until(func() -> bool: return shop.visible, 2.0)
+	var in_shop := Sounds.music_name()
+	shop.close_panel()
+	await _wait(0.3)
+	_check("dükkânda Nine'nin valsi (%s), kapanınca sabah müziği (%s)" % [in_shop, Sounds.music_name()],
+			in_shop == "shop" and Sounds.music_name() == "morning")
 
 
 ## İskelede her vakit × açık, yağmur ve sis (sisli günün öğle ve akşamı bulutlu): ekran görüntüsü, çizim
@@ -2430,6 +2483,7 @@ func _world_looks() -> void:
 	save.flags[main.get("LANTERN_FLAG")] = true
 	GameState.changed.emit()
 	var day := 3
+	var wrong_amb: PackedStringArray = []
 	var worst_contrast := 1.0
 	var worst_at := ""
 	var worst_draws := 0
@@ -2454,6 +2508,9 @@ func _world_looks() -> void:
 			var contrast := _shadow_contrast(image, at, at + Vector2(1.6, 0.0))
 			var shown := Weather.at(rules, save)
 			var label := "%s/%s" % [phase, shown]
+			var want_amb := "rain" if shown == "rain" else ("night" if phase == "night" else "lake")
+			if Sounds.ambience_name() != want_amb:
+				wrong_amb.append("%s: %s" % [label, Sounds.ambience_name()])
 			print("ÖLÇÜ %-14s doygunluk %.3f, en koyu %%5 %.3f, ortalama %.3f, gölge karşıtlığı %.2f, %d çizim" % [label,
 					stats["saturation"], stats["dark5"], stats["mean"], contrast, draws["draws"]])
 			if contrast < worst_contrast:
@@ -2466,6 +2523,8 @@ func _world_looks() -> void:
 	_check("her vakit ve havada gölge suda seçilir (en düşük karşıtlık %.2f: %s; en az %.2f)" % [worst_contrast, worst_at,
 			LOOK_CONTRAST], worst_contrast >= LOOK_CONTRAST)
 	_check("her vakit ve havada iskelede en çok %d çizim (%d)" % [TOUR_DRAWS, worst_draws], worst_draws <= TOUR_DRAWS)
+	_check("ortam sesi görünüşle: yağmurda yağmur, gece cırcır böceği, gündüz göl%s" % (
+			"" if wrong_amb.is_empty() else ": " + ", ".join(wrong_amb)), wrong_amb.is_empty())
 	save.settings["perf"] = false
 	GameState.changed.emit()
 
@@ -3155,6 +3214,9 @@ func _reels_setup() -> void:
 	(_hud().get("_status") as Control).modulate.a = 0.0
 	for player: AudioStreamPlayer in (Sounds.get("_ambience") as Array):
 		player.stop()
+	# Reels'in kendi müziği var (tools/reels_music.py): oyunun vakit müziği ve dükkân valsi kayda girmesin.
+	GameState.save.settings["music"] = false
+	Sounds.apply_settings()
 	var view := get_viewport().get_visible_rect().size
 	_finger = Vector2(view.x * 0.5 + 360.0, view.y * 0.7)
 

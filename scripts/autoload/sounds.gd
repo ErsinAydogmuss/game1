@@ -29,9 +29,16 @@ const BANK := {
 	"rank_up": [-9.0, 0.0, 1], "travel": [-10.0, 0.0, 1],
 	"lure": [-8.0, 0.06, 2], "strike": [-4.0, 0.03, 1], "snag": [-8.0, 0.0, 1], "bell": [-7.0, 0.05, 2],
 	"rise": [-5.0, 0.08, 2], "trap_place": [-6.0, 0.05, 1], "trap_collect": [-7.0, 0.04, 1],
+	# Dalga 4: Masalsı buluntu, fırtınada gök gürültüsü, Dede'yle çay, vakit değişimi, Nine'nin feneri.
+	"find_6": [-3.0, 0.0, 1], "thunder": [-7.0, 0.05, 1], "tea": [-9.0, 0.03, 1], "phase": [-12.0, 0.0, 1],
+	"lantern": [-9.0, 0.0, 1],
 }
 ## Döngüler: ad -> ses (dB).
 const LOOPS := { "reel": -12.0, "strain": -14.0, "bell_run": -9.0 }
+## Müzik parçaları (Dalga 4): dört vaktin sakin döngüleri ve Nine'nin dükkânının valsi (music/<ad>.ogg).
+const MUSIC := ["morning", "noon", "evening", "night", "shop"]
+## Ortam sesleri: göl (gündüz), gece (cırcır böceği, kurbağa), yağmur (ambience/<ad>.ogg).
+const AMBIENCE := ["lake", "night", "rain"]
 const MUSIC_DB := -15.0
 const AMBIENCE_DB := -12.0
 const FADE_TIME := 2.0
@@ -148,9 +155,9 @@ func play(sound: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
 	_playing_name[player] = sound
 
 
-## Balık tutuldu (kart görünürken): nadirliğe göre (0 Sıradan .. 4 Efsanevi → find_1..5).
+## Balık tutuldu (kart görünürken): nadirliğe göre (0 Sıradan .. 5 Masalsı → find_1..6).
 func find(rarity: int) -> void:
-	play("find_%d" % clampi(rarity + 1, 1, 5))
+	play("find_%d" % clampi(rarity + 1, 1, 6))
 
 
 ## Bir döngüyü (makara, gerilim) açar / kapatır; açıkken sesi ve perdesi değiştirilebilir.
@@ -167,16 +174,25 @@ func set_loop(loop_name: String, on: bool, volume_db: float = 0.0, pitch: float 
 		player.stop()
 
 
-## Ortam sesi (ör. "lake"): yumuşak geçişle değişir.
+## Ortam sesi (AMBIENCE: "lake", "night", "rain"): yumuşak geçişle değişir.
 func set_ambience(track: String) -> void:
 	if not _silent:
 		_switch(_ambience, track, AMBIENCE_DIR, AMBIENCE_DB, false)
 
 
-## Müzik (ör. "lake"): yumuşak geçişle değişir. Dosya yoksa sessiz kalır.
+## Müzik (MUSIC: vaktin adı ya da "shop"): yumuşak geçişle değişir. Dosya yoksa sessiz kalır.
 func set_music(track: String) -> void:
 	if not _silent:
 		_switch(_music, track, MUSIC_DIR, MUSIC_DB, true)
+
+
+## Çalan müzik ve ortam sesi (bot denetimi; yoksa "").
+func music_name() -> String:
+	return _music_name
+
+
+func ambience_name() -> String:
+	return _ambience_name
 
 
 ## Titreşim (ayarlarda açıksa). amplitude 0..1 (destekleyen cihazlarda).

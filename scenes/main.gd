@@ -73,8 +73,10 @@ const LANTERN_POOL := Vector2(6.0, 0.85)
 const CAMP_POOL := Vector2(4.0, 1.0)
 const POST_POOL := Vector2(3.2, 0.8)
 const SHOP_POOL := Vector2(3.5, 0.7)
-## Fırtınada şimşekler arası (sn; en az 12: yanıp sönme yok, çocuklar için yumuşak).
+## Fırtınada şimşekler arası (sn; en az 12: yanıp sönme yok, çocuklar için yumuşak) ve şimşekten sonra gök
+## gürültüsüne kadar (sn; uzak fırtına: önce ışık, sonra ses).
 const STORM_GAP := Vector2(12.0, 30.0)
+const THUNDER_DELAY := Vector2(0.6, 1.8)
 ## Dede'yle çay: ekran bu kadar sn karanlık kalır (vakit geçer); Dede balıkçıya bu kadar yakınsa (m)
 ## kamera TEA_SHOT sn ona yaklaşır (TEA_ZOOM), sonra balıkçıya döner.
 const TEA_HOLD := 0.6
@@ -135,6 +137,12 @@ var world_clock: WorldClock
 ## Yağmur ya da ateşböcekleri (tek çizim) ve fırtınada sıradaki şimşeğe kalan süre (sn).
 var ambient: AmbientParticles
 var _storm_wait: float = STORM_GAP.x
+## Şimşekten sonra gök gürültüsüne kalan süre (sn; bekleyen yoksa -1), fırtınanın oyun saati ve şimşeklerin
+## anları (bot denetimi: en az STORM_GAP.x arayla; en çok 8).
+var _thunder_wait: float = -1.0
+var _storm_clock: float = 0.0
+var storm_log: Array[float] = []
+var thunder_count: int = 0
 ## Çaydan sonra kameranın Dede'ye yakın kaldığı süre (sn; Dede uzaktaysa 0).
 var _tea_shot: float = 0.0
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
@@ -275,7 +283,6 @@ func _ready() -> void:
 	ItemArt.register_fish_colors(GameState.db.fish_colors())
 	FishPortrait.render_all(self, GameState.db)
 	_load_faces()
-	Sounds.set_ambience("lake")
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has("--autoplay"):
 		var bot: Node = load("res://scripts/dev/autoplay.gd").new()
 		bot.set("main", self)
@@ -292,6 +299,7 @@ func _start_session() -> void:
 	world_clock.reset(save)
 	var cond := world_clock.conditions()
 	_sync_world_chip()
+	_sync_music()
 	session = FishingSession.new(GameState.db, spot_id, gear, Dice.derive(save.seed, save.session),
 			bool(GameState.setting("easy", false)), save.catches == 0,
 			CatchOdds.pity_floor(GameState.db, save, start, gear.technique, cond), Zones.open_ids(GameState.db, save, spot_id),
@@ -1110,10 +1118,16 @@ func _sync_world_chip() -> void:
 ## açıkken iki vakit atlanırsa yalnızca sonuncusu) ve kayıt. İlk gece Nine fener verir; yoksa Dede vakte
 ## ya da havaya ilk sözünü söyler (bir kez).
 func _on_phase_changed(phase: String) -> void:
-	hud.toast_later(tr("UI_PHASE_NOW_" + phase), UiKit.TEXT, "", "phase_" + phase, "phase")
+	hud.toast_later(tr("UI_PHASE_NOW_" + phase), UiKit.TEXT, "phase", "phase_" + phase, "phase")
 	if not _check_lantern():
 		_world_line()
+	_sync_music()
 	GameState.save_game()
+
+
+## Müzik: vaktin parçası; dükkân açıkken Nine'nin valsi (Sounds.MUSIC).
+func _sync_music() -> void:
+	Sounds.set_music("shop" if shop_panel.visible else DayClock.phase(GameState.db.rules, GameState.save.clock_s))
 
 
 ## Dede'nin vakte ve havaya ilk sözü (her biri bir kez; bayrak kayda): önce hava (bulut, yağmur, sis;
@@ -1162,14 +1176,28 @@ func _sync_look(delta: float) -> void:
 		kind = "fireflies"
 	ambient.set_kind(kind)
 	ambient.follow(Vector3(camera.target.x, 0.0, camera.target.z))
-	# Fırtına (yağmurlu gece): en az STORM_GAP.x saniye arayla yumuşak şimşek.
+	# Ortam sesi görünüşle: yağmur, gece (cırcır böceği, kurbağa) ya da göl (kuşlar).
+	Sounds.set_ambience("rain" if float(look["rain"]) > 0.5 else ("night" if float(look["night"]) > 0.5 else "lake"))
+	# Fırtına (yağmurlu gece): en az STORM_GAP.x saniye arayla yumuşak şimşek, biraz sonra uzak gök gürültüsü
+	# (titreşimiyle).
+	if _thunder_wait >= 0.0:
+		_thunder_wait -= delta
+		if _thunder_wait < 0.0:
+			Sounds.play("thunder")
+			Sounds.haptic(40, 0.3)
+			thunder_count += 1
 	var cond := world_clock.conditions()
 	if Weather.stormy(str(cond["weather"]), str(cond["phase"])) and _film == null:
+		_storm_clock += delta
 		_storm_wait -= delta
 		if _storm_wait <= 0.0:
 			_storm_wait = randf_range(STORM_GAP.x, STORM_GAP.y)
 			scene.flash()
 			Sounds.haptic(25)
+			_thunder_wait = randf_range(THUNDER_DELAY.x, THUNDER_DELAY.y)
+			storm_log.append(_storm_clock)
+			if storm_log.size() > 8:
+				storm_log.pop_front()
 	else:
 		_storm_wait = STORM_GAP.x
 
@@ -1181,7 +1209,7 @@ func _check_lantern() -> bool:
 	if bool(save.flags.get(LANTERN_FLAG, false)) or DayClock.phase(GameState.db.rules, save.clock_s) != "night":
 		return false
 	save.flags[LANTERN_FLAG] = true
-	hud.toast_later(tr("UI_LANTERN_GIFT"), UiKit.ACCENT, "equip", "lantern")
+	hud.toast_later(tr("UI_LANTERN_GIFT"), UiKit.ACCENT, "lantern", "lantern")
 	_say("UI_DEDE_LANTERN")
 	return true
 
@@ -1214,6 +1242,7 @@ func _on_tea() -> void:
 		elder.approve()
 		if _said == said:
 			_say("UI_DEDE_TEA")
+		Sounds.play("tea")
 		Sounds.haptic(20), TEA_HOLD)
 
 
@@ -2309,6 +2338,7 @@ func _build_ui() -> void:
 	shop_panel.gear_changed.connect(_on_gear_changed)
 	shop_panel.sold.connect(_on_sold)
 	shop_panel.closed.connect(_on_shop_closed)
+	shop_panel.visibility_changed.connect(_sync_music)
 	book_panel = BookPanel.new()
 	book_panel.spot_id = spot_id
 	layer.add_child(book_panel)

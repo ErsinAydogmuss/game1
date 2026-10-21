@@ -5,7 +5,8 @@ Ritim ve bölümler kurgunun vuruşlarına oturur: tools/reels_edl.json "music" 
 tarz); tempo da oradan (bpm, beat_frames): 100 BPM'de bir vuruş tam 18 video karesi (30 fps). Sol majör; oyunun buluntu sesleriyle
 uyumlu (Destansı ve Efsanevi avda Do akoru), efsanevi gölgede yalnızca çan ve tını, son kartta ilk kez
 Sol'a oturur. Sazlar: marimba, çelesta ve çan, tel (Karplus-Strong), bas, pad, bakır vuruş, davul,
-el çırpma, shaker, timpani, yükselen süpürme. Yapı taşları tools/make_sounds.py'den (48 kHz).
+el çırpma, shaker, timpani, yükselen süpürme. Yapı taşları ve çalgılar tools/make_sounds.py'den (48 kHz;
+oyunun vakit müzikleriyle ortak).
 
 Kullanım:  python3 -I tools/reels_music.py --out /mutlak/klasör [--cut <kesim>|all] [--edl liste.json]
 Çıktı:     kurgu listesindeki her kesim için music_<kesim>.wav (kesimin süresi kadar: 45,00 ve 15,00 sn);
@@ -55,184 +56,23 @@ def b2n(beats):
 
 
 # --- Sazlar ----------------------------------------------------------------------------
+# Çalgılar tools/make_sounds.py'de (oyunun vakit müzikleriyle ortak). Bas ve süpürme burada vuruşla
+# kesilir (b2n).
 
-def kick(gain=1.0):
-    n = ms.frames(0.45)
-    body = ms.thump(50.0, n, 0.26, 1.6, 0.025)
-    click = ms.band(ms.noise(n, 11), 1800, 7000) * ms.env_exp(n, 0.003)
-    return (body + 0.35 * click) * gain
-
-
-def clap(seed):
-    n = ms.frames(0.35)
-    out = np.zeros(n)
-    r = ms.rng(seed)
-    for k, at in enumerate((0.0, 0.011, 0.023)):
-        burst = ms.band(r.standard_normal(n), 900, 5200) * ms.env_exp(n, 0.009 if k < 2 else 0.05)
-        ms.place(out, burst * (0.7 if k < 2 else 1.0), ms.frames(at))
-    return out * 0.5
-
-
-def snare(seed, gain=1.0):
-    n = ms.frames(0.25)
-    noise = ms.band(ms.noise(n, seed), 1500, 9000) * ms.env_exp(n, 0.05)
-    body = ms.sine(185.0, n) * ms.env_exp(n, 0.04)
-    return (0.7 * noise + 0.5 * body) * gain
-
-
-def shaker(seed, gain=1.0):
-    n = ms.frames(0.09)
-    return ms.band(ms.noise(n, seed), 5500, 14000) * ms.env_ar(n, 0.006, 0.07) * gain
-
-
-def hat(seed, gain=1.0):
-    n = ms.frames(0.06)
-    return ms.band(ms.noise(n, seed), 8000, 16000) * ms.env_exp(n, 0.012) * gain
-
-
-def crash(seed, gain=1.0, length=2.2):
-    n = ms.frames(length)
-    x = ms.band(ms.noise(n, seed), 2800, 15000) * ms.env_exp(n, length / 3.2, 0.002)
-    return x * gain
-
-
-def timpani(note, gain=1.0):
-    n = ms.frames(1.4)
-    f = ms.midi(note)
-    x = ms.partials(f, n, [(1.0, 1.0, 0.7), (1.5, 0.35, 0.4), (2.0, 0.2, 0.3)], seed=note)
-    x += 0.4 * ms.thump(f, n, 0.3, 0.4)
-    return x * np.clip(ms.tl(n) / 0.004, 0, 1) * gain
+kick, clap, snare, shaker, hat, crash, timpani = ms.kick, ms.clap, ms.snare, ms.shaker, ms.hat, ms.crash, ms.timpani
+marimba, celesta, bell, pluck, pad, brass_chord = ms.marimba, ms.celesta, ms.bell, ms.pluck, ms.pad, ms.brass_chord
+Mix = ms.Mix
 
 
 def bass(note, beats, seed):
-    """Tellere vurulmuş bas: sinüs + ikinci harmonik, yumuşak süzgeç."""
-    n = b2n(beats)
-    f = ms.midi(note)
-    t = ms.tl(n)
-    x = np.sin(2 * np.pi * f * t) + 0.35 * np.sin(4 * np.pi * f * t + 0.4) + 0.12 * np.sin(6 * np.pi * f * t)
-    env = np.exp(-t / 0.32) * np.clip(t / 0.004, 0, 1)
-    env *= np.clip((n / SR - t) / 0.03, 0, 1)
-    return ms.spectral(x * env, None, 900.0, 1.5)
-
-
-def marimba(note, seed, gain=1.0):
-    n = ms.frames(0.8)
-    f = ms.midi(note)
-    x = ms.partials(f, n, [(1.0, 1.0, 0.36), (3.93, 0.32, 0.07), (9.2, 0.08, 0.025)], seed=seed)
-    mallet = ms.band(ms.noise(n, seed + 5), 1500, 6000) * ms.env_exp(n, 0.002)
-    return (x + 0.15 * mallet) * np.clip(ms.tl(n) / 0.002, 0, 1) * gain
-
-
-def celesta(note, seed, gain=1.0, tau=0.7):
-    n = ms.frames(min(3.0, tau * 4.0))
-    return ms.chime(ms.midi(note), n, 0.9, tau) * gain
-
-
-def bell(note, seed, gain=1.0):
-    """Çan: uyumsuz kısmi tonlarla uzun sönüm (efsanevi gölgenin sessizliği)."""
-    n = ms.frames(3.0)
-    f = ms.midi(note)
-    x = ms.partials(f, n, [(1.0, 1.0, 1.6), (2.76, 0.4, 0.9), (5.4, 0.18, 0.5), (8.93, 0.08, 0.3)], seed=seed)
-    return x * np.clip(ms.tl(n) / 0.002, 0, 1) * gain
-
-
-def pluck(note, length, seed, bright=0.6):
-    """Karplus-Strong tel: y[n] = d · (y[n-P] + y[n-P+1]) / 2. Blok blok (P-1 örnek): her blok yalnızca
-    hesaplanmış örnekleri okur."""
-    n = ms.frames(length)
-    f = ms.midi(note)
-    period = max(3, int(round(SR / f)))
-    r = ms.rng(seed)
-    excite = ms.spectral(r.uniform(-1.0, 1.0, period * 4), None, 2000 + 6000 * bright, 1.0)[:period]
-    out = np.zeros(n)
-    out[: min(period, n)] = excite[: min(period, n)]
-    decay = 0.996
-    k = period
-    while k < n:
-        end = min(n, k + period - 1)
-        out[k:end] = decay * 0.5 * (out[k - period: end - period] + out[k - period + 1: end - period + 1])
-        k = end
-    return out * np.clip((length - ms.tl(n)) / 0.05, 0, 1)
-
-
-def pad(notes, n, attack=0.4, release=0.5, bright=2200.0, seed=0):
-    """Telli pad: notalar başına üç hafif akortsuz testere dişi, yumuşak süzgeç; stereo (sol, sağ)."""
-    t = ms.tl(n)
-    left = np.zeros(n)
-    right = np.zeros(n)
-    r = ms.rng(seed)
-    for note in notes:
-        f = ms.midi(note)
-        for detune, side in ((-0.09, 0), (0.0, 2), (0.08, 1)):
-            ff = f * 2 ** (detune / 12.0)
-            saw = np.zeros(n)
-            phase = r.uniform(0, 2 * np.pi)
-            for h in range(1, 12):
-                if ff * h > 8000:
-                    break
-                saw += np.sin(2 * np.pi * ff * h * t + phase * h) / h
-            if side in (0, 2):
-                left += saw
-            if side in (1, 2):
-                right += saw
-    env = ms.env_ar(n, attack, release)
-    left = ms.spectral(left, None, bright, 1.2) * env
-    right = ms.spectral(right, None, bright, 1.2) * env
-    scale = 1.0 / max(1, len(notes) * 3)
-    return left * scale, right * scale
-
-
-def brass_chord(notes, hold, gain=1.0):
-    n = ms.frames(hold + 0.5)
-    out = np.zeros(n)
-    for note in notes:
-        out += ms.brass(ms.midi(note), n, hold)
-    return ms.unit(out) * gain
+    return ms.bass(note, b2n(beats), seed)
 
 
 def riser(beats, seed, gain=1.0):
-    """Yükselen süpürme: bandı yükselen gürültü + yükselen sinüs; sonu bir sonraki vuruşa varır."""
-    n = b2n(beats)
-    x = ms.sweep_band(ms.noise(n, seed), 400.0, 7000.0, 2.5)
-    t = ms.tl(n)
-    tone = np.sin(2 * np.pi * np.cumsum(220.0 * 2 ** (2.0 * t / (n / SR))) / SR) * 0.15
-    ramp = (t / (n / SR)) ** 2
-    return (x * 0.8 + tone) * ramp * gain
+    return ms.riser(b2n(beats), seed, gain)
 
 
 # --- Karıştırma ----------------------------------------------------------------------------
-
-class Mix:
-    def __init__(self, n):
-        self.n = n
-        self.l = np.zeros(n)
-        self.r = np.zeros(n)
-        self.send = np.zeros(n)
-        self.rng = np.random.default_rng(2024)
-
-    def add(self, x, start, gain=1.0, pan=0.0, rev=0.0, humanize=True):
-        if humanize:
-            start += int(self.rng.integers(-150, 151))  # ±3 ms
-            gain *= float(self.rng.uniform(0.9, 1.05))
-        a = (pan + 1.0) * np.pi / 4.0
-        ms.place(self.l, x * gain * np.cos(a), start)
-        ms.place(self.r, x * gain * np.sin(a), start)
-        if rev > 0.0:
-            ms.place(self.send, x * gain * rev, start)
-
-    def add_stereo(self, left, right, start, gain=1.0, rev=0.0):
-        ms.place(self.l, left * gain, start)
-        ms.place(self.r, right * gain, start)
-        if rev > 0.0:
-            ms.place(self.send, (left + right) * 0.5 * gain * rev, start)
-
-    def render(self):
-        wet_l = ms.reverb(self.send, 2.2, 31, 5000.0)[: self.n]
-        wet_r = ms.reverb(self.send, 2.2, 37, 5000.0)[: self.n]
-        left = self.l + 0.55 * wet_l
-        right = self.r + 0.55 * wet_r
-        return left, right
-
 
 def arp_notes(chord, octave_up=24, count=8):
     _, voicing = CHORDS[chord]

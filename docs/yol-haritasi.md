@@ -153,7 +153,7 @@ Ersin'in seçimleri (hepsi önerilen): balık kovadan ve yeni tür kartından g�
 
 - [x] Parti 5a görsel promptları ([`gorsel-istekleri.md`](gorsel-istekleri.md)): Ersin görselleri üretirken kod yazılır.
 - [x] Oyun saati ve hava: 24 dakikalık gün (4 vakit), her günün tohumlu havası, vakit ve havaya göre oranlar (defter ve dükkânda da), yağmurda balık çabuk gelir, Ay Turnası (gece) ve Kocabaş (yağmurlu gece), üst ortada saat çipi, kayıt v5 (dalganın bütün alanları), geliştirme düğmeleri VAKİT +, HAVA, SEVGİ +50, `world` botu.
-- [ ] Vakit ışığı, gece, yağmur, sis; Dede'yle çay; vakit müziği. (Görünüş ✅: akşam, ay ışığı, yağmur, sis, bulut gölgeleri, fırtınada şimşek, Nine'nin feneri ve lambalar, ateşböcekleri. "Bugün" paneli ve çay ✅: saat çipine dokun, bugünün ve yarının havası, ÇAY İÇ; Dede'nin vakte ve havaya ilk sözleri. Sırada ses.)
+- [x] Vakit ışığı, gece, yağmur, sis; Dede'yle çay; vakit müziği: akşam, ay ışığı, yağmur, sis, bulut gölgeleri, fırtınada şimşek ve gök gürültüsü, Nine'nin feneri ve lambalar, ateşböcekleri; saat çipine dokununca "Bugün" paneli (bugünün ve yarının havası, Dede'yle çay), Dede'nin vakte ve havaya ilk sözleri; dört vaktin müziği ve dükkânın valsi, gece ve yağmur sesleri.
 - [ ] Tut-bırak, göl sevgisi, çöp toplama.
 - [ ] Dede'nin istekleri.
 - [ ] Gölün Sırrı: mektuplar ve harita parçaları.

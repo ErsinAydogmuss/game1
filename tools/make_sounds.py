@@ -6,7 +6,8 @@ sesleri bu oyun için yazıldı.
 Çıktı (assets/audio/):
   sfx/<ad>_<n>.wav   kısa efektler (mono, 44,1 kHz, 16 bit); aynı adın 1..n çeşidi
   loops/<ad>.wav     döngüler (makara, gerilim gıcırtısı)
-  ambience/<ad>.ogg  ortam döngüleri (göl: su, kuş, rüzgâr)
+  ambience/<ad>.ogg  ortam döngüleri (göl: su, kuş, rüzgâr; gece: cırcır böceği, kurbağa; yağmur)
+  music/<ad>.ogg     müzik: dört vaktin sakin döngüleri ve Nine'nin dükkânının valsi (stereo)
 
 Kullanım:  python3 tools/make_sounds.py            (hepsi)
            python3 tools/make_sounds.py bite reel  (adı bunlarla başlayanlar)
@@ -752,6 +753,578 @@ def trap_collect():
     return finish(x + 0.1 * reverb(x, 0.4)[:n], -1.0, 0.1)
 
 
+# --- Çalgılar (vakit müzikleri, dükkân ezgisi ve Reels müziği) --------------------------------
+# tools/reels_music.py bunları buradan alır (Reels müziği bit bit aynı kalır). Süreler saniye; bas ve
+# süpürme örnek sayısı alır (Reels vuruşa, oyunun müziği ölçüye göre keser).
+
+def kick(gain=1.0):
+    n = frames(0.45)
+    body = thump(50.0, n, 0.26, 1.6, 0.025)
+    click = band(noise(n, 11), 1800, 7000) * env_exp(n, 0.003)
+    return (body + 0.35 * click) * gain
+
+
+def clap(seed):
+    n = frames(0.35)
+    out = np.zeros(n)
+    r = rng(seed)
+    for k, at in enumerate((0.0, 0.011, 0.023)):
+        burst = band(r.standard_normal(n), 900, 5200) * env_exp(n, 0.009 if k < 2 else 0.05)
+        place(out, burst * (0.7 if k < 2 else 1.0), frames(at))
+    return out * 0.5
+
+
+def snare(seed, gain=1.0):
+    n = frames(0.25)
+    hiss = band(noise(n, seed), 1500, 9000) * env_exp(n, 0.05)
+    body = sine(185.0, n) * env_exp(n, 0.04)
+    return (0.7 * hiss + 0.5 * body) * gain
+
+
+def shaker(seed, gain=1.0):
+    n = frames(0.09)
+    return band(noise(n, seed), 5500, 14000) * env_ar(n, 0.006, 0.07) * gain
+
+
+def hat(seed, gain=1.0):
+    n = frames(0.06)
+    return band(noise(n, seed), 8000, 16000) * env_exp(n, 0.012) * gain
+
+
+def crash(seed, gain=1.0, length=2.2):
+    n = frames(length)
+    x = band(noise(n, seed), 2800, 15000) * env_exp(n, length / 3.2, 0.002)
+    return x * gain
+
+
+def timpani(note, gain=1.0):
+    n = frames(1.4)
+    f = midi(note)
+    x = partials(f, n, [(1.0, 1.0, 0.7), (1.5, 0.35, 0.4), (2.0, 0.2, 0.3)], seed=note)
+    x += 0.4 * thump(f, n, 0.3, 0.4)
+    return x * np.clip(tl(n) / 0.004, 0, 1) * gain
+
+
+def bass(note, n, seed):
+    """Tellere vurulmuş bas (n örnek): sinüs + ikinci harmonik, yumuşak süzgeç."""
+    f = midi(note)
+    t = tl(n)
+    x = np.sin(2 * np.pi * f * t) + 0.35 * np.sin(4 * np.pi * f * t + 0.4) + 0.12 * np.sin(6 * np.pi * f * t)
+    env = np.exp(-t / 0.32) * np.clip(t / 0.004, 0, 1)
+    env *= np.clip((n / SR - t) / 0.03, 0, 1)
+    return spectral(x * env, None, 900.0, 1.5)
+
+
+def marimba(note, seed, gain=1.0):
+    n = frames(0.8)
+    f = midi(note)
+    x = partials(f, n, [(1.0, 1.0, 0.36), (3.93, 0.32, 0.07), (9.2, 0.08, 0.025)], seed=seed)
+    mallet = band(noise(n, seed + 5), 1500, 6000) * env_exp(n, 0.002)
+    return (x + 0.15 * mallet) * np.clip(tl(n) / 0.002, 0, 1) * gain
+
+
+def celesta(note, seed, gain=1.0, tau=0.7):
+    n = frames(min(3.0, tau * 4.0))
+    return chime(midi(note), n, 0.9, tau) * gain
+
+
+def bell(note, seed, gain=1.0):
+    """Çan: uyumsuz kısmi tonlarla uzun sönüm (efsanevi gölgenin sessizliği)."""
+    n = frames(3.0)
+    f = midi(note)
+    x = partials(f, n, [(1.0, 1.0, 1.6), (2.76, 0.4, 0.9), (5.4, 0.18, 0.5), (8.93, 0.08, 0.3)], seed=seed)
+    return x * np.clip(tl(n) / 0.002, 0, 1) * gain
+
+
+def pluck(note, length, seed, bright=0.6):
+    """Karplus-Strong tel: y[n] = d · (y[n-P] + y[n-P+1]) / 2. Blok blok (P-1 örnek): her blok yalnızca
+    hesaplanmış örnekleri okur. bright düşükse ud gibi koyu."""
+    n = frames(length)
+    f = midi(note)
+    period = max(3, int(round(SR / f)))
+    r = rng(seed)
+    excite = spectral(r.uniform(-1.0, 1.0, period * 4), None, 2000 + 6000 * bright, 1.0)[:period]
+    out = np.zeros(n)
+    out[: min(period, n)] = excite[: min(period, n)]
+    decay = 0.996
+    k = period
+    while k < n:
+        end = min(n, k + period - 1)
+        out[k:end] = decay * 0.5 * (out[k - period: end - period] + out[k - period + 1: end - period + 1])
+        k = end
+    return out * np.clip((length - tl(n)) / 0.05, 0, 1)
+
+
+def kalimba(note, seed, gain=1.0, tau=0.9):
+    """Kalimba (başparmak piyanosu): metal dilin temel tonu ve uyumsuz üst tonu, parmak tıkı."""
+    n = frames(min(3.0, tau * 3.5))
+    f = midi(note)
+    x = partials(f, n, [(1.0, 1.0, tau), (5.95, 0.22, tau * 0.12), (3.01, 0.07, tau * 0.3)], seed=seed)
+    tick = band(noise(n, seed + 3), 2000, 7000) * env_exp(n, 0.0015)
+    return (x + 0.12 * tick) * np.clip(tl(n) / 0.0015, 0, 1) * gain
+
+
+def pad(notes, n, attack=0.4, release=0.5, bright=2200.0, seed=0):
+    """Telli pad: notalar başına üç hafif akortsuz testere dişi, yumuşak süzgeç; stereo (sol, sağ)."""
+    t = tl(n)
+    left = np.zeros(n)
+    right = np.zeros(n)
+    r = rng(seed)
+    for note in notes:
+        f = midi(note)
+        for detune, side in ((-0.09, 0), (0.0, 2), (0.08, 1)):
+            ff = f * 2 ** (detune / 12.0)
+            saw = np.zeros(n)
+            phase = r.uniform(0, 2 * np.pi)
+            for h in range(1, 12):
+                if ff * h > 8000:
+                    break
+                saw += np.sin(2 * np.pi * ff * h * t + phase * h) / h
+            if side in (0, 2):
+                left += saw
+            if side in (1, 2):
+                right += saw
+    env = env_ar(n, attack, release)
+    left = spectral(left, None, bright, 1.2) * env
+    right = spectral(right, None, bright, 1.2) * env
+    scale = 1.0 / max(1, len(notes) * 3)
+    return left * scale, right * scale
+
+
+def brass_chord(notes, hold, gain=1.0):
+    n = frames(hold + 0.5)
+    out = np.zeros(n)
+    for note in notes:
+        out += brass(midi(note), n, hold)
+    return unit(out) * gain
+
+
+def riser(n, seed, gain=1.0):
+    """Yükselen süpürme (n örnek): bandı yükselen gürültü + yükselen sinüs; sonu bir sonraki vuruşa varır."""
+    x = sweep_band(noise(n, seed), 400.0, 7000.0, 2.5)
+    t = tl(n)
+    tone = np.sin(2 * np.pi * np.cumsum(220.0 * 2 ** (2.0 * t / (n / SR))) / SR) * 0.15
+    ramp = (t / (n / SR)) ** 2
+    return (x * 0.8 + tone) * ramp * gain
+
+
+class Mix:
+    """Stereo karıştırıcı: kaydırma (pan), yankı gönderimi, insan eli gibi küçük kayma ve ses farkı."""
+
+    def __init__(self, n, seed=2024):
+        self.n = n
+        self.l = np.zeros(n)
+        self.r = np.zeros(n)
+        self.send = np.zeros(n)
+        self.rng = np.random.default_rng(seed)
+
+    def add(self, x, start, gain=1.0, pan=0.0, rev=0.0, humanize=True):
+        if humanize:
+            start += int(self.rng.integers(-150, 151))  # ±3 ms
+            gain *= float(self.rng.uniform(0.9, 1.05))
+        a = (pan + 1.0) * np.pi / 4.0
+        place(self.l, x * gain * np.cos(a), start)
+        place(self.r, x * gain * np.sin(a), start)
+        if rev > 0.0:
+            place(self.send, x * gain * rev, start)
+
+    def add_stereo(self, left, right, start, gain=1.0, rev=0.0):
+        place(self.l, left * gain, start)
+        place(self.r, right * gain, start)
+        if rev > 0.0:
+            place(self.send, (left + right) * 0.5 * gain * rev, start)
+
+    def render(self):
+        wet_l = reverb(self.send, 2.2, 31, 5000.0)[: self.n]
+        wet_r = reverb(self.send, 2.2, 37, 5000.0)[: self.n]
+        left = self.l + 0.55 * wet_l
+        right = self.r + 0.55 * wet_r
+        return left, right
+
+
+# --- Müzik: vakitler ve dükkân (Dalga 4) -----------------------------------------------------
+# Sakin, dikişsiz döngüler (40–48 sn; dükkân ezgisi daha kısa): kalimba, ud (koyu Karplus-Strong),
+# marimba, çelesta, pad ve bas. Ezgiler elle yazıldı: ölçü başına [(nota, vuruş)], None sus. Döngü
+# dairesel çizilir: sonda taşan çınlama ve yankı başa eklenir (dikiş yok). Her parça aynı RMS'e
+# çekilir (vakit değişince ses düzeyi zıplamasın), tepe -1 dBFS'i geçmez.
+
+MUSIC_CHORDS = {
+    "G": (43, [55, 59, 62, 67]),
+    "Em": (40, [52, 55, 59, 64]),
+    "Em9": (40, [52, 55, 59, 62, 66]),
+    "C": (36, [48, 52, 55, 60]),
+    "Cmaj7": (36, [48, 52, 55, 59]),
+    "D": (38, [50, 54, 57, 62]),
+    "Dsus4": (38, [50, 55, 57, 62]),
+    "Am": (45, [57, 60, 64, 69]),
+    "Am7": (45, [57, 60, 64, 67]),
+    "F": (41, [53, 57, 60, 65]),
+    "Bm7": (47, [50, 54, 57, 59]),
+}
+
+# Vakitlerin parçaları: tempo, ölçü (vuruş), akorlar (ölçü başına), ezgi (ölçü başına notalar),
+# ezginin çalgısı ve eşlik tarzı.
+SONGS = {
+    "morning": {
+        "bpm": 88, "meter": 4, "lead": "kalimba", "style": "morning",
+        "chords": ["G", "G", "Em", "Em", "C", "C", "D", "D", "G", "G", "Em", "Em", "C", "C", "Dsus4", "D"],
+        "melody": [
+            [(74, 1), (71, 1), (67, 1), (71, 1)], [(74, 2), (76, 1), (74, 1)],
+            [(71, 1), (67, 1), (64, 1), (67, 1)], [(71, 2), (72, 1), (71, 1)],
+            [(72, 1), (76, 1), (79, 1), (76, 1)], [(74, 2), (72, 1), (71, 1)],
+            [(69, 1), (74, 1), (78, 1), (76, 1)], [(74, 3), (None, 1)],
+            [(79, 1), (78, 1), (76, 1), (74, 1)], [(71, 2), (74, 1), (79, 1)],
+            [(78, 1), (76, 1), (71, 1), (67, 1)], [(71, 2), (74, 2)],
+            [(72, 1), (76, 1), (79, 1), (81, 1)], [(79, 2), (76, 1), (74, 1)],
+            [(74, 2), (72, 1), (69, 1)], [(71, 3), (None, 1)],
+        ],
+    },
+    "noon": {
+        "bpm": 92, "meter": 4, "lead": "marimba", "style": "noon",
+        "chords": ["C", "C", "Am", "Am", "F", "F", "G", "G", "C", "C", "Am", "Am", "F", "G", "C", "C"],
+        "melody": [
+            [(76, 1), (79, 1), (76, 0.5), (74, 0.5), (72, 1)], [(74, 1), (76, 1), (72, 2)],
+            [(72, 1), (76, 1), (72, 0.5), (71, 0.5), (69, 1)], [(71, 1), (72, 1), (69, 2)],
+            [(69, 1), (72, 1), (77, 1), (76, 1)], [(74, 1), (72, 1), (74, 2)],
+            [(71, 1), (74, 1), (79, 1), (77, 1)], [(76, 2), (74, 2)],
+            [(76, 1), (79, 1), (84, 1), (79, 1)], [(76, 1), (79, 1), (76, 2)],
+            [(76, 1), (72, 1), (69, 0.5), (71, 0.5), (72, 1)], [(71, 1), (69, 1), (64, 2)],
+            [(65, 1), (69, 1), (72, 1), (77, 1)], [(74, 1), (79, 1), (77, 1), (74, 1)],
+            [(72, 3), (None, 1)], [(None, 2), (67, 1), (71, 1)],
+        ],
+    },
+    "evening": {
+        "bpm": 84, "meter": 4, "lead": "oud", "style": "evening",
+        "chords": ["Cmaj7", "Cmaj7", "Bm7", "Bm7", "Em9", "Em9", "D", "D",
+                   "Cmaj7", "Cmaj7", "Bm7", "Bm7", "Am7", "Am7", "Dsus4", "D"],
+        "melody": [
+            [(71, 1.5), (72, 0.5), (74, 1), (76, 1)], [(79, 2), (76, 2)],
+            [(74, 1.5), (76, 0.5), (74, 1), (71, 1)], [(69, 2), (66, 2)],
+            [(67, 1), (71, 1), (74, 1), (78, 1)], [(76, 3), (None, 1)],
+            [(74, 1), (72, 1), (71, 1), (69, 1)], [(66, 2), (69, 2)],
+            [(71, 1.5), (72, 0.5), (74, 1), (76, 1)], [(79, 2), (81, 1), (79, 1)],
+            [(78, 1.5), (76, 0.5), (74, 1), (71, 1)], [(74, 2), (71, 2)],
+            [(72, 1), (76, 1), (79, 1), (76, 1)], [(72, 2), (71, 1), (69, 1)],
+            [(69, 2), (67, 2)], [(66, 3), (None, 1)],
+        ],
+    },
+    "night": {
+        "bpm": 66, "meter": 4, "lead": "celesta", "style": "night",
+        "chords": ["Em9", "Em9", "Cmaj7", "Cmaj7", "Am7", "Am7", "Bm7", "Bm7", "Em9", "Cmaj7", "Am7", "Dsus4"],
+        "melody": [
+            [(83, 2), (79, 2)], [(78, 2), (76, 2)],
+            [(79, 2), (76, 2)], [(74, 2), (71, 2)],
+            [(76, 2), (72, 2)], [(71, 2), (69, 2)],
+            [(74, 2), (71, 2)], [(69, 1), (71, 1), (66, 2)],
+            [(71, 1), (74, 1), (78, 2)], [(79, 2), (76, 2)],
+            [(72, 2), (76, 2)], [(74, 3), (None, 1)],
+        ],
+    },
+    # Nine'nin dükkânı: neşeli bir vals (3/4, "um-pa-pa"), 8 ölçülük ezgi üç kez (ikincisi bir oktav
+    # yukarıda çelestayla, üçüncüsü marimbayla).
+    "shop": {
+        "bpm": 132, "meter": 3, "lead": "kalimba", "style": "shop",
+        "chords": ["G", "G", "D", "D", "C", "D", "G", "G"] * 3,
+        "melody": [
+            [(74, 1), (71, 1), (74, 1)], [(79, 2), (78, 1)],
+            [(78, 1), (74, 1), (78, 1)], [(81, 2), (79, 1)],
+            [(76, 1), (72, 1), (76, 1)], [(74, 1), (78, 1), (81, 1)],
+            [(79, 2), (74, 1)], [(71, 2), (None, 1)],
+        ] * 3,
+    },
+}
+MUSIC_RMS_DB = -21.0
+
+
+def _lead(kind, note, seed, beat_s, beats):
+    if kind == "kalimba":
+        return kalimba(note, seed, 1.0, 0.8)
+    if kind == "marimba":
+        return marimba(note, seed)
+    if kind == "oud":
+        return pluck(note, max(0.6, beats * beat_s + 0.4), seed, 0.25)
+    return celesta(note, seed, 1.0, 0.9)
+
+
+def song(name):
+    """Bir vaktin (ya da dükkânın) müziği: dairesel çizilmiş dikişsiz döngü, stereo (sol, sağ)."""
+    spec = SONGS[name]
+    beat_s = 60.0 / spec["bpm"]
+    meter = spec["meter"]
+    bars = len(spec["chords"])
+    bar_n = frames(meter * beat_s)
+    total = bars * bar_n
+    tail = frames(3.5)
+    # Ön pay: insan eli kayması (±3 ms) ilk notaları sıfırın önüne düşürür; kesilmesinler, sona katlanırlar.
+    pre = frames(0.05)
+    m = Mix(pre + total + tail, 77 + len(name))
+    seed = 4000 + sum(ord(c) for c in name)
+    style = spec["style"]
+
+    def at(bar, beat):
+        return pre + bar * bar_n + frames(beat * beat_s)
+
+    # Pad: art arda aynı akorun ölçüleri tek akor (her ölçüde yeniden vurulmasın); sonu bir sonrakine örtüşür.
+    bright = {"morning": 1800.0, "noon": 2000.0, "evening": 1400.0, "night": 1000.0, "shop": 2200.0}[style]
+    pad_gain = {"morning": 0.12, "noon": 0.1, "evening": 0.15, "night": 0.2, "shop": 0.08}[style]
+    chords = spec["chords"]
+    bar = 0
+    while bar < bars:
+        run = 1
+        while bar + run < bars and chords[bar + run] == chords[bar]:
+            run += 1
+        _, voicing = MUSIC_CHORDS[chords[bar]]
+        left, right = pad(voicing, run * bar_n + frames(0.6), 0.35 if style != "night" else 0.9, 0.6, bright,
+                          seed + bar)
+        m.add_stereo(left, right, at(bar, 0), pad_gain, 0.35)
+        bar += run
+    for bar, chord in enumerate(chords):
+        root, voicing = MUSIC_CHORDS[chord]
+        tones = sorted(voicing)
+        s = at(bar, 0)
+        # Bas: dörtlükte kök ve beşli (gece tek, uzun), valsta yalnızca birinci vuruş.
+        low = root + 12 if root < 40 else root
+        if style == "night":
+            m.add(bass(low, bar_n, seed + bar), s, 0.18, humanize=False)
+        elif style == "shop":
+            m.add(bass(low, frames(beat_s), seed + bar), s, 0.4, humanize=False)
+        else:
+            half = frames(2 * beat_s)
+            m.add(bass(low, half, seed + bar), s, 0.32, humanize=False)
+            m.add(bass(low + 7, half, seed + 50 + bar), s + half, 0.24, humanize=False)
+        # Eşlik.
+        if style == "morning":
+            pattern = [0, 2, 1, 3, 2, 1, 3, 2]
+            for k in range(8):
+                note = tones[pattern[k] % len(tones)]
+                m.add(marimba(note, seed + 8 * bar + k), at(bar, k * 0.5), 0.13, pan=-0.35, rev=0.3)
+            if bar >= 4:
+                for k in range(8):
+                    m.add(shaker(seed + 16 * bar + k, 0.6 if k % 2 == 0 else 1.0), at(bar, k * 0.5), 0.05, pan=0.4)
+        elif style == "noon":
+            # Ud: kök, beşli, oktav, beşli (sekizlik); hafif tıkırtı ikinci ve dördüncü vuruşta.
+            line = [root + 12, root + 19, root + 24, root + 19] * 2
+            for k in range(8):
+                m.add(pluck(line[k], 0.7, seed + 8 * bar + k, 0.3), at(bar, k * 0.5), 0.16, pan=0.3, rev=0.2)
+            for b in (1, 3):
+                m.add(hat(seed + 4 * bar + b, 1.0), at(bar, b), 0.05, pan=-0.2)
+            m.add(shaker(seed + 9 * bar, 1.0), at(bar, 2.5), 0.04, pan=0.4)
+        elif style == "evening":
+            # Ud ile yavaş arpej (dörtlük), ezgi bitişlerinde çelesta parıltısı.
+            for k in range(4):
+                note = tones[[0, 2, 1, 3][k] % len(tones)]
+                m.add(pluck(note, 1.2, seed + 8 * bar + k, 0.22), at(bar, k), 0.12, pan=-0.3, rev=0.35)
+            if bar % 2 == 1:
+                m.add(celesta(tones[-1] + 24, seed + bar, 1.0, 1.0), at(bar, 3), 0.06, pan=0.4, rev=0.6)
+        elif style == "night":
+            # Gece: her dört ölçüde bir uzak çan, ikinci yarıda yumuşak kalimba yankısı.
+            if bar % 4 == 0:
+                m.add(bell(tones[0] + 24, seed + bar, 1.0), s, 0.05, pan=-0.3, rev=0.8)
+            m.add(kalimba(tones[1] + 12, seed + 40 + bar, 1.0, 1.2), at(bar, 2), 0.06, pan=0.35, rev=0.6)
+        elif style == "shop":
+            # Vals: "pa-pa" ikinci ve üçüncü vuruşta marimba akoru; yumuşak shaker.
+            for b in (1, 2):
+                for j, note in enumerate(tones[1:4]):
+                    m.add(marimba(note, seed + 12 * bar + 3 * b + j), at(bar, b), 0.07, pan=-0.25, rev=0.2)
+                m.add(shaker(seed + 5 * bar + b, 0.8), at(bar, b), 0.04, pan=0.4)
+    # Ezgi.
+    lead = spec["lead"]
+    for bar, notes in enumerate(spec["melody"]):
+        beat = 0.0
+        kind = lead
+        shift = 0
+        if style == "shop" and bar >= 16:
+            kind = "marimba"
+        elif style == "shop" and bar >= 8:
+            kind, shift = "celesta", 12
+        for k, (note, beats) in enumerate(notes):
+            if note is not None:
+                gain = {"kalimba": 0.3, "marimba": 0.28, "oud": 0.3, "celesta": 0.22}[kind]
+                m.add(_lead(kind, note + shift, seed + 100 * bar + k, beat_s, beats), at(bar, beat), gain,
+                      pan=0.15, rev=0.45)
+            beat += beats
+    left, right = m.render()
+    # 35 Hz altı atılır (telefon çalamaz). Süzgeç katlamadan önce: FFT süzgeci diziyi dairesel saymaz,
+    # katlanmış döngüde dikişte tık bırakırdı.
+    left = spectral(left, 35.0, None, 2.0)
+    right = spectral(right, 35.0, None, 2.0)
+    # Dairesel: döngünün sonundan taşan çınlama ve yankı başa, ön paya düşen sona eklenir.
+    left = _fold(left, total, pre)
+    right = _fold(right, total, pre)
+    rms = np.sqrt(np.mean((left ** 2 + right ** 2) * 0.5)) + 1e-9
+    gain = 10 ** (MUSIC_RMS_DB / 20.0) / rms
+    peak = max(np.max(np.abs(left)), np.max(np.abs(right))) * gain
+    if peak > 10 ** (-1.0 / 20.0):
+        gain *= 10 ** (-1.0 / 20.0) / peak
+    return left * gain, right * gain
+
+
+def _fold(x, n, pre=0):
+    """Dairesel döngü: x'in [pre, pre + n) aralığı; sonrası başa, ön pay (pre'den önce) sona eklenir."""
+    out = x[pre:pre + n].copy()
+    rest = x[pre + n:]
+    while len(rest) > 0:
+        k = min(n, len(rest))
+        out[:k] += rest[:k]
+        rest = rest[k:]
+    if pre > 0:
+        out[n - pre:] += x[:pre]
+    return out
+
+
+def music(name):
+    left, right = song(name)
+    return stereo(left, right)
+
+
+# --- Canlı dünya: ortam ve efektler (Dalga 4) ----------------------------------------------------
+
+def amb_night():
+    """Gece: cırcır böcekleri (dört ses, kendi aralıklarıyla), arada kurbağa, hafif rüzgâr ve dalga
+    (24 sn döngü; kuş yok)."""
+    dur = 24.0
+    n = frames(dur + 3.0)
+    t = tl(n)
+    wind = spectral(brown(n, 91), 40.0, 400.0, 1.0)
+    x = 0.35 * unit(wind) * (0.5 + 0.2 * np.sin(2 * np.pi * 0.05 * t))
+    r = rng(92)
+    laps = np.zeros(n)
+    at = 0.6
+    while at < dur + 2.5:
+        ln = frames(r.uniform(0.5, 0.9))
+        lap = unit(band(noise(ln, int(at * 100) + 7), 200, 1600)) * env_ar(ln, r.uniform(0.15, 0.3), 0.4)
+        place(laps, lap * r.uniform(0.3, 0.7), frames(at))
+        at += r.uniform(1.4, 2.8)
+    x += 0.2 * laps
+    crickets = np.zeros(n)
+    for c, carrier in enumerate((4300.0, 4700.0, 5100.0, 3900.0)):
+        gap = r.uniform(0.55, 1.1)
+        gain = r.uniform(0.35, 0.8)
+        at = r.uniform(0.0, gap)
+        while at < dur + 2.5:
+            pulses = int(r.integers(3, 6))
+            for k in range(pulses):
+                pn = frames(0.016)
+                pulse = sine(carrier * (1.0 + 0.01 * k), pn) * env_ar(pn, 0.003, 0.01)
+                place(crickets, pulse * gain, frames(at + k * 0.032))
+            at += gap * r.uniform(0.85, 1.15)
+    x += 0.11 * crickets + 0.04 * reverb(crickets, 0.9, 93)[:n]
+    frogs = np.zeros(n)
+    at = 3.0
+    while at < dur:
+        for k in range(2):
+            fn = frames(0.16)
+            ft = tl(fn)
+            f = r.uniform(190.0, 260.0)
+            buzz_tone = np.sign(np.sin(2 * np.pi * f * ft)) * (0.6 + 0.4 * np.sin(2 * np.pi * 55.0 * ft))
+            croak = spectral(buzz_tone, 150.0, 1400.0, 1.5) * env_ar(fn, 0.02, 0.09)
+            place(frogs, croak, frames(at + k * 0.22))
+        at += r.uniform(4.0, 7.5)
+    x += 0.12 * unit(frogs) + 0.04 * reverb(frogs, 1.2, 94)[:n]
+    return finish(loop_seam(x, 3.0), -8.0, 0.0)
+
+
+def amb_rain():
+    """Yağmur: göle düşen damlaların hışırtısı (yavaş dalgalanan), sık damla tıkırtıları, arada iri
+    damla şıpırtısı ve uzak hafif uğultu (20 sn döngü)."""
+    dur = 20.0
+    n = frames(dur + 3.0)
+    t = tl(n)
+    hiss = spectral(noise(n, 101), 350.0, 5500.0, 1.2, ((1800.0, 2500.0, 0.5),))
+    swell = 0.75 + 0.15 * np.sin(2 * np.pi * 0.07 * t) + 0.1 * np.sin(2 * np.pi * 0.19 * t + 1.3)
+    x = 0.5 * unit(hiss) * swell
+    r = rng(103)
+    # Sık damla tıkırtıları, zamana eşit yayılmış (döngü boyunca aynı sıklık).
+    ticks = np.zeros(n)
+    grain = frames(0.02)
+    for _ in range(int((dur + 2.5) * 90)):
+        g = band(r.standard_normal(grain), 2000, 7000) * env_exp(grain, 0.003 * r.uniform(0.6, 1.6))
+        place(ticks, g * r.uniform(0.3, 1.0), frames(r.uniform(0.0, dur + 2.5)))
+    x += 0.25 * unit(ticks)
+    drops = np.zeros(n)
+    at = 0.2
+    while at < dur + 2.5:
+        dn = frames(0.12)
+        drop = bubble(r.uniform(900, 1600), r.uniform(1800, 2600), dn, 0.03)
+        place(drops, drop * r.uniform(0.3, 0.8), frames(at))
+        at += r.uniform(0.08, 0.35)
+    x += 0.12 * unit(drops)
+    rumble = spectral(brown(n, 104), 30.0, 180.0, 1.0)
+    x += 0.15 * unit(rumble)
+    # Yağmur sıktır (tepesi düşük, enerjisi yüksek): göl ve gece sesleriyle aynı düzeyde dursun diye kısık.
+    return finish(loop_seam(x, 3.0), -10.0, 0.0)
+
+
+def thunder():
+    """Uzak gök gürültüsü (çocuklar için yumuşak): kısa bir çatırtı, sonra dalga dalga uğultu."""
+    n = frames(4.8)
+    t = tl(n)
+    r = rng(111)
+    crack = unit(band(noise(n, 112), 300, 3500)) * env_ar(n, 0.01, 0.25) * 0.35
+    rumble = np.zeros(n)
+    low = spectral(brown(n, 113), 25.0, 260.0, 1.2)
+    for k in range(4):
+        start = r.uniform(0.05, 1.6) if k else 0.08
+        env = np.clip((t - start) / 0.25, 0, 1) * np.exp(-np.maximum(t - start, 0) / r.uniform(0.6, 1.3))
+        rumble += unit(low) * env * r.uniform(0.5, 1.0)
+    x = crack + unit(rumble)
+    return finish(x + 0.3 * reverb(x, 2.4, 114, 1800.0)[:n], -2.0, 0.4)
+
+
+def tea():
+    """Çay: bardağa akan çay (yükselen tını, şırıltı) ve kaşığın bardağa iki tıkı."""
+    n = frames(1.7)
+    pour_n = frames(0.95)
+    pour = sweep_band(noise(pour_n, 121), 500.0, 1500.0, 5.0)
+    gurgle = 0.7 + 0.3 * np.sin(2 * np.pi * 23.0 * tl(pour_n)) * np.sin(2 * np.pi * 3.1 * tl(pour_n))
+    pour = unit(pour * gurgle) * env_ar(pour_n, 0.08, 0.25)
+    x = np.zeros(n)
+    place(x, 0.5 * pour, 0)
+    for k, at in enumerate((1.12, 1.3)):
+        tn = frames(0.35)
+        tink = partials(2900.0 + 180.0 * k, tn, [(1.0, 1.0, 0.09), (2.4, 0.4, 0.05), (4.1, 0.2, 0.03)], 122 + k)
+        place(x, 0.4 * tink * (1.0 - 0.3 * k), frames(at))
+    return finish(x + 0.15 * reverb(x, 0.6)[:n], -2.0, 0.08)
+
+
+def phase_chime():
+    """Vakit değişti: üç notalı yumuşak çan (Sol majör; buluntu seslerinden kısık)."""
+    n = frames(1.6)
+    x = arpeggio([79, 83, 86], 0.12, n, 0.5, 0.7, 0.85)
+    return finish(x + 0.35 * reverb(x, 1.4)[:n], -3.0, 0.2)
+
+
+def lantern():
+    """Nine'nin feneri: fitilin tutuşması (yumuşak hışırtı) ve sıcak bir majör akor."""
+    n = frames(1.5)
+    whoosh = unit(sweep_band(noise(n, 131), 300.0, 2200.0, 2.0)) * fit(env_ar(frames(0.5), 0.18, 0.3), n)
+    glow = arpeggio([72, 76, 79, 84], 0.05, n, 0.6, 0.8, 0.9)
+    x = 0.35 * whoosh + 0.6 * unit(glow)
+    return finish(x + 0.3 * reverb(x, 1.2)[:n], -2.0, 0.2)
+
+
+def find_mythic():
+    """Masalsı buluntu (Gölün Bekçisi): Efsanevi'nin fanfarı daha geniş, koro gibi pad ve çanlar."""
+    n = frames(3.6)
+    out = np.zeros(n)
+    stabs = [(0.0, 0.14), (0.16, 0.14), (0.32, 1.4)]
+    for at, dur in stabs:
+        seg_n = frames(dur + 0.4)
+        seg = np.zeros(seg_n)
+        for note in (55, 62, 67, 71, 74):
+            seg += brass(midi(note), seg_n, dur)
+        place(out, seg, frames(at))
+    out = unit(out) * 0.5
+    choir_l, choir_r = pad([67, 71, 74, 79, 83], n, 0.5, 1.6, 2600.0, 141)
+    out += 0.5 * unit(choir_l + choir_r)
+    out += 0.4 * unit(arpeggio([86, 91, 95, 98, 103], 0.08, n, 1.0, 0.9))
+    for k, note in enumerate((79, 86)):
+        place(out, 0.18 * unit(bell(note, 142 + k)), frames(0.9 + 0.45 * k))
+    out += 0.4 * thump(49, n, 0.45, 0.3)
+    out += 0.08 * band(noise(n, 143), 6000, 12000) * env_ar(n, 0.5, 2.6)
+    return finish(out + 0.4 * reverb(out, 2.2)[:n], -1.0, 0.5)
+
+
 # --- Liste ve çalıştırma ----------------------------------------------------------------
 
 def registry():
@@ -778,6 +1351,8 @@ def registry():
         "hint_1": tutorial, "coins_1": coins, "buy_1": buy, "equip_1": equip,
         "sting_1": sting, "rank_up_1": rank_up, "travel_1": travel, "strike_1": strike, "snag_1": snag,
         "trap_place_1": lambda: trap_place(830), "trap_collect_1": trap_collect,
+        "find_6_1": find_mythic, "thunder_1": thunder, "tea_1": tea, "phase_1": phase_chime,
+        "lantern_1": lantern,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))
@@ -785,6 +1360,10 @@ def registry():
     items.append(("loops", "strain", strain_loop))
     items.append(("loops", "bell_run", bell_loop))
     items.append(("ambience", "lake", amb_lake))
+    items.append(("ambience", "night", amb_night))
+    items.append(("ambience", "rain", amb_rain))
+    for name in SONGS:
+        items.append(("music", name, lambda name=name: music(name)))
     return items
 
 
@@ -794,13 +1373,14 @@ def main():
         if only and not any(name.startswith(o) or folder.startswith(o) for o in only):
             continue
         x = fn()
+        channels = 2 if folder == "music" else 1
         if folder in ("sfx", "loops"):
             path = os.path.join(ROOT, folder, name + ".wav")
             write_wav(path, x)
         else:
             path = os.path.join(ROOT, folder, name + ".ogg")
-            write_ogg(path, x, 1, 3)
-        print("%-9s %-18s %5.2f sn" % (folder, name, len(x) / SR))
+            write_ogg(path, x, channels, 3)
+        print("%-9s %-18s %5.2f sn" % (folder, name, len(x) / SR / channels))
 
 
 if __name__ == "__main__":
