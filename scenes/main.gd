@@ -105,6 +105,9 @@ var technique_panel: TechniquePanel
 var trap_panel: TrapPanel
 ## "Nasıl oynanır?" rehberi: ayarlardan, takım çantasından ve dükkândan açılır, onların üstünde durur.
 var guide_panel: GuidePanel
+## Açılış filminin örtüsü (sözler, ATLA) ve çekimleri (kamera, dev gölge); film yokken _film boş.
+var story_panel: StoryPanel
+var _film: StoryFilm
 ## Haritadan hızlı geçişte ekran kararır (en üstte).
 var fade: Fade
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
@@ -241,6 +244,7 @@ func _ready() -> void:
 
 ## Kayda göre yeni bir oturum (yeni gölgeler); ilk balık tutulmadıysa ilk av senaryolu.
 func _start_session() -> void:
+	_stop_intro()
 	var save := GameState.save
 	_save_ref = save
 	var start: Dictionary = Zones.at(GameState.db, spot_id, GameState.db.spot(spot_id)["start"])
@@ -277,6 +281,38 @@ func _start_session() -> void:
 	camera.pitch = FollowCamera.PITCH
 	camera.zoom = 1.0
 	camera.snap(_focus())
+	if Story.wants_intro(save):
+		_play_intro()
+
+
+## Açılış filmi (docs/gdd.md §10.5; yeni oyunda bir kez): göl arkada yaşar, kamerayı film sürer.
+## Arayüz, ipucu, ilk gölgenin halkası, yürüme ve yürüme halkası kapalı.
+func _play_intro() -> void:
+	_film = StoryFilm.new()
+	_film.setup(camera, angler, elder, nine, shadows, ripples, GameState.db, spot_id)
+	_film.begin()
+	angler.stop()
+	input.release_all()
+	hud.visible = false
+	story_panel.play()
+
+
+## Film bitti (ya da ATLA): bayrak kayda; kamera oyunun açısına kayar, "Gölgeyi gördün mü?" ipucu
+## başlar (Dede söyler).
+func _end_intro(_skipped: bool) -> void:
+	_stop_intro()
+	Story.mark_seen(GameState.save)
+	GameState.save_game()
+
+
+## Film durur (bitti ya da kayıt değişti): dev gölge silinir, olta elde, arayüz geri.
+func _stop_intro() -> void:
+	if _film == null:
+		return
+	_film.end()
+	_film = null
+	story_panel.stop()
+	hud.visible = true
 
 
 func _on_state_changed() -> void:
@@ -310,12 +346,14 @@ func _on_state_changed() -> void:
 ## Uygulama öne geldi: oyun sürer, tuzakların dolması (oyun kapalıyken de) yenilenir.
 func _on_focus_gained() -> void:
 	_paused = false
+	story_panel.held = false
 	_refresh_traps()
 
 
 func _on_focus_lost() -> void:
-	# Arama, Denetim Merkezi, arka plan: çekişme donar, parmak bırakılmış sayılır.
+	# Arama, Denetim Merkezi, arka plan: çekişme donar, parmak bırakılmış sayılır; film de durur.
 	_paused = true
+	story_panel.held = true
 	input.release_all()
 	session.release()
 	_stop_loops()
@@ -1114,8 +1152,10 @@ func _present(delta: float) -> void:
 		hud.tension_bar.warn = reel.thrashing()
 		hud.tension_bar.red = reel.in_red
 		hud.tension_bar.distance = reel.distance
-	_update_hint()
-	_first_cue(delta)
+	# Filmde ipucu ve ilk gölgenin halkası yok (film bitince başlar).
+	if _film == null:
+		_update_hint()
+		_first_cue(delta)
 	input.walking_allowed = session.state == FishingSession.State.IDLE and not _card_up() and not in_boat
 	# Yürünemezken (kart, yakalama, geri sarma) halka soluk: görünür kalır, düğmeler zıplamasın.
 	hud.joystick.dimmed = not input.walking_allowed
@@ -1126,6 +1166,10 @@ func _present(delta: float) -> void:
 			_step_clock = 0.0
 			Sounds.play("step")
 	# Kamera: olta sudayken eğilir ve balıkçı ile şamandıranın ortasına bakar; çekişmede yakınlaşır.
+	# Filmde kamerayı film sürer.
+	if _film != null:
+		_film.update(delta)
+		return
 	if bot_camera:
 		return
 	camera.target = _focus()
@@ -2021,6 +2065,13 @@ func _build_ui() -> void:
 	settings_panel.help_requested.connect(_open_guide)
 	technique_panel.help_requested.connect(_open_guide)
 	shop_panel.help_requested.connect(_open_guide)
+	# Açılış filminin örtüsü panellerin de üstünde (kararmanın altında).
+	story_panel = StoryPanel.new()
+	layer.add_child(story_panel)
+	story_panel.line_started.connect(func(index: int) -> void:
+		if _film != null:
+			_film.shot(index))
+	story_panel.finished.connect(_end_intro)
 	var top := CanvasLayer.new()
 	top.layer = 20
 	add_child(top)

@@ -311,6 +311,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ İpucu çubuğundaki yüzü kendi modelinden çekilir (Ersin'in Dede portreleri gelince onlar).
   - Balıkçı onun içinden geçmez, yanından kayarak geçer.
   - ✅ Her tekniği açılınca haber verir, ilk kullanımda nasıl oynandığını söyler (§10.3).
+  - ✅ Açılış filminde Nine'yle birlikte gölün öyküsünü anlatır, Gölün Bekçisi'ni gösterir ve ilk oltasını
+    balıkçıya verir (§10.5).
   - Her gün 3 küçük istekte bulunur ("bana 30 cm'lik bir kadife getir") ve "Gölün Sırrı"nı parça parça anlatır 🔜.
   - Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir 🔜.
 - **Nine** (Dede'nin eşi):
@@ -691,8 +693,29 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - Örnekler: "30 cm üstü kadife", "spinle 2 levrek", "gece bir balık", "3 balık bırak", "2 çöp topla".
   - Ödül: para, rütbe puanı, göl sevgisi; bazıları harita parçası verir.
   - Kazı'daki `quests.gd` uyarlanır.
+- **Açılış filmi** ✅ (v0.4.1; Ersin: "oyunun başlangıcında bir hikâyesi yok, ilgi çekici bir hikâye ekle"):
+  - Yeni oyunda bir kez, oyunun içinde oynar (~45–55 sn): göl arkada yaşar, kamera çekimden çekime kayar.
+    Sinema şeritleri, başta logo, altta konuşanın yüzü, adı ve en çok iki satır söz.
+  - Dokununca sonraki söz; söz kendiliğinden de ilerler (en az 5 sn). Sağ üstte ATLA. Film görülünce bir daha
+    oynamaz (kayıtta bayrak); bitince "Gölgeyi gördün mü?" ipucuyla ilk balık başlar.
+  - Sözler:
+
+    | # | Konuşan · çekim | Söz |
+    |---|---|---|
+    | 1 | Nine · Nine yakın, selam verir | Hoş geldin evladım! Bu yaz bizimle, göl köyünde kalacaksın. |
+    | 2 | Dede · göl | Şu göle bak evlat. Pırıl pırıl, değil mi? |
+    | 3 | Dede · Dede yakın | Biz gençken bu göl ölüyordu. Su bulanıktı, balıklar kaçmıştı. |
+    | 4 | Nine · sazlık | Dedenle yıllarca çöp topladık, sazlar diktik. Göl yeniden canlandı. |
+    | 5 | Dede · derin orta | Bir de derinlerde biri yaşar evlat: Gölün Bekçisi. |
+    | 6 | Dede (şaşkın) · dev gölge geçer | İşte orada! Gölü o korur. Ben onu yalnızca bir kez gördüm. |
+    | 7 | Nine · iskele | Bekçi, göle iyi bakanlara görünürmüş evladım. |
+    | 8 | Dede · hediye | Al, bu benim ilk oltam. Artık senin evlat! Haydi, ilk balığına! |
+
+  - Bekçi'nin dev gölgesi (5 m, masalsı turkuaz) derin ortada 10 m'lik bir yay çizip geçer; yalnızca görünüş,
+    gölgelerin kuralına ve oranlara dokunmaz. Son sözde balıkçı Dede'ye döner, Dede'nin bambu oltası eline gelir.
+  - Hikâyeyi Ayarlar'dan yeniden izlemek ve rütbe atladıkça Dede'nin anlattığı devamı 🔜 (v0.4.1, sıradaki adım).
 - **Gölün Sırrı:**
-  1. Dede efsaneyi anlatır; ilk şişe sazlıkta çıkar.
+  1. Dede efsaneyi anlatır (açılış filmi ve rütbe bölümleri bunu başlatır); ilk şişe sazlıkta çıkar.
   2. Her bölgeden bir mektup çıkar (6 mektup). Mektuplar Dede ile Nine'nin gençliğini anlatır: göl ölürken onu temizlemişler.
   3. Dede'nin özel isteklerinden 4 harita parçası gelir. Göl sevgisi 6 olunca Nine "altın hamur" verir.
   4. Final: gece ve sisli bir havada, derin ortada, dip tekniği ve altın hamurla Bekçi'nin gölgesi çıkar. Çok evreli bir çekişme olur; Bekçi tutulur ve yalnızca bırakılır. Bitiş sahnesi oynar, jenerik akar, göl çiçek açar.

@@ -40,6 +40,8 @@ var tension: float = 0.0
 var rod: RodModel
 ## Dipte olta sehpada (RodStand): eldeki olta gizlenir, eller serbest.
 var rod_on_stand: bool = false
+## Açılış filminde olta henüz elde değil (Dede'nin hediyesi, StoryFilm): gizli.
+var rod_hidden: bool = false
 
 var _body: Node3D
 var _target := Vector2.ZERO
@@ -249,7 +251,7 @@ func _update_rod(delta: float) -> void:
 		_show_time += delta
 		if _show_time > SHOW_TIME:
 			_show_time = -1.0
-	rod.visible = _show_time < 0.0 and not rod_on_stand
+	rod.visible = _show_time < 0.0 and not rod_on_stand and not rod_hidden
 	var free := pose == "free" and _cast_time < 0.0
 	_carry = move_toward(_carry, 1.0 if free else 0.0, delta * 4.0)
 	if not _synced_carry:

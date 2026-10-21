@@ -93,6 +93,23 @@ func sync(sim: ShadowSim, angler: Vector2, thrash: bool, delta: float) -> void:
 			_fx_rarity.erase(id)
 
 
+## Gölün Bekçisi'nin dev gölgesi (açılış filmi): yalnızca görünüş, sim'e bağlı değil (sync silmez).
+## Masalsı nadirliğin ipucuyla (parlayan kenar, turkuaz). Çağıran yerleştirir, solmasını verir
+## ("fade") ve siler.
+func make_ghost(length: float) -> MeshInstance3D:
+	var node := _make()
+	node.name = "Keeper"
+	var material := node.material_override as ShaderMaterial
+	material.set_shader_parameter("fx", int(FX["guardian"]))
+	var color := Color("#2fe0d0")
+	if db != null and db.rarity_index("mythic") >= 0:
+		color = db.rarity_def(db.rarity_index("mythic")).get("color", color)
+	material.set_shader_parameter("tint", color.lightened(0.15))
+	material.set_shader_parameter("fade", 0.0)
+	node.scale = Vector3(length * WIDTH_RATIO, 1.0, length)
+	return node
+
+
 ## Gölgenin dünyadaki yeri (yoksa Vector3.INF): sunum efektleri için.
 func shadow_point(id: int) -> Vector3:
 	var node: MeshInstance3D = _nodes.get(id)

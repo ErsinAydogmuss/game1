@@ -29,13 +29,18 @@ const BY_KEY := {
 	"UI_DEDE_CARD_NEW": SMILE, "UI_DEDE_CARD_RECORD": WOW, "UI_DEDE_CARD_RELEASE": STORY,
 	# Nine satın almada paketi uzatır, satışta sevinir.
 	"UI_NINE_BOUGHT": STORY, "UI_NINE_SOLD": WOW, "UI_NINE_FLY_ZONE": STORY, "UI_NINE_TRAP": STORY,
+	# Açılış filmi (Story.LINES): karşılama gülümser, gölün öyküsü anlatılır, Bekçi şaşırtır, Dede
+	# ilk oltasını uzatır.
+	"UI_INTRO_1": SMILE, "UI_INTRO_2": SMILE, "UI_INTRO_3": STORY, "UI_INTRO_4": STORY, "UI_INTRO_5": STORY,
+	"UI_INTRO_6": WOW, "UI_INTRO_7": SMILE, "UI_INTRO_8": STORY,
 }
 ## Ön ekle eşlenen sözler: Dede'nin öğütleri (UI_DEDE_TIP_1..., UI_DEDE_TIP_<teknik>), fazla iri
 ## balıkta takım öğüdü (UI_DEDE_TOO_BIG_...), kartta nadirliğe göre sözleri (UI_DEDE_CARD_<nadirlik>,
 ## Nadir ve üstü), yeni teknik açılınca (UI_DEDE_TECH_OPEN_<teknik>), ilk kez ele alınınca
-## (UI_DEDE_TECH_FIRST_<teknik>) ve bölgenin önerdiği teknik (UI_DEDE_SUGGEST_<bölge>). Önce BY_KEY bakılır.
+## (UI_DEDE_TECH_FIRST_<teknik>), bölgenin önerdiği teknik (UI_DEDE_SUGGEST_<bölge>) ve hikâyenin
+## devamı (UI_DEDE_STORY_<rütbe>, Story.CHAPTERS). Önce BY_KEY bakılır.
 const BY_PREFIX := {"UI_DEDE_TIP_": STORY, "UI_DEDE_TOO_BIG_": STORY, "UI_DEDE_CARD_": WOW,
-		"UI_DEDE_TECH_OPEN_": WOW, "UI_DEDE_TECH_FIRST_": STORY, "UI_DEDE_SUGGEST_": STORY}
+		"UI_DEDE_TECH_OPEN_": WOW, "UI_DEDE_TECH_FIRST_": STORY, "UI_DEDE_SUGGEST_": STORY, "UI_DEDE_STORY_": STORY}
 
 
 ## Sözün ifadesi.

@@ -464,3 +464,20 @@ UI_GUIDE_NINE_TEXT,She runs the shop. Tap her to sell fish and buy tackle.,"Dük
 UI_GUIDE_BOOK_TEXT,"%d species. The ones you haven't caught are silhouettes; hints, records and odds are inside.","%d tür var. Tutmadığın tür siluettir; ipucu, rekor ve oranlar defterde."
 UI_GUIDE_GOAL,Your goal,Hedef
 UI_GUIDE_GOAL_TEXT,Catch every species! The protected sturgeon goes back to the lake. And the lake has a secret…,Bütün türleri tut! Koruma altındaki mersin göle bırakılır. Bir de gölün bir sırrı var…
+UI_INTRO_1,"Welcome, dear! This summer you'll stay with us in the lake village.","Hoş geldin evladım! Bu yaz bizimle, göl köyünde kalacaksın."
+UI_INTRO_2,"Look at this lake, kiddo. Sparkling, isn't it?","Şu göle bak evlat. Pırıl pırıl, değil mi?"
+UI_INTRO_3,"When we were young, this lake was dying. The water was murky, the fish were gone.","Biz gençken bu göl ölüyordu. Su bulanıktı, balıklar kaçmıştı."
+UI_INTRO_4,Dede and I picked up rubbish for years and planted reeds. The lake came back to life.,"Dedenle yıllarca çöp topladık, sazlar diktik. Göl yeniden canlandı."
+UI_INTRO_5,"And deep down someone lives here, kiddo: the Lake Keeper.",Bir de derinlerde biri yaşar evlat: Gölün Bekçisi.
+UI_INTRO_6,There! It guards the lake. I've only seen it once.,İşte orada! Gölü o korur. Ben onu yalnızca bir kez gördüm.
+UI_INTRO_7,"They say the Keeper shows itself to those who care for the lake, dear.","Bekçi, göle iyi bakanlara görünürmüş evladım."
+UI_INTRO_8,"Here, my very first rod. It's yours now, kiddo! Off to your first fish!","Al, bu benim ilk oltam. Artık senin evlat! Haydi, ilk balığına!"
+UI_INTRO_SKIP,Skip,Atla
+UI_INTRO_GIFT,Dede's first rod,Dede'nin ilk oltası
+UI_STORY_DEDE,Dede,Dede
+UI_STORY_NINE,Nana,Nine
+UI_DEDE_STORY_3,"Once the lake was clean, we first saw the Keeper's shadow.",Göl temizlenince Bekçi'nin gölgesini ilk kez gördük.
+UI_DEDE_STORY_6,"Every summer the Keeper crosses the deep, leaving a trail.","Bekçi her yaz derin ortadan geçer, iz bırakırmış."
+UI_DEDE_STORY_10,"Every fish you release carries a hello to the Keeper, kiddo.",Bıraktığın her balık Bekçi'ye selam götürür evlat.
+UI_DEDE_STORY_15,Nana says the Keeper rises on misty nights.,Nine der ki Bekçi sisli gecelerde yüzeye çıkar.
+UI_DEDE_STORY_20,"You're the lake's legend now. The Keeper awaits you, kiddo.",Artık gölün efsanesisin. Bekçi seni bekliyor evlat.

@@ -136,6 +136,9 @@ var _toasts: Array[String] = []
 ## geri çekilir; dipte uzağa atılan kurşunun yanında bekleyen gölge 20 sn yolu kapatıyordu).
 var _placed: FishShadow = null
 var _no_bites: bool = false
+## Botun kayıtlarında açılış filmi görülmüş sayılır (oynasaydı dokunuşları yutardı); first ve story
+## senaryoları filmi ister.
+var _intro: bool = false
 
 
 func _ready() -> void:
@@ -197,6 +200,8 @@ func _ready() -> void:
 			_play_guide.call_deferred()
 		"rods":
 			_play_rods.call_deferred()
+		"story":
+			_play_story.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -416,7 +421,18 @@ func _play_controls() -> void:
 
 
 func _play_first() -> void:
+	# Yeni oyun: önce açılış filmi (ATLA ile geçilir; filmin kendisi story senaryosunda), sonra
+	# senaryolu ilk balık.
+	_intro = true
 	_use_save(0)
+	var story: StoryPanel = main.get("story_panel")
+	await _wait(1.5)
+	_check("ilk açılışta film oynar, arayüz gizli", story.visible and not _hud().visible)
+	await _shot("00_film")
+	await _tap(story.skip_button.get_global_rect().get_center())
+	await _wait_frames(2)
+	_check("ATLA filmi bitirir: arayüz geri, film görüldü", not story.visible and _hud().visible
+			and main.get("_film") == null and GameState.save.flags.has(Story.SEEN_FLAG))
 	var session := _session()
 	await _wait(1.5)
 	await _shot("01_ilk_acilis")
@@ -440,6 +456,119 @@ func _play_first() -> void:
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Açılış filmi (docs/gdd.md §10.5): yeni oyunda oynar (arayüz gizli, oltası elinde değil, ATLA
+## güvenli alanda), ilk söz Nine'nin, dokununca sonraki söz (olta atılmaz), söz kendiliğinden de
+## ilerler, her söz en çok iki satır, Bekçi'nin dev gölgesi derin ortada ekranda geçer, hediyede olta
+## elde, sonunda arayüz ve ilk ipucu geri; kayıt değişince film temiz durur. Her çekimin çizim sayısı
+## (≤150). Telefon oranında ve --safe-inset=130 ile, TR ve EN.
+func _play_story() -> void:
+	_intro = true
+	_use_save(0)
+	var story: StoryPanel = main.get("story_panel")
+	var hud := _hud()
+	var view := get_viewport().get_visible_rect().size
+	var center := view * Vector2(0.5, 0.42)
+	await _wait(0.6)
+	_check("yeni oyunda film oynar, arayüz gizli", story.visible and not hud.visible and main.get("_film") != null)
+	_check("oltası henüz elinde değil", not _angler().rod.visible)
+	_check_panel_buttons(story, "ATLA düğmesi")
+	await _shot("01_logo")
+	await _wait_until(func() -> bool: return story.index() == 0, StoryPanel.LOGO_TIME + 1.0)
+	await _wait(StoryFilm.MOVE_TIME)
+	var face: TextureRect = story.get("_face")
+	_check("ilk söz Nine'nin, yüzüyle (%s)" % _story_text(story), story.index() == 0
+			and str(Story.LINES[0][1]) == "nine" and face.visible)
+	await _shot("02_nine")
+	var worst := { "draws": 0, "shot": "" }
+	var lines_ok := true
+	var notes := PackedStringArray()
+	# Dokununca sonraki söz; olta atılmaz.
+	await _tap(center)
+	await _wait_frames(2)
+	_check("dokununca sonraki söz, olta atılmaz", story.index() == 1 and _state() == FishingSession.State.IDLE
+			and GameState.save.casts == 0 and not _angler().is_walking())
+	await _wait(StoryFilm.MOVE_TIME)
+	await _story_draws(worst, "lake")
+	await _shot("03_gol")
+	# Söz kendiliğinden de ilerler.
+	var auto := await _wait_until(func() -> bool: return story.index() == 2, Story.LINE_MIN + 8.0)
+	_check("söz kendiliğinden ilerler", auto)
+	for i in range(2, Story.LINES.size()):
+		if i > 2:
+			await _tap(center)
+			await _wait_until(func() -> bool: return story.index() == i, 2.0)
+		var kind := str(Story.LINES[i][2])
+		var text: Label = story.get("_text")
+		if text.get_line_count() > 2:
+			lines_ok = false
+			notes.append("%s %d satır" % [Story.LINES[i][0], text.get_line_count()])
+		await _wait(StoryFilm.MOVE_TIME)
+		await _story_draws(worst, kind)
+		if kind == "keeper":
+			# Dev gölge belirdikten sonra: derin suda ve ekranda.
+			await _wait(1.0)
+			var film: StoryFilm = main.get("_film")
+			var ghost := film.ghost_point() if film != null else Vector3.INF
+			var camera: Camera3D = main.get("camera")
+			var depth := _session().lake.depth_at(Vector2(ghost.x, ghost.z)) if ghost != Vector3.INF else 0.0
+			var shown := ghost != Vector3.INF and not camera.is_position_behind(ghost) \
+					and Rect2(Vector2.ZERO, view).grow(-40.0).has_point(camera.unproject_position(ghost))
+			_check("Bekçi'nin dev gölgesi derin ortada, ekranda (%.1f m)" % depth, shown and depth >= Story.KEEPER_DEPTH)
+		if kind == "gift":
+			await _wait(0.5)
+			var gift: Control = story.get("_gift")
+			_check("hediyede olta elde, rozet ekranda", _angler().rod.visible and gift.visible
+					and Rect2(Vector2.ZERO, view).encloses(gift.get_global_rect()))
+		await _shot("%02d_%s" % [i + 2, kind])
+	_check("her söz en çok iki satır%s" % ("" if lines_ok else ": " + ", ".join(notes)), lines_ok)
+	_check("filmde ≤150 çizim (en çok %d, %s)" % [worst["draws"], worst["shot"]], int(worst["draws"]) <= 150)
+	# Son söz kendiliğinden biter: arayüz, ilk ipucu, kamera oyunun açısında.
+	var done := await _wait_until(func() -> bool: return not story.visible, Story.LINE_MIN + 8.0)
+	await _wait(1.2)
+	_check("film biter: arayüz geri, film görüldü, ilk ipucu", done and hud.visible and main.get("_film") == null
+			and GameState.save.flags.has(Story.SEEN_FLAG) and str(main.get("_hint_shown")) == "UI_HINT_FIRST_SHADOW")
+	var camera: FollowCamera = main.get("camera")
+	await _wait(1.0)
+	_check("kamera oyunun açısına döner (%.2f, %.0f°)" % [camera.zoom, rad_to_deg(camera.pitch)],
+			absf(camera.zoom - 1.0) < 0.05 and absf(camera.pitch - FollowCamera.PITCH) < deg_to_rad(2.0))
+	_check_buttons()
+	await _shot("10_sonra")
+	# Kayıt değişince (ayarlarda sıfırlama, bot) film yarıda temiz durur.
+	_use_save(0)
+	await _wait_until(func() -> bool: return story.index() == 0, StoryPanel.LOGO_TIME + 1.0)
+	# Bekçi'ye kadar dokunarak (yeni söz TAP_GUARD dolmadan dokunuşla geçmez).
+	for i in 5:
+		await _wait(StoryPanel.TAP_GUARD + 0.15)
+		await _tap(center)
+	await _wait(1.0)
+	var mid_ghost := (main.get("_film") as StoryFilm).ghost_point() if main.get("_film") != null else Vector3.INF
+	_intro = false
+	_use_save(1)
+	await _wait_frames(3)
+	var shadows: Node = main.get("shadows")
+	_check("kayıt değişince film temiz durur: arayüz, olta, dev gölge, kamera", mid_ghost != Vector3.INF
+			and not story.visible and hud.visible and main.get("_film") == null and _angler().rod.visible
+			and shadows.find_child("Keeper", false, false) == null and absf(camera.zoom - 1.0) < 0.01)
+	await _shot("11_durdu")
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Filmdeki sözün yazısı (günlük için).
+func _story_text(story: StoryPanel) -> String:
+	return (story.get("_text") as Label).text
+
+
+## Filmin bu çekiminin çizim sayısı; en kötüsü worst'te.
+func _story_draws(worst: Dictionary, shot: String) -> void:
+	var m := await _measure_draws()
+	print("ÇİZİM film %s: %d çizim, %d üçgen" % [shot, m["draws"], m["primitives"]])
+	if int(m["draws"]) > int(worst["draws"]):
+		worst["draws"] = m["draws"]
+		worst["shot"] = shot
 
 
 ## Yakın çekim: balıkçı ve Dede. Kamerayı bot sürer (main.bot_camera).
@@ -3343,6 +3472,8 @@ func _use_save(catches: int) -> void:
 	save.settings = GameState.save.settings.duplicate()
 	if not _locale.is_empty():
 		save.settings["locale"] = _locale
+	if not _intro:
+		Story.mark_seen(save)
 	GameState.use_save(save)
 	GameState.apply_locale()
 	GameState.changed.emit()
