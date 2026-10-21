@@ -9,8 +9,8 @@ extends Control
 ## - Sağ alt: büyük eylem düğmesi (AT / GERİ SAR / BEKLE / VUR! / SAR); ekranın her yeri de
 ##   aynı işi yapar, düğme ne olacağını yazar. Sol alt: sandaldayken "Kıyıya dön" (olta sudayken
 ##   gizli).
-## - Üst orta: çekişmede gerilim çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü
-##   oyuncu da okusun).
+## - Üst orta: oyun saati çipi (vaktin ikonu, saat, açık değilse havanın ikonu; Dalga 4). Çekişmede
+##   onun yerinde gerilim çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü oyuncu da okusun).
 ## - Orta: kısa bildirimler ("Erken davrandın!"). Alt orta: ipucu çubuğu (konuşanın yüzü ve sözü:
 ##   Dede ya da Nine).
 ## - Sol üstte durumun altında: geliştirme sürümünde FPS; ölçüm açıkken (ayarlarda sürüm yazısına
@@ -93,6 +93,12 @@ var _coins: Label
 var _bucket: Label
 var _rank: Label
 var _rank_bar: RankBar
+## Üst ortadaki saat çipi (henüz dokunulmaz) ve gösterdiği vakit ile hava (değişince ikon yenilenir).
+var _world_chip: PanelContainer
+var _phase_icon: GameIcon
+var _time_label: Label
+var _weather_icon: GameIcon
+var _world_key: String = ""
 var _fps: Label
 var _hint: PanelContainer
 var _hint_label: Label
@@ -333,9 +339,40 @@ func hold_toasts(seconds: float) -> void:
 	_toast_hold = maxf(_toast_hold, seconds)
 
 
-## Çekişmede durum gizlenir (gerilim çubuğuna yer, dikkat balıkta).
+## Çekişmede durum ve saat çipi gizlenir (gerilim çubuğuna yer, dikkat balıkta).
 func set_fighting(on: bool) -> void:
 	_status.visible = not on
+	_world_chip.visible = not on
+
+
+## Saat çipi: vakit (phase_* ikonu), saat yazısı ("18:24") ve havanın ikonu (weather_*; açık havada
+## "": ikon yok, vaktin ikonu yeter).
+func set_world(phase: String, weather_icon: String, time_text: String) -> void:
+	_time_label.text = time_text
+	var key := phase + "|" + weather_icon
+	if key == _world_key:
+		return
+	_world_key = key
+	_phase_icon.kind = "phase_" + phase
+	_weather_icon.visible = not weather_icon.is_empty()
+	if _weather_icon.visible:
+		_weather_icon.kind = weather_icon
+
+
+## Saat çipinin yazısı ve ikonları (bot denetimi).
+func world_chip() -> Control:
+	return _world_chip
+
+
+func world_text() -> String:
+	return _time_label.text
+
+
+func world_icons() -> PackedStringArray:
+	var out := PackedStringArray([_phase_icon.kind])
+	if _weather_icon.visible:
+		out.append(_weather_icon.kind)
+	return out
 
 
 ## Eylem düğmesinin işi: cast, retrieve, wait, hook, reel ya da "" (gizli).
@@ -431,6 +468,37 @@ func _build_top() -> void:
 	tension_bar.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	tension_bar.visible = false
 	_frame().add_child(tension_bar)
+	_build_world_chip()
+
+
+## Saat çipi: durum haplarıyla aynı hap; ikonlar tek çizim (SkyIcons), saatin yazısı sabit genişlikte
+## (rakamlar değiştikçe çip kıpırdamasın).
+func _build_world_chip() -> void:
+	_world_chip = PanelContainer.new()
+	_world_chip.add_theme_stylebox_override("panel", UiKit.framed("pill", UiKit.pill_style(), 34.0))
+	_world_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_world_chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_world_chip.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_frame().add_child(_world_chip)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_world_chip.add_child(row)
+	_phase_icon = GameIcon.make("phase_morning", 58)
+	row.add_child(_phase_icon)
+	_time_label = _pill_label("06:00")
+	_time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var font := UiKit.display_font()
+	var widest := 0.0
+	for d in 10:
+		widest = maxf(widest, font.get_string_size(str(d), HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.SIZE_BODY + 4).x)
+	_time_label.custom_minimum_size.x = ceilf(widest * 4.0
+			+ font.get_string_size(":", HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.SIZE_BODY + 4).x) + 4.0
+	row.add_child(_time_label)
+	_weather_icon = GameIcon.make("weather_cloudy", 58)
+	_weather_icon.visible = false
+	row.add_child(_weather_icon)
 
 
 ## Durum hapı: ikon + sayı (Luckiest Guy). Etiketi döndürür.
@@ -445,9 +513,17 @@ func _pill(icon_kind: String) -> Label:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pill.add_child(row)
 	row.add_child(GameIcon.make(icon_kind, 58))
-	var label := UiKit.title("0", UiKit.SIZE_BODY + 4)
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var label := _pill_label("0")
 	row.add_child(label)
+	return label
+
+
+## Hapın sayısı: Luckiest Guy, dış çizgili, gölgesiz (gölge ayrı bir çizim geçişi: her hap yazısı
+## 3 yerine 2 çizim; iskelede 150 çizim sınırı).
+static func _pill_label(text: String) -> Label:
+	var label := UiKit.title(text, UiKit.SIZE_BODY + 4)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
 	return label
 
 

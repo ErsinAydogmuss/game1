@@ -583,11 +583,14 @@ with a small pink lotus flower on it.
 
 ```
 (ui_1 ile aynı stil cümleleri.) Icons, left to right, top row then bottom row: a cheerful round
-sun with tiny sparkles; a fluffy white cloud partly covering a small sun; a soft gray cloud with
-blue rain drops; three soft wavy bands of white mist in front of a pale sun; a dark storm cloud
-with a yellow lightning bolt and rain drops; a rolled paper note tied with a red ribbon and a
-small fish stamp.
+sun with tiny sparkles; two fluffy clouds, a white one in front of a light gray one (no sun or
+moon); a soft gray cloud with blue rain drops; four soft wavy bands of white mist (no sun or moon);
+a dark storm cloud with a yellow lightning bolt and rain drops; a rolled paper note tied with a red
+ribbon and a small fish stamp.
 ```
+
+Bulut ve sis ikonunda güneş ya da ay yok: oyunun saat çipinde vaktin ikonunun (güneş, ay) yanında
+dururlar, gece de doğru görünmeliler.
 
 | Kesilen ad | Nerede |
 |---|---|

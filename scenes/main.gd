@@ -66,8 +66,6 @@ const FAR_HIGH := 0.8
 ## (gerçek saatle) bu aralıkla (sn) yenilenir.
 const TRAP_REACH := 5.0
 const TRAP_SYNC_EVERY := 1.0
-## Geliştirme sürümünün SEVGİ + düğmesi bu kadar göl sevgisi ekler.
-const DEBUG_LOVE := 50
 
 var session: FishingSession
 var lake: LakeShape
@@ -234,6 +232,7 @@ func _ready() -> void:
 	world_clock.setup(GameState.db, GameState.save)
 	world_clock.conditions_changed.connect(_on_conditions_changed)
 	world_clock.phase_changed.connect(_on_phase_changed)
+	world_clock.clock_moved.connect(_sync_world_chip)
 	_start_session()
 	_refresh_status()
 	# Eski kayıt: rütbesi çoktan gelmiş teknik de bir kez haber verilir.
@@ -260,6 +259,7 @@ func _start_session() -> void:
 	var gear := _gear()
 	world_clock.reset(save)
 	var cond := world_clock.conditions()
+	_sync_world_chip()
 	session = FishingSession.new(GameState.db, spot_id, gear, Dice.derive(save.seed, save.session),
 			bool(GameState.setting("easy", false)), save.catches == 0,
 			CatchOdds.pity_floor(GameState.db, save, start, gear.technique, cond), Zones.open_ids(GameState.db, save, spot_id),
@@ -1057,17 +1057,31 @@ func _pity(zone: String, technique: String = "") -> int:
 func _on_conditions_changed(cond: Dictionary) -> void:
 	session.set_conditions(cond)
 	session.set_pity_floor(_pity(zone_id))
-	hud.refresh()
+	_sync_world_chip()
 
 
-## Vakit değişti: kısa bildirim (vaktin ikonuyla) ve kayıt.
+## Üst ortadaki saat çipi: vakit, saat ve açık değilse havanın ikonu (yağmurlu gece fırtına).
+func _sync_world_chip() -> void:
+	var cond := world_clock.conditions()
+	var phase := str(cond["phase"])
+	var weather := str(cond["weather"])
+	var icon := ""
+	if Weather.stormy(weather, phase):
+		icon = "weather_storm"
+	elif weather != "clear":
+		icon = "weather_" + weather
+	hud.set_world(phase, icon, DayClock.clock_text(GameState.db.rules, GameState.save.clock_s))
+
+
+## Vakit değişti: kısa bildirim (vaktin ikonuyla; sırada bekleyen vakit bildiriminin yerine geçer: panel
+## açıkken iki vakit atlanırsa yalnızca sonuncusu) ve kayıt.
 func _on_phase_changed(phase: String) -> void:
-	hud.toast_later(tr("UI_PHASE_NOW_" + phase), UiKit.TEXT, "phase_" + phase)
+	hud.toast_later(tr("UI_PHASE_NOW_" + phase), UiKit.TEXT, "", "phase_" + phase, "phase")
 	GameState.save_game()
 
 
 ## Geliştirme sürümü (Ayarlar'da VAKİT +, HAVA, SEVGİ +): saat sonraki vakte, bugünün havası sıradakine,
-## göl sevgisi DEBUG_LOVE artar; oranlar ve garanti gerçek akışla yenilenir.
+## göl sevgisi SettingsPanel.DEBUG_LOVE artar; oranlar ve garanti gerçek akışla yenilenir.
 func _debug_time() -> void:
 	world_clock.skip(GameState.save)
 	GameState.save_game()
@@ -1082,7 +1096,7 @@ func _debug_weather() -> void:
 
 
 func _debug_love() -> void:
-	LakeLove.add(GameState.db.rules, GameState.save, DEBUG_LOVE)
+	LakeLove.add(GameState.db.rules, GameState.save, SettingsPanel.DEBUG_LOVE)
 	world_clock.refresh(GameState.save)
 	GameState.save_game()
 	GameState.changed.emit()

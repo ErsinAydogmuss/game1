@@ -3,7 +3,8 @@ extends RefCounted
 ## Vakit, hava, çay, göl sevgisi ve isteklerin kodla çizilen ikonları (Dalga 4; Ersin'in görselleri
 ## gelene kadar: docs/gorsel-istekleri.md Parti 5a, time_icons ve weather_icons). Üst ortadaki saat
 ## çipinde her karede görünürler: her ikon tek üçgen dizisi (bir çizim; draw_circle her daire için
-## ayrı çizim tutardı, iskelede 150 çizim sınırı). Şekiller 100×100'lük tasarım alanında.
+## ayrı çizim tutardı, iskelede 150 çizim sınırı). Şekiller 100×100'lük tasarım alanında. Çipte havanın
+## ikonu vaktin ikonunun yanında durur: bulut ve sis güneşsiz (gece de doğru görünsün).
 
 const KINDS: Array[String] = ["phase_morning", "phase_noon", "phase_evening", "phase_night", "weather_clear",
 		"weather_cloudy", "weather_rain", "weather_fog", "weather_storm", "tea", "love", "requests"]
@@ -70,17 +71,16 @@ func build(kind: String) -> void:
 			_poly(_star(Vector2(72, 30), 8.0, 3.0, 4), STAR)
 			_poly(_star(Vector2(70, 70), 5.5, 2.0, 4), STAR)
 		"weather_cloudy":
-			_rays(Vector2(34, 36), 20.0, 29.0, [180.0, 225.0, 270.0, 315.0, 0.0], 9.0, SUN_RAY)
-			_disc(Vector2(34, 36), 16.0, SUN)
-			_cloud(Vector2(56, 62), CLOUD, Color("#d9e2ea"))
+			_cloud(Vector2(38, 40), RAIN_CLOUD, Color("#9fabb8"))
+			_cloud(Vector2(58, 62), CLOUD, Color("#d9e2ea"))
 		"weather_rain":
 			_cloud(Vector2(52, 42), RAIN_CLOUD, Color("#9fabb8"))
 			for p: Vector2 in [Vector2(36, 72), Vector2(52, 82), Vector2(68, 70)]:
 				_drop(p, DROP)
 		"weather_fog":
-			_disc(Vector2(50, 36), 18.0, Color("#fff1b8"))
-			for i in 3:
-				_band(46.0 + i * 15.0, Color(0.93, 0.95, 0.97, 0.95))
+			# Gri-mavi bantlar: saat çipinin açık hapında da seçilsin.
+			for i in 4:
+				_band(22.0 + i * 16.0, Color("#93a5b5").lerp(Color("#d6dee5"), i / 3.0))
 		"weather_storm":
 			_cloud(Vector2(52, 38), STORM_CLOUD, Color("#3f4752"))
 			_poly(PackedVector2Array([Vector2(56, 50), Vector2(42, 72), Vector2(52, 72), Vector2(45, 94), Vector2(68, 64),

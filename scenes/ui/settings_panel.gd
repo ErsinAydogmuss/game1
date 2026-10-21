@@ -23,6 +23,8 @@ signal love_requested
 const ROW_BUTTON := Vector2(300, 122)
 ## Geliştirme satırındaki para düğmeleri (dükkânda takım denemek için).
 const DEBUG_COINS: Array[int] = [1000, 10000]
+## Geliştirme satırının SEVGİ + düğmesi bu kadar göl sevgisi ekler (seviye eşiklerini denemek için).
+const DEBUG_LOVE := 50
 ## Başlıktaki oyun logosunun kutusu (kapat düğmesinin boyunda: başlık uzamasın).
 const LOGO := Vector2(170, 122)
 ## Panelin genişliği (başlıkta logo, başlık, HİKÂYE, "Nasıl oynanır?" ve kapat düğmesi).
@@ -177,7 +179,7 @@ func _world_row() -> void:
 	_debug_button(row, "DebugWeather", tr("UI_DEBUG_WEATHER")).pressed.connect(func() -> void:
 		Sounds.play("ui_tap")
 		weather_requested.emit())
-	_debug_button(row, "DebugLove", tr("UI_DEBUG_LOVE") % UiKit.format_int(50)).pressed.connect(func() -> void:
+	_debug_button(row, "DebugLove", tr("UI_DEBUG_LOVE") % UiKit.format_int(DEBUG_LOVE)).pressed.connect(func() -> void:
 		Sounds.play("ui_tap")
 		love_requested.emit())
 

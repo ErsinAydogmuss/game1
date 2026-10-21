@@ -247,7 +247,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 ## 6. Balıklar ✅
 
-İlk beşi prototipten, yedisi Dalga 2'de (bölge balıkları), aynalı sazan, alabalıklar ve kerevit Dalga 3'te (teknik balıkları). Kimlikler değişmez; görünüş kodla
+İlk beşi prototipten, yedisi Dalga 2'de (bölge balıkları), aynalı sazan, alabalıklar ve kerevit Dalga 3'te (teknik balıkları), Ay Turnası ve Kocabaş Dalga 4'te (vakit ve hava). Kimlikler değişmez; görünüş kodla
 (`scenes/world/fish_mesh.gd`), oranlar bölgeden (§10.1; tam tablo [`balik-katalogu.md`](balik-katalogu.md)).
 
 | Kimlik | TR | EN | Taban gölge | Nadirlik | Boy | Değer | Çekiş | Bölgeler | Görünüş |
@@ -268,12 +268,14 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | `trout` | Alabalık | Trout | 0,65 m | Nadir | 25–60 cm | 30 | çevik, sıçrar | dere ağzı (sinek; az da spin) | ince uzun, zeytin sırt, pembe yan şerit, koyu benekler |
 | `brook_trout` | Dere Alabalığı | Brook Trout | 0,8 m | Destansı | 35–80 cm | 70 | güçlü, sıçrar (iri tür) | dere ağzı (sinek; az da spin) | kahverengi, kırmızı benekli, turuncu alt yüzgeçler |
 | `crayfish` | Kerevit | Crayfish | 0,3 m | Sıradan | 6–14 cm | 10 | hafif | sazlık, kayalık burun (tuzak; az da dip) | kızıl kahve kabuk, halkalı kuyruk, iki iri kıskaç, duyargalar, saplı gözler |
+| `moon_pike` | Ay Turnası | Moon Pike | 1,25 m | Efsanevi | 90–140 cm | satılmaz | ani, güçlü, sıçrar (iri tür) | nilüferli koy, yalnızca gece (şamandıra ×1, spin ×1,4, dip ×0,2) | gümüş-mavi turna, soluk ay benekleri, sarı göz |
+| `kocabas` | Kocabaş | Old Bighead | 2,1 m | Efsanevi | 240–320 cm | satılmaz | çok ağır, uzun koşular (iri tür) | derin orta, yalnızca yağmurlu gece (dip ×1,5, şamandıra ×0,5) | dev yayın: yosunlu sırt, uzun bıyıklar |
 
-**Nadirlikler:** Sıradan (gri), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın), Masalsı (turkuaz; H2'de eklendi, yalnızca Gölün Bekçisi). İlk Efsanevi balık mersin; Masalsı balık henüz yok. Nadirlikler yalnızca sona eklenir; her kademenin bir simgesi, rütbe puanı ve göl sevgisi değeri var (§10.2, `data/rarities.json`).
+**Nadirlikler:** Sıradan (gri), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın), Masalsı (turkuaz; H2'de eklendi, yalnızca Gölün Bekçisi). Efsaneviler mersin, Ay Turnası (gece) ve Kocabaş (yağmurlu gece); Masalsı balık henüz yok (Gölün Bekçisi, finalde). Nadirlikler yalnızca sona eklenir; her kademenin bir simgesi, rütbe puanı ve göl sevgisi değeri var (§10.2, `data/rarities.json`).
 
 **Değerler (para, orta boy):** yukarıdaki tabloda; boy çarpanı 0,6–1,6.
 
-**Mersin koruma altında** (`release_only`): tutulur, kovaya girmez, satılmaz; kartta Dede "Mersin koruma altında evlat. Bir güzel bakalım, sonra bırakalım." der, düğme "Göle bırak" olur, bildirim "Mersin Balığı göle döndü". Rütbe puanı ve göl sevgisi verir; defterde "Koruma altında" yazar.
+**Mersin koruma altında** (`release_only`): tutulur, kovaya girmez, satılmaz; kartta Dede "Mersin koruma altında evlat. Bir güzel bakalım, sonra bırakalım." der, düğme "Göle bırak" olur, bildirim "Mersin Balığı göle döndü". Rütbe puanı ve göl sevgisi verir; defterde "Koruma altında" yazar. Ay Turnası ve Kocabaş da böyle (Dalga 4; Ersin: "göle bırakılır"): Dede'nin kendi sözüyle ("Ay Turnası! Nine buna inanmayacak...", "Kocabaş'ın ta kendisi! Benden yaşlıdır..."); "belli vakitte gelen" (`only`) her tür göle bırakılır (`ContentDB` denetler).
 
 **Doğma ağırlıkları** bölgenin (`data/spots.json`). İskele koyu: kızılkanat 26, gümüş balığı 14, çapak 10, sazan 20, levrek 18, turna 8, yayın 4 (Ersin'in seçimi: turna ve yayın kalsın ama az çıksın). Bölgelerin yıldız balıkları (sudak, altın sazan, mersin) başlangıç koylarında çıkmaz. Testlerin gölünde 35/25/17/15/8.
 
@@ -281,7 +283,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 **Dalga 3 türleri** sona eklenir ve şamandırayla gelmez: şamandıranın oranları, kataloğu ve altın testi değişmez. ✅ Aynalı sazan yalnızca dipte (sazlıkta 12, derin ortada 60 ağırlık). ✅ Alabalık ve dere alabalığı dere ağzında (30 ve 4 ağırlık): sinekle (yatkınlık 1), az da spinle (0,6 ve 0,4). Çekişmede çırpınınca sudan sıçrarlar (`fight.jumps`; yalnızca görünüş). ✅ Kerevit tuzakta (sazlık ve kayalık burun) ve az da dipte (yatkınlık 0,5; 8 ağırlık).
 
-**H2 türleri** (19 tür; ilk 5 kimlik korunur, sazan Güzel'e çıkar). Dalga 3'le 16'sı oyunda (✅); ay turnası ve Kocabaş Dalga 4'te vakit ve havayla, Gölün Bekçisi hikâyenin sonunda gelir. Bölge, teknik ve vakit ayrıntısı §10.1 ve §10.3'te.
+**H2 türleri** (19 tür; ilk 5 kimlik korunur, sazan Güzel'e çıkar). Dalga 3'le 16'sı oyunda; Dalga 4'te Ay Turnası ve Kocabaş (18, ✅), Gölün Bekçisi hikâyenin sonunda gelir. Bölge, teknik ve vakit ayrıntısı §10.1 ve §10.3'te.
 
 | Kademe | Türler |
 |---|---|
@@ -289,10 +291,39 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Güzel | sazan ✅, levrek ✅, kadife ✅ |
 | Nadir | turna ✅, sudak ✅, alabalık ✅, aynalı sazan ✅ |
 | Destansı | yayın ✅, altın sazan ✅, dere alabalığı ✅ |
-| Efsanevi | mersin ✅ (yalnızca bırakılır; koruma mesajı), ay turnası (gece), Kocabaş (dev yayın, fırtınalı gece) |
+| Efsanevi | mersin ✅ (yalnızca bırakılır; koruma mesajı), Ay Turnası ✅ (yalnızca gece, bırakılır), Kocabaş ✅ (dev yayın, yalnızca yağmurlu gece, bırakılır) |
 | Masalsı | Gölün Bekçisi (hikâyenin sonu) |
 
 - ✅ **Kerevit:** tuzakla ve dip avıyla çıkar (§10.3).
+- ✅ **Vakit ve hava** (Dalga 4, §10.5): her türün vakit (`when`) ve hava (`weather`) çarpanı var (yazılmayan 1). Vakit
+  çarpanlarının ortalaması her türde 1: vakit balığın ne zaman geldiğini değiştirir, kazancı değil (`test_economy`:
+  vakit ve hava ortalamasında bölgenin balık başına değeri koşulsuz değerin ±%5'inde). Belli vakitte gelen türler
+  (`only`) o koşulun dışında hiç gelmez. Oranlar iki aşamada hesaplanır (§10.2): önce bugünkü ağırlıklar, sonra
+  çıkan oran × koşul çarpanı (koşulsuz sayılar bit bit aynı).
+
+  | Tür | Sabah / öğle / akşam / gece | Hava |
+  |---|---|---|
+  | Kızılkanat | 1,0 / 1,3 / 1,0 / 0,7 | yağmur 0,8 |
+  | Gümüş Balığı | 1,3 / 1,0 / 1,1 / 0,6 | – |
+  | Çapak | 0,9 / 0,7 / 1,2 / 1,2 | bulutlu 1,2 |
+  | Tatlısu Kefali | 1,2 / 0,8 / 1,2 / 0,8 | yağmur 1,4 |
+  | Sazan | 1,3 / 0,7 / 0,9 / 1,1 | bulutlu 1,2 |
+  | Levrek | 1,2 / 1,0 / 1,2 / 0,6 | bulutlu 1,2 |
+  | Kadife | 1,5 / 0,7 / 1,1 / 0,7 | bulutlu 1,2, yağmur 1,3 |
+  | Turna | 1,2 / 0,8 / 1,3 / 0,7 | bulutlu 1,3, yağmur 1,2 |
+  | Sudak | 0,9 / 0,6 / 1,1 / 1,4 | bulutlu 1,3, yağmur 1,2, sis 1,5 |
+  | Yayın | 0,8 / 0,6 / 1,0 / 1,6 | yağmur 1,4 |
+  | Altın Sazan | 0,9 / 1,5 / 0,9 / 0,7 | bulutlu 0,8, yağmur 0,7 |
+  | Mersin Balığı | 1,1 / 0,8 / 0,9 / 1,2 | sis 1,3 |
+  | Aynalı Sazan | 1,2 / 0,8 / 0,9 / 1,1 | – |
+  | Alabalık | 1,3 / 0,7 / 1,3 / 0,7 | bulutlu 1,2, yağmur 1,4 |
+  | Dere Alabalığı | 1,4 / 0,7 / 1,2 / 0,7 | yağmur 1,5 |
+  | Kerevit (dipte; tuzak etkilenmez) | 0,8 / 0,6 / 1,0 / 1,6 | – |
+  | Ay Turnası | yalnızca gece | bulutlu 0,8, yağmur 0,6 |
+  | Kocabaş | yalnızca gece | yalnızca yağmur |
+
+  Koşulu gelince payı: Ay Turnası nilüferli koyda şamandırayla ~%2,5, spinle ~%7; Kocabaş derin ortada dipte ~%6.
+  Denge botunda (16 saat, 6 seed) Ay Turnası ilk kez 26–111. dakikada, Kocabaş 142–433. dakikada (bir seed'de hiç).
 - **Eşyalar:** eski çizme, teneke, mesajlı şişe (hikâye), paslı anahtar. Çöp toplamak göl sevgisi verir.
 - **Katalog:** bütün oranlar araçla üretilen `docs/balik-katalogu.md`'de yazar.
 
@@ -453,6 +484,16 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
     - tuzağa giriyorsa nerede ("Tuzağa girer: Sazlık, Kayalık Burun"; tuzak hep o türü verdiği için sıklık yazılmaz);
     - şamandırayla gelmiyorsa hangi teknikle ("Şununla tutulur: Spin, Sinek"; tuzak türünde "Şununla da tutulur: Dip");
     - yaşadığı bölgeler (tuzağınkilerle aynıysa yinelenmez) ve ne sıklıkla görüldüğü.
+  - ✅ Dalga 4'teki hâli (1. adım): 18 tür, iki sayfa (12 + 6). Oranlar gölün şimdiki koşuluyla (vakit, hava, göl
+    sevgisi); başlığın altında "Şimdi: Akşam · Yağmurlu" (sevgi seviyesi 2'den büyükse "· Göl sevgisi 2 (Nadir+ +%4)").
+    Tutulmamış türün vakit ipucu: belli vakitte geliyorsa "Yalnızca gece çıkar." / "Yalnızca fırtınalı gecelerde
+    yemlenir.", yoksa en sevdiği vakit ("En çok sabah gelir.") ve hava ("Yağmuru sever.") çarpanı en az 1,3 ise.
+    Dükkânın yem kartı da şimdiki koşulla.
+- ✅ **Oranlar ve koşul** (Dalga 4): oran iki aşamada hesaplanır. Önce bugünkü hesap (ağırlık × yem × teknik
+  yatkınlığı; o koşulda gelmeyen tür 0), sonra çıkan oran × türün koşul çarpanı (vakit × hava × sevginin Nadir+ payı,
+  binde) yeniden toplamı 1.000.000'a. Bütün çarpanlar 1 ise ikinci aşama atlanır: koşulsuz her sayı eskisi gibi
+  (altın test). Şans garantisi o koşulda gelebilen kademeleri sayar (gündüz nilüferli koyda Efsanevi garanti yok);
+  koşul değişince yenilenir, o koşulda gelmeyen türün dolaşan gölgesi çekilir.
 
 ### 10.3 Teknikler ✅
 
@@ -670,22 +711,35 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   4★ kademede (cam elyafı, orta spin, dip ve uzun sinek kamışı) önerilen teknik / şamandıra: sazlık 34,9 / 33,6, nilüferli koy 72,9 / 68,1, kayalık burun 74,0 / 70,8, dere ağzı 90,6 / 74,5, derin orta 131,7 / 115,8; 5★ kademede de önde. 8. adımdaki ilk hesap orta boyun değerini kullanıyor, iri balık kaybını saymıyordu (kapanış incelemesi): kayıp sayılınca naylon misinasız (3★) sazlıkta dip şamandıranın %99'unda kalıyor; bot naylon misinayı 9–22. dakikada, dip kamışını 19–33. dakikada alıyor (6 seed'in birinde misina 3 dk sonra).
   - **Sonuç** (`economy_report.gd -- --hours=16 --seeds=6`): saatte ~6.550–6.850 para ve ~167 av (önce ~5.900–6.200 ve 187: dip az ama iri balık getirir); rütbe 20'ye 5,3–5,5 saatte (önce 6,0–6,2); bütün takım 13,5–13,9 saatte (hedef 8–15). Bot zamanının ~%57'sini dipte (derin ortada), ~%36'sını sinekte (dere ağzında), ~%3–5'ini spinde, ~%1–3'ünü şamandırada geçiriyor; spin rütbe 2–7 arasında kıyı bölgelerinde, şamandıra yeni türleri tutmak için. Tuzaklar 16 saatte ~123 kerevit.
   - **Değerlendirme:** her tekniğin öne çıktığı bir yer var; spin sazlıkta ve iskele koyunda da güçlü (yırtıcılar), oyunun sonunda kıyının en iyisi dere ağzında sinek, derin ortada dip. Bot spinde yemi hiç bekletmediği için takılmayı ölçmüyor; insan için sazlık ve kayalık spinde biraz daha yavaş.
+- ✅ **Dalga 4, vakit ve hava ölçümü** (1. adım; `economy_report.gd -- --hours=16 --seeds=6`): denge botu oyun saatini
+  sürer (satış ve teknik değiştirme süresi saati ilerletmez), her atış o anki vakit, hava ve sevgiyle; yağmurda balık
+  0,83 kat sürede gelir (`session_timing.gd -- --weather=rain` ile `--weather=clear` ölçümünün oranı: geliş 4,65 → 3,85 sn,
+  satışsız saatte 216 → 219 av; `sim.json` `weather.rain_approach`). Sonuç: saatte 6.842–7.042 para (önce 6.557–6.836:
+  +%3,5; bot bölgeyi o vaktin en iyisine göre seçer) ve 165–167 av (önce 166–168). Vakitlere zamanın ~%25'i, havalara
+  açık %44–67, bulutlu %18–37, yağmur %8–22, sis %4–9. Korkuluklar yeşil (310 dakikada saatte 4.743–5.008 para).
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
 ### 10.5 Canlı dünya
 
-- **Oyun saati:**
-  - 24 dk = 1 gün: sabah, öğle, akşam ve gece 6'şar dk.
-  - Saat yalnızca oynarken akar; yokken durur, ceza yok.
-  - Dede'yle çay = sonraki vakte geç (ücretsiz).
+- **Oyun saati** ✅ (Dalga 4, 1. adım; `DayClock`, `WorldClock`):
+  - 24 dk = 1 gün: sabah, öğle, akşam ve gece 6'şar dk. 1 gerçek sn = 1 oyun dakikası; yeni oyun sabah 06:00'da.
+  - Saat yalnızca oynarken akar (kayıtta oynanan saniye `clock_s`); uygulama kapalıyken, bir panel açıkken, filmde ve
+    ekran kararırken durur, ceza yok. Kart açıkken akar.
+  - Vakit değişince kısa bildirim ("Akşam oldu", vaktin ikonuyla) ve kayıt.
+  - 🔜 Dede'yle çay = sonraki vakte geç (ücretsiz; iki çay arasında en az bir balık).
   - Gerçek saat kullanılmaz: hep aynı saatlerde oynayan da her vakti görür, çocuk gece balığı için uyanık kalmaz.
-- **Hava:** her oyun günü için tohumlu (seed'li): açık %55, bulutlu %20, yağmur %15, sis %10 (yalnızca sabah ve gece).
-  - Yağmur ısırmayı artırır.
-  - Sis ve gece bazı türlerin tek zamanı.
+- **Hava** ✅ (`Weather`): her oyun günü için tohumlu (seed'li): açık %55, bulutlu %20, yağmur %15, sis %10.
+  - İlk oyun günü hep açık. Sisli günde sis yalnızca sabah ve gece, öğle ve akşam bulutlu.
+  - Yağmurlu gece fırtınadır (ayrı bir hava değil; görünüşü 2. adımda: gök gürültüsü, yumuşak şimşek).
+  - Yağmur ısırmayı artırır: gölgeler takımı 1,3 kat uzaktan fark eder ve 1,25 kat hızlı yaklaşır (her teknikte;
+    şamandıranın dürtme zamanlaması değişmez). Ölçüm: balık 0,83 kat sürede gelir.
+  - Hava önceden belli (gelir kuralı 4): bugün ve yarın gösterilir (2. adımda "Bugün" paneli).
+  - Vakit ve hava türlerin oranını değiştirir (§6); gece Ay Turnası'nın, yağmurlu gece Kocabaş'ın tek zamanı.
 - **Göl sevgisi:**
-  - **Kaynaklar:** bırakılan balık (kademeye göre 1–40), toplanan çöp (3), istekler.
-  - **Etki:** 10 seviye; Nadir+ ağırlıkları seviye başına %4 artar, en çok %36. Defterdeki oranlara yansır.
+  - **Kaynaklar:** bırakılan balık (kademeye göre 1–40) ✅, toplanan çöp (3), istekler.
+  - **Etki** ✅: 10 seviye (eşikler 0, 12, 30, 60, 110, 180, 270, 380, 520, 700); Nadir+ ağırlıkları seviye başına %4
+    artar, en çok %36. Defterdeki oranlara yansır (defterin başlığı: "Şimdi: Akşam · Yağmurlu · Göl sevgisi 2 (Nadir+ +%4)").
   - Göl seviyeyle güzelleşir: çiçek, kuş, kelebek, daha berrak su.
   - Hiç azalmaz.
 - **Dede'nin istekleri:**
@@ -748,7 +802,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
 Ekran kalabalık olmasın diye her şeyin bir yeri var:
 
 - **Sol üst:** para, kova (5/12), rütbe rozeti. Başlık ve sürüm yazısı ayarlara taşınır.
-- **Üst orta:** saat ve hava çipi. Çekişmede yerini gerilim çubuğu alır.
+- ✅ **Üst orta:** saat çipi (Dalga 4): vaktin ikonu, saat ("18:24") ve açık değilse havanın ikonu (yağmurlu gece
+  fırtına). Çekişmede yerini gerilim çubuğu alır. Henüz dokunulmaz; 2. adımda dokununca "Bugün" paneli açılır.
 - **Sağ üst:** harita, defter, ayarlar (her biri ≥122).
 - ✅ **Sol alt:** yürüme halkası (252; sağ kenarı ipucu çubuğunun payının solunda; olta sudayken yok, sandalda yerinde "Kıyıya dön") ve üstünde teknik düğmesi (132).
 - **Sağ alt:** eylem düğmesi (300).

@@ -152,7 +152,7 @@ Ersin oyunu telefonda oynadı, altı şey istedi; her birinde önerilen seçene�
 Ersin'in seçimleri (hepsi önerilen): balık kovadan ve yeni tür kartından göle bırakılır; istekler ve Dede'yle çay üstteki saat çipinin "Bugün" panelinde; final rütbe 12–14 civarında; Ay Turnası ve Kocabaş mersin gibi göle bırakılır.
 
 - [x] Parti 5a görsel promptları ([`gorsel-istekleri.md`](gorsel-istekleri.md)): Ersin görselleri üretirken kod yazılır.
-- [ ] Oyun saati ve hava (çekirdek).
+- [x] Oyun saati ve hava: 24 dakikalık gün (4 vakit), her günün tohumlu havası, vakit ve havaya göre oranlar (defter ve dükkânda da), yağmurda balık çabuk gelir, Ay Turnası (gece) ve Kocabaş (yağmurlu gece), üst ortada saat çipi, kayıt v5 (dalganın bütün alanları), geliştirme düğmeleri VAKİT +, HAVA, SEVGİ +50, `world` botu.
 - [ ] Vakit ışığı, gece, yağmur, sis; Dede'yle çay; vakit müziği.
 - [ ] Tut-bırak, göl sevgisi, çöp toplama.
 - [ ] Dede'nin istekleri.

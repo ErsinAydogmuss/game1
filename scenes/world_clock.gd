@@ -11,6 +11,8 @@ signal phase_changed(phase: String)
 signal day_changed(day: int)
 ## Gölün koşulu değişti: { phase, weather, love } (oranlar, garanti, defter yenilenir).
 signal conditions_changed(conditions: Dictionary)
+## Saat ilerledi (oyun dakikası ya da çay): saat çipinin yazısı yenilenir.
+signal clock_moved
 
 ## true iken saat ilerlemez (yalnızca debug: botlar saati dondurur; eski senaryolar sabah ışığında).
 var frozen: bool = false
@@ -68,3 +70,5 @@ func _apply(save: SaveData, change: Dictionary) -> void:
 	if now != _last:
 		_last = now
 		conditions_changed.emit(now)
+	if not change.is_empty():
+		clock_moved.emit()

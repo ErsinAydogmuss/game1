@@ -73,6 +73,12 @@ extends Node
 ##     tezgâhtaki dükkânın Kamış, Ekstra, Takım ve Kova sekmelerinde "?" o sekmenin sayfası; rehber
 ##     kapanınca dükkân açık, Nine veda etmez (dükkân kapanınca uğurlar; uzaktan açılmışsa susar).
 ##     Dede'ye dokundukça öğütler; sonuncusu rehberi söyler.
+##   world: canlı dünya (KONTROL satırları; telefon oranında ve --safe-inset=130 ile): saat akar (öteki
+##     senaryolarda donuk: eski görüntüler sabah ışığında). Saat çipi üst ortada, haplara ve sağ üstteki
+##     düğmelere binmez, sabahı gösterir; saat oyun akarken ilerler, ayarlar açıkken durur; geliştirme
+##     düğmeleri: VAKİT + (öğle, sonra akşam ve gece: bildirim panel kapanınca, yalnızca sonuncusu), HAVA
+##     (bugünün havası, çipte ikonu); Ay Turnası gündüz yok, gece nilüferli koyda defterde oranıyla; iskelede
+##     gece ve havanın ikonuyla en çok TOUR_DRAWS çizim.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -204,6 +210,8 @@ func _ready() -> void:
 			_play_story.call_deferred()
 		"film":
 			_play_film.call_deferred()
+		"world":
+			_play_world.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -976,7 +984,7 @@ func _play_rarity() -> void:
 	book.open_book("wels")
 	await _wait(0.4)
 	await _shot("21_defter_yayin_siluet")
-	# Dalga 3: 16 tür iki sayfada; ikinci sayfada teknik türleri. Kerevitin ipucu tuzağı, alabalığınki
+	# 18 tür iki sayfada (Dalga 3 ve 4); ikinci sayfada teknik ve gece türleri. Kerevitin ipucu tuzağı, alabalığınki
 	# sineği söyler; oranların başlığında elindeki tekniğin adı.
 	var pages := 0
 	for node in book.find_children("*", "Button", true, false):
@@ -2160,6 +2168,131 @@ func _play_tour() -> void:
 	_quit()
 
 
+## Canlı dünya (Dalga 4): rütbe 3'ün oyuncusu, saat akar. Saat çipi, saatin akışı ve durması, geliştirme
+## düğmeleriyle vakit ve hava, Ay Turnası'nın gece oranı, iskelede çizim sayısı.
+func _play_world() -> void:
+	_use_save(3)
+	var db := GameState.db
+	var rules := db.rules
+	var save := GameState.save
+	var spot := str(main.get("spot_id"))
+	var clock: WorldClock = main.get("world_clock")
+	clock.frozen = false
+	save.xp = db.rank_xp[2]
+	Records.add(save.records, "rudd", 999, 3, 0)
+	_session().set_access(Zones.open_ids(db, save, spot))
+	main.call("_update_gates")
+	GameState.changed.emit()
+	await _wait(1.0)
+	var hud := _hud()
+	var chip := hud.world_chip()
+	_check("saat çipi sabahı gösterir (%s, %s)" % [hud.world_text(), ",".join(hud.world_icons())],
+			chip.is_visible_in_tree() and hud.world_text().begins_with("06:")
+			and hud.world_icons() == PackedStringArray(["phase_morning"]))
+	var right := hud.settings_button.get_global_rect().merge(hud.book_button.get_global_rect())
+	if hud.map_button.visible:
+		right = right.merge(hud.map_button.get_global_rect())
+	var pills := (hud.get("_status") as Control).get_global_rect()
+	var box := chip.get_global_rect()
+	_check("saat çipi haplara ve sağ üstteki düğmelere binmez (çip %s, haplar %s, düğmeler %s)" % [box, pills, right],
+			not box.intersects(pills) and not box.intersects(right))
+	await _shot("01_sabah")
+	var day_odds := BookPanel.odds(db, save, spot, "lily_cove")
+	var start := save.clock_s
+	await _wait(3.0)
+	var moved := save.clock_s - start
+	_check("saat oyun akarken ilerler (3 sn → %d oyun dakikası; çipte %s)" % [moved, hud.world_text()],
+			moved >= 2 and moved <= 4 and hud.world_text() == DayClock.clock_text(rules, save.clock_s))
+	# Ayarlar açıkken saat durur; geliştirme düğmeleri (ölçüm açıkken) vakti ve havayı değiştirir.
+	var settings: SettingsPanel = main.get("settings_panel")
+	var toast_box: Control = hud.get("_toast_box")
+	save.settings["perf"] = true
+	GameState.changed.emit()
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	var held := save.clock_s
+	await _wait(2.0)
+	_check("ayarlar açıkken saat durur (%d → %d)" % [held, save.clock_s], save.clock_s == held)
+	await _tap_control(settings.find_child("DebugTime", true, false))
+	await _wait_frames(3)
+	_check("VAKİT + → öğle, çipte %s; panel açıkken bildirim yok" % hud.world_text(),
+			DayClock.phase(rules, save.clock_s) == "noon" and hud.world_text() == "12:00"
+			and hud.world_icons()[0] == "phase_noon" and not toast_box.visible)
+	await _shot("02_gelistirici")
+	settings.close_panel()
+	var noon := await _wait_toast(UiKit.upper(tr("UI_PHASE_NOW_noon")), 4.0)
+	_check("panel kapanınca \"%s\" bildirimi" % tr("UI_PHASE_NOW_noon"), noon)
+	await _shot("03_ogle")
+	await _wait_until(func() -> bool: return not toast_box.visible, 4.0)
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	for i in 2:
+		await _tap_control(settings.find_child("DebugTime", true, false))
+		await _wait_frames(3)
+	settings.close_panel()
+	var night := await _wait_toast(UiKit.upper(tr("UI_PHASE_NOW_night")), 4.0)
+	var toast: Label = hud.get("_toast")
+	var evening_shown := func() -> bool:
+		return toast.is_visible_in_tree() and toast.text == UiKit.upper(tr("UI_PHASE_NOW_evening"))
+	var evening := await _wait_until(evening_shown, 3.0)
+	var only_last := night and not evening
+	_check("VAKİT + iki kez → gece (çipte %s); yalnızca \"%s\" bildirimi" % [hud.world_text(), tr("UI_PHASE_NOW_night")],
+			night and only_last and DayClock.phase(rules, save.clock_s) == "night"
+			and hud.world_icons()[0] == "phase_night" and hud.world_text().begins_with("00:"))
+	# Gece nilüferli koy: Ay Turnası gelir (gündüz gelmez); defterde oranı ve "yalnızca gece".
+	var fade: Fade = main.get("fade")
+	main.call("_travel", "lily_cove")
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy() and str(main.get("zone_id")) == "lily_cove", 5.0)
+	await _wait(1.0)
+	var night_odds := BookPanel.odds(db, save, spot, "lily_cove")
+	_check("Ay Turnası nilüferli koyda gündüz gelmez, gece gelir (%s → %s)" % [
+			UiKit.format_percent(int(day_odds.get("moon_pike", 0))), UiKit.format_percent(int(night_odds.get("moon_pike", 0)))],
+			int(day_odds.get("moon_pike", 0)) == 0 and int(night_odds.get("moon_pike", 0)) > 0)
+	var book: BookPanel = main.get("book_panel")
+	await _tap_control(hud.book_button)
+	await _wait_until(func() -> bool: return book.visible, 2.0)
+	book.open_book("moon_pike")
+	await _wait(0.5)
+	var text := _texts_in(book)
+	_check("gece defterde Ay Turnası: oranı, \"yalnızca gece\" ve şimdiki koşul",
+			text.contains(tr("UI_BOOK_CHANCE") % UiKit.format_percent(int(night_odds.get("moon_pike", 0))))
+			and text.contains(tr("UI_BOOK_HINT_ONLY_night"))
+			and text.contains(tr("UI_BOOK_NOW") % [tr("PHASE_night"), tr("WEATHER_clear")]))
+	_check("defter ekrana sığar (%.2f)" % book.fit_scale(), book.fit_scale() > 0.75)
+	await _shot("04_defter_ay_turnasi")
+	book.close_panel()
+	await _wait(0.3)
+	# HAVA: bugünün havası sıradakine; çipte havanın ikonu.
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	var before := Weather.at(rules, save)
+	await _tap_control(settings.find_child("DebugWeather", true, false))
+	await _wait_frames(3)
+	var weather := Weather.at(rules, save)
+	settings.close_panel()
+	await _wait(0.5)
+	var want := "weather_storm" if Weather.stormy(weather, "night") else "weather_" + weather
+	var icons := hud.world_icons()
+	_check("HAVA → bugünün havası %s → %s, çipte %s" % [before, weather, ",".join(icons)], weather != before
+			and (icons.size() == 1 if weather == "clear" else icons.size() == 2 and icons[1] == want))
+	# İskele (en çok çizim): gece, havanın ikonu, ölçüm açık.
+	main.call("_travel", "dock_cove")
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy() and str(main.get("zone_id")) == "dock_cove", 5.0)
+	await _wait(1.5)
+	var info := await _measure_draws()
+	print("ÇİZİM %-13s %3d çizim, %6d üçgen (gece, %s)" % ["dock_cove", info["draws"], info["primitives"], weather])
+	_check("iskelede saat çipi ve havanın ikonuyla en çok %d çizim (%d)" % [TOUR_DRAWS, info["draws"]],
+			int(info["draws"]) <= TOUR_DRAWS and int(info["draws"]) > 0)
+	await _shot("05_iskele_gece")
+	save.settings["perf"] = false
+	GameState.changed.emit()
+	await _wait(0.3)
+	_check_buttons()
+	_finish_checks()
+
+
 ## Kamışlar ve makaralar (görsel denetim; KONTROL satırları): dükkândaki kamışlar teknik teknik yan yana
 ## ve adlarıyla, suyun üstünde kameraya dönük (kuşanılan görünüş RodModel.LOOKS); makaralar yakından
 ## (çıkrık ve sinek makarası); sonra balıkçının elinde kuşanılan kamış ve dipte sehpadaki dip kamışı.
@@ -2564,7 +2697,7 @@ func _tap_card(shop: ShopPanel, id: String, which: int) -> void:
 	await _tap_control(buttons[which] as Control)
 
 
-## Gölün bütün balıkları (16; kerevit dahil): elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları
+## Gölün bütün balıkları (18; kerevit, Ay Turnası ve Kocabaş dahil): elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları
 ## işlemez. --fish=<kimlik> yalnızca o tür.
 func _play_fish() -> void:
 	_use_save(1)
@@ -3556,6 +3689,8 @@ func _use_save(catches: int) -> void:
 		save.settings["locale"] = _locale
 	if not _intro:
 		Story.mark_seen(save)
+	# Oyun saati donuk: senaryolar sabah ve açık havada, görüntüler eskisi gibi (world saati kendisi sürer).
+	(main.get("world_clock") as WorldClock).frozen = true
 	GameState.use_save(save)
 	GameState.apply_locale()
 	GameState.changed.emit()
