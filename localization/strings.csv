@@ -207,7 +207,7 @@ UI_BUCKET_COUNT,%d/%d,%d/%d
 UI_RANK_UP,Rank %d: %s!,Rütbe %d: %s!
 UI_BUCKET_FULL,Bucket full: the fish swam home,Kova dolu: balık göle döndü
 UI_RELEASED,The %s swam back home,%s göle döndü
-UI_DEDE_BUCKET,"Your bucket is full! Tap SELL, let's go see Nana.","Kovan doldu evlat! SAT'a bas, Nine'ye gidelim."
+UI_DEDE_BUCKET,"Your bucket is full! Tap SELL, or tap the bucket to free fish.","Kovan doldu evlat! SAT'a bas ya da kovaya dokun, göle bırak."
 UI_DEDE_BUCKET_CAST,"Your bucket is full, let's sell first! Tap SELL.","Kovan dolu, önce satalım evlat! SAT'a bas."
 UI_DEDE_BAIT_OUT,"Your bait's all gone, kiddo. Back to worms; Nana sells more.","Yemin bitti evlat. Solucanla devam; yenisi Nine'de."
 UI_DEDE_BOAT,"That boat's for deep water, kid. Your time will come!","Sandalla derin sulara açılınır. Zamanı gelecek evlat!"
@@ -255,7 +255,7 @@ UI_SHOP_HAVE,You have %d,Elinde %d
 UI_SHOP_PACK,Pack: %d,Paket: %d
 UI_SHOP_BUCKET,Bucket: %d/%d,Kova: %d/%d
 UI_SHOP_BUCKET_EMPTY,"Your bucket is empty. Bring me fish, I pay well!","Kovan boş. Balık tutunca getir, iyi fiyat veririm!"
-UI_SHOP_MORE_KINDS,+%d more kinds,+%d tür daha
+UI_SHOP_MORE_KINDS,+%d more,+%d tür daha
 UI_SHOP_TOTAL,Total,Toplam
 UI_SHOP_SELL_ALL,Sell all,Hepsini sat
 UI_NINE_SHOP_HELLO,"Welcome, dear! What are you looking for?","Hoş geldin evladım! Neye bakmıştın?"
@@ -546,3 +546,15 @@ UI_DEDE_WEATHER_cloudy,"Clouds are good, kid. The hunters come out.","Bulut iyid
 UI_DEDE_WEATHER_rain,Rain! Fish notice you from afar and come fast.,"Yağmur yağıyor! Balık uzaktan duyar, çabuk gelir."
 UI_DEDE_WEATHER_fog,Fog's rolling in. They say zander love it.,Sis bastı evlat. Sudak sisi sever derler.
 UI_DEDE_WEATHER_storm,A storm! Old Bighead roams the deep on such nights.,Fırtına! Kocabaş böyle gecelerde derinde gezer.
+UI_BUCKET_PANEL,My bucket,Kovam
+UI_BUCKET_RELEASE,Release,Bırak
+UI_BUCKET_RELEASE_ALL,Release all,Hepsini bırak
+UI_BUCKET_SURE,Are you sure?,Emin misin?
+UI_BUCKET_EMPTY,Your bucket is empty. The fish you catch go here.,Kovan boş. Tuttuğun balıklar buraya girer.
+UI_LOVE_LEVEL,Lake love %d,Göl sevgisi %d
+UI_LOVE_UP,Lake love %d!,Göl sevgisi %d!
+UI_LOVE_HOW,"Release fish, pick up trash: the lake blooms.","Balık bırak, çöp topla: göl güzelleşir."
+UI_LOVE_BONUS,Rare+ fish %s more often,Nadir+ balık %s daha sık
+UI_DEDE_LOVE_2,"The lake knows you now, kid! More rare fish will come.",Göl seni tanıdı evlat! Nadir balık artacak.
+UI_DEDE_LOVE_6,"The lake loves you! Go see Nana, she'll be happy.","Göl seni çok sevdi! Nine'ye uğra, sevinir."
+UI_DEDE_LOVE_10,"You're the lake's favourite angler, kid!",Gölün en sevdiği balıkçı sensin evlat!

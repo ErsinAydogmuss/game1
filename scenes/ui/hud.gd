@@ -3,15 +3,16 @@ extends Control
 ## Oyun arayüzü (HUD). Dokunuşları engellemez (MOUSE_FILTER_IGNORE); parmağı yalnızca
 ## TouchButton'lar yakalar. Çentik ve yuvarlak köşeler için güvenli alan payı her kenara eklenir
 ## (UiKit.safe_insets).
-## - Sol üst: para, kova (dolu/kapasite) ve rütbe (çekişmede gizli; oyunun adı ve sürüm
-##   ayarlarda). Sağ üst: harita (ilk balıktan sonra), Balık Defteri (ikisi de olta sudayken gizli)
+## - Sol üst: para, kova (dolu/kapasite; dokununca kova paneli: göle bırak, sat) ve rütbe (çekişmede gizli;
+##   oyunun adı ve sürüm ayarlarda). Sağ üst: harita (ilk balıktan sonra), Balık Defteri (ikisi de olta sudayken gizli)
 ##   ve ayarlar. Yeni bir bölge açılınca harita düğmesi bir süre nabız gibi atar.
 ## - Sağ alt: büyük eylem düğmesi (AT / GERİ SAR / BEKLE / VUR! / SAR); ekranın her yeri de
 ##   aynı işi yapar, düğme ne olacağını yazar. Sol alt: sandaldayken "Kıyıya dön" (olta sudayken
 ##   gizli).
 ## - Üst orta: oyun saati çipi (vaktin ikonu, saat, açık değilse havanın ikonu; Dalga 4); dokununca
-##   "Bugün" paneli (yalnızca olta boşken dokunuş alır: set_world_touch). Çekişmede onun yerinde gerilim
-##   çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü oyuncu da okusun).
+##   "Bugün" paneli (yalnızca olta boşken dokunuş alır: set_idle_touch; sol üstteki kova da: Kova paneli).
+##   Çekişmede onun yerinde gerilim çubuğu (renk + ikon + sarsıntı + "BIRAK!" yazısı: renk körü oyuncu
+##   da okusun).
 ## - Orta: kısa bildirimler ("Erken davrandın!"). Alt orta: ipucu çubuğu (konuşanın yüzü ve sözü:
 ##   Dede ya da Nine).
 ## - Sol üstte durumun altında: geliştirme sürümünde FPS; ölçüm açıkken (ayarlarda sürüm yazısına
@@ -22,8 +23,9 @@ signal book_pressed
 signal map_pressed
 signal shore_pressed
 signal technique_pressed
-## Saat çipine dokunuldu ("Bugün" paneli).
+## Saat çipine dokunuldu ("Bugün" paneli) ya da kovaya (kova paneli: göle bırak, sat).
 signal world_pressed
+signal bucket_pressed
 signal action_down
 signal action_up
 
@@ -67,6 +69,8 @@ var shore_button: TouchButton
 var technique_button: TouchButton
 ## Saat çipinin dokunma kutusu (görünmez; içinde hap): dokununca "Bugün" paneli.
 var world_button: TouchButton
+## Kova hapının dokunma kutusu (görünmez, en az CHIP_TOUCH; içinde hap): dokununca kova paneli.
+var bucket_button: TouchButton
 ## Sol alttaki yürüme halkası: olta sudayken ve sandalda gizli (sandalda yerinde "Kıyıya dön");
 ## yürünemezken (kart, yakalama, geri sarma) soluk: main dimmed'i verir.
 var joystick: TouchJoystick
@@ -307,11 +311,13 @@ func set_line_out(on: bool) -> void:
 				and (c != technique_button or technique_allowed) and (c != joystick or not _in_boat)
 
 
-## Saat çipi dokunuş alsın mı (main her kare: yalnızca olta boşken ve kart yokken). Almazken görünür kalır
-## (saat okunur), dokunuş oyuna geçer: olta sudayken eylem, geri sararken saklanan atış.
-func set_world_touch(on: bool) -> void:
-	if world_button != null:
-		world_button.takes_touch = on
+## Saat çipi ve kova dokunuş alsın mı (main her kare: yalnızca olta boşken ve kart yokken). Almazken
+## görünür kalırlar (saat ve kova okunur), dokunuş oyuna geçer: olta sudayken eylem, geri sararken saklanan
+## atış.
+func set_idle_touch(on: bool) -> void:
+	for b: TouchButton in [world_button, bucket_button]:
+		if b != null:
+			b.takes_touch = on
 
 
 ## Sandalda mı: "Kıyıya dön" düğmesi görünür, yürüme halkası gizlenir (sandalda yürünmez).
@@ -432,7 +438,8 @@ func _set_button(text: String, icon_kind: String, color: Color) -> void:
 
 ## Ekrandaki düğmeler (bot denetimi: boyut ve güvenli alan).
 func buttons() -> Array[TouchButton]:
-	return [map_button, book_button, settings_button, action_button, shore_button, technique_button, world_button]
+	return [map_button, book_button, settings_button, action_button, shore_button, technique_button, world_button,
+			bucket_button]
 
 
 # --- Kurulum ---------------------------------------------------------------------
@@ -454,7 +461,14 @@ func _build_top() -> void:
 	_status.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_frame().add_child(_status)
 	_coins = _pill("coin")
-	_bucket = _pill("bucket")
+	# Kova: hap, görünmez bir dokunma kutusunun (çizimsiz TouchButton, en az CHIP_TOUCH) üst kenarında.
+	bucket_button = TouchButton.make_plain(StyleBoxEmpty.new(), StyleBoxEmpty.new())
+	bucket_button.name = "BucketButton"
+	bucket_button.custom_minimum_size = Vector2(CHIP_TOUCH, CHIP_TOUCH)
+	bucket_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	bucket_button.pressed.connect(func() -> void: bucket_pressed.emit())
+	_status.add_child(bucket_button)
+	_bucket = _pill("bucket", bucket_button)
 	_rank = _pill("star")
 	_rank_bar = RankBar.new()
 	_rank.get_parent().add_child(_rank_bar)
@@ -522,12 +536,14 @@ func _build_world_chip() -> void:
 	row.add_child(_weather_icon)
 
 
-## Durum hapı: ikon + sayı (Luckiest Guy). Etiketi döndürür.
-func _pill(icon_kind: String) -> Label:
+## Durum hapı: ikon + sayı (Luckiest Guy); parent verilmezse durum satırına. Etiketi döndürür. Hap üst kenarda
+## durur (kovanın dokunma kutusu daha uzun: öteki haplar ona göre uzamasın).
+func _pill(icon_kind: String, parent: Control = null) -> Label:
 	var pill := PanelContainer.new()
 	pill.add_theme_stylebox_override("panel", UiKit.framed("pill", UiKit.pill_style(), 34.0))
 	pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_status.add_child(pill)
+	pill.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	(parent if parent != null else _status).add_child(pill)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER

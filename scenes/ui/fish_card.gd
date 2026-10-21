@@ -8,10 +8,14 @@ extends Control
 ## İçerik: nadirlik (simgeli rozet), balığın resmi (Ersin'in görseli gelene kadar renkli madalyon),
 ## adı, boyu, yıldızları, kısa tanımı, "Yeni tür!" / "Yeni rekor!" şeritleri ve Dede'nin sözü (Nadir
 ## ve üstünde nadirliğe göre; yoksa yeni tür ya da rekor için). Destansı ve üstünde konfeti.
-## Koruma altındaki türde (mersin) Dede koruma sözünü söyler, düğme "Göle bırak" olur.
+## Koruma altındaki türde (mersin) Dede koruma sözünü söyler, düğme "Göle bırak" olur. Öteki türde
+## (kovaya girdiyse: outcome "kept") ikinci düğme "Göle bırak": balık kovadan çıkıp göle döner, göl sevgisi
+## verir (release_requested; main bırakır, kart kapanır).
 ## Süreler _process(delta) toplamıyla ölçülür.
 
 signal closed
+## "Göle bırak" (korunmayan, kovaya girmiş balık): main kovadan çıkarıp bırakır.
+signal release_requested(fish_id: String)
 
 ## Bu kadar sn geçmeden dokunuş kartı kapatmaz (çekerken basılı kalan parmak kapatmasın).
 const MIN_OPEN := 0.6
@@ -23,9 +27,13 @@ const FRAMED_ART := 200.0
 ## Düğmenin boyu: kart ekrana sığmak için küçülse de (fit_scale) en az 122 birim kalsın
 ## (controls botu denetler; en kötü durum 16:9 ekran ve her yanda 130 birim çentik payı).
 const OK_SIZE := Vector2(420, 136)
+## İkinci düğme ("Göle bırak"; korunmayan türde).
+const RELEASE_SIZE := Vector2(380, 136)
 const CONFETTI_COLORS: Array[Color] = [Color("#ffcf3c"), Color("#ff5a7a"), Color("#4fd2ff"), Color("#7cf06a"), Color("#c47bff"), Color.WHITE]
 
 var ok_button: Button
+## Korunmayan ve kovaya girmiş balıkta "Göle bırak" (yoksa null).
+var release_button: Button
 ## Ersin'in portresi yokken Dede'nin modelden çekilen yedek yüzü (main verir; o da yoksa yüzsüz).
 var dede_face: Texture2D
 
@@ -128,14 +136,30 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	var line := dede_line(db, rarity, outcome, fish_id)
 	if not line.is_empty():
 		column.add_child(_dede_row(line))
-	var ok_text := tr("UI_CARD_RELEASE") if Bucket.release_only(db, fish_id) else tr("UI_CARD_OK")
+	var protected := Bucket.release_only(db, fish_id)
+	var ok_text := tr("UI_CARD_RELEASE") if protected else tr("UI_CARD_OK")
 	ok_button = UiKit.button(ok_text, UiKit.SUCCESS, UiKit.SIZE_TITLE, OK_SIZE)
-	ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	# Kart görülmeden kapanmasın: düğme de en kısa açık kalma süresine uyar.
+	# Kart görülmeden kapanmasın: düğmeler de en kısa açık kalma süresine uyar.
 	ok_button.pressed.connect(func() -> void:
 		if _age >= MIN_OPEN:
 			close_card())
-	column.add_child(ok_button)
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 28)
+	buttons.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	buttons.add_child(ok_button)
+	release_button = null
+	if not protected and bool(outcome.get("kept", false)):
+		release_button = UiKit.button(tr("UI_CARD_RELEASE"), UiKit.SECONDARY, UiKit.SIZE_BODY, RELEASE_SIZE)
+		release_button.name = "Release"
+		release_button.icon = GameIcon.texture_for("release")
+		release_button.add_theme_constant_override("icon_max_width", 56)
+		release_button.pressed.connect(func() -> void:
+			if _age >= MIN_OPEN:
+				release_requested.emit(fish_id)
+				close_card())
+		buttons.add_child(release_button)
+	column.add_child(buttons)
 	add_child(_card)
 	show()
 	_age = 0.0

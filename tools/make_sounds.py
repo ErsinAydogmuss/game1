@@ -1303,6 +1303,19 @@ def lantern():
     return finish(x + 0.3 * reverb(x, 1.2)[:n], -2.0, 0.2)
 
 
+def love_up():
+    """Göl sevgisi bir seviye arttı: arp gibi yükselen sıcak arpej ve su damlası parıltısı."""
+    n = frames(1.8)
+    x = np.zeros(n)
+    for k, note in enumerate((67, 71, 74, 79, 83)):
+        place(x, pluck(note, 1.4, 151 + k, 0.55) * (0.9 - 0.08 * k), frames(0.07 * k))
+    drops = np.zeros(n)
+    for k, f0 in enumerate((1900.0, 2500.0, 3100.0)):
+        place(drops, bubble(f0, f0 * 1.5, frames(0.1), 0.03) * 0.5, frames(0.42 + 0.1 * k))
+    x = unit(x) + 0.35 * unit(drops)
+    return finish(x + 0.35 * reverb(x, 1.4)[:n], -2.0, 0.2)
+
+
 def find_mythic():
     """Masalsı buluntu (Gölün Bekçisi): Efsanevi'nin fanfarı daha geniş, koro gibi pad ve çanlar."""
     n = frames(3.6)
@@ -1352,7 +1365,7 @@ def registry():
         "sting_1": sting, "rank_up_1": rank_up, "travel_1": travel, "strike_1": strike, "snag_1": snag,
         "trap_place_1": lambda: trap_place(830), "trap_collect_1": trap_collect,
         "find_6_1": find_mythic, "thunder_1": thunder, "tea_1": tea, "phase_1": phase_chime,
-        "lantern_1": lantern,
+        "lantern_1": lantern, "love_up_1": love_up,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

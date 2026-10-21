@@ -47,7 +47,7 @@ func test_code_plays_only_known_sounds() -> void:
 	for rarity in range(1, 7):
 		assert_true(bank.has("find_%d" % rarity), "buluntu sesi: %d" % rarity)
 	# Vakit değişimi ve fener bildirimle (toast_later) çalar.
-	for sound: String in ["phase", "lantern", "thunder", "tea"]:
+	for sound: String in ["phase", "lantern", "thunder", "tea", "love_up"]:
 		assert_true(bank.has(sound), "Dalga 4 sesi: " + sound)
 
 

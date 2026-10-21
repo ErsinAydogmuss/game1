@@ -79,6 +79,10 @@ extends Node
 ##     düğmeleri: VAKİT + (öğle, sonra akşam ve gece: bildirim panel kapanınca, yalnızca sonuncusu), HAVA
 ##     (bugünün havası, çipte ikonu); Ay Turnası gündüz yok, gece nilüferli koyda defterde oranıyla; iskelede
 ##     gece ve havanın ikonuyla en çok TOUR_DRAWS çizim.
+##   release: tut-bırak ve göl sevgisi (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN):
+##     dolu kovaya dokun → Kova paneli küçülmeden sığar; BIRAK (en küçüğü, sevgi, para aynı), HEPSİNİ BIRAK
+##     (önce "Emin misin?"), seviye bildirimi ve Dede; yeni tür kartında "Göle bırak"; olta sudayken kovaya
+##     dokunmak oyuna geçer; paneldeki SAT Nine'nin Kova sekmesine götürür.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -218,6 +222,8 @@ func _ready() -> void:
 			_play_film.call_deferred()
 		"world":
 			_play_world.call_deferred()
+		"release":
+			_play_release.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -2573,6 +2579,164 @@ static func _patch_lum(image: Image, at: Vector2) -> float:
 			sum += 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
 			n += 1
 	return sum / n
+
+
+## Tut-bırak ve göl sevgisi (Dalga 4, 3. adım; KONTROL satırları; telefon oranında ve --safe-inset=130 ile,
+## TR ve EN): kova dolu (10'luk kova, 7 tür; eylem düğmesi SAT). Kovaya dokun → Kova paneli küçülmeden
+## sığar (6 satır, "+1 tür daha", nadirden sıradana); BIRAK → türün en küçüğü göle döner (sevgi +1, para
+## aynı, defterde ve sayaçta bırakılan); HEPSİNİ BIRAK önce "Emin misin?" (süre geçince eski yazı), iki
+## dokunuşla kova boşalır; panel kapanınca "Göl sevgisi 2!" (kalp) ve Dede'nin sözü, SAT gider. Yeni tür
+## kartında "Göle bırak" (büyük): balık kovadan çıkar, bildirim. Olta sudayken kovaya dokunmak oyuna geçer
+## (geri sarar). Paneldeki SAT Nine'nin Kova sekmesine götürür. Düğmeler büyük ve güvenli alanda.
+func _play_release() -> void:
+	_use_save(3)
+	var db := GameState.db
+	var rules := db.rules
+	var save := GameState.save
+	var hud := _hud()
+	var panel: BucketPanel = main.get("bucket_panel")
+	var toast: Label = hud.get("_toast")
+	save.owned.append("bucket_big")
+	var fill := [["rudd", 16], ["rudd", 22], ["rudd", 19], ["silverside", 10], ["silverside", 14],
+			["perch", 30], ["carp", 50], ["pike", 80], ["chub", 30], ["tench", 35]]
+	for f: Array in fill:
+		Records.add(save.records, str(f[0]), int(f[1]), 1, 0)
+		Bucket.add(db, save, str(f[0]), int(f[1]), 1)
+	save.love = rules.love_levels[1] - 1
+	GameState.changed.emit()
+	await _wait(1.0)
+	var cap := Bucket.capacity(db, save)
+	_check("kova dolu (%d/%d): eylem düğmesi SAT" % [save.bucket.size(), cap],
+			save.bucket.size() == cap and str(main.call("_action_kind")) == "sell")
+	var pill := (hud.get("_bucket") as Control).get_parent().get_parent() as Control
+	var box := hud.bucket_button.get_global_rect()
+	_check("kovanın dokunma kutusu hapı kapsar, saat çipine binmez (%s, hap %s)" % [box, pill.get_global_rect()],
+			box.encloses(pill.get_global_rect()) and not box.intersects(hud.world_button.get_global_rect()))
+	# 1) Kovaya dokun: panel açılır, telefonda küçülmeden sığar; 6 satır ve "+1 tür daha".
+	await _tap_control(hud.bucket_button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	await _wait(0.4)
+	var rows := panel.find_children("Row_*", "PanelContainer", true, false)
+	var wide := PackedStringArray()
+	for row: Control in rows:
+		if row.get_combined_minimum_size().x > BucketPanel.ROW.x + 0.5:
+			wide.append("%s %.0f" % [row.name, row.get_combined_minimum_size().x])
+	var text := _texts_in(panel)
+	_check("kovaya dokun → Kova paneli küçülmeden sığar (%.3f, %s)" % [panel.fit_scale(), panel.panel_rect()],
+			panel.visible and panel.fit_scale() >= 0.999 and _panel_inside(panel))
+	_check("panelde 6 satır, \"%s\", %d/%d, satırlar sığar%s" % [tr("UI_SHOP_MORE_KINDS") % 1, cap, cap,
+			"" if wide.is_empty() else ": " + ", ".join(wide)], rows.size() == BucketPanel.ROWS
+			and text.contains(tr("UI_SHOP_MORE_KINDS") % 1) and text.contains("%d/%d" % [cap, cap]) and wide.is_empty()
+			and str(BucketPanel.rows_of(db, save)[0]["fish"]) == "pike")
+	await _shot("01_kova_paneli")
+	# 2) BIRAK: kızılkanatın en küçüğü (16 cm) göle döner; sevgi +1 (seviye 2), para aynı.
+	var coins := save.coins
+	var love := save.love
+	# Panel yenilenince satırlar (düğmeler de) yeniden kurulur: düğme dokunmadan önce aranır.
+	var release := panel.find_child("Release_rudd", true, false) as Button
+	var found := release != null
+	if found:
+		await _tap_control(release)
+	await _wait_frames(2)
+	var sizes := PackedInt32Array()
+	for entry: Dictionary in save.bucket:
+		if str(entry["fish"]) == "rudd":
+			sizes.append(int(entry["size_cm"]))
+	_check("BIRAK → en küçük kızılkanat göle döner (kalan %s), sevgi +1, para aynı, defterde bırakılan" % str(sizes),
+			found and sizes.size() == 2 and not 16 in sizes and save.love == love + 1 and save.coins == coins
+			and int((save.records["rudd"] as Dictionary).get("released", 0)) == 1
+			and int(save.stats.get("released", 0)) == 1 and LakeLove.level(rules, save.love) == 2
+			and _texts_in(panel).contains("%d/%d" % [cap - 1, cap]))
+	# 3) HEPSİNİ BIRAK: ilk dokunuş sorar (kova aynı), süre geçince eski yazı; iki dokunuşla kova boşalır.
+	var all := panel.find_child("ReleaseAll", true, false) as Button
+	var before := save.bucket.size()
+	var expect := save.love
+	for entry: Dictionary in save.bucket:
+		expect += int(db.rarity_def(int(db.fish_by_id(str(entry["fish"])).get("rarity", 0))).get("love", 0))
+	if all != null:
+		await _tap_control(all)
+	var asked := all != null and all.text == UiKit.upper(tr("UI_BUCKET_SURE")) and save.bucket.size() == before
+	await _shot("02_emin_misin")
+	await _wait(BucketPanel.SURE_TIME + 0.3)
+	_check("HEPSİNİ BIRAK önce sorar, süre geçince eski yazı (\"%s\")" % (all.text if all != null else ""),
+			asked and all.text == UiKit.upper(tr("UI_BUCKET_RELEASE_ALL")) and save.bucket.size() == before)
+	if all != null:
+		await _tap_control(all)
+		await _tap_control(all)
+	await _wait_frames(2)
+	_check("iki dokunuşla kova boşalır: sevgi %d → %d (beklenen %d), para aynı, panelde \"%s\"" % [love + 1, save.love,
+			expect, tr("UI_BUCKET_EMPTY")], save.bucket.is_empty() and save.love == expect and save.coins == coins
+			and int(save.stats.get("released", 0)) == fill.size() and _texts_in(panel).contains(tr("UI_BUCKET_EMPTY"))
+			and panel.find_child("ReleaseAll", true, false) == null)
+	await _shot("03_kova_bos")
+	# 4) Panel kapanınca: "Göl sevgisi 2!" (kalp ikonu), Dede'nin sözü; kova dolu değil, SAT gider.
+	await _tap_control(panel.close_button)
+	var up := UiKit.upper(tr("UI_LOVE_UP") % 2)
+	var shown := await _wait_until(func() -> bool: return toast.is_visible_in_tree() and toast.text == up, 3.0)
+	var icon: GameIcon = hud.get("_toast_icon")
+	_check("panel kapanınca \"%s\" bildirimi (kalp)" % up, shown and icon.visible and icon.kind == "love")
+	var told := await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_LOVE_2", 4.0)
+	_check("Dede göl sevgisini söyler (%s), eylem düğmesi artık AT" % main.get("_hint_shown"),
+			told and str(main.call("_action_kind")) != "sell")
+	await _shot("04_sevgi_2")
+	# 5) Yeni tür kartında "Göle bırak": çapak kovaya girer, kartın ikinci düğmesiyle göle döner.
+	await _wait_state(FishingSession.State.IDLE, 2.0)
+	var card: FishCard = main.get("card")
+	love = save.love
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "bream")
+	await _tap_world(Vector2(1.0, -1.0))
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait_state(FishingSession.State.CAUGHT, 25.0)
+	_touch(1, Vector2(260, 520), false)
+	await _wait_until(func() -> bool: return card.visible, 3.0)
+	await _wait(FishCard.MIN_OPEN)
+	var side := 0.0
+	if card.visible and card.release_button != null:
+		var r := card.release_button.get_global_rect()
+		side = minf(r.size.x, r.size.y)
+	var kept := save.bucket.size() == 1 and str(save.bucket[0]["fish"]) == "bream"
+	_check("yeni tür kartında \"%s\" (%.0f birim), balık kovada" % [tr("UI_CARD_RELEASE"), side],
+			card.visible and side >= 121.5 and kept)
+	await _shot("05_kart_birak")
+	if card.visible and card.release_button != null:
+		await _tap_control(card.release_button)
+	var freed := UiKit.upper(tr("UI_RELEASED") % tr("FISH_bream"))
+	var said := await _wait_until(func() -> bool: return toast.is_visible_in_tree() and toast.text == freed, 3.0)
+	_check("\"Göle bırak\" → kart kapanır, çapak göle döner (sevgi +1), \"%s\"" % freed,
+			not card.visible and save.bucket.is_empty() and save.love == love + 1 and said
+			and int((save.records["bream"] as Dictionary).get("released", 0)) == 1)
+	await _shot("06_birakildi")
+	# 6) Olta sudayken kovaya dokunmak oyuna geçer: panel açılmaz, olta geri sarılır.
+	await _wait_state(FishingSession.State.IDLE, 3.0)
+	await _tap_world(Vector2(0.0, 0.0))
+	await _wait_state(FishingSession.State.WAITING, 3.0)
+	await _tap_control(hud.bucket_button)
+	_check("olta sudayken kovaya dokun → panel yok, geri sarar", not panel.visible
+			and _state() == FishingSession.State.RETRIEVING)
+	await _wait_state(FishingSession.State.IDLE, 3.0)
+	# 7) Paneldeki SAT: Nine'nin tezgâhı, dükkân Kova sekmesinde.
+	for cm in [18, 21, 24]:
+		Records.add(save.records, "rudd", cm, 1, 0)
+		Bucket.add(db, save, "rudd", cm, 1)
+	GameState.changed.emit()
+	await _wait_frames(2)
+	await _tap_control(hud.bucket_button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	await _wait(0.3)
+	var shop: ShopPanel = main.get("shop_panel")
+	var sell := panel.find_child("Sell", true, false) as Button
+	if sell != null:
+		await _tap_control(sell)
+	var at_shop := await _wait_until(func() -> bool: return shop.visible, 6.0)
+	_check("paneldeki SAT → Nine'nin dükkânı Kova sekmesinde (%s)" % shop.current_tab(),
+			sell != null and at_shop and not panel.visible and shop.current_tab() == "sell")
+	await _wait(0.4)
+	await _shot("07_sat")
+	shop.close_panel()
+	await _wait(0.4)
+	_check_buttons()
+	_finish_checks()
 
 
 ## Kamışlar ve makaralar (görsel denetim; KONTROL satırları): dükkândaki kamışlar teknik teknik yan yana

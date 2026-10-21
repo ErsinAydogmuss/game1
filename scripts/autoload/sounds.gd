@@ -29,9 +29,10 @@ const BANK := {
 	"rank_up": [-9.0, 0.0, 1], "travel": [-10.0, 0.0, 1],
 	"lure": [-8.0, 0.06, 2], "strike": [-4.0, 0.03, 1], "snag": [-8.0, 0.0, 1], "bell": [-7.0, 0.05, 2],
 	"rise": [-5.0, 0.08, 2], "trap_place": [-6.0, 0.05, 1], "trap_collect": [-7.0, 0.04, 1],
-	# Dalga 4: Masalsı buluntu, fırtınada gök gürültüsü, Dede'yle çay, vakit değişimi, Nine'nin feneri.
+	# Dalga 4: Masalsı buluntu, fırtınada gök gürültüsü, Dede'yle çay, vakit değişimi, Nine'nin feneri, göl
+	# sevgisinin seviyesi.
 	"find_6": [-3.0, 0.0, 1], "thunder": [-7.0, 0.05, 1], "tea": [-9.0, 0.03, 1], "phase": [-12.0, 0.0, 1],
-	"lantern": [-9.0, 0.0, 1],
+	"lantern": [-9.0, 0.0, 1], "love_up": [-8.0, 0.0, 1],
 }
 ## Döngüler: ad -> ses (dB).
 const LOOPS := { "reel": -12.0, "strain": -14.0, "bell_run": -9.0 }

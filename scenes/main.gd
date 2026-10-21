@@ -87,6 +87,9 @@ const TEA_ZOOM := 0.62
 ## Dede'nin vakte ve havaya ilk sözünün bayrağı (vaktin ya da havanın kimliğiyle; kayıtta).
 const TIME_FLAG := "told_time_%s"
 const WEATHER_FLAG := "told_weather_%s"
+## Göl sevgisinin Dede'nin konuştuğu seviyeleri (UI_DEDE_LOVE_<seviye>) ve sözün bayrağı.
+const LOVE_LINES: Array[int] = [2, 6, 10]
+const LOVE_FLAG := "told_love_%d"
 
 var session: FishingSession
 var lake: LakeShape
@@ -124,8 +127,10 @@ var map_panel: MapPanel
 var technique_panel: TechniquePanel
 ## Boş tuzağın paneli (bekle ya da kaldır).
 var trap_panel: TrapPanel
-## "Bugün" paneli (saat çipine dokununca): vakit, bugünün ve yarının havası, Dede'yle çay.
+## "Bugün" paneli (saat çipine dokununca): vakit, bugünün ve yarının havası, Dede'yle çay, göl sevgisi.
 var day_panel: DayPanel
+## Kova paneli (kovaya dokununca): tür başına göle bırak, hepsini bırak, sat.
+var bucket_panel: BucketPanel
 ## "Nasıl oynanır?" rehberi: ayarlardan, takım çantasından ve dükkândan açılır, onların üstünde durur.
 var guide_panel: GuidePanel
 ## Açılış filminin örtüsü (sözler, ATLA) ve çekimleri (kamera, dev gölge); film yokken _film boş.
@@ -1013,8 +1018,10 @@ func _on_catch() -> void:
 	var protected := Bucket.release_only(db, fish_id)
 	var was_full := Bucket.is_full(db, save)
 	var kept := Bucket.add(db, save, fish_id, size_cm, stars)
+	# Kartın "Göle bırak"ı yalnızca kovaya giren balıkta (dolu kovada balık zaten göle döndü).
+	outcome["kept"] = kept
 	if not kept:
-		_release(fish_id, rarity)
+		_release_fish(fish_id)
 	GameState.save_game()
 	_refresh_status()
 	# Rütbe atlama, kova dolu gibi bildirimler balığın etiketi sönünce (üst üste binmesin).
@@ -1143,15 +1150,22 @@ func _sync_music() -> void:
 	Sounds.set_music("shop" if shop_panel.visible else DayClock.phase(GameState.db.rules, GameState.save.clock_s))
 
 
-## Dede'nin saate bağlı sözlerinden sıradaki (her biri bir kez; bayrak söylenince kayda): önce Nine'nin
-## feneri (ilk gece), sonra hava (bulut, yağmur, sis; yağmurlu gece fırtına: Kocabaş'ın gecesi), sonra vakit
-## (öğle, akşam, yeni günün sabahı). Söylediyse true (sırada başkası olabilir).
+## Dede'nin bekleyen sözlerinden sıradaki (her biri bir kez; bayrak söylenince kayda): önce Nine'nin feneri
+## (ilk gece), sonra göl sevgisinin seviyesi (2, 6, 10), sonra hava (bulut, yağmur, sis; yağmurlu gece
+## fırtına: Kocabaş'ın gecesi), sonra vakit (öğle, akşam, yeni günün sabahı). Söylediyse true (sırada başkası
+## olabilir).
 func _world_line() -> bool:
 	var save := GameState.save
 	if bool(save.flags.get(LANTERN_FLAG, false)) and not save.flags.has(LANTERN_TOLD):
 		save.flags[LANTERN_TOLD] = true
 		_say("UI_DEDE_LANTERN")
 		return true
+	var love := LakeLove.level(GameState.db.rules, save.love)
+	for at in LOVE_LINES:
+		if love >= at and not save.flags.has(LOVE_FLAG % at):
+			save.flags[LOVE_FLAG % at] = true
+			_say("UI_DEDE_LOVE_%d" % at)
+			return true
 	var cond := world_clock.conditions()
 	var phase := str(cond["phase"])
 	var weather := str(cond["weather"])
@@ -1293,8 +1307,7 @@ func _debug_weather() -> void:
 
 
 func _debug_love() -> void:
-	LakeLove.add(GameState.db.rules, GameState.save, SettingsPanel.DEBUG_LOVE)
-	world_clock.refresh(GameState.save)
+	_after_love(LakeLove.add(GameState.db.rules, GameState.save, SettingsPanel.DEBUG_LOVE))
 	GameState.save_game()
 	GameState.changed.emit()
 
@@ -1461,8 +1474,8 @@ func _present(delta: float) -> void:
 	hud.tension_bar.visible = fighting
 	hud.set_fighting(fighting)
 	hud.set_line_out(session.line_out())
-	# Saat çipi yalnızca olta boşken dokunuş alır (geri sararken üst ortaya dokunuş atış olarak saklansın).
-	hud.set_world_touch(session.state == FishingSession.State.IDLE and not _card_up())
+	# Saat çipi ve kova yalnızca olta boşken dokunuş alır (geri sararken oraya dokunuş atış olarak saklansın).
+	hud.set_idle_touch(session.state == FishingSession.State.IDLE and not _card_up())
 	if fighting:
 		hud.tension_bar.tension = reel.tension
 		hud.tension_bar.limit = session.rules.limit
@@ -1798,12 +1811,59 @@ func _place_shop() -> void:
 
 ## Balık göle bırakıldı: defterde bırakılan sayısı, göl sevgisi ve sayaç. Sevginin seviyesi
 ## değişirse oranlar yenilenir (Nadir+ payı).
-func _release(fish_id: String, rarity: int) -> void:
+func _release_fish(fish_id: String) -> void:
+	_after_love(WorldState.release(GameState.db, GameState.save, fish_id))
+
+
+## Göl sevgisi arttı (balık bırakıldı, çöp toplandı): oranlar sevgi seviyesiyle yenilenir; seviye atladıysa
+## kalp ikonuyla bildirim, ses ve titreşim (bildirim sırası: panel ya da kart kapanınca), Dede'nin sözü
+## (2., 6. ve 10. seviyede; olta boşa dönünce: _world_line).
+func _after_love(result: Dictionary) -> void:
+	world_clock.refresh(GameState.save)
+	var level := int(result.get("new_level", 1))
+	if level <= int(result.get("old_level", 1)):
+		return
+	hud.toast_later(tr("UI_LOVE_UP") % level, UiKit.ACCENT, "love_up", "love")
+	_world_line_due = true
+
+
+## Kova panelinde BIRAK: o türün en küçük balığı göle döner (göl sevgisi), su sesi ve titreşim; panel
+## yenilenir (sevgi çubuğu dolar).
+func _on_bucket_release(fish_id: String) -> void:
 	var save := GameState.save
-	Records.release(save.records, fish_id)
-	LakeLove.add(GameState.db.rules, save, int(GameState.db.rarity_def(rarity).get("love", 0)))
-	save.stats["released"] = int(save.stats.get("released", 0)) + 1
-	world_clock.refresh(save)
+	if Bucket.take(save, fish_id).is_empty():
+		return
+	_release_fish(fish_id)
+	GameState.save_game()
+	_refresh_status()
+	Sounds.play("splash")
+	Sounds.haptic(15)
+	bucket_panel.refresh()
+
+
+## Kova panelinde HEPSİNİ BIRAK (onaylı): bütün balıklar göle döner.
+func _on_bucket_release_all() -> void:
+	var save := GameState.save
+	if save.bucket.is_empty():
+		return
+	while not save.bucket.is_empty():
+		var entry: Dictionary = save.bucket.pop_back()
+		_release_fish(str(entry["fish"]))
+	GameState.save_game()
+	_refresh_status()
+	Sounds.play("splash")
+	Sounds.haptic(30)
+	bucket_panel.refresh()
+
+
+## Yeni tür (ya da rekor, nadir) kartında "Göle bırak": az önce kovaya giren balık göle döner.
+func _on_card_release(fish_id: String) -> void:
+	if Bucket.take_last(GameState.save, fish_id).is_empty():
+		return
+	_release_fish(fish_id)
+	GameState.save_game()
+	_refresh_status()
+	hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "splash", "release")
 
 
 ## Sol üstteki para, kova ve rütbe; harita düğmesi ilk balıktan sonra (bölgeli gölde).
@@ -2361,6 +2421,7 @@ func _build_ui() -> void:
 	card = FishCard.new()
 	layer.add_child(card)
 	card.closed.connect(func() -> void: session.acknowledge())
+	card.release_requested.connect(_on_card_release)
 	settings_panel = SettingsPanel.new()
 	layer.add_child(settings_panel)
 	settings_panel.rank_up_requested.connect(_debug_rank_up)
@@ -2400,6 +2461,11 @@ func _build_ui() -> void:
 	day_panel = DayPanel.new()
 	layer.add_child(day_panel)
 	day_panel.tea_requested.connect(_on_tea)
+	bucket_panel = BucketPanel.new()
+	layer.add_child(bucket_panel)
+	bucket_panel.release_requested.connect(_on_bucket_release)
+	bucket_panel.release_all_requested.connect(_on_bucket_release_all)
+	bucket_panel.sell_requested.connect(_go_sell)
 	# Rehber en son: açıldığı panelin (ayarlar, çanta, dükkân) üstünde çizilir; kapanınca o açık kalır.
 	guide_panel = GuidePanel.new()
 	layer.add_child(guide_panel)
@@ -2432,6 +2498,14 @@ func _build_ui() -> void:
 		_pending_cast = Dice.NO_POINT
 		_pending_trap = -1
 		map_panel.open_map(angler.pos2(), zone_id, _map_marks()))
+	hud.bucket_pressed.connect(func() -> void:
+		if session.state != FishingSession.State.IDLE or _card_up() or _film != null:
+			return
+		input.release_all()
+		angler.stop()
+		_pending_cast = Dice.NO_POINT
+		_pending_trap = -1
+		bucket_panel.open())
 	hud.world_pressed.connect(func() -> void:
 		if session.state != FishingSession.State.IDLE or _card_up() or _film != null:
 			return

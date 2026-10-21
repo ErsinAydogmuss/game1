@@ -620,9 +620,17 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 - ✅ **Takım çantası:** her teknik için kuşanılmış bir set (kamış ve küçük takım); makara ve misina ortak (kayıt v4: `loadouts.shared`). Teknik düğmesiyle geçilir (§10.3).
 - **Kova ve satış:**
   - Tutulan balık kovaya girer; dükkânda "hepsini sat" yapılır (Kazı'nın sırt çantası düzeni). ✅ Kova sekmesinde tür başına bir satır (sayı, değer), altta toplam ve HEPSİNİ SAT.
-  - Kova dolunca Dede uyarır ✅ (kova her dolduğunda) ve olta atılmaz: eylem düğmesi yeşil SAT olur, basınca Nine'ye gidilir (v0.4.1); kova kapasitesi dükkândan büyür.
+  - Kova dolunca Dede uyarır ✅ (kova her dolduğunda: "Kovan doldu evlat! SAT'a bas ya da kovaya dokun, göle bırak.") ve olta atılmaz: eylem düğmesi yeşil SAT olur, basınca Nine'ye gidilir (v0.4.1); kova kapasitesi dükkândan büyür.
   - Her türün en iyisi akvaryuma konabilir (§10.6).
-- **Bırakma:** bırakılan balık para vermez; göl sevgisi ve rütbe puanı verir.
+- ✅ **Bırakma** (Dalga 4): bırakılan balık para vermez, yalnızca göl sevgisi verir (rütbe puanı balık tutulunca gelmiştir).
+  - **Kova paneli:** sol üstteki kovaya dokununca açılır (olta boştayken; dokunma kutusu 122, olta sudayken dokunuş
+    almaz). Tür başına bir satır: resmi, adı, altında "×3", nadirliği ve bir balığın sevgisi ("♥ +5"), değeri, BIRAK
+    (türün en küçüğü göle döner). En çok 6 satır, fazlası "+N tür daha". Altta HEPSİNİ BIRAK (çocuk yanlışlıkla
+    basmasın: ilk dokunuş "Emin misin?", 3 sn içinde ikincisi bırakır), toplam değer ve SAT (Nine'nin tezgâhı, Kova
+    sekmesi). Başlıkta göl sevgisinin seviyesi ve çubuğu: bıraktıkça dolar. Telefonda küçülmeden sığar.
+  - **Kartta "Göle bırak":** yeni tür, rekor ya da nadir balık kartında ikinci düğme (≥122): az önce kovaya giren
+    balık göle döner, "Çapak göle döndü". Koruma altındaki türlerde tek düğme zaten "Göle bırak"; dolu kovaya gelen
+    balık da göle döner (sevgi verir).
 - **Para:** yalnızca oynayarak kazanılır, gerçek parayla asla satılmaz. Bu yüzden oranı değiştiren yem ve yapay yem satılabilir (§11).
 - **Rütbe 1–20:** rütbe puanı av ve isteklerden gelir; bölge ve takım kilitlerini açar.
 - **Denge hedefleri** (denge botunun korkulukları):
@@ -780,7 +788,12 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     fırtına", sisli günde "Sabah ve gece").
   - Vakit ve hava türlerin oranını değiştirir (§6); gece Ay Turnası'nın, yağmurlu gece Kocabaş'ın tek zamanı.
 - **Göl sevgisi:**
-  - **Kaynaklar:** bırakılan balık (kademeye göre 1–40) ✅, toplanan çöp (3), istekler.
+  - **Kaynaklar:** bırakılan balık (kademeye göre 1/2/5/12/40/100) ✅, toplanan çöp (3), istekler.
+  - ✅ Seviye atlayınca kalp ikonuyla "Göl sevgisi 2!", ses ve titreşim (panel ya da kart açıksa kapanınca). Dede
+    2., 6. ve 10. seviyede bir kez konuşur (olta boşa dönünce): "Göl seni tanıdı evlat! Nadir balık artacak.", "Göl
+    seni çok sevdi! Nine'ye uğra, sevinir." (altın hamur, 5. adım), "Gölün en sevdiği balıkçı sensin evlat!".
+  - ✅ Görüldüğü yerler: Kova panelinin başlığı, "Bugün" panelindeki sevgi kartı (çayın yanında: seviye, çubuk;
+    seviye 1'de "Balık bırak, çöp topla: göl güzelleşir.", sonra "Nadir+ balık %4 daha sık"), defterin başlığı.
   - **Etki** ✅: 10 seviye (eşikler 0, 12, 30, 60, 110, 180, 270, 380, 520, 700); Nadir+ ağırlıkları seviye başına %4
     artar, en çok %36. Defterdeki oranlara yansır (defterin başlığı: "Şimdi: Akşam · Yağmurlu · Göl sevgisi 2 (Nadir+ +%4)").
   - Göl seviyeyle güzelleşir: çiçek, kuş, kelebek, daha berrak su.
@@ -844,14 +857,16 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
 
 Ekran kalabalık olmasın diye her şeyin bir yeri var:
 
-- **Sol üst:** para, kova (5/12), rütbe rozeti. Başlık ve sürüm yazısı ayarlara taşınır.
+- **Sol üst:** para, kova (5/12), rütbe rozeti. Başlık ve sürüm yazısı ayarlara taşınır. ✅ Kovaya dokununca Kova
+  paneli (§10.4; dokunma kutusu 122, olta sudayken dokunuş almaz).
 - ✅ **Üst orta:** saat çipi (Dalga 4): vaktin ikonu, saat ("18:24") ve açık değilse havanın ikonu (yağmurlu gece
   fırtına). Çekişmede yerini gerilim çubuğu alır. Dokununca "Bugün" paneli (dokunma kutusu 122; olta sudayken
   görünür ama dokunuş almaz, ekranın her yeri eylem):
   - **Şimdi:** vaktin ikonu ve adı, saat, sonraki vakte kalan ("Geceye 3 dk");
   - **Hava:** bugün ve yarın;
   - **Dede'yle çay** (ÇAY İÇ);
-  - başlıkta günün sırası ("3. gün"); ileride göl sevgisi (3. adım) ve Dede'nin istekleri (4. adım).
+  - **Göl sevgisi** ✅ (çayın yanında; §10.5);
+  - başlıkta günün sırası ("3. gün"); ileride Dede'nin istekleri (4. adım).
   Panel açıkken saat durur; telefonda küçülmeden sığar.
 - **Sağ üst:** harita, defter, ayarlar (her biri ≥122).
 - ✅ **Sol alt:** yürüme halkası (252; sağ kenarı ipucu çubuğunun payının solunda; olta sudayken yok, sandalda yerinde "Kıyıya dön") ve üstünde teknik düğmesi (132).

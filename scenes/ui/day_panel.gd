@@ -7,8 +7,9 @@ extends Dialog
 ##   günde sis sabah ve gece);
 ## - Dede'yle çay: sonraki vakte geçilir (ücretsiz; tea_requested, main kararmayla geçer). İki çay arasında
 ##   en az bir balık tutulmalı (WorldState.can_tea): yoksa düğme pasif, Dede'nin sözü "Önce bir balık tut".
-## İleride (Dalga 4'ün 3. ve 4. adımı) göl sevgisi ve Dede'nin istekleri de burada. Yazılar refresh'te (her
-## açılışta, o anki dilde); panel dil uygulanmadan önce kurulur.
+## - Göl sevgisi (çayın yanında): seviye, çubuk, Nadir+ payı, nasıl artar.
+## İleride (Dalga 4'ün 4. adımı) Dede'nin istekleri de burada. Yazılar refresh'te (her açılışta, o anki dilde);
+## panel dil uygulanmadan önce kurulur.
 
 signal tea_requested
 
@@ -21,9 +22,12 @@ const TEA_ICON := 110.0
 const TEA_BUTTON := Vector2(340, 122)
 ## Hava satırında "Bugün" ve "Yarın" yazısının sütunu (iki satır hizalı dursun).
 const DAY_COLUMN := 190.0
+## Göl sevgisi kartının genişliği ve ikonu.
+const LOVE_CARD := 470.0
+const LOVE_ICON := 96.0
 
 var _cards: HBoxContainer
-var _tea_box: VBoxContainer
+var _tea_box: HBoxContainer
 ## Başlıktaki günün hapı (yazısı refresh'te).
 var _day_pill: PanelContainer
 var _day_label: Label
@@ -39,7 +43,8 @@ func _build() -> void:
 	_cards = HBoxContainer.new()
 	_cards.add_theme_constant_override("separation", 20)
 	body.add_child(_cards)
-	_tea_box = VBoxContainer.new()
+	_tea_box = HBoxContainer.new()
+	_tea_box.add_theme_constant_override("separation", 20)
 	body.add_child(_tea_box)
 
 
@@ -55,6 +60,7 @@ func refresh() -> void:
 	_cards.add_child(_weather_card(rules, save))
 	Dialog.clear(_tea_box)
 	_tea_box.add_child(_tea_card(rules, save))
+	_tea_box.add_child(_love_card(db, save))
 
 
 ## Şimdi: vaktin ikonu ve adı, saat ("18:24"), sonraki vakte kalan süre ("Geceye 3 dk").
@@ -149,6 +155,39 @@ func _tea_card(rules: FishingRules, save: SaveData) -> Control:
 		close_panel()
 		tea_requested.emit())
 	row.add_child(button)
+	return panel
+
+
+## Göl sevgisi: kalp, seviye, seviye içindeki ilerleme, Nadir+ payı (seviye 1'de nasıl artar).
+func _love_card(db: ContentDB, save: SaveData) -> Control:
+	var panel := _card("LoveCard")
+	panel.size_flags_horizontal = Control.SIZE_FILL
+	panel.custom_minimum_size.x = LOVE_CARD
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	panel.add_child(row)
+	var icon := GameIcon.make("love", LOVE_ICON)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(icon)
+	var text := VBoxContainer.new()
+	text.add_theme_constant_override("separation", 2)
+	text.alignment = BoxContainer.ALIGNMENT_CENTER
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(text)
+	var level := LakeLove.level(db.rules, save.love)
+	text.add_child(_display(tr("UI_LOVE_LEVEL") % level, UiKit.SIZE_BODY - 4, UiKit.INK))
+	var bar := BucketPanel.LoveBar.new()
+	bar.custom_minimum_size = Vector2(280, 16)
+	bar.progress = LakeLove.progress(db.rules, save.love)
+	text.add_child(bar)
+	var note := tr("UI_LOVE_HOW")
+	if level > 1:
+		note = tr("UI_LOVE_BONUS") % UiKit.format_percent((LakeLove.rare_bonus_pm(db.rules, level) - 1000) * 1000)
+	var how := UiKit.ink(note, 24, UiKit.INK_SOFT)
+	how.name = "LoveNote"
+	how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	how.max_lines_visible = 2
+	text.add_child(how)
 	return panel
 
 

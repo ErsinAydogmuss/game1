@@ -3,7 +3,8 @@ extends RefCounted
 ## Gölün o anki koşulları (docs/gdd.md §10.5): vakit (DayClock), hava (Weather) ve göl sevgisinin
 ## seviyesi (LakeLove). Saf: hepsi kayıttan türer (saat, seed, sevgi, bayraklar). Oturum, defter,
 ## dükkân ve denge botu oranları aynı koşullarla hesaplar (CatchOdds.context): ekranda yazan oran
-## gerçek orandır (gelir kuralı 10). Dede'yle çay da burada: sonraki vakte geçilir.
+## gerçek orandır (gelir kuralı 10). Dede'yle çay (sonraki vakte geçilir) ve balığı göle bırakmak (göl
+## sevgisi) da burada.
 
 
 ## { phase, weather, love } (love: seviye 1..10).
@@ -30,3 +31,16 @@ static func drink_tea(rules: FishingRules, save: SaveData) -> Dictionary:
 		return {}
 	save.tea_at = save.catches
 	return DayClock.skip_phase(rules, save)
+
+
+## Bir balık göle bırakıldı (kovadan, karttan, kova dolu olduğu için ya da koruma altındaki tür): deftere
+## (bırakılan sayısı), göl sevgisine (nadirliğine göre: rarities.json love) ve sayaca yazılır. Para
+## vermez. Döner: { love: eklenen, old_level, new_level } (seviye atladıysa bildirim).
+static func release(db: ContentDB, save: SaveData, fish_id: String) -> Dictionary:
+	Records.release(save.records, fish_id)
+	var rarity := int(db.fish_by_id(fish_id).get("rarity", 0))
+	var love := int(db.rarity_def(rarity).get("love", 0))
+	var out := LakeLove.add(db.rules, save, love)
+	out["love"] = love
+	save.stats["released"] = int(save.stats.get("released", 0)) + 1
+	return out
