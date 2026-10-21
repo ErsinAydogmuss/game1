@@ -915,7 +915,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   1. Dede efsaneyi anlatır (açılış filmi ve rütbe bölümleri bunu başlatır); ilk şişe sazlıkta çıkar.
   2. ✅ **Şişeler ve mektuplar.** Her bölgeden bir şişe, sırayla: sıradaki mektubun rütbesi gelmiş, son mektuptan beri
      en az 15 balık tutulmuş ve bölge açık olmalı. Mektuplar genç Nine ile Dede'nin gölün iki yakasından şişelerle
-     yazışması (tek numaralar Nine'nin, çiftler Dede'nin; 80–120 kelime): göl ölürken onu nasıl temizlediklerini anlatır.
+     yazışması (tek numaralar Nine'nin, çiftler Dede'nin; Türkçesi 51–60, İngilizcesi 81–94 kelime: kâğıda kaydırmadan
+     sığar): göl ölürken onu nasıl temizlediklerini anlatır.
 
      | # | Bölge | Rütbe | Mektup |
      |---|---|---|---|
