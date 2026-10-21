@@ -305,6 +305,40 @@ func _end_intro(_skipped: bool) -> void:
 	GameState.save_game()
 
 
+## Ayarlar'da HİKÂYE: ekran kararır, balıkçı iskelenin başına geçer (sandaldaysa iner), film baştan.
+## Kayıt değişmez: film zaten görülmüş, bitince iskeledesin.
+func _replay_story() -> void:
+	if session.state != FishingSession.State.IDLE or _card_up() or _film != null or fade.busy():
+		return
+	_stop_for_travel()
+	fade.play(func() -> void:
+		var db := GameState.db
+		var start: Vector2 = db.spot(spot_id)["start"]
+		_leave_boat()
+		angler.place(start)
+		angler.face_now(Vector2(0.0, -1.0))
+		var zone: Dictionary = Zones.at(db, spot_id, start)
+		session.set_pity_floor(CatchOdds.pity_floor(db, GameState.save, Zones.place(db, spot_id, str(zone.get("id", ""))),
+				session.technique.id))
+		session.relocate(start)
+		_follow_zone()
+		_snap_camera()
+		_play_intro())
+
+
+## Hikâyenin devamı (Story.CHAPTERS): rütbesi gelmiş ilk bölümü Dede anlatır, bir kez (bayrak kayda).
+## Anlattıysa true.
+func _tell_story() -> bool:
+	var save := GameState.save
+	var chapter := Story.next_chapter(Rank.rank(GameState.db, save), save)
+	if chapter == 0:
+		return false
+	_say(Story.tell(chapter, save))
+	_line_time = ADVICE_TIME
+	GameState.save_game()
+	return true
+
+
 ## Film durur (bitti ya da kayıt değişti): dev gölge silinir, olta elde, arayüz geri.
 func _stop_intro() -> void:
 	if _film == null:
@@ -934,6 +968,9 @@ func _on_catch() -> void:
 		_say(suggestion)
 	elif not zone_news and _trap_line_due():
 		_say_trap_open()
+	elif not zone_news:
+		# Yeni rütbenin hikâye bölümü (başka haber yoksa; varsa sonraki balıkta ya da Dede'ye dokununca).
+		_tell_story()
 	bobber.hide_bobber()
 	# Balığın sudan çıktığı yerde halka: çekişmenin son noktası (kıyıda suyun kenarı).
 	ripples.spawn(Vector2(bobber.fight_point.x, bobber.fight_point.z), 1.0, 0.8)
@@ -1921,9 +1958,14 @@ func _return_to_shore() -> void:
 	_travel(str(start.get("id", "")))
 
 
-## Dede'ye dokunuldu: sıradaki öğüdü ipucu çubuğunda söyler (balon, baş sallama).
+## Dede'ye dokunuldu: sıradaki öğüdü ipucu çubuğunda söyler (balon, baş sallama); rütbesi gelmiş
+## bir hikâye bölümü varsa önce onu.
 func _on_talk() -> void:
 	if session.state != FishingSession.State.IDLE or _card_up():
+		return
+	# Rütbesi gelmiş bir hikâye bölümü varsa önce o (bir kez), sonra öğütler.
+	if _tell_story():
+		Sounds.haptic(10)
 		return
 	var tips := Elder.tips(GameState.db, GameState.save)
 	_tip_index = _tip_index % tips.size() + 1
@@ -2031,6 +2073,7 @@ func _build_ui() -> void:
 	settings_panel = SettingsPanel.new()
 	layer.add_child(settings_panel)
 	settings_panel.rank_up_requested.connect(_debug_rank_up)
+	settings_panel.story_requested.connect(_replay_story)
 	shop_panel = ShopPanel.new()
 	layer.add_child(shop_panel)
 	shop_panel.spot_id = spot_id
@@ -2103,6 +2146,8 @@ func _build_ui() -> void:
 		input.release_all()
 		session.release()
 		_stop_loops()
+		# Hikâye yalnızca olta boşken yeniden izlenir (film iskelede baştan oynar).
+		settings_panel.story_ready = session.state == FishingSession.State.IDLE and not _card_up() and _film == null
 		settings_panel.open())
 	hud.action_down.connect(func() -> void: input.pointer(InputRouter.BUTTON_POINTER, true))
 	hud.action_up.connect(func() -> void: input.pointer(InputRouter.BUTTON_POINTER, false))

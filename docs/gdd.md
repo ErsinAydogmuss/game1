@@ -713,7 +713,19 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
 
   - Bekçi'nin dev gölgesi (5 m, masalsı turkuaz) derin ortada 10 m'lik bir yay çizip geçer; yalnızca görünüş,
     gölgelerin kuralına ve oranlara dokunmaz. Son sözde balıkçı Dede'ye döner, Dede'nin bambu oltası eline gelir.
-  - Hikâyeyi Ayarlar'dan yeniden izlemek ve rütbe atladıkça Dede'nin anlattığı devamı 🔜 (v0.4.1, sıradaki adım).
+  - ✅ Ayarlar'da HİKÂYE: film iskelede baştan oynar (sandaldaysan iner); olta suda değilken. Kayıt değişmez.
+- **Hikâyenin devamı** ✅ (v0.4.1): unvanın değiştiği rütbelerde (3, 6, 10, 15, 20) Dede hikâyeyi bir adım
+  sürdürür: o rütbeye gelince sonraki balıktan sonra (başka haber yoksa) ya da Dede'ye dokununca, her biri bir kez.
+  Dalga 4'teki finale (sisli gece, derin orta, Bekçi) hazırlar.
+
+  | Rütbe | Dede'nin sözü |
+  |---|---|
+  | 3 | Göl temizlenince Bekçi'nin gölgesini ilk kez gördük. |
+  | 6 | Bekçi her yaz derin ortadan geçer, iz bırakırmış. |
+  | 10 | Bıraktığın her balık Bekçi'ye selam götürür evlat. |
+  | 15 | Nine der ki Bekçi sisli gecelerde yüzeye çıkar. |
+  | 20 | Artık gölün efsanesisin. Bekçi seni bekliyor evlat. |
+
 - **Gölün Sırrı:**
   1. Dede efsaneyi anlatır (açılış filmi ve rütbe bölümleri bunu başlatır); ilk şişe sazlıkta çıkar.
   2. Her bölgeden bir mektup çıkar (6 mektup). Mektuplar Dede ile Nine'nin gençliğini anlatır: göl ölürken onu temizlemişler.

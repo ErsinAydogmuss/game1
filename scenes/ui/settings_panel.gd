@@ -1,6 +1,7 @@
 class_name SettingsPanel
 extends Dialog
-## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil; başlıkta "Nasıl oynanır?" (rehber:
+## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil; başlıkta HİKÂYE (açılış filmi yeniden:
+## story_requested; olta boşken, main açmadan önce story_ready verir) ve "Nasıl oynanır?" (rehber:
 ## help_requested). (Kazı'dan uyarlandı.)
 ## Sürüm yazısına arka arkaya 5 kez dokununca ölçüm açılır ya da kapanır (HUD'da FPS, çizim ve
 ## üçgen sayısı; telefonda hız ölçümü: docs/iphone-kurulum.md). Ölçüm açıkken geliştirme sürümünde
@@ -9,6 +10,8 @@ extends Dialog
 
 ## Bir rütbe atlatılsın (geliştirme sürümü; main gerçek akışla: bildirim, açılan yer, Dede).
 signal rank_up_requested
+## Açılış filmi yeniden izlensin (main iskelede baştan oynatır; kayıt değişmez).
+signal story_requested
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
@@ -16,19 +19,24 @@ const ROW_BUTTON := Vector2(300, 122)
 const DEBUG_COINS: Array[int] = [1000, 10000]
 ## Başlıktaki oyun logosunun kutusu (kapat düğmesinin boyunda: başlık uzamasın).
 const LOGO := Vector2(170, 122)
+## Panelin genişliği (başlıkta logo, başlık, HİKÂYE, "Nasıl oynanır?" ve kapat düğmesi).
+const WIDTH := 1300.0
 ## Ölçümü açan dokunuş sayısı ve iki dokunuş arasındaki en uzun süre (sn).
 const PERF_TAPS := 5
 const TAP_GAP := 0.8
 
 var _rows: VBoxContainer
-## Başlıktaki "Nasıl oynanır?" düğmesi (rehberin ana girişi; yazısı refresh'te).
+## Başlıktaki "Nasıl oynanır?" düğmesi (rehberin ana girişi; yazısı refresh'te) ve HİKÂYE düğmesi
+## (olta suda, kart açık ya da film oynarken pasif: story_ready).
 var _guide: Button
+var _story: Button
+var story_ready: bool = true
 var _taps: int = 0
 var _since_tap: float = 0.0
 
 
 func _build() -> void:
-	set_header(tr("UI_SETTINGS"), "settings", 1100.0)
+	set_header(tr("UI_SETTINGS"), "settings", WIDTH)
 	# Başlıkta ayar ikonu yerine oyunun logosu (Ersin'in; yoksa ikon kalır).
 	var logo := ItemArt.art("logo.png")
 	if logo != null:
@@ -42,7 +50,14 @@ func _build() -> void:
 		_icon.get_parent().add_child(rect)
 		_icon.get_parent().move_child(rect, _icon.get_index())
 		_icon.visible = false
-	# Rehber: başlıkta yazılı düğme (satır eklenince panel telefonda küçülürdü; başlıkta yer var).
+	# Hikâye ve rehber: başlıkta yazılı düğmeler (satır eklenince panel telefonda küçülürdü; başlıkta yer var).
+	_story = UiKit.button("", UiKit.SECONDARY, UiKit.SIZE_SMALL, Vector2(0, 122))
+	_story.name = "Story"
+	_story.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		close_panel()
+		story_requested.emit())
+	header_extra.add_child(_story)
 	_guide = UiKit.button("", UiKit.SECONDARY, UiKit.SIZE_SMALL, Vector2(0, 122))
 	_guide.name = "Guide"
 	_guide.pressed.connect(func() -> void:
@@ -58,7 +73,9 @@ func _build() -> void:
 
 
 func refresh() -> void:
-	set_header(tr("UI_SETTINGS"), "settings", 1100.0)
+	set_header(tr("UI_SETTINGS"), "settings", WIDTH)
+	_story.text = UiKit.upper(tr("UI_STORY_REPLAY"))
+	_story.disabled = not story_ready
 	_guide.text = UiKit.upper(tr("UI_GUIDE_OPEN"))
 	clear(_rows)
 	var settings := GameState.save.settings

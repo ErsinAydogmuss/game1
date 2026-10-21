@@ -462,7 +462,9 @@ func _play_first() -> void:
 ## güvenli alanda), ilk söz Nine'nin, dokununca sonraki söz (olta atılmaz), söz kendiliğinden de
 ## ilerler, her söz en çok iki satır, Bekçi'nin dev gölgesi derin ortada ekranda geçer, hediyede olta
 ## elde, sonunda arayüz ve ilk ipucu geri; kayıt değişince film temiz durur. Her çekimin çizim sayısı
-## (≤150). Telefon oranında ve --safe-inset=130 ile, TR ve EN.
+## (≤150). Sonra Ayarlar'da HİKÂYE (sazlıktan: film iskelede baştan, ATLA, balık sayısı aynı; olta
+## sudayken pasif) ve rütbe bölümleri (rütbe 3'te Dede'ye dokun: ilk bölüm; yine dokun: öğüt). Telefon
+## oranında ve --safe-inset=130 ile, TR ve EN.
 func _play_story() -> void:
 	_intro = true
 	_use_save(0)
@@ -552,9 +554,73 @@ func _play_story() -> void:
 			and not story.visible and hud.visible and main.get("_film") == null and _angler().rod.visible
 			and shadows.find_child("Keeper", false, false) == null and absf(camera.zoom - 1.0) < 0.01)
 	await _shot("11_durdu")
+	await _story_replay(story)
+	await _story_chapters()
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Ayarlar'da HİKÂYE: sazlıktan açılır, film iskelenin başında baştan oynar, ATLA'dan sonra iskeledesin
+## ve balık sayısı aynı; olta sudayken düğme pasif.
+func _story_replay(story: StoryPanel) -> void:
+	var hud := _hud()
+	var fade: Fade = main.get("fade")
+	var settings: SettingsPanel = main.get("settings_panel")
+	var start: Vector2 = GameState.db.spot(GameState.db.main_spot)["start"]
+	main.call("_travel", "reeds")
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(0.5)
+	var catches := GameState.save.catches
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	await _wait(0.4)
+	var replay := settings.find_child("Story", true, false) as Button
+	_check("ayarlarda HİKÂYE, panel küçülmeden sığar (%.2f)" % settings.fit_scale(), replay != null
+			and not replay.disabled and replay.text == UiKit.upper(tr("UI_STORY_REPLAY")) and settings.fit_scale() > 0.999)
+	_check_panel_buttons(settings, "ayarların düğmeleri")
+	await _shot("12_ayarlar")
+	if replay == null:
+		return
+	await _tap_control(replay)
+	var played := await _wait_until(func() -> bool: return story.visible and not fade.busy(), 5.0)
+	_check("HİKÂYE: film baştan, balıkçı iskelenin başında (%.1f m)" % _angler().pos2().distance_to(start),
+			played and not settings.visible and main.get("_film") != null and _angler().pos2().distance_to(start) < 0.3)
+	await _wait(1.0)
+	await _shot("13_yeniden")
+	await _tap(story.skip_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	_check("ATLA: iskeledesin, arayüz geri, balık sayısı aynı", not story.visible and hud.visible
+			and GameState.save.catches == catches and _angler().pos2().distance_to(start) < 0.3)
+	# Olta sudayken HİKÂYE pasif (film iskelede, olta boşken oynar).
+	await _wait(0.6)
+	await _tap_control(hud.action_button)
+	await _wait_until(func() -> bool: return _session().line_out(), 3.0)
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	await _wait(0.3)
+	replay = settings.find_child("Story", true, false) as Button
+	_check("olta sudayken HİKÂYE pasif", _session().line_out() and replay != null and replay.disabled)
+	settings.close_panel()
+	await _wait(0.3)
+
+
+## Hikâyenin devamı: rütbe 3'te Dede'ye dokununca ilk bölüm (bir kez), yine dokununca öğüt.
+func _story_chapters() -> void:
+	_use_save(1)
+	GameState.save.xp = GameState.db.rank_xp[2]
+	GameState.changed.emit()
+	await _wait(1.0)
+	await _tap(_screen(_elder().head_point()))
+	await _wait_frames(3)
+	_check("rütbe 3'te Dede'ye dokun: hikâyenin ilk bölümü", str(main.get("_hint_shown")) == "UI_DEDE_STORY_3"
+			and GameState.save.flags.has(Story.TOLD_FLAG % 3))
+	await _shot("14_bolum")
+	await _wait(0.5)
+	await _tap(_screen(_elder().head_point()))
+	await _wait_frames(3)
+	_check("yine dokun: öğüt, bölüm yinelenmez (%s)" % str(main.get("_hint_shown")),
+			str(main.get("_hint_shown")).begins_with("UI_DEDE_TIP_"))
 
 
 ## Filmdeki sözün yazısı (günlük için).

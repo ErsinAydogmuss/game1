@@ -118,6 +118,20 @@ func test_chapters_in_order_once() -> void:
 		assert_eq(Moods.of(key), Moods.STORY, "%s: Dede anlatır" % key)
 
 
+## Ayarlar'daki HİKÂYE düğmesinin yazısı (büyük harfle: Â, İ) başlık fontunda var.
+func test_replay_button_in_font() -> void:
+	var rows := _csv_rows()
+	assert_true(rows.has("UI_STORY_REPLAY"), "UI_STORY_REPLAY çevirisi var")
+	if not rows.has("UI_STORY_REPLAY"):
+		return
+	var font := UiKit.display_font()
+	for column in [1, 2]:
+		var text := (rows["UI_STORY_REPLAY"] as PackedStringArray)[column].replace("i", "İ").to_upper()
+		for i in text.length():
+			var c := text.unicode_at(i)
+			assert_true(c == 32 or font.has_char(c), "UI_STORY_REPLAY (%s): başlık fontunda yok: %s" % [_lang(column), char(c)])
+
+
 static func _lines(font: Font, text: String, width: float, size: int) -> int:
 	var flags := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
 	var box := font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, width, size, -1, flags)
