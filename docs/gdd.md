@@ -930,10 +930,11 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
      - Şişe bölgenin atış noktasından 2–4 m açıkta (derin ortada ilk şamandıranın yanında) suda yan yatar, sallanır,
        parlar, arada çevresinde halka. Çıkınca "Suda bir şişe var: Sazlık" bildirimi, haritada işareti, Dede'nin sözü
        ("Sazlıkta suda bir şey parlıyor evlat! Git bir bak.").
-     - Şişeye dokun: yakındaysan hemen, uzaktaysan kıyı yolundan yürüyüp alırsın; derin ortanınkine sandalla ilk
-       şamandıraya gidilir (kıyıdan dokununca Dede söyler). Şişe kalkar, mektup açılır: mektup kâğıdında başlık
-       ("Mektup 3/6"), mektubun adı, yazı, imza; kaydırmadan sığar. Kapanınca Dede yazanı tanır ("Bu yazıyı tanıdım
-       evlat... Nine'nin!"). Şişe alınana kadar suda bekler; süre yok (gelir kuralı 7).
+     - Şişeye dokun: yakındaysan hemen, uzaktaysan kıyı yolundan yürüyüp alırsın; şişe başka sudaysa ekran kararıp
+       oraya geçilir (derin ortanınkine sandalla ilk şamandıraya, sandaldan kıyıdakine sandaldan inilerek). Şişe
+       kalkar, mektup açılır: mektup kâğıdında başlık ("Mektup 3/6"), mektubun adı, yazı, imza; kaydırmadan sığar.
+       Kapanınca Dede yazanı tanır ("Bu yazıyı tanıdım evlat... Nine'nin!"). Şişe alınana kadar suda bekler; süre
+       yok (gelir kuralı 7).
      - Okunan mektuplar Balık Defteri'nin "Gölün Sırrı" sekmesinde (ilk mektuptan sonra görünür): altı mektup kartı
        (okunanlar yeniden açılır; sıradakinde bölgesi ve ne beklediği: rütbe, sandal ya da kaç balık), harita yapbozu,
        altın hamur.

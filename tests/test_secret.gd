@@ -91,6 +91,32 @@ func test_bottle_lies_in_its_zone_near_the_stand() -> void:
 	assert_true(not Dice.is_point(Secret.bottle_point(db, SPOT, "nowhere")), "bilinmeyen bölge")
 
 
+## Her şişeye uzanılır: kıyıdakine kıyı yolunun en yakın noktasından (yoldaki engellere pay bırakarak), derin
+## ortadakine ilk şamandıraya bağlanan sandaldan (LakeScene.BUOY_MOOR); main Secret.REACH içinde alır.
+func test_every_bottle_is_within_reach() -> void:
+	var db := content()
+	var lake := db.lake(SPOT)
+	var path := ShorePath.new(lake, lake.world_rect if lake.world_band != INF else Rect2())
+	for letter in Secret.LETTERS:
+		var zone_id := str(letter["zone"])
+		var zone := db.zone(SPOT, zone_id)
+		var p := Secret.bottle_point(db, SPOT, zone_id)
+		if not Dice.is_point(p):
+			continue
+		if bool(zone["boat"]):
+			var buoys: Array[Vector2] = zone["buoys"]
+			var boat := buoys[0] + LakeScene.BUOY_MOOR
+			assert_true(p.distance_to(boat) <= Secret.REACH - 1.0, "sandaldan uzanılır: %s (%.2f m)" % [zone_id,
+					p.distance_to(boat)])
+		else:
+			var stands: Array[Vector2] = zone["stands"]
+			var walk := path.nearest_open(p)
+			assert_true(p.distance_to(walk) <= Secret.REACH - 1.0, "kıyıdan uzanılır: %s (%.2f m)" % [zone_id,
+					p.distance_to(walk)])
+			# Sandaldan inilince bölgenin atış noktasına geçilir: şişe oradan da alınır.
+			assert_true(p.distance_to(stands[0]) <= Secret.REACH, "atış noktasından uzanılır: " + zone_id)
+
+
 func test_golden_dough_at_love_six() -> void:
 	var db := content()
 	var save := _save(6)

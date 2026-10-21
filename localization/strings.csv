@@ -508,9 +508,10 @@ UI_GUIDE_DEDE,Dede,Dede
 UI_GUIDE_DEDE_TEXT,He sits on the dock. Tap him for advice; he tells you when something new opens.,"İskelede oturur. Dokun, öğüt verir; yeni bir şey açılınca anlatır."
 UI_GUIDE_NINE,Nana,Nine
 UI_GUIDE_NINE_TEXT,She runs the shop. Tap her to sell fish and buy tackle.,"Dükkânın sahibi. Dokun: balık satar, takım alırsın."
-UI_GUIDE_BOOK_TEXT,"%d species. The ones you haven't caught are silhouettes; hints, records and odds are inside.","%d tür var. Tutmadığın tür siluettir; ipucu, rekor ve oranlar defterde."
+UI_GUIDE_BOOK_TEXT,"%d species. Uncaught ones are silhouettes; hints, records and odds are inside.","%d tür var. Tutmadığın tür siluettir; ipucu, rekor ve oranlar defterde."
 UI_GUIDE_GOAL,Your goal,Hedef
-UI_GUIDE_GOAL_TEXT,Catch every species! The protected sturgeon goes back to the lake. And the lake has a secret…,Bütün türleri tut! Koruma altındaki mersin göle bırakılır. Bir de gölün bir sırrı var…
+UI_GUIDE_GOAL_TEXT,Catch every species! Let the protected sturgeon go. And the lake has a secret…,Bütün türleri tut! Koruma altındaki mersin göle bırakılır. Bir de gölün bir sırrı var…
+UI_GUIDE_SECRET_TEXT,Glowing bottles in the water hold old letters. Dede's golden requests complete the map.,Parlayan şişelerde eski mektuplar var. Dede'nin altın istekleri haritayı tamamlar.
 UI_INTRO_1,"Welcome, dear! This summer you'll stay with us in the lake village.","Hoş geldin evladım! Bu yaz bizimle, göl köyünde kalacaksın."
 UI_INTRO_2,"Look at this lake, kiddo. Sparkling, isn't it?","Şu göle bak evlat. Pırıl pırıl, değil mi?"
 UI_INTRO_3,"When we were young, this lake was dying. The water was murky, the fish were gone.","Biz gençken bu göl ölüyordu. Su bulanıktı, balıklar kaçmıştı."
@@ -622,13 +623,11 @@ LETTER_6,"To the girl of the reeds,\nI'm dropping this bottle from my boat, righ
 LETTER_6_FROM,The boy from the other shore,Karşı yakanın oğlanı
 UI_LETTER_N,Letter %d/%d,Mektup %d/%d
 UI_BOTTLE_SEEN,A bottle in the water: %s,Suda bir şişe var: %s
-UI_BOTTLE_BOAT,The bottle is by the first buoy,Şişe ilk şamandıranın yanında
 UI_GOLDEN_TITLE,Dede's golden request,Dede'nin altın isteği
 UI_GOLDEN_NEW,Dede's golden request! Tap the clock.,Dede'nin altın isteği! Saate dokun.
 UI_GOLDEN_DONE,Map piece %d/%d! +%s coins,Harita parçası %d/%d! +%s para
 UI_DEDE_BOTTLE_FIRST,"Something's shining in the reeds, kid! Go and see.",Sazlıkta suda bir şey parlıyor evlat! Git bir bak.
 UI_DEDE_BOTTLE,"Another bottle, kid: %s!",Bir şişe daha çıktı evlat: %s!
-UI_DEDE_BOTTLE_FAR,"Take the boat to the first buoy, kid.",Sandalla ilk şamandıraya git evlat.
 UI_DEDE_LETTER_1,"I know this writing, kid... It's Nana's!",Bu yazıyı tanıdım evlat... Nine'nin!
 UI_DEDE_LETTER_2,"I wrote this one, kid! What days those were...",Bunu ben yazmışım evlat! Ne günlerdi...
 UI_DEDE_LETTER_3,The first lily... Nana cried with joy that day.,İlk nilüfer... Nine o gün sevinçten ağlamıştı.
@@ -636,7 +635,7 @@ UI_DEDE_LETTER_4,"That night I saw the Keeper, the only time ever.",O gece Bekç
 UI_DEDE_LETTER_5,"Golden dough! Nana still knows that recipe, kid.",Altın hamur! Nine o tarifi hâlâ bilir evlat.
 UI_DEDE_LETTER_6,"That's where I saw the Keeper. Finish the map, kid!",Bekçi'yi gördüğüm yer orası. Haritayı tamamla!
 UI_DEDE_GOLDEN_FIRST,"I once tore my old map in four. Tap the clock, kid!",Eski haritamı dörde yırtmıştım. Saate dokun evlat!
-UI_DEDE_GOLDEN_DONE,"Another map piece! Check your book, kid.",Bir harita parçası daha! Deftere bak evlat.
+UI_DEDE_GOLDEN_DONE,"A piece of the map! Check your book, kid.",Haritanın bir parçası! Deftere bak evlat.
 UI_DEDE_MAP_DONE,The map is whole! The X is at the first buoy.,"Harita tamam! X, ilk şamandıranın orada."
 UI_BOOK_TAB_SECRET,Lake's Secret,Gölün Sırrı
 UI_BOOK_TAB_FISH,Fish,Balıklar

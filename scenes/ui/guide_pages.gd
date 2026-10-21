@@ -48,7 +48,8 @@ const PILL_MARGIN := Vector2(12, 16)
 ## - kimlik ve görsel: action (eylem düğmesi; let_go gerilim çubuğu), icon (GameIcon), category
 ##   (takımın resmi), portrait (konuşanın yüzü);
 ## - başlık ve metin anahtarı;
-## - kilit: lock "bag" (Takım Çantası, ilk teknikle açılır) ya da "requests" (Dede'nin istekleri);
+## - kilit: lock "bag" (Takım Çantası, ilk teknikle açılır), "requests" (Dede'nin istekleri) ya da "secret"
+##   (Gölün Sırrı: ilk şişenin rütbesi);
 ##   takım kategorisinin kilidi kategorisinden gelir;
 ## - stars: kategorinin başlangıç taşıması yıldızla gösterilir.
 ## "from" alanı karoları veriden kurar: rarities, techniques ya da zones. "steps": karolar sıralı
@@ -109,12 +110,14 @@ const PAGES: Array[Dictionary] = [
 			{ "id": "requests", "icon": "requests", "title": "UI_REQ_TITLE", "text": "UI_GUIDE_REQUESTS_TEXT",
 				"lock": "requests" },
 		] },
-	{ "id": "people", "icon": "book", "title": "UI_GUIDE_PEOPLE", "lead": "UI_GUIDE_PEOPLE_LEAD", "layout": "row4",
+	{ "id": "people", "icon": "book", "title": "UI_GUIDE_PEOPLE", "lead": "UI_GUIDE_PEOPLE_LEAD", "layout": "row5",
 		"tiles": [
 			{ "id": "dede", "portrait": "dede_smile", "title": "UI_GUIDE_DEDE", "text": "UI_GUIDE_DEDE_TEXT" },
 			{ "id": "nine", "portrait": "nine_smile", "title": "UI_GUIDE_NINE", "text": "UI_GUIDE_NINE_TEXT" },
 			{ "id": "book", "icon": "book", "title": "UI_BOOK", "text": "UI_GUIDE_BOOK_TEXT" },
 			{ "id": "goal", "icon": "trophy", "title": "UI_GUIDE_GOAL", "text": "UI_GUIDE_GOAL_TEXT" },
+			{ "id": "secret", "icon": "bottle", "title": "UI_SECRET_TITLE", "text": "UI_GUIDE_SECRET_TEXT",
+				"lock": "secret" },
 		] },
 ]
 
@@ -335,6 +338,8 @@ static func _tile(db: ContentDB, raw: Dictionary) -> Dictionary:
 			tile["rank"] = bag_rank(db)
 		"requests":
 			tile["rank"] = db.requests.unlock_rank
+		"secret":
+			tile["rank"] = int(Secret.LETTERS[0]["rank"])
 	return tile
 
 

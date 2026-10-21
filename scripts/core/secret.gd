@@ -24,6 +24,9 @@ const LETTER_GAP := 15
 const BOTTLE_RANGE: Array[float] = [3.0, 2.6, 3.4, 2.2, 3.8]
 const BOTTLE_BUOY: Array[float] = [1.8, 2.2, 1.4]
 const BOTTLE_SHORE := 0.6
+## Şişeye uzanma payı (m): balıkçı (ya da sandal) bu kadar yakındayken şişeyi alır; her şişe kıyı yolunun ya da
+## ilk şamandıraya bağlanan sandalın bu kadar yakınında (test_secret).
+const REACH := 5.0
 ## Altın hamur: göl sevgisinin bu seviyesinde Nine verir (dükkâna uğrayınca; bayrak kayıtta).
 const DOUGH_LOVE := 6
 const DOUGH_FLAG := "golden_dough"

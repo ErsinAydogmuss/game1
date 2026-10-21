@@ -69,9 +69,9 @@ const FAR_HIGH := 0.8
 const TRAP_REACH := 5.0
 const TRAP_SYNC_EVERY := 1.0
 ## Gölün Sırrı (5. adım): şişeye bu kadar yakından (m) dokunulunca alınır; uzaktaysa balıkçı kıyı yolundan
-## yürür (derin ortadaki şişeye sandal ilk şamandıraya gider). Dede'nin şişeyi söylediği bayrak (mektubun
-## numarasıyla) ve altın isteklerin ilk sözünün bayrağı.
-const BOTTLE_REACH := 5.0
+## yürür (başka sudaki şişeye geçilir: sandal derin ortanın ilk şamandırasına, sandaldan kıyıdakine iniş). Dede'nin
+## şişeyi söylediği bayrak (mektubun numarasıyla) ve altın isteklerin ilk sözünün bayrağı.
+const BOTTLE_REACH := Secret.REACH
 const BOTTLE_FLAG := "told_bottle_%d"
 const GOLDEN_TOLD_FLAG := "told_golden"
 ## Gece lambaların ışık havuzları (yarıçap m, güç): Nine'nin feneri balıkçının çevresinde (ilk gece
@@ -1231,13 +1231,15 @@ func _sync_request_badge() -> void:
 	hud.world_badge = unseen
 
 
-## Bugün paneli açıldı: istekler görüldü (rozet söner). İstekler varken açıldıysa Dede'nin "saate dokun"u
-## gereksiz: söylenmiş sayılır.
+## Bugün paneli açıldı: istekler görüldü (rozet söner). İstekler (altın istek de) varken açıldıysa Dede'nin
+## "saate dokun"u gereksiz: söylenmiş sayılır.
 func _mark_requests_seen() -> void:
 	var save := GameState.save
 	save.flags[REQ_SEEN_FLAG] = save.request_serial
 	if not Requests.daily(GameState.db, save).is_empty():
 		save.flags[REQ_TOLD_FLAG] = true
+	if not Requests.golden(GameState.db, save).is_empty():
+		save.flags[GOLDEN_TOLD_FLAG] = true
 	_sync_request_badge()
 
 
@@ -1335,6 +1337,7 @@ func _debug_secret() -> void:
 		if i >= 0:
 			var letter := Secret.LETTERS[i]
 			save.xp = maxi(save.xp, db.rank_xp[int(letter["rank"]) - 1])
+			save.catches = maxi(save.catches, Secret.LETTER_GAP)
 			save.letter_at = mini(save.letter_at, save.catches - Secret.LETTER_GAP)
 			if bool(db.zone(spot_id, str(letter["zone"])).get("boat", false)) and not Zones.BOAT in save.owned:
 				save.owned.append(Zones.BOAT)
@@ -1433,6 +1436,9 @@ func _world_line() -> bool:
 	for at in LOVE_LINES:
 		if love >= at and not save.flags.has(LOVE_FLAG % at):
 			save.flags[LOVE_FLAG % at] = true
+			# 6'nın sözü "Nine'ye uğra": altın hamur zaten alındıysa söylenmez.
+			if at == Secret.DOUGH_LOVE and Secret.has_dough(save):
+				continue
 			_say("UI_DEDE_LOVE_%d" % at)
 			return true
 	var cond := world_clock.conditions()
@@ -2629,7 +2635,9 @@ func _sync_bottle() -> void:
 
 
 ## Şişeye dokunuldu (olta boşken): yakındaysa alınır. Uzaktaysa kıyıda balıkçı kıyı yolundan yürür, varınca
-## alır; derin ortadaki şişeye sandaldayken sandal ilk şamandıraya gider, karadan Dede sandalı söyler.
+## alır; şişe başka sudaysa oraya geçilir (ekran kararır): derin ortadakine sandal ilk şamandıraya gider (karadan
+## da: şişe ancak sandal alınınca çıkar), sandaldan kıyıdakine sandaldan inilip bölgenin atış noktasına geçilir.
+## Şişe geçişten sonra alınır.
 func _on_bottle_tapped() -> void:
 	if session.state != FishingSession.State.IDLE or _card_up() or not bottle.visible:
 		return
@@ -2641,17 +2649,15 @@ func _on_bottle_tapped() -> void:
 		angler.stop()
 		_take_bottle()
 		return
-	var zone := GameState.db.zone(spot_id, Secret.bottle_zone(GameState.save))
-	if bool(zone.get("boat", false)):
-		if in_boat:
-			# Geçiş bekleyen toplamaları unutur: şişe geçişten sonra beklenir.
+	var zone_id := Secret.bottle_zone(GameState.save)
+	var deep := bool(GameState.db.zone(spot_id, zone_id).get("boat", false))
+	if deep or in_boat:
+		# Geçiş bekleyen toplamaları unutur: şişe geçişten sonra beklenir.
+		if deep:
 			_go_boat(0)
-			_pending_bottle = true
 		else:
-			_say("UI_DEDE_BOTTLE_FAR")
-		return
-	if in_boat:
-		_say("UI_DEDE_BOTTLE_FAR")
+			_travel(zone_id)
+		_pending_bottle = true
 		return
 	_pending_bottle = true
 	_walk_route(p)

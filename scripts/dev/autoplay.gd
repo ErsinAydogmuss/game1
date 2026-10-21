@@ -2890,6 +2890,15 @@ func _play_secret() -> void:
 	GameState.changed.emit()
 	await _wait(1.0)
 	_check("rütbe 2'de şişe yok", not bottle.visible)
+	var book: BookPanel = main.get("book_panel")
+	await _tap_control(_hud().book_button)
+	await _wait_until(func() -> bool: return book.visible, 2.0)
+	await _wait(0.4)
+	var early := book.find_child("ViewButton", true, false) as Button
+	_check("ilk mektuptan önce defterde Gölün Sırrı yok", book.view() == "fish"
+			and (early == null or not early.is_visible_in_tree()))
+	book.close_panel()
+	await _wait(0.4)
 	# Rütbe 3: sazlıkta şişe.
 	save.xp = db.rank_xp[2]
 	GameState.changed.emit()
@@ -2925,7 +2934,6 @@ func _play_secret() -> void:
 	_check("kapanınca Dede yazanı tanır", await _wait_until(func() -> bool:
 			return str(main.get("_line")) == "UI_DEDE_LETTER_1", 3.0))
 	# Defter: ilk mektuptan sonra Gölün Sırrı görünüşü (düğmesi sayfa düğmelerinin sağında).
-	var book: BookPanel = main.get("book_panel")
 	await _tap_control(_hud().book_button)
 	await _wait_until(func() -> bool: return book.visible, 2.0)
 	await _wait(0.5)
@@ -2960,6 +2968,10 @@ func _play_secret() -> void:
 	await _wait(0.5)
 	_check("rütbe 4 ve 15 balık: iskele koyunda şişe", bottle.visible and Secret.bottle_zone(save) == "dock_cove")
 	await _travel_to("dock_cove")
+	await _wait(1.0)
+	# İskelede (çizimin en çok olduğu yer) şişe ve arada çevresindeki halka: bir halka aralığı boyunca en çok.
+	var dock_draws := await _measure_draws(int(BottleMarker.RIPPLE_EVERY * 30.0) + 10)
+	_check("ÇİZİM iskelede şişe ve halkasıyla: %d (≤150)" % int(dock_draws["draws"]), int(dock_draws["draws"]) <= 150)
 	_angler().place(Vector2(0.0, 9.5))
 	await _wait(0.8)
 	var far := _angler().pos2().distance_to(bottle.spot())
@@ -3031,15 +3043,33 @@ func _play_secret() -> void:
 	_check("takım çantasında dipte altın hamur", bag.find_child("Dough", true, false) != null)
 	bag.close_panel()
 	await _wait(0.3)
-	# Derin ortanın şişesi: sandal üçüncü şamandırada, şişeye dokununca ilk şamandıraya gider ve alır.
-	save.letters = Secret.LETTERS.size() - 1
+	# Sandaldayken kıyıdaki şişeye (dere ağzı, mektup 5) dokununca sandaldan inilip dere ağzına geçilir, şişe alınır.
+	save.letters = 4
 	save.letter_at = save.catches - Secret.LETTER_GAP
-	save.xp = db.rank_xp[11]
+	save.xp = db.rank_xp[9]
 	if not Zones.BOAT in save.owned:
 		save.owned.append(Zones.BOAT)
 	GameState.changed.emit()
 	await _wait(0.3)
 	var fade: Fade = main.get("fade")
+	main.call("_go_boat", 1)
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(0.5)
+	_check("sandalda; dere ağzında şişe (mektup 5)", bool(main.get("in_boat")) and bottle.visible
+			and Secret.bottle_zone(save) == "stream_mouth")
+	main.call("_on_bottle_tapped")
+	_check("sandaldan kıyıdaki şişeye: dere ağzına geçilir ve alınır (mektup 5)", await _wait_until(func() -> bool:
+			return letters.visible, 8.0) and save.letters == 5 and not bool(main.get("in_boat")))
+	await _wait(0.4)
+	await _tap_control(letters.close_button)
+	await _wait(0.5)
+	# Derin ortanın şişesi: sandal üçüncü şamandırada, şişeye dokununca ilk şamandıraya gider ve alır.
+	save.letters = Secret.LETTERS.size() - 1
+	save.letter_at = save.catches - Secret.LETTER_GAP
+	save.xp = db.rank_xp[11]
+	GameState.changed.emit()
+	await _wait(0.3)
 	main.call("_go_boat", 2)
 	await _wait_frames(2)
 	await _wait_until(func() -> bool: return not fade.busy(), 4.0)

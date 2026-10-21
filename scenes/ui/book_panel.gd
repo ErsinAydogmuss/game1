@@ -678,7 +678,7 @@ func _letter_card(db: ContentDB, save: SaveData, n: int) -> Button:
 		return b
 	top.add_child(DayPanel._display("?", 64, Color(UiKit.INK_SOFT, 0.7 if next else 0.4)))
 	if next:
-		var when := _wrapped(_next_text(db, save, n), 24, UiKit.INK_SOFT)
+		var when := _wrapped(_next_text(db, save, n), 24, UiKit.INK_SOFT, LETTER_CARD.x - 24.0)
 		when.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		when.max_lines_visible = 2
 		column.add_child(when)
@@ -726,8 +726,9 @@ func _boat_zone(db: ContentDB) -> Dictionary:
 	return {}
 
 
-static func _wrapped(text: String, size: int, color: Color) -> Label:
+## Satıra bölünen yazı (genişliği verilmezse haritanın kartının sütunu).
+static func _wrapped(text: String, size: int, color: Color, width: float = SECRET_MAP.x - 20.0) -> Label:
 	var label := UiKit.ink(text, size, color)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.custom_minimum_size = Vector2(SECRET_MAP.x - 20.0, 0)
+	label.custom_minimum_size = Vector2(width, 0)
 	return label

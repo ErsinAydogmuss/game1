@@ -188,7 +188,8 @@ func _world_row() -> void:
 		Sounds.play("ui_tap")
 		love_requested.emit())
 	var finish := _debug_button(row, "DebugRequest", tr("UI_DEBUG_REQUEST"))
-	finish.disabled = Requests.daily(GameState.db, GameState.save).is_empty()
+	finish.disabled = Requests.daily(GameState.db, GameState.save).is_empty() \
+			and Requests.golden(GameState.db, GameState.save).is_empty()
 	finish.pressed.connect(func() -> void:
 		Sounds.play("ui_tap")
 		finish_request_requested.emit())

@@ -98,6 +98,14 @@ func test_guide_covers_the_game() -> void:
 			assert_true(GuidePages.WHERE_KEYS.has(t), "tekniğin yeri yazılmamış: " + t)
 	for fx: String in ContentDB.SHADOW_FX:
 		assert_true(GuidePages.SHADOW_KEYS.has(fx), "gölge ipucunun yazısı yok: " + fx)
+	# Gölün Sırrı: ilk şişenin rütbesinde açılır.
+	var secret := {}
+	for tile in GuidePages.tiles_of(db, "people"):
+		if str(tile["id"]) == "secret":
+			secret = tile
+	assert_true(not secret.is_empty(), "Gölün Sırrı rehberde")
+	if not secret.is_empty():
+		assert_eq(int(secret["rank"]), int(Secret.LETTERS[0]["rank"]), "sırrın kilidi ilk şişenin rütbesi")
 
 
 ## Dükkânın her sekmesinin "?"si o sekmedeki takımı anlatan sayfayı açar (her teknikte).
