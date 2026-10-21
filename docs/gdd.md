@@ -323,7 +323,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   | Kocabaş | yalnızca gece | yalnızca yağmur |
 
   Koşulu gelince payı: Ay Turnası nilüferli koyda şamandırayla ~%2,5, spinle ~%7; Kocabaş derin ortada dipte ~%6.
-  Denge botunda (16 saat, 6 seed) Ay Turnası ilk kez 26–111. dakikada, Kocabaş 142–433. dakikada (bir seed'de hiç).
+  Denge botunda (16 saat, 6 seed; vakit değişince bölgesini yeniden seçer) Ay Turnası ilk kez 26–119. dakikada,
+  Kocabaş 146–596. dakikada (bir seed'de 16 saatte hiç): fırtınalı gece derin ortada dipte olmak şansa bağlı.
 - **Eşyalar:** eski çizme, teneke, mesajlı şişe (hikâye), paslı anahtar. Çöp toplamak göl sevgisi verir.
 - **Katalog:** bütün oranlar araçla üretilen `docs/balik-katalogu.md`'de yazar.
 
@@ -501,10 +502,13 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
     - şamandırayla gelmiyorsa hangi teknikle ("Şununla tutulur: Spin, Sinek"; tuzak türünde "Şununla da tutulur: Dip");
     - yaşadığı bölgeler (tuzağınkilerle aynıysa yinelenmez) ve ne sıklıkla görüldüğü.
   - ✅ Dalga 4'teki hâli (1. adım): 18 tür, iki sayfa (12 + 6). Oranlar gölün şimdiki koşuluyla (vakit, hava, göl
-    sevgisi); başlığın altında "Şimdi: Akşam · Yağmurlu" (sevgi seviyesi 2'den büyükse "· Göl sevgisi 2 (Nadir+ +%4)").
-    Tutulmamış türün vakit ipucu: belli vakitte geliyorsa "Yalnızca gece çıkar." / "Yalnızca fırtınalı gecelerde
-    yemlenir.", yoksa en sevdiği vakit ("En çok sabah gelir.") ve hava ("Yağmuru sever.") çarpanı en az 1,3 ise.
-    Dükkânın yem kartı da şimdiki koşulla.
+    sevgisi); başlıkta koşulun hapı: vaktin ve havanın ikonu, "Akşam · Yağmurlu" (yağmurlu gecede "Fırtınalı"; sevgi
+    seviyesi 2'den büyükse "· Göl sevgisi 2 (Nadir+ +%4)"). Tutulmamış türün vakit ipucu tek satırda: belli vakitte
+    geliyorsa "Yalnızca gece çıkar." / "Yalnızca fırtınalı gecelerde yemlenir.", yoksa en sevdiği vakit ("En çok
+    sabah gelir.") ve hava ("Yağmuru sever.") çarpanı en az 1,3 ise. Ay Turnası ve Kocabaş'ta "Gölün efsanesi:
+    tutulur, göle bırakılır." (mersinde koruma sözü). Dükkânın yem kartı da şimdiki koşulla. Defter, telefonda
+    güvenli alanın içinde (inceleme: koşul satırları eklenince alttan taşıyordu; paneller artık güvenli alanın
+    ortasında, `Dialog`).
 - ✅ **Oranlar ve koşul** (Dalga 4): oran iki aşamada hesaplanır. Önce bugünkü hesap (ağırlık × yem × teknik
   yatkınlığı; o koşulda gelmeyen tür 0), sonra çıkan oran × türün koşul çarpanı (vakit × hava × sevginin Nadir+ payı,
   binde) yeniden toplamı 1.000.000'a. Bütün çarpanlar 1 ise ikinci aşama atlanır: koşulsuz her sayı eskisi gibi
@@ -728,11 +732,13 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - **Sonuç** (`economy_report.gd -- --hours=16 --seeds=6`): saatte ~6.550–6.850 para ve ~167 av (önce ~5.900–6.200 ve 187: dip az ama iri balık getirir); rütbe 20'ye 5,3–5,5 saatte (önce 6,0–6,2); bütün takım 13,5–13,9 saatte (hedef 8–15). Bot zamanının ~%57'sini dipte (derin ortada), ~%36'sını sinekte (dere ağzında), ~%3–5'ini spinde, ~%1–3'ünü şamandırada geçiriyor; spin rütbe 2–7 arasında kıyı bölgelerinde, şamandıra yeni türleri tutmak için. Tuzaklar 16 saatte ~123 kerevit.
   - **Değerlendirme:** her tekniğin öne çıktığı bir yer var; spin sazlıkta ve iskele koyunda da güçlü (yırtıcılar), oyunun sonunda kıyının en iyisi dere ağzında sinek, derin ortada dip. Bot spinde yemi hiç bekletmediği için takılmayı ölçmüyor; insan için sazlık ve kayalık spinde biraz daha yavaş.
 - ✅ **Dalga 4, vakit ve hava ölçümü** (1. adım; `economy_report.gd -- --hours=16 --seeds=6`): denge botu oyun saatini
-  sürer (satış ve teknik değiştirme süresi saati ilerletmez), her atış o anki vakit, hava ve sevgiyle; yağmurda balık
-  0,83 kat sürede gelir (`session_timing.gd -- --weather=rain` ile `--weather=clear` ölçümünün oranı: geliş 4,65 → 3,85 sn,
-  satışsız saatte 216 → 219 av; `sim.json` `weather.rain_approach`). Sonuç: saatte 6.842–7.042 para (önce 6.557–6.836:
-  +%3,5; bot bölgeyi o vaktin en iyisine göre seçer) ve 165–167 av (önce 166–168). Vakitlere zamanın ~%25'i, havalara
-  açık %44–67, bulutlu %18–37, yağmur %8–22, sis %4–9. Korkuluklar yeşil (310 dakikada saatte 4.743–5.008 para).
+  sürer (satış, teknik değiştirme ve haritadan geçiş saati ilerletmez: oyunda panel ve kararma saati durdurur), her
+  atış o anki vakit, hava ve sevgiyle; vakit değişince bot bölgesini ve tekniğini yeniden seçer (oyuncu gibi: gece
+  Ay Turnası için nilüferli koya); yağmurda balık 0,84 kat sürede gelir (`session_timing.gd -- --weather=rain` aynı
+  seed'lerle açık havada da ölçer: geliş 4,62 → 3,88 sn, satışsız saatte 216 → 219 av; `sim.json`
+  `weather.rain_approach`). Sonuç: saatte 6.717–7.333 para (önce 6.557–6.836: ~+%4) ve 165–167 av (önce 166–168).
+  Vakitlere zamanın ~%25'i. Ay Turnası ilk kez 26–119. dakikada. Rütbe 9'a cam kamıştan önce varan bot önce sandala
+  biriktirir: cam kamış 54–150. dakikada (korkuluk 160'a genişledi; Dalga 3'te 52–87). Korkuluklar yeşil.
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 

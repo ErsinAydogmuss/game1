@@ -327,7 +327,7 @@ func test_v5_bad_values_are_sanitized() -> void:
 	assert_eq(s.letter_at, 0, "eksi şişe sayacı sıfırlanır")
 	assert_eq(s.map_pieces, SaveData.MAX_MAP_PIECES, "parça sınırda")
 	assert_eq(s.keeper, 0, "eksi Bekçi sayısı sıfırlanır")
-	assert_eq(s.request_serial, 0, "eksi istek sayacı sıfırlanır")
+	assert_eq(s.request_serial, 1, "eksi istek sayacı kayıttaki isteklerin sırasının üstünde (sırasız istek 0)")
 	assert_eq(s.request_day, -1, "gün en az -1")
 	assert_eq(s.reroll_day, -1, "yazı olan gün varsayılana döner")
 	assert_eq(s.requests.size(), 2, "yuvası tekrarlı, bozuk ya da türsüz istek düşer")
@@ -339,6 +339,20 @@ func test_v5_bad_values_are_sanitized() -> void:
 		assert_eq(int(s.requests[1]["goal"]), 1, "hedef en az 1")
 		assert_eq(s.requests[1]["want"], {}, "bozuk istek bilgisi boş")
 	assert_eq(str(s.traps[0]["trash"]), "", "yazı olmayan çöp boş")
+
+
+## Son çayın ve sıradaki şişenin sayacı tutulan balıktan büyük olamaz; istek sayacı kayıttaki isteklerin
+## sırasının üstünde kalır (aynı zar aynı isteği vermesin).
+func test_v5_counters_follow_the_save() -> void:
+	var s := SaveData.from_dict({
+		"version": 5, "catches": 3, "tea_at": 50, "letter_at": 80, "request_serial": 2,
+		"requests": [{ "slot": 0, "kind": "fish", "serial": 7, "goal": 2 }, { "slot": 1, "kind": "zone", "serial": 4 }],
+	})
+	assert_eq(s.tea_at, 3, "çay sayacı balık sayısında kalır")
+	assert_eq(s.letter_at, 3, "şişe sayacı balık sayısında kalır")
+	assert_eq(s.request_serial, 8, "istek sayacı isteklerin en büyük sırasının bir üstü")
+	var kept := SaveData.from_dict({ "version": 5, "catches": 9, "tea_at": 4, "letter_at": 6, "request_serial": 12 })
+	assert_eq([kept.tea_at, kept.letter_at, kept.request_serial], [4, 6, 12], "doğru sayaçlar değişmez")
 
 
 ## Rütbe puanı eğriden eğriye taşınınca her eşikte ve aralığın içinde rütbe aynı kalır,

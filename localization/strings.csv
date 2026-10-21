@@ -278,6 +278,7 @@ UI_BOOK_NOT_CAUGHT,Not caught yet.,Henüz tutulmadı.
 UI_BOOK_BEST,Biggest: %d cm,En büyük: %d cm
 UI_BOOK_COUNT,Caught: %d · Released: %d,Tutulan: %d · Bırakılan: %d
 UI_BOOK_PROTECTED,"Protected: caught, admired and let go.","Koruma altında: tutulur, sevilir, göle bırakılır."
+UI_BOOK_LEGEND,"A lake legend: caught, then let go.","Gölün efsanesi: tutulur, göle bırakılır."
 UI_BOOK_BAIT_HINT,Favourite bait: %s,Sevdiği yem: %s
 UI_BOOK_LURE_HINT,Favourite lure: %s,Sevdiği yapay yem: %s
 UI_BOOK_FLY_HINT,Favourite fly: %s,Sevdiği sinek: %s
@@ -295,7 +296,7 @@ UI_BOOK_HINT_WHEN_night,Most often at night.,En çok gece gelir.
 UI_BOOK_HINT_LIKES_cloudy,Loves cloudy days.,Bulutlu havayı sever.
 UI_BOOK_HINT_LIKES_rain,Loves the rain.,Yağmuru sever.
 UI_BOOK_HINT_LIKES_fog,Loves misty days.,Sisi sever.
-UI_BOOK_NOW,Now: %s · %s,Şimdi: %s · %s
+UI_BOOK_NOW,%s · %s,%s · %s
 UI_BOOK_LOVE,Lake love %d (Rare+ +%s),Göl sevgisi %d (Nadir+ +%s)
 UI_BOOK_HINT_SOMETIMES,Sometimes seen in this lake.,Bu gölde ara sıra görülür.
 UI_BOOK_HINT_RARELY,Rarely seen in this lake.,Bu gölde nadiren görülür.

@@ -86,9 +86,34 @@ func refresh() -> void:
 		if save.records.has(str(f["id"])):
 			found += 1
 	count.add_child(UiKit.title("%d / %d" % [found, fish.size()], 46, UiKit.ACCENT, HORIZONTAL_ALIGNMENT_CENTER, 10))
+	header_extra.add_child(_conditions_pill(db, save))
 	header_extra.add_child(count)
 	_build_grid(db, save, fish)
 	_build_detail(db, save)
+
+
+## Başlıkta gölün şimdiki koşulu (oranlar ona göre): vaktin ve havanın ikonu, "Gece · Fırtınalı" (yağmurlu
+## gece fırtına) ve sevgi seviyesi 2'den büyükse sevginin Nadir+ payı.
+func _conditions_pill(db: ContentDB, save: SaveData) -> PanelContainer:
+	var cond := WorldState.conditions(db, save)
+	var phase := str(cond["phase"])
+	var weather := "storm" if Weather.stormy(str(cond["weather"]), phase) else str(cond["weather"])
+	var pill := PanelContainer.new()
+	pill.add_theme_stylebox_override("panel", UiKit.pill_style(Color(0.18, 0.1, 0.04, 0.85)))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	pill.add_child(row)
+	row.add_child(GameIcon.make("phase_" + phase, 48))
+	if weather != "clear":
+		row.add_child(GameIcon.make("weather_" + weather, 48))
+	var text := tr("UI_BOOK_NOW") % [tr("PHASE_" + phase), tr("WEATHER_" + weather)]
+	var love := int(cond["love"])
+	if love > 1:
+		text += " · " + tr("UI_BOOK_LOVE") % [love, UiKit.format_percent((LakeLove.rare_bonus_pm(db.rules, love) - 1000) * 1000)]
+	var label := UiKit.label(text, 26, UiKit.TEXT)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	return pill
 
 
 ## Gölün türleri, defterin sırasıyla: nadirlik, sonra fish.json sırası.
@@ -258,9 +283,11 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 	var title_color := UiKit.rarity_color(db, rarity).darkened(0.25) if found else UiKit.INK
 	text.add_child(UiKit.title(tr("FISH_" + id) if found else "???", 44, title_color, HORIZONTAL_ALIGNMENT_LEFT, 0))
 	text.add_child(UiKit.rarity_badge(db, rarity, 26))
-	# Koruma altındaki tür (mersin) satılmaz: tutulur, göle bırakılır.
+	# Koruma altındaki tür (mersin) satılmaz: tutulur, göle bırakılır. Belli vakitte gelen efsaneler (Ay
+	# Turnası, Kocabaş) de bırakılır: koruma değil, efsane sözüyle.
 	if Bucket.release_only(db, id):
-		var protected := UiKit.ink(tr("UI_BOOK_PROTECTED"), 26, UiKit.INK)
+		var legend := not (f.get("only", {}) as Dictionary).is_empty()
+		var protected := UiKit.ink(tr("UI_BOOK_LEGEND" if legend else "UI_BOOK_PROTECTED"), 26, UiKit.INK)
 		protected.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		protected.custom_minimum_size = Vector2(420, 0)
 		_detail.add_child(protected)
@@ -305,8 +332,12 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, 
 	if not favourite.is_empty():
 		out.append(UiKit.translate(FAVOURITE_KEYS[str(db.gear_item(favourite)["category"])]) \
 				% UiKit.translate("GEAR_" + favourite))
+	# Vakit ve hava tek satırda ("En çok sabah gelir. Yağmuru sever."): defter ekrana sığsın.
+	var time := PackedStringArray()
 	for key in _time_hints(db, fish_id):
-		out.append(UiKit.translate(key))
+		time.append(UiKit.translate(key))
+	if not time.is_empty():
+		out.append(" ".join(time))
 	var trap_zones := PackedStringArray()
 	for z in db.zones_of(spot):
 		if fish_id in (z["trap_ids"] as PackedStringArray):
@@ -430,16 +461,7 @@ func _add_lake_odds(db: ContentDB, save: SaveData, species_odds: Dictionary) -> 
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.custom_minimum_size = Vector2(420, 0)
 	_detail.add_child(heading)
-	# Oranlar gölün şimdiki koşuluyla (vakit, hava, göl sevgisi): ekranda yazan gerçek oran.
-	var cond := WorldState.conditions(db, save)
-	var now := tr("UI_BOOK_NOW") % [tr("PHASE_" + str(cond["phase"])), tr("WEATHER_" + str(cond["weather"]))]
-	var love := int(cond["love"])
-	if love > 1:
-		now += " · " + tr("UI_BOOK_LOVE") % [love, UiKit.format_percent((LakeLove.rare_bonus_pm(db.rules, love) - 1000) * 1000)]
-	var conditions := UiKit.ink(now, 24, UiKit.INK_SOFT)
-	conditions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	conditions.custom_minimum_size = Vector2(420, 0)
-	_detail.add_child(conditions)
+	# Oranlar gölün şimdiki koşuluyla (vakit, hava, göl sevgisi; başlıkta yazar): ekranda yazan gerçek oran.
 	var by_rarity := CatchOdds.rarity_ppm(db, species_odds)
 	var grid := GridContainer.new()
 	grid.columns = 4

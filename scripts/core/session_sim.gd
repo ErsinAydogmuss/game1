@@ -28,12 +28,13 @@ extends RefCounted
 ##    Her satıştan sonra tuzağına kerevit girmiş olan toplanır (kova boşken; tuzağın bölgesine gidilir),
 ##    boştaki tuzak sazlığın atış noktasının yakınına bırakılır (yer kalmazsa açık başka bir tuzak
 ##    bölgesine); tuzak başına trap_s. Tuzaklar botun oyun süresiyle dolar (TrapSim; şimdi = geçen sn).
-## 10. Canlı dünya (Dalga 4): oyun saati botun geçen süresinden akar (dükkân ve takım çantası açıkken
-##    durur: sell_s, switch_s sayılmaz); her atışın oranı, şans garantisi ve sayacı gölün o anki
-##    koşuluyla (WorldState: vakit, hava, sevgi); yağmurda balık daha çabuk gelir (sim.json weather,
-##    yoksa rules.json rain_approach'ın tersi). Yalnızca belli vakitte gelen türü (Ay Turnası) o vakitte
-##    kovalar (bölge ve teknik seçimi); bölgenin balık başına değeri koşulsuz (vakit ve hava kazancı
-##    ±%5'te tutar: test_economy). Vakitlerde ve havalarda geçen süre: phase_time, weather_time.
+## 10. Canlı dünya (Dalga 4): oyun saati botun geçen süresinden akar (dükkân, takım çantası, harita ve
+##    kararma sürerken durur: sell_s, switch_s, travel_s sayılmaz); her atışın oranı, şans garantisi ve
+##    sayacı gölün o anki koşuluyla (WorldState: vakit, hava, sevgi); yağmurda balık daha çabuk gelir
+##    (sim.json weather, yoksa rules.json rain_approach'ın tersi). Yalnızca belli vakitte gelen türü (Ay
+##    Turnası) o vakitte kovalar (bölge ve teknik seçimi); bölgenin balık başına değeri koşulsuz (vakit ve
+##    hava kazancı ±%5'te tutar: test_economy); vakit değişince bölgeyi ve tekniği yeniden seçer. Vakitlerde
+##    ve havalarda geçen süre: phase_time, weather_time.
 ## Aynı seed aynı sonucu verir.
 
 const SIM_PATH := "res://data/sim.json"
@@ -75,8 +76,11 @@ var zone_time: Dictionary = {}
 ## Vakitlerde ve havalarda geçen süre (sn; rapor).
 var phase_time: Dictionary = {}
 var weather_time: Dictionary = {}
-## Oyun saatinin durduğu süre (dükkân, takım çantası; sn): saat = elapsed - _paused_s.
+## Oyun saatinin durduğu süre (dükkân, takım çantası, harita; sn): saat = elapsed - _paused_s.
 var _paused_s: float = 0.0
+## Son atıştaki vakit: vakit değişince oyuncu gibi bölgesini ve tekniğini yeniden seçer (gece nilüferli
+## koyda Ay Turnası; yoksa yalnızca satıştan sonra seçtiği için geceye denk gelmek şansa kalıyordu).
+var _last_phase: String = ""
 
 ## Oranların geldiği yer: botun bölgesi (bölgesiz gölde gölün kendisi).
 var _spot: Dictionary
@@ -123,6 +127,12 @@ func cast_once() -> void:
 		if not Bucket.is_full(db, save):
 			break
 		_sell_and_shop()
+	var phase := str(conditions()["phase"])
+	if phase != _last_phase:
+		if not _last_phase.is_empty():
+			_choose_zone()
+			_choose_technique()
+		_last_phase = phase
 	casts += 1
 	var before := elapsed
 	if technique != "float":
@@ -207,7 +217,7 @@ func _on_catch(def: Dictionary, percentile: int, cond: Dictionary = {}) -> void:
 func _sell_and_shop() -> void:
 	# Nine'nin dükkânı başlangıç bölgesinde: uzaktaysa (sandalda) önce oraya dönülür.
 	if zone_id != _home:
-		elapsed += _num("travel_s", 6.0)
+		_travel()
 		zone_id = _home
 		_spot = Zones.place(db, spot_id, _home)
 	elapsed += _num("sell_s", 30.0)
@@ -262,11 +272,17 @@ func _tend_traps() -> void:
 			return
 
 
+## Haritadan geçiş (travel_s): harita açıkken ve ekran kararırken oyun saati durur.
+func _travel() -> void:
+	elapsed += _num("travel_s", 6.0)
+	_paused_s += _num("travel_s", 6.0)
+
+
 ## Bölgeye gider (başka bölgedeyse travel_s; balık tutmadığı için "zone:" sayılmaz).
 func _go_to(id: String) -> void:
 	if id.is_empty() or id == zone_id:
 		return
-	elapsed += _num("travel_s", 6.0)
+	_travel()
 	zone_id = id
 	_spot = Zones.place(db, spot_id, id)
 
@@ -303,7 +319,7 @@ func _choose_zone() -> void:
 	var id := str(next.get("id", ""))
 	if id.is_empty() or id == zone_id:
 		return
-	elapsed += _num("travel_s", 6.0)
+	_travel()
 	zone_id = id
 	_spot = next
 	_mark("zone:" + id)

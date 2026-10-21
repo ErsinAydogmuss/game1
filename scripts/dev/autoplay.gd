@@ -1010,11 +1010,21 @@ func _play_rarity() -> void:
 	var trout_text := _texts_in(book)
 	_check("alabalığın ipucu sineği söyler", trout_text.contains(tr("UI_BOOK_FLY_HINT").split("%")[0])
 			and trout_text.contains(tr("UI_TECH_fly")))
-	_check("defter ekrana sığar (%.2f)" % book.fit_scale(), book.fit_scale() > 0.75)
+	_check("defter ekrana ve güvenli alana sığar (%.2f, %s)" % [book.fit_scale(), book.panel_rect()],
+			book.fit_scale() > 0.75 and _panel_inside(book))
 	book.close_panel()
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Panelin kutusu (ölçekli) güvenli alanın içinde mi (en çok 1 birim taşma)?
+func _panel_inside(panel: Dialog) -> bool:
+	var view := get_viewport().get_visible_rect()
+	var inset := UiKit.safe_insets(_hud())
+	var safe := Rect2(view.position + Vector2(inset.x, inset.y),
+			view.size - Vector2(inset.x + inset.z, inset.y + inset.w))
+	return safe.grow(1.0).encloses(panel.panel_rect())
 
 
 ## Bir düğümün altındaki bütün yazılar (Label), satır satır.
@@ -2141,6 +2151,8 @@ func _play_tour() -> void:
 		all_open = all_open and Zones.unlocked(db, save, z)
 	_check("ölçüm açıkken \"Hepsini aç\" → rütbe %d ve sandal, bütün bölgeler açık" % Rank.rank(db, save),
 			found and all_open and Economy.owns(db, save, Zones.BOAT) and int(main.get("_access_rank")) == Rank.rank(db, save))
+	_check("ölçüm açıkken ayarlar (geliştirme satırlarıyla) ekrana ve güvenli alana sığar (%.2f, %s)" % [
+			settings.fit_scale(), settings.panel_rect()], _panel_inside(settings))
 	await _shot("00_ayarlar")
 	settings.close_panel()
 	await _wait(1.0)
@@ -2280,7 +2292,8 @@ func _play_world() -> void:
 			text.contains(tr("UI_BOOK_CHANCE") % UiKit.format_percent(int(night_odds.get("moon_pike", 0))))
 			and text.contains(tr("UI_BOOK_HINT_ONLY_night"))
 			and text.contains(tr("UI_BOOK_NOW") % [tr("PHASE_night"), tr("WEATHER_clear")]))
-	_check("defter ekrana sığar (%.2f)" % book.fit_scale(), book.fit_scale() > 0.75)
+	_check("defter ekrana ve güvenli alana sığar (%.2f, %s)" % [book.fit_scale(), book.panel_rect()],
+			book.fit_scale() > 0.75 and _panel_inside(book))
 	await _shot("04_defter_ay_turnasi")
 	book.close_panel()
 	await _wait(0.3)

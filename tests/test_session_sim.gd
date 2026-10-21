@@ -4,8 +4,8 @@ extends BaseTest
 ## değeri, oran ya da kural değişince rapor yeniden çalıştırılır, tablo ve bu sınırlar gözden
 ## geçirilir. Dalga 2: bölgeler rütbeyle açılır, sandal. Dalga 3: teknikler (spin rütbe 2'de; ilk
 ## kamışı öncelikli alınır, Dede haber verir); sonraki teknikler kendi satırlarını ekler; kerevit
-## tuzağı (rütbe 3; ilk tuzak öncelikli). Dalga 4: oyun saati ve hava (botun saati dükkânda durur),
-## yalnızca gece gelen Ay Turnası.
+## tuzağı (rütbe 3; ilk tuzak öncelikli). Dalga 4: oyun saati ve hava (botun saati dükkânda, takım
+## çantasında ve haritada durur; vakit değişince bölgesini yeniden seçer), yalnızca gece gelen Ay Turnası.
 
 const SEEDS := [1000, 1077, 1154]
 ## Korkulukların ölçüldüğü oyun süresi (dk).
@@ -25,8 +25,9 @@ const PACING := [
 	# Dalga 3 dengesi (economy_report -- --hours=16 --seeds=6): sıradaki kova öncelikli ama onun için
 	# biriktirilmez (oyuncu sık dolan kovayı büyütür): büyük kova 43–54 dk (Dalga 3'ün ilk ölçümünde
 	# 95–101). Cam kamış şamandıranın: bot rütbe 4'ten sonra şamandırayı az kullanır (zamanının ~%2'si),
-	# kamışı tekniklerin ilk kamışlarından ve kovadan sonra alır (52–87 dk). Kepçe 159–172 dk.
-	["buy:rod_float_glass", 10.0, 100.0],
+	# kamışı tekniklerin ilk kamışlarından ve kovadan sonra alır (52–87 dk). Dalga 4'te rütbe 9'a cam
+	# kamıştan önce varan bot önce sandala biriktirir (sandal öncelikli): 6 seed'de 54–150 dk. Kepçe 159–172 dk.
+	["buy:rod_float_glass", 10.0, 160.0],
 	# Naylon misina (120 para, rütbe 1; 9 seed'de 6–20 dk, dip kamışı 22–32). Dipten önce alındığını
 	# test_pacing_guard_rails ayrıca denetler (BEFORE).
 	["buy:line_mono", 0.0, 25.0],
@@ -41,10 +42,12 @@ const PACING := [
 	["tech:fly", 60.0, 125.0],     # dere ağzında sinekle ilk atış
 	["buy:trap_1", 8.0, 20.0],     # tuzak rütbe 3'te: ilk tuzak (150) öncelikli (ölçüm 10–17)
 	["trap", 28.0, 55.0],          # tuzaktan ilk kerevit: bırakıldıktan 20 dk sonra, sıradaki satışta
-	# Efsanevinin ilki Dalga 4'te Ay Turnası: yalnızca gece, nilüferli koyda (bot gece oraya gider; 3 seed'de
-	# 82–111 dk). Mersin (sandalla derin ortada) ve Kocabaş (fırtınalı gece) şansa çok bağlı: pay geniş.
-	["rarity_legendary", 50.0, 300.0],
-	["fish:moon_pike", 50.0, 300.0],
+	# Efsanevinin ilki Dalga 4'te Ay Turnası: yalnızca gece, nilüferli koyda (nilüferli koy ~10. dakikada
+	# açılır, ilk gece 18. dakikada başlar; bot vakit değişince bölgesini yeniden seçer, gece oraya gider:
+	# 6 seed'de 26–119 dk). İlk gecelerde gelmesi şansa bağlı: pay geniş. Mersin (sandalla derin ortada) ve
+	# Kocabaş (fırtınalı gece, derin ortada dip) daha geç.
+	["rarity_legendary", 20.0, 300.0],
+	["fish:moon_pike", 20.0, 300.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.

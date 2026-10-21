@@ -9,8 +9,9 @@ extends SceneTree
 ## --technique: o teknikle (tekniğin ilk kamışı; --gear=top en iyi takımı) oynar; öneri sim.json
 ## "techniques" altına (tekniğin bölgeleri de: --zone ile).
 ## --weather=rain (ya da clear, cloudy, fog) ve --phase= (morning, noon, evening, night; verilmezse öğle):
-## gölün koşulu (Dalga 4; yağmurda gölgeler uzaktan fark eder, hızlı yaklaşır). Yağmurdaki geliş süresinin
-## açık havadakine oranı sim.json "weather": { "rain_approach" }'a yazılır.
+## gölün koşulu (Dalga 4; yağmurda gölgeler uzaktan fark eder, hızlı yaklaşır). Hava açık değilse araç aynı
+## seed'lerle açık havada da ölçer ve geliş süresinin oranını yazar: sim.json "weather": { "rain_approach" }
+## (yalnızca o oran; önerilen öteki sayılar o koşulun, sim.json'un genel değerleri açık havadan).
 ## Bot (şamandıra):
 ## - Nişan (AIM_S) alır; menzildeki en yakın gölgenin önüne (LEAD_M) atar, insan gibi şaşarak
 ##   (AIM_NOISE_M yarıçaplı daire içinde); gölge yoksa rastgele suya.
@@ -138,7 +139,9 @@ func _initialize() -> void:
 	elif not _zone.is_empty():
 		where = "zones.%s" % _zone
 	print("")
-	print("  önerilen data/sim.json%s:" % ("" if where.is_empty() else " (%s)" % where))
+	var measured := "" if _conditions.is_empty() else " — ölçüm %s, %s: sim.json'a yazılmaz, oran aşağıda" % [
+			_conditions["phase"], _conditions["weather"]]
+	print("  önerilen data/sim.json%s%s:" % ["" if where.is_empty() else " (%s)" % where, measured])
 	print("    \"cast_s\": %.1f," % cast_s)
 	print("    \"approach_s\": %s," % _uniform(approach))
 	print("    \"nibble_s\": %s," % _uniform(_nibble))
@@ -146,6 +149,24 @@ func _initialize() -> void:
 	print("    \"start_m\": %s," % _uniform(_hook_m, gear.range_m))
 	print("    \"fight_s\": %.1f," % _mean(_fight))
 	print("    \"reaction_s\": %.2f" % REACTION_S)
+	var weather := "" if _conditions.is_empty() else str(_conditions["weather"])
+	if not weather.is_empty() and weather != "clear":
+		# Aynı seed'lerle açık havada: geliş süresinin oranı (sim.json weather.<hava>_approach).
+		var here := _mean(approach)
+		_conditions["weather"] = "clear"
+		for list: Array[float] in [_flight, _wait, _nibble, _to_bite, _fight, _hook_m]:
+			list.clear()
+		_counts.clear()
+		_total_s = 0.0
+		for s in _seeds:
+			_play(db, gear, 5000 + s * 31)
+		var clear_cast := AIM_S + _mean(_flight)
+		var clear: Array[float] = []
+		for i in _to_bite.size():
+			clear.append(_to_bite[i] - _nibble[i] - clear_cast)
+		print("")
+		print("  %s / açık hava (%s): balığın gelişi %.2f / %.2f sn → sim.json \"weather\": { \"%s_approach\": %.2f }" % [
+				weather, _conditions["phase"], here, _mean(clear), weather, here / maxf(_mean(clear), 0.01)])
 	quit()
 
 

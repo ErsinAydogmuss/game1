@@ -3,7 +3,9 @@ extends Control
 ## Ortak modal pencere: arkası karartılır, ortada krem renkli kutu; üstte ikon + başlık,
 ## sağda isteğe bağlı göstergeler ve kapat butonu. "modal" grubundadır: açıkken oyun girdisi
 ## (joystick dışındaki dokunmalar) oyuna geçmez. Alt sınıflar _build() içinde body'yi doldurur.
-## Kutu ekrana (güvenli alan payıyla) sığmazsa küçültülür: dar ekranda (iPad) taşmasın.
+## Kutu ekrana (güvenli alan payıyla) sığmazsa küçültülür: dar ekranda (iPad) taşmasın. Kutu güvenli alanın
+## ortasında durur: ortalayan kapsayıcı iki yöne büyür (kutunun en küçük boyu ekrandan uzunsa aşağı doğru
+## büyüyüp kutuyu aşağı kaydırıyordu: defter telefonda alttan taşıyordu).
 
 signal closed
 ## Rehber bu sayfada açılsın: paneldeki "?" ya da "Nasıl oynanır?" düğmesi (GuidePages sayfası;
@@ -17,6 +19,7 @@ var header_extra: HBoxContainer
 var close_button: TextureButton
 
 var _panel: PanelContainer
+var _center: CenterContainer
 var _title: Label
 var _icon: GameIcon
 var _width: float = 1600.0
@@ -36,8 +39,11 @@ func _ready() -> void:
 	add_child(dim)
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	center.grow_vertical = Control.GROW_DIRECTION_BOTH
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
+	_center = center
 	_panel = PanelContainer.new()
 	_panel.add_theme_stylebox_override("panel", UiKit.framed("panel", UiKit.dialog_style(), 64.0))
 	_panel.custom_minimum_size = Vector2(_width, 0)
@@ -47,6 +53,7 @@ func _ready() -> void:
 		if visible and not _opening:
 			_panel.scale = Vector2.ONE * fit_scale())
 	get_viewport().size_changed.connect(func() -> void:
+		_fit_safe_area()
 		if visible and not _opening:
 			_panel.scale = Vector2.ONE * fit_scale())
 	# resized her zaman son boyutla gelmez (dükkânda sekme değişince ölçek bayat kalıyordu): sığma
@@ -102,6 +109,7 @@ func set_header(text: String, icon_kind: String, width: float = 1600.0) -> void:
 
 
 func open() -> void:
+	_fit_safe_area()
 	show()
 	refresh()
 	Sounds.play("panel_open")
@@ -155,6 +163,22 @@ func add_help_button(page_of: Callable) -> BaseButton:
 		help_requested.emit(str(page_of.call())))
 	header_extra.add_child(b)
 	return b
+
+
+## Ortalayan kapsayıcı güvenli alanı kaplar (çentik ve ev çubuğu payı her kenarda farklı): kutu onun
+## ortasında.
+func _fit_safe_area() -> void:
+	var inset := UiKit.safe_insets(self)
+	_center.offset_left = inset.x
+	_center.offset_top = inset.y
+	_center.offset_right = -inset.z
+	_center.offset_bottom = -inset.w
+
+
+## Kutunun ekranda kapladığı yer (ölçekli; bot denetimi: güvenli alanın içinde mi).
+func panel_rect() -> Rect2:
+	var xform := _panel.get_global_transform()
+	return Rect2(xform * Vector2.ZERO, xform.basis_xform(_panel.size))
 
 
 ## Kutunun ekrana sığma ölçeği (en çok 1): güvenli alan ve kenar payı çıkınca kalan yer.

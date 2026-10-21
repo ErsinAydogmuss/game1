@@ -9,6 +9,19 @@ const SPOT := "big_lake"
 const LILY := Vector2(14.0, 4.2)
 const BUOY := Vector2(-3.0, -17.0)
 const OPEN_ALL: Array[String] = ["dock_cove", "reeds", "lily_cove", "rocky_point", "stream_mouth", "deep_water"]
+## Dalga 4'ten önceki sürümün (dfa423b) koşulsuz oranları (büyük gölün bölgeleri; yeni türlerin bölgeleri
+## dahil: Ay Turnası ve Kocabaş koşulsuz bağlamda hiç çıkmaz). Bütün bölge × teknik satırları o sürümle
+## karşılaştırıldı (19 satır, hepsi aynı); burada bir kısmı.
+const BEFORE_WAVE_4 := {
+	"dock_cove/float": { "bream": 100000, "carp": 200000, "perch": 180000, "pike": 80000, "rudd": 260000,
+		"silverside": 140000, "wels": 40000 },
+	"dock_cove/spin": { "perch": 608108, "pike": 378378, "wels": 13514 },
+	"lily_cove/float": { "carp": 240000, "golden_carp": 60000, "perch": 260000, "pike": 220000, "rudd": 220000 },
+	"lily_cove/spin": { "perch": 457746, "pike": 542254 },
+	"stream_mouth/fly": { "brook_trout": 72727, "chub": 327273, "rudd": 54545, "trout": 545455 },
+	"deep_water/bottom": { "bream": 119272, "carp": 251098, "mirror_carp": 75329, "perch": 28876, "pike": 30132,
+		"sturgeon": 28249, "wels": 414313, "zander": 52731 },
+}
 
 
 static func _cond(phase: String, weather: String = "clear", love: int = 1) -> Dictionary:
@@ -33,20 +46,52 @@ func test_no_conditions_keep_every_number() -> void:
 			assert_true(not plain.has("moon_pike") and not plain.has("kocabas"), "%s: koşulsuz efsane yok" % z["id"])
 	var home := CatchOdds.species_ppm(db, db.spot("home_lake"))
 	assert_eq(int(home["rudd"]), 350000, "testlerin gölünde kızılkanat yine %35")
+	for key: String in BEFORE_WAVE_4:
+		var zone := db.zone(SPOT, key.get_slice("/", 0))
+		assert_eq(CatchOdds.species_ppm(db, zone, { "technique": key.get_slice("/", 1) }), BEFORE_WAVE_4[key],
+				"%s: Dalga 4'ten önceki sayılar" % key)
 
 
-## İkinci aşama: bütün çarpanlar 1000 olsaydı ilk aşamanın oranı aynen dönerdi (normalleştirme
-## kayıpsız).
-func test_second_pass_is_lossless() -> void:
+## İkinci aşama (koşullu): oran, ağırlık × yatkınlık × vakit × hava × sevginin Nadir+ payıyla ondalıklı
+## bağımsız bir hesapla aynı; toplam tam 1e6. Pay: koşul çarpanı binde tamsayıyla kesilir (factor_pm, en çok
+## üç kesme: göreli %0,3) ve iki normalleştirmenin yuvarlaması (birkaç ppm). Eksik ya da yanlış bir çarpan
+## en az %20 saptırır.
+func test_second_pass_matches_reference() -> void:
 	var db := content()
-	for z in db.zones_of(SPOT):
-		var first := CatchOdds.species_ppm(db, z)
-		var ids := PackedStringArray()
-		var raw: Array[int] = []
-		for id: String in first:
-			ids.append(id)
-			raw.append(int(first[id]) * 1000)
-		assert_eq(CatchOdds._normalize(ids, raw), first, "%s: ikinci aşama kayıpsız" % z["id"])
+	var love_from := db.rarity_index(db.rules.love_from)
+	var cases := [["lily_cove", "float", _cond("night", "rain", 5)], ["lily_cove", "spin", _cond("night", "cloudy", 2)],
+			["deep_water", "bottom", _cond("night", "rain", 10)], ["rocky_point", "spin", _cond("morning", "fog", 3)],
+			["stream_mouth", "fly", _cond("evening", "rain", 7)], ["dock_cove", "float", _cond("noon", "cloudy", 1)]]
+	for c: Array in cases:
+		var zone := db.zone(SPOT, str(c[0]))
+		var technique := str(c[1])
+		var cond: Dictionary = c[2]
+		var got := CatchOdds.species_ppm(db, zone, _with(cond, technique))
+		var ids: PackedStringArray = zone["fish_ids"]
+		var weights: PackedInt32Array = zone["fish_weights"]
+		var share := {}
+		var total := 0.0
+		for i in ids.size():
+			var id := ids[i]
+			if not CatchOdds.available(db, id, cond):
+				continue
+			var w := float(weights[i]) * db.affinity(id, technique) * db.when_mult(id, str(cond["phase"])) \
+					* db.weather_mult(id, str(cond["weather"]))
+			if int(db.fish_by_id(id)["rarity"]) >= love_from:
+				w *= LakeLove.rare_bonus_pm(db.rules, int(cond["love"])) / 1000.0
+			if w > 0.0:
+				share[id] = w
+				total += w
+		var sum := 0
+		for id: String in got:
+			sum += int(got[id])
+		assert_eq(sum, Dice.PPM, "%s/%s: toplam 1e6" % [c[0], technique])
+		assert_eq(got.size(), share.size(), "%s/%s: aynı türler" % [c[0], technique])
+		for id: String in share:
+			var want := float(share[id]) / total * Dice.PPM
+			var slack := want * 0.003 + 4.0
+			assert_between(float(got.get(id, -100)), want - slack, want + slack, "%s/%s %s: %d ≈ %.0f" % [c[0], technique,
+					id, int(got.get(id, -1)), want])
 
 
 func test_moon_pike_only_at_night() -> void:
@@ -158,8 +203,10 @@ func test_session_conditions() -> void:
 	var gear := GearStats.starter(db)
 	var session := FishingSession.new(db, SPOT, gear, 11, false, false, -1, PackedStringArray(OPEN_ALL))
 	var rig := session.sim.rig
+	session.set_conditions(_cond("night", "rain"))
 	session.set_conditions({})
-	assert_true(session.sim.rig == rig, "boş koşul profili değiştirmez")
+	assert_eq(session.conditions(), {}, "koşul boşalır")
+	assert_eq(session.sim.rig.notice_front, rig.notice_front, "boş koşulda profil koşulsuz (yağmursuz)")
 	session.set_conditions(_cond("noon", "rain"))
 	assert_between(session.sim.rig.notice_front, rig.notice_front * 1.29, rig.notice_front * 1.31, "yağmurda uzaktan fark eder")
 	assert_between(session.sim.rig.approach_speed, rig.approach_speed * 1.24, rig.approach_speed * 1.26, "yağmurda hızlı yaklaşır")

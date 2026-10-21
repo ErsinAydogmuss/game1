@@ -189,13 +189,19 @@ static func from_dict(raw: Dictionary) -> SaveData:
 	s.pity = _counts(d.get("pity", {}))
 	s.stats = _counts(d.get("stats", {}))
 	s.clock_s = maxi(0, _int(d, "clock_s", 0))
-	s.tea_at = maxi(-1, _int(d, "tea_at", -1))
+	# Son çay ve sıradaki şişenin sayacı tutulan balık sayısından büyük olamaz (bozuk kayıtta çay ve şişe
+	# o kadar balık beklemesin).
+	s.tea_at = clampi(_int(d, "tea_at", -1), -1, s.catches)
 	s.requests = _requests(d.get("requests", []))
 	s.request_serial = maxi(0, _int(d, "request_serial", 0))
+	# İstek zarı sırasıyla atılır: sayaç kayıttaki isteklerin sırasının üstünde (tuzaklardaki gibi; aynı
+	# zar aynı isteği vermesin).
+	for request in s.requests:
+		s.request_serial = maxi(s.request_serial, int(request.get("serial", -1)) + 1)
 	s.request_day = maxi(-1, _int(d, "request_day", -1))
 	s.reroll_day = maxi(-1, _int(d, "reroll_day", -1))
 	s.letters = clampi(_int(d, "letters", 0), 0, MAX_LETTERS)
-	s.letter_at = maxi(0, _int(d, "letter_at", 0))
+	s.letter_at = clampi(_int(d, "letter_at", 0), 0, s.catches)
 	s.map_pieces = clampi(_int(d, "map_pieces", 0), 0, MAX_MAP_PIECES)
 	s.keeper = maxi(0, _int(d, "keeper", 0))
 	return s
