@@ -326,6 +326,14 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   Denge botunda (16 saat, 6 seed; vakit değişince bölgesini yeniden seçer) Ay Turnası ilk kez 26–119. dakikada,
   Kocabaş 146–596. dakikada (bir seed'de 16 saatte hiç): fırtınalı gece derin ortada dipte olmak şansa bağlı.
 - **Eşyalar:** eski çizme, teneke, mesajlı şişe (hikâye), paslı anahtar. Çöp toplamak göl sevgisi verir.
+  - ✅ **Çöp** (Dalga 4; `rules.json` `trash`): dipte tutulan balığın yanında %5 (kurşun dibi tarar; şamandıra,
+    spin ve sinek yüzeyde: çöp yok), tuzağın her yeni içeriğinde %20 (ilk kerevitle birlikte çıkar). Hangisi:
+    çizme 35, teneke kutu 35, plastik şişe 25, paslı anahtar 5. Ne çıkacağı önceden belli (gelir kuralı 4):
+    balıkta gölgenin zarı, tuzakta içerik kurulurken (kerevitler aynı kalır). Toplanınca göl sevgisi verir (3,
+    paslı anahtar 5); kovaya girmez, satılmaz, para vermez. Eşyanın resmiyle bildirim ("Eski çizme çıktı! Göl
+    sevgisi +3"), ses ve titreşim; Dede her eşyanın ilk gelişinde konuşur ("Eski bir çizme! Göl temizlendikçe
+    balık çoğalır.", "Teneke kutu! Topladığın her çöp göle iyi gelir.", "Plastik şişe! Balıklar bunlarla
+    yaşayamaz evlat.", "Paslı bir anahtar! Benim gençliğimden kalma olabilir.").
 - **Katalog:** bütün oranlar araçla üretilen `docs/balik-katalogu.md`'de yazar.
 
 ## 7. Kahraman, Dede ve Nine
@@ -788,7 +796,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     fırtına", sisli günde "Sabah ve gece").
   - Vakit ve hava türlerin oranını değiştirir (§6); gece Ay Turnası'nın, yağmurlu gece Kocabaş'ın tek zamanı.
 - **Göl sevgisi:**
-  - **Kaynaklar:** bırakılan balık (kademeye göre 1/2/5/12/40/100) ✅, toplanan çöp (3), istekler.
+  - **Kaynaklar:** bırakılan balık (kademeye göre 1/2/5/12/40/100) ✅, toplanan çöp (3; paslı anahtar 5; §6) ✅,
+    istekler.
   - ✅ Seviye atlayınca kalp ikonuyla "Göl sevgisi 2!", ses ve titreşim (panel ya da kart açıksa kapanınca). Dede
     2., 6. ve 10. seviyede bir kez konuşur (olta boşa dönünce): "Göl seni tanıdı evlat! Nadir balık artacak.", "Göl
     seni çok sevdi! Nine'ye uğra, sevinir." (altın hamur, 5. adım), "Gölün en sevdiği balıkçı sensin evlat!".

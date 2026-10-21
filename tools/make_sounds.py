@@ -1316,6 +1316,26 @@ def love_up():
     return finish(x + 0.35 * reverb(x, 1.4)[:n], -2.0, 0.2)
 
 
+def trash():
+    """Çöp çıktı: sudan çekilen ıslak bir şey (şıpırtı, damlalar), çamurlu tok bir vuruş, tenekenin kısa
+    tınısı; sonunda "temizlendi" diye iki yükselen nota."""
+    r = rng(161)
+    n = frames(1.3)
+    x = 0.45 * splash_noise(n, 162, 400, 5000, 0.1, 0.008)
+    x += 0.5 * thump(95, n, 0.12, 0.5)
+    tin = partials(620.0, frames(0.5), [(1.0, 1.0, 0.12), (2.76, 0.5, 0.08), (5.4, 0.25, 0.05)], 163)
+    place(x, 0.25 * unit(tin), frames(0.05))
+    for i in range(4):
+        m = frames(0.1)
+        drop = bubble(r.uniform(900, 1300), r.uniform(1700, 2300), m, 0.02)
+        place(x, 0.22 * drop, frames(0.2 + 0.09 * i + r.uniform(0.0, 0.03)))
+    sparkle = np.zeros(n)
+    for k, note in enumerate((79, 86)):
+        place(sparkle, pluck(note, 0.6, 164 + k, 0.4) * (0.8 - 0.2 * k), frames(0.62 + 0.1 * k))
+    x = x + 0.3 * unit(sparkle)
+    return finish(x + 0.15 * reverb(x, 0.6)[:n], -1.0, 0.1)
+
+
 def find_mythic():
     """Masalsı buluntu (Gölün Bekçisi): Efsanevi'nin fanfarı daha geniş, koro gibi pad ve çanlar."""
     n = frames(3.6)
@@ -1365,7 +1385,7 @@ def registry():
         "sting_1": sting, "rank_up_1": rank_up, "travel_1": travel, "strike_1": strike, "snag_1": snag,
         "trap_place_1": lambda: trap_place(830), "trap_collect_1": trap_collect,
         "find_6_1": find_mythic, "thunder_1": thunder, "tea_1": tea, "phase_1": phase_chime,
-        "lantern_1": lantern, "love_up_1": love_up,
+        "lantern_1": lantern, "love_up_1": love_up, "trash_1": trash,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

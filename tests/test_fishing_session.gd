@@ -209,6 +209,22 @@ func test_missed_fish_is_replaced_within_8_seconds() -> void:
 	assert_eq(session.sim.shadows.size(), 4, "gölde yine 4 gölge")
 
 
+## Çöp (Dalga 4) yalnızca dipte: şamandırayla tutulan balığın yanında hiç çıkmaz (gölgenin seed'i dipte
+## çöp getirse de).
+func test_no_trash_with_the_float() -> void:
+	var rules := content().rules
+	var trash_seed := 0
+	while Trash.with_catch(rules, trash_seed, "bottom").is_empty():
+		trash_seed += 1
+	var session := _session(true)
+	var s := _to_biting(session)
+	s.seed = trash_seed
+	session.press()
+	assert_true(_run_until(session, FishingSession.State.CAUGHT, 90.0), "Kolay'da basılı tutunca tutulur")
+	assert_eq(int(session.last_catch["seed"]), trash_seed, "gölgenin seed'i yakalayışta")
+	assert_eq(str(session.last_catch["trash"]), "", "şamandırada çöp yok")
+
+
 func test_catch_waits_for_the_card() -> void:
 	var session := _session(true)
 	var s := _to_biting(session)

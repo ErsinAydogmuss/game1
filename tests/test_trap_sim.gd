@@ -104,6 +104,45 @@ func test_collecting_fills_the_bucket_and_book_without_pity() -> void:
 	assert_eq(int(save.stats.get("trapped", 0)), 3, "sayaç")
 
 
+## Çöp (Dalga 4) içerikle aynı sıra numarasıyla ama ayrı tuzla zarlanır: kerevitler çöple de çöpsüz de
+## aynı, sayaç da.
+func test_trash_does_not_change_the_crayfish() -> void:
+	var rules := content().rules
+	var keep := rules.trash_trap_ppm
+	var a := _save()
+	var with_trash := _placed(a)
+	rules.trash_trap_ppm = 0
+	var b := _save()
+	var without := _placed(b)
+	rules.trash_trap_ppm = keep
+	assert_eq(with_trash["items"], without["items"], "kerevitler aynı")
+	assert_eq(a.trap_serial, b.trap_serial, "sayaç aynı")
+	assert_eq(str(without["trash"]), "", "olasılık 0: çöp yok")
+	assert_eq(str(with_trash["trash"]), Trash.in_trap(rules, a.seed, 0), "çöp kurulunca belli")
+
+
+## Tuzaktaki çöp ilk kerevitle birlikte çıkar (kerevit girmeden çıkmaz); yerine yeni içerikle yeni zar.
+func test_trash_comes_up_with_the_first_crayfish() -> void:
+	var db := content()
+	var rules := db.rules
+	var save := _save()
+	var serial := 0
+	while Trash.in_trap(rules, save.seed, serial).is_empty():
+		serial += 1
+	save.trap_serial = serial
+	var trap := _placed(save)
+	var item := Trash.in_trap(rules, save.seed, serial)
+	assert_eq(str(trap["trash"]), item, "tuzağın çöpü kurulunca belli")
+	var index := TrapSim.find(save, int(trap["id"]))
+	var early := TrapSim.collect(db, save, SPOT, index, T0 + 10)
+	assert_eq(str(early["trash"]), "", "kerevit girmeden çöp çıkmaz")
+	assert_eq(str(save.traps[index]["trash"]), item, "çöp tuzakta bekler")
+	var got := TrapSim.collect(db, save, SPOT, index, T0 + rules.trap_fill_s)
+	assert_eq((got["items"] as Array).size(), 1, "bir kerevit")
+	assert_eq(str(got["trash"]), item, "çöp kerevitle çıkar")
+	assert_eq(str(save.traps[index]["trash"]), Trash.in_trap(rules, save.seed, serial + 1), "yeni içerikle yeni zar")
+
+
 func test_full_bucket_keeps_crayfish_in_the_trap() -> void:
 	var db := content()
 	var rules := db.rules

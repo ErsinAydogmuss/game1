@@ -10,7 +10,8 @@ extends Control
 ## weather_*, tea, love, requests; Dalga 4) görseli yoksa SkyIcons'la tek üçgen dizisiyle çizilir.
 ## "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini (circle, triangle,
 ## diamond, star, sparkle, medallion; görseli yoksa şekil tint renginde), "zone:<bölge>" bölge
-## rozetini (görseli yoksa kodla: iskele, kamış, nilüfer, kaya, dere, şamandıra) çizer.
+## rozetini (görseli yoksa kodla: iskele, kamış, nilüfer, kaya, dere, şamandıra), "item:<eşya>" eşyanın
+## görselini (çöp, kerevit; ItemArt.item, görseli yoksa soru işareti) çizer.
 
 ## Kodla çizilebilen ikonlar (görseli yoksa). Bilinmeyen ad soru işareti çizer (boş kalmasın);
 ## takımın "kind"ı bunlardan biri olmalı (test_content_db denetler).
@@ -95,6 +96,8 @@ static func texture_for(icon_kind: String) -> Texture2D:
 		return ItemArt.ui(art) if not art.is_empty() else null
 	if icon_kind.begins_with("zone:"):
 		return ItemArt.zone(icon_kind.substr(5))
+	if icon_kind.begins_with("item:"):
+		return ItemArt.item(icon_kind.substr(5))
 	var art: Texture2D = ItemArt.ui(str(ART_NAMES[icon_kind])) if ART_NAMES.has(icon_kind) else null
 	if art == null and GEAR_ART.has(icon_kind):
 		art = ItemArt.gear(str(GEAR_ART[icon_kind]))

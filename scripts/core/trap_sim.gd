@@ -7,14 +7,16 @@ extends RefCounted
 ##   olunan tuzak kadar (dükkândaki trap_1..3).
 ## - İçerik kurulurken belli olur (gelir kuralı 4): tuzağa girecek trap_max kerevit o an zarlanır
 ##   (Dice.derive(seed, SALT, trap_serial); her zarlama sayacı bir artırır) ve "items"te sırayla
-##   bekler. Hızlandırma yok.
+##   bekler; aynı zarlamada ayrı bir tuzla çöp de (Trash.in_trap: "trash", kerevitler aynı kalır).
+##   Hızlandırma yok.
 ## - Dolma gerçek saatle, oyun kapalıyken de: progress_s her trap_fill_s sn'de bir kerevit
 ##   "girdirir", en çok trap_max (boşta biriken üst sınırda durur: gelir kuralı 7). Saat geri
 ##   alınırsa bir şey kaybolmaz ya da kazanılmaz (yalnızca dayanak last_unix yenilenir); ileri
 ##   alınırsa en çok trap_max.
 ## - Toplama: giren kerevitler kovaya (kova dolarsa kalanı tuzakta bekler: kayıp yok), kayıt
-##   defterine ve rütbe puanına; şans garantisi sayaçları ilerlemez. Toplanan yerine yeni içerik
-##   zarlanır (tuzak yeniden kurulur), artan süre sonraki kerevite sayılır.
+##   defterine ve rütbe puanına; şans garantisi sayaçları ilerlemez. Tuzaktaki çöp ilk kerevitle
+##   birlikte çıkar (çağıran toplar: Trash.collect). Toplanan yerine yeni içerik zarlanır (tuzak yeniden
+##   kurulur), artan süre sonraki kerevite sayılır.
 
 const SALT := 7301
 
@@ -148,6 +150,7 @@ static func place(db: ContentDB, save: SaveData, spot_id: String, zone_id: Strin
 		"last_unix": now,
 		"progress_s": 0,
 		"items": [],
+		"trash": "",
 	}
 	_top_up(db, save, spot_id, trap)
 	save.traps.append(trap)
@@ -194,10 +197,10 @@ static func find(save: SaveData, id: int) -> int:
 ## Tuzaktaki kerevitler toplanır: kovaya (sığmayan tuzakta bekler), kayıt defterine ve rütbe
 ## puanına (şans garantisi ilerlemez). Toplanan kadar yeni içerik zarlanır. Döner: { items: toplanan
 ## [{ fish, size_cm, stars }], left: tuzakta kalan, new_species: defterde yeni tür, ranked:
-## Rank.add_xp sonucu (rütbe atlama) }.
+## Rank.add_xp sonucu (rütbe atlama), trash: kerevitle çıkan çöp ("" yoksa; çağıran toplar) }.
 static func collect(db: ContentDB, save: SaveData, spot_id: String, index: int, now: int) -> Dictionary:
 	var out: Array[Dictionary] = []
-	var result := { "items": out, "left": 0, "new_species": false, "ranked": {} }
+	var result := { "items": out, "left": 0, "new_species": false, "ranked": {}, "trash": "" }
 	if index < 0 or index >= save.traps.size():
 		return result
 	var rules := db.rules
@@ -220,6 +223,8 @@ static func collect(db: ContentDB, save: SaveData, spot_id: String, index: int, 
 		out.append(item)
 	result["left"] = ready(rules, trap)
 	if not out.is_empty():
+		result["trash"] = str(trap.get("trash", ""))
+		trap["trash"] = ""
 		_top_up(db, save, spot_id, trap)
 		save.stats["trapped"] = int(save.stats.get("trapped", 0)) + out.size()
 	result["ranked"] = Rank.add_xp(db, save, xp)
@@ -234,7 +239,8 @@ static func remove(save: SaveData, index: int) -> void:
 
 
 ## Tuzağın bekleyen içeriği trap_max'a tamamlanır: bir zarlama, trap_serial'dan türeyen bir RNG ile
-## (bölgenin trap tablosundan tür, FishTable'dan boy ve yıldız).
+## (bölgenin trap tablosundan tür, FishTable'dan boy ve yıldız). Tuzakta bekleyen çöp yoksa aynı sıra
+## numarasıyla çöp de zarlanır (Trash.in_trap: başka tuz, kerevitlerin zarına dokunmaz).
 static func _top_up(db: ContentDB, save: SaveData, spot_id: String, trap: Dictionary) -> void:
 	var items: Array = trap["items"]
 	if items.size() >= db.rules.trap_max:
@@ -246,6 +252,8 @@ static func _top_up(db: ContentDB, save: SaveData, spot_id: String, trap: Dictio
 		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = Dice.derive(save.seed, SALT, save.trap_serial)
+	if str(trap.get("trash", "")).is_empty():
+		trap["trash"] = Trash.in_trap(db.rules, save.seed, save.trap_serial)
 	save.trap_serial += 1
 	while items.size() < db.rules.trap_max:
 		var fish_id := ids[maxi(0, Dice.pick_weighted(rng, weights))]

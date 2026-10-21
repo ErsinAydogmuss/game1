@@ -128,6 +128,33 @@ func test_sniffs_then_run_and_strike() -> void:
 		assert_eq(session.state, FishingSession.State.FIGHTING, "dokununca takılır")
 
 
+## Çöp (Dalga 4): dipte tutulan balığın yanında; zarı gölgenin seed'inden (önceden belli, kovaya girmez:
+## main toplar).
+func test_trash_comes_with_a_bottom_catch() -> void:
+	var rules := content().rules
+	var trash_seed := 0
+	while Trash.with_catch(rules, trash_seed, "bottom").is_empty():
+		trash_seed += 1
+	var session := _session(true)
+	var log: Array[Dictionary] = []
+	var fish := _to_sniffing(session, log)
+	fish.seed = trash_seed
+	assert_true(_run_until(session, FishingSession.State.BITING, 12.0, log), "koşu gelir")
+	session.press()
+	assert_true(_run_until(session, FishingSession.State.CAUGHT, 90.0, log), "Kolay'da basılı tutunca tutulur")
+	assert_eq(str(session.last_catch["trash"]), Trash.with_catch(rules, trash_seed, "bottom"), "balığın yanında çöp")
+	var other := trash_seed + 1
+	while not Trash.with_catch(rules, other, "bottom").is_empty():
+		other += 1
+	var plain := _session(true)
+	var quiet := _to_sniffing(plain, log)
+	quiet.seed = other
+	assert_true(_run_until(plain, FishingSession.State.BITING, 12.0, log), "koşu gelir")
+	plain.press()
+	assert_true(_run_until(plain, FishingSession.State.CAUGHT, 90.0, log), "tutulur")
+	assert_eq(str(plain.last_catch["trash"]), "", "zarı tutmayan balıkta çöp yok")
+
+
 func test_touch_while_sniffing_scares_the_fish() -> void:
 	var session := _session()
 	var log: Array[Dictionary] = []

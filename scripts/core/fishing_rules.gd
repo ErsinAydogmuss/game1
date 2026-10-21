@@ -126,6 +126,13 @@ var love_levels := PackedInt32Array([0, 12, 30, 60, 110, 180, 270, 380, 520, 700
 ## Her seviye love_from ve üstündeki nadirliklerin ağırlığını bu kadar artırır (seviye 1'de 0).
 var love_rare_bonus: float = 0.04
 var love_from: String = "rare"
+## Çöp (Trash): dipte tutulan balığın yanında ve tuzağın her yeni içeriğinde çıkma olasılığı (ppm);
+## eşyalar (kimlik, ağırlık, toplanınca göl sevgisi; sırası zarın sırası).
+var trash_bottom_ppm: int = 50_000
+var trash_trap_ppm: int = 200_000
+var trash_ids := PackedStringArray(["boot", "tin_can", "plastic_bottle", "rusty_key"])
+var trash_weights := PackedInt32Array([35, 35, 25, 5])
+var trash_love := PackedInt32Array([3, 3, 3, 5])
 
 
 ## Tekniklerin profilleri (kimlik → TechniqueRules). Şamandıranınki üst düzey bölümlerden.
@@ -242,6 +249,22 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 			r.love_levels.append(int(at))
 	r.love_rare_bonus = float(love.get("rare_bonus", r.love_rare_bonus))
 	r.love_from = str(love.get("rare_from", r.love_from))
+	var trash: Dictionary = d.get("trash", {})
+	r.trash_bottom_ppm = roundi(float(trash.get("bottom", r.trash_bottom_ppm / float(Dice.PPM))) * Dice.PPM)
+	r.trash_trap_ppm = roundi(float(trash.get("trap", r.trash_trap_ppm / float(Dice.PPM))) * Dice.PPM)
+	var items: Variant = trash.get("items")
+	if typeof(items) == TYPE_ARRAY:
+		r.trash_ids = PackedStringArray()
+		r.trash_weights = PackedInt32Array()
+		r.trash_love = PackedInt32Array()
+		for item: Variant in items:
+			if typeof(item) != TYPE_DICTIONARY:
+				errors.append("rules.json: trash.items: her eşya bir bölüm olmalı")
+				continue
+			var it: Dictionary = item
+			r.trash_ids.append(str(it.get("id", "")))
+			r.trash_weights.append(int(it.get("weight", 0)))
+			r.trash_love.append(int(it.get("love", 0)))
 	r._validate(errors)
 	# Teknikler: şamandıra üst düzey bölümlerden; ötekiler "techniques" bölümünden.
 	var base := r.technique("float")
@@ -286,10 +309,23 @@ func _validate(errors: PackedStringArray) -> void:
 		"yağmur (fark etme ve yaklaşma en az 1 kat)": rain_notice >= 1.0 and rain_approach >= 1.0,
 		"göl sevgisi (0 ile başlar, artar; nadirlik payı 0–0,1)": love_levels.size() >= 2 and love_levels[0] == 0 \
 				and _rising(love_levels) and love_rare_bonus >= 0.0 and love_rare_bonus <= 0.1,
+		"çöp (olasılıklar 0–1, en az bir eşya, kimlikler dolu ve eşsiz, ağırlıklar pozitif, sevgi 0–100)": \
+				trash_bottom_ppm >= 0 and trash_bottom_ppm <= Dice.PPM and trash_trap_ppm >= 0 \
+				and trash_trap_ppm <= Dice.PPM and _trash_ok(),
 	}
 	for label: String in checks:
 		if not bool(checks[label]):
 			errors.append("rules.json: geçersiz: " + label)
+
+
+func _trash_ok() -> bool:
+	if trash_ids.is_empty() or trash_weights.size() != trash_ids.size() or trash_love.size() != trash_ids.size():
+		return false
+	for i in trash_ids.size():
+		if trash_ids[i].is_empty() or trash_ids.find(trash_ids[i]) != i or trash_weights[i] <= 0 \
+				or trash_love[i] < 0 or trash_love[i] > 100:
+			return false
+	return true
 
 
 static func _known_phases(phases: PackedStringArray) -> bool:

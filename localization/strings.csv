@@ -558,3 +558,12 @@ UI_LOVE_BONUS,Rare+ fish %s more often,Nadir+ balık %s daha sık
 UI_DEDE_LOVE_2,"The lake knows you now, kid! More rare fish will come.",Göl seni tanıdı evlat! Nadir balık artacak.
 UI_DEDE_LOVE_6,"The lake loves you! Go see Nana, she'll be happy.","Göl seni çok sevdi! Nine'ye uğra, sevinir."
 UI_DEDE_LOVE_10,"You're the lake's favourite angler, kid!",Gölün en sevdiği balıkçı sensin evlat!
+ITEM_boot,Old boot,Eski çizme
+ITEM_tin_can,Tin can,Teneke kutu
+ITEM_plastic_bottle,Plastic bottle,Plastik şişe
+ITEM_rusty_key,Rusty key,Paslı anahtar
+UI_TRASH_FOUND,%s! Lake love +%d,%s çıktı! Göl sevgisi +%d
+UI_DEDE_TRASH_boot,An old boot! A cleaner lake brings more fish.,Eski bir çizme! Göl temizlendikçe balık çoğalır.
+UI_DEDE_TRASH_tin_can,A tin can! Every bit you pick up helps the lake.,Teneke kutu! Topladığın her çöp göle iyi gelir.
+UI_DEDE_TRASH_plastic_bottle,A plastic bottle! Fish can't live with these.,Plastik şişe! Balıklar bunlarla yaşayamaz evlat.
+UI_DEDE_TRASH_rusty_key,A rusty key! Might be from when I was young.,Paslı bir anahtar! Benim gençliğimden kalma olabilir.

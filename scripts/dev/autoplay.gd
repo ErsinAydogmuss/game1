@@ -82,7 +82,7 @@ extends Node
 ##   release: tut-bırak ve göl sevgisi (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN):
 ##     dolu kovaya dokun → Kova paneli küçülmeden sığar; BIRAK (en küçüğü, sevgi, para aynı), HEPSİNİ BIRAK
 ##     (önce "Emin misin?"), seviye bildirimi ve Dede; yeni tür kartında "Göle bırak"; olta sudayken kovaya
-##     dokunmak oyuna geçer; paneldeki SAT Nine'nin Kova sekmesine götürür.
+##     dokunmak oyuna geçer; dipte çöp (bildirim, sevgi, Dede); paneldeki SAT Nine'nin Kova sekmesine götürür.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -147,6 +147,9 @@ var _toasts: Array[String] = []
 ## _shadow_at'in son yerleştirdiği balık: reels'te takıma yalnızca o gelir (öteki gölge fark ederse
 ## geri çekilir; dipte uzağa atılan kurşunun yanında bekleyen gölge 20 sn yolu kapatıyordu).
 var _placed: FishShadow = null
+## _shadow_at'in koyduğu gölgenin seed'i (≥ 0 ise; release: dipte çöp zarı tutan gölge). Türü, boyu ve yolu
+## doğarken zarlandı: yalnızca çöp değişir.
+var _shadow_seed: int = -1
 var _no_bites: bool = false
 ## Botun kayıtlarında açılış filmi görülmüş sayılır (oynasaydı dokunuşları yutardı); first ve story
 ## senaryoları filmi ister.
@@ -2587,7 +2590,8 @@ static func _patch_lum(image: Image, at: Vector2) -> float:
 ## aynı, defterde ve sayaçta bırakılan); HEPSİNİ BIRAK önce "Emin misin?" (süre geçince eski yazı), iki
 ## dokunuşla kova boşalır; panel kapanınca "Göl sevgisi 2!" (kalp) ve Dede'nin sözü, SAT gider. Yeni tür
 ## kartında "Göle bırak" (büyük): balık kovadan çıkar, bildirim. Olta sudayken kovaya dokunmak oyuna geçer
-## (geri sarar). Paneldeki SAT Nine'nin Kova sekmesine götürür. Düğmeler büyük ve güvenli alanda.
+## (geri sarar). Dipte balığın yanında çöp (eski çizme: resmiyle bildirim, sevgi, kovaya girmez; Dede'nin
+## ilk sözü). Paneldeki SAT Nine'nin Kova sekmesine götürür. Düğmeler büyük ve güvenli alanda.
 func _play_release() -> void:
 	_use_save(3)
 	var db := GameState.db
@@ -2715,7 +2719,37 @@ func _play_release() -> void:
 	_check("olta sudayken kovaya dokun → panel yok, geri sarar", not panel.visible
 			and _state() == FishingSession.State.RETRIEVING)
 	await _wait_state(FishingSession.State.IDLE, 3.0)
-	# 7) Paneldeki SAT: Nine'nin tezgâhı, dükkân Kova sekmesinde.
+	# 7) Dipte çöp: dip kamışıyla tutulan sazanın yanında eski çizme (gölgenin seed'i çöp zarını tutar);
+	# eşyanın resmiyle bildirim, sevgi +3, sayaç, kovaya girmez; Dede'nin ilk sözü.
+	save.xp = maxi(save.xp, db.rank_xp[3])
+	if not "rod_carp_1" in save.owned:
+		save.owned.append("rod_carp_1")
+	save.technique = "bottom"
+	GameState.changed.emit()
+	main.call("_on_gear_changed")
+	await _wait(1.0)
+	var boot_seed := 0
+	while Trash.with_catch(rules, boot_seed, "bottom") != "boot":
+		boot_seed += 1
+	_shadow_seed = boot_seed
+	love = save.love
+	var bottom := await _bottom_cast(true)
+	_shadow_seed = -1
+	var boot_text := UiKit.upper(tr("UI_TRASH_FOUND") % [tr("ITEM_boot"), Trash.love_of(rules, "boot")])
+	var popped := await _wait_until(func() -> bool: return toast.is_visible_in_tree() and toast.text == boot_text, 8.0)
+	var boots := 0
+	for entry: Dictionary in save.bucket:
+		if str(entry["fish"]) == "boot":
+			boots += 1
+	_check("dipte balığın yanında eski çizme: \"%s\" (resmiyle), sevgi +%d, kovaya girmez" % [boot_text,
+			Trash.love_of(rules, "boot")], bool(bottom["caught"]) and popped and icon.kind == "item:boot"
+			and save.love == love + Trash.love_of(rules, "boot") and Trash.found(save, "boot") == 1 and boots == 0)
+	await _shot("07_cop")
+	var talked := await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_TRASH_boot", 12.0)
+	_check("Dede çizmeyi söyler (%s)" % main.get("_hint_shown"), talked)
+	await _shot("08_dede_cop")
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	# 8) Paneldeki SAT: Nine'nin tezgâhı, dükkân Kova sekmesinde.
 	for cm in [18, 21, 24]:
 		Records.add(save.records, "rudd", cm, 1, 0)
 		Bucket.add(db, save, "rudd", cm, 1)
@@ -2732,7 +2766,7 @@ func _play_release() -> void:
 	_check("paneldeki SAT → Nine'nin dükkânı Kova sekmesinde (%s)" % shop.current_tab(),
 			sell != null and at_shop and not panel.visible and shop.current_tab() == "sell")
 	await _wait(0.4)
-	await _shot("07_sat")
+	await _shot("09_sat")
 	shop.close_panel()
 	await _wait(0.4)
 	_check_buttons()
@@ -4175,6 +4209,8 @@ func _shadow_at(p: Vector2, heading: Vector2, fish_id: String, percentile: int =
 	chosen.heading = heading.normalized()
 	chosen.mode = FishShadow.Mode.PAUSE
 	chosen.timer = 1_000_000
+	if _shadow_seed >= 0:
+		chosen.seed = _shadow_seed
 	_placed = chosen
 	_no_bites = false
 	if percentile >= 0:

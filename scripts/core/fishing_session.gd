@@ -491,12 +491,15 @@ func _step_fight() -> void:
 	hooked.pos = fight_point()
 
 
+## Balık tutuldu: last_catch (ve "catch" olayı). Dipte balığın yanında çöp çıkabilir ("trash": eşya ya da "";
+## zar gölgenin seed'inden: Trash.with_catch).
 func _caught() -> void:
 	var s := hooked
 	last_catch = {
 		"fish": s.fish_id, "fish_index": s.fish_index, "size_cm": s.size_cm, "stars": s.stars,
-		"rarity": s.rarity, "percentile": s.percentile, "shadow": s.id,
+		"rarity": s.rarity, "percentile": s.percentile, "shadow": s.id, "seed": s.seed,
 		"zone": lake.zone_ids[s.zone] if s.zone >= 0 and s.zone < lake.zone_ids.size() else "",
+		"trash": Trash.with_catch(rules, s.seed, technique.id),
 	}
 	sim.remove(s)
 	hooked = null

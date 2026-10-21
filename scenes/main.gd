@@ -90,6 +90,8 @@ const WEATHER_FLAG := "told_weather_%s"
 ## Göl sevgisinin Dede'nin konuştuğu seviyeleri (UI_DEDE_LOVE_<seviye>) ve sözün bayrağı.
 const LOVE_LINES: Array[int] = [2, 6, 10]
 const LOVE_FLAG := "told_love_%d"
+## Dede her çöp eşyasının ilk gelişinde konuşur (bayrak; söz UI_DEDE_TRASH_<eşya>).
+const TRASH_FLAG := "told_trash_%s"
 
 var session: FishingSession
 var lake: LakeShape
@@ -1027,6 +1029,10 @@ func _on_catch() -> void:
 	# Rütbe atlama, kova dolu gibi bildirimler balığın etiketi sönünce (üst üste binmesin).
 	hud.hold_toasts(CatchFx.HOLD_TIME)
 	zone_news = _after_rank(ranked)
+	# Dipte balığın yanında çöp (zarı gölgenin: FishingSession.last_catch "trash").
+	var trash := str(info.get("trash", ""))
+	if not trash.is_empty():
+		_find_trash(trash)
 	# Bölgenin önerdiği teknik (Dede bir kez; yeni haber varsa sonraki balıkta). Oyuncu orada o teknikle
 	# tuttuysa öneriye gerek kalmadı.
 	if technique == str(db.zone(spot_id, zone_id).get("suggest", "")):
@@ -1151,15 +1157,20 @@ func _sync_music() -> void:
 
 
 ## Dede'nin bekleyen sözlerinden sıradaki (her biri bir kez; bayrak söylenince kayda): önce Nine'nin feneri
-## (ilk gece), sonra göl sevgisinin seviyesi (2, 6, 10), sonra hava (bulut, yağmur, sis; yağmurlu gece
-## fırtına: Kocabaş'ın gecesi), sonra vakit (öğle, akşam, yeni günün sabahı). Söylediyse true (sırada başkası
-## olabilir).
+## (ilk gece), sonra ilk kez çıkan çöp eşyası, sonra göl sevgisinin seviyesi (2, 6, 10), sonra hava (bulut,
+## yağmur, sis; yağmurlu gece fırtına: Kocabaş'ın gecesi), sonra vakit (öğle, akşam, yeni günün sabahı).
+## Söylediyse true (sırada başkası olabilir).
 func _world_line() -> bool:
 	var save := GameState.save
 	if bool(save.flags.get(LANTERN_FLAG, false)) and not save.flags.has(LANTERN_TOLD):
 		save.flags[LANTERN_TOLD] = true
 		_say("UI_DEDE_LANTERN")
 		return true
+	for item in GameState.db.rules.trash_ids:
+		if Trash.found(save, item) > 0 and not save.flags.has(TRASH_FLAG % item):
+			save.flags[TRASH_FLAG % item] = true
+			_say("UI_DEDE_TRASH_" + item)
+			return true
 	var love := LakeLove.level(GameState.db.rules, save.love)
 	for at in LOVE_LINES:
 		if love >= at and not save.flags.has(LOVE_FLAG % at):
@@ -1827,6 +1838,20 @@ func _after_love(result: Dictionary) -> void:
 	_world_line_due = true
 
 
+## Çöp çıktı (dipte balığın yanında ya da tuzakta): göl sevgisi ve sayaçlar (kovaya girmez, para vermez),
+## eşyanın resmiyle bildirim, ses ve titreşim (sırada: balığın etiketi sönünce), sonra seviye atladıysa
+## sevginin bildirimi; Dede her eşyanın ilk gelişinde konuşur (olta boşa dönünce: _world_line).
+func _find_trash(item: String) -> void:
+	var save := GameState.save
+	var result := Trash.collect(GameState.db.rules, save, item)
+	hud.toast_later(tr("UI_TRASH_FOUND") % [tr("ITEM_" + item), int(result["love"])], UiKit.ACCENT, "trash",
+			"item:" + item)
+	_after_love(result)
+	if not save.flags.has(TRASH_FLAG % item):
+		_world_line_due = true
+	GameState.save_game()
+
+
 ## Kova panelinde BIRAK: o türün en küçük balığı göle döner (göl sevgisi), su sesi ve titreşim; panel
 ## yenilenir (sevgi çubuğu dolar).
 func _on_bucket_release(fish_id: String) -> void:
@@ -2222,6 +2247,10 @@ func _collect_trap(id: int) -> void:
 	Sounds.find(rarity)
 	hud.hold_toasts(CatchFx.HOLD_TIME)
 	var news := _after_rank(result["ranked"])
+	# Tuzakta çöp: kerevitlerle birlikte çıkar (içerikle zarlandı: TrapSim).
+	var trash := str(result.get("trash", ""))
+	if not trash.is_empty():
+		_find_trash(trash)
 	var left := int(result["left"])
 	if left > 0:
 		hud.toast_later(tr("UI_TRAP_LEFT") % left, UiKit.ACCENT, "", "tech_trap")
