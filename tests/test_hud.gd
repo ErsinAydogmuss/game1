@@ -5,7 +5,7 @@ extends BaseTest
 ## İpucu çubuğunda görünen sözler: oyunun ipuçları, Dede'nin öğütleri ve uyarıları, Nine'nin sözleri
 ## (main._hint_key ve _say). Kartta ve dükkânda görünenler (UI_DEDE_CARD_, UI_NINE_SHOP_) değil.
 const HINT_PREFIXES: Array[String] = ["UI_HINT_", "UI_DEDE_TIP_", "UI_NINE_LINE_", "UI_DEDE_TECH_", "UI_DEDE_SUGGEST_",
-		"UI_DEDE_STORY_", "UI_DEDE_TIME_", "UI_DEDE_WEATHER_", "UI_DEDE_LOVE_", "UI_DEDE_TRASH_"]
+		"UI_DEDE_STORY_", "UI_DEDE_TIME_", "UI_DEDE_WEATHER_", "UI_DEDE_LOVE_", "UI_DEDE_TRASH_", "UI_DEDE_REQ_"]
 const HINT_KEYS: Array[String] = ["UI_DEDE_BUCKET", "UI_DEDE_BUCKET_CAST", "UI_DEDE_BAIT_OUT", "UI_DEDE_BOAT", "UI_DEDE_BOAT_SHOP",
 		"UI_DEDE_BOAT_DEEP", "UI_DEDE_GATE", "UI_DEDE_LEGEND_NEAR", "UI_DEDE_ZONE_OPEN", "UI_DEDE_SNAG",
 		"UI_DEDE_FLY_STILL", "UI_DEDE_TRAP_OPEN", "UI_DEDE_TRAP_FIRST", "UI_DEDE_LANTERN", "UI_DEDE_TEA"]

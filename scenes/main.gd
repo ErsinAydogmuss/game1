@@ -97,6 +97,10 @@ const LOVE_FLAG := "told_love_%d"
 const TRASH_FLAG := "told_trash_%s"
 ## Göl sevgisinin bu seviyesinden sonra gündüzleri kelebekler uçar (göl güzelleşir: LakeScene.set_love).
 const BUTTERFLY_LOVE := 3
+## Dede'nin istekleri (Dalga 4, 4. adım): ilk isteklerin sözü bir kez (bayrak); çipin rozeti için Bugün
+## panelinin son açılışındaki istek sayacı (request_serial: ondan sonra gelen istek yenidir).
+const REQ_TOLD_FLAG := "told_requests"
+const REQ_SEEN_FLAG := "requests_seen"
 
 var session: FishingSession
 var lake: LakeShape
@@ -197,6 +201,8 @@ var _line_speaker: String = "dede"
 var _world_line_due: bool = false
 ## Göl sevgisinin görünüşü bir kez yenilenecek (çok balık birden bırakılınca bitkiler bir kez kurulsun).
 var _love_scene_due: bool = false
+## Bir istek bitti: Dede "aferin" der (yakalayışın sözlerinin sırasında ya da olta boşa dönünce).
+var _request_done: bool = false
 ## Gölün görünüşünün önbelleği: saat (tam saniye) ve hava düğmesinin bayrakları değişmedikçe aynı
 ## (DayLook.at her kare yeniden hesaplanmasın; _current_look).
 var _look_cache: Dictionary = {}
@@ -292,6 +298,8 @@ func _ready() -> void:
 	world_clock.conditions_changed.connect(_on_conditions_changed)
 	world_clock.phase_changed.connect(_on_phase_changed)
 	world_clock.clock_moved.connect(_sync_world_chip)
+	# Yeni oyun günü: Dede'nin boş istek yuvaları dolar.
+	world_clock.day_changed.connect(func(_day: int) -> void: _refill_requests())
 	_start_session()
 	_refresh_status()
 	# Eski kayıt: rütbesi çoktan gelmiş teknik de bir kez haber verilir; gece açılan kayıtta fener, yağmurlu
@@ -322,6 +330,9 @@ func _start_session() -> void:
 	var cond := world_clock.conditions()
 	_sync_world_chip()
 	_sync_music()
+	_request_done = false
+	# Dede'nin istekleri: açıksa ve bugün dolmadıysa boş yuvalar dolar (eski kayıt; kayıt değişince de).
+	_refill_requests()
 	# Gölün görünüşü hemen kaydın vaktinde ve havasında (sahne sabah ışığıyla kurulur; gece açılan oyun
 	# sabahtan kaymasın).
 	_look_clock = -1
@@ -454,6 +465,7 @@ func _on_state_changed() -> void:
 		session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id, in_boat))
 		_update_gates()
 		_announce_techniques()
+		_refill_requests()
 	session.easy = bool(GameState.setting("easy", false))
 	# Ayar çekişmenin ortasında değişirse (Ayarlar açıkken oyun donuk) süren çekişmeye de geçer.
 	if session.reel != null and session.hooked != null:
@@ -1033,7 +1045,13 @@ func _on_catch() -> void:
 	var kept := Bucket.add(db, save, fish_id, size_cm, stars)
 	# Kartın "Göle bırak"ı yalnızca kovaya giren balıkta (dolu kovada balık zaten göle döndü).
 	outcome["kept"] = kept
-	var zone_news := _after_rank(ranked)
+	# Dede'nin istekleri: av sayılır (bölgesi gölgenin, vakti ve havası şimdiki); biten istek öder. Bildirimi
+	# rütbeninkinden önce (rütbeyi o atlatmış olabilir).
+	var cond := world_clock.conditions()
+	var paid := _note_request({ "type": "catch", "fish": fish_id, "size_cm": size_cm, "rarity": rarity,
+			"technique": technique, "zone": str(info.get("zone", "")), "phase": str(cond["phase"]),
+			"weather": str(cond["weather"]) })
+	var zone_news := _after_rank(_join_ranks(ranked, paid))
 	# Göle dönen balık: önce haberi, sonra (seviye atladıysa) sevginin bildirimi.
 	if protected:
 		hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
@@ -1059,6 +1077,10 @@ func _on_catch() -> void:
 			# Aynı balıkla yeni bölge açıldıysa Dede onu söyler; kovayı yeşil SAT düğmesi ve atış denemesinde
 			# Dede'nin sözü hatırlatır.
 			_say("UI_DEDE_BUCKET")
+		elif _request_done:
+			# Bu balıkla Dede'nin bir isteği bitti.
+			_request_done = false
+			_say("UI_DEDE_REQ_DONE")
 		elif not suggestion.is_empty():
 			save.flags[Elder.SUGGEST_FLAG % zone_id] = true
 			_say(suggestion)
@@ -1097,9 +1119,10 @@ func _on_catch() -> void:
 
 ## Rütbe atladıysa (av ya da tuzak): oturumun erişimi ve çitler yenilenir; rütbe bildirimi, açılan
 ## bölge (adı rozetiyle, Dede söyler, harita düğmesi nabız gibi atar), açılan teknik ve tuzak. Dede
-## bir haber söylediyse true (kovanın hatırlatması o zaman sonraki balığa kalır).
+## bir haber söylediyse true (kovanın hatırlatması o zaman sonraki balığa kalır). Boş değişim (istek
+## bitmedi) bir şey yapmaz.
 func _after_rank(ranked: Dictionary) -> bool:
-	if int(ranked["new_rank"]) <= int(ranked["old_rank"]):
+	if ranked.is_empty() or int(ranked["new_rank"]) <= int(ranked["old_rank"]):
 		return false
 	var db := GameState.db
 	var save := GameState.save
@@ -1120,7 +1143,107 @@ func _after_rank(ranked: Dictionary) -> bool:
 	# tuzağın sözü bölgenin sözünü ezmez, sonraki balığa kalır).
 	if _announce_techniques(not opened.is_empty()):
 		news = true
+	# Dede'nin istekleri bu rütbede açıldıysa yuvalar hemen dolar (Dede saate dokunmayı olta boşa dönünce
+	# söyler: _world_line).
+	_refill_requests()
 	return news
+
+
+## İki rütbe değişimi birleşir (av ve biten istekler): en eski rütbeden en yenisine; biri boşsa öteki.
+static func _join_ranks(a: Dictionary, b: Dictionary) -> Dictionary:
+	if a.is_empty():
+		return b
+	if b.is_empty():
+		return a
+	return { "old_rank": mini(int(a["old_rank"]), int(b["old_rank"])),
+			"new_rank": maxi(int(a["new_rank"]), int(b["new_rank"])) }
+
+
+# --- Dede'nin istekleri ---------------------------------------------------------------
+
+## Yeni oyun gününde (ve istekler açılınca) boş yuvalar dolar (Requests.refill). İlk isteklerde Dede saate
+## dokunmayı söyler (_world_line: bir kez, çip nabız gibi atar); sonraki günlerde bildirim. Çipte rozet:
+## Bugün panelinde görülmemiş istek.
+func _refill_requests() -> void:
+	var save := GameState.save
+	var fresh := Requests.refill(GameState.db, save, spot_id)
+	if not fresh.is_empty():
+		if save.flags.has(REQ_TOLD_FLAG):
+			hud.toast_later(tr("UI_REQ_NEW_DAY"), UiKit.ACCENT, "", "requests", "requests")
+		else:
+			_world_line_due = true
+		GameState.save_game()
+	_sync_request_badge()
+
+
+## Çipin rozeti: Bugün panelinin son açılışından sonra gelen (görülmemiş) bir istek var.
+func _sync_request_badge() -> void:
+	var save := GameState.save
+	var seen := int(save.flags.get(REQ_SEEN_FLAG, 0))
+	var unseen := false
+	for r in Requests.daily(GameState.db, save):
+		unseen = unseen or int(r["serial"]) >= seen
+	hud.world_badge = unseen
+
+
+## Bugün paneli açıldı: istekler görüldü (rozet söner).
+func _mark_requests_seen() -> void:
+	GameState.save.flags[REQ_SEEN_FLAG] = GameState.save.request_serial
+	_sync_request_badge()
+
+
+## Oyunun bir olayı (av, bırakma, çöp, tuzak) Dede'nin isteklerine sayılır (Requests.note); biten istekler
+## öder. Döner: isteklerin rütbe değişimi (yoksa boş; çağıran kendi değişimiyle birleştirir).
+func _note_request(event: Dictionary) -> Dictionary:
+	return _pay_requests(Requests.note(GameState.save, event))
+
+
+## Biten istekler öder (Requests.pay; bir kez): para, rütbe puanı, göl sevgisi. Her biri bildirimle (para
+## sesiyle; sırada: balığın etiketi sönünce, panel ya da kart kapanınca), sevgi (_after_love), Dede'nin
+## "aferin"i sıraya. Döner: rütbe değişimi (ödeme yoksa boş).
+func _pay_requests(done: Array[Dictionary]) -> Dictionary:
+	var ranked := {}
+	for r in done:
+		var paid := Requests.pay(GameState.db, GameState.save, r)
+		if paid.is_empty():
+			continue
+		hud.toast_later(tr("UI_REQ_DONE") % UiKit.format_int(int(paid["coins"])), UiKit.ACCENT, "coins", "requests")
+		_after_love(paid["loved"])
+		ranked = _join_ranks(ranked, paid["ranked"])
+		_request_done = true
+		_world_line_due = true
+	if not ranked.is_empty():
+		_refresh_status()
+	return ranked
+
+
+## Bugün panelinde bir istek değiştirildi (günde bir; Requests.reroll): yuvada yenisi (görülmüş sayılır),
+## panel yenilenir.
+func _on_reroll(slot: int) -> void:
+	var save := GameState.save
+	if Requests.reroll(GameState.db, save, spot_id, slot).is_empty():
+		Sounds.play("error")
+		Sounds.haptic(30)
+		return
+	GameState.save_game()
+	Sounds.haptic(15)
+	day_panel.refresh()
+	_mark_requests_seen()
+
+
+## Geliştirme sürümü (Ayarlar'da İSTEK BİTİR): Dede'nin ilk bitmemiş isteği biter ve gerçek akışla öder
+## (bildirim, sevgi, rütbe; panel kapanınca görünür).
+func _debug_finish_request() -> void:
+	var save := GameState.save
+	for r in Requests.daily(GameState.db, save):
+		if int(r["progress"]) < int(r["goal"]):
+			r["progress"] = int(r["goal"])
+			var done: Array[Dictionary] = [r]
+			_after_rank(_pay_requests(done))
+			break
+	GameState.save_game()
+	_refresh_status()
+	GameState.changed.emit()
 
 
 ## Şans garantisi: bölgede (boşsa gölde), bu teknikle (verilmezse elindeki), gölün o anki koşulunda
@@ -1168,12 +1291,23 @@ func _sync_music() -> void:
 	Sounds.set_music("shop" if shop_panel.visible else DayClock.phase(GameState.db.rules, GameState.save.clock_s))
 
 
-## Dede'nin bekleyen sözlerinden sıradaki (her biri bir kez; bayrak söylenince kayda): önce Nine'nin feneri
+## Dede'nin bekleyen sözlerinden sıradaki (her biri bir kez; bayrak söylenince kayda): önce Dede'nin
+## istekleri (ilk istekler: saate dokun, çip nabız gibi atar; biten istek: aferin), sonra Nine'nin feneri
 ## (ilk gece), sonra ilk kez çıkan çöp eşyası, sonra göl sevgisinin seviyesi (LOVE_LINES), sonra hava (bulut,
 ## yağmur, sis; yağmurlu gece fırtına: Kocabaş'ın gecesi), sonra vakit (öğle, akşam, yeni günün sabahı).
 ## Söylediyse true (sırada başkası olabilir).
 func _world_line() -> bool:
 	var save := GameState.save
+	var db := GameState.db
+	if not save.flags.has(REQ_TOLD_FLAG) and not Requests.daily(db, save).is_empty():
+		save.flags[REQ_TOLD_FLAG] = true
+		_say("UI_DEDE_REQ_FIRST")
+		hud.pulse_world()
+		return true
+	if _request_done:
+		_request_done = false
+		_say("UI_DEDE_REQ_DONE")
+		return true
 	if bool(save.flags.get(LANTERN_FLAG, false)) and not save.flags.has(LANTERN_TOLD):
 		save.flags[LANTERN_TOLD] = true
 		_say("UI_DEDE_LANTERN")
@@ -1837,9 +1971,10 @@ func _place_shop() -> void:
 
 
 ## Balık göle bırakıldı: defterde bırakılan sayısı, göl sevgisi ve sayaç. Sevginin seviyesi
-## değişirse oranlar yenilenir (Nadir+ payı).
+## değişirse oranlar yenilenir (Nadir+ payı). Dede'nin bırakma isteğine sayılır.
 func _release_fish(fish_id: String) -> void:
 	_after_love(WorldState.release(GameState.db, GameState.save, fish_id))
+	_after_rank(_note_request({ "type": "release" }))
 
 
 ## Göl sevgisi arttı (balık bırakıldı, çöp toplandı): oranlar sevgi seviyesiyle yenilenir; seviye atladıysa
@@ -1876,6 +2011,7 @@ func _find_trash(item: String) -> void:
 	_after_love(result)
 	if not save.flags.has(TRASH_FLAG % item):
 		_world_line_due = true
+	_after_rank(_note_request({ "type": "trash" }))
 	GameState.save_game()
 
 
@@ -1931,6 +2067,7 @@ func _refresh_status() -> void:
 	# panel kapanınca eski sözü göstermesin).
 	if _line_time > 0.0 and _line in BUCKET_LINES and not Bucket.is_full(db, save):
 		_line_time = 0.0
+	_sync_request_badge()
 
 
 ## Rütbesi gelmiş ama haber verilmemiş teknik (rütbe atladı ya da eski kayıt): adı ikonuyla, Dede
@@ -2290,7 +2427,14 @@ func _collect_trap(id: int) -> void:
 		elder.approve()
 	Sounds.find(rarity)
 	hud.hold_toasts(CatchFx.HOLD_TIME)
-	var news := _after_rank(result["ranked"])
+	# Dede'nin istekleri: tuzaktan gelen kerevitler tuzak isteğine ve türün isteğine sayılır (tür başına).
+	var counts := {}
+	for item: Dictionary in items:
+		counts[str(item["fish"])] = int(counts.get(str(item["fish"]), 0)) + 1
+	var paid := {}
+	for kind: String in counts:
+		paid = _join_ranks(paid, _note_request({ "type": "trap", "fish": kind, "count": int(counts[kind]) }))
+	var news := _after_rank(_join_ranks(result["ranked"], paid))
 	# Tuzakta çöp: kerevitlerle birlikte çıkar (içerikle zarlandı: TrapSim).
 	var trash := str(result.get("trash", ""))
 	if not trash.is_empty():
@@ -2502,6 +2646,7 @@ func _build_ui() -> void:
 	settings_panel.time_requested.connect(_debug_time)
 	settings_panel.weather_requested.connect(_debug_weather)
 	settings_panel.love_requested.connect(_debug_love)
+	settings_panel.finish_request_requested.connect(_debug_finish_request)
 	settings_panel.story_requested.connect(_replay_story)
 	shop_panel = ShopPanel.new()
 	layer.add_child(shop_panel)
@@ -2535,6 +2680,7 @@ func _build_ui() -> void:
 	day_panel = DayPanel.new()
 	layer.add_child(day_panel)
 	day_panel.tea_requested.connect(_on_tea)
+	day_panel.reroll_requested.connect(_on_reroll)
 	bucket_panel = BucketPanel.new()
 	layer.add_child(bucket_panel)
 	bucket_panel.release_requested.connect(_on_bucket_release)
@@ -2589,7 +2735,8 @@ func _build_ui() -> void:
 		angler.stop()
 		_pending_cast = Dice.NO_POINT
 		_pending_trap = -1
-		day_panel.open())
+		day_panel.open()
+		_mark_requests_seen())
 	hud.technique_pressed.connect(func() -> void:
 		if session.state != FishingSession.State.IDLE or _card_up():
 			return

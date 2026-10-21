@@ -60,6 +60,10 @@ const TECH_SIZE := Vector2(132, 132)
 const TECH_PULSE := 4.0
 ## Saat çipinin dokunma kutusunun yüksekliği (en az 122): hap ince, kutu onun altına uzanır.
 const CHIP_TOUCH := 122.0
+## Dede'nin yeni istekleri: saat çipinin sağ üst köşesindeki rozet (yuvarlak; tek çizim) ve istekler açılınca
+## çipin nabzı (sn).
+const BADGE_SIZE := 30.0
+const WORLD_PULSE := 4.0
 
 var settings_button: TouchButton
 var book_button: TouchButton
@@ -110,6 +114,8 @@ var _phase_icon: GameIcon
 var _time_label: Label
 var _weather_icon: GameIcon
 var _world_key: String = ""
+## Çipin rozeti (yeni istek; konumu her kare çipin köşesinden: kapsayıcı dizmesin diye top_level).
+var _world_badge: Panel
 var _fps: Label
 var _hint: PanelContainer
 var _hint_label: Label
@@ -139,6 +145,7 @@ var _line_out: bool = false
 var _in_boat: bool = false
 var _map_pulse: float = 0.0
 var _tech_pulse: float = 0.0
+var _world_pulse: float = 0.0
 var _clock: float = 0.0
 var _fps_clock: float = 0.0
 
@@ -205,6 +212,15 @@ func _process(delta: float) -> void:
 			_tech_pulse = maxf(0.0, _tech_pulse - delta)
 		technique_button.pivot_offset = technique_button.size * 0.5
 		technique_button.scale = Vector2.ONE * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _tech_pulse))
+	if _world_pulse > 0.0:
+		if _toast_hold <= 0.0:
+			_world_pulse = maxf(0.0, _world_pulse - delta)
+		_world_chip.pivot_offset = _world_chip.size * 0.5
+		_world_chip.scale = Vector2.ONE * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _world_pulse))
+	# Rozet çipin sağ üst köşesinde (çip gizliyse o da gizli: görünürlüğü üstten gelir).
+	if _world_badge.is_visible_in_tree():
+		var corner := _world_chip.get_global_rect()
+		_world_badge.global_position = Vector2(corner.end.x - BADGE_SIZE * 0.8, corner.position.y - BADGE_SIZE * 0.25)
 	# VUR! anında eylem düğmesi nabız gibi atar.
 	if _action_kind == "hook":
 		action_button.pivot_offset = action_button.size * 0.5
@@ -335,6 +351,20 @@ func pulse_map() -> void:
 ## Yeni teknik açıldı: teknik düğmesi bir süre nabız gibi atar.
 func pulse_technique() -> void:
 	_tech_pulse = TECH_PULSE
+
+
+## Dede'nin istekleri açıldı: saat çipi bir süre nabız gibi atar.
+func pulse_world() -> void:
+	_world_pulse = WORLD_PULSE
+
+
+## Saat çipinin rozeti: Dede'nin görülmemiş yeni isteği var (Bugün paneli açılınca söner; çekişmede çip
+## gizli, rozet de).
+var world_badge: bool = false:
+	set(value):
+		world_badge = value
+		if _world_badge != null:
+			_world_badge.visible = value
 
 
 ## Elindeki teknik: düğmenin ikonu.
@@ -538,6 +568,20 @@ func _build_world_chip() -> void:
 	_weather_icon = GameIcon.make("weather_cloudy", 58)
 	_weather_icon.visible = false
 	row.add_child(_weather_icon)
+	_world_badge = Panel.new()
+	_world_badge.name = "WorldBadge"
+	_world_badge.top_level = true
+	_world_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_world_badge.size = Vector2(BADGE_SIZE, BADGE_SIZE)
+	var dot := StyleBoxFlat.new()
+	dot.bg_color = UiKit.DANGER
+	dot.set_corner_radius_all(int(BADGE_SIZE * 0.5))
+	dot.set_border_width_all(4)
+	dot.border_color = Color.WHITE
+	dot.anti_aliasing = true
+	_world_badge.add_theme_stylebox_override("panel", dot)
+	_world_badge.visible = false
+	_world_chip.add_child(_world_badge)
 
 
 ## Durum hapı: ikon + sayı (Luckiest Guy); parent verilmezse durum satırına. Etiketi döndürür. Hap üst kenarda

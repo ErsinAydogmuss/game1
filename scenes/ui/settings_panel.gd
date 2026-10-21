@@ -18,6 +18,7 @@ signal story_requested
 signal time_requested
 signal weather_requested
 signal love_requested
+signal finish_request_requested
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
@@ -167,8 +168,9 @@ func _debug_row() -> void:
 		rank_up_requested.emit())
 
 
-## Geliştirme sürümünün canlı dünya satırı (Dalga 4; telefonda vakit, hava ve sevgiyi denemek için):
-## VAKİT + (sonraki vakit), HAVA (bugünün havası sıradakine), SEVGİ + (göl sevgisi).
+## Geliştirme sürümünün canlı dünya satırı (Dalga 4; telefonda vakit, hava, sevgi ve istekleri denemek için):
+## VAKİT + (sonraki vakit), HAVA (bugünün havası sıradakine), SEVGİ + (göl sevgisi), İSTEK BİTİR (Dede'nin ilk
+## bitmemiş isteği biter ve öder; istek yoksa pasif).
 func _world_row() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
@@ -182,6 +184,11 @@ func _world_row() -> void:
 	_debug_button(row, "DebugLove", tr("UI_DEBUG_LOVE") % UiKit.format_int(DEBUG_LOVE)).pressed.connect(func() -> void:
 		Sounds.play("ui_tap")
 		love_requested.emit())
+	var finish := _debug_button(row, "DebugRequest", tr("UI_DEBUG_REQUEST"))
+	finish.disabled = Requests.daily(GameState.db, GameState.save).is_empty()
+	finish.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		finish_request_requested.emit())
 
 
 ## Satırı eşit paylaşan düğme (bot adıyla bulur: dokunuştan sonra satırlar yeniden kurulur).

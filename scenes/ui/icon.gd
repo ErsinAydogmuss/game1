@@ -18,7 +18,7 @@ extends Control
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release", "pin", "boat", "trap"]
+		"release", "pin", "boat", "trap", "reroll"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -187,6 +187,8 @@ func _draw() -> void:
 			_boat()
 		"trap":
 			_trap()
+		"reroll":
+			_reroll()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -478,6 +480,20 @@ func _pin() -> void:
 	draw_circle(Vector2(50, 37), 25, RED)
 	draw_circle(Vector2(50, 37), 10, Color.WHITE)
 	draw_circle(Vector2(41, 27), 5, Color(1, 1, 1, 0.55))
+
+
+## Değiştir (Dede'nin isteği başkasıyla): çember üstünde birbirini kovalayan iki ok (rengi tint).
+func _reroll() -> void:
+	var c := Vector2(50, 50)
+	for start: float in [200.0, 20.0]:
+		var a0 := deg_to_rad(start)
+		var a1 := deg_to_rad(start + 130.0)
+		draw_arc(c, 30.0, a0, a1, 20, tint, 11.0, true)
+		# Okun başı yayın ucunda, yayın yönünde (açı artarken).
+		var tip := c + Vector2(cos(a1), sin(a1)) * 30.0
+		var along := Vector2(-sin(a1), cos(a1))
+		var out := Vector2(cos(a1), sin(a1))
+		draw_colored_polygon(PackedVector2Array([tip + along * 16.0, tip + out * 14.0, tip - out * 14.0]), tint)
 
 
 ## Kürekli sandal (yandan): ahşap gövde, oturak ve kürek.

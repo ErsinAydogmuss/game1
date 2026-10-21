@@ -219,10 +219,10 @@ func _row(db: ContentDB, row: Dictionary) -> Control:
 	count.name = "Count"
 	tags.add_child(count)
 	tags.add_child(UiKit.rarity_badge(db, int(row["rarity"]), 22))
-	var love := _with_icon("love", "+%d" % int(row["love"]), 34, 26)
+	var love := UiKit.icon_text("love", "+%d" % int(row["love"]), 34, 26)
 	love.name = "Love"
 	tags.add_child(love)
-	var value := _with_icon("coin", UiKit.format_int(int(row["value"])), 44, UiKit.SIZE_SMALL + 2)
+	var value := UiKit.icon_text("coin", UiKit.format_int(int(row["value"])), 44, UiKit.SIZE_SMALL + 2)
 	value.custom_minimum_size.x = VALUE_W
 	line.add_child(value)
 	var release := UiKit.button(tr("UI_BUCKET_RELEASE"), UiKit.SECONDARY, UiKit.SIZE_SMALL, RELEASE_BUTTON)
@@ -231,15 +231,6 @@ func _row(db: ContentDB, row: Dictionary) -> Control:
 	release.pressed.connect(func() -> void: release_requested.emit(fish_id))
 	line.add_child(release)
 	return panel
-
-
-static func _with_icon(kind: String, text: String, icon_size: float, font_size: int) -> HBoxContainer:
-	var box := HBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
-	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	box.add_child(GameIcon.make(kind, icon_size))
-	box.add_child(UiKit.ink(text, font_size))
-	return box
 
 
 ## Göl sevgisinin seviye içindeki ilerlemesi: ince çubuk (hapın içinde, yazının altında).

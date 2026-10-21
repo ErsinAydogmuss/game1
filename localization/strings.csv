@@ -21,6 +21,7 @@ UI_DEBUG_RANK_UP,Rank +1,Rütbe +1
 UI_DEBUG_TIME,Time +,Vakit +
 UI_DEBUG_WEATHER,Weather,Hava
 UI_DEBUG_LOVE,Love +%s,Sevgi +%s
+UI_DEBUG_REQUEST,Finish request,İstek bitir
 RARITY_common,Common,Sıradan
 RARITY_fine,Fine,Güzel
 RARITY_rare,Rare,Nadir
@@ -490,6 +491,16 @@ UI_GUIDE_ZONE_LILY_COVE,Predators hide in the lilies; lures can snag.,Yırtıcı
 UI_GUIDE_ZONE_ROCKY_POINT,Rocky and deep: lures can snag on rocks.,Kayalık ve derin; yapay yem takılabilir.
 UI_GUIDE_ZONE_STREAM_MOUTH,Flowing water: the only place for flies.,Akıntılı su: sinek yalnızca burada.
 UI_GUIDE_ZONE_DEEP_WATER,The deepest water and the biggest fish.,Gölün en derin yeri; en iri balıklar.
+UI_GUIDE_LIVING,A living lake,Göl yaşıyor
+UI_GUIDE_LIVING_LEAD,"Time flows and the weather turns. Tap the clock: today, tea and Dede's requests.","Saat akar, hava değişir. Saate dokun: bugün, çay ve Dede'nin istekleri."
+UI_GUIDE_TIME,Time of day,Vakit
+UI_GUIDE_TIME_TEXT,A day lasts %d minutes. Each time of day brings other fish; some come only at night.,Bir gün %d dakika. Her vakit başka balık gelir; bazıları yalnızca gece.
+UI_GUIDE_WEATHER,Weather,Hava
+UI_GUIDE_WEATHER_TEXT,"In the rain, fish come from farther away. Tap the clock to see tomorrow.",Yağmurda balık daha uzaktan gelir. Yarının havası için saate dokun.
+UI_GUIDE_TEA_TEXT,Have tea to skip to the next time of day. Catch a fish between cups.,"Çay iç, sonraki vakte geç. İki çay arasında bir balık tut."
+UI_GUIDE_LOVE,Lake love,Göl sevgisi
+UI_GUIDE_LOVE_TEXT,"Release fish, pick up trash: the lake blooms, and each level brings rare fish more often.","Balık bırak, çöp topla: göl güzelleşir; her seviyede nadir balık biraz sıklaşır."
+UI_GUIDE_REQUESTS_TEXT,"%d small jobs a day for coins, points and love. Swap one each day.","Her gün %d küçük iş: para, puan ve sevgi verir. Günde birini değiştirebilirsin."
 UI_GUIDE_PEOPLE,Friends and goal,Dostlar ve hedef
 UI_GUIDE_PEOPLE_LEAD,Stuck? Tap Dede. This guide is always in Settings.,Takılırsan Dede'ye dokun. Bu rehber hep Ayarlar'da.
 UI_GUIDE_DEDE,Dede,Dede
@@ -531,7 +542,7 @@ UI_MINUTES,%d min,%d dk
 UI_SECONDS,%d s,%d sn
 UI_DAY_DETAIL_rain,Stormy at night,Gece fırtına
 UI_DAY_DETAIL_fog,Morning and night,Sabah ve gece
-UI_TEA_TITLE,Tea with Grandpa,Dede'yle çay
+UI_TEA_TITLE,Tea with Dede,Dede'yle çay
 UI_TEA_TO_morning,Morning comes while the tea brews.,Çay demlenirken sabah olur.
 UI_TEA_TO_noon,Noon comes while the tea brews.,Çay demlenirken öğle olur.
 UI_TEA_TO_evening,Evening comes while the tea brews.,Çay demlenirken akşam olur.
@@ -562,6 +573,14 @@ UI_REQ_rain,%d fish in the rain,Yağmurda %d balık
 UI_REQ_release,Release %d fish,%d balık bırak
 UI_REQ_trash,Pick up %d trash,%d çöp topla
 UI_REQ_trap,%d crayfish from traps,Tuzaktan %d kerevit
+UI_REQ_TITLE,Dede's requests,Dede'nin istekleri
+UI_REQ_EMPTY,New request tomorrow,Yarın yeni istek
+UI_REQ_REROLL_HINT,You can swap one request a day,Günde bir isteği değiştirebilirsin
+UI_REQ_REROLL_USED,You can swap again tomorrow,Yarın yine değiştirebilirsin
+UI_REQ_NEW_DAY,New day! Dede has new requests,Yeni gün! Dede'nin yeni istekleri var
+UI_REQ_DONE,Request done! +%s coins,İstek tamam! +%s para
+UI_DEDE_REQ_FIRST,"I'll have small jobs for you daily, kid! Tap the clock.",Her gün sana küçük işlerim olacak evlat! Saate dokun.
+UI_DEDE_REQ_DONE,"Well done, kid! Just what I wanted.",Aferin evlat! Tam istediğim gibi.
 UI_LOVE_LEVEL,Lake love %d,Göl sevgisi %d
 UI_LOVE_UP,Lake love %d!,Göl sevgisi %d!
 UI_LOVE_HOW,"Release fish, pick up trash: the lake blooms.","Balık bırak, çöp topla: göl güzelleşir."

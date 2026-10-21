@@ -227,6 +227,8 @@ func _ready() -> void:
 			_play_world.call_deferred()
 		"release":
 			_play_release.call_deferred()
+		"requests":
+			_play_requests.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -2595,6 +2597,294 @@ static func _patch_lum(image: Image, at: Vector2) -> float:
 			sum += 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
 			n += 1
 	return sum / n
+
+
+## Dede'nin istekleri (Dalga 4, 4. adım; KONTROL satırları; telefon oranında, --safe-inset=130, TR ve EN):
+## rütbe 1'de yok (rozet yok, Bugün panelinde istek bölümü gizli); rütbe 2'yi getiren balıkla yuvalar dolar, çipte
+## rozet (çipin köşesinde), Dede saate dokunmayı söyler, çip nabız gibi atar; iskelede çizim sınırı rozetle. Bugün
+## paneli küçülmeden sığar: istek kartları (yazı en çok iki satır, ilerleme, değiştir düğmesi), açılınca rozet
+## söner. Bir yakalayışla biten istek: bildirim, para, rütbe puanı ve sevgi gelir, yuva boşalır ("Yarın yeni
+## istek"), Dede "aferin" der; kovadan bırakmayla biten bırakma isteği de. Değiştir bir kez: yeni istek, not
+## "Yarın yine", düğmeler pasif. Yeni günde (VAKİT +) boş yuva dolar: "Sabah oldu"dan sonra "Yeni gün!", rozet.
+## İSTEK BİTİR deneme düğmesi. Rütbe 3'te yağmurlu günde yağmur isteği adayı. Rehberin "Göl yaşıyor" sayfası.
+func _play_requests() -> void:
+	_use_save(3)
+	_roomy_bucket()
+	var db := GameState.db
+	var rules := db.rules
+	var save := GameState.save
+	var hud := _hud()
+	var day_panel: DayPanel = main.get("day_panel")
+	var toast: Label = hud.get("_toast")
+	var badge: Control = hud.get("_world_badge")
+	var spot := str(main.get("spot_id"))
+	# Kartsız yakalamalar: bütün türler bilinir, rekor kırılmaz.
+	for f in db.fish:
+		Records.add(save.records, str(f["id"]), 999, 3, 0)
+	save.xp = db.rank_xp[db.requests.unlock_rank - 1] - 1
+	GameState.changed.emit()
+	await _wait(1.0)
+	# 1) Rütbe 1: istek yok.
+	await _tap_control(hud.world_button)
+	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
+	await _wait(0.4)
+	var box := day_panel.find_child("Requests", true, false) as Control
+	_check("rütbe 1'de istek yok: çipte rozet yok, Bugün panelinde istek bölümü gizli", day_panel.visible
+			and save.requests.is_empty() and not hud.world_badge and box != null and not box.is_visible_in_tree())
+	day_panel.close_panel()
+	await _wait(0.4)
+	# 2) Rütbe 2'yi getiren balık: yuvalar dolar, çipte rozet; Dede saate dokunmayı söyler, çip nabız gibi atar.
+	var caught := await _catch_at_dock("rudd", 300_000)
+	await _wait_frames(2)
+	_check("rütbe 2'yi getiren balıkla %d istek, çipte rozet" % save.requests.size(), caught
+			and Rank.rank(db, save) == db.requests.unlock_rank and save.requests.size() == db.requests.slots
+			and hud.world_badge)
+	var told := await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_REQ_FIRST", 20.0)
+	var view := get_viewport().get_visible_rect()
+	_check("Dede saate dokunmayı söyler, çip nabız gibi atar, rozet çipin köşesinde ve ekranda (%s, %s)" % [
+			main.get("_hint_shown"), badge.get_global_rect()], told and float(hud.get("_world_pulse")) > 0.0
+			and badge.is_visible_in_tree() and badge.get_global_rect().intersects(hud.world_button.hit_rect())
+			and view.encloses(badge.get_global_rect()))
+	await _shot("01_ilk_istekler")
+	var hint: Control = hud.get("_hint")
+	await _wait_until(func() -> bool: return not toast.is_visible_in_tree() and not hint.visible, 25.0)
+	await _wait(0.5)
+	var draws := int((await _measure_draws())["draws"])
+	print("ÇİZİM istek rozeti: %d" % draws)
+	_check("çipte rozetle iskelede en çok %d çizim (%d)" % [TOUR_DRAWS, draws], badge.is_visible_in_tree()
+			and draws > 0 and draws <= TOUR_DRAWS)
+	# 3) Bugün paneli: küçülmeden sığar; istek kartları (yazı en çok iki satır, ilerleme 0/N, değiştir düğmesi);
+	# açılınca rozet söner.
+	await _tap_control(hud.world_button)
+	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
+	await _wait(0.5)
+	var notes := PackedStringArray()
+	for slot in db.requests.slots:
+		var r := Requests.find_slot(save, slot)
+		var holder := day_panel.find_child("Request%d" % slot, true, false) as Control
+		var label := holder.find_child("Text", true, false) as Label if holder != null else null
+		var progress := holder.find_child("Progress", true, false) as Label if holder != null else null
+		var reroll := day_panel.find_child("Reroll%d" % slot, true, false) as Button
+		if r.is_empty() or label == null or progress == null or reroll == null:
+			notes.append("yuva %d eksik" % slot)
+			continue
+		print("İSTEK %d: %s (%s), ödül %s" % [slot, label.text, progress.text, r["reward"]])
+		if label.get_line_count() > 2:
+			notes.append("yuva %d: %d satır" % [slot, label.get_line_count()])
+		if label.text != DayPanel.text_of(db, r) or progress.text != "0/%d" % int(r["goal"]):
+			notes.append("yuva %d: %s, %s" % [slot, label.text, progress.text])
+		if reroll.disabled:
+			notes.append("yuva %d: değiştir pasif" % slot)
+	_check("Bugün panelinde %d istek: yazı en çok iki satır, ilerleme, değiştir%s" % [db.requests.slots,
+			"" if notes.is_empty() else ": " + ", ".join(notes)], notes.is_empty())
+	_check("Bugün paneli telefonda küçülmeden sığar (%.3f, %s)" % [day_panel.fit_scale(), day_panel.panel_rect()],
+			day_panel.fit_scale() >= 0.999 and _panel_inside(day_panel))
+	_check_panel_buttons(day_panel, "Bugün panelinin düğmeleri")
+	_check("panel açılınca rozet söner", not hud.world_badge and not badge.visible)
+	await _shot("02_bugun_istekler")
+	day_panel.close_panel()
+	await _wait(0.4)
+	# 4) Bir yakalayışla biten istek: ilerleme bir eksikken istenen balık tutulur → bildirim, para, rütbe puanı ve
+	# sevgi gelir, yuva boşalır, Dede "aferin" der.
+	var target := _request_by_catch(db, save)
+	_check("bir yakalayışla bitebilen istek var (%s)" % (Requests.key_of(target[0]) if not target.is_empty() else "-"),
+			not target.is_empty())
+	var done_slot := -1
+	if not target.is_empty():
+		var r: Dictionary = target[0]
+		done_slot = int(r["slot"])
+		r["progress"] = int(r["goal"]) - 1
+		var reward: Dictionary = r["reward"]
+		var coins := save.coins
+		var xp := save.xp
+		var love := save.love
+		var done_text := UiKit.upper(tr("UI_REQ_DONE") % UiKit.format_int(int(reward["coins"])))
+		var got := await _catch_at_dock(str(target[1]), int(target[2]))
+		var said := await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_REQ_DONE", 8.0)
+		var shown := await _wait_toast(done_text, 8.0)
+		var icon: GameIcon = hud.get("_toast_icon")
+		_check("istenen balık (%s) → \"%s\" (istek ikonu), +%d para, +%d puan, +%d sevgi, yuva boş, Dede \"aferin\"" % [
+				target[1], done_text, int(reward["coins"]), int(reward["xp"]), int(reward["love"])], got and shown
+				and icon.kind == "requests" and save.coins == coins + int(reward["coins"])
+				and save.xp >= xp + int(reward["xp"]) and save.love == love + int(reward["love"])
+				and Requests.find_slot(save, done_slot).is_empty() and said
+				and int(save.stats.get("requests", 0)) == 1)
+		await _shot("03_istek_tamam")
+	# 4b) Bırakma isteği: ilerleme bir eksikken kovadan bir balık bırakılır; bildirim panel kapanınca.
+	var release_req := {}
+	for r in Requests.daily(db, save):
+		if str(r["kind"]) == "release":
+			release_req = r
+	if not release_req.is_empty() and not save.bucket.is_empty():
+		# Önceki bildirim sönsün (bırakmanınki panel kapanınca gelmeli).
+		await _wait_until(func() -> bool: return not toast.is_visible_in_tree(), 8.0)
+		release_req["progress"] = int(release_req["goal"]) - 1
+		var bucket_panel: BucketPanel = main.get("bucket_panel")
+		var coins := save.coins
+		var paid := int((release_req["reward"] as Dictionary)["coins"])
+		await _tap_control(hud.bucket_button)
+		await _wait_until(func() -> bool: return bucket_panel.visible, 2.0)
+		await _wait(0.4)
+		var fish := str(save.bucket[0]["fish"])
+		var release := bucket_panel.find_child("Release_" + fish, true, false) as Button
+		# Panel yenilenince düğme silinir: bulunduğu dokunmadan önce.
+		var found := release != null
+		if found:
+			await _tap_control(release)
+		await _wait_frames(2)
+		var held := not toast.is_visible_in_tree()
+		await _tap_control(bucket_panel.close_button)
+		var shown := await _wait_toast(UiKit.upper(tr("UI_REQ_DONE") % UiKit.format_int(paid)), 6.0)
+		_check("bırakma isteği: kovadan bırakınca biter (+%d para), bildirim panel kapanınca" % paid,
+				found and held and shown and save.coins == coins + paid
+				and Requests.find_slot(save, int(release_req["slot"])).is_empty())
+		if done_slot < 0:
+			done_slot = int(release_req["slot"])
+	# 5) Değiştir: günde bir; yuvada yeni istek (eskisi ve ekrandakiler gelmez), not "Yarın yine", düğmeler pasif;
+	# biten isteğin yuvasında "Yarın yeni istek".
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	await _tap_control(hud.world_button)
+	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
+	await _wait(0.4)
+	var empty_label := day_panel.find_child("Request%d" % done_slot, true, false)
+	empty_label = empty_label.find_child("Empty", true, false) if empty_label != null else null
+	_check("biten isteğin yuvasında \"%s\"" % tr("UI_REQ_EMPTY"), empty_label is Label
+			and (empty_label as Label).text == tr("UI_REQ_EMPTY"))
+	var slot_r := -1
+	for slot in db.requests.slots:
+		if slot_r < 0 and Requests.can_reroll(db, save, slot):
+			slot_r = slot
+	var old := Requests.find_slot(save, slot_r).duplicate(true)
+	var reroll_button := day_panel.find_child("Reroll%d" % slot_r, true, false) as Button
+	var can := reroll_button != null and not reroll_button.disabled
+	if can:
+		await _tap_control(reroll_button)
+	await _wait_frames(3)
+	var fresh := Requests.find_slot(save, slot_r)
+	var note := day_panel.find_child("RerollNote", true, false) as Label
+	var all_off := true
+	for slot in db.requests.slots:
+		var b := day_panel.find_child("Reroll%d" % slot, true, false) as Button
+		all_off = all_off and (b == null or b.disabled)
+	_check("değiştir: yuva %d'de yeni istek (%s → %s), \"%s\", değiştir düğmeleri pasif" % [slot_r,
+			Requests.key_of(old) if not old.is_empty() else "-", Requests.key_of(fresh) if not fresh.is_empty() else "-",
+			tr("UI_REQ_REROLL_USED")], can and not old.is_empty() and not fresh.is_empty()
+			and int(fresh["serial"]) != int(old["serial"]) and Requests.key_of(fresh) != Requests.key_of(old)
+			and note != null and note.text == tr("UI_REQ_REROLL_USED") and all_off and not hud.world_badge)
+	await _shot("04_degistir")
+	day_panel.close_panel()
+	await _wait(0.4)
+	# 6) Yeni gün (VAKİT + sabaha kadar): boş yuva dolar; "Sabah oldu"dan sonra "Yeni gün!" bildirimi, rozet.
+	var today := DayClock.day(rules, save.clock_s)
+	var seen: Array[String] = []
+	var watch := func() -> bool:
+		if toast.is_visible_in_tree() and (seen.is_empty() or seen[seen.size() - 1] != toast.text):
+			seen.append(toast.text)
+		return false
+	var skips := 0
+	while DayClock.day(rules, save.clock_s) == today and skips < 8:
+		main.call("_debug_time")
+		skips += 1
+		await _wait_frames(2)
+		watch.call()
+	var new_day := UiKit.upper(tr("UI_REQ_NEW_DAY"))
+	var morning := UiKit.upper(tr("UI_PHASE_NOW_morning"))
+	await _wait_until(func() -> bool:
+		watch.call()
+		return seen.has(new_day), 15.0)
+	_check("yeni gün: %d. yuva doldu, \"%s\" \"%s\"dan sonra, rozet (%s)" % [done_slot, new_day, morning, ", ".join(seen)],
+			done_slot >= 0 and not Requests.find_slot(save, done_slot).is_empty()
+			and save.request_day == today + 1 and seen.has(morning) and seen.find(morning) < seen.find(new_day)
+			and hud.world_badge)
+	await _shot("05_yeni_gun")
+	# 7) İSTEK BİTİR (geliştirme sürümü, ölçüm açıkken): ilk bitmemiş istek biter, gerçek akışla öder; bildirim
+	# panel kapanınca.
+	var settings: SettingsPanel = main.get("settings_panel")
+	save.settings["perf"] = true
+	GameState.changed.emit()
+	await _tap_control(hud.settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	await _wait(0.4)
+	var first := {}
+	for r in Requests.daily(db, save):
+		if first.is_empty() and int(r["progress"]) < int(r["goal"]):
+			first = r.duplicate(true)
+	var finish := settings.find_child("DebugRequest", true, false) as Button
+	var coins_before := save.coins
+	var active := finish != null and not finish.disabled
+	if active:
+		await _tap_control(finish)
+	await _wait_frames(3)
+	var paid_coins := int((first.get("reward", {}) as Dictionary).get("coins", 0))
+	settings.close_panel()
+	var shown_debug := await _wait_toast(UiKit.upper(tr("UI_REQ_DONE") % UiKit.format_int(paid_coins)), 6.0)
+	_check("İSTEK BİTİR: ilk bitmemiş istek (%s) biter ve öder (+%d para), bildirim panel kapanınca" % [
+			Requests.key_of(first) if not first.is_empty() else "-", paid_coins], active and not first.is_empty()
+			and Requests.find_slot(save, int(first["slot"])).is_empty() and save.coins == coins_before + paid_coins
+			and shown_debug)
+	save.settings["perf"] = false
+	GameState.changed.emit()
+	await _wait(0.3)
+	# 8) Yağmur isteği yalnızca yağmur tahmininde: rütbe 3'te bugünün havası yağmur (HAVA) → aday.
+	save.xp = maxi(save.xp, db.rank_xp[2])
+	var tries := 0
+	while Weather.at(rules, save) != "rain" and tries < 8:
+		main.call("_debug_weather")
+		tries += 1
+	_check("rütbe 3'te yağmurlu günde yağmur isteği adayı", Weather.at(rules, save) == "rain"
+			and Requests.candidates(db, save, spot).has("rain"))
+	# 9) Rehberin "Göl yaşıyor" sayfası: karolar sığar, isteklerin kilidi açık (rütbe 2'den sonra).
+	var guide: GuidePanel = main.get("guide_panel")
+	main.call("_open_guide", "living")
+	await _wait_until(func() -> bool: return guide.visible, 2.0)
+	await _wait(0.5)
+	_check_guide_tiles(guide, "living")
+	_check("rehberin \"%s\" sayfası küçülmeden sığar, isteklerin kilidi açık" % tr("UI_GUIDE_LIVING"),
+			guide.current_page() == "living" and guide.fit_scale() > 0.999 and not _guide_locked(guide, "requests"))
+	await _shot("06_rehber")
+	guide.close_panel()
+	await _wait(0.3)
+	_check_buttons()
+	_finish_checks()
+
+
+## Bir yakalayışla bitebilecek ilk istek ve onu bitirecek balık: [istek, tür, yüzdelik] (yoksa boş). İskelede
+## şamandırayla: tür ve boy istekleri, iskele koyunun bölge isteği, şimdiki vaktin isteği.
+func _request_by_catch(db: ContentDB, save: SaveData) -> Array:
+	var zone := str(main.get("zone_id"))
+	var phase := DayClock.phase(db.rules, save.clock_s)
+	for r in Requests.daily(db, save):
+		var want: Dictionary = r["want"]
+		match str(r["kind"]):
+			"species":
+				return [r, str(want["fish"]), 300_000]
+			"size":
+				return [r, str(want["fish"]), FishTable.STAR_LIMITS[2] - 1]
+			"zone":
+				if str(want["zone"]) == zone:
+					return [r, "rudd", 300_000]
+			"phase":
+				if str(want["phase"]) == phase:
+					return [r, "rudd", 300_000]
+	return []
+
+
+## İskelede şamandırayla bir balık tutar: gölgeyi koyar, atar, VUR, oyuncu gibi çeker; kart açılırsa kapatır,
+## olta boşa dönene kadar bekler. Tutulduysa true.
+func _catch_at_dock(fish_id: String, percentile: int = -1) -> bool:
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), fish_id, percentile)
+	await _tap_world(Vector2(1.0, -1.0))
+	if not await _wait_state(FishingSession.State.BITING, 25.0):
+		return false
+	await _reel_like_player(6, 40.0)
+	var caught := _state() == FishingSession.State.CAUGHT and str(_session().last_catch.get("fish", "")) == fish_id
+	var card: FishCard = main.get("card")
+	await _wait(FishCard.MIN_OPEN)
+	if card.visible or float(main.get("_card_wait")) >= 0.0:
+		await _close_card(card)
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	return caught
 
 
 ## Tut-bırak ve göl sevgisi (Dalga 4, 3. adım; KONTROL satırları; telefon oranında ve --safe-inset=130 ile,

@@ -294,6 +294,54 @@ func test_every_kind_has_a_text() -> void:
 				assert_true(table.has(str(arg)), "%s: adın çevirisi: %s" % [key, arg])
 
 
+## İsteğin yazısı Bugün panelinin kartında en çok iki satır (iki dilde; her olası hedef, en büyük sayı ve üç
+## basamaklı boyla; panelde yazının sütunu en az DayPanel.REQUEST_TEXT_W).
+func test_texts_fit_two_lines() -> void:
+	var db := content()
+	var table := _translations()
+	var font := UiKit.body_font()
+	var size := DayPanel.REQUEST_TEXT_SIZE
+	var flags := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
+	var wants := {
+		"species": [], "size": [], "technique": [], "zone": [], "phase": [],
+		"rare": [{ "rarity": db.rarity_index(Requests.RARE_FROM) }], "rain": [{ "weather": "rain" }],
+		"release": [{}], "trash": [{}], "trap": [{}],
+	}
+	for f in db.fish:
+		if not bool(f.get("release_only", false)):
+			wants["species"].append({ "fish": str(f["id"]) })
+			wants["size"].append({ "fish": str(f["id"]), "min_cm": 125 })
+	for t: String in ContentDB.TECHNIQUES:
+		if t != "float" and db.has_technique(t):
+			wants["technique"].append({ "technique": t })
+	for z in db.zones_of(SPOT):
+		wants["zone"].append({ "zone": str(z["id"]) })
+	for p: String in DayClock.PHASES:
+		wants["phase"].append({ "phase": p })
+	var most := 0
+	for range_v: Vector2i in db.requests.species_count.values():
+		most = maxi(most, range_v.y)
+	var checked := 0
+	for t in db.requests.templates:
+		var kind := str(t["kind"])
+		var count: Vector2i = t["count"]
+		for want: Dictionary in wants.get(kind, []):
+			var r := _req(kind, want)
+			r["goal"] = most if kind == "species" else count.y
+			var described := Requests.describe(db, r)
+			for column: int in [1, 2]:
+				var args: Array = []
+				for value: Variant in described[1]:
+					args.append((table[str(value)] as PackedStringArray)[column] if value is String else value)
+				var text := (table[str(described[0])] as PackedStringArray)[column] % args
+				var measured := font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, DayPanel.REQUEST_TEXT_W,
+						size, -1, flags)
+				var lines := roundi(measured.y / font.get_height(size))
+				assert_true(lines <= 2, "%s (%s): %d satır: %s" % [kind, "EN" if column == 1 else "TR", lines, text])
+				checked += 1
+	assert_true(checked > 50, "yazılar ölçüldü (%d)" % checked)
+
+
 func _save(rank: int) -> SaveData:
 	var save := SaveData.create_new(0)
 	save.seed = 4242

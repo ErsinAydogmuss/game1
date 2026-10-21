@@ -551,6 +551,16 @@ static func rarity_badge(db: ContentDB, rarity: int, size: int = SIZE_SMALL) -> 
 	return pill
 
 
+## İkon ve yanında kısa yazı (para, göl sevgisi): krem kartta mürekkep renginde.
+static func icon_text(kind: String, text: String, icon_size: float, font_size: int) -> HBoxContainer:
+	var box := HBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	box.add_child(GameIcon.make(kind, icon_size))
+	box.add_child(ink(text, font_size))
+	return box
+
+
 ## Nadirliğin simgesinin GameIcon adı ("rarity:<şekil>", rarities.json "shape").
 static func rarity_icon(db: ContentDB, rarity: int) -> String:
 	return "rarity:" + str(db.rarity_def(rarity).get("shape", "circle"))

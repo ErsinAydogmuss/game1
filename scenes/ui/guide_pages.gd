@@ -1,6 +1,6 @@
 class_name GuidePages
 extends RefCounted
-## "Nasıl oynanır?" rehberinin içeriği (GuidePanel çizer, test_guide denetler). Rehber 9 sayfa;
+## "Nasıl oynanır?" rehberinin içeriği (GuidePanel çizer, test_guide denetler). Rehber 10 sayfa;
 ## her sayfada bir giriş cümlesi ve karolar var. Bir karo şunlardan oluşur:
 ## - görsel ve başlık;
 ## - metin: biçimli; sayıları veriden gelir;
@@ -48,8 +48,8 @@ const PILL_MARGIN := Vector2(12, 16)
 ## - kimlik ve görsel: action (eylem düğmesi; let_go gerilim çubuğu), icon (GameIcon), category
 ##   (takımın resmi), portrait (konuşanın yüzü);
 ## - başlık ve metin anahtarı;
-## - kilit: lock "bag" (Takım Çantası, ilk teknikle açılır); takım kategorisinin kilidi
-##   kategorisinden gelir;
+## - kilit: lock "bag" (Takım Çantası, ilk teknikle açılır) ya da "requests" (Dede'nin istekleri);
+##   takım kategorisinin kilidi kategorisinden gelir;
 ## - stars: kategorinin başlangıç taşıması yıldızla gösterilir.
 ## "from" alanı karoları veriden kurar: rarities, techniques ya da zones. "steps": karolar sıralı
 ## adımlar (alttaki satırda numarası).
@@ -100,6 +100,15 @@ const PAGES: Array[Dictionary] = [
 		] },
 	{ "id": "zones", "icon": "map", "title": "UI_GUIDE_ZONES", "lead": "UI_GUIDE_ZONES_LEAD", "layout": "grid6",
 		"from": "zones" },
+	{ "id": "living", "icon": "phase_noon", "title": "UI_GUIDE_LIVING", "lead": "UI_GUIDE_LIVING_LEAD", "layout": "row5",
+		"tiles": [
+			{ "id": "time", "icon": "phase_night", "title": "UI_GUIDE_TIME", "text": "UI_GUIDE_TIME_TEXT" },
+			{ "id": "weather", "icon": "weather_rain", "title": "UI_GUIDE_WEATHER", "text": "UI_GUIDE_WEATHER_TEXT" },
+			{ "id": "tea", "icon": "tea", "title": "UI_TEA_TITLE", "text": "UI_GUIDE_TEA_TEXT" },
+			{ "id": "love", "icon": "love", "title": "UI_GUIDE_LOVE", "text": "UI_GUIDE_LOVE_TEXT" },
+			{ "id": "requests", "icon": "requests", "title": "UI_REQ_TITLE", "text": "UI_GUIDE_REQUESTS_TEXT",
+				"lock": "requests" },
+		] },
 	{ "id": "people", "icon": "book", "title": "UI_GUIDE_PEOPLE", "lead": "UI_GUIDE_PEOPLE_LEAD", "layout": "row4",
 		"tiles": [
 			{ "id": "dede", "portrait": "dede_smile", "title": "UI_GUIDE_DEDE", "text": "UI_GUIDE_DEDE_TEXT" },
@@ -321,8 +330,11 @@ static func _tile(db: ContentDB, raw: Dictionary) -> Dictionary:
 			tile["stars"] = _carry_stars(db, category)
 	else:
 		tile["art"] = str(raw.get("icon", "question"))
-	if str(raw.get("lock", "")) == "bag":
-		tile["rank"] = bag_rank(db)
+	match str(raw.get("lock", "")):
+		"bag":
+			tile["rank"] = bag_rank(db)
+		"requests":
+			tile["rank"] = db.requests.unlock_rank
 	return tile
 
 
@@ -340,6 +352,10 @@ static func _text_args(db: ContentDB, key: String) -> Array:
 			return [BookPanel.species(db, db.main_spot).size()]
 		"UI_GUIDE_TECH_TRAP":
 			return [roundi(db.rules.trap_fill_s / 60.0), db.rules.trap_max]
+		"UI_GUIDE_TIME_TEXT":
+			return [roundi(DayClock.day_s(db.rules) / 60.0)]
+		"UI_GUIDE_REQUESTS_TEXT":
+			return [db.requests.slots]
 	return []
 
 

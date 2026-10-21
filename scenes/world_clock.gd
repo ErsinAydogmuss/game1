@@ -72,16 +72,16 @@ func refresh(save: SaveData) -> void:
 	_apply(save, {})
 
 
-## Sıra: önce koşul (oranlar, garanti; conditions() artık yeni vakti ve havayı verir), sonra gün ve vakit
-## haberleri, en son saatin yazısı.
+## Sıra: önce koşul (oranlar, garanti; conditions() artık yeni vakti ve havayı verir), sonra vakit ve gün
+## haberleri (yeni günde "Sabah oldu" Dede'nin yeni isteklerinin bildiriminden önce), en son saatin yazısı.
 func _apply(save: SaveData, change: Dictionary) -> void:
 	var now := WorldState.conditions(_db, save)
 	if now != _last:
 		_last = now
 		conditions_changed.emit(now)
-	if bool(change.get("day_changed", false)):
-		day_changed.emit(int(change["new_day"]))
 	if bool(change.get("phase_changed", false)):
 		phase_changed.emit(str(change["new_phase"]))
+	if bool(change.get("day_changed", false)):
+		day_changed.emit(int(change["new_day"]))
 	if not change.is_empty():
 		clock_moved.emit()

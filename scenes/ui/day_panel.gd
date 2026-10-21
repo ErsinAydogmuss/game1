@@ -8,13 +8,16 @@ extends Dialog
 ## - Dede'yle çay: sonraki vakte geçilir (ücretsiz; tea_requested, main kararmayla geçer). İki çay arasında
 ##   en az bir balık tutulmalı (WorldState.can_tea): yoksa düğme pasif, Dede'nin sözü "Önce bir balık tut".
 ## - Göl sevgisi (çayın yanında): seviye, çubuk, Nadir+ payı, nasıl artar.
-## İleride (Dalga 4'ün 4. adımı) Dede'nin istekleri de burada. Yazılar refresh'te (her açılışta, o anki dilde);
-## panel dil uygulanmadan önce kurulur.
+## - Dede'nin istekleri (rütbe 2'den sonra; Requests): yuva başına bir kart: ikon, ne istendiği, ilerleme
+##   ("1/3"), ödül (para ve göl sevgisi), değiştir düğmesi (günde bir: reroll_requested); boş yuvada "Yarın yeni
+##   istek". Biten istek kendiliğinden öder (main).
+## Yazılar refresh'te (her açılışta, o anki dilde); panel dil uygulanmadan önce kurulur.
 
 signal tea_requested
+signal reroll_requested(slot: int)
 
-## Panelin genişliği (iki kart yan yana, altta çay; telefonda küçülmeden sığar).
-const WIDTH := 1300.0
+## Panelin genişliği (iki kart yan yana, altında çay ve sevgi, en altta üç istek; telefonda küçülmeden sığar).
+const WIDTH := 1500.0
 ## Şimdi kartındaki vaktin ikonu, hava satırının ikonu, çay kartının ikonu.
 const NOW_ICON := 140.0
 const WEATHER_ICON := 76.0
@@ -25,9 +28,18 @@ const DAY_COLUMN := 190.0
 ## Göl sevgisi kartının genişliği ve ikonu.
 const LOVE_CARD := 470.0
 const LOVE_ICON := 96.0
+## İstek kartı: ikonu, yazının sütunu (iki satıra sığar: test_requests ve bot ölçer), yazının boyu, değiştir
+## düğmesi.
+const REQUEST_ICON := 64.0
+const REQUEST_TEXT_W := 200.0
+const REQUEST_TEXT_SIZE := 26
+const REROLL_BUTTON := Vector2(122, 122)
+const REROLL_ICON := 76.0
 
 var _cards: HBoxContainer
 var _tea_box: HBoxContainer
+var _requests_head: HBoxContainer
+var _requests_box: HBoxContainer
 ## Başlıktaki günün hapı (yazısı refresh'te).
 var _day_pill: PanelContainer
 var _day_label: Label
@@ -46,6 +58,13 @@ func _build() -> void:
 	_tea_box = HBoxContainer.new()
 	_tea_box.add_theme_constant_override("separation", 20)
 	body.add_child(_tea_box)
+	_requests_head = HBoxContainer.new()
+	_requests_head.add_theme_constant_override("separation", 16)
+	body.add_child(_requests_head)
+	_requests_box = HBoxContainer.new()
+	_requests_box.name = "Requests"
+	_requests_box.add_theme_constant_override("separation", 20)
+	body.add_child(_requests_box)
 
 
 func refresh() -> void:
@@ -61,6 +80,25 @@ func refresh() -> void:
 	Dialog.clear(_tea_box)
 	_tea_box.add_child(_tea_card(rules, save))
 	_tea_box.add_child(_love_card(db, save))
+	Dialog.clear(_requests_head)
+	Dialog.clear(_requests_box)
+	var open := Requests.unlocked(db, save)
+	_requests_head.visible = open
+	_requests_box.visible = open
+	if not open:
+		return
+	_requests_head.add_child(GameIcon.make("requests", 52))
+	var title := _display(tr("UI_REQ_TITLE"), UiKit.SIZE_SMALL + 4, UiKit.INK)
+	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_requests_head.add_child(title)
+	_requests_head.add_child(UiKit.spacer())
+	var note := UiKit.ink(tr("UI_REQ_REROLL_USED") if Requests.rerolled_today(db, save) else tr("UI_REQ_REROLL_HINT"),
+			24, UiKit.INK_SOFT)
+	note.name = "RerollNote"
+	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_requests_head.add_child(note)
+	for slot in db.requests.slots:
+		_requests_box.add_child(_request_card(db, save, slot))
 
 
 ## Şimdi: vaktin ikonu ve adı, saat ("18:24"), sonraki vakte kalan süre ("Geceye 3 dk").
@@ -189,6 +227,101 @@ func _love_card(db: ContentDB, save: SaveData) -> Control:
 	how.max_lines_visible = 2
 	text.add_child(how)
 	return panel
+
+
+## Dede'nin bir isteği: ikon, ne istendiği (en çok iki satır), ilerleme, ödül (para ve göl sevgisi) ve değiştir
+## düğmesi (günde bir; biten ya da değiştirme hakkı kullanılmışsa pasif). Boş yuvada "Yarın yeni istek".
+func _request_card(db: ContentDB, save: SaveData, slot: int) -> Control:
+	var panel := _card("Request%d" % slot)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	panel.add_child(row)
+	var r := Requests.find_slot(save, slot)
+	if r.is_empty():
+		var empty := UiKit.ink(tr("UI_REQ_EMPTY"), REQUEST_TEXT_SIZE, UiKit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
+		empty.name = "Empty"
+		empty.custom_minimum_size.y = REROLL_BUTTON.y
+		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		empty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(empty)
+		return panel
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 4)
+	left.alignment = BoxContainer.ALIGNMENT_CENTER
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(left)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 10)
+	left.add_child(top)
+	var icon := GameIcon.make(icon_of(db, r), REQUEST_ICON)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(icon)
+	var text := UiKit.ink(text_of(db, r), REQUEST_TEXT_SIZE, UiKit.INK)
+	text.name = "Text"
+	text.custom_minimum_size.x = REQUEST_TEXT_W
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.max_lines_visible = 2
+	top.add_child(text)
+	var bottom := HBoxContainer.new()
+	bottom.add_theme_constant_override("separation", 6)
+	left.add_child(bottom)
+	var progress := _display("%d/%d" % [int(r["progress"]), int(r["goal"])], 30, UiKit.PRIMARY)
+	progress.name = "Progress"
+	bottom.add_child(progress)
+	bottom.add_child(UiKit.spacer())
+	var reward: Dictionary = r["reward"]
+	bottom.add_child(UiKit.icon_text("coin", UiKit.format_int(int(reward.get("coins", 0))), 34, 26))
+	if int(reward.get("love", 0)) > 0:
+		bottom.add_child(UiKit.icon_text("love", "+%d" % int(reward["love"]), 30, 26))
+	var reroll := UiKit.button("", UiKit.SECONDARY, UiKit.SIZE_SMALL, REROLL_BUTTON)
+	reroll.name = "Reroll%d" % slot
+	reroll.disabled = not Requests.can_reroll(db, save, slot)
+	reroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var arrows := GameIcon.make("reroll", REROLL_ICON, UiKit.TEXT)
+	# Düğmenin ortasında (düğme kapsayıcı değil: çocuğun yerini kendimiz veririz).
+	arrows.position = (REROLL_BUTTON - Vector2.ONE * REROLL_ICON) * 0.5
+	arrows.modulate.a = 0.4 if reroll.disabled else 1.0
+	reroll.add_child(arrows)
+	reroll.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		reroll_requested.emit(slot))
+	row.add_child(reroll)
+	return panel
+
+
+## İsteğin yazısı o anki dilde (Requests.describe: değerlerdeki yazılar da çevrilir).
+static func text_of(db: ContentDB, request: Dictionary) -> String:
+	var described := Requests.describe(db, request)
+	var args: Array = []
+	for value: Variant in described[1]:
+		args.append(UiKit.translate(str(value)) if value is String else value)
+	return UiKit.translate(str(described[0])) % args
+
+
+## İsteğin ikonu: istenen tür, teknik, bölge, vakit, nadirlik, yağmur, bırakma, çöp ya da tuzak.
+static func icon_of(db: ContentDB, request: Dictionary) -> String:
+	var want: Dictionary = request["want"]
+	match str(request["kind"]):
+		"species", "size":
+			return "fish:" + str(want.get("fish", ""))
+		"technique":
+			return "tech_" + str(want.get("technique", ""))
+		"zone":
+			return "zone:" + str(want.get("zone", ""))
+		"phase":
+			return "phase_" + str(want.get("phase", ""))
+		"rare":
+			return UiKit.rarity_icon(db, int(want.get("rarity", 0)))
+		"rain":
+			return "weather_rain"
+		"release":
+			return "release"
+		"trash":
+			return "item:boot"
+		"trap":
+			return "tech_trap"
+	return "requests"
 
 
 ## Çay düğmesi (bot denetimi).
