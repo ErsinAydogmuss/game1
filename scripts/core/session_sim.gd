@@ -28,6 +28,12 @@ extends RefCounted
 ##    Her satıştan sonra tuzağına kerevit girmiş olan toplanır (kova boşken; tuzağın bölgesine gidilir),
 ##    boştaki tuzak sazlığın atış noktasının yakınına bırakılır (yer kalmazsa açık başka bir tuzak
 ##    bölgesine); tuzak başına trap_s. Tuzaklar botun oyun süresiyle dolar (TrapSim; şimdi = geçen sn).
+## 10. Canlı dünya (Dalga 4): oyun saati botun geçen süresinden akar (dükkân ve takım çantası açıkken
+##    durur: sell_s, switch_s sayılmaz); her atışın oranı, şans garantisi ve sayacı gölün o anki
+##    koşuluyla (WorldState: vakit, hava, sevgi); yağmurda balık daha çabuk gelir (sim.json weather,
+##    yoksa rules.json rain_approach'ın tersi). Yalnızca belli vakitte gelen türü (Ay Turnası) o vakitte
+##    kovalar (bölge ve teknik seçimi); bölgenin balık başına değeri koşulsuz (vakit ve hava kazancı
+##    ±%5'te tutar: test_economy). Vakitlerde ve havalarda geçen süre: phase_time, weather_time.
 ## Aynı seed aynı sonucu verir.
 
 const SIM_PATH := "res://data/sim.json"
@@ -66,6 +72,11 @@ var technique_time: Dictionary = {}
 ## Botun avlandığı bölge (bölgesiz gölde boş) ve dakika dakika her bölgede geçen süre (sn).
 var zone_id: String = ""
 var zone_time: Dictionary = {}
+## Vakitlerde ve havalarda geçen süre (sn; rapor).
+var phase_time: Dictionary = {}
+var weather_time: Dictionary = {}
+## Oyun saatinin durduğu süre (dükkân, takım çantası; sn): saat = elapsed - _paused_s.
+var _paused_s: float = 0.0
 
 ## Oranların geldiği yer: botun bölgesi (bölgesiz gölde gölün kendisi).
 var _spot: Dictionary
@@ -116,16 +127,20 @@ func cast_once() -> void:
 	var before := elapsed
 	if technique != "float":
 		_mark("tech:" + technique)
-	elapsed += _num("cast_s", 1.6) + _range("approach_s", Vector2(3, 9)) + _range("nibble_s", Vector2(1, 3))
+	var cond := conditions()
+	var approach := _range("approach_s", Vector2(3, 9))
+	if str(cond["weather"]) == "rain":
+		approach *= float((timing.get("weather", {}) as Dictionary).get("rain_approach", 1.0 / db.rules.rain_approach))
+	elapsed += _num("cast_s", 1.6) + approach + _range("nibble_s", Vector2(1, 3))
 	var gear := Economy.gear_for(db, save, technique)
-	var species := CatchOdds.species_ppm(db, _spot, {"attract": gear.attract, "technique": technique})
-	var fish_id := CatchOdds.roll(db, rng, species, CatchOdds.pity_floor(db, save, _spot, technique))
+	var species := CatchOdds.species_ppm(db, _spot, CatchOdds.context(gear, technique, cond))
+	var fish_id := CatchOdds.roll(db, rng, species, CatchOdds.pity_floor(db, save, _spot, technique, cond))
 	var def := db.fish_by_id(fish_id)
 	var percentile := FishTable.roll_percentile(rng)
 	if Dice.chance(rng, int(_num("miss_ppm", 150000))):
 		lost += 1
 		elapsed += _num("lost_s", 2.5)
-		_count_zone(before)
+		_count_zone(before, cond)
 		return
 	Economy.use_bait(db, save, technique)
 	var rules := db.rules
@@ -140,10 +155,10 @@ func cast_once() -> void:
 	if int(fight["outcome"]) != ReelModel.Outcome.CAUGHT:
 		lost += 1
 		elapsed += _num("lost_s", 2.5)
-		_count_zone(before)
+		_count_zone(before, cond)
 		return
-	_on_catch(def, percentile)
-	_count_zone(before)
+	_on_catch(def, percentile, cond)
+	_count_zone(before, cond)
 	if Bucket.is_full(db, save):
 		_sell_and_shop()
 
@@ -156,7 +171,13 @@ func run(max_minutes: float, max_casts: int = 1_000_000) -> void:
 		n += 1
 
 
-func _on_catch(def: Dictionary, percentile: int) -> void:
+## Gölün botun saatindeki koşulu (oyun saati elapsed - _paused_s).
+func conditions() -> Dictionary:
+	save.clock_s = maxi(0, int(elapsed - _paused_s))
+	return WorldState.conditions(db, save)
+
+
+func _on_catch(def: Dictionary, percentile: int, cond: Dictionary = {}) -> void:
 	var fish_id := str(def["id"])
 	var rarity := int(def["rarity"])
 	var size_cm := FishTable.size_cm(def, percentile)
@@ -164,7 +185,7 @@ func _on_catch(def: Dictionary, percentile: int) -> void:
 	var outcome := Records.add(save.records, fish_id, size_cm, stars, int(elapsed))
 	catches += 1
 	save.catches += 1
-	CatchOdds.note_catch(db, save, rarity, _spot, technique)
+	CatchOdds.note_catch(db, save, rarity, _spot, technique, cond)
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	if int(ranked["new_rank"]) > int(ranked["old_rank"]):
 		_note_rank(ranked)
@@ -174,12 +195,13 @@ func _on_catch(def: Dictionary, percentile: int) -> void:
 			_choose_technique()
 	if not Bucket.add(db, save, fish_id, size_cm, stars):
 		Records.release(save.records, fish_id)
-		save.love += int(db.rarity_def(rarity).get("love", 0))
+		LakeLove.add(db.rules, save, int(db.rarity_def(rarity).get("love", 0)))
 	elapsed += _num("show_s", 2.4)
 	if Records.wants_card(rarity, outcome):
 		elapsed += _num("card_s", 2.5)
 	_mark("species_%d" % save.records.size())
 	_mark("rarity_" + db.rarity_id(rarity))
+	_mark("fish:" + fish_id)
 
 
 func _sell_and_shop() -> void:
@@ -189,6 +211,8 @@ func _sell_and_shop() -> void:
 		zone_id = _home
 		_spot = Zones.place(db, spot_id, _home)
 	elapsed += _num("sell_s", 30.0)
+	# Dükkân açıkken oyun saati durur.
+	_paused_s += _num("sell_s", 30.0)
 	earned += Economy.sell_all(db, save)
 	sells += 1
 	_mark("sell")
@@ -305,9 +329,9 @@ func _zone_score(z: Dictionary) -> float:
 
 
 ## Tür bu bölgede kamışı alınmış bir teknikle gelir mi? Yalnızca belli vakitte ya da havada gelen tür
-## (fish.json only) o koşulda değilse gelmez (bot onun için bölgeye gitmez).
+## (fish.json only) şimdi o koşulda değilse gelmez (bot onun için bölgeye gitmez; gece gider).
 func _catchable(z: Dictionary, fish_id: String) -> bool:
-	if not CatchOdds.available(db, fish_id, {}):
+	if not CatchOdds.available(db, fish_id, conditions()):
 		return false
 	for t: String in ContentDB.TECHNIQUES:
 		if Economy.technique_ready(db, save, t) and CatchOdds.allows(z, t) and db.affinity(fish_id, t) > 0.0:
@@ -331,6 +355,8 @@ func _choose_technique() -> void:
 		return
 	technique = best
 	elapsed += _num("switch_s", 3.0)
+	# Takım çantası açıkken oyun saati durur.
+	_paused_s += _num("switch_s", 3.0)
 
 
 ## Tekniğin çekiciliği: hiç denenmemişse merak; sonra dakikada kazanç (rate) ve defterde olmayan türün
@@ -338,7 +364,8 @@ func _choose_technique() -> void:
 func _technique_score(t: String) -> float:
 	var score := 0.0 if t == "float" or milestones.has("tech:" + t) else 1.0e12
 	var gear := Economy.gear_for(db, save, t)
-	var odds := CatchOdds.species_ppm(db, _spot, {"attract": gear.attract, "technique": t})
+	# Yeni türün payı gölün şimdiki koşuluyla (gece spinle Ay Turnası); kazanç (rate) koşulsuz.
+	var odds := CatchOdds.species_ppm(db, _spot, CatchOdds.context(gear, t, conditions()))
 	var fresh := 0.0
 	for fid: String in odds:
 		if not save.records.has(fid):
@@ -404,10 +431,15 @@ static func timing_of(sim_timing: Dictionary, zone: String, t: String, key: Stri
 	return fallback
 
 
-## Atışın süresi bölgenin ve tekniğin hanesine (rapor: bölgelerde ve tekniklerde geçen zaman).
-func _count_zone(since: float) -> void:
+## Atışın süresi bölgenin, tekniğin, vaktin ve havanın hanesine (rapor: nerede, nasıl, ne zaman).
+func _count_zone(since: float, cond: Dictionary = {}) -> void:
 	zone_time[zone_id] = float(zone_time.get(zone_id, 0.0)) + elapsed - since
 	technique_time[technique] = float(technique_time.get(technique, 0.0)) + elapsed - since
+	if not cond.is_empty():
+		var phase := str(cond["phase"])
+		var weather := str(cond["weather"])
+		phase_time[phase] = float(phase_time.get(phase, 0.0)) + elapsed - since
+		weather_time[weather] = float(weather_time.get(weather, 0.0)) + elapsed - since
 
 
 ## Alışveriş (Kazı'nın botu gibi): her kategorinin sıradaki takımından rütbesi yetenlerin en

@@ -1,6 +1,7 @@
 extends SceneTree
 ## Ekonomi ve ilerleme raporu: denge botu (SessionSim) birkaç seed'le oynar; rütbelerin, takım
-## alımlarının ve türlerin ilk görüldüğü dakikaları, saatlik para ve av sayısını yazar.
+## alımlarının ve türlerin ilk görüldüğü dakikaları (belli vakitte gelen efsaneler dahil), saatlik
+## para ve av sayısını, bölgelerde, tekniklerde, vakitlerde ve havalarda geçen zamanı yazar.
 ##   godot --headless --path . -s res://tools/economy_report.gd [-- --hours=8 --seeds=3]
 ## Hedefler docs/gdd.md §8 ve §10.4'te; korkuluklar tests/test_session_sim.gd'de.
 
@@ -51,6 +52,10 @@ func _initialize() -> void:
 		keys.append("species_%d" % n)
 	for r in db.rarities:
 		keys.append("rarity_" + str(r["id"]))
+	# Yalnızca belli vakitte gelen türlerin ilk tutulduğu dakika (Dalga 4: Ay Turnası, Kocabaş).
+	for f in db.fish:
+		if not (f["only"] as Dictionary).is_empty():
+			keys.append("fish:" + str(f["id"]))
 	for key in keys:
 		var cells := PackedStringArray()
 		for sim in sims:
@@ -82,4 +87,18 @@ func _initialize() -> void:
 				total += float(sim.technique_time[k])
 			cells.append("%5.1f" % (100.0 * float(sim.technique_time.get(t, 0.0)) / maxf(total, 1.0)))
 		print("  %-26s %s" % [t, "  ".join(cells)])
+	# Vakitlerde ve havalarda geçen zaman (atış ve çekişme; Dalga 4): saat dükkânda ve takım çantasında
+	# durur, günün havası zarla.
+	for part: Array in [["vakitlerde", DayClock.PHASES, "phase_time"], ["havalarda", Weather.KINDS, "weather_time"]]:
+		print("")
+		print("%s geçen zaman (%%):" % part[0])
+		for name: String in part[1]:
+			var cells := PackedStringArray()
+			for sim in sims:
+				var spent: Dictionary = sim.get(str(part[2]))
+				var total := 0.0
+				for k: String in spent:
+					total += float(spent[k])
+				cells.append("%5.1f" % (100.0 * float(spent.get(name, 0.0)) / maxf(total, 1.0)))
+			print("  %-26s %s" % [name, "  ".join(cells)])
 	quit()

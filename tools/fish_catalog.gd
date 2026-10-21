@@ -1,8 +1,9 @@
 extends SceneTree
 ## Balık kataloğunu (docs/balik-katalogu.md) veriden üretir: nadirlikler, boy ve yıldız şansları,
-## şans garantisi, tekniklerin yatkınlık tablosu, oyunun gölündeki türler ve her bölgede her teknikle
-## (şamandıra ve dipte yeme, spinde yapay yeme, sinekte sineğe göre) gelme şansları, nadirlik oranı ve
-## ortalama değer; kerevit tuzağının tablosu. Oranlar oyunun gölge doğururken kullandığı işlevlerden
+## şans garantisi, tekniklerin yatkınlık tablosu, vakit, hava ve göl sevgisi (Dalga 4: türlerin
+## sevdiği vakit ve hava, bölgelerde vakte ve havaya göre oranlar), oyunun gölündeki türler ve her
+## bölgede her teknikle (şamandıra ve dipte yeme, spinde yapay yeme, sinekte sineğe göre) gelme
+## şansları, nadirlik oranı ve ortalama değer; kerevit tuzağının tablosu. Oranlar oyunun gölge doğururken kullandığı işlevlerden
 ## (CatchOdds) okunur: Balık Defteri'nde yazan oranlarla hep aynıdır (gelir kuralı 10).
 ##   godot --headless --path . -s res://tools/fish_catalog.gd
 ## Balık, nadirlik, yem, teknik ya da atış noktası değişince yeniden çalıştırılır.
@@ -49,6 +50,7 @@ func _initialize() -> void:
 	_big_fish(db, lines)
 	_pity(db, lines)
 	_techniques(db, db.main_spot, lines)
+	_world(db, db.main_spot, lines)
 	_spot(db, db.main_spot, lines)
 	var file := FileAccess.open(OUTPUT, FileAccess.WRITE)
 	if file == null:
@@ -132,6 +134,9 @@ func _spot(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
 	lines.append("- Göl bölgelere ayrılır: gölge balıkçının çevresinde doğar, türü doğduğu yerin bölgesinden gelir.")
 	lines.append("  Oranlar bölgenindir (Balık Defteri ve dükkân bulunulan bölgeninkini gösterir). Şans garantisi")
 	lines.append("  balıkçının bölgesinde doğar; sayaç yalnızca o bölgede gelebilen kademeler için ilerler.")
+	lines.append("- Aşağıdaki tablolar vakitten ve havadan bağımsızdır (koşulsuz). Yalnızca belli vakitte gelen tür")
+	lines.append("  (Ay Turnası, Kocabaş) kendi vaktindeki oranıyla yazılır (ör. \"gece %2\"). Vakte ve havaya göre")
+	lines.append("  oranlar: \"Vakit ve hava\" bölümü.")
 	lines.append("")
 	for z in zones:
 		var opens := "başta açık" if int(z["rank"]) <= 1 else "rütbe %d" % int(z["rank"])
@@ -207,8 +212,16 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray, techniqu
 		var row := "| %s | %s | %s | %d–%d | %s | %s | %s |" % [_name("FISH_" + id), _name("FISH_" + id, "en"),
 				_name("RARITY_" + db.rarity_id(int(f["rarity"]))), span.x, span.y, value, _number(float(f["shadow_m"])),
 				"✓" if bool((f["fight"] as Dictionary)["heavy"]) else ""]
-		for o in odds:
-			row += " %s |" % _percent(int(o.get(id, 0)))
+		var own := CatchOdds.own_conditions(db, id)
+		for b in baits.size():
+			if own.is_empty():
+				row += " %s |" % _percent(int(odds[b].get(id, 0)))
+				continue
+			# Yalnızca belli vakitte gelen tür: kendi vaktindeki oranı.
+			var ctx := own.duplicate()
+			ctx["attract"] = baits[b]["attract"]
+			ctx["technique"] = technique
+			row += " %s %s |" % [_when_label(own), _percent(int(CatchOdds.species_ppm(db, spot, ctx).get(id, 0)))]
 		lines.append(row)
 	lines.append("")
 	var top := CatchOdds.top_rarity(db, spot, technique)
@@ -248,6 +261,109 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray, techniqu
 		row += " %s | %s |" % [_number(value), _number(xp)]
 		lines.append(row)
 	lines.append("")
+
+
+## Vakit, hava ve göl sevgisi (docs/gdd.md §10.5): kurallar, türlerin sevdiği vakit ve hava, göl
+## sevgisinin seviyeleri, her bölgede şamandırayla (solucan) vakte ve havaya göre oranlar.
+func _world(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
+	var rules := db.rules
+	lines.append("## Vakit ve hava")
+	lines.append("")
+	lines.append("- Bir oyun günü %d dakika: sabah, öğle, akşam, gece %d'şar dakika. Saat yalnızca oynarken akar (oyuncu" % [
+			DayClock.day_s(rules) / 60, rules.phase_s / 60])
+	lines.append("  yokken, panel açıkken durur); Dede'yle çay sonraki vakte geçirir.")
+	var total := 0
+	for w in rules.weather_weights:
+		total += w
+	var weather := PackedStringArray()
+	for k in Weather.KINDS.size():
+		weather.append("%s %s" % [_name("WEATHER_" + Weather.KINDS[k]).to_lower(), _percent(rules.weather_weights[k] * PPM / total)])
+	lines.append("- Her oyun günün havası önceden belli (bugün ve yarın gösterilir): %s. İlk gün açık. Sisli günde sis" % ", ".join(weather))
+	lines.append("  yalnızca sabah ve gece, öğle ve akşam bulutlu. Yağmurlu gece fırtınadır.")
+	lines.append("- Yağmurda gölgeler takımı %s kat uzaktan fark eder, %s kat hızlı yaklaşır." % [_number(rules.rain_notice),
+			_number(rules.rain_approach)])
+	lines.append("- Türün oranı vaktin ve havanın çarpanıyla değişir (aşağıda; yazılmayan 1). Vakit çarpanlarının ortalaması")
+	lines.append("  her türde 1: vakit balığın ne zaman geldiğini değiştirir, kazancı değil.")
+	lines.append("")
+	lines.append("| Tür | Sabah | Öğle | Akşam | Gece | Hava |")
+	lines.append("|---|---|---|---|---|---|")
+	for f in db.fish:
+		var id := str(f["id"])
+		var row := "| %s |" % _name("FISH_" + id)
+		var own := CatchOdds.own_conditions(db, id)
+		for phase in DayClock.PHASES:
+			if own.is_empty():
+				row += " %s |" % _number(db.when_mult(id, phase))
+			else:
+				row += " %s |" % ("✓" if db.fish_available(id, phase, str(own["weather"])) else "—")
+		var likes := PackedStringArray()
+		var only_weather: PackedStringArray = (f["only"] as Dictionary).get("weather", PackedStringArray())
+		for kind in only_weather:
+			likes.append("yalnızca " + _name("WEATHER_" + kind).to_lower())
+		for kind: String in (f["weather"] as Dictionary):
+			likes.append("%s %s" % [_name("WEATHER_" + kind).to_lower(), _number(float(f["weather"][kind]))])
+		row += " %s |" % ", ".join(likes)
+		lines.append(row)
+	lines.append("")
+	lines.append("**Göl sevgisi:** bırakılan balık (nadirliğe göre), toplanan çöp ve istekler verir; hiç azalmaz. Her seviye")
+	lines.append("%s ve üstü türlerin ağırlığını %s artırır:" % [_name("RARITY_" + rules.love_from), _percent(roundi(rules.love_rare_bonus * PPM))])
+	lines.append("")
+	var head := "| Seviye |"
+	var sep := "|---|"
+	var need := "| Sevgi |"
+	var bonus := "| Nadir+ payı |"
+	for lvl in range(1, LakeLove.max_level(rules) + 1):
+		head += " %d |" % lvl
+		sep += "---|"
+		need += " %d |" % rules.love_levels[lvl - 1]
+		bonus += " +%s |" % _percent((LakeLove.rare_bonus_pm(rules, lvl) - 1000) * 1000)
+	lines.append(head)
+	lines.append(sep)
+	lines.append(need)
+	lines.append(bonus)
+	lines.append("")
+	for z in db.zones_of(spot_id):
+		var techniques: Array[String] = ["float"]
+		if not str(z["suggest"]).is_empty():
+			techniques.append(str(z["suggest"]))
+		for t in techniques:
+			lines.append("### %s, %s: vakte göre (açık hava) ve havaya göre (öğle)" % [_name("ZONE_" + str(z["id"])),
+					_name("UI_TECH_" + t).to_lower()])
+			lines.append("")
+			lines.append("| Tür | Sabah | Öğle | Akşam | Gece | Bulutlu | Yağmurlu | Sisli (sabah) |")
+			lines.append("|---|---|---|---|---|---|---|---|")
+			var columns: Array[Dictionary] = []
+			for phase in DayClock.PHASES:
+				columns.append({ "phase": phase, "weather": "clear" })
+			columns.append({ "phase": "noon", "weather": "cloudy" })
+			columns.append({ "phase": "noon", "weather": "rain" })
+			columns.append({ "phase": "morning", "weather": "fog" })
+			var tables: Array[Dictionary] = []
+			for c in columns:
+				var ctx := c.duplicate()
+				ctx["technique"] = t
+				tables.append(CatchOdds.species_ppm(db, z, ctx))
+			for id: String in (z["fish_ids"] as PackedStringArray):
+				if db.affinity(id, t) <= 0.0:
+					continue
+				var row := "| %s |" % _name("FISH_" + id)
+				for odds in tables:
+					row += " %s |" % (_percent(int(odds[id])) if odds.has(id) else "—")
+				lines.append(row)
+			# Yağmurlu gece (fırtına): yalnızca o gece gelen tür varsa.
+			var storm := CatchOdds.species_ppm(db, z, { "technique": t, "phase": "night", "weather": "rain" })
+			for id: String in storm:
+				if (db.fish_by_id(id)["only"] as Dictionary).has("weather"):
+					lines.append("")
+					lines.append("Fırtınalı gecede (yağmurlu gece) %s: %s." % [_name("FISH_" + id), _percent(int(storm[id]))])
+			lines.append("")
+
+
+## Yalnızca belli vakitte gelen türün vakti (katalog: "gece", "fırtınalı gece").
+static func _when_label(own: Dictionary) -> String:
+	if str(own["weather"]) == "rain" and str(own["phase"]) == "night":
+		return "fırtınalı gece"
+	return _name("PHASE_" + str(own["phase"])).to_lower()
 
 
 ## Tekniğin tür çeken yuvası (şamandıra ve dip: yem, spin: yapay yem, sinek: sinek).

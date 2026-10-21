@@ -17,6 +17,8 @@ const OFTEN_PPM := 200_000
 const SOMETIMES_PPM := 80_000
 ## "Sevdiği yem" ipucu: yuva (kategori) -> söz. Türün tekniklerinin kullandığı yuvalara bakılır.
 const FAVOURITE_KEYS := { "bait": "UI_BOOK_BAIT_HINT", "lure": "UI_BOOK_LURE_HINT", "fly": "UI_BOOK_FLY_HINT" }
+## Türün sevdiği vakit ya da hava ipucuna yazılır, çarpanı en az bu kadarsa (fish.json when, weather).
+const LIKES_AT := 1.3
 const UNKNOWN_BORDER := Color("#cdb48a")
 const SILHOUETTE := Color(0.16, 0.1, 0.06, 0.6)
 ## Tutulmamış türün görselli nadirlik simgesi: şekli belli, rengi soluk.
@@ -102,10 +104,12 @@ static func species(db: ContentDB, spot: String) -> Array[Dictionary]:
 	return out
 
 
-## Bu göldeki tür oranları elindeki teknik ve kuşanılan takımla (doğan gölgeler de bunu kullanır).
+## Bu göldeki tür oranları elindeki teknik, kuşanılan takım ve gölün o anki koşuluyla (vakit, hava,
+## göl sevgisi: WorldState; doğan gölgeler de bunu kullanır).
 static func odds(db: ContentDB, save: SaveData, spot: String, zone: String = "") -> Dictionary:
 	var gear := Economy.gear_for(db, save, save.technique)
-	return CatchOdds.species_ppm(db, Zones.place(db, spot, zone), { "attract": gear.attract, "technique": gear.technique })
+	return CatchOdds.species_ppm(db, Zones.place(db, spot, zone),
+			CatchOdds.context(gear, gear.technique, WorldState.conditions(db, save)))
 
 
 
@@ -285,10 +289,12 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 
 
 ## Tutulmamış bir balığın ipuçları: sevdiği yem (tekniklerinin yemi, yapay yemi ya da sineği; en
-## çok çeken), tuzağa giriyorsa nerede, şamandırayla gelmiyorsa hangi teknikle tutulduğu, bölgeli
-## gölde yaşadığı yerler ve ne sıklıkla görüldüğü (oyundaki tekniklerin her biriyle, en sık
-## görüldüğü bölgede). Tuzak türünde sıklık yazılmaz (tuzağa hep o girer); yaşadığı yerler
-## tuzağınkilerle aynıysa yinelenmez.
+## çok çeken), yalnızca belli vakitte geliyorsa ne zaman (Ay Turnası gece, Kocabaş fırtınalı gece),
+## yoksa en çok sevdiği vakit ve hava (çarpanı en az LIKES_AT), tuzağa giriyorsa nerede, şamandırayla
+## gelmiyorsa hangi teknikle tutulduğu, bölgeli gölde yaşadığı yerler ve ne sıklıkla görüldüğü
+## (oyundaki tekniklerin her biriyle, en sık görüldüğü bölgede; vakitten bağımsız, belli vakitte gelen
+## tür kendi vaktinde). Tuzak türünde sıklık yazılmaz (tuzağa hep o girer); yaşadığı yerler tuzağınkilerle
+## aynıysa yinelenmez.
 static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, zone: String = "") -> PackedStringArray:
 	var out := PackedStringArray()
 	var techniques := PackedStringArray()
@@ -299,6 +305,8 @@ static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, 
 	if not favourite.is_empty():
 		out.append(UiKit.translate(FAVOURITE_KEYS[str(db.gear_item(favourite)["category"])]) \
 				% UiKit.translate("GEAR_" + favourite))
+	for key in _time_hints(db, fish_id):
+		out.append(UiKit.translate(key))
 	var trap_zones := PackedStringArray()
 	for z in db.zones_of(spot):
 		if fish_id in (z["trap_ids"] as PackedStringArray):
@@ -344,14 +352,17 @@ static func _favourite(db: ContentDB, spot: String, fish_id: String, techniques:
 	var best := 0
 	for t in techniques:
 		for place in places:
-			best = maxi(best, int(CatchOdds.species_ppm(db, place, { "technique": t }).get(fish_id, 0)))
+			best = maxi(best, _ppm_in(db, place, fish_id, t))
 	for t in techniques:
 		for slot in db.slots_for(t):
 			if not FAVOURITE_KEYS.has(slot):
 				continue
 			for g in db.gear_in(slot):
 				for place in places:
-					var ppm := int(CatchOdds.species_ppm(db, place, { "attract": g["attract"], "technique": t }).get(fish_id, 0))
+					var ctx := CatchOdds.own_conditions(db, fish_id)
+					ctx["attract"] = g["attract"]
+					ctx["technique"] = t
+					var ppm := int(CatchOdds.species_ppm(db, place, ctx).get(fish_id, 0))
 					if ppm > best:
 						best = ppm
 						best_id = str(g["id"])
@@ -362,8 +373,50 @@ static func _favourite(db: ContentDB, spot: String, fish_id: String, techniques:
 static func _best_ppm(db: ContentDB, place: Dictionary, fish_id: String, techniques: PackedStringArray) -> int:
 	var top := 0
 	for t in techniques:
-		top = maxi(top, int(CatchOdds.species_ppm(db, place, { "technique": t }).get(fish_id, 0)))
+		top = maxi(top, _ppm_in(db, place, fish_id, t))
 	return top
+
+
+## Türün bu yerde bu teknikle (yemsiz) oranı: koşulsuz; belli vakitte gelen tür kendi vaktinde.
+static func _ppm_in(db: ContentDB, place: Dictionary, fish_id: String, technique: String) -> int:
+	var ctx := CatchOdds.own_conditions(db, fish_id)
+	ctx["technique"] = technique
+	return int(CatchOdds.species_ppm(db, place, ctx).get(fish_id, 0))
+
+
+
+## Vaktin ve havanın ipuçları (çeviri anahtarları): yalnızca belli vakitte gelen türde ne zaman
+## (UI_BOOK_HINT_ONLY_storm: yağmurlu gece, UI_BOOK_HINT_ONLY_<vakit>); yoksa en sevdiği vakit
+## (UI_BOOK_HINT_WHEN_<vakit>) ve hava (UI_BOOK_HINT_LIKES_<hava>), çarpanı en az LIKES_AT ise.
+static func _time_hints(db: ContentDB, fish_id: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	var def := db.fish_by_id(fish_id)
+	var only: Dictionary = def.get("only", {})
+	if not only.is_empty():
+		var phases: PackedStringArray = only.get("phase", PackedStringArray())
+		var kinds: PackedStringArray = only.get("weather", PackedStringArray())
+		if "rain" in kinds and "night" in phases:
+			out.append("UI_BOOK_HINT_ONLY_storm")
+		elif not phases.is_empty():
+			out.append("UI_BOOK_HINT_ONLY_" + phases[0])
+		return out
+	var best_phase := ""
+	var best := LIKES_AT
+	for phase in DayClock.PHASES:
+		if db.when_mult(fish_id, phase) >= best:
+			best = db.when_mult(fish_id, phase)
+			best_phase = phase
+	if not best_phase.is_empty():
+		out.append("UI_BOOK_HINT_WHEN_" + best_phase)
+	var best_kind := ""
+	best = LIKES_AT
+	for kind in Weather.KINDS:
+		if db.weather_mult(fish_id, kind) >= best:
+			best = db.weather_mult(fish_id, kind)
+			best_kind = kind
+	if not best_kind.is_empty():
+		out.append("UI_BOOK_HINT_LIKES_" + best_kind)
+	return out
 
 
 ## Gölün nadirlik oranları (elindeki teknik ve kuşanılan yemle; başlıkta tekniğin adı) ve şans
@@ -377,6 +430,16 @@ func _add_lake_odds(db: ContentDB, save: SaveData, species_odds: Dictionary) -> 
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.custom_minimum_size = Vector2(420, 0)
 	_detail.add_child(heading)
+	# Oranlar gölün şimdiki koşuluyla (vakit, hava, göl sevgisi): ekranda yazan gerçek oran.
+	var cond := WorldState.conditions(db, save)
+	var now := tr("UI_BOOK_NOW") % [tr("PHASE_" + str(cond["phase"])), tr("WEATHER_" + str(cond["weather"]))]
+	var love := int(cond["love"])
+	if love > 1:
+		now += " · " + tr("UI_BOOK_LOVE") % [love, UiKit.format_percent((LakeLove.rare_bonus_pm(db.rules, love) - 1000) * 1000)]
+	var conditions := UiKit.ink(now, 24, UiKit.INK_SOFT)
+	conditions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	conditions.custom_minimum_size = Vector2(420, 0)
+	_detail.add_child(conditions)
 	var by_rarity := CatchOdds.rarity_ppm(db, species_odds)
 	var grid := GridContainer.new()
 	grid.columns = 4

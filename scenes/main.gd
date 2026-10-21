@@ -66,6 +66,8 @@ const FAR_HIGH := 0.8
 ## (gerçek saatle) bu aralıkla (sn) yenilenir.
 const TRAP_REACH := 5.0
 const TRAP_SYNC_EVERY := 1.0
+## Geliştirme sürümünün SEVGİ + düğmesi bu kadar göl sevgisi ekler.
+const DEBUG_LOVE := 50
 
 var session: FishingSession
 var lake: LakeShape
@@ -110,6 +112,8 @@ var story_panel: StoryPanel
 var _film: StoryFilm
 ## Haritadan hızlı geçişte ekran kararır (en üstte).
 var fade: Fade
+## Oyun saati (Dalga 4): vakit, gün ve hava; saat oyun akarken ilerler (botlarda donuk: frozen).
+var world_clock: WorldClock
 ## true iken kamerayı main sürmez (yalnızca debug: bot yakın çekim yapar).
 var bot_camera: bool = false
 
@@ -225,6 +229,11 @@ func _ready() -> void:
 	add_child(line)
 	_build_ui()
 	_build_input()
+	world_clock = WorldClock.new()
+	add_child(world_clock)
+	world_clock.setup(GameState.db, GameState.save)
+	world_clock.conditions_changed.connect(_on_conditions_changed)
+	world_clock.phase_changed.connect(_on_phase_changed)
 	_start_session()
 	_refresh_status()
 	# Eski kayıt: rütbesi çoktan gelmiş teknik de bir kez haber verilir.
@@ -249,9 +258,12 @@ func _start_session() -> void:
 	_save_ref = save
 	var start: Dictionary = Zones.at(GameState.db, spot_id, GameState.db.spot(spot_id)["start"])
 	var gear := _gear()
+	world_clock.reset(save)
+	var cond := world_clock.conditions()
 	session = FishingSession.new(GameState.db, spot_id, gear, Dice.derive(save.seed, save.session),
 			bool(GameState.setting("easy", false)), save.catches == 0,
-			CatchOdds.pity_floor(GameState.db, save, start, gear.technique), Zones.open_ids(GameState.db, save, spot_id))
+			CatchOdds.pity_floor(GameState.db, save, start, gear.technique, cond), Zones.open_ids(GameState.db, save, spot_id),
+			cond)
 	zone_id = ""
 	_zone_known = false
 	_held_technique = str(save.flags.get(HELD_FLAG, ""))
@@ -321,8 +333,7 @@ func _replay_story() -> void:
 		zone_id = ""
 		_zone_known = false
 		var zone: Dictionary = Zones.at(db, spot_id, start)
-		session.set_pity_floor(CatchOdds.pity_floor(db, GameState.save, Zones.place(db, spot_id, str(zone.get("id", ""))),
-				session.technique.id))
+		session.set_pity_floor(_pity(str(zone.get("id", ""))))
 		session.relocate(start)
 		_follow_zone()
 		_snap_camera()
@@ -417,6 +428,9 @@ func _process(delta: float) -> void:
 		_on_shop()
 	_check_pending_cast()
 	_check_pending_trap()
+	# Oyun saati: filmde ve kararmada da durur (panel ve odak kaybı yukarıda).
+	if _film == null and not fade.busy():
+		world_clock.tick(delta, GameState.save)
 	_trap_clock += delta
 	if _trap_clock >= TRAP_SYNC_EVERY:
 		_trap_clock = 0.0
@@ -711,8 +725,7 @@ func _go_sell() -> void:
 		_leave_boat()
 		angler.place(spot)
 		angler.face_now(Vector2(nine.global_position.x, nine.global_position.z) - spot)
-		session.set_pity_floor(CatchOdds.pity_floor(db, GameState.save,
-				Zones.place(db, spot_id, str(Zones.at(db, spot_id, spot).get("id", ""))), session.technique.id))
+		session.set_pity_floor(_pity(str(Zones.at(db, spot_id, spot).get("id", ""))))
 		session.relocate(spot)
 		_follow_zone()
 		_snap_camera()
@@ -936,8 +949,9 @@ func _on_catch() -> void:
 	var outcome := Records.add(save.records, fish_id, size_cm, stars, GameState.clock.now_unix())
 	save.catches += 1
 	var technique := session.technique.id
-	CatchOdds.note_catch(db, save, rarity, Zones.place(db, spot_id, str(info.get("zone", ""))), technique)
-	session.set_pity_floor(CatchOdds.pity_floor(db, save, Zones.place(db, spot_id, zone_id), technique))
+	CatchOdds.note_catch(db, save, rarity, Zones.place(db, spot_id, str(info.get("zone", ""))), technique,
+			world_clock.conditions())
+	session.set_pity_floor(_pity(zone_id, technique))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	var zone_news := false
 	# Balık kovaya girer. Koruma altındaki tür (mersin) hep göle döner (göl sevgisi verir). Kova
@@ -1030,6 +1044,50 @@ func _after_rank(ranked: Dictionary) -> bool:
 	return news
 
 
+## Şans garantisi: bölgede (boşsa gölde), bu teknikle (verilmezse elindeki), gölün o anki koşulunda
+## gelebilen kademeler (CatchOdds.pity_floor; gündüz nilüferli koyda Efsanevi garanti yok).
+func _pity(zone: String, technique: String = "") -> int:
+	var db := GameState.db
+	var t := technique if not technique.is_empty() else session.technique.id
+	return CatchOdds.pity_floor(db, GameState.save, Zones.place(db, spot_id, zone), t, world_clock.conditions())
+
+
+## Gölün koşulu değişti (vakit, hava, sevgi seviyesi): oturumun oranları, takım profili ve şans
+## garantisi yenilenir (o koşulda gelmeyen türün gölgesi çekilir).
+func _on_conditions_changed(cond: Dictionary) -> void:
+	session.set_conditions(cond)
+	session.set_pity_floor(_pity(zone_id))
+	hud.refresh()
+
+
+## Vakit değişti: kısa bildirim (vaktin ikonuyla) ve kayıt.
+func _on_phase_changed(phase: String) -> void:
+	hud.toast_later(tr("UI_PHASE_NOW_" + phase), UiKit.TEXT, "phase_" + phase)
+	GameState.save_game()
+
+
+## Geliştirme sürümü (Ayarlar'da VAKİT +, HAVA, SEVGİ +): saat sonraki vakte, bugünün havası sıradakine,
+## göl sevgisi DEBUG_LOVE artar; oranlar ve garanti gerçek akışla yenilenir.
+func _debug_time() -> void:
+	world_clock.skip(GameState.save)
+	GameState.save_game()
+	GameState.changed.emit()
+
+
+func _debug_weather() -> void:
+	Weather.cycle_debug(GameState.db.rules, GameState.save)
+	world_clock.refresh(GameState.save)
+	GameState.save_game()
+	GameState.changed.emit()
+
+
+func _debug_love() -> void:
+	LakeLove.add(GameState.db.rules, GameState.save, DEBUG_LOVE)
+	world_clock.refresh(GameState.save)
+	GameState.save_game()
+	GameState.changed.emit()
+
+
 ## Geliştirme sürümü (Ayarlar'da RÜTBE +1): bir sonraki rütbenin puanı verilir, gerçek rütbe atlama
 ## akışıyla (bildirim, açılan bölge ve teknik, Dede'nin sözü, nabızlar; panel kapanınca görünür).
 func _debug_rank_up() -> void:
@@ -1058,8 +1116,7 @@ func _follow_zone() -> void:
 		shop_panel.zone_id = now
 		book_panel.zone_id = now
 		technique_panel.zone_id = now
-		session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save, Zones.place(GameState.db, spot_id, now),
-				session.technique.id))
+		session.set_pity_floor(_pity(now))
 	_fit_technique()
 	_zone_known = true
 
@@ -1512,12 +1569,14 @@ func _place_shop() -> void:
 	_update_gates()
 
 
-## Balık göle bırakıldı: defterde bırakılan sayısı, göl sevgisi ve sayaç.
+## Balık göle bırakıldı: defterde bırakılan sayısı, göl sevgisi ve sayaç. Sevginin seviyesi
+## değişirse oranlar yenilenir (Nadir+ payı).
 func _release(fish_id: String, rarity: int) -> void:
 	var save := GameState.save
 	Records.release(save.records, fish_id)
-	save.love += int(GameState.db.rarity_def(rarity).get("love", 0))
+	LakeLove.add(GameState.db.rules, save, int(GameState.db.rarity_def(rarity).get("love", 0)))
 	save.stats["released"] = int(save.stats.get("released", 0)) + 1
+	world_clock.refresh(save)
 
 
 ## Sol üstteki para, kova ve rütbe; harita düğmesi ilk balıktan sonra (bölgeli gölde).
@@ -1615,8 +1674,7 @@ func _travel(target: String) -> void:
 		var k := lake.zone_index(target)
 		angler.face_now(MapView.badge_anchor(lake, k) - stand)
 		# Yeni yerin gölgeleri o bölgenin şans garantisiyle doğsun.
-		session.set_pity_floor(CatchOdds.pity_floor(db, GameState.save, Zones.place(db, spot_id, target),
-				session.technique.id))
+		session.set_pity_floor(_pity(target))
 		session.relocate(stand)
 		_follow_zone()
 		_snap_camera())
@@ -1938,8 +1996,7 @@ func _go_boat(buoy: int) -> void:
 		angler.place(at)
 		angler.face_now(buoys[index] - at)
 		session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id, true))
-		session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save,
-				Zones.place(GameState.db, spot_id, str(zone["id"])), session.technique.id))
+		session.set_pity_floor(_pity(str(zone["id"])))
 		session.relocate(at)
 		hud.set_boat(true)
 		_follow_zone()
@@ -2035,8 +2092,7 @@ func _on_technique_selected(technique: String) -> void:
 ## Şans garantisi elindeki tekniğe göre (o teknikle gelebilen kademeler): teknik değişmeden önce
 ## verilir, gölgeler bu garantiyle yeniden doğar.
 func _technique_pity(technique: String) -> void:
-	session.set_pity_floor(CatchOdds.pity_floor(GameState.db, GameState.save, Zones.place(GameState.db, spot_id, zone_id),
-			Techniques.resolve(technique)))
+	session.set_pity_floor(_pity(zone_id, Techniques.resolve(technique)))
 
 
 ## Elindeki tekniğin kuşanılmış takımı (teknik hazır değilse şamandıranınki).
@@ -2080,6 +2136,9 @@ func _build_ui() -> void:
 	settings_panel = SettingsPanel.new()
 	layer.add_child(settings_panel)
 	settings_panel.rank_up_requested.connect(_debug_rank_up)
+	settings_panel.time_requested.connect(_debug_time)
+	settings_panel.weather_requested.connect(_debug_weather)
+	settings_panel.love_requested.connect(_debug_love)
 	settings_panel.story_requested.connect(_replay_story)
 	shop_panel = ShopPanel.new()
 	layer.add_child(shop_panel)

@@ -18,6 +18,9 @@ UI_DEBUG_RESET_SURE,Sure? Tap again,Emin misin? Yine dokun
 UI_DEBUG_UNLOCK_GO,Unlock all,Hepsini aç
 UI_DEBUG_COINS,+%s,+%s
 UI_DEBUG_RANK_UP,Rank +1,Rütbe +1
+UI_DEBUG_TIME,Time +,Vakit +
+UI_DEBUG_WEATHER,Weather,Hava
+UI_DEBUG_LOVE,Love +%s,Sevgi +%s
 RARITY_common,Common,Sıradan
 RARITY_fine,Fine,Güzel
 RARITY_rare,Rare,Nadir
@@ -283,6 +286,17 @@ UI_BOOK_HINT_ZONE,Lives in: %s,Yaşadığı yer: %s
 UI_BOOK_HINT_TECH,Caught with: %s,%s ile tutulur
 UI_BOOK_HINT_TECH_ALSO,Also caught with: %s,%s ile de tutulur
 UI_BOOK_HINT_OFTEN,Often seen in this lake.,Bu gölde sık görülür.
+UI_BOOK_HINT_ONLY_night,Only comes out at night.,Yalnızca gece çıkar.
+UI_BOOK_HINT_ONLY_storm,Only feeds on stormy nights.,Yalnızca fırtınalı gecelerde yemlenir.
+UI_BOOK_HINT_WHEN_morning,Most often in the morning.,En çok sabah gelir.
+UI_BOOK_HINT_WHEN_noon,Most often at noon.,En çok öğlen gelir.
+UI_BOOK_HINT_WHEN_evening,Most often in the evening.,En çok akşam gelir.
+UI_BOOK_HINT_WHEN_night,Most often at night.,En çok gece gelir.
+UI_BOOK_HINT_LIKES_cloudy,Loves cloudy days.,Bulutlu havayı sever.
+UI_BOOK_HINT_LIKES_rain,Loves the rain.,Yağmuru sever.
+UI_BOOK_HINT_LIKES_fog,Loves misty days.,Sisi sever.
+UI_BOOK_NOW,Now: %s · %s,Şimdi: %s · %s
+UI_BOOK_LOVE,Lake love %d (Rare+ +%s),Göl sevgisi %d (Nadir+ +%s)
 UI_BOOK_HINT_SOMETIMES,Sometimes seen in this lake.,Bu gölde ara sıra görülür.
 UI_BOOK_HINT_RARELY,Rarely seen in this lake.,Bu gölde nadiren görülür.
 UI_BOOK_CHANCE,"Chance a shadow is this fish (with your gear): %s","Takımınla bir gölgenin bu balık olma şansı: %s"
@@ -376,6 +390,10 @@ WEATHER_cloudy,Cloudy,Bulutlu
 WEATHER_rain,Rainy,Yağmurlu
 WEATHER_fog,Foggy,Sisli
 WEATHER_storm,Stormy,Fırtınalı
+UI_PHASE_NOW_morning,Good morning!,Sabah oldu
+UI_PHASE_NOW_noon,It's noon,Öğle oldu
+UI_PHASE_NOW_evening,Evening has come,Akşam oldu
+UI_PHASE_NOW_night,Night has fallen,Gece oldu
 GEAR_trap_1,Crayfish trap,Kerevit tuzağı
 GEAR_trap_1_DESC,"Leave it in the shallows; it fills by itself, even while you are away.","Sığ suya bırak; sen yokken de kendi dolar."
 GEAR_trap_2,Second trap,İkinci tuzak

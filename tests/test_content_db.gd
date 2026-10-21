@@ -286,6 +286,12 @@ func test_every_content_id_has_translations() -> void:
 	for kind in Weather.KINDS:
 		keys.append("WEATHER_" + kind)
 	keys.append("WEATHER_storm")
+	for phase in DayClock.PHASES:
+		keys.append("UI_PHASE_NOW_" + phase)
+	# Defterin vakit ve hava ipuçları (BookPanel._time_hints; birleştirilen anahtarlar).
+	for f in db.fish:
+		for key in BookPanel._time_hints(db, str(f["id"])):
+			keys.append(key)
 	# Göle bırakılan her türün kartta Dede'nin kendi sözü (FishCard.dede_line).
 	for f in db.fish:
 		if bool(f["release_only"]) and db.rarity_id(int(f["rarity"])) != "mythic":

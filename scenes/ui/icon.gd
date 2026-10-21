@@ -6,7 +6,9 @@ extends Control
 ## sound, music, vibration, easy, globe, up, down, rod, reel, line, bait, net, bucket, aquarium,
 ## bobber, hook, fish, shop, gem, map, sell (para kesesi), release (göle dönen balık), pin (haritada
 ## "buradasın"). Yalnızca görselle çizilenler (görseli yoksa çağıran başka ikon seçer): anchor
-## ("Kıyıya dön"), compass, buoy, signpost (harita). "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini (circle, triangle,
+## ("Kıyıya dön"), compass, buoy, signpost (harita). Vakit, hava, çay, sevgi ve istek ikonları (phase_*,
+## weather_*, tea, love, requests; Dalga 4) görseli yoksa SkyIcons'la tek üçgen dizisiyle çizilir.
+## "fish:<id>" balık portresini, "rarity:<şekil>" nadirlik simgesini (circle, triangle,
 ## diamond, star, sparkle, medallion; görseli yoksa şekil tint renginde), "zone:<bölge>" bölge
 ## rozetini (görseli yoksa kodla: iskele, kamış, nilüfer, kaya, dere, şamandıra) çizer.
 
@@ -26,6 +28,11 @@ const ART_NAMES := {
 	"release": "release", "pin": "pin", "anchor": "anchor", "compass": "compass", "buoy": "buoy",
 	"signpost": "signpost", "tech_float": "tech_float", "tech_spin": "tech_spin", "tech_bottom": "tech_bottom",
 	"tech_fly": "tech_fly", "tech_trap": "tech_trap", "tackle_bag": "tackle_bag",
+	# Dalga 4 (Parti 5a): vakitler, havalar, çay, göl sevgisi, istekler (görseli yoksa SkyIcons çizer).
+	"phase_morning": "phase_morning", "phase_noon": "phase_noon", "phase_evening": "phase_evening",
+	"phase_night": "phase_night", "weather_clear": "weather_clear", "weather_cloudy": "weather_cloudy",
+	"weather_rain": "weather_rain", "weather_fog": "weather_fog", "weather_storm": "weather_storm",
+	"tea": "tea", "love": "love", "requests": "requests",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem, Ekstra ve tekniğe özel sekmeleri (yapay yem, kurşun, sinek).
@@ -101,6 +108,10 @@ func _draw() -> void:
 		draw_texture_rect(texture, Rect2((size - Vector2(side, side)) * 0.5, Vector2(side, side)), false, modulate_art)
 		return
 	var s := minf(size.x, size.y) / 100.0
+	if kind in SkyIcons.KINDS:
+		# Saat çipindekiler her karede görünür: tek üçgen dizisi (dönüşüm elle, set_transform'dan önce).
+		SkyIcons.draw(self, kind, (size - Vector2(100, 100) * s) * 0.5, s)
+		return
 	draw_set_transform((size - Vector2(100, 100) * s) * 0.5, 0.0, Vector2(s, s))
 	if kind.begins_with("rarity:"):
 		_rarity(kind.substr(7))

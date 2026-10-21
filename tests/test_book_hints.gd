@@ -76,3 +76,27 @@ static func _best_ppm(db: ContentDB, spot: String, fish_id: String, item: Dictio
 	for z in db.zones_of(spot):
 		best = maxi(best, int(CatchOdds.species_ppm(db, z, { "attract": item["attract"], "technique": technique }).get(fish_id, 0)))
 	return best
+
+
+## Vakit ve hava (Dalga 4): yalnızca belli vakitte gelen türün ipucu ne zaman geldiğini ve kendi
+## vaktinde nerede yaşadığını söyler (Ay Turnası gece nilüferli koyda, Kocabaş fırtınalı gece derin
+## ortada); öteki türde en sevdiği vakit ve hava (kadife sabah ve yağmur). Defterin oranı gölün şimdiki
+## koşuluyla: gündüz Ay Turnası yok, gece var.
+func test_time_hints() -> void:
+	var db := content()
+	var save := SaveData.create_new(0)
+	var moon := "\n".join(BookPanel.hints(db, save, db.main_spot, "moon_pike"))
+	assert_true(moon.contains(UiKit.translate("UI_BOOK_HINT_ONLY_night")), "Ay Turnası gece: %s" % moon)
+	assert_true(moon.contains(UiKit.translate("ZONE_lily_cove")), "nilüferli koyda yaşar: %s" % moon)
+	var giant := "\n".join(BookPanel.hints(db, save, db.main_spot, "kocabas"))
+	assert_true(giant.contains(UiKit.translate("UI_BOOK_HINT_ONLY_storm")), "Kocabaş fırtınalı gece: %s" % giant)
+	assert_true(giant.contains(UiKit.translate("ZONE_deep_water")), "derin ortada yaşar: %s" % giant)
+	var tench := "\n".join(BookPanel.hints(db, save, db.main_spot, "tench"))
+	assert_true(tench.contains(UiKit.translate("UI_BOOK_HINT_WHEN_morning")), "kadife sabah: %s" % tench)
+	assert_true(tench.contains(UiKit.translate("UI_BOOK_HINT_LIKES_rain")), "kadife yağmuru sever: %s" % tench)
+	assert_true(not tench.contains(UiKit.translate("UI_BOOK_HINT_ONLY_night")), "kadife her zaman gelir")
+	save.technique = "float"
+	save.clock_s = 0
+	assert_true(not BookPanel.odds(db, save, db.main_spot, "lily_cove").has("moon_pike"), "sabah defterde Ay Turnası yok")
+	save.clock_s = 3 * db.rules.phase_s + 10
+	assert_true(int(BookPanel.odds(db, save, db.main_spot, "lily_cove").get("moon_pike", 0)) > 0, "gece defterde Ay Turnası")

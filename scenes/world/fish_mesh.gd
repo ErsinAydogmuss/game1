@@ -45,6 +45,10 @@ const SHAPES := {
 	"brook_trout": { "ratio": 3.1, "nose": 2.1, "eye": 0.068, "flat": 0.08, "spots": "#e04a2f", "low_fins": "#e8743a",
 		"fork": 0.03 },
 	"crayfish": { "crayfish": true, "wiggle": 0.3, "show": 2.0, "outline": 0.6 },
+	# Dalga 4 efsaneleri: Ay Turnası (gümüş-mavi turna, soluk ay benekleri, altın göz), Kocabaş (dev
+	# yayın: yosunlu sırt lekeleri, uzun bıyıklar).
+	"moon_pike": { "ratio": 3.5, "nose": 1.5, "eye": 0.062, "iris": "#f2cf5b", "flat": 0.15, "spots": "#e8f0ff" },
+	"kocabas": { "ratio": 3.3, "nose": 2.9, "eye": 0.036, "whiskers": 0.6, "flat": 0.34, "patches": "#5d6b45" },
 }
 const DEFAULT_SHAPE := { "ratio": 2.2, "nose": 2.4, "eye": 0.075 }
 ## Dış çizginin dünyadaki kalınlığı (m).

@@ -85,6 +85,19 @@ static func available(db: ContentDB, fish_id: String, ctx: Dictionary) -> bool:
 	return db.fish_available(fish_id, str(ctx.get("phase", "")), str(ctx.get("weather", "")))
 
 
+## Yalnızca belli vakitte ya da havada gelen türün (fish.json only) kendi koşulu: ilk vakti ve havası
+## (yazılmayan koşul sabah ve açık hava); öteki türlerde boş (koşulsuz). Defterin ipuçları ve katalog
+## o türün oranını kendi vaktinde gösterir.
+static func own_conditions(db: ContentDB, fish_id: String) -> Dictionary:
+	var only: Dictionary = db.fish_by_id(fish_id).get("only", {})
+	if only.is_empty():
+		return {}
+	var phases: PackedStringArray = only.get("phase", PackedStringArray())
+	var kinds: PackedStringArray = only.get("weather", PackedStringArray())
+	return { "phase": phases[0] if not phases.is_empty() else "morning",
+			"weather": kinds[0] if not kinds.is_empty() else "clear" }
+
+
 ## Türün koşul çarpanı (binde; en az 1): vaktin ve havanın tercihi (fish.json when, weather) ve göl
 ## sevgisinin Nadir+ payı (LakeLove). Bağlamda olmayan koşul 1000 sayılır.
 static func factor_pm(db: ContentDB, fish_id: String, ctx: Dictionary) -> int:

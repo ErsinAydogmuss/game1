@@ -121,12 +121,15 @@ func _initialize() -> void:
 
 ## Raporda yer alan tür: şamandırada hepsi (çekişme modelinin karşılaştırması; docs/gdd.md §5
 ## tabloları), öteki teknikte yalnızca oyunun gölünde o teknikle gelenler (sinek yalnızca dere ağzında:
-## yatkınlığı olan ama orada yaşamayan tür sinekle hiç gelmez).
+## yatkınlığı olan ama orada yaşamayan tür sinekle hiç gelmez). Yalnızca belli vakitte gelen tür (Ay
+## Turnası, Kocabaş) kendi vaktinde bakılır.
 static func _reported(db: ContentDB, fish_id: String, technique: String) -> bool:
 	if technique == "float":
 		return true
+	var ctx := CatchOdds.own_conditions(db, fish_id)
+	ctx["technique"] = technique
 	for z in db.zones_of(db.main_spot):
-		if CatchOdds.species_ppm(db, z, { "technique": technique }).has(fish_id):
+		if CatchOdds.species_ppm(db, z, ctx).has(fish_id):
 			return true
 	return false
 

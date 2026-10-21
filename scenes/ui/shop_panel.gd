@@ -435,15 +435,20 @@ func _stat_row(item: Dictionary, stat: Array) -> Control:
 
 
 ## Yemin (yapay yemin, sineğin) çektiği balıklar (en çok iki): bir gölgenin o balık olma şansı
-## çekimsiz ve bu yemle, yemin tekniğinde ("Levrek %22 → %41"; Balık Defteri'yle aynı işlev,
-## CatchOdds). Altında elindeki sayı (yapay yem ve sinek tükenmez: yalnızca takılıysa).
+## çekimsiz ve bu yemle, yemin tekniğinde, gölün şimdiki koşuluyla ("Levrek %22 → %41"; Balık
+## Defteri'yle aynı işlev, CatchOdds). Altında elindeki sayı (yapay yem ve sinek tükenmez: yalnızca
+## takılıysa).
 func _bait_info(parent: VBoxContainer, item: Dictionary) -> void:
 	var db := GameState.db
 	var spot := Zones.place(db, spot_id if not spot_id.is_empty() else db.main_spot, zone_id)
 	var attract: Dictionary = item["attract"]
 	var tech := _item_technique(item)
-	var plain := CatchOdds.species_ppm(db, spot, { "technique": tech })
-	var baited := CatchOdds.species_ppm(db, spot, { "attract": attract, "technique": tech })
+	# Gölün şimdiki koşuluyla (vakit, hava, göl sevgisi): defter ve gölgelerle aynı oran.
+	var cond := WorldState.conditions(db, GameState.save)
+	var plain := CatchOdds.species_ppm(db, spot, CatchOdds.context(null, tech, cond))
+	var baited_ctx := CatchOdds.context(null, tech, cond)
+	baited_ctx["attract"] = attract
+	var baited := CatchOdds.species_ppm(db, spot, baited_ctx)
 	var keys := attract.keys().filter(func(k: Variant) -> bool: return plain.has(k))
 	keys.sort_custom(func(a: Variant, b: Variant) -> bool: return float(attract[a]) > float(attract[b]))
 	for i in mini(2, keys.size()):

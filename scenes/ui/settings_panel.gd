@@ -5,13 +5,19 @@ extends Dialog
 ## help_requested). (Kazı'dan uyarlandı.)
 ## Sürüm yazısına arka arkaya 5 kez dokununca ölçüm açılır ya da kapanır (HUD'da FPS, çizim ve
 ## üçgen sayısı; telefonda hız ölçümü: docs/iphone-kurulum.md). Ölçüm açıkken geliştirme sürümünde
-## iki satır daha görünür (normalde panel küçülmeden sığsın): deneme düğmeleri (hepsini aç, para,
-## rütbe atlama: rank_up_requested, main gerçek akışla atlatır) ve kaydı sıfırlama.
+## üç satır daha görünür (normalde panel küçülmeden sığsın): deneme düğmeleri (hepsini aç, para,
+## rütbe atlama: rank_up_requested, main gerçek akışla atlatır), canlı dünya (vakit, hava, sevgi:
+## time_requested, weather_requested, love_requested) ve kaydı sıfırlama.
 
 ## Bir rütbe atlatılsın (geliştirme sürümü; main gerçek akışla: bildirim, açılan yer, Dede).
 signal rank_up_requested
 ## Açılış filmi yeniden izlensin (main iskelede baştan oynatır; kayıt değişmez).
 signal story_requested
+## Geliştirme sürümü (Dalga 4): saat sonraki vakte, bugünün havası sıradakine, göl sevgisi artsın
+## (main gerçek akışla: oranlar, garanti, bildirim).
+signal time_requested
+signal weather_requested
+signal love_requested
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
@@ -104,6 +110,7 @@ func refresh() -> void:
 	_rows.add_child(version)
 	if OS.is_debug_build() and bool(settings.get("perf", false)):
 		_debug_row()
+		_world_row()
 		var reset := _row(tr("UI_DEBUG_RESET"), "close")
 		var reset_button := UiKit.button(tr("UI_DEBUG_RESET"), UiKit.DANGER, UiKit.SIZE_SMALL, ROW_BUTTON)
 		# Tek dokunuş kaydı silmesin: ilk dokunuş sorar, 3 sn içinde ikincisi siler.
@@ -156,6 +163,23 @@ func _debug_row() -> void:
 	rank.pressed.connect(func() -> void:
 		Sounds.play("ui_tap")
 		rank_up_requested.emit())
+
+
+## Geliştirme sürümünün canlı dünya satırı (Dalga 4; telefonda vakit, hava ve sevgiyi denemek için):
+## VAKİT + (sonraki vakit), HAVA (bugünün havası sıradakine), SEVGİ + (göl sevgisi).
+func _world_row() -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	_rows.add_child(row)
+	_debug_button(row, "DebugTime", tr("UI_DEBUG_TIME")).pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		time_requested.emit())
+	_debug_button(row, "DebugWeather", tr("UI_DEBUG_WEATHER")).pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		weather_requested.emit())
+	_debug_button(row, "DebugLove", tr("UI_DEBUG_LOVE") % UiKit.format_int(50)).pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		love_requested.emit())
 
 
 ## Satırı eşit paylaşan düğme (bot adıyla bulur: dokunuştan sonra satırlar yeniden kurulur).

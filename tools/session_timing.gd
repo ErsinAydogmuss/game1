@@ -8,6 +8,9 @@ extends SceneTree
 ## durur; gölgeler yalnızca o bölgede doğar (denge botu bölge başına süre kullanır: sim.json "zones").
 ## --technique: o teknikle (tekniğin ilk kamışı; --gear=top en iyi takımı) oynar; öneri sim.json
 ## "techniques" altına (tekniğin bölgeleri de: --zone ile).
+## --weather=rain (ya da clear, cloudy, fog) ve --phase= (morning, noon, evening, night; verilmezse öğle):
+## gölün koşulu (Dalga 4; yağmurda gölgeler uzaktan fark eder, hızlı yaklaşır). Yağmurdaki geliş süresinin
+## açık havadakine oranı sim.json "weather": { "rain_approach" }'a yazılır.
 ## Bot (şamandıra):
 ## - Nişan (AIM_S) alır; menzildeki en yakın gölgenin önüne (LEAD_M) atar, insan gibi şaşarak
 ##   (AIM_NOISE_M yarıçaplı daire içinde); gölge yoksa rastgele suya.
@@ -44,6 +47,8 @@ var _seeds: int = 3
 var _top: bool = false
 var _zone: String = ""
 var _technique: String = "float"
+## Gölün koşulu (boşsa koşulsuz).
+var _conditions: Dictionary = {}
 
 # Ölçümler (sn): uçuş, şamandıra suya düştükten balık gelene kadar, dürtmeler, hazır olmaktan
 # ısırmaya (nişan, atış, geri sarıp yeniden atış dahil), çekişme; takılan balığın uzaklığı (m).
@@ -73,10 +78,20 @@ func _initialize() -> void:
 			_zone = arg.substr(7)
 		elif arg.begins_with("--technique="):
 			_technique = arg.substr(12)
+		elif arg.begins_with("--weather="):
+			_conditions["weather"] = arg.substr(10)
+			_conditions["phase"] = _conditions.get("phase", "noon")
+		elif arg.begins_with("--phase="):
+			_conditions["phase"] = arg.substr(8)
+			_conditions["weather"] = _conditions.get("weather", "clear")
 	var db := ContentDB.load_default()
 	for e in db.errors:
 		printerr("İçerik hatası: " + e)
 	var problem := _check_args(db)
+	if problem.is_empty() and not _conditions.is_empty():
+		if not str(_conditions["weather"]) in Weather.KINDS or not str(_conditions["phase"]) in DayClock.PHASES:
+			problem = "bilinmeyen hava ya da vakit: %s (hava: %s; vakit: %s)" % [str(_conditions), ", ".join(Weather.KINDS),
+					", ".join(DayClock.PHASES)]
 	if not problem.is_empty():
 		printerr(problem)
 		quit(1)
@@ -85,8 +100,9 @@ func _initialize() -> void:
 	var started := Time.get_ticks_msec()
 	for s in _seeds:
 		_play(db, gear, 5000 + s * 31)
-	print("Oturum süreleri: %s%s, %s, %d seed × %d atış, takım: %s (hesap %.1f sn)" % [db.main_spot,
+	print("Oturum süreleri: %s%s, %s, %d seed × %d atış, takım: %s%s (hesap %.1f sn)" % [db.main_spot,
 			"" if _zone.is_empty() else " / " + _zone, _technique, _seeds, _casts, "en iyi" if _top else "başlangıç",
+			"" if _conditions.is_empty() else ", %s, %s" % [_conditions["phase"], _conditions["weather"]],
 			(Time.get_ticks_msec() - started) / 1000.0])
 	print("  %-34s %6s %6s %6s %6s %6s" % ["", "adet", "ort", "p10", "p50", "p90"])
 	_row("atış uçuşu", _flight)
@@ -163,7 +179,8 @@ func _gear(db: ContentDB) -> GearStats:
 
 
 func _play(db: ContentDB, gear: GearStats, seed_value: int) -> void:
-	var session := FishingSession.new(db, db.main_spot, gear, seed_value, false, false)
+	var session := FishingSession.new(db, db.main_spot, gear, seed_value, false, false, -1, PackedStringArray(),
+			_conditions)
 	if not _zone.is_empty():
 		var z := db.zone(db.main_spot, _zone)
 		var stands: Array[Vector2] = z["stands"]
