@@ -48,6 +48,14 @@ extends RefCounted
 ##    varken satıştan önce kalanı kadar en ucuz balığı bırakır (daha önce bırakma isteği takılır ve değiştirilir:
 ##    her rütbede bırakan bot erken alışverişleri geciktiriyordu). İlk biten istek request_1, onuncusu
 ##    requests_10.
+## 13. Gölün Sırrı (Dalga 4, 5. adım): suda şişe varsa (bildirim, haritada işaret, Dede söyler) oyuncu gidip alır:
+##    şişenin bölgesine gidilir (travel_s), şişe alınır (bottle_s) ve mektup okunur (letter_s; panel açıkken saat
+##    durur), sonra avlandığı bölgeye döner. Altın istek gelebiliyorsa altın yuvaya gelir (Bugün paneline bakılır).
+##    Altın av isteği vakti ve havası gelince kovalanır (oyuncu haritanın parçasını ister): bölgesi seçilir, tekniği
+##    ya da türünü en çok getiren teknik ele alınır (akşam nilüferli koyda turna, gece derin ortada diple yayın);
+##    bırakma isteği günlük bırakma isteği gibi satıştan önce en ucuz balıklarla. Göl sevgisi 6'da Nine altın hamuru
+##    verir (satışta, dükkân açıkken). İlk dakikalar: letter_<n>, golden_<parça> (altın istek geldi), piece_<parça>,
+##    dough, final_ready (altı mektup, dört parça, altın hamur).
 ## Aynı seed aynı sonucu verir.
 
 const SIM_PATH := "res://data/sim.json"
@@ -60,6 +68,8 @@ const BUY_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", 
 const NEW_SPECIES_WORTH := 100000.0
 ## rate'in boy zarı: balığın ortalama değeri bu kadar eşit aralıklı örnekle hesaplanır.
 const RATE_SAMPLES := 50
+## Teknik seçiminde kovalanan altın isteğin değeri: yeni türden önce gelir (hiç denenmemiş teknikten sonra).
+const GOLDEN_WORTH := 1.0e9
 ## Atıştan önce kova doluysa en çok bu kadar satış turu (satıştan sonra toplanan tuzaklar kovayı yine
 ## doldurabilir; her turda tuzaklar boşalır).
 const SELL_ROUNDS := 4
@@ -83,7 +93,8 @@ var trapped: int = 0
 var released: int = 0
 var full_released: int = 0
 var trash: int = 0
-## Dede'nin istekleri: biten istek, isteklerden gelen para (earned'in içinde) ve değiştirilen istek.
+## Dede'nin günlük istekleri: biten istek, isteklerden gelen para (earned'in içinde) ve değiştirilen istek (altın
+## istekler sayılmaz: parçaları save.map_pieces, parası earned'de).
 var requests_done: int = 0
 var request_coins: int = 0
 var rerolls: int = 0
@@ -91,7 +102,8 @@ var rerolls: int = 0
 ## "rarity_<id>", "zone:<bölge>" (o bölgede ilk avlanış), "tech:<teknik>" (o teknikle ilk atış),
 ## "trap_set" (ilk tuzak bırakıldı), "trap" (tuzaktan ilk kerevit), "release" (ilk bırakılan balık), "trash"
 ## (ilk çöp), "love_<seviye>" (göl sevgisinin seviyesi), "requests" (ilk istekler), "request_1" (ilk biten
-## istek), "requests_10" (onuncusu).
+## istek), "requests_10" (onuncusu), "letter_<n>" (okunan mektup), "golden_<parça>" (altın istek geldi),
+## "piece_<parça>" (harita parçası), "dough" (altın hamur), "final_ready".
 var milestones: Dictionary = {}
 ## Botun elindeki teknik ve her teknikte geçen süre (sn).
 var technique: String = "float"
@@ -153,6 +165,7 @@ func cast_once() -> void:
 		if not Bucket.is_full(db, save):
 			break
 		_sell_and_shop()
+	_tend_secret()
 	var phase := str(conditions()["phase"])
 	if phase != _last_phase:
 		if not _last_phase.is_empty():
@@ -263,6 +276,10 @@ func _sell_and_shop() -> void:
 	sells += 1
 	_mark("sell")
 	shop()
+	# Göl sevgisi 6'da Nine altın hamuru verir (dükkân açılınca).
+	if Secret.give_dough(db, save):
+		_mark("dough")
+		_check_final()
 	_tend_traps()
 	_trips += 1
 	_choose_zone()
@@ -333,12 +350,12 @@ func _release_cheap() -> void:
 			i += 1
 
 
-## Dede'nin bitmemiş bırakma isteği: kalanı kadar en ucuz balık göle (oyuncu "3 balık bırak"ı görünce kovadan
-## küçükleri bırakır).
+## Dede'nin bitmemiş bırakma isteği (günlük ya da altın): kalanı kadar en ucuz balık göle (oyuncu "3 balık bırak"ı
+## görünce kovadan küçükleri bırakır).
 func _release_for_request() -> void:
 	var left := 0
-	for r in Requests.daily(db, save):
-		if str(r["kind"]) == "release":
+	for r in save.requests:
+		if Requests.counts_for(r, { "type": "release" }) > 0:
 			left = maxi(left, int(r["goal"]) - int(r["progress"]))
 	while left > 0 and not save.bucket.is_empty():
 		var cheapest := 0
@@ -416,10 +433,15 @@ func _note_request(event: Dictionary) -> Dictionary:
 		var paid := Requests.pay(db, save, r)
 		if paid.is_empty():
 			continue
-		requests_done += 1
-		request_coins += int(paid["coins"])
 		earned += int(paid["coins"])
 		_note_love(paid["loved"])
+		# Altın istek: harita parçası (günlük isteklerin sayaçlarına ve request_1, requests_10'a girmez).
+		if int(paid["piece"]) > 0:
+			_mark("piece_%d" % int(paid["piece"]))
+			_check_final()
+			continue
+		requests_done += 1
+		request_coins += int(paid["coins"])
 		_mark("request_1")
 		if requests_done >= 10:
 			_mark("requests_10")
@@ -476,6 +498,12 @@ func _choose_zone() -> void:
 	var share := _num("boat_share", 0.5)
 	if not boat.is_empty() and share > 0.0 and fmod(float(_trips) * share, 1.0) + share >= 1.0 - 0.0001:
 		next = boat
+	# Altın istek vakti gelince bölgesinde kovalanır (akşam nilüferli koy, gece derin orta).
+	var want := _golden_want()
+	if want.has("zone"):
+		var target := db.zone(spot_id, str(want["zone"]))
+		if not target.is_empty() and Zones.unlocked(db, save, target):
+			next = target
 	var id := str(next.get("id", ""))
 	if id.is_empty() or id == zone_id:
 		return
@@ -547,7 +575,75 @@ func _technique_score(t: String) -> float:
 		if not save.records.has(fid):
 			fresh += float(odds[fid]) / ContentDB.PPM
 	var per_minute := (1.0 - miss_share(timing, zone_id, t)) * 60.0 / cycle_s(timing, zone_id, t)
-	return score + rate(db, timing, _spot, t, gear) + fresh * NEW_SPECIES_WORTH * per_minute
+	return score + rate(db, timing, _spot, t, gear) + fresh * NEW_SPECIES_WORTH * per_minute + _golden_score(t, odds)
+
+
+## Gölün Sırrı: önce altın istek (gelebiliyorsa altın yuvaya; Bugün paneline bakılır, vakti gelmişse kovalanır);
+## suda şişe varsa bölgesine gidilir (travel_s), şişe alınır (bottle_s), mektup okunur (letter_s: panel açıkken
+## saat durur), sonra avlandığı bölgeye dönülür. Okunan mektup sıradaki altın isteği getirebilir.
+func _tend_secret() -> void:
+	_offer_golden()
+	if not Secret.bottle_due(db, save, spot_id):
+		return
+	_go_to(Secret.bottle_zone(save))
+	elapsed += _num("bottle_s", 4.0)
+	var n := Secret.read_letter(db, save, spot_id)
+	elapsed += _num("letter_s", 30.0)
+	_paused_s += _num("letter_s", 30.0)
+	_mark("letter_%d" % n)
+	_check_final()
+	_choose_zone()
+	_choose_technique()
+	_offer_golden()
+
+
+## Sıradaki altın istek gelebiliyorsa (Requests.offer_golden) altın yuvaya gelir: bildirim, Dede; oyuncu Bugün
+## paneline bakar (request_s). Vakti şimdiyse hemen kovalanır.
+func _offer_golden() -> void:
+	var r := Requests.offer_golden(db, save)
+	if r.is_empty():
+		return
+	_mark("golden_%d" % int((r["reward"] as Dictionary)["piece"]))
+	_look_at_requests()
+	if not _golden_want().is_empty():
+		_choose_zone()
+		_choose_technique()
+
+
+## Kovalanan altın istek (oyuncu haritanın parçasını ister): altın yuvadaki av isteği, vakti ve havası şimdiyse
+## (akşam nilüferli koyda turna, gece derin ortada diple yayın). Döner: isteğin istedikleri (want) ya da boş.
+func _golden_want() -> Dictionary:
+	var r := Requests.golden(db, save)
+	if r.is_empty():
+		return {}
+	var want: Dictionary = r["want"]
+	if str(want.get("event", "")) != "catch":
+		return {}
+	var cond := conditions()
+	for field: String in ["phase", "weather"]:
+		if want.has(field) and str(want[field]) != str(cond[field]):
+			return {}
+	return want
+
+
+## Tekniğin altın istekteki payı (GOLDEN_WORTH): isteğin bölgesindeyken istediği teknik; türü varsa o türün bu
+## teknikle oranıyla (odds: tekniğin şimdiki oranları).
+func _golden_score(t: String, odds: Dictionary) -> float:
+	var want := _golden_want()
+	if want.is_empty() or str(want.get("zone", zone_id)) != zone_id:
+		return 0.0
+	if want.has("technique") and str(want["technique"]) != t:
+		return 0.0
+	var share := 1.0
+	if want.has("fish"):
+		share = float(odds.get(str(want["fish"]), 0)) / ContentDB.PPM
+	return share * GOLDEN_WORTH
+
+
+## Final hazır olduysa (altı mektup, dört parça, altın hamur) ilk dakikası.
+func _check_final() -> void:
+	if Secret.final_ready(save):
+		_mark("final_ready")
 
 
 ## Bir teknikle bu yerde (bölge ya da göl) dakikada ortalama kazanç (para): oranlar (takımın yeminin,

@@ -354,7 +354,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ Her tekniği açılınca haber verir, ilk kullanımda nasıl oynandığını söyler (§10.3).
   - ✅ Açılış filminde Nine'yle birlikte gölün öyküsünü anlatır, Gölün Bekçisi'ni gösterir ve ilk oltasını
     balıkçıya verir (§10.5).
-  - ✅ Her gün 3 küçük istekte bulunur ("3 Kadife tut", "Kadife · en az 35 cm"; §10.5); "Gölün Sırrı"nı parça parça anlatır 🔜.
+  - ✅ Her gün 3 küçük istekte bulunur ("3 Kadife tut", "Kadife · en az 35 cm"; §10.5); "Gölün Sırrı"nı parça parça
+    anlatır: şişeden çıkan her mektuptan sonra bir söz, eski haritasının dört parçası için dört altın istek (§10.5).
   - ✅ Dede'yle çay içmek oyun saatini bir sonraki vakte geçirir (§10.5). Vakte ve havaya ilk sözleri bir kez
     (olta boşa dönünce; çekişmede ipucunu ezmez):
     öğle ("Altın Sazan öğle güneşini sever"), akşam (turna ile levrek), yeni günün sabahı, bulut, yağmur, sis
@@ -364,7 +365,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ İskelenin kara ucunun solundaki küçük ahşap dükkânı işletir: tezgâhın arkasında ayakta durur, yüzü iskeleye ve kameraya dönük. Balıkçı yaklaşınca ona bakar. Ona ya da dükkâna dokununca selam verir (balon, baş sallama, tezgâha uzanır); sözü ipucu çubuğunda kendi yüzüyle çıkar. Dükkân paneli 🔜 (Dalga 1, 6. adım).
   - ✅ KayKit Mage, yeniden boyanmış: gümüş saç, hardal sarısı hırka. Kodla beyaz, mavi çiçekli yazma (çenenin altında bağlı), turkuaz puantiyeli önlük, yuvarlak gözlük ve pembe yanaklar (Ersin'in portre tarifi). Büyücü şapkası, asa ve kitap gizli. Model yoksa kodla kurulan yedek çıkar.
   - ✅ Dükkân kodla kurulur: alçak döşeme, raflı arka duvar (yem kavanozları, kutular), tezgâh (solucan kovası, kavanozlar, mısır kasası, zil), olta sehpası ve kepçe, turkuaz-krem çizgili tente, "Nine'nin Dükkânı" tabelası; yanında fıçı, kasa, çuval. Kamera yukarıdan baktığı için tente yüksek ve kısa: Nine'nin başı altından görünür. Balıkçı dükkânın içinden geçmez.
-  - Hikâyede gençliğini anlatır; göl sevgisi yükselince "altın hamur"u verir 🔜.
+  - ✅ Hikâyede gençliğini anlatır (şişelerdeki tek numaralı mektuplar onun); göl sevgisi 6 olunca dükkâna ilk
+    uğrayışta "altın hamur"u verir (§10.5).
 - **Kedi (Tekir)** 🔜:
   - İskelede bekler, peşinden biraz gelir. Dokununca mırlar (titreşim).
   - Küçük balık isteyebilir; her 5 beslemede sıradaki hediyeyi getirir (sabit sırayla, zar yok).
@@ -790,6 +792,17 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   6.835–7.214), 310. dakikada 4.948–5.394 (korkuluk 6.500); 163–166 av. Erken rütbeler ve alışverişler aynı, rütbe
   20 4,9–5,3 saatte. Göl sevgisi 6'sı 137–227. dakikada (önce 145–226): istekler onu az öne çeker; finalin öteki
   şartları (mektuplar, harita parçaları, altın isteklerin sevgisi) 5. adımda.
+- ✅ **Dalga 4, Gölün Sırrı'nın ölçümü** (5. adım; `economy_report.gd -- --hours=16 --seeds=6`): denge botu şişe çıkınca
+  bölgesine gider, alır (`sim.json` `bottle_s` 4 sn) ve mektubu okur (`letter_s` 30 sn, saat durur), sonra avlandığı
+  bölgeye döner; altın istek gelince Bugün paneline bakar; altın av isteğini vakti gelince kovalar (akşam nilüferli
+  koyda turnayı en çok getiren teknikle, gece derin ortada diple), altın bırakma isteğini günlük bırakma isteği gibi
+  satıştan önce en ucuz balıklarla bitirir; göl sevgisi 6'da sıradaki satışta Nine'den altın hamuru alır. Sonuç:
+  mektuplar 9,0–12,2 / 16,9–21,2 / 35,5–43,0 / 62,6–72,7 / 92,4–99,5 / 126–135. dakikada; parçalar 48,5–51,6 (ilk altın
+  istek üçüncü mektupla gelir, akşamı bekler) / 63,8–90,7 / 94,1–101,8 / 127–151; altın hamur 140–188; final hazır
+  151–188. dakikada (rütbe 13–14; hedef bot ~3 sa, insan 5–6 sa). Altın isteklerin parası (dördü ~900) kazancı az
+  artırır: 310. dakikada saatte 5.141–5.777 para (önce 4.948–5.394; korkuluk 6.500), 16 saatte 7.332–7.807. Günlük
+  istekler saatte 3,7–4,4 (altın istekler bu sayaca girmez); botun seyri değiştiği için onuncu günlük istek 97–248.
+  dakikada (ortalama aynı, ~180; korkuluk 80–300).
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
@@ -824,7 +837,7 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - ✅ Seviye atlayınca kalp ikonuyla "Göl sevgisi 2!", ses ve titreşim (panel ya da kart açıksa kapanınca; birkaç
     seviye birden atlanırsa yalnızca sonuncusu). Dede 2. ve 10. seviyede bir kez konuşur (olta boşa dönünce): "Göl seni
     tanıdı evlat! Nadir balık artacak.", "Gölün en sevdiği balıkçı sensin evlat!". 6. seviyenin sözü ("Göl seni çok
-    sevdi! Nine'ye uğra, sevinir.") altın hamurla gelir (5. adım; o zamana kadar Nine'de bir şey yok).
+    sevdi! Nine'ye uğra, sevinir.") altın hamuru haber verir: Nine onu dükkâna ilk uğrayışta verir (§10.5).
   - ✅ Görüldüğü yerler: Kova panelinin başlığı, "Bugün" panelindeki sevgi kartı (çayın yanında: seviye, çubuk;
     seviye 1'de "Balık bırak, çöp topla: göl güzelleşir.", sonra "Nadir+ balık en çok %4 daha sık"), defterin başlığı.
   - **Etki** ✅: 10 seviye (eşikler 0, 12, 30, 60, 110, 180, 270, 380, 520, 700); Nadir+ ağırlıkları seviye başına %4
@@ -864,7 +877,7 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     gibi."
   - Sayılanlar: av (tür, boy, nadirlik, teknik, bölge, vakit, hava), göle bırakılan balık (kovadan, karttan, koruma
     altındaki tür), toplanan çöp, tuzaktan gelen her kerevit (tuzak isteğine, kerevitin tür ve boy isteğine).
-  - Denge §10.4. Altın istekler (harita parçaları) 5. adımda: ayrı yuvada, değiştirilmez.
+  - Denge §10.4. Altın istekler (harita parçaları): ayrı yuvada, değiştirilmez, yarın yenisi gelmez (Gölün Sırrı).
 - **Açılış filmi** ✅ (v0.4.1; Ersin: "oyunun başlangıcında bir hikâyesi yok, ilgi çekici bir hikâye ekle"):
   - Yeni oyunda bir kez, oyunun içinde oynar (~45–55 sn): göl arkada yaşar, kamera çekimden çekime kayar.
     Sinema şeritleri, başta logo, altta konuşanın yüzü, adı ve en çok iki satır söz.
@@ -898,11 +911,53 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   | 15 | Nine der ki Bekçi sisli gecelerde yüzeye çıkar. |
   | 20 | Artık gölün efsanesisin. Bekçi seni bekliyor evlat. |
 
-- **Gölün Sırrı:**
+- **Gölün Sırrı** (Dalga 4, 5. adım ✅; `Secret`, `Requests.offer_golden`):
   1. Dede efsaneyi anlatır (açılış filmi ve rütbe bölümleri bunu başlatır); ilk şişe sazlıkta çıkar.
-  2. Her bölgeden bir mektup çıkar (6 mektup). Mektuplar Dede ile Nine'nin gençliğini anlatır: göl ölürken onu temizlemişler.
-  3. Dede'nin özel isteklerinden 4 harita parçası gelir. Göl sevgisi 6 olunca Nine "altın hamur" verir.
-  4. Final: gece ve sisli bir havada, derin ortada, dip tekniği ve altın hamurla Bekçi'nin gölgesi çıkar. Çok evreli bir çekişme olur; Bekçi tutulur ve yalnızca bırakılır. Bitiş sahnesi oynar, jenerik akar, göl çiçek açar.
+  2. ✅ **Şişeler ve mektuplar.** Her bölgeden bir şişe, sırayla: sıradaki mektubun rütbesi gelmiş, son mektuptan beri
+     en az 15 balık tutulmuş ve bölge açık olmalı. Mektuplar genç Nine ile Dede'nin gölün iki yakasından şişelerle
+     yazışması (tek numaralar Nine'nin, çiftler Dede'nin; 80–120 kelime): göl ölürken onu nasıl temizlediklerini anlatır.
+
+     | # | Bölge | Rütbe | Mektup |
+     |---|---|---|---|
+     | 1 | Sazlık | 3 | Kuruyan sazlar |
+     | 2 | İskele koyu | 4 | İskelenin altından (çizmeler, paslı anahtar) |
+     | 3 | Nilüferli koy | 6 | İlk nilüfer |
+     | 4 | Kayalık burun | 8 | Turkuaz gölge (Bekçi'yi gördüğü gece) |
+     | 5 | Dere ağzı | 10 | Altın hamur (ninenin tarifi) |
+     | 6 | Derin orta (sandal) | 12 | Dört parça ("Gördüğüm yeri çizdim, haritayı dörde yırttım") |
+
+     - Şişe bölgenin atış noktasından 2–4 m açıkta (derin ortada ilk şamandıranın yanında) suda yan yatar, sallanır,
+       parlar, arada çevresinde halka. Çıkınca "Suda bir şişe var: Sazlık" bildirimi, haritada işareti, Dede'nin sözü
+       ("Sazlıkta suda bir şey parlıyor evlat! Git bir bak.").
+     - Şişeye dokun: yakındaysan hemen, uzaktaysan kıyı yolundan yürüyüp alırsın; derin ortanınkine sandalla ilk
+       şamandıraya gidilir (kıyıdan dokununca Dede söyler). Şişe kalkar, mektup açılır: mektup kâğıdında başlık
+       ("Mektup 3/6"), mektubun adı, yazı, imza; kaydırmadan sığar. Kapanınca Dede yazanı tanır ("Bu yazıyı tanıdım
+       evlat... Nine'nin!"). Şişe alınana kadar suda bekler; süre yok (gelir kuralı 7).
+     - Okunan mektuplar Balık Defteri'nin "Gölün Sırrı" sekmesinde (ilk mektuptan sonra görünür): altı mektup kartı
+       (okunanlar yeniden açılır; sıradakinde bölgesi ve ne beklediği: rütbe, sandal ya da kaç balık), harita yapbozu,
+       altın hamur.
+  3. ✅ **Harita parçaları: Dede'nin altın istekleri.** Altın yuvada (günlük üç isteğin üstünde, altın şeritte), sırayla,
+     mektubu ve rütbesi gelince; değiştirilmez, yarın yenisi gelmez, süresi dolmaz. Ödül: parça, para round5(150 + 10 ·
+     rütbe), 100 rütbe puanı, 8 göl sevgisi. Gelince "Dede'nin altın isteği! Saate dokun." ve Dede'nin sözü ("Eski
+     haritamı dörde yırtmıştım. Saate dokun evlat!"); bitince "Harita parçası 2/4! +230 para".
+
+     | Parça | Şart | İstek |
+     |---|---|---|
+     | 1 | 3 mektup, rütbe 6 | Akşam Nilüferli Koy'da 1 Turna tut |
+     | 2 | 4 mektup, rütbe 8 | Gece vakti 3 balık tut |
+     | 3 | 5 mektup, rütbe 10 | Göle 5 balık bırak |
+     | 4 | 6 mektup, rütbe 12 | Gece Derin Orta'da diple 1 Yayın tut |
+
+     - Defterde 2×2 yapboz: bulunan parça yerinde (Ersin'in hazine haritası görseli gelince onun çeyreği; yoksa kodla
+       parşömen: gölün gerçek şekli, iskele, koyu derin orta), eksiğin yeri kesik çizgili ve soru işaretli. Dört parça
+       tamamsa haritanın ve oyunun haritasında derin ortanın ilk şamandırasında kırmızı X ("X: derin ortanın ilk
+       şamandırası. Sisli geceyi bekle!"); Dede: "Harita tamam! X, ilk şamandıranın orada."
+  4. ✅ **Altın hamur.** Göl sevgisi 6 olunca Dede "Nine'ye uğra" der; dükkâna ilk uğrayışta Nine verir ("Al evladım,
+     ninemin altın hamuru! Dipte kullan."), bildirim. Anahtar eşya: dükkânda kartı yok, satılmaz; Takım Çantası'nın dip
+     karosunda rozeti, defterde "Altın hamur sende".
+  5. Final hazır: altı mektup, dört parça, altın hamur (denge botu 151–188. dakikada, rütbe 13–14; §10.4).
+  6. Final 🔜 (6. adım): gece ve sisli bir havada, derin ortada, dip tekniği ve altın hamurla Bekçi'nin gölgesi çıkar.
+     Çok evreli bir çekişme olur; Bekçi tutulur ve yalnızca bırakılır. Bitiş sahnesi oynar, jenerik akar, göl çiçek açar.
 
 ### 10.6 Yuva ve kişilik
 

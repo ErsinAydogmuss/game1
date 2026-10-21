@@ -6,7 +6,8 @@ extends BaseTest
 ## kamışı öncelikli alınır, Dede haber verir); sonraki teknikler kendi satırlarını ekler; kerevit
 ## tuzağı (rütbe 3; ilk tuzak öncelikli). Dalga 4: oyun saati ve hava (botun saati dükkânda, takım
 ## çantasında ve haritada durur; vakit değişince bölgesini yeniden seçer), yalnızca gece gelen Ay Turnası;
-## ucuz balığı göle bırakma, çöp ve göl sevgisinin seviyeleri; Dede'nin istekleri.
+## ucuz balığı göle bırakma, çöp ve göl sevgisinin seviyeleri; Dede'nin istekleri; Gölün Sırrı (mektuplar, altın
+## istekler, altın hamur, final hazır).
 
 const SEEDS := [1000, 1077, 1154]
 ## Korkulukların ölçüldüğü oyun süresi (dk).
@@ -59,14 +60,28 @@ const PACING := [
 	["love_6", 120.0, 240.0],
 	# Dede'nin istekleri (4. adım; economy_report 16 sa × 6 seed): rütbe 2'de (0,6–3,2. dk) dolar, ilki 6,6–17,5. dakikada
 	# biter, onuncusu 156–216. dakikada (saatte 4,0–4,5 istek; bot istekleri kovalamaz, günde bir dünden kalanı değiştirir).
-	# İsteklerin sevgisi göl sevgisi 6'yı az öne çeker (137–227. dk; önce 145–226).
+	# İsteklerin sevgisi göl sevgisi 6'yı az öne çeker (137–227. dk; önce 145–226). Gölün Sırrı'yla (5. adım) bot
+	# altın istekleri kovalar (akşam nilüferli koy, gece derin orta), seyri değişir: onuncu günlük istek 97–248. dakikada
+	# (ortalama aynı, ~180 dk; saatte 3,7–4,4 istek). Altın istekler bu sayaca girmez.
 	["requests", 0.0, 5.0],
 	["request_1", 2.0, 30.0],
-	["requests_10", 100.0, 300.0],
+	["requests_10", 80.0, 300.0],
+	# Gölün Sırrı (5. adım; economy_report 16 sa × 6 seed): ilk mektup rütbe 3'te sazlıkta (9,0–12,2. dk), altıncısı
+	# sandalla derin ortada (126–135). İlk altın istek üçüncü mektupla gelir, parçası akşam nilüferli koyda turnayla
+	# (48,5–51,6: bot vakti gelince kovalar); dördüncü parça gece derin ortada diple yayın (127–151). Altın hamur göl
+	# sevgisi 6'da, sıradaki satışta (140–188); final hazır olurken rütbe 13–14 (151–188; hedef bot ~3 sa, insan 5–6 sa).
+	["letter_1", 5.0, 20.0],
+	["letter_6", 100.0, 180.0],
+	["piece_1", 30.0, 80.0],
+	["piece_4", 110.0, 200.0],
+	["dough", 120.0, 240.0],
+	["final_ready", 120.0, 240.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.
-const BEFORE := [["buy:line_mono", "buy:rod_carp_1"]]
+## Mektuplar sırayla okunur; altın istek mektubundan sonra gelir, parçası ondan sonra.
+const BEFORE := [["buy:line_mono", "buy:rod_carp_1"], ["letter_1", "letter_2"], ["letter_5", "letter_6"],
+		["letter_3", "golden_1"], ["golden_1", "piece_1"], ["letter_6", "piece_4"], ["piece_4", "final_ready"]]
 
 
 func test_same_seed_same_session() -> void:
@@ -105,21 +120,26 @@ func test_pacing_guard_rails() -> void:
 
 
 ## Dede'nin istekleri: bot rütbe 2'de istek alır, biten istekler öder (para kazanca girer), günde en çok bir
-## istek değiştirilir; yuvalar hiç taşmaz.
+## istek değiştirilir; yuvalar hiç taşmaz (günlük yuvalar ve tek altın yuva).
 func test_bot_does_requests() -> void:
 	var db := content()
 	var sim := SessionSim.new(db, db.main_spot, SEEDS[0])
 	var top := 0
+	var golden := 0
 	while sim.minutes() < 120.0:
 		sim.cast_once()
-		top = maxi(top, sim.save.requests.size())
+		top = maxi(top, Requests.daily(db, sim.save).size())
+		golden = maxi(golden, sim.save.requests.size() - Requests.daily(db, sim.save).size())
 	var days := DayClock.day(db.rules, sim.save.clock_s) + 1
 	assert_true(sim.requests_done >= 5, "120 dk'da biten istek: %d" % sim.requests_done)
-	assert_eq(int(sim.save.stats.get("requests", 0)), sim.requests_done, "sayaç")
+	assert_eq(int(sim.save.stats.get("requests", 0)), sim.requests_done + sim.save.map_pieces,
+			"sayaç (günlük istekler ve parça veren altın istekler)")
 	assert_true(sim.request_coins > 0 and sim.request_coins < sim.earned, "isteklerin parası kazancın içinde (%d / %d)" % [
 			sim.request_coins, sim.earned])
 	assert_true(sim.rerolls <= days, "günde en çok bir değiştirme (%d değiştirme, %d gün)" % [sim.rerolls, days])
 	assert_true(top <= db.requests.slots, "yuvalar taşmaz (%d)" % top)
+	assert_true(golden <= 1, "tek altın istek (%d)" % golden)
+	assert_true(sim.save.map_pieces >= 1, "120 dk'da altın istekten harita parçası (%d)" % sim.save.map_pieces)
 
 
 ## Bölgeli göl: bot yalnızca açık bölgede avlanır (rütbe, sandal); kıyı bölgelerini dolaşır,
