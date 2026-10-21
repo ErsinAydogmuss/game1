@@ -119,6 +119,16 @@ func with_pull(pull: float) -> TechniqueRules:
 	return t
 
 
+## Yağmur (Dalga 4, rules.json weather): gölgeler takımı daha uzaktan fark eder ve daha hızlı
+## yaklaşır (her teknikte aynı; dürtme ve vuruş penceresi değişmez).
+func with_boost(notice_mult: float, approach_mult: float) -> TechniqueRules:
+	var t := copy()
+	t.notice_front = notice_front * notice_mult
+	t.notice_side = notice_side * notice_mult
+	t.approach_speed = approach_speed * approach_mult
+	return t
+
+
 ## Tekniğe özgü sayı (params'ta; iç içe bölüm "strike.stop" gibi noktayla).
 func num(key: String, fallback: float) -> float:
 	var v: Variant = _lookup(key)

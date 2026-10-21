@@ -105,6 +105,28 @@ var trap_depth: float = 1.2
 var trap_near := Vector2(1.2, 3.5)
 var trap_spacing: float = 2.0
 
+# --- Oyun saati, hava ve göl sevgisi (Dalga 4, docs/gdd.md §10.5) --------------------------
+## Bir vaktin süresi (oyun saniyesi: oynanan saniye); gün DayClock.PHASES kadar vakit.
+var phase_s: int = 360
+## Sabahın başladığı saat (saat çipi; 1 gerçek sn = 1 oyun dakikası).
+var start_hour: int = 6
+## Günün havasının ağırlıkları (Weather.KINDS sırasıyla: açık, bulutlu, yağmur, sis).
+var weather_weights := PackedInt32Array([55, 20, 15, 10])
+## İlk oyun gününün havası (yeni oyuncu berrak gölde öğrensin).
+var first_weather: String = "clear"
+## Sisli günde sisin olduğu vakitler; öteki vakitlerde fog_else.
+var fog_phases := PackedStringArray(["morning", "night"])
+var fog_else: String = "cloudy"
+## Yağmurda gölgeler takımı bu kat uzaktan fark eder ve bu kat hızlı yaklaşır (her teknikte:
+## TechniqueRules.with_boost).
+var rain_notice: float = 1.3
+var rain_approach: float = 1.25
+## Göl sevgisinin seviye eşikleri (toplam sevgi; [0] = 1. seviye = 0). Hiç azalmaz.
+var love_levels := PackedInt32Array([0, 12, 30, 60, 110, 180, 270, 380, 520, 700])
+## Her seviye love_from ve üstündeki nadirliklerin ağırlığını bu kadar artırır (seviye 1'de 0).
+var love_rare_bonus: float = 0.04
+var love_from: String = "rare"
+
 
 ## Tekniklerin profilleri (kimlik → TechniqueRules). Şamandıranınki üst düzey bölümlerden.
 var _techniques: Dictionary = {}
@@ -191,6 +213,35 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 	r.trap_depth = float(trap.get("depth_max_m", r.trap_depth))
 	r.trap_near = _vec2(trap.get("near_m"), r.trap_near)
 	r.trap_spacing = float(trap.get("spacing_m", r.trap_spacing))
+	var clock: Dictionary = d.get("clock", {})
+	r.phase_s = int(clock.get("phase_s", r.phase_s))
+	r.start_hour = int(clock.get("start_hour", r.start_hour))
+	var weather: Dictionary = d.get("weather", {})
+	var chance: Variant = weather.get("chance", {})
+	if typeof(chance) == TYPE_DICTIONARY and not (chance as Dictionary).is_empty():
+		r.weather_weights = PackedInt32Array()
+		for kind in Weather.KINDS:
+			r.weather_weights.append(int((chance as Dictionary).get(kind, 0)))
+		for kind: Variant in chance:
+			if not str(kind) in Weather.KINDS:
+				errors.append("rules.json: weather.chance: bilinmeyen hava: %s" % kind)
+	r.first_weather = str(weather.get("first_day", r.first_weather))
+	var fog: Variant = weather.get("fog_phases")
+	if typeof(fog) == TYPE_ARRAY:
+		r.fog_phases = PackedStringArray()
+		for phase: Variant in fog:
+			r.fog_phases.append(str(phase))
+	r.fog_else = str(weather.get("fog_else", r.fog_else))
+	r.rain_notice = float(weather.get("rain_notice", r.rain_notice))
+	r.rain_approach = float(weather.get("rain_approach", r.rain_approach))
+	var love: Dictionary = d.get("love", {})
+	var levels: Variant = love.get("levels")
+	if typeof(levels) == TYPE_ARRAY:
+		r.love_levels = PackedInt32Array()
+		for at: Variant in levels:
+			r.love_levels.append(int(at))
+	r.love_rare_bonus = float(love.get("rare_bonus", r.love_rare_bonus))
+	r.love_from = str(love.get("rare_from", r.love_from))
 	r._validate(errors)
 	# Teknikler: şamandıra üst düzey bölümlerden; ötekiler "techniques" bölümünden.
 	var base := r.technique("float")
@@ -227,10 +278,32 @@ func _validate(errors: PackedStringArray) -> void:
 		"tuzak (dolma süresi, en çok kayıt sınırı kadar, sığ su, yakın aralık)": trap_fill_s > 0 and trap_max >= 1 \
 				and trap_max <= SaveData.MAX_TRAP_ITEMS and trap_depth > 0.0 and trap_near.x > 0.0 \
 				and trap_near.y > trap_near.x and trap_spacing >= 0.0,
+		"saat (vakit en az 1 dk, sabah 0–23)": phase_s >= 60 and start_hour >= 0 and start_hour < 24,
+		"hava (4 ağırlık, toplam > 0, ilk gün ve sisin yerine bilinen hava, sis bilinen vakitlerde)": \
+				weather_weights.size() == Weather.KINDS.size() and _sum(weather_weights) > 0 \
+				and first_weather in Weather.KINDS and fog_else in Weather.KINDS and fog_else != "fog" \
+				and _known_phases(fog_phases),
+		"yağmur (fark etme ve yaklaşma en az 1 kat)": rain_notice >= 1.0 and rain_approach >= 1.0,
+		"göl sevgisi (0 ile başlar, artar; nadirlik payı 0–0,1)": love_levels.size() >= 2 and love_levels[0] == 0 \
+				and _rising(love_levels) and love_rare_bonus >= 0.0 and love_rare_bonus <= 0.1,
 	}
 	for label: String in checks:
 		if not bool(checks[label]):
 			errors.append("rules.json: geçersiz: " + label)
+
+
+static func _known_phases(phases: PackedStringArray) -> bool:
+	for phase in phases:
+		if not phase in DayClock.PHASES:
+			return false
+	return true
+
+
+static func _rising(values: PackedInt32Array) -> bool:
+	for i in range(1, values.size()):
+		if values[i] <= values[i - 1]:
+			return false
+	return true
 
 
 static func _sum(values: PackedInt32Array) -> int:

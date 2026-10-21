@@ -2,7 +2,8 @@ extends SceneTree
 ## Headless test koşucusu.
 ##   godot --headless --path . -s res://tests/run_tests.gd
 ## tests/test_*.gd dosyalarındaki test_* metotlarını çalıştırır. Bir test başarısız olursa
-## ya da çalışırken motor/script hatası üretirse çıkış kodu 1 olur.
+## ya da çalışırken motor/script hatası üretirse çıkış kodu 1 olur. Ayar yaparken yalnızca bazı
+## dosyalar: -- --only=test_reel_model (adı böyle başlayan dosyalar; virgülle birden çok).
 
 
 class ErrorCatcher:
@@ -29,8 +30,14 @@ func _initialize() -> void:
 	var failed := 0
 	var files := Array(DirAccess.get_files_at("res://tests"))
 	files.sort()
+	var only := PackedStringArray()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="):
+			only = arg.trim_prefix("--only=").split(",", false)
 	for file: String in files:
 		if not (file.begins_with("test_") and file.ends_with(".gd")):
+			continue
+		if not only.is_empty() and not Array(only).any(func(prefix: String) -> bool: return file.begins_with(prefix)):
 			continue
 		var script: GDScript = load("res://tests/" + file)
 		if script == null or not script.can_instantiate():

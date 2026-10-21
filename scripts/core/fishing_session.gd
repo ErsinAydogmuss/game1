@@ -30,6 +30,8 @@ extends RefCounted
 ##
 ## Bölgeli gölde gölgeler balıkçının çevresinde doğar (ShadowSim); balıkçının bölgesi zone().
 ## access: gölge doğabilen bölgeler (Zones.open_ids; boşsa sandalsız bütün bölgeler).
+## Gölün koşulları (Dalga 4: vakit, hava, göl sevgisi; WorldState.conditions) set_conditions ile
+## verilir: oranlar ve yağmurda takım profili ona göre. Verilmezse koşulsuz (testler, altın test).
 
 ## Durumlar sona eklenir (kayıt ve testler sıra numarasını tutar). FOLLOWING: spinde balık yemin
 ## peşinde (Dalga 3).
@@ -79,6 +81,8 @@ var gear: GearStats
 var technique: Technique
 ## Atış sürerken gelen başka tekniğin takımı: boşa dönünce kuşanılır (set_gear).
 var _pending_gear: GearStats = null
+## Gölün koşulları (vakit, hava, sevgi; boşsa koşulsuz).
+var _cond: Dictionary = {}
 
 # Durum sayaçları (teknikler de okur ve yazar).
 ## Atışta, dürtmede, geri sarmada ve kaçırmadan sonra kalan adım.
@@ -98,9 +102,11 @@ var _events: Array[Dictionary] = []
 
 ## gear: kuşanılmış takım (GearStats.starter = bambu olta). seed: oturum tohumu
 ## (Dice.derive(kayıt seed'i, oturum sayısı)). first_catch: ilk av senaryolu olsun (oyuncu
-## henüz balık tutmadı). pity_floor: şans garantisi (CatchOdds.pity_floor; -1 = yok).
+## henüz balık tutmadı). pity_floor: şans garantisi (CatchOdds.pity_floor; -1 = yok). conditions:
+## gölün koşulları (ilk gölgeler de onlarla doğar; boşsa koşulsuz).
 func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, easy_mode: bool,
-		first_catch: bool, pity_floor: int = -1, access: PackedStringArray = PackedStringArray()) -> void:
+		first_catch: bool, pity_floor: int = -1, access: PackedStringArray = PackedStringArray(),
+		conditions: Dictionary = {}) -> void:
 	_db = db
 	rules = db.rules
 	gear = gear_stats if gear_stats != null else GearStats.starter(db)
@@ -109,13 +115,14 @@ func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, eas
 	lake = db.lake(spot_id)
 	angler = spot.get("start", Vector2.ZERO)
 	easy = easy_mode
+	_cond = conditions.duplicate()
 	technique = Techniques.make(gear.technique, rules)
 	var odds := _odds(pity_floor)
 	odds["reach"] = gear.range_m
 	if not access.is_empty():
 		odds["open"] = access
 	sim = ShadowSim.new(db, spot, lake, seed, first_catch, angler, odds)
-	sim.set_rig(technique.rig_for(gear))
+	sim.set_rig(_rig())
 
 
 ## Gerçek zamanı sabit adımlara çevirir.
@@ -244,8 +251,25 @@ func set_gear(gear_stats: GearStats) -> void:
 	if state == State.IDLE and _apply_technique():
 		return
 	# Aynı teknikte takım değişti (dipte yem sepeti toplanmayı hızlandırır).
-	sim.set_rig(technique.rig_for(gear))
+	sim.set_rig(_rig())
 	sim.set_odds(_odds(sim.pity_floor))
+
+
+## Gölün koşulları değişti (vakit, hava, sevgi): bundan sonra doğan gölgeler yeni oranla; o koşulda
+## gelmeyen türün dolaşan gölgesi çekilir (gündüz olunca Ay Turnası); yağmurda takım profili güçlenir.
+## Aynı koşulda bir şey yapmaz. Zar atılmaz.
+func set_conditions(cond: Dictionary) -> void:
+	if cond == _cond:
+		return
+	_cond = cond.duplicate()
+	sim.set_rig(_rig())
+	sim.set_odds(_odds(sim.pity_floor))
+	sim.recycle_unfit()
+
+
+## Gölün koşulları (boşsa koşulsuz).
+func conditions() -> Dictionary:
+	return _cond
 
 
 ## Gölge doğabilen bölgeler değişti (rütbe atladı, sandala binildi ya da inildi).
@@ -516,12 +540,24 @@ func _apply_technique() -> bool:
 	if Techniques.resolve(gear.technique) == technique.id:
 		return false
 	technique = Techniques.make(gear.technique, rules)
-	sim.set_rig(technique.rig_for(gear))
+	sim.set_rig(_rig())
 	sim.set_odds(_odds(sim.pity_floor))
 	relocate(angler)
 	return true
 
 
-## Gölgelerin oranının bağlamı: yemin (yapay yemin, sineğin) çekimi, şans garantisi, teknik.
+## Gölgelerin oranının bağlamı: yemin (yapay yemin, sineğin) çekimi, teknik, gölün koşulları
+## (CatchOdds.context) ve şans garantisi.
 func _odds(pity_floor: int) -> Dictionary:
-	return { "attract": gear.attract, "pity_floor": pity_floor, "technique": technique.id }
+	var odds := CatchOdds.context(gear, technique.id, _cond)
+	odds["pity_floor"] = pity_floor
+	return odds
+
+
+## Gölgelerin okuduğu takım profili: tekniğinki bu takımla (rig_for); yağmurda gölgeler daha uzaktan
+## fark eder ve daha hızlı yaklaşır (rules.json weather). Koşulsuz ve kuru havada rig_for'un kendisi.
+func _rig() -> TechniqueRules:
+	var profile := technique.rig_for(gear)
+	if str(_cond.get("weather", "")) == "rain":
+		return profile.with_boost(rules.rain_notice, rules.rain_approach)
+	return profile

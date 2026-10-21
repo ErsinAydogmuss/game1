@@ -4,10 +4,15 @@ extends RefCounted
 ## taşınabilir. Alan eklerken VERSION'ı artır, migrate()'e adım ekle ve test_save_data.gd'ye
 ## göç testi yaz.
 
-const VERSION := 4
+const VERSION := 5
 ## Kayıtta en çok bu kadar tuzak ve tuzak başına içerik tutulur (bozuk kayıt büyümesin).
 const MAX_TRAPS := 8
 const MAX_TRAP_ITEMS := 8
+## Dede'nin istekleri (v5): 3 günlük yuva ve hikâyenin altın yuvası.
+const MAX_REQUESTS := 4
+## Gölün Sırrı (v5): her bölgeden bir mektup, dört harita parçası.
+const MAX_LETTERS := 6
+const MAX_MAP_PIECES := 4
 ## Rütbe eğrileri (progression.json "xp"): kaydın sürümüyle değişen eğri, göçte rütbe puanı yeni
 ## eğriye taşınır (rütbe düşmesin). Bunlar o sürümün eğrisidir, değiştirilmez; eğri yeniden
 ## değişirse yeni sürüm ve yeni sabit eklenir (test_save_data denetler).
@@ -62,6 +67,26 @@ var love: int = 0
 var pity: Dictionary = {}
 ## Sayaçlar (istekler ve denge için): earned, spent, sold, released...
 var stats: Dictionary = {}
+## Oyun saati (v5, docs/gdd.md §10.5): oynanan saniye; vakit ve gün bundan türer (DayClock). Oyuncu
+## yokken durur.
+var clock_s: int = 0
+## Son çay içildiğinde tutulan balık sayısı (iki çay arasında en az bir balık; -1 = hiç içilmedi).
+var tea_at: int = -1
+## Dede'nin istekleri (v5): [{ slot, kind, want: { tür, teknik, bölge, vakit ... }, goal, progress,
+## day, serial, reward: { coins, xp, love, piece } }]. İstek oluşunca belli (gelir kuralı 4);
+## süresi dolmaz.
+var requests: Array[Dictionary] = []
+## Kurulan isteklerin sayacı (isteğin zarı), yuvaların en son dolduğu ve ücretsiz değiştirmenin en son
+## kullanıldığı oyun günü (-1 = hiç).
+var request_serial: int = 0
+var request_day: int = -1
+var reroll_day: int = -1
+## Gölün Sırrı (v5): okunan mektup sayısı, sıradaki şişenin sayıldığı balık sayısı (son mektuptan beri
+## tutulan balıklar), toplanan harita parçası, Gölün Bekçisi'nin kaç kez tutulup bırakıldığı.
+var letters: int = 0
+var letter_at: int = 0
+var map_pieces: int = 0
+var keeper: int = 0
 
 
 static func create_new(now_unix: int) -> SaveData:
@@ -111,6 +136,16 @@ func to_dict() -> Dictionary:
 		"love": love,
 		"pity": pity.duplicate(),
 		"stats": stats.duplicate(),
+		"clock_s": clock_s,
+		"tea_at": tea_at,
+		"requests": requests.duplicate(true),
+		"request_serial": request_serial,
+		"request_day": request_day,
+		"reroll_day": reroll_day,
+		"letters": letters,
+		"letter_at": letter_at,
+		"map_pieces": map_pieces,
+		"keeper": keeper,
 	}
 
 
@@ -153,6 +188,16 @@ static func from_dict(raw: Dictionary) -> SaveData:
 	s.love = maxi(0, _int(d, "love", 0))
 	s.pity = _counts(d.get("pity", {}))
 	s.stats = _counts(d.get("stats", {}))
+	s.clock_s = maxi(0, _int(d, "clock_s", 0))
+	s.tea_at = maxi(-1, _int(d, "tea_at", -1))
+	s.requests = _requests(d.get("requests", []))
+	s.request_serial = maxi(0, _int(d, "request_serial", 0))
+	s.request_day = maxi(-1, _int(d, "request_day", -1))
+	s.reroll_day = maxi(-1, _int(d, "reroll_day", -1))
+	s.letters = clampi(_int(d, "letters", 0), 0, MAX_LETTERS)
+	s.letter_at = maxi(0, _int(d, "letter_at", 0))
+	s.map_pieces = clampi(_int(d, "map_pieces", 0), 0, MAX_MAP_PIECES)
+	s.keeper = maxi(0, _int(d, "keeper", 0))
 	return s
 
 
@@ -202,6 +247,21 @@ static func migrate(raw: Dictionary) -> Dictionary:
 		d["traps"] = []
 		d["trap_serial"] = 0
 		v = 4
+	if v < 5:
+		# v5 (Dalga 4, canlı dünya): oyun saati sabahtan başlar; istek, mektup ve harita parçası yok.
+		# İlk şişe şimdiki balık sayısından sayılır (eski oyuncu da onu yeni balıklarla bulur);
+		# tuzaklarda çöp yok (sanitize: trash "").
+		d["clock_s"] = 0
+		d["tea_at"] = -1
+		d["requests"] = []
+		d["request_serial"] = 0
+		d["request_day"] = -1
+		d["reroll_day"] = -1
+		d["letters"] = 0
+		d["letter_at"] = maxi(0, _int(d, "catches", 0))
+		d["map_pieces"] = 0
+		d["keeper"] = 0
+		v = 5
 	d["version"] = v
 	return d
 
@@ -322,6 +382,47 @@ static func _traps(raw: Variant) -> Array[Dictionary]:
 			"last_unix": maxi(0, _int(e, "last_unix", 0)),
 			"progress_s": maxi(0, _int(e, "progress_s", 0)),
 			"items": items,
+			# Tuzağa giren çöp (v5; kurulunca belli, boşsa yok).
+			"trash": _text(e, "trash", ""),
+		})
+	return out
+
+
+## İstekler: türü (kind) yazı olmalı; yuva 0..MAX_REQUESTS-1 ve tekrarsız; hedef en az 1, ilerleme
+## 0..hedef; istenenler (want) yazı ya da sıfır/pozitif sayı; ödül sıfır/pozitif sayılar.
+static func _requests(raw: Variant) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if typeof(raw) != TYPE_ARRAY:
+		return out
+	var slots := {}
+	for entry: Variant in raw:
+		if typeof(entry) != TYPE_DICTIONARY or out.size() >= MAX_REQUESTS:
+			continue
+		var e: Dictionary = entry
+		var kind := _text(e, "kind", "")
+		var slot := _int(e, "slot", -1)
+		if kind.is_empty() or slot < 0 or slot >= MAX_REQUESTS or slots.has(slot):
+			continue
+		slots[slot] = true
+		var want := {}
+		var raw_want: Variant = e.get("want", {})
+		if typeof(raw_want) == TYPE_DICTIONARY:
+			for key: Variant in raw_want:
+				var value: Variant = (raw_want as Dictionary)[key]
+				if typeof(value) == TYPE_STRING:
+					want[str(key)] = str(value)
+				elif typeof(value) in [TYPE_INT, TYPE_FLOAT] and int(value) >= 0:
+					want[str(key)] = int(value)
+		var goal := maxi(1, _int(e, "goal", 1))
+		out.append({
+			"slot": slot,
+			"kind": kind,
+			"want": want,
+			"goal": goal,
+			"progress": clampi(_int(e, "progress", 0), 0, goal),
+			"day": maxi(0, _int(e, "day", 0)),
+			"serial": maxi(0, _int(e, "serial", 0)),
+			"reward": _counts(e.get("reward", {})),
 		})
 	return out
 

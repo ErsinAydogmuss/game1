@@ -26,7 +26,7 @@ const BY_KEY := {
 	"UI_DEDE_FLY_STILL": STORY,
 	# Tuzak: açılınca sevinir, ilk tuzakta anlatır.
 	"UI_DEDE_TRAP_OPEN": WOW, "UI_DEDE_TRAP_FIRST": STORY,
-	"UI_DEDE_CARD_NEW": SMILE, "UI_DEDE_CARD_RECORD": WOW, "UI_DEDE_CARD_RELEASE": STORY,
+	"UI_DEDE_CARD_NEW": SMILE, "UI_DEDE_CARD_RECORD": WOW, "UI_DEDE_CARD_RELEASE_sturgeon": STORY,
 	# Nine satın almada paketi uzatır, satışta sevinir.
 	"UI_NINE_BOUGHT": STORY, "UI_NINE_SOLD": WOW, "UI_NINE_FLY_ZONE": STORY, "UI_NINE_TRAP": STORY,
 	# Açılış filmi (Story.LINES): karşılama gülümser, gölün öyküsü anlatılır, Bekçi şaşırtır, Dede

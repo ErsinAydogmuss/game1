@@ -164,11 +164,14 @@ func fit_scale() -> float:
 	return clampf(minf(room.x / need.x, room.y / need.y), 0.5, 1.0)
 
 
-## Dede'nin karttaki sözü: koruma altındaki türde koruma sözü, Nadir ve üstünde nadirliğe göre,
-## yoksa yeni tür ya da rekor için (çeviri anahtarı; "" = söz yok).
+## Dede'nin karttaki sözü: Masalsı'da (Gölün Bekçisi) Bekçi'nin sözü, göle bırakılan türde türün
+## kendi sözü (UI_DEDE_CARD_RELEASE_<tür>: mersin koruma altında, Ay Turnası ve Kocabaş efsane), Nadir
+## ve üstünde nadirliğe göre, yoksa yeni tür ya da rekor için (çeviri anahtarı; "" = söz yok).
 static func dede_line(db: ContentDB, rarity: int, outcome: Dictionary, fish_id: String = "") -> String:
+	if rarity == db.rarity_index("mythic"):
+		return "UI_DEDE_CARD_mythic"
 	if not fish_id.is_empty() and Bucket.release_only(db, fish_id):
-		return "UI_DEDE_CARD_RELEASE"
+		return "UI_DEDE_CARD_RELEASE_" + fish_id
 	if rarity >= db.rarity_index("rare"):
 		return "UI_DEDE_CARD_%s" % db.rarity_id(rarity)
 	if bool(outcome.get("new_species", false)):

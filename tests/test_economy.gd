@@ -259,10 +259,39 @@ static func _loadout(db: ContentDB, technique: String, min_carry: int, line: Str
 	return GearStats.from_items(db, items, none)
 
 
-## Bölgede solucanla balık başına ortalama değer (boy zarının eşit aralıklı örnekleriyle).
-static func _mean_value(db: ContentDB, place: Dictionary) -> float:
+## Vakit ve hava (Dalga 4) balığın ne zaman geldiğini değiştirir, kazancı değil: vakitlerin ve
+## havaların zaman payıyla ortalanınca (sisli günün öğlesi ve akşamı bulutlu) her bölgede balık başına
+## ortalama değer koşulsuz değerin ±%5'inde; şamandırayla ve bölgenin önerdiği teknikle. Göl sevgisi
+## sayılmaz (bırakılan balığın karşılığıdır).
+func test_time_and_weather_keep_the_economy() -> void:
+	var db := content()
+	var rules := db.rules
+	var total := 0
+	for w in rules.weather_weights:
+		total += w
+	for z in db.zones_of(db.main_spot):
+		var techniques := ["float"]
+		if not str(z["suggest"]).is_empty():
+			techniques.append(str(z["suggest"]))
+		for technique: String in techniques:
+			var plain := _mean_value(db, z, { "technique": technique })
+			var mean := 0.0
+			for phase: String in DayClock.PHASES:
+				for k in Weather.KINDS.size():
+					var kind := Weather.KINDS[k]
+					if kind == "fog" and not phase in rules.fog_phases:
+						kind = rules.fog_else
+					var share := float(rules.weather_weights[k]) / total / DayClock.PHASES.size()
+					mean += share * _mean_value(db, z, { "technique": technique, "phase": phase, "weather": kind })
+			assert_between(mean / plain, 0.95, 1.05, "%s, %s: vakit ve havayla balık başına %.1f para (koşulsuz %.1f)" % [
+					z["id"], technique, mean, plain])
+
+
+## Bölgede solucanla balık başına ortalama değer (boy zarının eşit aralıklı örnekleriyle; ctx: teknik
+## ve koşullar, verilmezse şamandıra ve koşulsuz).
+static func _mean_value(db: ContentDB, place: Dictionary, ctx: Dictionary = {}) -> float:
 	const SAMPLES := 200
-	var odds := CatchOdds.species_ppm(db, place)
+	var odds := CatchOdds.species_ppm(db, place, ctx)
 	var value := 0.0
 	for id: String in odds:
 		var def := db.fish_by_id(id)

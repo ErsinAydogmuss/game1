@@ -18,7 +18,9 @@ var rarities: Array[Dictionary] = []
 ## sudan sıçrar; yalnızca görünüş), first_burst_steps (varsa türün ilk çırpınması: alabalık takılır
 ## takılmaz sıçrar; yoksa kuralların) },
 ## affinity { teknik: çarpan } (türün teknik yatkınlığı; yazılmayan teknikte 0, alan hiç yoksa
-## yalnızca şamandıra 1).
+## yalnızca şamandıra 1), when { vakit: çarpan } ve weather { hava: çarpan } (Dalga 4: türün sevdiği
+## vakit ve hava; yazılmayanda 1), only { phase: [vakitler], weather: [havalar] } (yalnızca o
+## vakitlerde ve havalarda gelir: Ay Turnası gece, Kocabaş yağmurlu gece; boşsa her zaman).
 var fish: Array[Dictionary] = []
 ## Takım (gear.json): id, category, price, rank, icon, kind ve kategoriye göre değerler
 ## (rod: technique, range_m, power, carry; reel: reel_speed, drag; line: snap_after, stealth, carry;
@@ -190,6 +192,27 @@ func affinity(fish_id: String, technique: String) -> float:
 	return float((f["affinity"] as Dictionary).get(technique, 0.0))
 
 
+## Türün bu vakitteki çarpanı (fish.json when; yazılmamışsa 1).
+func when_mult(fish_id: String, phase: String) -> float:
+	return float((fish_by_id(fish_id).get("when", {}) as Dictionary).get(phase, 1.0))
+
+
+## Türün bu havadaki çarpanı (fish.json weather; yazılmamışsa 1).
+func weather_mult(fish_id: String, weather: String) -> float:
+	return float((fish_by_id(fish_id).get("weather", {}) as Dictionary).get(weather, 1.0))
+
+
+## Tür bu vakitte ve havada gelir mi (fish.json only: yalnızca o vakitlerde ve havalarda; vakit ya da
+## hava bilinmiyorsa ("") gelmez)? only yoksa her zaman.
+func fish_available(fish_id: String, phase: String, weather: String) -> bool:
+	var only: Dictionary = fish_by_id(fish_id).get("only", {})
+	if only.is_empty():
+		return true
+	var phases: PackedStringArray = only.get("phase", PackedStringArray())
+	var kinds: PackedStringArray = only.get("weather", PackedStringArray())
+	return (phases.is_empty() or phase in phases) and (kinds.is_empty() or weather in kinds)
+
+
 ## Rütbe sayısı (en yüksek rütbe).
 func max_rank() -> int:
 	return rank_xp.size()
@@ -314,6 +337,19 @@ func _load_fish(raw: Dictionary) -> void:
 		if typeof(raw_affinity) == TYPE_DICTIONARY:
 			for t: Variant in raw_affinity:
 				affinity[str(t)] = float((raw_affinity as Dictionary)[t])
+		var only := {}
+		var raw_only: Variant = d.get("only", {})
+		if typeof(raw_only) == TYPE_DICTIONARY:
+			for key: String in ["phase", "weather"]:
+				var list: Variant = (raw_only as Dictionary).get(key, [])
+				if typeof(list) == TYPE_ARRAY and not (list as Array).is_empty():
+					var names := PackedStringArray()
+					for n: Variant in list:
+						names.append(str(n))
+					only[key] = names
+			for key: Variant in raw_only:
+				if not str(key) in ["phase", "weather"]:
+					errors.append("fish.json: %s: only: bilinmeyen koşul: %s" % [id, key])
 		var def := {
 			"id": id,
 			"rarity": maxi(0, rarity_index(rarity_name)),
@@ -327,9 +363,21 @@ func _load_fish(raw: Dictionary) -> void:
 			"accent": Color(str(d.get("accent", "#e2463a"))),
 			"fight": fight,
 			"affinity": affinity,
+			"when": _multipliers(d.get("when", {})),
+			"weather": _multipliers(d.get("weather", {})),
+			"only": only,
 		}
 		_fish_index[id] = fish.size()
 		fish.append(def)
+
+
+## Ad -> çarpan sözlüğü (vakit ya da hava); sözlük değilse boş.
+static func _multipliers(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) == TYPE_DICTIONARY:
+		for key: Variant in raw:
+			out[str(key)] = float((raw as Dictionary)[key])
+	return out
 
 
 func _load_gear(raw: Dictionary) -> void:
@@ -572,6 +620,8 @@ func _validate() -> void:
 			errors.append("rarities.json: %s: xp ve love pozitif, pity sıfır ya da pozitif olmalı" % r["id"])
 	for f in fish:
 		_validate_fish(f)
+	if rarity_index(rules.love_from) < 0:
+		errors.append("rules.json: love.rare_from bilinmeyen nadirlik: %s" % rules.love_from)
 	_validate_gear()
 	_validate_progression()
 	if spot(main_spot).is_empty():
@@ -739,6 +789,25 @@ func _validate_fish(f: Dictionary) -> void:
 			any = true
 	if not any:
 		errors.append("fish.json: %s: hiçbir teknikle gelmiyor (affinity)" % id)
+	# Vaktin ve havanın çarpanı en az 0,001 (CatchOdds binde birle yuvarlar; 0 türü sessizce silerdi:
+	# hiç gelmeyeceği vakit "only" ile yazılır).
+	for key: String in ["when", "weather"]:
+		var known: Array[String] = DayClock.PHASES if key == "when" else Weather.KINDS
+		var mults: Dictionary = f[key]
+		for name: Variant in mults:
+			if not str(name) in known or float(mults[name]) < 0.001 or float(mults[name]) > 5.0:
+				errors.append("fish.json: %s: %s: bilinmeyen ad ya da geçersiz çarpan (0,001–5): %s" % [id, key, name])
+	var only: Dictionary = f["only"]
+	for phase: String in only.get("phase", PackedStringArray()):
+		if not phase in DayClock.PHASES:
+			errors.append("fish.json: %s: only.phase: bilinmeyen vakit: %s" % [id, phase])
+	for kind: String in only.get("weather", PackedStringArray()):
+		if not kind in Weather.KINDS:
+			errors.append("fish.json: %s: only.weather: bilinmeyen hava: %s" % [id, kind])
+	# Yalnızca belli vakitte ya da havada gelen tür satılmaz (göle bırakılır): vakit ve hava kazancı
+	# şişirmesin, nadir an göle sevgi versin (docs/gdd.md §10.5).
+	if not only.is_empty() and not bool(f["release_only"]):
+		errors.append("fish.json: %s: only (belli vakitte gelen) tür release_only olmalı" % id)
 
 
 ## geometry: göl şekli kurulup başlangıç, atış noktaları, şamandıralar ve bölgeler de denetlensin.

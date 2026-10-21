@@ -304,8 +304,11 @@ func _zone_score(z: Dictionary) -> float:
 	return score + float(_zone_values[id]) + int(z["rank"]) * 0.01
 
 
-## Tür bu bölgede kamışı alınmış bir teknikle gelir mi?
+## Tür bu bölgede kamışı alınmış bir teknikle gelir mi? Yalnızca belli vakitte ya da havada gelen tür
+## (fish.json only) o koşulda değilse gelmez (bot onun için bölgeye gitmez).
 func _catchable(z: Dictionary, fish_id: String) -> bool:
+	if not CatchOdds.available(db, fish_id, {}):
+		return false
 	for t: String in ContentDB.TECHNIQUES:
 		if Economy.technique_ready(db, save, t) and CatchOdds.allows(z, t) and db.affinity(fish_id, t) > 0.0:
 			return true

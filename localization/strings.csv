@@ -266,7 +266,9 @@ UI_DEDE_CARD_rare,"Wow, a rare one! Sharp eyes, kid.","Vay be, nadir bir balık!
 UI_DEDE_CARD_epic,Even I've rarely seen one of these! An epic catch.,"Bunu ben bile az gördüm! Destansı bir av."
 UI_DEDE_CARD_legendary,Legendary! The whole village will hear of this!,"Efsane! Bunu bütün köy duyacak!"
 UI_DEDE_CARD_mythic,"The Lake Keeper... So it's real.","Gölün Bekçisi... Demek gerçekmiş."
-UI_DEDE_CARD_RELEASE,"Sturgeon are protected, kid. Let's admire it and let it go.","Mersin koruma altında evlat. Bir güzel bakalım, sonra bırakalım."
+UI_DEDE_CARD_RELEASE_sturgeon,"Sturgeon are protected, kid. Let's admire it and let it go.","Mersin koruma altında evlat. Bir güzel bakalım, sonra bırakalım."
+UI_DEDE_CARD_RELEASE_moon_pike,"The Moon Pike! Nana won't believe it. Let's let it go, kid.","Ay Turnası! Nine'n buna inanmayacak. Haydi, göle bırakalım evlat."
+UI_DEDE_CARD_RELEASE_kocabas,"Old Bighead himself! He's older than me. Off you go home, old friend.","Kocabaş'ın ta kendisi! Benden yaşlıdır. Haydi koca dost, evine dön."
 UI_DEDE_LEGEND_NEAR,"Shh! See that glowing shadow? Could be legendary!","Şşş! Şu parlayan gölgeyi gördün mü? Efsanevi olabilir!"
 UI_BOOK,Fish Book,Balık Defteri
 UI_BOOK_NOT_CAUGHT,Not caught yet.,Henüz tutulmadı.
@@ -361,6 +363,19 @@ UI_FLY_STILL,Still water,Durgun su
 UI_DEDE_FLY_STILL,"A fly won't drift on still water, kid. Cast on the current!","Durgun suda sinek kımıldamaz evlat. Akıntıya at!"
 FISH_crayfish,Crayfish,Kerevit
 FISH_crayfish_DESC,"Lives among stones in the shallows. Walks into traps.","Sığlıkta taşların arasında yaşar. Tuzağa kendi girer."
+FISH_moon_pike,Moon Pike,Ay Turnası
+FISH_moon_pike_DESC,A silver pike that only rises on moonlit nights. The legend of the lily cove: always let it go.,"Yalnızca mehtaplı gecelerde çıkan gümüş bir turna. Nilüferli koyun efsanesi: hep göle bırakılır."
+FISH_kocabas,Old Bighead,Kocabaş
+FISH_kocabas_DESC,A giant wels as old as the village. It only feeds on stormy nights. Always let it go.,"Köy kadar yaşlı dev bir yayın. Yalnızca fırtınalı gecelerde yemlenir. Hep göle bırakılır."
+PHASE_morning,Morning,Sabah
+PHASE_noon,Noon,Öğle
+PHASE_evening,Evening,Akşam
+PHASE_night,Night,Gece
+WEATHER_clear,Clear,Açık
+WEATHER_cloudy,Cloudy,Bulutlu
+WEATHER_rain,Rainy,Yağmurlu
+WEATHER_fog,Foggy,Sisli
+WEATHER_storm,Stormy,Fırtınalı
 GEAR_trap_1,Crayfish trap,Kerevit tuzağı
 GEAR_trap_1_DESC,"Leave it in the shallows; it fills by itself, even while you are away.","Sığ suya bırak; sen yokken de kendi dolar."
 GEAR_trap_2,Second trap,İkinci tuzak

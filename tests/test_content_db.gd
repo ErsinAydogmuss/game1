@@ -6,7 +6,7 @@ func test_loads_without_errors() -> void:
 	var db := content()
 	assert_eq(db.errors.size(), 0, "içerik hataları: " + ", ".join(db.errors))
 	assert_eq(db.rarities.size(), 6, "6 nadirlik (Masalsı eklendi)")
-	assert_eq(db.fish.size(), 16, "16 balık (Dalga 2'de 7 tür, Dalga 3'te aynalı sazan, iki alabalık ve kerevit)")
+	assert_eq(db.fish.size(), 18, "18 balık (Dalga 2'de 7 tür, Dalga 3'te aynalı sazan, iki alabalık ve kerevit, Dalga 4'te Ay Turnası ve Kocabaş)")
 	assert_true(not db.spot("home_lake").is_empty(), "testlerin gölü")
 	assert_eq(db.main_spot, "big_lake", "oyun Köy Gölü'nde açılır")
 	assert_true(db.gear.size() >= 30, "dükkân takımı okundu")
@@ -27,15 +27,19 @@ func test_fish_follow_the_design() -> void:
 			assert_eq(db.rarity_id(int(f["rarity"])), expected[id], id + " nadirliği")
 	assert_eq(db.fish_by_id("rudd")["size_cm"], Vector2i(15, 30), "Kızılkanat 15–30 cm")
 	assert_eq(db.fish_by_id("wels")["size_cm"], Vector2i(100, 250), "Yayın 100–250 cm")
-	# Mersin koruma altında: satılmaz, yalnızca bırakılır; ötekiler satılır.
+	# Mersin koruma altında; Ay Turnası (gece) ve Kocabaş (yağmurlu gece) efsane: satılmaz, yalnızca
+	# bırakılır (Dalga 4, Ersin'in seçimi); ötekiler satılır.
+	var released := ["sturgeon", "moon_pike", "kocabas"]
 	for f in db.fish:
-		assert_eq(bool(f["release_only"]), str(f["id"]) == "sturgeon", "%s: yalnızca mersin bırakılır" % f["id"])
+		assert_eq(bool(f["release_only"]), str(f["id"]) in released, "%s: yalnızca mersin, Ay Turnası ve Kocabaş bırakılır" % f["id"])
 	assert_eq(int(db.fish_by_id("sturgeon")["value"]), 0, "mersin satılmaz")
+	assert_eq(db.rarity_id(int(db.fish_by_id("moon_pike")["rarity"])), "legendary", "Ay Turnası Efsanevi")
+	assert_eq(db.rarity_id(int(db.fish_by_id("kocabas")["rarity"])), "legendary", "Kocabaş Efsanevi")
 	# Bölgeler: yeni türler kendi yerlerinde; yıldızlar (sudak, altın sazan, mersin) başlangıç
 	# koylarında çıkmaz; iskele koyunda turna ve yayın az (Ersin'in seçimi).
 	var homes := { "silverside": ["dock_cove", "reeds"], "bream": ["dock_cove", "deep_water"],
 		"chub": ["rocky_point", "stream_mouth"], "tench": ["reeds"], "zander": ["rocky_point", "deep_water"],
-		"golden_carp": ["lily_cove"], "sturgeon": ["deep_water"] }
+		"golden_carp": ["lily_cove"], "sturgeon": ["deep_water"], "moon_pike": ["lily_cove"], "kocabas": ["deep_water"] }
 	for id: String in homes:
 		var found := []
 		for z in db.zones_of("big_lake"):
@@ -70,6 +74,12 @@ func test_validation_catches_bad_data() -> void:
 		# Binde birin altındaki yatkınlık sıfıra yuvarlanırdı (tür sessizce gelmezdi).
 		if str((f as Dictionary)["id"]) == "perch":
 			((f as Dictionary)["affinity"] as Dictionary)["spin"] = 0.0004
+		# Vakit ve hava (Dalga 4): bilinmeyen vakit, sıfır çarpan; yalnızca gece gelen tür satılamaz.
+		if str((f as Dictionary)["id"]) == "chub":
+			(f as Dictionary)["when"] = { "dusk": 1.2, "noon": 0.0 }
+			(f as Dictionary)["weather"] = { "snow": 2.0 }
+		if str((f as Dictionary)["id"]) == "bream":
+			(f as Dictionary)["only"] = { "phase": ["night", "teatime"], "season": ["winter"] }
 	_write(dir.path_join("fish.json"), JSON.stringify(fish))
 	var spots := JSON.parse_string(FileAccess.get_file_as_string("res://data/spots.json")) as Dictionary
 	var spot: Dictionary = spots["spots"][0]
@@ -104,9 +114,35 @@ func test_validation_catches_bad_data() -> void:
 	assert_true("tench: bilinmeyen teknik" in all, "yatkınlıkta bilinmeyen teknik yakalanır")
 	assert_true("perch: bilinmeyen teknik ya da geçersiz yatkınlık: spin" in all, "binde birin altındaki yatkınlık")
 	assert_true("lure_spinner: bilinmeyen balık ya da geçersiz çarpan: chub" in all, "binde birin altındaki çekim")
+	assert_true("chub: when: bilinmeyen ad ya da geçersiz çarpan (0,001–5): dusk" in all, "bilinmeyen vakit")
+	assert_true("chub: when: bilinmeyen ad ya da geçersiz çarpan (0,001–5): noon" in all, "sıfır vakit çarpanı")
+	assert_true("chub: weather: bilinmeyen ad ya da geçersiz çarpan (0,001–5): snow" in all, "bilinmeyen hava")
+	assert_true("bream: only.phase: bilinmeyen vakit: teatime" in all, "only'de bilinmeyen vakit")
+	assert_true("bream: only: bilinmeyen koşul: season" in all, "only'de bilinmeyen koşul")
+	assert_true("bream: only (belli vakitte gelen) tür release_only olmalı" in all, "belli vakitte gelen tür satılamaz")
 	for file in DirAccess.get_files_at(dir):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join(file)))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))
+
+
+## Saat, hava ve sevgi kuralları denetlenir (rules.json clock, weather, love).
+func test_world_rules_are_validated() -> void:
+	var errors := PackedStringArray()
+	var rules := JSON.parse_string(FileAccess.get_file_as_string("res://data/rules.json")) as Dictionary
+	rules["clock"] = { "phase_s": 10, "start_hour": 30 }
+	rules["weather"] = { "chance": { "clear": 50, "hail": 5 }, "first_day": "storm", "fog_phases": ["dusk"],
+		"fog_else": "fog", "rain_notice": 0.5 }
+	rules["love"] = { "levels": [0, 20, 10], "rare_bonus": 0.5, "rare_from": "shiny" }
+	FishingRules.from_dict(rules, errors)
+	var all := " | ".join(errors)
+	assert_true("weather.chance: bilinmeyen hava: hail" in all, "bilinmeyen hava")
+	assert_true("geçersiz: saat" in all, "vakit 1 dk'dan kısa, saat 24'ten büyük")
+	assert_true("geçersiz: hava" in all, "ilk gün ya da sisin yerine bilinmeyen hava, bilinmeyen vakit")
+	assert_true("geçersiz: yağmur" in all, "yağmur fark etmeyi azaltamaz")
+	assert_true("geçersiz: göl sevgisi" in all, "eşikler artmalı, pay en çok 0,1")
+	var clean := PackedStringArray()
+	FishingRules.from_dict(JSON.parse_string(FileAccess.get_file_as_string("res://data/rules.json")) as Dictionary, clean)
+	assert_eq(clean.size(), 0, "oyunun kuralları temiz: " + " | ".join(clean))
 
 
 ## Bölge verisi denetlenir: bilinmeyen havza bölgesi, suyun içindeki atış noktası, karadaki
@@ -244,6 +280,16 @@ func test_every_content_id_has_translations() -> void:
 				keys.append("UI_DEDE_SUGGEST_" + str(z["id"]))
 	for i in range(1, Elder.TIP_COUNT + 1):
 		keys.append(Elder.TIP_KEY % i)
+	# Vakitler ve havalar (saat çipi, defter; Dalga 4); fırtına yağmurlu gece.
+	for phase in DayClock.PHASES:
+		keys.append("PHASE_" + phase)
+	for kind in Weather.KINDS:
+		keys.append("WEATHER_" + kind)
+	keys.append("WEATHER_storm")
+	# Göle bırakılan her türün kartta Dede'nin kendi sözü (FishCard.dede_line).
+	for f in db.fish:
+		if bool(f["release_only"]) and db.rarity_id(int(f["rarity"])) != "mythic":
+			keys.append("UI_DEDE_CARD_RELEASE_" + str(f["id"]))
 	for id: String in Elder.TECH_TIPS:
 		keys.append(str(Elder.TECH_TIPS[id]))
 	for i in range(1, Nine.LINE_COUNT + 1):

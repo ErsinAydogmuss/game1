@@ -18,13 +18,25 @@ func test_roundtrip_keeps_every_field() -> void:
 	s.loadouts = { "shared": { "reel": "reel_smooth" }, "float": { "bait": "bait_corn" }, "spin": { "rod": "rod_spin_light" } }
 	s.technique = "spin"
 	s.traps = [{ "id": 2, "zone": "reeds", "x": -16.5, "z": 1.25, "placed_unix": 1100, "last_unix": 1500, "progress_s": 900,
-			"items": [{ "fish": "crayfish", "size_cm": 11, "stars": 2 }] }]
+			"items": [{ "fish": "crayfish", "size_cm": 11, "stars": 2 }], "trash": "boot" }]
 	s.trap_serial = 3
 	s.baits = { "bait_corn": 12 }
 	s.xp = 150
 	s.love = 9
 	s.pity = { "rare": 14, "epic": 30 }
 	s.stats = { "earned": 120, "sold": 11 }
+	# v5 (Dalga 4): oyun saati, çay, istekler, Gölün Sırrı.
+	s.clock_s = 2000
+	s.tea_at = 7
+	s.requests = [{ "slot": 1, "kind": "size", "want": { "fish": "tench", "size_cm": 30 }, "goal": 1, "progress": 0,
+			"day": 1, "serial": 4, "reward": { "coins": 45, "xp": 22, "love": 4 } }]
+	s.request_serial = 5
+	s.request_day = 1
+	s.reroll_day = 0
+	s.letters = 2
+	s.letter_at = 6
+	s.map_pieces = 1
+	s.keeper = 0
 	var back := SaveData.from_dict(s.to_dict())
 	assert_eq(back.to_dict(), s.to_dict(), "bütün alanlar aynen döner")
 	assert_eq(back.to_dict()["version"], SaveData.VERSION, "sürüm yazılır")
@@ -230,8 +242,8 @@ func test_v3_save_migrates_to_v4() -> void:
 
 ## v0.4'ün gerçek bir kaydı (denge botu spin, dip ve sinek kamışını, ilk tuzağı alıp sazlığa bırakana
 ## kadar oynadı; botun saniyeleri gerçek saate taşındı; değiştirilmez): okunur ve gidiş-dönüşte aynı
-## kalır (v5 gelince göç bundan sınanır). Teknik başına setler, ortak makara ve misina, elindeki teknik,
-## kurulmuş tuzak ve içeriği, tuzak sayacı.
+## kalır (v5 göçü bundan sınanır: test_v4_save_migrates_to_v5). Teknik başına setler, ortak makara ve
+## misina, elindeki teknik, kurulmuş tuzak ve içeriği, tuzak sayacı.
 func test_v4_save_reads_back() -> void:
 	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v4.json"))
 	assert_eq(typeof(raw), TYPE_DICTIONARY, "v4 kaydı okunur")
@@ -265,6 +277,68 @@ func test_v4_save_reads_back() -> void:
 	assert_eq(int(s.stats["trapped"]), 3, "tuzaktan toplanan")
 	var fresh := SaveData.from_dict(raw)
 	assert_eq(SaveData.from_dict(fresh.to_dict()).to_dict(), fresh.to_dict(), "gidiş-dönüşte aynı")
+
+
+## v0.4'ün gerçek kaydı (tests/fixtures/save_v4.json, değiştirilmez) v5'e göçer: oyun saati sabahtan
+## (gün 0), çay içilmedi, istek, mektup ve harita parçası yok; ilk şişe kaydın balık sayısından
+## sayılır (eski oyuncu da onu yeni balıklarla bulur); tuzakta çöp yok; v4'ün her şeyi aynen.
+func test_v4_save_migrates_to_v5() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v4.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v4 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	assert_eq(int((raw as Dictionary)["version"]), 4, "örnek v4 kaydı")
+	var s := SaveData.from_dict(raw)
+	var db := content()
+	assert_eq(int(s.to_dict()["version"]), 5, "v5'e göçtü")
+	assert_eq(s.clock_s, 0, "oyun saati sabahtan")
+	assert_eq(DayClock.phase(db.rules, s.clock_s), "morning", "ilk vakit sabah")
+	assert_eq(s.tea_at, -1, "çay içilmedi")
+	assert_true(s.requests.is_empty() and s.request_day == -1 and s.reroll_day == -1, "istek yok")
+	assert_eq(s.letters, 0, "mektup yok")
+	assert_eq(s.letter_at, s.catches, "ilk şişe şimdiki balık sayısından sayılır")
+	assert_true(s.catches > 0, "örnek kayıtta balık var")
+	assert_eq(s.map_pieces, 0, "harita parçası yok")
+	assert_eq(s.keeper, 0, "Bekçi tutulmadı")
+	for trap in s.traps:
+		assert_eq(str(trap["trash"]), "", "tuzakta çöp yok")
+	assert_eq(s.love, int((raw as Dictionary)["love"]), "göl sevgisi aynen")
+	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "göçten sonra gidiş-dönüşte aynı")
+
+
+## v5'in alanları bozuksa ayıklanır: eksi saat sıfır, mektup ve parça sınırda, istekler (türü yazı,
+## yuvası 0..3 ve tekrarsız, hedef en az 1, ilerleme hedefte kalır), tuzağın çöpü yazı.
+func test_v5_bad_values_are_sanitized() -> void:
+	var s := SaveData.from_dict({
+		"version": 5, "clock_s": -40, "tea_at": -9, "letters": 99, "letter_at": -3, "map_pieces": 7, "keeper": -1,
+		"request_serial": -2, "request_day": -5, "reroll_day": "dün",
+		"requests": [
+			{ "slot": 0, "kind": "fish", "want": { "fish": "rudd", "size_cm": -4, "bad": [1] }, "goal": 3, "progress": 9,
+				"reward": { "coins": 30, "xp": -1 } },
+			{ "slot": 0, "kind": "zone", "goal": 2 },
+			{ "slot": 7, "kind": "fish" }, { "slot": 2, "kind": "" }, "bozuk",
+			{ "slot": 3, "kind": "special", "goal": 0, "want": "yok" },
+		],
+		"traps": [{ "id": 1, "zone": "reeds", "x": 1.0, "z": 2.0, "items": [], "trash": 5 }],
+	})
+	assert_eq(s.clock_s, 0, "eksi saat sıfırlanır")
+	assert_eq(s.tea_at, -1, "çay sayacı en az -1")
+	assert_eq(s.letters, SaveData.MAX_LETTERS, "mektup sınırda")
+	assert_eq(s.letter_at, 0, "eksi şişe sayacı sıfırlanır")
+	assert_eq(s.map_pieces, SaveData.MAX_MAP_PIECES, "parça sınırda")
+	assert_eq(s.keeper, 0, "eksi Bekçi sayısı sıfırlanır")
+	assert_eq(s.request_serial, 0, "eksi istek sayacı sıfırlanır")
+	assert_eq(s.request_day, -1, "gün en az -1")
+	assert_eq(s.reroll_day, -1, "yazı olan gün varsayılana döner")
+	assert_eq(s.requests.size(), 2, "yuvası tekrarlı, bozuk ya da türsüz istek düşer")
+	if s.requests.size() == 2:
+		var first := s.requests[0]
+		assert_eq(int(first["progress"]), 3, "ilerleme hedefte kalır")
+		assert_eq(first["want"], { "fish": "rudd" }, "eksi ve yazı olmayan istek bilgisi düşer")
+		assert_eq(first["reward"], { "coins": 30 }, "eksi ödül düşer")
+		assert_eq(int(s.requests[1]["goal"]), 1, "hedef en az 1")
+		assert_eq(s.requests[1]["want"], {}, "bozuk istek bilgisi boş")
+	assert_eq(str(s.traps[0]["trash"]), "", "yazı olmayan çöp boş")
 
 
 ## Rütbe puanı eğriden eğriye taşınınca her eşikte ve aralığın içinde rütbe aynı kalır,

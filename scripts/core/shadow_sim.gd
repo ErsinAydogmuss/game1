@@ -307,6 +307,20 @@ func set_odds(odds: Dictionary) -> void:
 	pity_floor = int(odds.get("pity_floor", -1))
 
 
+## Gölün koşulu değişti (set_odds'tan sonra; vakit, hava): o koşulda gelmeyen türün (oranı yok)
+## dolaşan ya da duraklayan gölgesi çekilir (kaçar, yerine yakında yenisi doğar). Yaklaşan, oltadaki
+## ve senaryolu gölgeye dokunulmaz. Zar atılmaz.
+func recycle_unfit() -> void:
+	for s in shadows:
+		if s.scripted or s == approacher or (s.mode != FishShadow.Mode.WANDER and s.mode != FishShadow.Mode.PAUSE):
+			continue
+		var species: Dictionary = _zone_species[s.zone] if _zoned and s.zone >= 0 and s.zone < _zone_species.size() \
+				else _species
+		if not species.has(s.fish_id):
+			s.recycled = true
+			flee(s, _angler)
+
+
 ## Bundan sonra doğacak gölgelerin tür oranları (Balık Defteri ve testler): bölgeli gölde
 ## balıkçının bölgesininki.
 func species_odds() -> Dictionary:
