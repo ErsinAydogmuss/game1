@@ -1,0 +1,21 @@
+{
+	"_note": "Dede'nin istekleri (Dalga 4, docs/gdd.md §10.5). Rütbe unlock_rank'ta açılır; slots günlük yuva (her yeni oyun gününde yalnızca boş yuvalar dolar; süre sınırı yok, günde bir değiştirme ücretsiz). İstek oluşunca belli (gelir kuralı 4): zar kaydın seed'i ve isteğin sıra numarasıyla. Şablonlar: kind (kimlik değişmez: kayıtta), weight (seçilme ağırlığı), rank (en az rütbe), count [en az, en çok] (tür isteğinde nadirliğe göre species_count), love (bittiğinde göl sevgisi), mult (ödül çarpanı). Ödül: para round5((coins_base + coins_per_rank × rütbe) × mult × [spread_min, spread_max]), rütbe puanı (xp_base + xp_per_rank × rütbe) × mult. Tür ve boy isteği bir açık bölgede elindeki bir teknikle en az species_min_ppm gelen türden (Sıradan, Güzel, Nadir; koruma altındaki tür yok); boy türün size_percentile yüzdeliğinden 5 cm'ye yuvarlanır (3 yıldızın içinde); teknik isteği alınmış kamışla (şamandıra değil); bölge isteği açık bölge; yağmur isteği yalnızca bugünün ya da yarının havası yağmursa; çöp isteği dip kamışı ya da tuzak varken; tuzak isteği tuzak alınmışken.",
+	"slots": 3,
+	"unlock_rank": 2,
+	"reward": { "coins_base": 15, "coins_per_rank": 6, "spread_min": 0.75, "spread_max": 1.25, "xp_base": 10, "xp_per_rank": 4 },
+	"species_count": { "common": [3, 5], "fine": [2, 3], "rare": [1, 2] },
+	"species_min_ppm": 20000,
+	"size_percentile": [0.35, 0.6],
+	"templates": [
+		{ "kind": "species", "weight": 6, "rank": 2, "count": [1, 5], "love": 3, "mult": 1.0 },
+		{ "kind": "size", "weight": 4, "rank": 3, "count": [1, 1], "love": 4, "mult": 1.2 },
+		{ "kind": "technique", "weight": 3, "rank": 2, "count": [3, 5], "love": 3, "mult": 1.0 },
+		{ "kind": "zone", "weight": 3, "rank": 3, "count": [4, 6], "love": 3, "mult": 1.0 },
+		{ "kind": "phase", "weight": 3, "rank": 2, "count": [2, 4], "love": 4, "mult": 1.1 },
+		{ "kind": "rare", "weight": 2, "rank": 4, "count": [1, 2], "love": 5, "mult": 1.4 },
+		{ "kind": "rain", "weight": 2, "rank": 3, "count": [2, 3], "love": 4, "mult": 1.1 },
+		{ "kind": "release", "weight": 3, "rank": 2, "count": [3, 5], "love": 5, "mult": 0.8 },
+		{ "kind": "trash", "weight": 2, "rank": 4, "count": [1, 2], "love": 6, "mult": 1.0 },
+		{ "kind": "trap", "weight": 2, "rank": 3, "count": [3, 6], "love": 3, "mult": 0.9 }
+	]
+}

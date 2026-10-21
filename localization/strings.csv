@@ -552,6 +552,16 @@ UI_BUCKET_RELEASE_ALL,Release all,Hepsini bırak
 UI_BUCKET_SURE,Are you sure?,Emin misin?
 UI_BUCKET_EMPTY,Your bucket is empty. The fish you catch go here.,Kovan boş. Tuttuğun balıklar buraya girer.
 UI_BUCKET_PAGE,Page %d/%d »,Sayfa %d/%d »
+UI_REQ_species,Catch %d %s,%d %s tut
+UI_REQ_size,%s over %d cm,%s · %d cm üstü
+UI_REQ_technique,%s: %d fish,%s ile %d balık
+UI_REQ_zone,%s: %d fish,%s: %d balık
+UI_REQ_phase,%s: %d fish,%s vakti %d balık
+UI_REQ_rare,%d %s+ fish,%d %s+ balık
+UI_REQ_rain,%d fish in the rain,Yağmurda %d balık
+UI_REQ_release,Release %d fish,%d balık bırak
+UI_REQ_trash,Pick up %d trash,%d çöp topla
+UI_REQ_trap,%d crayfish from traps,Tuzaktan %d kerevit
 UI_LOVE_LEVEL,Lake love %d,Göl sevgisi %d
 UI_LOVE_UP,Lake love %d!,Göl sevgisi %d!
 UI_LOVE_HOW,"Release fish, pick up trash: the lake blooms.","Balık bırak, çöp topla: göl güzelleşir."

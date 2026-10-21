@@ -45,6 +45,8 @@ var spots: Array[Dictionary] = []
 ## Oyunun açıldığı atış noktası (spots.json "main").
 var main_spot: String = ""
 var rules: FishingRules
+## Dede'nin isteklerinin kuralları (data/requests.json).
+var requests: RequestRules
 var errors: PackedStringArray = []
 
 ## Takım kategorileri ve kuşanılan yuvalar (bucket, extra ve boat kuşanılmaz: sahip olunan en iyisi
@@ -84,6 +86,7 @@ static func load_from(dir: String, all_lakes: bool = true) -> ContentDB:
 	db._load_gear(db._read_json(dir.path_join("gear.json")))
 	db._load_progression(db._read_json(dir.path_join("progression.json")))
 	db._load_spots(db._read_json(dir.path_join("spots.json")))
+	db.requests = RequestRules.from_dict(db._read_json(dir.path_join("requests.json")), db.errors)
 	db._validate()
 	return db
 
@@ -628,6 +631,7 @@ func _validate() -> void:
 		errors.append("spots.json: main bilinmiyor: " + main_spot)
 	for s in spots:
 		_validate_spot(s, _all_lakes or str(s["id"]) == main_spot)
+	requests.validate(self, errors)
 
 
 func _validate_gear() -> void:
