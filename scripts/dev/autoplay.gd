@@ -2970,8 +2970,17 @@ func _play_secret() -> void:
 	await _travel_to("dock_cove")
 	await _wait(1.0)
 	# İskelede (çizimin en çok olduğu yer) şişe ve arada çevresindeki halka: bir halka aralığı boyunca en çok.
-	var dock_draws := await _measure_draws(int(BottleMarker.RIPPLE_EVERY * 30.0) + 10)
-	_check("ÇİZİM iskelede şişe ve halkasıyla: %d (≤150)" % int(dock_draws["draws"]), int(dock_draws["draws"]) <= 150)
+	# Sınır kalıcı görünüşe bakar: geçici yazılar (bildirim, Dede'nin sözü) sönünce ölçülür (gezi botu gibi).
+	var ripple_frames := int(BottleMarker.RIPPLE_EVERY * 30.0) + 10
+	var busy_draws := int((await _measure_draws(ripple_frames))["draws"])
+	var toast: Control = _hud().get("_toast")
+	var hint: Control = _hud().get("_hint")
+	await _wait_until(func() -> bool: return not toast.is_visible_in_tree() and not hint.visible, 25.0)
+	await _wait(0.5)
+	var dock_draws := int((await _measure_draws(ripple_frames))["draws"])
+	print("ÇİZİM iskelede şişeyle: yazılarla %d, yazısız %d" % [busy_draws, dock_draws])
+	_check("ÇİZİM iskelede şişe ve halkasıyla (yazılar sönünce): %d (≤%d)" % [dock_draws, TOUR_DRAWS],
+			dock_draws > 0 and dock_draws <= TOUR_DRAWS)
 	_angler().place(Vector2(0.0, 9.5))
 	await _wait(0.8)
 	var far := _angler().pos2().distance_to(bottle.spot())
