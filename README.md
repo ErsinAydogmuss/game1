@@ -6,7 +6,7 @@
 >
 > - **Oyun saati ve hava:** 24 dakikalık oyun günü (sabah, öğle, akşam, gece) ve her günün havası (açık, bulutlu, yağmur, sis; yağmurlu gece fırtınalı) hangi balığın geleceğini değiştirir. Akşam turuncu, gece ay ışığı, Nine'nin feneri ve ateşböcekleri; yağmurda damlalar ve halkalar. Üstteki saat çipine dokununca **"Bugün" paneli:** yarının havası, Dede'yle çay (sonraki vakte geçer), göl sevgisi ve Dede'nin istekleri.
 > - **Tut-bırak ve göl sevgisi:** balık kovadan ya da kartından göle bırakılır. Göl sevgisi artar, göl güzelleşir (çiçekler, çiçekli nilüferler, berrak su, kelebekler), nadir balıklar biraz sıklaşır. Dipte ve tuzakta çöp çıkar; toplamak da sevgi verir.
-> - **Dede'nin istekleri:** her oyun günü üç küçük iş; süresi dolmaz, günde bir kez değiştirilir.
+> - **Dede'nin istekleri:** üç yuvada küçük işler; her oyun günü boş yuvalar dolar, süresi dolmaz, günde bir istek değiştirilir.
 > - **Gölün Sırrı:** rütbe 3'ten sonra her bölgede suda bir şişe, içinde genç Nine ile Dede'nin mektubu (altı mektup). Dede'nin dört altın isteği haritanın dört parçasını verir; göl sevgisi 6'da Nine altın hamuru verir. Sonunda sisli bir gecede haritanın X'inde **Gölün Bekçisi** (iki dalışlı çekişme), bitiş filmi ve jenerik.
 > - İki gece efsanesi: **Ay Turnası** (gece, nilüferli koy) ve **Kocabaş** (yağmurlu gece, derin orta). Defterde 19 tür.
 >
@@ -55,7 +55,7 @@
 20. **"Bugün" paneli ve çay:** saat çipine dokun: vakit, bugünün ve yarının havası, göl sevgisi ve Dede'nin istekleri. **ÇAY İÇ** Dede'yle çay içip sonraki vakte geçirir (iki çay arasında en az bir balık tutulur).
 21. **Göle bırak ve göl sevgisi:** sol üstteki kovaya dokun: Kova panelinde bir türün en küçüğünü BIRAK ya da HEPSİNİ BIRAK; yeni tür kartında da "Göle bırak" var. Bırakmak para vermez, göl sevgisi verir (nadir balık daha çok). Sevgi seviyesi arttıkça göl güzelleşir; Nadir ve üstü balıklar biraz sıklaşır. Sevgi hiç azalmaz.
 22. **Çöp:** dipte arada balığın yanında, tuzakta da çizme, teneke, plastik şişe ya da paslı anahtar çıkar. Kendiliğinden toplanır, kovaya girmez, göl sevgisi verir.
-23. **Dede'nin istekleri:** rütbe 2'den sonra her oyun günü üç küçük iş: bir tür, bir boy, bir teknik, bir bölge, bir vakit... Saatin köşesinde rozet görünce "Bugün" paneline bak. Biten istek para, rütbe puanı ve göl sevgisi verir. Süresi dolmaz; günde bir istek değiştirilebilir.
+23. **Dede'nin istekleri:** rütbe 2'den sonra üç yuvada küçük işler (her oyun günü boş yuvalar dolar): bir tür, bir boy, bir teknik, bir bölge, bir vakit... Saatin köşesinde rozet görünce "Bugün" paneline bak. Biten istek para, rütbe puanı ve göl sevgisi verir. Süresi dolmaz; günde bir istek değiştirilebilir.
 24. **Gölün Sırrı:** rütbe 3'ten sonra sazlıkta suda bir şişe belirir (haritada işareti var). Dokun: balıkçı gidip alır, içinden genç Nine ile Dede'nin mektubu çıkar. Her bölgede bir şişe, altı mektup; sonuncusu sandalla derin ortada. Defterin altındaki "Gölün Sırrı" düğmesi mektupları ve haritayı gösterir. Dede'nin dört altın isteği haritanın dört parçasını verir; göl sevgisi 6'da Nine altın hamur verir (dipte kendiliğinden kullanılır).
 25. **Gölün Bekçisi:** hepsi tamam olunca Dede "Bu gece sis basacak" der. Gece sandalla haritanın X'ine git, dip kamışıyla at: Bekçi gelir. Zil çalınca VUR; Bekçi dalınca ("BIRAK! Bekçi dalıyor!") parmağını kaldır. Kaçarsa 25 saniye sonra geri gelir. Göle bırakınca bitiş filmi ve jenerik oynar; sonra Ayarlar'daki BİTİŞ filmi yeniden oynatır.
 

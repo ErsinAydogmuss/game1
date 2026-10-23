@@ -385,7 +385,7 @@ FISH_moon_pike,Moon Pike,Ay Turnası
 FISH_moon_pike_DESC,A silver pike that only rises on moonlit nights. The legend of the lily cove: always let it go.,"Yalnızca mehtaplı gecelerde çıkan gümüş bir turna. Nilüferli koyun efsanesi: hep göle bırakılır."
 FISH_kocabas,Old Bighead,Kocabaş
 FISH_kocabas_DESC,A giant wels as old as the village. It only feeds on stormy nights. Always let it go.,"Köy kadar yaşlı dev bir yayın. Yalnızca fırtınalı gecelerde yemlenir. Hep göle bırakılır."
-FISH_keeper,Keeper of the Lake,Gölün Bekçisi
+FISH_keeper,Lake Keeper,Gölün Bekçisi
 FISH_keeper_DESC,The giant turquoise shadow from the old letters. It guards the heart of the lake: always let it go.,"Eski mektuplardaki dev turkuaz gölge. Gölün kalbini korur: hep göle bırakılır."
 PHASE_morning,Morning,Sabah
 PHASE_noon,Noon,Öğle
@@ -396,7 +396,7 @@ WEATHER_cloudy,Cloudy,Bulutlu
 WEATHER_rain,Rainy,Yağmurlu
 WEATHER_fog,Foggy,Sisli
 WEATHER_storm,Stormy,Fırtınalı
-UI_PHASE_NOW_morning,Good morning!,Sabah oldu
+UI_PHASE_NOW_morning,Morning has come,Sabah oldu
 UI_PHASE_NOW_noon,It's noon,Öğle oldu
 UI_PHASE_NOW_evening,Evening has come,Akşam oldu
 UI_PHASE_NOW_night,Night has fallen,Gece oldu
@@ -567,7 +567,7 @@ UI_BUCKET_RELEASE_ALL,Release all,Hepsini bırak
 UI_BUCKET_SURE,Are you sure?,Emin misin?
 UI_BUCKET_EMPTY,Your bucket is empty. The fish you catch go here.,Kovan boş. Tuttuğun balıklar buraya girer.
 UI_BUCKET_PAGE,Page %d/%d »,Sayfa %d/%d »
-UI_REQ_species,Catch %d %s,%d %s tut
+UI_REQ_species,Catch %d fish: %s,%d %s tut
 UI_REQ_size,%s · at least %d cm,%s · en az %d cm
 UI_REQ_technique,%s: %d fish,%s ile %d balık
 UI_REQ_zone,%s: %d fish,%s: %d balık
@@ -654,7 +654,7 @@ UI_SECRET_GOLDEN,Golden request: %s,Altın istek: %s
 UI_SECRET_X,X: the first buoy in Deep Water. Wait for a foggy night!,X: derin ortanın ilk şamandırası. Sisli geceyi bekle!
 UI_SECRET_DOUGH_HAVE,Golden dough: yours (bottom fishing),Altın hamur: sende (dip takımında)
 UI_SECRET_DOUGH_WAIT,Golden dough: Nana gives it at lake love %d,Altın hamur: göl sevgisi %d olunca Nine verir
-UI_NINE_DOUGH,"Here's golden dough, dear! Use it bottom fishing.","Al evladım, ninemin altın hamuru! Dipte kullan."
+UI_NINE_DOUGH,"My grandma's golden dough, for bottom fishing!","Al evladım, ninemin altın hamuru! Dipte kullan."
 UI_DOUGH_GIVEN,Nana gave you golden dough!,Nine sana altın hamur verdi!
 UI_DEDE_FINAL,All done! Fog rolls in tonight: take the boat to the X.,"Hepsi tamam! Bu gece sis basacak, sandalla X'e git."
 UI_DEDE_KEEPER_WAIT,"The Keeper comes at night, kid. Let's have tea and wait.",Bekçi gece gelir evlat. Çay içip geceyi bekleyelim.

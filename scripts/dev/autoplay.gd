@@ -50,10 +50,10 @@ extends Node
 ##     dokunuş (ölçüm açılır: sol üstte FPS, çizim, üçgen); sonra her bölgenin atış noktasına ve
 ##     sandalla derin ortaya geçer; her yerde ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü;
 ##     KONTROL: her yerde en çok TOUR_DRAWS çizim.
-##   video: v0.4 tanıtımı, teknikler (--write-movie ile kaydedilir): rütbe 9'un oyuncusu; takım
-##     çantasından spin, dur-kalk ve turna; haritadan sazlığa geç, dolu tuzağı topla (kerevitler);
-##     çantadan dip, sehpa, zil ve koşu, aynalı sazan; haritadan dere ağzına geç, çantadan sinek,
-##     sürüklenme, halka ve sıçrayan alabalık.
+##   video: v0.5 tanıtımı, canlı dünya (--write-movie ile kaydedilir): rütbe 9'un oyuncusu; akşam iskelede Dede'nin
+##     isteği biter; Bugün paneli ve çay; Nine'nin feneriyle gece, ateşböcekleri; sabah yağmur; sazlıkta şişe ve
+##     mektup; sisli gecede sandalla derin orta, Bekçi'nin dev gölgesi sandalın çevresinde yüzüp dalar (yalnızca
+##     görünüş).
 ##   reels: Instagram Reels reklamının çekimi (--write-movie ile; tools/reels_ad.py dikey videoyu kurgular):
 ##     rütbe 9'un oyuncusu. İskelede Nine ve Dede yakın çekim, uzaklaşan geniş çekim; nilüferli koyda
 ##     altın sazan, kayalık burunda spinle turna, sazlıkta dolu tuzak ve dipte aynalı sazan, dere ağzında
@@ -83,6 +83,15 @@ extends Node
 ##     dolu kovaya dokun → Kova paneli küçülmeden sığar; BIRAK (en küçüğü, sevgi, para aynı), HEPSİNİ BIRAK
 ##     (önce "Emin misin?"), seviye bildirimi ve Dede; yeni tür kartında "Göle bırak"; olta sudayken kovaya
 ##     dokunmak oyuna geçer; dipte çöp (bildirim, sevgi, Dede); paneldeki SAT Nine'nin Kova sekmesine götürür.
+##   story: açılış filmi ve hikâyenin devamı (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN):
+##     yeni oyunda film (arayüz gizli, ATLA güvenli alanda, sözler, Bekçi'nin dev gölgesi, hediye), Ayarlar'da HİKÂYE,
+##     rütbe 3'te Dede'nin hikâyesi (ayrıntı: CLAUDE.md).
+##   film: açılış filminin videosu (dokunuşsuz, kendi hızında; Movie Maker ile).
+##   requests: Dede'nin istekleri (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN): rütbe 2'de
+##     istekler, rozet, Dede; Bugün paneli; biten istek; bırakma isteği (zar getirmediyse bot bir yuvayı çevirir);
+##     değiştir; yeni gün; yağmur isteği; rehberin "Göl yaşıyor" sayfası.
+##   secret: Gölün Sırrı (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN): şişeler ve mektuplar
+##     (yürüyerek, sandaldan), defterin Gölün Sırrı görünüşü, altın istekler ve harita parçaları, altın hamur, X.
 ##   keeper: Gölün Bekçisi ve final (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN): final
 ##     hazır kayıt (6 mektup, 4 parça, altın hamur; rütbe 13, dip kamışı ve sandal). Dede "bu gece sis basacak";
 ##     Bugün panelinde gecenin sisi; X'te gündüz Dede "gece gelir"; gece sisli, fırtına yok; X'te şamandırayla Dede
@@ -1978,6 +1987,18 @@ func _fly_target(session: FishingSession, flowing: bool) -> Vector2:
 
 ## Göldeki nokta ekranda arayüzün bir düğmesinin (saat çipi, kova, harita...) altında mı: bot düğmeye değil
 ## suya dokunsun (oyuncu da düğmenin altındaki suya dokunamaz; Dalga 4'ten beri saat çipi bir düğme).
+## Şişeye gerçek dokunuşla (ekrandaysa ve bir düğmenin altında değilse: InputRouter'ın "bottle" hedefi); değilse
+## main'in işlevi doğrudan (günlüğe yazar: sandaldan uzak kıyıdaki şişe ekranın dışında).
+func _tap_bottle(bottle: BottleMarker) -> void:
+	var at := _screen(bottle.point())
+	if get_viewport().get_visible_rect().grow(-24.0).has_point(at) and not _under_hud(bottle.spot()):
+		print("şişeye dokunuldu (%d, %d)" % [roundi(at.x), roundi(at.y)])
+		await _tap(at)
+		return
+	print("şişe ekranın dışında (%d, %d): main'e doğrudan" % [roundi(at.x), roundi(at.y)])
+	main.call("_on_bottle_tapped")
+
+
 func _under_hud(p: Vector2) -> bool:
 	var screen := _screen(Vector3(p.x, 0.0, p.y))
 	for b: TouchButton in _hud().buttons():
@@ -2445,7 +2466,9 @@ func _world_tea() -> void:
 		return
 	var angler: Angler = main.get("angler")
 	var elder: Elder = main.get("elder")
-	var near := angler.global_position.distance_to(elder.global_position) <= float(main.get("TEA_NEAR"))
+	# main'in kuralı: kıyıda ve Dede'ye yatayda TEA_NEAR'dan yakın.
+	var to_elder := Vector2(elder.global_position.x - angler.global_position.x, elder.global_position.z - angler.global_position.z)
+	var near := not bool(main.get("in_boat")) and to_elder.length() <= float(main.get("TEA_NEAR"))
 	var catches := save.catches
 	var seen := {}
 	var lines := {}
@@ -2468,18 +2491,17 @@ func _world_tea() -> void:
 	closest[0] = Vector2(camera.target.x - elder.global_position.x, camera.target.z - elder.global_position.z).length()
 	await _shot("07_cay")
 	await _wait_until(watch, 2.5)
-	var dede_line := ""
-	for key: String in lines:
-		if key == "UI_DEDE_TEA" or key == "UI_DEDE_TIME_morning" or key.begins_with("UI_DEDE_WEATHER_"):
-			dede_line = key
 	_check("ÇAY → gece biter, %d. günün sabahı; \"%s\" bildirimi; son çay kayıtta" % [today + 2, tr("UI_PHASE_NOW_morning")],
 			DayClock.phase(rules, landed) == "morning" and DayClock.day(rules, landed) == today + 1
 			and landed - (today + 1) * DayClock.day_s(rules) <= 1 and save.tea_at == catches
 			and seen.has(UiKit.upper(tr("UI_PHASE_NOW_morning"))))
-	_check("çaydan sonra Dede konuşur (%s)" % dede_line, not dede_line.is_empty())
+	# Çaydan önceki söz (havanın) sayılmaz: çayın sözü ancak çaydan sonra söylenir.
+	_check("çaydan sonra Dede konuşur (UI_DEDE_TEA)", lines.has("UI_DEDE_TEA"))
 	if near:
 		_check("Dede yakında: kamera ona yaklaşır (%.1f sn, Dede'ye %.1f m)" % [shot_left, closest[0]],
 				shot_left > 0.5 and closest[0] < 2.5)
+	else:
+		_check("Dede uzakta (%.1f m): yakın çekim yok" % to_elder.length(), shot_left <= 0.0)
 	await _tap_control(hud.world_button)
 	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
 	await _wait(0.4)
@@ -2582,7 +2604,7 @@ static func _image_stats(image: Image) -> Dictionary:
 	lum.sort()
 	var count := lum.size()
 	var dark := 0.0
-	var dark_n := maxi(1, count / 20)
+	var dark_n := maxi(1, int(count / 20.0))
 	for i in dark_n:
 		dark += lum[i]
 	var mean := 0.0
@@ -2729,6 +2751,18 @@ func _play_requests() -> void:
 	for r in Requests.daily(db, save):
 		if str(r["kind"]) == "release":
 			release_req = r
+	if release_req.is_empty():
+		# Zar bırakma isteği getirmediyse bot biten isteğin dışındaki bir yuvayı bırakma isteğine çevirir (adım hep
+		# sınansın; yuvası, sırası ve ödülü aynı).
+		for r in Requests.daily(db, save):
+			if release_req.is_empty() and int(r["slot"]) != done_slot:
+				r["kind"] = "release"
+				r["want"] = {}
+				r["goal"] = 3
+				r["progress"] = 0
+				release_req = r
+		print("requests: bırakma isteği botla kondu (yuva %d)" % int(release_req.get("slot", -1)))
+	_check("bırakma isteği var, kovada balık var", not release_req.is_empty() and not save.bucket.is_empty())
 	if not release_req.is_empty() and not save.bucket.is_empty():
 		# Önceki bildirim sönsün (bırakmanınki panel kapanınca gelmeli).
 		await _wait_until(func() -> bool: return not toast.is_visible_in_tree(), 8.0)
@@ -3079,7 +3113,7 @@ func _play_secret() -> void:
 	await _wait(0.5)
 	_check("sandalda; dere ağzında şişe (mektup 5)", bool(main.get("in_boat")) and bottle.visible
 			and Secret.bottle_zone(save) == "stream_mouth")
-	main.call("_on_bottle_tapped")
+	await _tap_bottle(bottle)
 	_check("sandaldan kıyıdaki şişeye: dere ağzına geçilir ve alınır (mektup 5)", await _wait_until(func() -> bool:
 			return letters.visible, 8.0) and save.letters == 5 and not bool(main.get("in_boat")))
 	await _wait(0.4)
@@ -3096,7 +3130,7 @@ func _play_secret() -> void:
 	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
 	await _wait(0.5)
 	_check("derin ortada şişe ilk şamandıranın yanında", bottle.visible and Secret.bottle_zone(save) == "deep_water")
-	main.call("_on_bottle_tapped")
+	await _tap_bottle(bottle)
 	_check("sandal ilk şamandıraya gider ve alır: mektup 6", await _wait_until(func() -> bool:
 			return letters.visible, 8.0) and save.letters == Secret.LETTERS.size() and int(main.get("_buoy")) == 0)
 	await _wait(0.5)
@@ -3243,6 +3277,7 @@ func _play_keeper() -> void:
 	await _tap(Vector2(260, 520))
 	await _wait_state(FishingSession.State.IDLE, 6.0)
 	await _wait_until(func() -> bool: return float(keeper.get("_return_wait")) <= 0.0, KeeperPresenter.RETURN_TIME + 5.0)
+	var love_before := save.love
 	var second := await _keeper_cast(false)
 	_check("%d sn sonra Bekçi yine gelir (Dede: geri geldi)" % roundi(KeeperPresenter.RETURN_TIME), bool(second["rose"])
 			and bool(second["back"]))
@@ -3253,8 +3288,9 @@ func _play_keeper() -> void:
 	_check("Bekçi elde gösterilmez", not bool(second["in_hand"]))
 	_check("Masalsı kart, düğmesi Göle bırak", await _wait_until(func() -> bool: return card.visible, 3.0)
 			and card.ok_button != null and card.ok_button.text == UiKit.upper(tr("UI_CARD_RELEASE")))
-	_check("Bekçi göle döndü: final bitti, sevgi, defterde", save.keeper == 1 and not Secret.keeper_night(save)
-			and save.records.has(Secret.KEEPER_ID))
+	var mythic_love := int(db.rarity_def(db.rarity_index("mythic"))["love"])
+	_check("Bekçi göle döndü: final bitti, +%d sevgi (Masalsı), defterde" % mythic_love, save.keeper == 1
+			and not Secret.keeper_night(save) and save.love == love_before + mythic_love and save.records.has(Secret.KEEPER_ID))
 	await _wait(0.6)
 	await _shot("05_bekci_kart")
 	await _close_card(card)
@@ -3288,7 +3324,7 @@ func _play_keeper() -> void:
 	await _wait(2.0)
 	await _shot("08_jenerik_2")
 	_check("jeneriğin ATLA'sı büyük ve güvenli alanda", _inside_safe(credits.skip_button)
-			and credits.skip_button.size.y >= 122.0)
+			and credits.skip_button.get_global_rect().size.y >= 121.5)
 	await _tap_control(credits.skip_button)
 	_check("ATLA: oyun geri", await _wait_until(func() -> bool: return not credits.visible and _hud().visible, 3.0))
 	await _wait(1.5)
@@ -3298,7 +3334,9 @@ func _play_keeper() -> void:
 	book.open_book(Secret.KEEPER_ID)
 	await _wait_until(func() -> bool: return book.visible, 2.0)
 	await _wait(0.6)
-	_check("defterde Bekçi seçili, tutulmuş", book.selected() == Secret.KEEPER_ID)
+	_check("defterde Bekçi seçili, kayıtta tutulmuş ve bırakılmış", book.selected() == Secret.KEEPER_ID
+			and int((save.records.get(Secret.KEEPER_ID, {}) as Dictionary).get("count", 0)) >= 1
+			and int((save.records.get(Secret.KEEPER_ID, {}) as Dictionary).get("released", 0)) >= 1)
 	_check("defter güvenli alanda", _panel_inside(book))
 	await _shot("09_defter_bekci")
 	book.close_panel()
@@ -3310,7 +3348,7 @@ func _play_keeper() -> void:
 	await _wait(0.5)
 	var ending := settings.find_child("Ending", true, false) as Button
 	_check("Ayarlar'da BİTİŞ (büyük, güvenli alanda); panel küçülmeden sığar (%.2f)" % settings.fit_scale(),
-			ending != null and ending.is_visible_in_tree() and not ending.disabled and ending.size.y >= 122.0
+			ending != null and ending.is_visible_in_tree() and not ending.disabled and ending.get_global_rect().size.y >= 121.5
 			and _inside_safe(ending) and settings.fit_scale() > 0.999)
 	await _shot("10_ayarlar_bitis")
 	var clock_before := save.clock_s
@@ -3331,7 +3369,7 @@ func _play_keeper() -> void:
 	await _wait_until(func() -> bool: return not credits.visible, 3.0)
 	await _wait(0.5)
 	_check("yeniden izlemek saati değiştirmez; ATLA'dan sonra balıkçı iskelede", save.clock_s == clock_before
-			and not bool(main.get("in_boat")))
+			and not bool(main.get("in_boat")) and _angler().pos2().distance_to(db.spot(str(main.get("spot_id")))["start"]) < 0.5)
 	# Oyun sonrası: kendiliğinden sisli bir gecede X'te Bekçi yine gelir (filmsiz).
 	main.call("_debug_time")
 	main.call("_debug_time")
@@ -4168,8 +4206,8 @@ func _tap_card(shop: ShopPanel, id: String, which: int) -> void:
 	await _tap_control(buttons[which] as Control)
 
 
-## Gölün bütün balıkları (18; kerevit, Ay Turnası ve Kocabaş dahil): elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları
-## işlemez. --fish=<kimlik> yalnızca o tür.
+## Gölün bütün balıkları (19; kerevit, Ay Turnası ve Kocabaş dahil; Gölün Bekçisi yalnızca kartıyla: oyunda elde gösterilmez):
+## elde (CatchFx) ve kartı. Görsel denetim; oturum kuralları işlemez. --fish=<kimlik> yalnızca o tür.
 func _play_fish() -> void:
 	_use_save(1)
 	main.set("bot_camera", true)
@@ -5233,6 +5271,10 @@ func _use_save(catches: int) -> void:
 	save.session = 1
 	save.catches = catches
 	save.settings = GameState.save.settings.duplicate()
+	# Makinenin ayarları botu şaşırtmasın: Kolay çekme ve ölçüm kapalı (isteyen senaryo kendisi açar; Kolay'da misina
+	# kopmaz, ölçüm açıkken gezinin beş dokunuşu ölçümü kapatırdı).
+	save.settings["easy"] = false
+	save.settings["perf"] = false
 	if not _locale.is_empty():
 		save.settings["locale"] = _locale
 	if not _intro:

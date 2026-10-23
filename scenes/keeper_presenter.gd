@@ -6,8 +6,10 @@ extends Node
 ## titreşim, bildirim, Dede'nin sözü ve Bekçi'nin müziği (presence_changed: main müziği değiştirir). O gece X'te
 ## takım Bekçi'nin (FishingSession.reserve): o belirmeden ya da kaçıp dönmeden öteki balıklar yemi kapmaz. Dalışın
 ## uyarısında ve dalışta turkuaz halka, sarsıntı, ses ve titreşim (ipucu main'de: UI_HINT_KEEPER_DIVE). Kaçarsa
-## RETURN_TIME sn sonra yine gelir (Dede söyler; o arada sabah olursa gelmez, Dede söyler); sabah olunca gider.
-## Aynı gece yeniden belirince Dede "geri geldi" der. X'te dip kamışı elde değilse ya da final
+## RETURN_TIME sn sonra yine gelir (Dede söyler; o arada sabah olursa gelmez, Dede söyler); sabah olunca gider
+## (Dede söyler). Gece X'ten ayrılınca (kıyıya, başka şamandıraya, başka tekniğe) dolaşan Bekçi sessizce çekilir,
+## dönünce yine belirir. Aynı gece kaçtıktan sonra yeniden belirince Dede "geri geldi" der. X'te dip kamışı elde
+## değilse ya da final
 ## gecesi henüz gelmediyse Dede ne yapılacağını söyler (oturum başına bir kez). main kurar (setup), her oyun
 ## karesinde update eder (filmde, kararmada, panel açıkken ve odak kaybında etmez), oturumun olaylarını on_event
 ## ile iletir.
@@ -40,8 +42,8 @@ var _waiting: float = 0.0
 var _return_wait: float = 0.0
 ## Oltadaki balık Bekçi mi?
 var _fighting: bool = false
-## Bu gece kaç kez belirdi (ikincisinden sonra "geri geldi").
-var _rises: int = 0
+## Bu gece Bekçi oltadan kaçtı: yeniden belirince Dede "geri geldi" der (X'ten ayrılıp dönünce değil).
+var _lost_tonight: bool = false
 ## Son karede Bekçi'nin vakti miydi (Secret.keeper_due): kaçan Bekçi ancak öyleyse geri gelir.
 var _due: bool = false
 ## Bu oturumda söylendi: X'te dip kamışı elde değil; final gecesi ama gece değil.
@@ -64,7 +66,7 @@ func reset() -> void:
 	_waiting = 0.0
 	_return_wait = 0.0
 	_fighting = false
-	_rises = 0
+	_lost_tonight = false
 	_due = false
 	_told_bottom = false
 	_told_wait = false
@@ -96,7 +98,7 @@ func update(delta: float, session: FishingSession, save: SaveData, cond: Diction
 	session.reserve(due)
 	var keeper := session.summoned()
 	if phase != "night":
-		_rises = 0
+		_lost_tonight = false
 	if not due:
 		# Sabah oldu (sis kalktı): dolaşan Bekçi derinlere döner; yaklaşan ya da oltadaki kendi sonucuyla biter.
 		if keeper != null and keeper.mode != FishShadow.Mode.FLEE and session.dismiss_summoned() and phase != "night":
@@ -148,6 +150,7 @@ func on_event(e: Dictionary, session: FishingSession) -> void:
 				_fighting = false
 				if _due:
 					_return_wait = RETURN_TIME
+					_lost_tonight = true
 					speak.emit("UI_DEDE_KEEPER_LOST")
 				else:
 					# Çekişirken sabah oldu: bu gece dönmez.
@@ -161,13 +164,12 @@ func _rise(session: FishingSession, save: SaveData) -> bool:
 	var point := Secret.keeper_point(db, spot_id, session.angler, session.bobber)
 	if not Dice.is_point(point) or session.summon(Secret.KEEPER_ID, point, Secret.KEEPER_PERCENTILE) < 0:
 		return false
-	_rises += 1
 	_queue_rings(point, RISE_RINGS)
 	Sounds.play("sting")
 	Sounds.haptic(60)
 	camera.shake(0.06)
 	hud.toast(tr("UI_KEEPER_RISE"), UiKit.rarity_color(db, db.rarity_index("mythic")), "rarity:medallion")
-	if _rises > 1:
+	if _lost_tonight:
 		speak.emit("UI_DEDE_KEEPER_BACK")
 	elif save.keeper > 0:
 		speak.emit("UI_DEDE_KEEPER_AGAIN")

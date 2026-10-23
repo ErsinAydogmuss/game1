@@ -4,7 +4,8 @@ extends SceneTree
 ## sevdiği vakit ve hava, bölgelerde vakte ve havaya göre oranlar), oyunun gölündeki türler ve her
 ## bölgede her teknikle (şamandıra ve dipte yeme, spinde yapay yeme, sinekte sineğe göre) gelme
 ## şansları, nadirlik oranı ve ortalama değer; kerevit tuzağının tablosu. Oranlar oyunun gölge doğururken kullandığı işlevlerden
-## (CatchOdds) okunur: Balık Defteri'nde yazan oranlarla hep aynıdır (gelir kuralı 10).
+## (CatchOdds) okunur (gelir kuralı 10). Bölge tabloları koşulsuz (vakit, hava ve göl sevgisi yok sayılır, belli vakitte
+## gelen türler yok); vakit ve hava bölümü koşullu oranları verir. Balık Defteri gölün o anki koşuluyla gösterir.
 ##   godot --headless --path . -s res://tools/fish_catalog.gd
 ## Balık, nadirlik, yem, teknik ya da atış noktası değişince yeniden çalıştırılır.
 
@@ -36,11 +37,12 @@ func _initialize() -> void:
 	lines.append("")
 	lines.append("> Bu dosya `tools/fish_catalog.gd` ile veriden üretilir; elle düzenleme. Veri: `data/fish.json`,")
 	lines.append("> `data/rarities.json`, `data/spots.json`, `data/gear.json`. Oranlar oyunun gölge doğururken kullandığı")
-	lines.append("> işlevlerden (`CatchOdds`) okunur; Balık Defteri'nde yazan oranlar bunlardır.")
+	lines.append("> işlevlerden (`CatchOdds`) okunur. Bölge tabloları koşulsuzdur (vakit, hava ve göl sevgisi yok sayılır; belli")
+	lines.append("> vakitte gelen türler yok); Balık Defteri gölün o anki koşuluyla gösterir (Vakit ve hava bölümündeki gibi).")
 	lines.append("")
 	lines.append("- **Değer** = türün değeri × boy çarpanı (türün en küçük boyu 0,6, en büyüğü 1,6; tamsayı para). Değeri")
-	lines.append("  0 olan balık satılmaz: Masalsı hikâye balığı (sonraki dalgalarda) ve koruma altındaki tür (mersin). Mersin")
-	lines.append("  kovaya girmez: tutulur, göle bırakılır; rütbe puanı ve göl sevgisi verir.")
+	lines.append("  0 olan balık satılmaz: koruma altındaki mersin, gece efsaneleri (Ay Turnası, Kocabaş) ve Masalsı Gölün")
+	lines.append("  Bekçisi. Kovaya girmezler: tutulur, göle bırakılır; rütbe puanı ve göl sevgisi verirler.")
 	lines.append("- **Rütbe puanı** = nadirliğin puanı × (1 + yıldız başına 0,25). Bırakılan balık da puan verir.")
 	lines.append("- Bir gölgenin türü ve boyu doğduğu anda belirlenir (gizli ama değişmez); gölgenin boyu balığın")
 	lines.append("  boyunu ele verir, nadirlik ipucu (pırıltı, ışıltı, dalga izi) kademesini.")
@@ -264,27 +266,28 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray, techniqu
 	lines.append("")
 
 
-## Vakit, hava ve göl sevgisi (docs/gdd.md §10.5): kurallar, türlerin sevdiği vakit ve hava, göl
-## sevgisinin seviyeleri, her bölgede şamandırayla (solucan) vakte ve havaya göre oranlar.
+## Vakit ve hava (docs/gdd.md §10.5): kurallar, türlerin sevdiği vakit ve hava, her bölgede şamandırayla
+## (solucan) ve bölgenin önerdiği teknikle vakte ve havaya göre oranlar (göl sevgisi: _love).
 func _world(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
 	var rules := db.rules
 	lines.append("## Vakit ve hava")
 	lines.append("")
 	lines.append("- Bir oyun günü %d dakika: sabah, öğle, akşam, gece %d'şar dakika. Saat yalnızca oynarken akar (oyuncu" % [
-			DayClock.day_s(rules) / 60, rules.phase_s / 60])
+			roundi(DayClock.day_s(rules) / 60.0), roundi(rules.phase_s / 60.0)])
 	lines.append("  yokken, panel açıkken durur); Dede'yle çay sonraki vakte geçirir.")
 	var total := 0
 	for w in rules.weather_weights:
 		total += w
 	var weather := PackedStringArray()
 	for k in Weather.KINDS.size():
-		weather.append("%s %s" % [_name("WEATHER_" + Weather.KINDS[k]).to_lower(), _percent(rules.weather_weights[k] * PPM / total)])
+		weather.append("%s %s" % [_name("WEATHER_" + Weather.KINDS[k]).to_lower(),
+				_percent(roundi(rules.weather_weights[k] * float(PPM) / total))])
 	lines.append("- Her oyun günün havası önceden belli (bugün ve yarın gösterilir): %s. İlk gün açık. Sisli günde sis" % ", ".join(weather))
 	lines.append("  yalnızca sabah ve gece, öğle ve akşam bulutlu. Yağmurlu gece fırtınadır.")
 	lines.append("- Yağmurda gölgeler takımı %s kat uzaktan fark eder, %s kat hızlı yaklaşır." % [_number(rules.rain_notice),
 			_number(rules.rain_approach)])
 	lines.append("- Türün oranı vaktin ve havanın çarpanıyla değişir (aşağıda; yazılmayan 1). Vakit çarpanlarının ortalaması")
-	lines.append("  her türde 1: vakit balığın ne zaman geldiğini değiştirir, kazancı değil.")
+	lines.append("  her türde 1 (`test_content_db` denetler): vakit balığın ne zaman geldiğini değiştirir, kazancı değil.")
 	lines.append("")
 	lines.append("| Tür | Sabah | Öğle | Akşam | Gece | Hava |")
 	lines.append("|---|---|---|---|---|---|")
@@ -305,23 +308,6 @@ func _world(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
 			likes.append("%s %s" % [_name("WEATHER_" + kind).to_lower(), _number(float(f["weather"][kind]))])
 		row += " %s |" % ", ".join(likes)
 		lines.append(row)
-	lines.append("")
-	lines.append("**Göl sevgisi:** bırakılan balık (nadirliğe göre), toplanan çöp ve istekler verir; hiç azalmaz. Her seviye")
-	lines.append("%s ve üstü türlerin ağırlığını %s artırır:" % [_name("RARITY_" + rules.love_from), _percent(roundi(rules.love_rare_bonus * PPM))])
-	lines.append("")
-	var head := "| Seviye |"
-	var sep := "|---|"
-	var need := "| Sevgi |"
-	var bonus := "| Nadir+ payı |"
-	for lvl in range(1, LakeLove.max_level(rules) + 1):
-		head += " %d |" % lvl
-		sep += "---|"
-		need += " %d |" % rules.love_levels[lvl - 1]
-		bonus += " +%s |" % _percent((LakeLove.rare_bonus_pm(rules, lvl) - 1000) * 1000)
-	lines.append(head)
-	lines.append(sep)
-	lines.append(need)
-	lines.append(bonus)
 	lines.append("")
 	for z in db.zones_of(spot_id):
 		var techniques: Array[String] = ["float"]

@@ -17,6 +17,8 @@ const END_SIZE := 46
 const SKIP_SIZE := Vector2(260, 122)
 ## ATLA ancak bu kadar sn sonra çalışır: filmin ATLA'sına çift dokunuş jeneriği de atlamasın (iki düğme aynı yerde).
 const SKIP_GUARD := 0.8
+## Bir karenin en uzun adımı (sn): uygulama arka plandan dönünce jenerik sıçramasın.
+const MAX_STEP := 0.1
 ## Emek verenler: [görevin anahtarı, adlar]. "UI_" ile başlayan ad çevrilir.
 const ROLES: Array[Array] = [
 	["UI_CREDITS_IDEA", ["Ersin"]],
@@ -83,6 +85,8 @@ func content_height() -> float:
 func _process(delta: float) -> void:
 	if not visible or held:
 		return
+	# Uygulama arka plandan dönünce ilk karenin delta'sı uzakta geçen süredir: jenerik bir anda bitmesin.
+	delta = minf(delta, MAX_STEP)
 	_age += delta
 	_offset += delta * SPEED
 	_layout()

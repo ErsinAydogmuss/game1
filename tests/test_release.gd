@@ -23,6 +23,17 @@ func test_take_picks_the_smallest_and_take_last_the_newest() -> void:
 	assert_eq(save.bucket.size(), 2, "olmayan tür kovayı değiştirmez")
 
 
+## Tuzağın kartı en iri kereviti gösterir: kartın "Göle bırak"ı o boydakini çıkarır (kovaya ondan sonra girenler
+## kalır); o boyda yoksa türün en son gireni.
+func test_take_last_with_a_size_takes_the_shown_fish() -> void:
+	var save := _save_with([["crayfish", 9], ["crayfish", 14], ["crayfish", 10]])
+	var shown := Bucket.take_last(save, "crayfish", 14)
+	assert_eq(int(shown.get("size_cm", 0)), 14, "kartın gösterdiği en iri kerevit")
+	assert_eq(save.bucket.size(), 2, "yalnızca o çıktı")
+	var other := Bucket.take_last(save, "crayfish", 99)
+	assert_eq(int(other.get("size_cm", 0)), 10, "o boyda yoksa en son giren")
+
+
 func test_release_gives_love_not_coins() -> void:
 	var db := content()
 	var save := _save_with([["rudd", 20]])

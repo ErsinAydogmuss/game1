@@ -24,6 +24,8 @@ const BOX_GAP := 24
 const LOGO_TIME := 2.4
 ## Yeni söz bu kadar sn dolmadan dokunuşla geçmez (art arda iki dokunuş iki söz atlamasın).
 const TAP_GUARD := 0.45
+## Bir karenin en uzun adımı (sn): uygulama arka plandan dönünce söz atlanmasın.
+const MAX_STEP := 0.1
 const SKIP_SIZE := Vector2(260, 122)
 const GIFT_ICON := 200.0
 ## Hediye rozetinin ortası ekran genişliğinin bu kadarında.
@@ -113,6 +115,8 @@ func stop() -> void:
 func _process(delta: float) -> void:
 	if not visible or held:
 		return
+	# Uygulama arka plandan dönünce ilk karenin delta'sı uzakta geçen süredir: söz atlanmasın.
+	delta = minf(delta, MAX_STEP)
 	_age += delta
 	_left -= delta
 	_bars = minf(1.0, _bars + delta * 2.5)

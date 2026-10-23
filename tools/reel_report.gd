@@ -46,8 +46,12 @@ func _initialize() -> void:
 			printerr("Bilinmeyen balık: " + id)
 			quit(1)
 			return
-		# Hikâyenin balığı dipte gelir (altın hamur).
+		# Hikâyenin balığı dipte gelir (altın hamur) ve kendi uzaklığında takılır: tek başına ölçülür.
 		if bool(db.fish_by_id(id)["story"]):
+			if only.size() > 1:
+				printerr("Hikâyenin balığı tek başına ölçülür: --fish=" + id)
+				quit(1)
+				return
 			technique = "bottom"
 	if not db.has_technique(technique):
 		printerr("Bilinmeyen teknik: " + technique)
@@ -59,7 +63,7 @@ func _initialize() -> void:
 		return
 	var gear := gear_for(db, mode, technique)
 	var distances := distances_for(technique)
-	if not only.is_empty() and bool(db.fish_by_id(only[0])["story"]):
+	if only.size() == 1 and bool(db.fish_by_id(only[0])["story"]):
 		distances = story_distances(gear)
 	var max_distance: float = gear.range_m + db.rules.escape_extra + gear.escape_extra
 	var bots := [

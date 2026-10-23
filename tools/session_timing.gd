@@ -9,9 +9,10 @@ extends SceneTree
 ## --technique: o teknikle (tekniğin ilk kamışı; --gear=top en iyi takımı) oynar; öneri sim.json
 ## "techniques" altına (tekniğin bölgeleri de: --zone ile).
 ## --weather=rain (ya da clear, cloudy, fog) ve --phase= (morning, noon, evening, night; verilmezse öğle):
-## gölün koşulu (Dalga 4; yağmurda gölgeler uzaktan fark eder, hızlı yaklaşır). Hava açık değilse araç aynı
-## seed'lerle açık havada da ölçer ve geliş süresinin oranını yazar: sim.json "weather": { "rain_approach" }
-## (yalnızca o oran; önerilen öteki sayılar o koşulun, sim.json'un genel değerleri açık havadan).
+## gölün koşulu (Dalga 4; yağmurda gölgeler uzaktan fark eder, hızlı yaklaşır). Yağmurda araç aynı seed'lerle açık
+## havada da ölçer ve geliş süresinin oranını yazar: sim.json "weather": { "rain_approach" } (yalnızca o oran;
+## önerilen öteki sayılar o koşulun, sim.json'un genel değerleri açık havadan). Bulut ve sis takımı değiştirmez
+## (yalnızca oranlar): karşılaştırma yok.
 ## Bot (şamandıra):
 ## - Nişan (AIM_S) alır; menzildeki en yakın gölgenin önüne (LEAD_M) atar, insan gibi şaşarak
 ##   (AIM_NOISE_M yarıçaplı daire içinde); gölge yoksa rastgele suya.
@@ -150,8 +151,11 @@ func _initialize() -> void:
 	print("    \"fight_s\": %.1f," % _mean(_fight))
 	print("    \"reaction_s\": %.2f" % REACTION_S)
 	var weather := "" if _conditions.is_empty() else str(_conditions["weather"])
-	if not weather.is_empty() and weather != "clear":
-		# Aynı seed'lerle açık havada: geliş süresinin oranı (sim.json weather.<hava>_approach).
+	if weather == "cloudy" or weather == "fog":
+		print("")
+		print("  %s: takım açık havadaki gibi (yalnızca oranlar değişir); sim.json'da yalnızca rain_approach var" % weather)
+	if weather == "rain":
+		# Aynı seed'lerle açık havada: geliş süresinin oranı (sim.json weather.rain_approach).
 		var here := _mean(approach)
 		_conditions["weather"] = "clear"
 		for list: Array[float] in [_flight, _wait, _nibble, _to_bite, _fight, _hook_m]:

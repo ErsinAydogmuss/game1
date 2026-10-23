@@ -97,8 +97,10 @@ func test_finished_request_pays_once() -> void:
 	var xp := save.xp
 	var love := save.love
 	r["progress"] = int(r["goal"])
+	assert_eq(Requests.finished(save), [r], "hedefine varan ödenmemiş istek bitmiş sayılır (açılışta ödenir)")
 	var paid := Requests.pay(db, save, r)
 	assert_true(not paid.is_empty(), "öder")
+	assert_true(Requests.finished(save).is_empty(), "ödenince bitmiş istek kalmaz")
 	assert_eq(save.coins, coins + int(reward["coins"]), "para")
 	assert_eq(save.xp, xp + int(reward["xp"]), "rütbe puanı")
 	assert_eq(save.love, love + int(reward["love"]), "göl sevgisi")
@@ -186,6 +188,17 @@ func test_rain_only_with_a_rain_forecast() -> void:
 	wet.flags[Weather.DEBUG_DAY] = DayClock.day(rules, wet.clock_s)
 	wet.flags[Weather.DEBUG_KIND] = "rain"
 	assert_eq(Requests.candidates(db, wet, SPOT).get("rain", []), [{ "weather": "rain" }], "bugün yağmur: yağmur isteği")
+	# Yalnızca yarın yağmur (tahmin bugün ve yarın): yağmur isteği yine gelir.
+	var tomorrow := _save(6)
+	var day := DayClock.day(rules, tomorrow.clock_s)
+	var seen := false
+	for seed_value in 2000:
+		tomorrow.seed = seed_value
+		if Weather.day_kind(rules, tomorrow, day) != "rain" and Weather.day_kind(rules, tomorrow, day + 1) == "rain":
+			seen = true
+			break
+	assert_true(seen, "yalnızca yarını yağmurlu bir kayıt")
+	assert_eq(Requests.candidates(db, tomorrow, SPOT).get("rain", []), [{ "weather": "rain" }], "yarın yağmur: yağmur isteği")
 
 
 func test_size_target_is_round_and_within_three_stars() -> void:

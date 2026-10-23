@@ -54,6 +54,17 @@ func test_fish_follow_the_design() -> void:
 	assert_eq(str(spot["first_fish"]), "rudd", "ilk av Kızılkanat")
 
 
+
+## Vakit balığın ne zaman geldiğini değiştirir, kazancı değil: her türde dört vaktin çarpanlarının ortalaması 1
+## (docs/gdd.md §6; belli vakitte gelen türün çarpanı yok).
+func test_time_multipliers_average_one() -> void:
+	var db := content()
+	for f in db.fish:
+		var sum := 0.0
+		for phase: String in DayClock.PHASES:
+			sum += db.when_mult(str(f["id"]), phase)
+		assert_between(sum / float(DayClock.PHASES.size()), 0.995, 1.005, "%s: vakit çarpanlarının ortalaması 1" % f["id"])
+
 ## Bozuk veri yakalanır: kurallarla çelişen çekişme, bilinmeyen balık, suyun içindeki başlangıç.
 func test_validation_catches_bad_data() -> void:
 	var dir := "user://test_bad_data"

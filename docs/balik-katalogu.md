@@ -2,11 +2,12 @@
 
 > Bu dosya `tools/fish_catalog.gd` ile veriden üretilir; elle düzenleme. Veri: `data/fish.json`,
 > `data/rarities.json`, `data/spots.json`, `data/gear.json`. Oranlar oyunun gölge doğururken kullandığı
-> işlevlerden (`CatchOdds`) okunur; Balık Defteri'nde yazan oranlar bunlardır.
+> işlevlerden (`CatchOdds`) okunur. Bölge tabloları koşulsuzdur (vakit, hava ve göl sevgisi yok sayılır; belli
+> vakitte gelen türler yok); Balık Defteri gölün o anki koşuluyla gösterir (Vakit ve hava bölümündeki gibi).
 
 - **Değer** = türün değeri × boy çarpanı (türün en küçük boyu 0,6, en büyüğü 1,6; tamsayı para). Değeri
-  0 olan balık satılmaz: Masalsı hikâye balığı (sonraki dalgalarda) ve koruma altındaki tür (mersin). Mersin
-  kovaya girmez: tutulur, göle bırakılır; rütbe puanı ve göl sevgisi verir.
+  0 olan balık satılmaz: koruma altındaki mersin, gece efsaneleri (Ay Turnası, Kocabaş) ve Masalsı Gölün
+  Bekçisi. Kovaya girmezler: tutulur, göle bırakılır; rütbe puanı ve göl sevgisi verirler.
 - **Rütbe puanı** = nadirliğin puanı × (1 + yıldız başına 0,25). Bırakılan balık da puan verir.
 - Bir gölgenin türü ve boyu doğduğu anda belirlenir (gizli ama değişmez); gölgenin boyu balığın
   boyunu ele verir, nadirlik ipucu (pırıltı, ışıltı, dalga izi) kademesini.
@@ -125,7 +126,7 @@ Türlerin teknik yatkınlığı (çarpan; boş: o teknikle gelmez) ve tuzağa gi
   yalnızca sabah ve gece, öğle ve akşam bulutlu. Yağmurlu gece fırtınadır.
 - Yağmurda gölgeler takımı 1,3 kat uzaktan fark eder, 1,25 kat hızlı yaklaşır.
 - Türün oranı vaktin ve havanın çarpanıyla değişir (aşağıda; yazılmayan 1). Vakit çarpanlarının ortalaması
-  her türde 1: vakit balığın ne zaman geldiğini değiştirir, kazancı değil.
+  her türde 1 (`test_content_db` denetler): vakit balığın ne zaman geldiğini değiştirir, kazancı değil.
 
 | Tür | Sabah | Öğle | Akşam | Gece | Hava |
 |---|---|---|---|---|---|
@@ -148,14 +149,6 @@ Türlerin teknik yatkınlığı (çarpan; boş: o teknikle gelmez) ve tuzağa gi
 | Ay Turnası | — | — | — | ✓ | bulutlu 0,8, yağmurlu 0,6 |
 | Kocabaş | — | — | — | ✓ | yalnızca yağmurlu |
 | Gölün Bekçisi | — | — | — | ✓ | yalnızca sisli |
-
-**Göl sevgisi:** bırakılan balık (nadirliğe göre), toplanan çöp ve istekler verir; hiç azalmaz. Her seviye
-Nadir ve üstü türlerin ağırlığını %4 artırır:
-
-| Seviye | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Sevgi | 0 | 12 | 30 | 60 | 110 | 180 | 270 | 380 | 520 | 700 |
-| Nadir+ payı | +%0 | +%4 | +%8 | +%12 | +%16 | +%20 | +%24 | +%28 | +%32 | +%36 |
 
 ### İskele Koyu, şamandıra: vakte göre (açık hava) ve havaya göre (öğle)
 

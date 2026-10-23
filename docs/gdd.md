@@ -222,7 +222,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - Sonra 2–2,6 sn dalar: bırakınca 1,8 m/sn uzaklaşır (en çok kaçış sınırının 0,5 m içine, kaçmaz); basılı tutunca
     gerilim sınırın üstüne çıkar, misina kopar. Kolay modda dalış 0,6 kat hızlı, kopma yok.
   - Dalışın zarı yalnızca dalışlı balıkta çekilir: öteki balıkların çekişmesi ve altın test aynı kalır.
-  - Dipte 12–14 m'de takılır (`tools/reel_report.gd -- --fish=keeper`, `--gear=mid`, `--gear=top`; her çekişmede iki dalış):
+  - Dipte menzilin son 2 metresinde takılır (ilk dip kamışıyla 12–14 m, ikinciyle 14–16, en iyisiyle 16–18; `tools/reel_report.gd -- --fish=keeper`, `--gear=mid`, `--gear=top`; her çekişmede iki dalış):
 
 | Dip takımı | Kusursuz | İyi oyuncu (0,4 sn) | Yavaş (0,7 sn) | Hep basılı | Kolay: iyi oyuncu / hep basılı |
 |---|---|---|---|---|---|
@@ -287,7 +287,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | `crayfish` | Kerevit | Crayfish | 0,3 m | Sıradan | 6–14 cm | 10 | hafif | sazlık, kayalık burun (tuzak; az da dip) | kızıl kahve kabuk, halkalı kuyruk, iki iri kıskaç, duyargalar, saplı gözler |
 | `moon_pike` | Ay Turnası | Moon Pike | 1,25 m | Efsanevi | 90–140 cm | satılmaz | ani, güçlü, sıçrar (iri tür) | nilüferli koy, yalnızca gece (şamandıra ×1, spin ×1,4, dip ×0,2) | gümüş-mavi turna, soluk ay benekleri, sarı göz |
 | `kocabas` | Kocabaş | Old Bighead | 2,1 m | Efsanevi | 240–320 cm | satılmaz | çok ağır, uzun koşular (iri tür) | derin orta, yalnızca yağmurlu gece (dip ×1,5, şamandıra ×0,5) | dev yayın: yosunlu sırt, uzun bıyıklar |
-| `keeper` | Gölün Bekçisi | Keeper of the Lake | 4,4 m | Masalsı | 480–520 cm (hep ~517 cm, 5★) | satılmaz | iki dalış: BIRAK! (§5) | derin ortada haritanın X'i (ilk şamandıra), sisli gece, dip ve altın hamurla; bölgelerin tablosunda yok, oyun çağırır (§10.5) | uzun turkuaz gövde, açık plakalar ve benekler, bıyık, dört sırt yüzgeci |
+| `keeper` | Gölün Bekçisi | Lake Keeper | 4,4 m | Masalsı | 480–520 cm (hep ~517 cm, 5★) | satılmaz | iki dalış: BIRAK! (§5) | derin ortada haritanın X'i (ilk şamandıra), sisli gece, dip ve altın hamurla; bölgelerin tablosunda yok, oyun çağırır (§10.5) | uzun turkuaz gövde, açık plakalar ve benekler, bıyık, dört sırt yüzgeci |
 
 **Nadirlikler:** Sıradan (gri), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın), Masalsı (turkuaz; H2'de eklendi, yalnızca Gölün Bekçisi). Efsaneviler mersin, Ay Turnası (gece) ve Kocabaş (yağmurlu gece); tek Masalsı balık Gölün Bekçisi (Dalga 4'ün finali, §10.5). Nadirlikler yalnızca sona eklenir; her kademenin bir simgesi, rütbe puanı ve göl sevgisi değeri var (§10.2, `data/rarities.json`).
 
@@ -542,7 +542,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
     - tuzağa giriyorsa nerede ("Tuzağa girer: Sazlık, Kayalık Burun"; tuzak hep o türü verdiği için sıklık yazılmaz);
     - şamandırayla gelmiyorsa hangi teknikle ("Şununla tutulur: Spin, Sinek"; tuzak türünde "Şununla da tutulur: Dip");
     - yaşadığı bölgeler (tuzağınkilerle aynıysa yinelenmez) ve ne sıklıkla görüldüğü.
-  - ✅ Dalga 4'teki hâli (1. adım): 18 tür, iki sayfa (12 + 6). Oranlar gölün şimdiki koşuluyla (vakit, hava, göl
+  - ✅ Dalga 4'teki hâli (1. adım; 6. adımdan sonra Gölün Bekçisi'yle 19 tür, 12 + 7): 18 tür, iki sayfa (12 + 6). Oranlar gölün şimdiki koşuluyla (vakit, hava, göl
     sevgisi); başlıkta koşulun hapı: vaktin ve havanın ikonu, "Akşam · Yağmurlu" (yağmurlu gecede "Fırtınalı"; sevgi
     seviyesi 2'den büyükse "· Göl sevgisi 2 (Nadir+ +%4)"). Tutulmamış türün vakit ipucu tek satırda: belli vakitte
     geliyorsa "Yalnızca gece çıkar." / "Yalnızca fırtınalı gecelerde yemlenir.", yoksa en sevdiği vakit ("En çok
@@ -1000,8 +1000,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
      - Kaçarsa (misina koptu): Dede "Kaçırdık! Bekle, geri gelecek."; 25 sn sonra yeniden atınca gelir ("Geri geldi!
        Bu sefer dalınca bırak evlat."; oyun sonrasında da). Sabah olunca derinlere döner ("Sabah oldu, Bekçi derinlere
        döndü."; çekişirken ya da beklerken sabah olursa o gece gelmez). Ceza yok.
-     - Tutulunca elde gösterilmez (5 m): sudan çıktığı yerde turkuaz halkalar, herkes sevinir; Masalsı kart (koruma
-       sözü), tek düğme "Göle bırak". Şans garantisine sayılmaz, yanında çöp çıkmaz. Bırakmak finali bitirir
+     - Tutulunca elde gösterilmez (5 m): sudan çıktığı yerde turkuaz halkalar, herkes sevinir; Masalsı kart (Dede'nin
+       sözü "Gölün Bekçisi... Demek gerçekmiş."), tek düğme "Göle bırak". Şans garantisine sayılmaz, yanında çöp çıkmaz. Bırakmak finali bitirir
        (`save.keeper`), Masalsı kademenin göl sevgisi 100. O gece sabaha kadar sisli kalır (sis şafakta kalkar).
      - **Bitiş filmi** (kart kapanınca, bir kez; kart açıkken uygulama kapandıysa açılışta; ~32 sn; açılış filmi gibi
        göl arkada yaşar; dokununca sonraki söz, ATLA; kendi müziği). Şafak ve çiçek açma ATLA'da da olur: film bitince

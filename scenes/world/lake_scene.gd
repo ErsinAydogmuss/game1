@@ -1086,11 +1086,13 @@ func _process(delta: float) -> void:
 			_look = DayLook.mix(_look, _look_target, 1.0 - exp(-delta * LOOK_RATE))
 			if DayLook.close(_look, _look_target):
 				_look = _look_target.duplicate()
-		if _flash_age >= 0.0:
+		var flashing := _flash_age >= 0.0
+		if flashing:
 			_flash_age += delta
 			if _flash_age > FLASH_RISE + FLASH_FALL:
 				_flash_age = -1.0
-		if moving or _flash_age >= 0.0:
+		# Şimşeğin bittiği karede de: son karenin parıltısı görünüşte kalmasın (fırtınalı gece aydınlık kalırdı).
+		if moving or flashing:
 			_apply_look()
 	for i in _buoys.size():
 		var phase := float(i) * 1.7

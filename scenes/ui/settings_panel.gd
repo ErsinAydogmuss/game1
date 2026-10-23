@@ -6,8 +6,9 @@ extends Dialog
 ## Sürüm yazısına arka arkaya 5 kez dokununca ölçüm açılır ya da kapanır (HUD'da FPS, çizim ve
 ## üçgen sayısı; telefonda hız ölçümü: docs/iphone-kurulum.md). Ölçüm açıkken geliştirme sürümünde
 ## üç satır daha görünür (normalde panel küçülmeden sığsın): deneme düğmeleri (hepsini aç, para,
-## rütbe atlama: rank_up_requested, main gerçek akışla atlatır), canlı dünya (vakit, hava, sevgi:
-## time_requested, weather_requested, love_requested) ve kaydı sıfırlama.
+## rütbe atlama: rank_up_requested, main gerçek akışla atlatır), canlı dünya (vakit, hava, sevgi, istek bitir,
+## sır: time_requested, weather_requested, love_requested, finish_request_requested, secret_requested) ve kaydı
+## sıfırlama.
 
 ## Bir rütbe atlatılsın (geliştirme sürümü; main gerçek akışla: bildirim, açılan yer, Dede).
 signal rank_up_requested

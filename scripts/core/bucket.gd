@@ -57,12 +57,21 @@ static func take(save: SaveData, fish_id: String) -> Dictionary:
 	return _remove(save, pick)
 
 
-## Kovadan o türün en son giren balığını çıkarır (yeni tür kartındaki "Göle bırak": az önce tutulan).
-static func take_last(save: SaveData, fish_id: String) -> Dictionary:
+## Kovadan o türün en son giren balığını çıkarır (yeni tür kartındaki "Göle bırak": az önce tutulan). size_cm
+## verilirse o boydaki en son gireni (tuzağın kartı en iri kereviti gösterir, kovaya ondan sonra girenler de
+## olabilir); o boyda yoksa türün en son gireni.
+static func take_last(save: SaveData, fish_id: String, size_cm: int = -1) -> Dictionary:
+	var pick := -1
 	for i in range(save.bucket.size() - 1, -1, -1):
-		if str(save.bucket[i]["fish"]) == fish_id:
-			return _remove(save, i)
-	return {}
+		var entry := save.bucket[i]
+		if str(entry["fish"]) != fish_id:
+			continue
+		if pick < 0:
+			pick = i
+		if size_cm < 0 or int(entry["size_cm"]) == size_cm:
+			pick = i
+			break
+	return _remove(save, pick)
 
 
 static func _remove(save: SaveData, index: int) -> Dictionary:

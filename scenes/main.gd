@@ -92,6 +92,10 @@ const TEA_HOLD := 0.6
 const TEA_NEAR := 8.0
 const TEA_SHOT := 2.0
 const TEA_ZOOM := 0.62
+## Bir karenin en uzun adımı (sn). Telefonda uygulama arka plandan dönünce ilk karenin delta'sı uzakta geçen
+## bütün süredir (Godot uzun boşluğu kırpmaz): oyun saati, Bekçi'nin beklemesi ve sunum sıçramasın (saat oyuncu
+## yokken akmaz).
+const MAX_FRAME := 0.25
 ## Dede'nin vakte ve havaya ilk sözünün bayrağı (vaktin ya da havanın kimliğiyle; kayıtta).
 const TIME_FLAG := "told_time_%s"
 const WEATHER_FLAG := "told_weather_%s"
@@ -368,8 +372,6 @@ func _start_session() -> void:
 	_sync_world_chip()
 	_sync_music()
 	_request_done = false
-	# Dede'nin istekleri: açıksa ve bugün dolmadıysa boş yuvalar dolar (eski kayıt; kayıt değişince de).
-	_refill_requests()
 	# Gölün görünüşü hemen kaydın vaktinde ve havasında (sahne sabah ışığıyla kurulur; gece açılan oyun
 	# sabahtan kaymasın).
 	_look_clock = -1
@@ -403,6 +405,9 @@ func _start_session() -> void:
 	_forget_pickups()
 	traps.clear()
 	_refresh_traps()
+	# Dede'nin istekleri: açıksa ve bugün dolmadıysa boş yuvalar dolar (eski kayıt; kayıt değişince de). Oturum
+	# kurulduktan sonra: ödenmemiş istek ödenirse (sevgi, rütbe) koşul ve erişim yeni oturuma geçer.
+	_refill_requests()
 	_letter_read = 0
 	_golden_line = ""
 	bottle.hide_bottle()
@@ -523,6 +528,8 @@ func _replay_ending() -> void:
 		return
 	_stop_for_travel()
 	fade.play(func() -> void:
+		# Oyun sonrasında sisli gecede X'te dolaşan Bekçi filmin dev gölgesinin yanında kalmasın (derinlere döner).
+		session.dismiss_summoned()
 		_play_ending(true))
 
 
@@ -638,6 +645,7 @@ func _stop_loops() -> void:
 
 
 func _process(delta: float) -> void:
+	delta = minf(delta, MAX_FRAME)
 	# Odak kaybında ve bir panel (ayarlar, dükkân, defter...) açıkken oyun donar (çekişmedeki
 	# balık kaçmasın). Balık kartı panel değildir: kart açıkken balık gösterimi sürer. Sıradaki
 	# bildirimler (rütbe, açılan yer) de bekler: karartmanın altında kalmasın, panel kapanınca çıkar.
@@ -1383,6 +1391,8 @@ func _mark_requests_seen() -> void:
 		save.flags[REQ_TOLD_FLAG] = true
 	if not Requests.golden(GameState.db, save).is_empty():
 		save.flags[GOLDEN_TOLD_FLAG] = true
+	# Kayda hemen: uygulama kapanırsa rozet ve Dede'nin "saate dokun"u geri gelmesin.
+	GameState.save_game()
 	_sync_request_badge()
 
 
@@ -1543,10 +1553,10 @@ func _sync_music() -> void:
 
 
 ## Dede'nin bekleyen sözlerinden sıradaki (her biri bir kez; bayrak söylenince kayda): önce Dede'nin
-## istekleri (ilk istekler: saate dokun, çip nabız gibi atar; biten istek: aferin), sonra Nine'nin feneri
-## (ilk gece), sonra ilk kez çıkan çöp eşyası, sonra göl sevgisinin seviyesi (LOVE_LINES), sonra hava (bulut,
-## yağmur, sis; yağmurlu gece fırtına: Kocabaş'ın gecesi), sonra vakit (öğle, akşam, yeni günün sabahı).
-## Söylediyse true (sırada başkası olabilir).
+## istekleri (ilk istekler: saate dokun, çip nabız gibi atar; biten istek: aferin), sonra ilk altın istek,
+## suda yeni bir şişe, final hazır ("bu gece sis basacak"), Nine'nin feneri (ilk gece), ilk kez çıkan çöp
+## eşyası, göl sevgisinin seviyesi (LOVE_LINES), hava (bulut, yağmur, sis; yağmurlu gece fırtına: Kocabaş'ın
+## gecesi), en son vakit (öğle, akşam, yeni günün sabahı). Söylediyse true (sırada başkası olabilir).
 func _world_line() -> bool:
 	var save := GameState.save
 	var db := GameState.db
@@ -1572,7 +1582,10 @@ func _world_line() -> bool:
 		if letter == 1:
 			_say("UI_DEDE_BOTTLE_FIRST")
 		else:
-			_say("UI_DEDE_BOTTLE", "dede", [tr("ZONE_" + Secret.bottle_zone(save))])
+			# Bölgenin adı her gösterişte o anki dilde (dil değişince eski dilde kalmasın).
+			var zone := Secret.bottle_zone(save)
+			_say("UI_DEDE_BOTTLE")
+			_line_args_fn = func() -> Array: return [tr("ZONE_" + zone)]
 		return true
 	# Final hazır (altı mektup, dört parça, altın hamur): Dede sisli geceyi ve X'i söyler (bir kez).
 	if Secret.keeper_night(save) and not save.flags.has(FINAL_TOLD_FLAG):
@@ -2335,7 +2348,8 @@ func _on_bucket_release_all() -> void:
 ## Yeni tür (ya da rekor, nadir) kartında "Göle bırak": az önce kovaya giren balık göle döner (önce bırakmanın
 ## bildirimi, sonra seviye atladıysa sevginin).
 func _on_card_release(fish_id: String) -> void:
-	if Bucket.take_last(GameState.save, fish_id).is_empty():
+	# Kartın gösterdiği balık (tuzakta en iri kerevit; kovaya ondan sonra girenler de var).
+	if Bucket.take_last(GameState.save, fish_id, int(_card_info.get("size_cm", -1))).is_empty():
 		return
 	hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "splash", "release")
 	_release_fish(fish_id)
@@ -2816,14 +2830,14 @@ func _on_bottle_tapped() -> void:
 		angler.stop()
 		_take_bottle()
 		return
-	var zone_id := Secret.bottle_zone(GameState.save)
-	var deep := bool(GameState.db.zone(spot_id, zone_id).get("boat", false))
+	var bottle_zone := Secret.bottle_zone(GameState.save)
+	var deep := bool(GameState.db.zone(spot_id, bottle_zone).get("boat", false))
 	if deep or in_boat:
 		# Geçiş bekleyen toplamaları unutur: şişe geçişten sonra beklenir.
 		if deep:
 			_go_boat(0)
 		else:
-			_travel(zone_id)
+			_travel(bottle_zone)
 		_pending_bottle = true
 		return
 	_pending_bottle = true
