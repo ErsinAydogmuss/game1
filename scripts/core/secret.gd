@@ -196,6 +196,14 @@ static func release_keeper(save: SaveData, day: int) -> void:
 	save.flags[KEEPER_DAY_FLAG] = day
 
 
+## Bekçi'nin gecesinin günü (release_keeper'ın günü): gece sürüyorsa bugün, değilse dün. Bekçi yalnızca gece
+## çıkar; çekişme ya da kart şafağa taşınca bırakış sabaha düşer, gün yine o gecenin kalır (yoksa ertesi gece
+## de sisli olurdu, fırtınası ve Kocabaş'ı gelmezdi; oyun sonrasında Bekçi o gece çıkmazdı).
+static func night_day(rules: FishingRules, clock_s: int) -> int:
+	var day := DayClock.day(rules, clock_s)
+	return day if DayClock.phase(rules, clock_s) == "night" else maxi(0, day - 1)
+
+
 ## Haritanın X'i (derin ortanın KEEPER_BUOY şamandırası; yoksa Dice.NO_POINT).
 static func keeper_x(db: ContentDB, spot_id: String) -> Vector2:
 	for z in db.zones_of(spot_id):

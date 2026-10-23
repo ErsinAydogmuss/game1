@@ -231,6 +231,35 @@ func test_releasing_the_keeper_ends_the_final() -> void:
 	assert_eq(int((save.records.get(Secret.KEEPER_ID, {}) as Dictionary).get("released", 0)), 1, "defterde bırakıldı")
 
 
+## Çekişme ya da kart şafağa taşınca Bekçi sabah bırakılır: gün yine gecenin günü (Secret.night_day). Ertesi gece
+## kendi havasında (yağmurluysa yağmur; sis yalnızca bırakıldığı gece), oyun sonrasında Bekçi ertesi sisli gecede
+## yine çıkar.
+func test_keeper_released_after_dawn_keeps_its_night() -> void:
+	var db := content()
+	var rules := db.rules
+	var day_s := DayClock.day_s(rules)
+	var save := _final_save()
+	# Ertesi günü yağmurlu bir gün: Bekçi o günün gecesinde tutulur, şafaktan sonra bırakılır.
+	var d := -1
+	for day in range(1, 200):
+		if Weather.of_day(rules, save.seed, day + 1) == "rain":
+			d = day
+			break
+	assert_true(d > 0, "ertesi günü yağmurlu bir gün var")
+	if d < 0:
+		return
+	assert_eq(Secret.night_day(rules, d * day_s + 3 * rules.phase_s + 10), d, "gece sürerken gecenin günü bugün")
+	save.clock_s = (d + 1) * day_s + 35
+	assert_eq(DayClock.phase(rules, save.clock_s), "morning", "şafak söktü")
+	assert_eq(Secret.night_day(rules, save.clock_s), d, "sabah: gecenin günü dün")
+	Records.add(save.records, Secret.KEEPER_ID, 517, 5, 0)
+	WorldState.release(db, save, Secret.KEEPER_ID)
+	assert_eq(int(save.flags.get(Secret.KEEPER_DAY_FLAG, -1)), d, "bırakışın günü gecenin günü")
+	assert_eq(Weather.at(rules, save, (d + 1) * day_s + 3 * rules.phase_s + 10), "rain", "ertesi gece kendi havasında")
+	assert_true(not Secret.keeper_due(save, "night", "fog", true, "bottom", d), "bırakıldığı gecede yeniden çıkmaz")
+	assert_true(Secret.keeper_due(save, "night", "fog", true, "bottom", d + 1), "oyun sonrası: ertesi sisli gecede çıkar")
+
+
 ## Bekçi haritanın X'inde (derin ortanın KEEPER_BUOY şamandırası) çıkar: sandaldan her yöne atılan dip takımına
 ## (kurşun derin ortanın suyunda kalır) karşı sandaldan 6–9 m ötede, derin ortanın derin suyunda, takımdan en az
 ## KEEPER_GAP uzakta belirir.

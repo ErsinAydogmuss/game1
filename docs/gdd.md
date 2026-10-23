@@ -851,7 +851,7 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - ✅ İlk gece Nine fener hediye eder ("Nine sana bir fener verdi!", Dede: "Nine fener yolladı evlat! Gece
     balığı bir başkadır."): geceleri balıkçının çevresinde 6 m sıcak ışık. Dükkân ve denge değişmez.
   - Yağmur ısırmayı artırır: gölgeler takımı 1,3 kat uzaktan fark eder ve 1,25 kat hızlı yaklaşır (her teknikte;
-    şamandıranın dürtme zamanlaması değişmez). Ölçüm: balık 0,83 kat sürede gelir.
+    şamandıranın dürtme zamanlaması değişmez). Ölçüm: balık 0,84 kat sürede gelir.
   - Hava önceden belli (gelir kuralı 4): "Bugün" panelinde bugünün ve yarının havası (yağmurlu günde "Gece
     fırtına", sisli günde "Sabah ve gece").
   - Vakit ve hava türlerin oranını değiştirir (§6); gece Ay Turnası'nın, yağmurlu gece Kocabaş'ın tek zamanı.

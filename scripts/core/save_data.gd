@@ -201,7 +201,7 @@ static func from_dict(raw: Dictionary) -> SaveData:
 	s.request_day = maxi(-1, _int(d, "request_day", -1))
 	s.reroll_day = maxi(-1, _int(d, "reroll_day", -1))
 	s.letters = clampi(_int(d, "letters", 0), 0, MAX_LETTERS)
-	s.letter_at = clampi(_int(d, "letter_at", 0), 0, s.catches)
+	s.letter_at = clampi(_int(d, "letter_at", s.catches), 0, s.catches)
 	s.map_pieces = clampi(_int(d, "map_pieces", 0), 0, MAX_MAP_PIECES)
 	s.keeper = maxi(0, _int(d, "keeper", 0))
 	return s
@@ -394,8 +394,9 @@ static func _traps(raw: Variant) -> Array[Dictionary]:
 	return out
 
 
-## İstekler: türü (kind) yazı olmalı; yuva 0..MAX_REQUESTS-1 ve tekrarsız; hedef en az 1, ilerleme
-## 0..hedef; istenenler (want) yazı ya da sıfır/pozitif sayı; ödül sıfır/pozitif sayılar.
+## İstekler: türü (kind) bilinen bir tür olmalı (RequestRules.KINDS; bilinmeyen tür hiç bitmez, altın yuvada
+## Gölün Sırrı'nı kilitlerdi); yuva 0..MAX_REQUESTS-1 ve tekrarsız; hedef en az 1, ilerleme 0..hedef; istenenler
+## (want) yazı ya da sıfır/pozitif sayı; ödül sıfır/pozitif sayılar.
 static func _requests(raw: Variant) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if typeof(raw) != TYPE_ARRAY:
@@ -407,7 +408,7 @@ static func _requests(raw: Variant) -> Array[Dictionary]:
 		var e: Dictionary = entry
 		var kind := _text(e, "kind", "")
 		var slot := _int(e, "slot", -1)
-		if kind.is_empty() or slot < 0 or slot >= MAX_REQUESTS or slots.has(slot):
+		if not kind in RequestRules.KINDS or slot < 0 or slot >= MAX_REQUESTS or slots.has(slot):
 			continue
 		slots[slot] = true
 		var want := {}

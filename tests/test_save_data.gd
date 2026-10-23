@@ -306,18 +306,19 @@ func test_v4_save_migrates_to_v5() -> void:
 	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "göçten sonra gidiş-dönüşte aynı")
 
 
-## v5'in alanları bozuksa ayıklanır: eksi saat sıfır, mektup ve parça sınırda, istekler (türü yazı,
-## yuvası 0..3 ve tekrarsız, hedef en az 1, ilerleme hedefte kalır), tuzağın çöpü yazı.
+## v5'in alanları bozuksa ayıklanır: eksi saat sıfır, mektup ve parça sınırda, istekler (türü bilinen bir tür:
+## bilinmeyen tür hiç bitmez, altın yuvada Gölün Sırrı'nı kilitlerdi; yuvası 0..3 ve tekrarsız, hedef en az 1,
+## ilerleme hedefte kalır), tuzağın çöpü yazı.
 func test_v5_bad_values_are_sanitized() -> void:
 	var s := SaveData.from_dict({
 		"version": 5, "clock_s": -40, "tea_at": -9, "letters": 99, "letter_at": -3, "map_pieces": 7, "keeper": -1,
 		"request_serial": -2, "request_day": -5, "reroll_day": "dün",
 		"requests": [
-			{ "slot": 0, "kind": "fish", "want": { "fish": "rudd", "size_cm": -4, "bad": [1] }, "goal": 3, "progress": 9,
+			{ "slot": 0, "kind": "species", "want": { "fish": "rudd", "size_cm": -4, "bad": [1] }, "goal": 3, "progress": 9,
 				"reward": { "coins": 30, "xp": -1 } },
 			{ "slot": 0, "kind": "zone", "goal": 2 },
-			{ "slot": 7, "kind": "fish" }, { "slot": 2, "kind": "" }, "bozuk",
-			{ "slot": 3, "kind": "special", "goal": 0, "want": "yok" },
+			{ "slot": 7, "kind": "species" }, { "slot": 2, "kind": "" }, "bozuk", { "slot": 1, "kind": "foo", "goal": 1 },
+			{ "slot": 3, "kind": "secret", "goal": 0, "want": "yok" },
 		],
 		"traps": [{ "id": 1, "zone": "reeds", "x": 1.0, "z": 2.0, "items": [], "trash": 5 }],
 	})
@@ -330,7 +331,7 @@ func test_v5_bad_values_are_sanitized() -> void:
 	assert_eq(s.request_serial, 2, "eksi istek sayacı kayıttaki isteklerin sırasının üstünde (sırasız istekler 0 ve tekrarlanan 1)")
 	assert_eq(s.request_day, -1, "gün en az -1")
 	assert_eq(s.reroll_day, -1, "yazı olan gün varsayılana döner")
-	assert_eq(s.requests.size(), 2, "yuvası tekrarlı, bozuk ya da türsüz istek düşer")
+	assert_eq(s.requests.size(), 2, "yuvası tekrarlı, bozuk, türsüz ya da bilinmeyen türde istek düşer")
 	if s.requests.size() == 2:
 		var first := s.requests[0]
 		assert_eq(int(first["progress"]), 3, "ilerleme hedefte kalır")
@@ -347,13 +348,15 @@ func test_v5_bad_values_are_sanitized() -> void:
 func test_v5_counters_follow_the_save() -> void:
 	var s := SaveData.from_dict({
 		"version": 5, "catches": 3, "tea_at": 50, "letter_at": 80, "request_serial": 2,
-		"requests": [{ "slot": 0, "kind": "fish", "serial": 7, "goal": 2 }, { "slot": 1, "kind": "zone", "serial": 4 }],
+		"requests": [{ "slot": 0, "kind": "species", "serial": 7, "goal": 2 }, { "slot": 1, "kind": "zone", "serial": 4 }],
 	})
 	assert_eq(s.tea_at, 3, "çay sayacı balık sayısında kalır")
 	assert_eq(s.letter_at, 3, "şişe sayacı balık sayısında kalır")
 	assert_eq(s.request_serial, 8, "istek sayacı isteklerin en büyük sırasının bir üstü")
 	var kept := SaveData.from_dict({ "version": 5, "catches": 9, "tea_at": 4, "letter_at": 6, "request_serial": 12 })
 	assert_eq([kept.tea_at, kept.letter_at, kept.request_serial], [4, 6, 12], "doğru sayaçlar değişmez")
+	# Şişe sayacı yoksa göçteki gibi balık sayısından sayılır (0 olsaydı eski oyuncunun şişesi hemen çıkardı).
+	assert_eq(SaveData.from_dict({ "version": 5, "catches": 9 }).letter_at, 9, "eksik şişe sayacı balık sayısı")
 
 
 ## Rütbe puanı eğriden eğriye taşınınca her eşikte ve aralığın içinde rütbe aynı kalır,

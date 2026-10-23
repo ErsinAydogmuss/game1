@@ -19,7 +19,8 @@ extends RefCounted
 ## Hikâye balığı (Gölün Bekçisi; summon): sunumun çağırdığı tek gölge. Göldeyken takımı yalnızca o fark eder
 ## (senaryolu ilk av gibi; öteki gölgeler süs olarak dolaşır), korkmaz, vazgeçmez, evinin çevresinde dolaşır;
 ## bölgesinden, balıkçıdan uzaklığından ve gölün koşulundan çekilmez. Gölgelerin sayısına girmez, gidince
-## yerine yenisi doğmaz; kimliği ve zarı ayrı (SUMMON_ID, SUMMON_SALT): öteki gölgelerin zarı kaymaz.
+## yerine yenisi doğmaz; kimliği ve zarı ayrı (SUMMON_ID, SUMMON_SALT): öteki gölgelerin zarı kaymaz (yalnızca
+## takıma yaklaşmakta olan balık ilgisini kaybederken kendi zarından çeker).
 
 const STEP := 1.0 / FishingRules.HZ
 ## Önü kapalıysa denenecek sapma açıları (radyan): kıyı boyunca kayar.
@@ -318,9 +319,10 @@ func find(id: int) -> FishShadow:
 
 
 ## Hikâye balığını çağırır (Gölün Bekçisi): point'te (suda) doğar, türü ve boy yüzdeliği verilir (zar yok);
-## hareketi kendi zarından (SUMMON_SALT). Takıma yaklaşmakta olan öteki balık ilgisini kaybeder: yolu
-## bundan sonra yalnızca onun. Gölde zaten çağrılan bir gölge varsa o kalkar. Doğamazsa (kara, bilinmeyen
-## tür) null.
+## hareketi kendi zarından (SUMMON_SALT). Takıma yaklaşmakta olan öteki balık ilgisini kaybeder (kendi zarından:
+## lose_interest): yolu bundan sonra yalnızca onun. Dürtmeye başlamış balık kalır; oyunda çağırma yalnızca
+## beklerken ve takım ayrılmışken olur (reserved: öteki balık fark etmez). Gölde zaten çağrılan bir gölge varsa
+## o kalkar. Doğamazsa (kara, bilinmeyen tür) null.
 func summon(fish_id: String, point: Vector2, percentile: int) -> FishShadow:
 	var index := _db.fish_index(fish_id)
 	if index < 0 or not _lake.is_water(point):

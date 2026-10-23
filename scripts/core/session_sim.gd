@@ -179,10 +179,11 @@ func cast_once() -> void:
 			_choose_technique()
 		_last_phase = phase
 	casts += 1
-	var before := elapsed
 	if technique != "float":
 		_mark("tech:" + technique)
 	_tend_requests()
+	# Bugün paneline bakış (saat durur) satış ve yolculuk gibi bölgenin ve vaktin süresine girmez.
+	var before := elapsed
 	var cond := conditions()
 	var approach := _range("approach_s", Vector2(3, 9))
 	if str(cond["weather"]) == "rain":
@@ -679,6 +680,10 @@ func _tend_keeper() -> bool:
 	_mark("tech:bottom")
 	casts += 1
 	elapsed += _num("cast_s", 1.6) + _range("keeper_s", Vector2(8.0, 14.0))
+	# Şafak söktüyse Bekçi gelmez (oyunda sabah olunca gelmemiş Bekçi çekilir): atış boşa, sonraki gece.
+	if str(conditions()["phase"]) != "night":
+		_count_zone(before, cond)
+		return true
 	var rules := db.rules
 	var gear := Economy.gear_for(db, save, "bottom")
 	var def := db.fish_by_id(Secret.KEEPER_ID)

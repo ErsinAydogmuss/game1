@@ -40,7 +40,7 @@ static func drink_tea(rules: FishingRules, save: SaveData) -> Dictionary:
 static func release(db: ContentDB, save: SaveData, fish_id: String) -> Dictionary:
 	Records.release(save.records, fish_id)
 	if fish_id == Secret.KEEPER_ID:
-		Secret.release_keeper(save, DayClock.day(db.rules, save.clock_s))
+		Secret.release_keeper(save, Secret.night_day(db.rules, save.clock_s))
 	var rarity := int(db.fish_by_id(fish_id).get("rarity", 0))
 	var love := int(db.rarity_def(rarity).get("love", 0))
 	var out := LakeLove.add(db.rules, save, love)
