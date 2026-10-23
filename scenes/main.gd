@@ -247,13 +247,14 @@ var _pending_bottle: bool = false
 var _letter_read: int = 0
 var _golden_line: String = ""
 ## Gölün Bekçisi (final): karşılaşma (sisli gece, X, dip: KeeperPresenter), bitiş filminden sonraki jenerik,
-## Bekçi'nin kartı kapanınca bitiş filmi oynayacak mı (ilk bırakılışta), oynayan film bitiş filmi mi ve
-## Ayarlar'dan yeniden mi izleniyor (o zaman kayıt ve saat değişmez).
+## Bekçi'nin kartı kapanınca bitiş filmi oynayacak mı (ilk bırakılışta), oynayan film bitiş filmi mi,
+## Ayarlar'dan yeniden mi izleniyor (o zaman kayıt ve saat değişmez) ve filmin şafağı oldu mu.
 var keeper: KeeperPresenter
 var credits_panel: CreditsPanel
 var _ending_due: bool = false
 var _ending: bool = false
 var _ending_replay: bool = false
+var _dawn_done: bool = false
 
 
 func _ready() -> void:
@@ -415,6 +416,9 @@ func _start_session() -> void:
 	camera.snap(_focus())
 	if Story.wants_intro(save):
 		_play_intro()
+	elif save.keeper > 0 and not save.flags.has(Story.ENDING_FLAG):
+		# Bekçi göle döndü ama bitiş filmi görülmedi (kart açıkken uygulama kapandı): film şimdi.
+		_play_ending()
 
 
 ## Açılış filmi (docs/gdd.md §10.5; yeni oyunda bir kez): göl arkada yaşar, kamerayı film sürer.
@@ -430,9 +434,14 @@ func _play_intro() -> void:
 
 
 ## Film bitti (ya da ATLA): açılışta bayrak kayda, kamera oyunun açısına kayar, "Gölgeyi gördün mü?" ipucu
-## başlar (Dede söyler); bitiş filminde jenerik başlar (kamera filmin son çekiminde kalır).
-func _end_intro(_skipped: bool) -> void:
+## başlar (Dede söyler); bitiş filminde jenerik başlar (kamera filmin son çekiminde kalır). Bitiş filmi atlandıysa
+## anları da olur: balıkçı iskelede, saat sabah, göl çiçekli (kamera son çekime kayar).
+func _end_intro(skipped: bool) -> void:
 	if _ending:
+		if skipped:
+			_film.skip_ending()
+		_dawn()
+		_ending_seen()
 		credits_panel.play()
 		_sync_music()
 		return
@@ -441,16 +450,16 @@ func _end_intro(_skipped: bool) -> void:
 	GameState.save_game()
 
 
-## Bitiş filmi (Story.ENDING; Gölün Bekçisi göle bırakılınca bir kez, Ayarlar'da BİTİŞ ile yeniden): göl arkada
-## yaşar, kamerayı ve ışığı film sürer, arayüz gizli. İlk seferde şafakta balıkçı iskeleye döner ve oyunun saati
-## sonraki sabaha geçer (moment "dawn"); göl sevgisinin en üst görünüşüne geçer ("bloom"; Bekçi bırakıldığı için
-## kalıcı). Sonra jenerik. replay: kayıt ve saat değişmez.
+## Bitiş filmi (Story.ENDING; Gölün Bekçisi göle bırakılınca bir kez, kart açıkken uygulama kapandıysa açılışta,
+## Ayarlar'da BİTİŞ ile yeniden): göl arkada yaşar, kamerayı ve ışığı film sürer, arayüz gizli. Balıkçı sandalla
+## X'ten başlar (Bekçi sandalın çevresinde döner); şafakta iskeleye döner, ilk seferde oyunun saati sonraki sabaha
+## geçer (moment "dawn": _dawn); göl sevgisinin en üst görünüşüne geçer ("bloom"; ilk seferde bayrak kayda, kalıcı:
+## _ending_seen). Sonra jenerik. replay: kayıt ve saat değişmez.
 func _play_ending(replay: bool = false) -> void:
 	_ending = true
 	_ending_replay = replay
-	if not replay:
-		GameState.save.flags[Story.ENDING_FLAG] = true
-		GameState.save_game()
+	_dawn_done = false
+	_moor_at_x()
 	_film = StoryFilm.new()
 	_film.setup(camera, angler, elder, nine, shadows, ripples, GameState.db, spot_id)
 	_film.moment.connect(_on_film_moment)
@@ -462,24 +471,41 @@ func _play_ending(replay: bool = false) -> void:
 	_sync_music()
 
 
-## Bitiş filminin anı: şafakta (ilk seferde) kararmada balıkçı iskeleye geçer, gece bitmediyse saat sonraki
-## sabaha; göl çiçek açar (sevginin en üst görünüşü, ışıltılı halkalar).
+## Bitiş filminin anı: şafakta kararmada balıkçı iskeleye geçer (ilk seferde gece bitmediyse saat sonraki
+## sabaha); göl çiçek açar (sevginin en üst görünüşü, ışıltılı halkalar).
 func _on_film_moment(kind: String) -> void:
 	match kind:
 		"dawn":
-			if _ending_replay:
-				return
-			fade.play(func() -> void:
-				_to_dock_start()
-				if DayClock.phase(GameState.db.rules, GameState.save.clock_s) == "night":
-					world_clock.skip(GameState.save)
-				GameState.save_game())
+			if not fade.play(_dawn):
+				_dawn()
 		"bloom":
-			_sync_love_scene()
+			_ending_seen()
 			var start: Vector2 = GameState.db.spot(spot_id)["start"]
 			for k in 6:
 				ripples.spawn(start + Vector2(randf_range(-6.0, 6.0), randf_range(-9.0, -3.0)), randf_range(0.8, 1.6),
 						1.4, Color(1.0, 0.95, 0.7, 0.8), 0.1)
+
+
+## Bitiş filminin şafağı (bir kez; film atlanınca jenerikten önce): balıkçı iskelenin başına (sandaldan iner);
+## ilk seferde gece bitmediyse oyunun saati sonraki sabaha.
+func _dawn() -> void:
+	if _dawn_done:
+		return
+	_dawn_done = true
+	_to_dock_start()
+	if not _ending_replay and DayClock.phase(GameState.db.rules, GameState.save.clock_s) == "night":
+		world_clock.skip(GameState.save)
+	GameState.save_game()
+
+
+## İlk bitiş filmi görüldü (göl çiçek açtı ya da film atlandı): bayrak kayda, göl sevgisinin en üst görünüşü
+## bundan sonra kalıcı (_sync_love_scene).
+func _ending_seen() -> void:
+	if _ending_replay or GameState.save.flags.has(Story.ENDING_FLAG):
+		return
+	GameState.save.flags[Story.ENDING_FLAG] = true
+	GameState.save_game()
+	_sync_love_scene()
 
 
 ## Jenerik bitti (ya da ATLA): film biter, arayüz ve oyunun kamerası geri; Dede'nin bekleyen sözleri sırayla.
@@ -489,16 +515,14 @@ func _on_credits_finished(_skipped: bool) -> void:
 	_world_line_due = true
 
 
-## Ayarlar'da BİTİŞ (Bekçi bir kez bırakıldıysa; olta boşken): ekran kararır, balıkçı iskelenin başına geçer
-## (sandaldaysa iner), bitiş filmi ve jenerik baştan. Kayıt ve saat değişmez.
+## Ayarlar'da BİTİŞ (Bekçi bir kez bırakıldıysa; olta boşken): ekran kararır, balıkçı sandalla X'e geçer (Bekçi
+## sandalın çevresinde döner), şafakta iskeleye; bitiş filmi ve jenerik baştan. Kayıt ve saat değişmez.
 func _replay_ending() -> void:
 	if GameState.save.keeper <= 0 or session.state != FishingSession.State.IDLE or _card_up() or _film != null \
 			or fade.busy():
 		return
 	_stop_for_travel()
 	fade.play(func() -> void:
-		_to_dock_start()
-		_snap_camera()
 		_play_ending(true))
 
 
@@ -563,7 +587,8 @@ func _on_state_changed() -> void:
 	# Kayıt dışarıdan değiştiyse (ayarlar, bot) para, kova ve rütbe de güncel olsun.
 	_refresh_status()
 	if GameState.save != _save_ref:
-		# Kayıt değişti (sıfırlama): göl baştan.
+		# Kayıt değişti (sıfırlama): göl baştan. Eski kaydın Bekçi kartı yeni kayıtta bitiş filmi açmasın.
+		_ending_due = false
 		if card.visible:
 			card.close_card()
 		_card_wait = -1.0
@@ -2251,13 +2276,14 @@ func _after_love(result: Dictionary) -> void:
 	_world_line_due = true
 
 
-## Gölün görünüşü kaydın sevgi seviyesiyle (LakeScene.set_love: bitkiler, berrak su); Gölün Bekçisi göle
-## bırakıldıysa en üst seviyede (göl çiçek açtı: bitiş filmi).
+## Gölün görünüşü kaydın sevgi seviyesiyle (LakeScene.set_love: bitkiler, berrak su); ilk bitiş filmi görüldüyse
+## en üst seviyede (filmde göl çiçek açtı; Bekçi'nin kartı açıkken değil).
 func _sync_love_scene() -> void:
 	_love_scene_due = false
 	var rules := GameState.db.rules
 	var top := LakeLove.max_level(rules)
-	scene.set_love(top if GameState.save.keeper > 0 else LakeLove.level(rules, GameState.save.love), top)
+	var bloomed := GameState.save.flags.has(Story.ENDING_FLAG)
+	scene.set_love(top if bloomed else LakeLove.level(rules, GameState.save.love), top)
 
 
 ## Çöp çıktı (dipte balığın yanında ya da tuzakta): göl sevgisi ve sayaçlar (kovaya girmez, para vermez),
@@ -2867,19 +2893,38 @@ func _go_boat(buoy: int) -> void:
 	var first := not GameState.save.flags.has("visited_" + str(zone["id"]))
 	_stop_for_travel()
 	fade.play(func() -> void:
-		var at := scene.moor_boat(buoys[index])
-		in_boat = true
-		_buoy = index
-		angler.place(at)
-		angler.face_now(buoys[index] - at)
-		session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id, true))
-		session.set_pity_floor(_pity(str(zone["id"])))
-		session.relocate(at)
-		hud.set_boat(true)
-		_follow_zone()
+		_moor(zone, index)
 		_snap_camera()
 		if first:
 			_say("UI_DEDE_BOAT_DEEP"))
+
+
+## Sandal şamandıranın yanına bağlanır, balıkçı içinde (kararmanın ya da filmin altında): gölgeler derin ortada
+## doğar, "Kıyıya dön" düğmesi çıkar.
+func _moor(zone: Dictionary, index: int) -> void:
+	var buoys: Array[Vector2] = zone["buoys"]
+	var at := scene.moor_boat(buoys[index])
+	in_boat = true
+	_buoy = index
+	angler.place(at)
+	angler.face_now(buoys[index] - at)
+	session.set_access(Zones.open_ids(GameState.db, GameState.save, spot_id, true))
+	session.set_pity_floor(_pity(str(zone["id"])))
+	session.relocate(at)
+	hud.set_boat(true)
+	_follow_zone()
+
+
+## Bitiş filminin başı: balıkçı sandalla haritanın X'inde (Bekçi'yi tutan zaten orada; BİTİŞ tekrarında ve
+## açılışta film oraya götürür, sessizce: bölgenin adı filmin altında kalırdı).
+func _moor_at_x() -> void:
+	var zone := _boat_zone()
+	if zone.is_empty() or Secret.KEEPER_BUOY >= (zone["buoys"] as Array).size():
+		return
+	if not (in_boat and _buoy == Secret.KEEPER_BUOY):
+		zone_id = ""
+		_zone_known = false
+		_moor(zone, Secret.KEEPER_BUOY)
 
 
 ## Sandaldan iner (sandal iskeleye döner, gölgeler yine kıyı bölgelerinde doğar). Kararmanın içinde.

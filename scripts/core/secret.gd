@@ -181,7 +181,13 @@ static func keeper_due(save: SaveData, phase: String, weather: String, at_x: boo
 		return false
 	if save.keeper == 0:
 		return final_ready(save)
-	return int(save.flags.get(KEEPER_DAY_FLAG, -1)) != day
+	return not released_on(save, day)
+
+
+## Bekçi bu oyun gününde (gecesi dahil) göle bırakıldı mı (bayrak keeper_day)? O gün yeniden çıkmaz
+## (keeper_due), bırakıldığı gece sabaha kadar sisli kalır (Weather.at: sis şafakta kalkar).
+static func released_on(save: SaveData, day: int) -> bool:
+	return save.keeper > 0 and int(save.flags.get(KEEPER_DAY_FLAG, -1)) == day
 
 
 ## Bekçi göle bırakıldı (WorldState.release): sayaç bir artar, bugün yeniden çıkmaz.

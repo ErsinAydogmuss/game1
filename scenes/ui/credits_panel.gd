@@ -3,8 +3,8 @@ extends Control
 ## Jenerik (docs/gdd.md §10.5; bitiş filminden sonra): StoryPanel gibi "modal" örtü, Dialog değil: göl arkada
 ## yaşar, oyun girdisi kapalı. Koyu yarı saydam zemin; ortada aşağıdan yukarı kendiliğinden kayan yazılar: logo,
 ## emek verenler (ROLES: Ersin fikir ve görseller, Claude kod, KayKit ve Kenney 3B modeller, yazı tipleri, kodla
-## üretilen sesler), teşekkür ve son söz. Sağ üstte ATLA (güvenli alanda, 122 boy); yazılar bitince ya da ATLA'da
-## finished. Süreler _process(delta) toplamıyla.
+## üretilen sesler), teşekkür ve son söz. Sağ üstte ATLA (güvenli alanda, 122 boy; açıldıktan SKIP_GUARD sn
+## sonra çalışır); yazılar bitince ya da ATLA'da finished. Süreler _process(delta) toplamıyla.
 
 signal finished(skipped: bool)
 
@@ -15,6 +15,8 @@ const ROLE_SIZE := 34
 const NAME_SIZE := 52
 const END_SIZE := 46
 const SKIP_SIZE := Vector2(260, 122)
+## ATLA ancak bu kadar sn sonra çalışır: filmin ATLA'sına çift dokunuş jeneriği de atlamasın (iki düğme aynı yerde).
+const SKIP_GUARD := 0.8
 ## Emek verenler: [görevin anahtarı, adlar]. "UI_" ile başlayan ad çevrilir.
 const ROLES: Array[Array] = [
 	["UI_CREDITS_IDEA", ["Ersin"]],
@@ -32,6 +34,8 @@ var held: bool = false
 var _dim: ColorRect
 var _column: VBoxContainer
 var _offset: float = 0.0
+## Jenerik kaç sn'dir ekranda (ATLA'nın koruması).
+var _age: float = 0.0
 
 
 func _ready() -> void:
@@ -51,9 +55,7 @@ func _ready() -> void:
 	add_child(_column)
 	skip_button = UiKit.button("", UiKit.NEUTRAL, UiKit.SIZE_SMALL, SKIP_SIZE)
 	skip_button.name = "Skip"
-	skip_button.pressed.connect(func() -> void:
-		Sounds.play("ui_tap")
-		_finish(true))
+	skip_button.pressed.connect(_on_skip)
 	add_child(skip_button)
 	get_viewport().size_changed.connect(_layout)
 	hide()
@@ -64,6 +66,7 @@ func play() -> void:
 	_build()
 	show()
 	_offset = 0.0
+	_age = 0.0
 	_layout()
 
 
@@ -80,6 +83,7 @@ func content_height() -> float:
 func _process(delta: float) -> void:
 	if not visible or held:
 		return
+	_age += delta
 	_offset += delta * SPEED
 	_layout()
 	var view := get_viewport_rect().size
@@ -90,6 +94,13 @@ func _process(delta: float) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch or event is InputEventMouseButton:
 		accept_event()
+
+
+func _on_skip() -> void:
+	if _age < SKIP_GUARD:
+		return
+	Sounds.play("ui_tap")
+	_finish(true)
 
 
 func _finish(skipped: bool) -> void:

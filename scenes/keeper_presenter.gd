@@ -6,9 +6,11 @@ extends Node
 ## titreşim, bildirim, Dede'nin sözü ve Bekçi'nin müziği (presence_changed: main müziği değiştirir). O gece X'te
 ## takım Bekçi'nin (FishingSession.reserve): o belirmeden ya da kaçıp dönmeden öteki balıklar yemi kapmaz. Dalışın
 ## uyarısında ve dalışta turkuaz halka, sarsıntı, ses ve titreşim (ipucu main'de: UI_HINT_KEEPER_DIVE). Kaçarsa
-## RETURN_TIME sn sonra yine gelir (Dede söyler); sabah olunca gider. X'te dip kamışı elde değilse ya da final
+## RETURN_TIME sn sonra yine gelir (Dede söyler; o arada sabah olursa gelmez, Dede söyler); sabah olunca gider.
+## Aynı gece yeniden belirince Dede "geri geldi" der. X'te dip kamışı elde değilse ya da final
 ## gecesi henüz gelmediyse Dede ne yapılacağını söyler (oturum başına bir kez). main kurar (setup), her oyun
-## karesinde update eder (filmde, panel açıkken ve odak kaybında etmez), oturumun olaylarını on_event ile iletir.
+## karesinde update eder (filmde, kararmada, panel açıkken ve odak kaybında etmez), oturumun olaylarını on_event
+## ile iletir.
 ## Süreler update'in delta'sıyla (oyun saati gibi).
 
 ## Dede'nin sözü (main ipucu çubuğunda söyler).
@@ -40,6 +42,8 @@ var _return_wait: float = 0.0
 var _fighting: bool = false
 ## Bu gece kaç kez belirdi (ikincisinden sonra "geri geldi").
 var _rises: int = 0
+## Son karede Bekçi'nin vakti miydi (Secret.keeper_due): kaçan Bekçi ancak öyleyse geri gelir.
+var _due: bool = false
 ## Bu oturumda söylendi: X'te dip kamışı elde değil; final gecesi ama gece değil.
 var _told_bottom: bool = false
 var _told_wait: bool = false
@@ -61,6 +65,7 @@ func reset() -> void:
 	_return_wait = 0.0
 	_fighting = false
 	_rises = 0
+	_due = false
 	_told_bottom = false
 	_told_wait = false
 	_rings.clear()
@@ -86,20 +91,26 @@ func update(delta: float, session: FishingSession, save: SaveData, cond: Diction
 	var day := DayClock.day(db.rules, save.clock_s)
 	var technique := session.technique.id
 	var due := Secret.keeper_due(save, phase, weather, at_x, technique, day)
+	_due = due
 	# Bekçi'nin gecesinde X'te takım onun: belirmeden önce yakındaki bir balık yemi kapmasın.
 	session.reserve(due)
 	var keeper := session.summoned()
-	if not due:
+	if phase != "night":
 		_rises = 0
+	if not due:
 		# Sabah oldu (sis kalktı): dolaşan Bekçi derinlere döner; yaklaşan ya da oltadaki kendi sonucuyla biter.
 		if keeper != null and keeper.mode != FishShadow.Mode.FLEE and session.dismiss_summoned() and phase != "night":
 			speak.emit("UI_DEDE_KEEPER_GONE")
+		elif keeper == null and _return_wait > 0.0 and phase != "night":
+			# Kaçan Bekçi'yi beklerken sabah oldu: bu gece dönmez.
+			_return_wait = 0.0
+			speak.emit("UI_DEDE_KEEPER_GONE")
+	# Takım RISE_DELAY sn kesintisiz bekleyince Bekçi belirir (yer yoksa sonraki karede yeniden denenir).
 	if due and keeper == null and _return_wait <= 0.0 and session.state == FishingSession.State.WAITING:
 		_waiting += delta
-		if _waiting >= RISE_DELAY:
+		if _waiting >= RISE_DELAY and _rise(session, save):
 			_waiting = 0.0
-			_rise(session, save)
-	elif session.state != FishingSession.State.WAITING:
+	else:
 		_waiting = 0.0
 	# X'te Dede yol gösterir: altın hamur dipte işe yarar; Bekçi gece gelir (çay içip beklenebilir).
 	if at_x and session.state == FishingSession.State.IDLE:
@@ -135,29 +146,34 @@ func on_event(e: Dictionary, session: FishingSession) -> void:
 		"lost":
 			if _fighting:
 				_fighting = false
-				_return_wait = RETURN_TIME
-				speak.emit("UI_DEDE_KEEPER_LOST")
+				if _due:
+					_return_wait = RETURN_TIME
+					speak.emit("UI_DEDE_KEEPER_LOST")
+				else:
+					# Çekişirken sabah oldu: bu gece dönmez.
+					speak.emit("UI_DEDE_KEEPER_GONE")
 		"catch":
 			_fighting = false
 
 
-## Bekçi belirir: takıma karşı, sandaldan 6–9 m ötede (yer yoksa sonraki karede yeniden denenir).
-func _rise(session: FishingSession, save: SaveData) -> void:
+## Bekçi belirir: takıma karşı, sandaldan 6–9 m ötede. Belirdiyse true (yer yoksa false: sonraki karede yeniden).
+func _rise(session: FishingSession, save: SaveData) -> bool:
 	var point := Secret.keeper_point(db, spot_id, session.angler, session.bobber)
 	if not Dice.is_point(point) or session.summon(Secret.KEEPER_ID, point, Secret.KEEPER_PERCENTILE) < 0:
-		return
+		return false
 	_rises += 1
 	_queue_rings(point, RISE_RINGS)
 	Sounds.play("sting")
 	Sounds.haptic(60)
 	camera.shake(0.06)
 	hud.toast(tr("UI_KEEPER_RISE"), UiKit.rarity_color(db, db.rarity_index("mythic")), "rarity:medallion")
-	if save.keeper > 0:
-		speak.emit("UI_DEDE_KEEPER_AGAIN")
-	elif _rises == 1:
-		speak.emit("UI_DEDE_KEEPER_RISE")
-	else:
+	if _rises > 1:
 		speak.emit("UI_DEDE_KEEPER_BACK")
+	elif save.keeper > 0:
+		speak.emit("UI_DEDE_KEEPER_AGAIN")
+	else:
+		speak.emit("UI_DEDE_KEEPER_RISE")
+	return true
 
 
 func _queue_rings(at: Vector2, rings: Array[Vector3]) -> void:

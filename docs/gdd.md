@@ -998,12 +998,14 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
        modda Kolay): iki dalış (§5); dalışın uyarısında ipucu "BIRAK! Bekçi dalıyor!", turkuaz halka, ses, sarsıntı,
        titreşim.
      - Kaçarsa (misina koptu): Dede "Kaçırdık! Bekle, geri gelecek."; 25 sn sonra yeniden atınca gelir ("Geri geldi!
-       Bu sefer dalınca bırak evlat."). Sabah olunca derinlere döner ("Sabah oldu, Bekçi derinlere döndü."). Ceza yok.
+       Bu sefer dalınca bırak evlat."; oyun sonrasında da). Sabah olunca derinlere döner ("Sabah oldu, Bekçi derinlere
+       döndü."; çekişirken ya da beklerken sabah olursa o gece gelmez). Ceza yok.
      - Tutulunca elde gösterilmez (5 m): sudan çıktığı yerde turkuaz halkalar, herkes sevinir; Masalsı kart (koruma
        sözü), tek düğme "Göle bırak". Şans garantisine sayılmaz, yanında çöp çıkmaz. Bırakmak finali bitirir
-       (`save.keeper`), Masalsı kademenin göl sevgisi 100.
-     - **Bitiş filmi** (kart kapanınca, bir kez; ~32 sn; açılış filmi gibi göl arkada yaşar; dokununca sonraki söz,
-       ATLA; kendi müziği):
+       (`save.keeper`), Masalsı kademenin göl sevgisi 100. O gece sabaha kadar sisli kalır (sis şafakta kalkar).
+     - **Bitiş filmi** (kart kapanınca, bir kez; kart açıkken uygulama kapandıysa açılışta; ~32 sn; açılış filmi gibi
+       göl arkada yaşar; dokununca sonraki söz, ATLA; kendi müziği). Şafak ve çiçek açma ATLA'da da olur: film bitince
+       balıkçı iskelede, saat sabah, göl çiçekli. Göl kart açıkken değil, filmde çiçek açar:
 
        | # | Konuşan · çekim | Söz |
        |---|---|---|
@@ -1013,11 +1015,12 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
        | 4 | Dede · Dede ve Nine sevinir | Aferin evlat! Gölün sırrı artık senin de sırrın. |
        | 5 | Nine · göl, geniş | Bu göl artık senin de evin. Ne zaman istersen gel evladım! |
 
-     - **Jenerik** (filmden sonra; kendiliğinden yukarı kayar, ATLA): logo; Fikir ve görseller: Ersin; Kod: Claude;
+     - **Jenerik** (filmden sonra; kendiliğinden yukarı kayar, ATLA; filmin ATLA'sına çift dokunuş jeneriği atlamaz): logo; Fikir ve görseller: Ersin; Kod: Claude;
        3B modeller: KayKit · Kay Lousberg, Kenney; Yazı tipleri: Luckiest Guy · Astigmatic, Baloo 2 · Ek Type; Sesler ve
        müzik: kodla üretildi; Teşekkürler: oynayan herkese; son söz "Gölün Bekçisi'ni göle bıraktın. Göl seni bekliyor!".
      - **Oyun sonrası:** geceler normal havaya döner; rütbe 20'nin sözü Bekçi'den sonra "Artık gölün efsanesisin. Bekçi
-       bile sana selam verdi!"; Ayarlar'da BİTİŞ filmi ve jeneriği yeniden oynatır (saat ve kayıt değişmez);
+       bile sana selam verdi!"; Ayarlar'da BİTİŞ filmi ve jeneriği yeniden oynatır (sandalla X'ten başlar, şafakta
+       iskele; saat ve kayıt değişmez);
        kendiliğinden gelen sisli gecelerde X'te Bekçi yine çıkar, filmsiz ("Bekçi yine sana göründü evlat!"; bırakıldığı
        gün değil). Defterde 19. tür (ipucu "Haritanın X'inde, sisli bir gecede, altın hamurla."), Gölün Sırrı
        görünüşünde "Gölün Bekçisi'ni göle bıraktın. Göl seni seviyor!".

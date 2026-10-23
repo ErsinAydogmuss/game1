@@ -1015,7 +1015,7 @@ func _play_rarity() -> void:
 	book.open_book("wels")
 	await _wait(0.4)
 	await _shot("21_defter_yayin_siluet")
-	# 18 tür iki sayfada (Dalga 3 ve 4); ikinci sayfada teknik ve gece türleri. Kerevitin ipucu tuzağı, alabalığınki
+	# 19 tür iki sayfada (Dalga 3 ve 4; 19. Gölün Bekçisi); ikinci sayfada teknik ve gece türleri. Kerevitin ipucu tuzağı, alabalığınki
 	# sineği söyler; oranların başlığında elindeki tekniğin adı.
 	var pages := 0
 	for node in book.find_children("*", "Button", true, false):
@@ -3316,15 +3316,22 @@ func _play_keeper() -> void:
 	var clock_before := save.clock_s
 	if ending != null:
 		await _tap_control(ending)
-	_check("BİTİŞ: film baştan", await _wait_until(func() -> bool:
-			return story.visible and story.lines() == Story.ENDING, 5.0))
+	_check("BİTİŞ: film baştan, sandal X'te (Bekçi onun çevresinde döner)", await _wait_until(func() -> bool:
+			return story.visible and story.lines() == Story.ENDING, 5.0) and bool(main.get("in_boat"))
+			and int(main.get("_buoy")) == Secret.KEEPER_BUOY)
 	await _wait(1.0)
 	await _tap_control(story.skip_button)
 	_check("ATLA: jenerik", await _wait_until(func() -> bool: return credits.visible, 3.0))
+	# Jeneriğin ATLA'sı hemen çalışmaz (filmin ATLA'sına çift dokunuş jeneriği atlamasın).
+	await _tap_control(credits.skip_button)
+	await _wait_frames(3)
+	_check("jeneriğin ATLA'sı hemen çalışmaz", credits.visible)
+	await _wait(CreditsPanel.SKIP_GUARD + 0.2)
 	await _tap_control(credits.skip_button)
 	await _wait_until(func() -> bool: return not credits.visible, 3.0)
 	await _wait(0.5)
-	_check("yeniden izlemek saati değiştirmez", save.clock_s == clock_before)
+	_check("yeniden izlemek saati değiştirmez; ATLA'dan sonra balıkçı iskelede", save.clock_s == clock_before
+			and not bool(main.get("in_boat")))
 	# Oyun sonrası: kendiliğinden sisli bir gecede X'te Bekçi yine gelir (filmsiz).
 	main.call("_debug_time")
 	main.call("_debug_time")
@@ -3349,6 +3356,27 @@ func _play_keeper() -> void:
 			return _session().summoned() != null, 6.0) and await _wait_until(func() -> bool:
 			return str(main.get("_line")) == "UI_DEDE_KEEPER_AGAIN", 4.0))
 	await _shot("11_oyun_sonrasi")
+	# Bekçi'nin kartı açıkken uygulama kapandıysa (Bekçi göle döndü, film görülmedi): açılışta bitiş filmi oynar,
+	# balıkçı sandalla X'te; ATLA'da da filmin anları olur: iskelede, saat sabah, göl çiçekli, kayıtta.
+	var copy := SaveData.from_dict(GameState.save.to_dict())
+	copy.flags.erase(Story.ENDING_FLAG)
+	copy.clock_s = DayClock.day(rules, copy.clock_s) * DayClock.day_s(rules) + 3 * rules.phase_s + 10
+	GameState.use_save(copy)
+	await _wait_frames(3)
+	_check("Bekçi tutulmuş, film görülmemiş kayıt: açılışta bitiş filmi, sandal X'te", story.visible
+			and story.lines() == Story.ENDING and bool(main.get("in_boat")) and int(main.get("_buoy")) == Secret.KEEPER_BUOY)
+	await _wait(1.0)
+	await _tap_control(story.skip_button)
+	await _wait_until(func() -> bool: return credits.visible, 3.0)
+	await _wait(0.4)
+	var docked_after := not bool(main.get("in_boat")) \
+			and _angler().pos2().distance_to(db.spot(str(main.get("spot_id")))["start"]) < 0.5
+	_check("ATLA'da da şafak ve çiçek: iskelede, sabah, göl çiçekli, kayıtta", docked_after
+			and DayClock.phase(rules, GameState.save.clock_s) == "morning"
+			and scene.love_level() == LakeLove.max_level(rules) and GameState.save.flags.has(Story.ENDING_FLAG))
+	await _wait(CreditsPanel.SKIP_GUARD + 0.2)
+	await _tap_control(credits.skip_button)
+	await _wait_until(func() -> bool: return not credits.visible, 3.0)
 	_finish_checks()
 
 

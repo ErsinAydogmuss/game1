@@ -157,6 +157,18 @@ func end() -> void:
 	_ghost_age = -1.0
 
 
+## Bitiş filmi atlandı (jenerik başlıyor): kamera son çekime kayar, ışık sabahın, dev gölge kalkar.
+func skip_ending() -> void:
+	look = DayLook.of("morning", "clear")
+	_from = [camera.target, camera.zoom, camera.pitch]
+	_to = _shot_of(str(lines[lines.size() - 1][2]))
+	_move = 0.0
+	if _ghost != null:
+		_ghost.queue_free()
+		_ghost = null
+	_ghost_age = -1.0
+
+
 ## Dev gölge şu an görünüyor mu (bot denetler)?
 func ghost_point() -> Vector3:
 	return _ghost.global_position if _ghost != null and _ghost.is_inside_tree() else Vector3.INF

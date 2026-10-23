@@ -41,6 +41,8 @@ const LOOPS := { "reel": -12.0, "strain": -14.0, "bell_run": -9.0 }
 ## Müzik parçaları (Dalga 4): dört vaktin sakin döngüleri, Nine'nin dükkânının valsi, Gölün Bekçisi'nin parçası
 ## (karşılaşma ve çekişme) ve bitişin parçası (bitiş filmi, jenerik) (music/<ad>.ogg).
 const MUSIC := ["morning", "noon", "evening", "night", "shop", "keeper", "ending"]
+## Her seferinde baştan çalan parçalar (Bekçi'nin gelişi, bitiş filmi): kaldığı yerden sürmez.
+const RESTART := ["keeper", "ending"]
 ## Ortam sesleri: göl (gündüz), gece (cırcır böceği, kurbağa), yağmur (ambience/<ad>.ogg).
 const AMBIENCE := ["lake", "night", "rain"]
 const MUSIC_DB := -15.0
@@ -265,10 +267,11 @@ func _switch(pair: Array[AudioStreamPlayer], track: String, dir: String, volume_
 		previous.kill()
 	fresh.stream = stream
 	fresh.volume_db = -60.0
-	# Müzik kaldığı yerden sürer (dükkândan dönünce vaktin müziği baştan başlamaz); ortam sesi baştan.
+	# Müzik kaldığı yerden sürer (dükkândan dönünce vaktin müziği baştan başlamaz; Bekçi'nin ve bitişin parçası
+	# baştan: RESTART); ortam sesi baştan.
 	if music and old.playing and not current_name.is_empty():
 		_music_pos[current_name] = old.get_playback_position()
-	fresh.play(float(_music_pos.get(track, 0.0)) if music else 0.0)
+	fresh.play(float(_music_pos.get(track, 0.0)) if music and not track in RESTART else 0.0)
 	var tween := create_tween().set_parallel(true)
 	tween.tween_property(fresh, "volume_db", volume_db, FADE_TIME).set_trans(Tween.TRANS_SINE)
 	if old.playing:

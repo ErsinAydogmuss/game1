@@ -87,7 +87,8 @@ func test_debug_cycle_changes_only_today() -> void:
 
 
 ## Final hazırken (Gölün Bekçisi bırakılana kadar) her gece sisli, fırtına yok; öteki vakitler günün havasıyla.
-## Bekçi bırakılınca geceler yine günün havasına döner (yağmurlu gece fırtına, Kocabaş).
+## Bekçi'nin bırakıldığı gece sabaha kadar sisli kalır (günün zarı aynı); sonraki geceler yine günün havasıyla
+## (yağmurlu gece fırtına, Kocabaş).
 func test_final_nights_are_foggy_until_the_keeper_is_released() -> void:
 	var db := content()
 	var rules := db.rules
@@ -118,5 +119,16 @@ func test_final_nights_are_foggy_until_the_keeper_is_released() -> void:
 	assert_eq(WorldState.conditions(db, save)["weather"], "fog", "koşullarda final gecesinin sisi")
 	save.records[Secret.KEEPER_ID] = { "count": 1, "best_cm": 517, "best_stars": 5, "first_unix": 0, "released": 0 }
 	WorldState.release(db, save, Secret.KEEPER_ID)
-	assert_eq(Weather.at(rules, save), "rain", "Bekçi bırakılınca yağmurlu gece yine yağmur")
-	assert_true(Weather.stormy(Weather.at(rules, save), "night"), "ve fırtına")
+	assert_eq(Weather.at(rules, save), "fog", "Bekçi'nin bırakıldığı gece sabaha kadar sisli (sis şafakta kalkar)")
+	assert_eq(Weather.forecast(rules, save)[0], "rain", "günün zarı aynı (tahmin)")
+	# Sonraki yağmurlu gece yine yağmur (fırtına): final bitti.
+	var next_rain := -1
+	for day in range(rain_day + 1, rain_day + 120):
+		if Weather.of_day(rules, save.seed, day) == "rain":
+			next_rain = day
+			break
+	assert_true(next_rain > 0, "sonra yine yağmurlu gün var")
+	if next_rain > 0:
+		var night := next_rain * DayClock.day_s(rules) + 3 * rules.phase_s + 10
+		assert_eq(Weather.at(rules, save, night), "rain", "Bekçi bırakıldıktan sonra yağmurlu gece yine yağmur")
+		assert_true(Weather.stormy(Weather.at(rules, save, night), "night"), "ve fırtına")
