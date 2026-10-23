@@ -319,7 +319,8 @@ Kazı'nın yapısı. ✅ = var, 🔜 = sıradaki adımlarda.
   - Uzun sözlü balık kartı (mersin) ortadaki 1080'lik kareden taşar: kurguda geniş kırpılır (`aspect`).
   - Dalga 4: mersin bırakılınca göl sevgisi 3. seviyeye çıkar; bildirim ve "love_up" sesi kayda girer (Dede'nin sözü gizli çubukta). Yeniden çekimde `reels_ad.py --check` bildirimin bir parçaya düşüp düşmediğini söyler.
   - Gizlenen saat çipi ve kova hapı (saydam) dokunuş almaya devam eder: atış noktası `_reels_spot` ekranda ve bir düğmenin altında olmayan yeri seçer (v0.5'in kuru çekiminde çipe düşen dokunuş "Bugün" panelini açık bıraktı, sonraki bütün dokunuşları yuttu). Çekimden önce açık kalmış panel kapanır, günlüğe "açık panel kapatıldı" yazılır.
-  - Ortam sesi kayda girmez: bot her kare durdurur (görünüş değişince main yenisini açar), kurgu kesimin bölümlerine göre ekler. v0.5'te bildirimler de gizli (yazılar kurguda).
+  - Ortam sesi kayda girmez: bot her kare durdurur (görünüş değişince main yenisini açar), kurgu kesimin bölümlerine göre ekler. v0.5'te bildirimler de gizli (yazılar kurguda; günlükte `REELS HIDE toasts`: `--check` onları parçalara saymaz).
+  - Nine'nin feneri gece yakın çekimleri gündüz gibi gösterir (6 m'lik ışık havuzu): v0.5'te yalnızca fener çekiminde yanar, bot sonrakilerde bayrağı kapatır (saat donuk: vakit değişmez, fener geri verilmez).
   - Senk: zamanlayıcıdan (`await` + timer) dönen kodun istediği çizim bir kare sonra görünür. Bot SYNC'i beyazın gerçekten çizildiği karede yazar (`video_overlay.flashed`); Movie Maker'da kaydın karesi `Engine.get_frames_drawn()` ile aynı.
   - PIL'le Luckiest Guy yazarken üst payı `getbbox(..., anchor="ma", stroke_width=...)` ile hesapla: İ'nin noktası ve Â'nın şapkası üst çizginin 23–40 px üstüne çıkar, sabit pay onları keser.
 - `Image.blend_rect` iki görüntünün aynı biçimde olmasını ister (RGBA8).

@@ -3,7 +3,7 @@
 
 Girdi:
   --avi    `reels` bot senaryosunun kaydı (--write-movie; 30 fps, MJPEG + PCM)
-  --log    aynı çalıştırmanın çıktısı (REELS SYNC/TAKE/MARK/CUT/PANEL/TOAST/AIM/END satırları)
+  --log    aynı çalıştırmanın çıktısı (REELS SYNC/SET/HIDE/TAKE/MARK/CUT/PANEL/TOAST/AIM/END satırları)
   --music  tools/reels_music.py çıktısının klasörü (music_30.wav, music_15.wav; yoksa üretilir)
   --out    çıktı klasörü
 Kurgu listesi tools/reels_edl.json: parçalar işaretlere göre (vuruşla), yazılar, müzik bölümleri.
@@ -86,7 +86,7 @@ def run(cmd, **kw):
 
 def parse_log(path):
     info = {"sync": None, "view": None, "end": None, "set": "v04", "marks": {}, "cuts": [], "panels": {},
-            "toasts": [], "takes": [], "aims": []}
+            "toasts": [], "takes": [], "aims": [], "hidden": set()}
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
             if not line.startswith("REELS "):
@@ -115,6 +115,8 @@ def parse_log(path):
                 info["aims"].append((frame, rest))
             elif kind == "SET":
                 info["set"] = rest.strip()
+            elif kind == "HIDE":
+                info["hidden"].add(rest.strip())
             elif kind == "END":
                 info["end"] = frame
     if info["sync"] is None or info["end"] is None:
@@ -224,7 +226,10 @@ def cover_problems(info, cut):
 
 
 def toasts_in(info, shots):
+    """Parçaya düşen bildirimler (bot bildirimleri gizlediyse, HIDE toasts: hiçbiri görünmez)."""
     out = []
+    if "toasts" in info["hidden"]:
+        return out
     for frame, text in info["toasts"]:
         for s in shots:
             if s["start"] - 30 <= frame < s["end"]:

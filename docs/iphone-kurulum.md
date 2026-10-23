@@ -308,7 +308,7 @@ Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte
 | Çekişme anında | | | |
 
 - **Hedef:** her yerde 60 FPS, en az 50.
-- **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken; v0.4.1): iskelede 141, öteki yerlerde 89–115, sandalda 96. Telefondaki sayı bundan çok farklıysa not et.
+- **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken; v0.5): iskelede 142, öteki yerlerde 90–116, sandalda 97. Gece, yağmur ya da ateşböcekleriyle iskelede en çok 147; suda şişe varken +1 (halkasıyla +2). Telefondaki sayı bundan çok farklıysa not et.
 - FPS 50'nin altındaysa şunları da yaz: hangi yerde düştüğü, telefonun ısınıp ısınmadığı, ilk açılışta mı yoksa sürekli mi olduğu.
 
 İstersen bir de `--export-release` ile kur (8. adım) ve açık bölgelerde ölç. Release derlemede deneme düğmeleri (HEPSİNİ AÇ, para, RÜTBE +1) yoktur; sayılar debug'dan biraz daha iyi çıkar.

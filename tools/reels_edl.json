@@ -405,8 +405,8 @@
 				{
 					"id": "aksam",
 					"beats": 6,
-					"src": "dusk.fall",
-					"offset": -24
+					"src": "dusk.night",
+					"offset": -95
 				},
 				{
 					"id": "fener",
@@ -442,13 +442,13 @@
 					"id": "dev",
 					"beats": 5,
 					"src": "storm.swim",
-					"offset": 30
+					"offset": 22
 				},
 				{
 					"id": "kosu",
 					"beats": 5,
 					"src": "storm.biting",
-					"offset": 0
+					"offset": 2
 				}
 			],
 			"captions": [
@@ -628,7 +628,7 @@
 					"id": "dalis",
 					"beats": 5,
 					"src": "keeper.dive_warn",
-					"offset": -24
+					"offset": -10
 				}
 			],
 			"captions": [

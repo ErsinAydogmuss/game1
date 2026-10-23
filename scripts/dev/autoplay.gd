@@ -170,6 +170,8 @@ const REELS_NIGHT_AT := 40
 const REELS_LEGEND_PERCENTILE := 750000
 const REELS_MOON_REACTION := 12
 const REELS_KEEPER_REACTION := 10
+## Dipte koşunun kırpma denetimi kaç kare sonra (kameranın kesmesinden sonra).
+const REELS_STAND_AIM_DELAY := 3
 const REELS_GHOST_FRAMES := 150
 const REELS_GHOST_SIDE := 1.9
 var _reels_only: PackedStringArray = PackedStringArray()
@@ -4900,8 +4902,10 @@ func _reels_setup_v05() -> void:
 	await _wait_frames(2)
 	_park_fn = _reels_park_point
 	_reels_quiet()
+	# Bildirimler kayıtta görünmez (hikâyeyi kurgunun yazıları anlatır); kurgu aracı onları parçalara saymaz.
 	var toast_box: Control = _hud().get("_toast_box")
 	(toast_box.get_parent() as Control).modulate.a = 0.0
+	_reels_log("HIDE", "toasts")
 
 
 ## İskele, öğleden geceye: geniş çekim, kamera yavaşça yaklaşır; saat hızla akar (öğleden akşama, akşamdan geceye;
@@ -4964,6 +4968,9 @@ func _reels_lantern() -> void:
 ## Nilüferli koy, gece: Ay Turnası'nın (Efsanevi, yalnızca gece) parlayan izli gölgesi şamandıraya süzülür
 ## (yaklaşan kamera), dalar, VUR; çekişmede sudan sıçrar; elde altın ışık sütunu, kart ("Göle bırak").
 func _reels_moon() -> void:
+	# Fener yalnızca fener çekiminde yanar: 6 m'lik ışığı yakın çekimleri gündüz gibi gösterir, gecenin gizemi
+	# (parlayan gölgeler, şişe, Bekçi) karanlıkta okunur. Saat donuk: vakit değişmez, fener geri verilmez.
+	GameState.save.flags[str(main.get("LANTERN_FLAG"))] = false
 	_set_shot(func() -> Dictionary: return _game_frame(0.9))
 	await _reels_go("lily_cove")
 	await _reels_technique("float")
@@ -5018,16 +5025,9 @@ func _reels_storm() -> void:
 		_check("reels: fırtına: dip atışı", false)
 		return
 	await _wait(1.0)
-	var session := _session()
-	var lead := session.bobber
-	var dir := (lead - session.angler).normalized()
-	var lake := session.lake
-	var start := lead + dir * 3.0
-	for d: float in [6.5, 5.5, 4.5, 3.5]:
-		var p := lead + dir * d + dir.orthogonal() * 1.2
-		if lake.is_deep(p, 1.0):
-			start = p
-			break
+	var lead := _session().bobber
+	# Kurşun menzilin sonunda, bölgenin suyunun kenarına yakın düşer: dev gölge kıyıdan en uzak yoldan gelir.
+	var start := _reels_open_path(lead, 6.0)
 	var fish := _shadow_at(start, lead - start, "kocabas", REELS_LEGEND_PERCENTILE)
 	if fish == null:
 		_check("reels: fırtına: Kocabaş", false)
@@ -5191,6 +5191,9 @@ func _reels_keeper() -> void:
 	_no_bites = false
 	_placed = null
 	_take("keeper")
+	# Kamera sandalla Bekçi'nin ortasına bakar; Bekçi belirmeden önce belireceği yere (rise): dikey kırpmada
+	# yükselir, sonra takıma gelir.
+	var plan := {}
 	_set_shot(func() -> Dictionary:
 		var session := _session()
 		var boat := _angler().global_position
@@ -5199,13 +5202,22 @@ func _reels_keeper() -> void:
 			var p := session.fight_point()
 			var f := Vector3(p.x, 0.0, p.y)
 			return _frame(boat.lerp(f, 0.55), clampf(boat.distance_to(f) / 8.0, 0.85, 1.6), float(main.get("LINE_PITCH")))
-		var b := Vector3(session.bobber.x, 0.0, session.bobber.y)
-		var aim := b if keeper == null else b.lerp(Vector3(keeper.pos.x, 0.0, keeper.pos.y), 0.5)
+		var aim := Vector3(session.bobber.x, 0.0, session.bobber.y)
+		if keeper != null:
+			aim = Vector3(keeper.pos.x, 0.0, keeper.pos.y)
+			plan.erase("rise")
+		elif plan.has("rise"):
+			var rise: Vector2 = plan["rise"]
+			aim = Vector3(rise.x, 0.0, rise.y)
 		return _frame(boat.lerp(aim, 0.5), clampf(boat.distance_to(aim) / 7.5, 1.0, 1.7), float(main.get("LINE_PITCH"))))
 	await _reels_cast(5.0)
 	if not await _wait_state(FishingSession.State.WAITING, 4.0):
 		_check("reels: X: dip atışı", false)
 		return
+	# KeeperPresenter'ın çağıracağı yer (sandal ve kurşun değişmez: aynı nokta).
+	var point := Secret.keeper_point(GameState.db, str(main.get("spot_id")), _session().angler, _session().bobber)
+	if point != Dice.NO_POINT:
+		plan["rise"] = point
 	var rose := await _wait_until(func() -> bool: return _session().summoned() != null, KeeperPresenter.RISE_DELAY + 4.0)
 	var sniffed := rose and await _wait_state(FishingSession.State.NIBBLING, 30.0)
 	var ran := sniffed and await _wait_state(FishingSession.State.BITING, 20.0)
@@ -5542,9 +5554,14 @@ func _reels_watch() -> void:
 		_mark(str(FishingSession.State.find_key(state)).to_lower())
 		if session.state in [FishingSession.State.BITING, FishingSession.State.FOLLOWING]:
 			if session.technique.id == "bottom":
-				_aim(_mark_tag + ".stand", stand.global_position + Vector3(0.0, 0.45, 0.0))
+				# Sehpa birkaç kare sonra denetlenir: çekim kamerayı koşuda sehpaya kesebilir (_snap_shot).
+				_watch["stand_aim"] = Engine.get_frames_drawn() + REELS_STAND_AIM_DELAY
 			else:
 				_aim(_mark_tag + ".rig", Vector3(session.bobber.x, 0.0, session.bobber.y))
+	var stand_aim := int(_watch.get("stand_aim", -1))
+	if stand_aim >= 0 and Engine.get_frames_drawn() >= stand_aim:
+		_watch.erase("stand_aim")
+		_aim(_mark_tag + ".stand", stand.global_position + Vector3(0.0, 0.45, 0.0))
 	var reel := session.reel
 	var fighting := session.state == FishingSession.State.FIGHTING and reel != null
 	if _edge("show", (main.get("catch_fx") as CatchFx).is_showing()):
