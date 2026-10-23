@@ -5045,6 +5045,8 @@ func _reels_storm() -> void:
 			var near := Vector3(b.x, 0.0, b.y).lerp(Vector3(fish.pos.x, 0.0, fish.pos.y), 0.4)
 			return _frame(near, _ease(1.0, 0.72, 5.0, _shot_t), float(main.get("LINE_PITCH")))
 		return _game_frame(0.9))
+	# Dev gölge belirdiği an kadrajda (Dede'nin efsane haberi aynı karede): kamera ona keser, sonra yavaşça yaklaşır.
+	_snap_shot()
 	_mark("swim")
 	await _wait_until(func() -> bool: return fish.pos.distance_to(lead) < 3.2, 12.0)
 	await _reels_lightning()
