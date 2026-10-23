@@ -25,6 +25,11 @@
 | ![Dip: olta sehpada, zil durmadan çalıyor, VUR](docs/ekran/14_dip.jpg) | ![Sinek: dere ağzında halka çıktı](docs/ekran/15_sinek.jpg) |
 | ![Sazlıkta dolu kerevit tuzağı: turuncu şamandıra ve 4/4 rozeti](docs/ekran/16_tuzak.jpg) | ![Dipte tutulan Nadir aynalı sazan, yeni tür kartı](docs/ekran/17_aynali.jpg) |
 | ![Açılış filmi: Gölün Bekçisi'nin dev gölgesi derin ortada geçiyor](docs/ekran/18_film_bekci.jpg) | ![Açılış filmi: Dede ilk oltasını balıkçıya veriyor](docs/ekran/19_film_hediye.jpg) |
+| ![Akşam: turuncu ışık, Dede "Turna ile levrek akşam açılır!" diyor](docs/ekran/20_aksam.jpg) | ![Gece iskelede: Nine'nin feneri, lambalar ve ateşböcekleri](docs/ekran/21_gece_fener.jpg) |
+| ![Fırtınalı gece: yağmur ve damla halkaları, saat çipinde fırtına](docs/ekran/22_firtina.jpg) | !["Bugün" paneli: vakit, bugünün ve yarının havası, Dede'yle çay, göl sevgisi, Dede'nin üç isteği](docs/ekran/23_bugun.jpg) |
+| ![Kova paneli: tür başına BIRAK, HEPSİNİ BIRAK ve SAT](docs/ekran/24_kova.jpg) | ![Göl sevgisi 10: çiçekler, çiçekli nilüferler, berrak su ve kelebekler](docs/ekran/25_gol_sevgisi.jpg) |
+| ![Sazlıkta suda parlayan şişe](docs/ekran/26_sise.jpg) | ![Genç Nine'nin ilk mektubu: Kuruyan Sazlar](docs/ekran/27_mektup.jpg) |
+| ![Dört parça tamam: haritada X, derin ortanın ilk şamandırası](docs/ekran/28_harita_x.jpg) | ![Gölün Bekçisi dalıyor: BIRAK!](docs/ekran/29_bekci.jpg) |
 
 ## Nasıl oynanır
 

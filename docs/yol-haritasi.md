@@ -158,7 +158,15 @@ Ersin'in seçimleri (hepsi önerilen): balık kovadan ve yeni tür kartından g�
 - [x] Dede'nin istekleri: rütbe 2'de açılır; her oyun günü boş yuvalar dolar (3 istek: tür, boy, teknik, bölge, vakit, nadir, yağmur, bırakma, çöp, tuzak), süre sınırı yok, günde bir ücretsiz değiştirme; "Bugün" panelinde istek kartları, saat çipinde rozet; biten istek para, rütbe puanı ve göl sevgisi verir, Dede "aferin" der; rehberin 9. sayfası "Göl yaşıyor" (rehber 10 sayfa); denge botu istekleri yapar (saatte ~4 istek, kazancın ~%7'si), `requests` botu.
 - [x] Gölün Sırrı: mektuplar ve harita parçaları. Rütbe 3'ten sonra her bölgeden bir şişe (sırayla, aralarında 15 balık; sonuncusu sandalla derin ortada): dokununca balıkçı gidip alır, genç Nine ile Dede'nin mektubu açılır (6 mektup, mektup kâğıdında), Dede yazanı tanır. Dede'nin dört altın isteği ayrı yuvada (akşam nilüferli koyda turna, gece 3 balık, 5 balık bırak, gece derin ortada diple yayın): her biri haritanın bir parçası. Defterde "Gölün Sırrı" sekmesi (mektuplar, 2×2 harita yapbozu, altın hamur); dört parça tamamsa haritada X. Göl sevgisi 6'da Nine altın hamur verir. Denge botu da oynar: final hazır 151–188. dakikada (rütbe 13–14). `secret` botu; geliştirme düğmesi SIR +.
 - [x] Gölün Sırrı: final, Gölün Bekçisi, bitiş sahnesi. Final hazır olunca Bekçi bırakılana kadar her gece sisli; gece sandalla haritanın X'ine (derin ortanın ilk şamandırası) gidip dibe atınca Gölün Bekçisi belirir (o gece X'te yem onun), iki dalışında BIRAK; kaçarsa 25 sn sonra döner. Tutulunca elde gösterilmez: Masalsı kart, "Göle bırak", bitiş filmi (Bekçi sandalın çevresinde döner ve dalar, şafak, göl çiçek açar, Dede ve Nine sevinir) ve jenerik. Oyun sonrası: Ayarlar'da BİTİŞ, rütbe 20'nin yeni sözü, kendiliğinden gelen sisli gecelerde Bekçi yine çıkar. Denge botu da oynar: Bekçi 152–209. dakikada. `keeper` botu.
-- [ ] Kapanış (v0.5): üç inceleme ajanı, bütün KONTROL botları, tanıtım videosu, `save_v5.json` örneği, README görüntüleri, belgeler.
+- [x] Kapanış (v0.5): üç inceleme ajanı (çekirdek, sunum, araçlar ve belgeler; düzeltilenler: şafaktan sonra bırakılan
+  Bekçi'nin günü gecenin günü, bilinmeyen istek türü kayıttan düşer, denge botunda şafaktan sonra Bekçi gelmez, saat
+  arka plandan dönünce sıçramaz, bozuk kayıtta açılış hatası, bot denetimleri sıkılaştı), bütün KONTROL botları telefon
+  oranında ve çentik payıyla, hepsi TAMAM (controls, first, story, shop, map, boat, technique, trap, fly, rods, tour:
+  iskele 142 çizim, guide, rarity, world, release, requests, secret, keeper; yazısı çok olanlar İngilizce de: story,
+  guide, world, release, requests, secret, keeper), dışa aktarma paketi, `save_v5.json` örneği ve okuma testi,
+  tanıtım videosu (akşam isteği, çay, fenerli gece, yağmur, şişe, Bekçi'nin gölgesi), iki Reels videosu ("Gece başka
+  bir göl", "Gölün Sırrı"), telefon boyutunda README görüntüleri, belgeler; sürüm 0.5.
+- [ ] Ersin telefonda dener ([`iphone-kurulum.md`](iphone-kurulum.md) 27–36).
 
 **Dalga 5 — Yuva ve kişilik → v0.6**
 
