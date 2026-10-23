@@ -656,3 +656,34 @@ UI_SECRET_DOUGH_HAVE,Golden dough: yours (bottom fishing),Altın hamur: sende (d
 UI_SECRET_DOUGH_WAIT,Golden dough: Nana gives it at lake love %d,Altın hamur: göl sevgisi %d olunca Nine verir
 UI_NINE_DOUGH,"Here's golden dough, dear! Use it bottom fishing.","Al evladım, ninemin altın hamuru! Dipte kullan."
 UI_DOUGH_GIVEN,Nana gave you golden dough!,Nine sana altın hamur verdi!
+UI_DEDE_FINAL,All done! Fog rolls in tonight: take the boat to the X.,"Hepsi tamam! Bu gece sis basacak, sandalla X'e git."
+UI_DEDE_KEEPER_WAIT,"The Keeper comes at night, kid. Let's have tea and wait.",Bekçi gece gelir evlat. Çay içip geceyi bekleyelim.
+UI_DEDE_KEEPER_BOTTOM,"Golden dough is for the bottom, kid: use the bottom rod!",Altın hamur dipte işe yarar evlat: dip kamışını al!
+UI_DEDE_KEEPER_RISE,"There it is, the Lake Keeper! Strike when the bell rings!","İşte o, Gölün Bekçisi! Zil çalınca vur evlat!"
+UI_DEDE_KEEPER_BACK,"It's back! This time let go when it dives, kid.",Geri geldi! Bu sefer dalınca bırak evlat.
+UI_DEDE_KEEPER_LOST,"We lost it! Wait, it'll come back.","Kaçırdık! Bekle, geri gelecek."
+UI_DEDE_KEEPER_AGAIN,"The Keeper came to you again, kid!",Bekçi yine sana göründü evlat!
+UI_DEDE_KEEPER_GONE,Morning's here. The Keeper went back to the deep.,"Sabah oldu, Bekçi derinlere döndü."
+UI_HINT_KEEPER_DIVE,LET GO! The Keeper is diving!,BIRAK! Bekçi dalıyor!
+UI_KEEPER_RISE,The Lake Keeper is here!,Gölün Bekçisi geldi!
+UI_END_1,"Look, kid... The Keeper is circling your boat. It's thanking you!",Bak evlat... Bekçi sandalın çevresinde dönüyor. Sana teşekkür ediyor!
+UI_END_2,"Morning has come. Look, the fog is lifting!","Sabah oldu. Bakın, sis kalkıyor!"
+UI_END_3,"The lake has never been this beautiful. Thanks to you, dear.",Göl hiç bu kadar güzel olmamıştı. Senin sayende evladım.
+UI_END_4,"Well done, kid! The lake's secret is your secret now.",Aferin evlat! Gölün sırrı artık senin de sırrın.
+UI_END_5,"This lake is your home now. Come back any time, dear!",Bu göl artık senin de evin. Ne zaman istersen gel evladım!
+UI_CREDITS_IDEA,Idea and art,Fikir ve görseller
+UI_CREDITS_CODE,Code,Kod
+UI_CREDITS_MODELS,3D models,3B modeller
+UI_CREDITS_FONTS,Fonts,Yazı tipleri
+UI_CREDITS_SOUND,Sounds and music,Sesler ve müzik
+UI_CREDITS_SOUND_BY,Made with code,Kodla üretildi
+UI_CREDITS_THANKS,Thanks to,Teşekkürler
+UI_CREDITS_PLAYERS,Everyone who plays,Oynayan herkese
+UI_CREDITS_END,You let the Lake Keeper go. The lake is waiting for you!,Gölün Bekçisi'ni göle bıraktın. Göl seni bekliyor!
+UI_ENDING_REPLAY,Ending,Bitiş
+UI_BOOK_HINT_KEEPER,"At the map's X, on a foggy night, with golden dough.","Haritanın X'inde, sisli bir gecede, altın hamurla."
+UI_BOOK_STORY,"It guards the heart of the lake: caught, then always let go.","Gölün kalbini korur: tutulur, hep göle bırakılır."
+UI_SECRET_X_READY,X: the first buoy in Deep Water. Go by boat at night and fish the bottom!,"X: derin ortanın ilk şamandırası. Gece sandalla git, dibe at!"
+UI_SECRET_KEEPER_DONE,You let the Lake Keeper go. The lake loves you!,Gölün Bekçisi'ni göle bıraktın. Göl seni seviyor!
+UI_DAY_DETAIL_keeper,Fog tonight: the Keeper's night,Gece sis: Bekçi'nin gecesi
+UI_DEDE_STORY_20_KEEPER,You're the lake's legend now. Even the Keeper greeted you!,Artık gölün efsanesisin. Bekçi bile sana selam verdi!

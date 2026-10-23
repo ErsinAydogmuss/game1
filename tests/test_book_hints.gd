@@ -15,6 +15,21 @@ func test_bottom_only_fish_names_its_technique_and_zones() -> void:
 	assert_true(not text.contains(UiKit.translate("UI_BOOK_HINT_RARELY")), "nadiren değil (dipte ara sıra): %s" % text)
 
 
+## Gölün Bekçisi zarla gelmez: ipucu yalnızca nerede ve nasıl (haritanın X'i, sisli gece, altın hamur); defterde 19.
+## tür (bölgelerin tablosunda yok).
+func test_keeper_hint_names_the_x() -> void:
+	var db := content()
+	var save := SaveData.create_new(0)
+	var hints := BookPanel.hints(db, save, db.main_spot, Secret.KEEPER_ID)
+	assert_eq(hints.size(), 1, "tek ipucu: %s" % "\n".join(hints))
+	assert_eq(hints[0] if not hints.is_empty() else "", UiKit.translate("UI_BOOK_HINT_KEEPER"), "X, sisli gece, altın hamur")
+	var ids: Array[String] = []
+	for f in BookPanel.species(db, db.main_spot):
+		ids.append(str(f["id"]))
+	assert_eq(ids.size(), 19, "defterde 19 tür")
+	assert_eq(ids[-1], Secret.KEEPER_ID, "Masalsı Bekçi en sonda")
+
+
 func test_float_fish_has_no_technique_line() -> void:
 	var db := content()
 	var save := SaveData.create_new(0)

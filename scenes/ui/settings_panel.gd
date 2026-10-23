@@ -1,8 +1,8 @@
 class_name SettingsPanel
 extends Dialog
 ## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil; başlıkta HİKÂYE (açılış filmi yeniden:
-## story_requested; olta boşken, main açmadan önce story_ready verir) ve "Nasıl oynanır?" (rehber:
-## help_requested). (Kazı'dan uyarlandı.)
+## story_requested; olta boşken, main açmadan önce story_ready verir), Gölün Bekçisi bırakıldıysa BİTİŞ (bitiş
+## filmi ve jenerik: ending_requested) ve "Nasıl oynanır?" (rehber: help_requested). (Kazı'dan uyarlandı.)
 ## Sürüm yazısına arka arkaya 5 kez dokununca ölçüm açılır ya da kapanır (HUD'da FPS, çizim ve
 ## üçgen sayısı; telefonda hız ölçümü: docs/iphone-kurulum.md). Ölçüm açıkken geliştirme sürümünde
 ## üç satır daha görünür (normalde panel küçülmeden sığsın): deneme düğmeleri (hepsini aç, para,
@@ -13,6 +13,8 @@ extends Dialog
 signal rank_up_requested
 ## Açılış filmi yeniden izlensin (main iskelede baştan oynatır; kayıt değişmez).
 signal story_requested
+## Bitiş filmi ve jenerik yeniden izlensin (Gölün Bekçisi bir kez bırakıldıysa; kayıt ve saat değişmez).
+signal ending_requested
 ## Geliştirme sürümü (Dalga 4): saat sonraki vakte, bugünün havası sıradakine, göl sevgisi artsın
 ## (main gerçek akışla: oranlar, garanti, bildirim).
 signal time_requested
@@ -42,6 +44,8 @@ var _rows: VBoxContainer
 var _guide: Button
 var _story: Button
 var story_ready: bool = true
+## BİTİŞ (bitiş filmi; yalnızca Bekçi göle bırakıldıysa görünür, HİKÂYE gibi story_ready'yle).
+var _ending: Button
 var _taps: int = 0
 var _since_tap: float = 0.0
 
@@ -69,6 +73,13 @@ func _build() -> void:
 		close_panel()
 		story_requested.emit())
 	header_extra.add_child(_story)
+	_ending = UiKit.button("", UiKit.SECONDARY, UiKit.SIZE_SMALL, Vector2(0, 122))
+	_ending.name = "Ending"
+	_ending.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		close_panel()
+		ending_requested.emit())
+	header_extra.add_child(_ending)
 	_guide = UiKit.button("", UiKit.SECONDARY, UiKit.SIZE_SMALL, Vector2(0, 122))
 	_guide.name = "Guide"
 	_guide.pressed.connect(func() -> void:
@@ -87,6 +98,9 @@ func refresh() -> void:
 	set_header(tr("UI_SETTINGS"), "settings", WIDTH)
 	_story.text = UiKit.upper(tr("UI_STORY_REPLAY"))
 	_story.disabled = not story_ready
+	_ending.text = UiKit.upper(tr("UI_ENDING_REPLAY"))
+	_ending.visible = GameState.save.keeper > 0
+	_ending.disabled = not story_ready
 	_guide.text = UiKit.upper(tr("UI_GUIDE_OPEN"))
 	clear(_rows)
 	var settings := GameState.save.settings

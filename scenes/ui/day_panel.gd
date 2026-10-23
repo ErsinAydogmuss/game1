@@ -172,7 +172,7 @@ func _weather_card(rules: FishingRules, save: SaveData) -> Control:
 		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(text)
 		text.add_child(UiKit.ink(tr("WEATHER_" + kind), UiKit.SIZE_BODY, UiKit.INK))
-		var detail := weather_detail(kind)
+		var detail := weather_detail(kind, Secret.keeper_night(save))
 		if not detail.is_empty():
 			text.add_child(UiKit.ink(tr(detail), 26, UiKit.INK_SOFT))
 	return panel
@@ -393,8 +393,11 @@ static func duration_text(seconds: int) -> String:
 
 
 ## Havanın ne zaman olduğu (çeviri anahtarı; yoksa ""): yağmurlu günün gecesi fırtınalı, sisli günde sis
-## sabah ve gece (öğle ve akşam bulutlu: Weather.at).
-static func weather_detail(kind: String) -> String:
+## sabah ve gece (öğle ve akşam bulutlu: Weather.at). Final gecesinde (keeper_night: Gölün Bekçisi bırakılana
+## kadar) her gece sisli, fırtına yok.
+static func weather_detail(kind: String, keeper_night: bool = false) -> String:
+	if keeper_night:
+		return "UI_DAY_DETAIL_keeper"
 	match kind:
 		"rain":
 			return "UI_DAY_DETAIL_rain"

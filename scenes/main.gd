@@ -107,6 +107,10 @@ const BUTTERFLY_LOVE := 3
 ## panelinin son açılışındaki istek sayacı (request_serial: ondan sonra gelen istek yenidir).
 const REQ_TOLD_FLAG := "told_requests"
 const REQ_SEEN_FLAG := "requests_seen"
+## Final (Gölün Bekçisi): Dede'nin "bu gece sis basacak" sözünün bayrağı; Bekçi'nin sudan çıktığı yerin halkaları.
+const FINAL_TOLD_FLAG := "told_final"
+const KEEPER_RINGS: Array[Vector2] = [Vector2(2.4, 1.6), Vector2(3.6, 2.0)]
+const TURQUOISE := Color(0.62, 1.0, 0.95, 0.85)
 
 var session: FishingSession
 var lake: LakeShape
@@ -242,6 +246,14 @@ var letter_panel: LetterPanel
 var _pending_bottle: bool = false
 var _letter_read: int = 0
 var _golden_line: String = ""
+## Gölün Bekçisi (final): karşılaşma (sisli gece, X, dip: KeeperPresenter), bitiş filminden sonraki jenerik,
+## Bekçi'nin kartı kapanınca bitiş filmi oynayacak mı (ilk bırakılışta), oynayan film bitiş filmi mi ve
+## Ayarlar'dan yeniden mi izleniyor (o zaman kayıt ve saat değişmez).
+var keeper: KeeperPresenter
+var credits_panel: CreditsPanel
+var _ending_due: bool = false
+var _ending: bool = false
+var _ending_replay: bool = false
 
 
 func _ready() -> void:
@@ -317,6 +329,11 @@ func _ready() -> void:
 	world_clock.clock_moved.connect(_sync_world_chip)
 	# Yeni oyun günü: Dede'nin boş istek yuvaları dolar.
 	world_clock.day_changed.connect(func(_day: int) -> void: _refill_requests())
+	keeper = KeeperPresenter.new()
+	add_child(keeper)
+	keeper.setup(GameState.db, spot_id, ripples, camera, hud)
+	keeper.speak.connect(func(key: String) -> void: _say(key))
+	keeper.presence_changed.connect(func(_present: bool) -> void: _sync_music())
 	_start_session()
 	_refresh_status()
 	# Eski kayıt: rütbesi çoktan gelmiş teknik de bir kez haber verilir; gece açılan kayıtta fener, yağmurlu
@@ -339,6 +356,8 @@ func _ready() -> void:
 ## Kayda göre yeni bir oturum (yeni gölgeler); ilk balık tutulmadıysa ilk av senaryolu.
 func _start_session() -> void:
 	_stop_intro()
+	keeper.reset()
+	_ending_due = false
 	var save := GameState.save
 	_save_ref = save
 	var start: Dictionary = Zones.at(GameState.db, spot_id, GameState.db.spot(spot_id)["start"])
@@ -410,12 +429,93 @@ func _play_intro() -> void:
 	story_panel.play()
 
 
-## Film bitti (ya da ATLA): bayrak kayda; kamera oyunun açısına kayar, "Gölgeyi gördün mü?" ipucu
-## başlar (Dede söyler).
+## Film bitti (ya da ATLA): açılışta bayrak kayda, kamera oyunun açısına kayar, "Gölgeyi gördün mü?" ipucu
+## başlar (Dede söyler); bitiş filminde jenerik başlar (kamera filmin son çekiminde kalır).
 func _end_intro(_skipped: bool) -> void:
+	if _ending:
+		credits_panel.play()
+		_sync_music()
+		return
 	_stop_intro()
 	Story.mark_seen(GameState.save)
 	GameState.save_game()
+
+
+## Bitiş filmi (Story.ENDING; Gölün Bekçisi göle bırakılınca bir kez, Ayarlar'da BİTİŞ ile yeniden): göl arkada
+## yaşar, kamerayı ve ışığı film sürer, arayüz gizli. İlk seferde şafakta balıkçı iskeleye döner ve oyunun saati
+## sonraki sabaha geçer (moment "dawn"); göl sevgisinin en üst görünüşüne geçer ("bloom"; Bekçi bırakıldığı için
+## kalıcı). Sonra jenerik. replay: kayıt ve saat değişmez.
+func _play_ending(replay: bool = false) -> void:
+	_ending = true
+	_ending_replay = replay
+	if not replay:
+		GameState.save.flags[Story.ENDING_FLAG] = true
+		GameState.save_game()
+	_film = StoryFilm.new()
+	_film.setup(camera, angler, elder, nine, shadows, ripples, GameState.db, spot_id)
+	_film.moment.connect(_on_film_moment)
+	_film.begin(true)
+	angler.stop()
+	input.release_all()
+	hud.visible = false
+	story_panel.play(Story.ENDING, false)
+	_sync_music()
+
+
+## Bitiş filminin anı: şafakta (ilk seferde) kararmada balıkçı iskeleye geçer, gece bitmediyse saat sonraki
+## sabaha; göl çiçek açar (sevginin en üst görünüşü, ışıltılı halkalar).
+func _on_film_moment(kind: String) -> void:
+	match kind:
+		"dawn":
+			if _ending_replay:
+				return
+			fade.play(func() -> void:
+				_to_dock_start()
+				if DayClock.phase(GameState.db.rules, GameState.save.clock_s) == "night":
+					world_clock.skip(GameState.save)
+				GameState.save_game())
+		"bloom":
+			_sync_love_scene()
+			var start: Vector2 = GameState.db.spot(spot_id)["start"]
+			for k in 6:
+				ripples.spawn(start + Vector2(randf_range(-6.0, 6.0), randf_range(-9.0, -3.0)), randf_range(0.8, 1.6),
+						1.4, Color(1.0, 0.95, 0.7, 0.8), 0.1)
+
+
+## Jenerik bitti (ya da ATLA): film biter, arayüz ve oyunun kamerası geri; Dede'nin bekleyen sözleri sırayla.
+func _on_credits_finished(_skipped: bool) -> void:
+	_stop_intro()
+	GameState.save_game()
+	_world_line_due = true
+
+
+## Ayarlar'da BİTİŞ (Bekçi bir kez bırakıldıysa; olta boşken): ekran kararır, balıkçı iskelenin başına geçer
+## (sandaldaysa iner), bitiş filmi ve jenerik baştan. Kayıt ve saat değişmez.
+func _replay_ending() -> void:
+	if GameState.save.keeper <= 0 or session.state != FishingSession.State.IDLE or _card_up() or _film != null \
+			or fade.busy():
+		return
+	_stop_for_travel()
+	fade.play(func() -> void:
+		_to_dock_start()
+		_snap_camera()
+		_play_ending(true))
+
+
+## Balıkçı iskelenin başına (sandaldaysa iner; kararmanın içinde): oturumun başı gibi sessiz (bölgenin adı ve
+## teknik bildirimi filmin altında kalırdı).
+func _to_dock_start() -> void:
+	var db := GameState.db
+	var start: Vector2 = db.spot(spot_id)["start"]
+	_leave_boat()
+	angler.place(start)
+	angler.face_now(Vector2(0.0, -1.0))
+	zone_id = ""
+	_zone_known = false
+	var zone: Dictionary = Zones.at(db, spot_id, start)
+	session.set_pity_floor(_pity(str(zone.get("id", ""))))
+	session.relocate(start)
+	_follow_zone()
 
 
 ## Ayarlar'da HİKÂYE: ekran kararır, balıkçı iskelenin başına geçer (sandaldaysa iner), film baştan.
@@ -425,18 +525,7 @@ func _replay_story() -> void:
 		return
 	_stop_for_travel()
 	fade.play(func() -> void:
-		var db := GameState.db
-		var start: Vector2 = db.spot(spot_id)["start"]
-		_leave_boat()
-		angler.place(start)
-		angler.face_now(Vector2(0.0, -1.0))
-		# İskeleye geçiş oturumun başı gibi sessiz (bölgenin adı ve teknik bildirimi filmin altında kalırdı).
-		zone_id = ""
-		_zone_known = false
-		var zone: Dictionary = Zones.at(db, spot_id, start)
-		session.set_pity_floor(_pity(str(zone.get("id", ""))))
-		session.relocate(start)
-		_follow_zone()
+		_to_dock_start()
 		_snap_camera()
 		_play_intro())
 
@@ -454,14 +543,18 @@ func _tell_story() -> bool:
 	return true
 
 
-## Film durur (bitti ya da kayıt değişti): dev gölge silinir, olta elde, arayüz geri.
+## Film durur (bitti ya da kayıt değişti): dev gölge silinir, olta elde, arayüz geri; jenerik de durur.
 func _stop_intro() -> void:
+	if credits_panel != null:
+		credits_panel.stop()
 	if _film == null:
 		return
 	_film.end()
 	_film = null
+	_ending = false
 	story_panel.stop()
 	hud.visible = true
+	_sync_music()
 
 
 func _on_state_changed() -> void:
@@ -498,6 +591,7 @@ func _on_state_changed() -> void:
 func _on_focus_gained() -> void:
 	_paused = false
 	story_panel.held = false
+	credits_panel.held = false
 	_refresh_traps()
 
 
@@ -505,6 +599,7 @@ func _on_focus_lost() -> void:
 	# Arama, Denetim Merkezi, arka plan: çekişme donar, parmak bırakılmış sayılır; film de durur.
 	_paused = true
 	story_panel.held = true
+	credits_panel.held = true
 	input.release_all()
 	session.release()
 	_stop_loops()
@@ -532,9 +627,10 @@ func _process(delta: float) -> void:
 	_check_pending_cast()
 	_check_pending_trap()
 	_check_pending_bottle()
-	# Oyun saati: filmde ve kararmada da durur (panel ve odak kaybı yukarıda).
+	# Oyun saati: filmde ve kararmada da durur (panel ve odak kaybı yukarıda). Gölün Bekçisi de (sisli gece, X).
 	if _film == null and not fade.busy():
 		world_clock.tick(delta, GameState.save)
+		keeper.update(delta, session, GameState.save, world_clock.conditions(), in_boat and _buoy == Secret.KEEPER_BUOY)
 	_sync_look(delta)
 	_trap_clock += delta
 	if _trap_clock >= TRAP_SYNC_EVERY:
@@ -852,6 +948,8 @@ func _sell_spot() -> Vector2:
 # --- Olaylar -------------------------------------------------------------------------
 
 func _on_event(e: Dictionary) -> void:
+	# Gölün Bekçisi: belirişi, dalışları ve kaçışı (halkalar, ses, titreşim, Dede'nin sözü).
+	keeper.on_event(e, session)
 	match str(e["type"]):
 		"cast":
 			GameState.save.casts += 1
@@ -1055,8 +1153,11 @@ func _on_catch() -> void:
 	var outcome := Records.add(save.records, fish_id, size_cm, stars, GameState.clock.now_unix())
 	save.catches += 1
 	var technique := session.technique.id
-	CatchOdds.note_catch(db, save, rarity, Zones.place(db, spot_id, str(info.get("zone", ""))), technique,
-			world_clock.conditions())
+	# Hikâyenin balığı (Gölün Bekçisi) şans garantisine sayılmaz: çağrıldı, zarla gelmedi.
+	var story := bool(info.get("story", false))
+	if not story:
+		CatchOdds.note_catch(db, save, rarity, Zones.place(db, spot_id, str(info.get("zone", ""))), technique,
+				world_clock.conditions())
 	session.set_pity_floor(_pity(zone_id, technique))
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	# Rütbe atlama, göle dönen balık, göl sevgisi, çöp gibi bildirimler balığın etiketi sönünce (üst üste
@@ -1118,7 +1219,24 @@ func _on_catch() -> void:
 			_tell_story()
 	bobber.hide_bobber()
 	# Balığın sudan çıktığı yerde halka: çekişmenin son noktası (kıyıda suyun kenarı).
-	ripples.spawn(Vector2(bobber.fight_point.x, bobber.fight_point.z), 1.0, 0.8)
+	var out_at := Vector2(bobber.fight_point.x, bobber.fight_point.z)
+	ripples.spawn(out_at, 1.0, 0.8)
+	if story:
+		# Gölün Bekçisi elde gösterilmez (5 m): sudan çıktığı yerde turkuaz halkalar, herkes sevinir, Masalsı kart.
+		# Kart kapanınca ilk seferde bitiş filmi.
+		for ring in KEEPER_RINGS:
+			ripples.spawn(out_at, ring.x, ring.y, TURQUOISE, 0.16)
+		angler.cheer()
+		elder.cheer()
+		camera.shake(0.1)
+		Sounds.play("reel_in")
+		Sounds.find(rarity)
+		Sounds.haptic(140)
+		_card_info = info
+		_card_outcome = outcome
+		_card_wait = CARD_DELAY
+		_ending_due = not save.flags.has(Story.ENDING_FLAG)
+		return
 	# Balık elde: kaldırıp gösterir, üstünde adı ve boyu; Nadir ve üstünde ışık sütunu.
 	var color := UiKit.rarity_color(GameState.db, rarity)
 	catch_fx.show_catch(GameState.db.fish_by_id(fish_id), int(info["size_cm"]), tr("FISH_" + fish_id), color,
@@ -1386,9 +1504,17 @@ func _on_phase_changed(phase: String) -> void:
 	GameState.save_game()
 
 
-## Müzik: vaktin parçası; dükkân açıkken Nine'nin valsi (Sounds.MUSIC).
+## Müzik: vaktin parçası; dükkân açıkken Nine'nin valsi, Gölün Bekçisi gölde ya da oltadayken onun parçası, bitiş
+## filminde ve jenerikte bitişin parçası (Sounds.MUSIC).
 func _sync_music() -> void:
-	Sounds.set_music("shop" if shop_panel.visible else DayClock.phase(GameState.db.rules, GameState.save.clock_s))
+	var track := DayClock.phase(GameState.db.rules, GameState.save.clock_s)
+	if _ending:
+		track = "ending"
+	elif shop_panel.visible:
+		track = "shop"
+	elif keeper != null and keeper.present():
+		track = "keeper"
+	Sounds.set_music(track)
 
 
 ## Dede'nin bekleyen sözlerinden sıradaki (her biri bir kez; bayrak söylenince kayda): önce Dede'nin
@@ -1422,6 +1548,12 @@ func _world_line() -> bool:
 			_say("UI_DEDE_BOTTLE_FIRST")
 		else:
 			_say("UI_DEDE_BOTTLE", "dede", [tr("ZONE_" + Secret.bottle_zone(save))])
+		return true
+	# Final hazır (altı mektup, dört parça, altın hamur): Dede sisli geceyi ve X'i söyler (bir kez).
+	if Secret.keeper_night(save) and not save.flags.has(FINAL_TOLD_FLAG):
+		save.flags[FINAL_TOLD_FLAG] = true
+		_say("UI_DEDE_FINAL")
+		_line_time = ADVICE_TIME
 		return true
 	if bool(save.flags.get(LANTERN_FLAG, false)) and not save.flags.has(LANTERN_TOLD):
 		save.flags[LANTERN_TOLD] = true
@@ -1475,7 +1607,8 @@ func _current_look() -> Dictionary:
 ## havuzları, yağmur ya da ateşböcekleri, fırtınada şimşek.
 func _sync_look(delta: float) -> void:
 	var save := GameState.save
-	var look := _current_look()
+	# Bitiş filmi kendi ışığını verir (gece sisi, şafaktan sonra açık sabah).
+	var look := _film.look if _film != null and not _film.look.is_empty() else _current_look()
 	scene.set_look(look)
 	var lamps := float(look["lamps"])
 	var pools: Array[Vector4] = []
@@ -1725,6 +1858,9 @@ func _present(delta: float) -> void:
 	if _bait_out and _line_time <= 0.0 and session.state == FishingSession.State.IDLE and not _card_up() and _film == null:
 		_bait_out = false
 		_say("UI_DEDE_BAIT_OUT")
+	# Final hazır oldu (son parça, mektup ya da hamur): Dede'nin sözü sıraya.
+	if not _world_line_due and Secret.keeper_night(GameState.save) and not GameState.save.flags.has(FINAL_TOLD_FLAG):
+		_world_line_due = true
 	# Saate bağlı sözler (fener, vaktin ve havanın ilk sözü) sırayla: olta boşta, kart yokken, başka söz bitince.
 	if _world_line_due and _line_time <= 0.0 and session.state == FishingSession.State.IDLE and not _card_up() \
 			and _film == null:
@@ -1974,7 +2110,7 @@ func _notice_legends(delta: float) -> void:
 		return
 	var legendary := GameState.db.rarity_index("legendary")
 	for s in session.sim.shadows:
-		if s.rarity < legendary or _announced.has(s.id) or s.mode == FishShadow.Mode.FLEE:
+		if s.rarity < legendary or s.summoned or _announced.has(s.id) or s.mode == FishShadow.Mode.FLEE:
 			continue
 		if s.pos.distance_to(angler.pos2()) > LEGEND_NOTICE_M:
 			continue
@@ -2022,6 +2158,9 @@ func _update_hint() -> void:
 func _hint_key() -> String:
 	if card.visible:
 		return ""
+	# Gölün Bekçisi dalıyor (ya da dalacak): bırak! Dede'nin sözünden önce.
+	if session.reel != null and session.reel.diving():
+		return "UI_HINT_KEEPER_DIVE"
 	if _line_time > 0.0:
 		return _line
 	var technique := session.technique.id
@@ -2112,11 +2251,13 @@ func _after_love(result: Dictionary) -> void:
 	_world_line_due = true
 
 
-## Gölün görünüşü kaydın sevgi seviyesiyle (LakeScene.set_love: bitkiler, berrak su).
+## Gölün görünüşü kaydın sevgi seviyesiyle (LakeScene.set_love: bitkiler, berrak su); Gölün Bekçisi göle
+## bırakıldıysa en üst seviyede (göl çiçek açtı: bitiş filmi).
 func _sync_love_scene() -> void:
 	_love_scene_due = false
 	var rules := GameState.db.rules
-	scene.set_love(LakeLove.level(rules, GameState.save.love), LakeLove.max_level(rules))
+	var top := LakeLove.max_level(rules)
+	scene.set_love(top if GameState.save.keeper > 0 else LakeLove.level(rules, GameState.save.love), top)
 
 
 ## Çöp çıktı (dipte balığın yanında ya da tuzakta): göl sevgisi ve sayaçlar (kovaya girmez, para vermez),
@@ -2874,7 +3015,12 @@ func _build_ui() -> void:
 	hud.perf = bool(GameState.setting("perf", false))
 	card = FishCard.new()
 	layer.add_child(card)
-	card.closed.connect(func() -> void: session.acknowledge())
+	card.closed.connect(func() -> void:
+		session.acknowledge()
+		# Gölün Bekçisi'nin kartı kapandı: ilk seferde bitiş filmi.
+		if _ending_due:
+			_ending_due = false
+			_play_ending())
 	card.release_requested.connect(_on_card_release)
 	settings_panel = SettingsPanel.new()
 	layer.add_child(settings_panel)
@@ -2885,6 +3031,7 @@ func _build_ui() -> void:
 	settings_panel.finish_request_requested.connect(_debug_finish_request)
 	settings_panel.secret_requested.connect(_debug_secret)
 	settings_panel.story_requested.connect(_replay_story)
+	settings_panel.ending_requested.connect(_replay_ending)
 	shop_panel = ShopPanel.new()
 	layer.add_child(shop_panel)
 	shop_panel.spot_id = spot_id
@@ -2942,6 +3089,10 @@ func _build_ui() -> void:
 		if _film != null:
 			_film.shot(index))
 	story_panel.finished.connect(_end_intro)
+	# Jenerik (bitiş filminden sonra) filmin örtüsünün üstünde.
+	credits_panel = CreditsPanel.new()
+	layer.add_child(credits_panel)
+	credits_panel.finished.connect(_on_credits_finished)
 	var top := CanvasLayer.new()
 	top.layer = 20
 	add_child(top)

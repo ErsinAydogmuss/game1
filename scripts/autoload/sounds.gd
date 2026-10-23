@@ -33,13 +33,14 @@ const BANK := {
 	# sevgisinin seviyesi, çöp.
 	"find_6": [-3.0, 0.0, 1], "thunder": [-7.0, 0.05, 1], "tea": [-9.0, 0.03, 1], "phase": [-12.0, 0.0, 1],
 	"lantern": [-9.0, 0.0, 1], "love_up": [-8.0, 0.0, 1], "trash": [-8.0, 0.04, 1],
-	# Gölün Sırrı: şişe alındı, mektup açıldı.
-	"bottle": [-7.0, 0.03, 1], "paper": [-9.0, 0.05, 1],
+	# Gölün Sırrı: şişe alındı, mektup açıldı; final: Gölün Bekçisi dalıyor.
+	"bottle": [-7.0, 0.03, 1], "paper": [-9.0, 0.05, 1], "dive": [-5.0, 0.04, 1],
 }
 ## Döngüler: ad -> ses (dB).
 const LOOPS := { "reel": -12.0, "strain": -14.0, "bell_run": -9.0 }
-## Müzik parçaları (Dalga 4): dört vaktin sakin döngüleri ve Nine'nin dükkânının valsi (music/<ad>.ogg).
-const MUSIC := ["morning", "noon", "evening", "night", "shop"]
+## Müzik parçaları (Dalga 4): dört vaktin sakin döngüleri, Nine'nin dükkânının valsi, Gölün Bekçisi'nin parçası
+## (karşılaşma ve çekişme) ve bitişin parçası (bitiş filmi, jenerik) (music/<ad>.ogg).
+const MUSIC := ["morning", "noon", "evening", "night", "shop", "keeper", "ending"]
 ## Ortam sesleri: göl (gündüz), gece (cırcır böceği, kurbağa), yağmur (ambience/<ad>.ogg).
 const AMBIENCE := ["lake", "night", "rain"]
 const MUSIC_DB := -15.0

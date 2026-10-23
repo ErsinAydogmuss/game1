@@ -4,7 +4,7 @@ extends RefCounted
 ## rütbe atladıkça Dede'nin anlattığı devamı (bölümler). Saf kurallar ve veri; sunum main'de.
 ## Göl köyü: Dede ile Nine gençken ölen gölü temizlemiş, sazlar dikmiş; göl canlanmış. Derinlerde
 ## gölü koruyan Gölün Bekçisi yaşar, göle iyi bakanlara görünür (Dalga 4'ün finali: sisli gece,
-## derin orta, Bekçi).
+## derin orta, Bekçi). Bekçi göle bırakılınca bitiş filmi (ENDING) ve jenerik oynar.
 
 ## Film görüldü mü (kayıtta bayrak; kayıt sürümü değişmez).
 const SEEN_FLAG := "seen_intro"
@@ -22,14 +22,28 @@ const LINES: Array[Array] = [
 ]
 
 
+## Bitiş filmi (Gölün Bekçisi göle bırakılınca, bir kez; Ayarlar'dan yeniden izlenir): Bekçi sandalın
+## çevresinde döner ve dalar, şafak söker (sonraki sabah, sis kalkar), göl çiçek açar, iskelede Dede ve
+## Nine sevinir, göl; sonra jenerik. Çekimleri StoryFilm kurar.
+const ENDING: Array[Array] = [
+	["UI_END_1", "dede", "circle", 8.5],
+	["UI_END_2", "nine", "dawn", 6.0],
+	["UI_END_3", "nine", "bloom", 6.0],
+	["UI_END_4", "dede", "cheer"],
+	["UI_END_5", "nine", "wide", 6.0],
+]
+## Bitiş filmi görüldü mü (kayıtta bayrak).
+const ENDING_FLAG := "seen_ending"
+
+
 ## Bir sözün ekranda kalacağı süre (sn): en az LINE_MIN (ya da sözün kendi süresi), uzun yazıda harf
-## başına PER_CHAR. Dokunuş daha önce geçirir.
+## başına PER_CHAR. Dokunuş daha önce geçirir. lines: filmin sözleri (açılış ya da bitiş).
 const LINE_MIN := 5.0
 const PER_CHAR := 0.085
 
 
-static func line_time(index: int, text: String) -> float:
-	var line: Array = LINES[index]
+static func line_time(index: int, text: String, lines: Array[Array] = LINES) -> float:
+	var line: Array = lines[index]
 	var least := float(line[3]) if line.size() > 3 else LINE_MIN
 	return maxf(least, text.length() * PER_CHAR)
 ## Hikâyenin devamı: rütbe → Dede'nin sözü. Unvanın değiştiği rütbeler; her biri bir kez
@@ -37,6 +51,8 @@ static func line_time(index: int, text: String) -> float:
 const CHAPTERS := { 3: "UI_DEDE_STORY_3", 6: "UI_DEDE_STORY_6", 10: "UI_DEDE_STORY_10", 15: "UI_DEDE_STORY_15",
 		20: "UI_DEDE_STORY_20" }
 const TOLD_FLAG := "told_story_%d"
+## Finalden sonra anlatılan bölümlerin kendi sözü.
+const CHAPTER_AFTER := { 20: "UI_DEDE_STORY_20_KEEPER" }
 
 
 ## Film oynasın mı: yeni oyun (film görülmedi ve hiç balık tutulmadı).
@@ -59,9 +75,12 @@ static func next_chapter(rank: int, save: SaveData) -> int:
 	return 0
 
 
-## Bölüm anlatıldı: sözü döner (bayrak kayda).
+## Bölüm anlatıldı: sözü döner (bayrak kayda). Son bölüm Gölün Bekçisi göle bırakıldıysa kendi hâliyle
+## (CHAPTER_AFTER: "Bekçi bile sana selam verdi").
 static func tell(rank: int, save: SaveData) -> String:
 	save.flags[TOLD_FLAG % rank] = true
+	if save.keeper > 0 and CHAPTER_AFTER.has(rank):
+		return str(CHAPTER_AFTER[rank])
 	return str(CHAPTERS[rank])
 
 
@@ -108,3 +127,32 @@ static func _deep(lake: LakeShape, path: PackedVector2Array) -> bool:
 		if not lake.is_water(p) or lake.depth_at(p) < KEEPER_DEPTH:
 			return false
 	return true
+
+
+## Bitiş filminde Bekçi'nin dönüş yolu: center'ın (sandal) çevresinde CIRCLE_RADII yarıçaplarından ilk, bütün
+## noktaları suda olan çember (kıyıdan en az CIRCLE_SHORE); hiçbiri olmazsa en küçüğü. count nokta, saat yönünün
+## tersine bir tur (ilk ve son nokta aynı). Yalnızca görünüş.
+const CIRCLE_RADII: Array[float] = [4.5, 4.0, 3.5, 3.0]
+const CIRCLE_SHORE := 0.8
+
+
+static func keeper_circle(db: ContentDB, spot_id: String, center: Vector2, count: int = 32) -> PackedVector2Array:
+	var lake := db.lake(spot_id)
+	var out := PackedVector2Array()
+	for r: float in CIRCLE_RADII:
+		out = _circle(center, r, count)
+		var wet := true
+		for p in out:
+			if not lake.is_water(p) or lake.on_dock(p, 0.3) or lake.shore_distance(p) < CIRCLE_SHORE:
+				wet = false
+				break
+		if wet:
+			return out
+	return out
+
+
+static func _circle(center: Vector2, radius: float, count: int) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for i in count + 1:
+		out.append(center + Vector2.from_angle(TAU * float(i) / float(count)) * radius)
+	return out

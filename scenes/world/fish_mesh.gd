@@ -49,6 +49,11 @@ const SHAPES := {
 	# yayın: yosunlu sırt lekeleri, uzun bıyıklar).
 	"moon_pike": { "ratio": 3.5, "nose": 1.5, "eye": 0.062, "iris": "#f2cf5b", "flat": 0.15, "spots": "#e8f0ff" },
 	"kocabas": { "ratio": 3.3, "nose": 2.9, "eye": 0.036, "whiskers": 0.6, "flat": 0.34, "patches": "#5d6b45" },
+	# Gölün Bekçisi (final): eski bir dev; sırtında açık turkuaz plakalar, parlak benekler ve yan şerit, uzun
+	# bıyıklar, büyük yüzgeçler, açık göz.
+	"keeper": { "ratio": 3.4, "nose": 1.9, "eye": 0.05, "iris": "#e9fffb", "flat": 0.26, "scutes": "#d7fff8",
+		"whiskers": 0.5, "spots": "#c8fbff", "lateral": "#b6fff2", "dorsal": [0.55, 0.85, 0.72, 0.55], "fork": 0.14,
+		"tail_tilt": 0.25 },
 }
 const DEFAULT_SHAPE := { "ratio": 2.2, "nose": 2.4, "eye": 0.075 }
 ## Dış çizginin dünyadaki kalınlığı (m).

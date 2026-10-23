@@ -33,6 +33,12 @@ const BY_KEY := {
 	# ilk oltasını uzatır.
 	"UI_INTRO_1": SMILE, "UI_INTRO_2": SMILE, "UI_INTRO_3": STORY, "UI_INTRO_4": STORY, "UI_INTRO_5": STORY,
 	"UI_INTRO_6": WOW, "UI_INTRO_7": SMILE, "UI_INTRO_8": STORY,
+	# Final (Gölün Bekçisi): Dede sisli geceyi müjdeler, Bekçi çıkınca ve dalınca heyecanlanır, yol gösterir; bitiş
+	# filminde (Story.ENDING) Dede şaşırır ve sevinir, Nine gülümser, gölün güzelliğini anlatır.
+	"UI_DEDE_FINAL": WOW, "UI_DEDE_KEEPER_RISE": WOW, "UI_DEDE_KEEPER_BACK": WOW, "UI_DEDE_KEEPER_AGAIN": WOW,
+	"UI_DEDE_KEEPER_LOST": STORY, "UI_DEDE_KEEPER_WAIT": STORY, "UI_DEDE_KEEPER_BOTTOM": STORY,
+	"UI_HINT_KEEPER_DIVE": WOW,
+	"UI_END_1": WOW, "UI_END_2": SMILE, "UI_END_3": STORY, "UI_END_4": WOW, "UI_END_5": SMILE,
 }
 ## Ön ekle eşlenen sözler: Dede'nin öğütleri (UI_DEDE_TIP_1..., UI_DEDE_TIP_<teknik>), fazla iri
 ## balıkta takım öğüdü (UI_DEDE_TOO_BIG_...), kartta nadirliğe göre sözleri (UI_DEDE_CARD_<nadirlik>,

@@ -22,6 +22,9 @@ func test_every_phase_and_weather_has_texts() -> void:
 	assert_eq(DayPanel.weather_detail("rain"), "UI_DAY_DETAIL_rain", "yağmurlu günün gecesi fırtına")
 	assert_eq(DayPanel.weather_detail("fog"), "UI_DAY_DETAIL_fog", "sis sabah ve gece")
 	assert_eq(DayPanel.weather_detail("clear"), "", "açık havada açıklama yok")
+	# Final gecesi (Gölün Bekçisi bırakılana kadar her gece sisli): her havada gecenin sisi yazar.
+	for kind: String in Weather.KINDS:
+		assert_eq(DayPanel.weather_detail(kind, true), "UI_DAY_DETAIL_keeper", "final gecesinde %s" % kind)
 
 
 ## Saat çipi ve kova: dokunma kutuları en az 122 (hap ince: kutu ekranın üst kenarına uzanır, aşağıya, suya

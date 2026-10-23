@@ -24,6 +24,7 @@ func test_every_sound_has_a_file() -> void:
 	for phase: String in DayClock.PHASES:
 		assert_true(phase in music, "vaktin müziği listede: " + phase)
 	assert_true("shop" in music, "dükkânın müziği listede")
+	assert_true("keeper" in music and "ending" in music, "Gölün Bekçisi'nin ve bitişin müziği listede")
 	for track: String in music:
 		assert_true(ResourceLoader.exists("%s%s.ogg" % [c["MUSIC_DIR"], track]), "müzik yok: " + track)
 

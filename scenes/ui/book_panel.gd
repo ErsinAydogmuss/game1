@@ -339,10 +339,12 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 	text.add_child(UiKit.title(tr("FISH_" + id) if found else "???", 44, title_color, HORIZONTAL_ALIGNMENT_LEFT, 0))
 	text.add_child(UiKit.rarity_badge(db, rarity, 26))
 	# Koruma altındaki tür (mersin) satılmaz: tutulur, göle bırakılır. Belli vakitte gelen efsaneler (Ay
-	# Turnası, Kocabaş) de bırakılır: koruma değil, efsane sözüyle.
+	# Turnası, Kocabaş) de bırakılır: koruma değil, efsane sözüyle; hikâyenin balığı (Gölün Bekçisi) kendi sözüyle.
+	var story := bool(f.get("story", false))
 	if Bucket.release_only(db, id):
 		var legend := not (f.get("only", {}) as Dictionary).is_empty()
-		var protected := UiKit.ink(tr("UI_BOOK_LEGEND" if legend else "UI_BOOK_PROTECTED"), 26, UiKit.INK)
+		var key := "UI_BOOK_STORY" if story else ("UI_BOOK_LEGEND" if legend else "UI_BOOK_PROTECTED")
+		var protected := UiKit.ink(tr(key), 26, UiKit.INK)
 		protected.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		protected.custom_minimum_size = Vector2(420, 0)
 		_detail.add_child(protected)
@@ -365,12 +367,15 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 			line.custom_minimum_size = Vector2(420, 0)
 			_detail.add_child(line)
 	var species_odds := odds(db, save, spot_id, zone_id)
-	_detail.add_child(UiKit.ink(tr("UI_BOOK_CHANCE") % UiKit.format_percent(int(species_odds.get(id, 0))), 28, UiKit.INK))
+	# Hikâyenin balığı zarla gelmez (oranı yok): yeri ipucunda.
+	if not story:
+		_detail.add_child(UiKit.ink(tr("UI_BOOK_CHANCE") % UiKit.format_percent(int(species_odds.get(id, 0))), 28,
+				UiKit.INK))
 	_detail.add_child(UiKit.spacer(true))
 	_add_lake_odds(db, save, species_odds)
 
 
-## Tutulmamış bir balığın ipuçları: sevdiği yem (tekniklerinin yemi, yapay yemi ya da sineği; en
+## Tutulmamış bir balığın ipuçları (hikâyenin balığında yalnızca nerede ve nasıl: UI_BOOK_HINT_KEEPER): sevdiği yem (tekniklerinin yemi, yapay yemi ya da sineği; en
 ## çok çeken), yalnızca belli vakitte geliyorsa ne zaman (Ay Turnası gece, Kocabaş fırtınalı gece),
 ## yoksa en çok sevdiği vakit ve hava (çarpanı en az LIKES_AT), tuzağa giriyorsa nerede, şamandırayla
 ## gelmiyorsa hangi teknikle tutulduğu, bölgeli gölde yaşadığı yerler ve ne sıklıkla görüldüğü
@@ -379,6 +384,10 @@ func _build_detail(db: ContentDB, save: SaveData) -> void:
 ## aynıysa yinelenmez.
 static func hints(db: ContentDB, save: SaveData, spot: String, fish_id: String, zone: String = "") -> PackedStringArray:
 	var out := PackedStringArray()
+	# Hikâyenin balığı (Gölün Bekçisi) zarla gelmez: haritanın X'i, sisli gece, altın hamur.
+	if bool(db.fish_by_id(fish_id).get("story", false)):
+		out.append(UiKit.translate("UI_BOOK_HINT_KEEPER"))
+		return out
 	var techniques := PackedStringArray()
 	for t: String in ContentDB.TECHNIQUES:
 		if db.has_technique(t) and db.affinity(fish_id, t) > 0.0:
@@ -611,7 +620,11 @@ func _build_secret(db: ContentDB, save: SaveData) -> void:
 	_secret_lines.add_child(pieces)
 	var note := ""
 	var golden := Requests.golden(db, save)
-	if save.map_pieces >= SaveData.MAX_MAP_PIECES:
+	if save.keeper > 0:
+		note = tr("UI_SECRET_KEEPER_DONE")
+	elif Secret.final_ready(save):
+		note = tr("UI_SECRET_X_READY")
+	elif save.map_pieces >= SaveData.MAX_MAP_PIECES:
 		note = tr("UI_SECRET_X")
 	elif not golden.is_empty():
 		note = tr("UI_SECRET_GOLDEN") % DayPanel.text_of(db, golden)

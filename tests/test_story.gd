@@ -118,18 +118,105 @@ func test_chapters_in_order_once() -> void:
 		assert_eq(Moods.of(key), Moods.STORY, "%s: Dede anlatır" % key)
 
 
+## Bitiş filminin sözleri iki dilde var, film kutusunda en çok iki satıra sığar; konuşanlar ve çekimler
+## bilinir; Bekçi'nin turuyla başlar, gölün geniş çekimiyle biter; Bekçi'nin turu uzun kalır.
+func test_ending_lines_exist_and_fit_two_lines() -> void:
+	var rows := _csv_rows()
+	var font := UiKit.body_font()
+	var width := StoryPanel.text_width()
+	var shots := ["circle", "dawn", "bloom", "cheer", "wide"]
+	for line: Array in Story.ENDING:
+		var key := str(line[0])
+		var speaker := str(line[1])
+		assert_true(StoryPanel.NAMES.has(speaker), "%s: konuşan bilinir (%s)" % [key, speaker])
+		assert_true(str(line[2]) in shots, "%s: çekim bilinir (%s)" % [key, line[2]])
+		assert_true(Moods.face(speaker, key) != null, "%s: %s'nin yüzü var" % [key, speaker])
+		assert_true(rows.has(key), "%s çevirisi var" % key)
+		if not rows.has(key):
+			continue
+		for column in [1, 2]:
+			var text: String = (rows[key] as PackedStringArray)[column]
+			assert_true(not text.strip_edges().is_empty(), "%s (%s) boş değil" % [key, _lang(column)])
+			var lines := _lines(font, text, width, StoryPanel.TEXT_SIZE)
+			assert_true(lines <= MAX_LINES, "%s (%s) %d satır: %s" % [key, _lang(column), lines, text])
+	assert_eq(str(Story.ENDING[0][2]), "circle", "bitiş Bekçi'nin turuyla başlar")
+	assert_eq(str(Story.ENDING[Story.ENDING.size() - 1][2]), "wide", "gölün geniş çekimiyle biter")
+	assert_true(Story.line_time(0, "", Story.ENDING) >= StoryFilm.CIRCLE_TIME, "Bekçi'nin turu bitene kadar söz kalır")
+	for column in [1, 2]:
+		var total := 0.0
+		for i in Story.ENDING.size():
+			var key := str(Story.ENDING[i][0])
+			if rows.has(key):
+				total += Story.line_time(i, (rows[key] as PackedStringArray)[column], Story.ENDING)
+		assert_between(total, 25.0, 50.0, "bitiş filminin süresi (%s)" % _lang(column))
+
+
+## Bekçi'nin bitiş filmindeki turu: X'te sandalın çevresinde, bütün noktaları suda ve kıyıdan uzak; kapalı bir
+## tur (ilk ve son nokta aynı).
+func test_keeper_circle_in_water() -> void:
+	var db := content()
+	var x := Secret.keeper_x(db, db.main_spot)
+	assert_true(Dice.is_point(x), "haritanın X'i var")
+	if not Dice.is_point(x):
+		return
+	var center := x + LakeScene.BUOY_MOOR
+	var path := Story.keeper_circle(db, db.main_spot, center)
+	assert_true(path.size() > 8, "tur var (%d nokta)" % path.size())
+	var lake := db.lake(db.main_spot)
+	for p in path:
+		assert_true(lake.is_water(p) and lake.shore_distance(p) >= Story.CIRCLE_SHORE, "tur suda: %s" % str(p))
+	assert_true(path[0].distance_to(path[path.size() - 1]) < 0.001, "kapalı tur")
+	assert_true(path[0].distance_to(center) >= Story.CIRCLE_RADII[-1] - 0.001, "sandalın çevresinde")
+
+
+## Jeneriğin her satırı (görevler, adlar, son söz) iki dilde var ve tek satıra sığar (başlık fontunda).
+func test_credits_fit() -> void:
+	var rows := _csv_rows()
+	var font := UiKit.display_font()
+	var keys: Array[String] = ["UI_CREDITS_END", "UI_ENDING_REPLAY"]
+	for role: Array in CreditsPanel.ROLES:
+		keys.append(str(role[0]))
+		for who: String in role[1]:
+			if who.begins_with("UI_"):
+				keys.append(who)
+			else:
+				var size := font.get_string_size(UiKit.upper(who), HORIZONTAL_ALIGNMENT_LEFT, -1, CreditsPanel.NAME_SIZE)
+				assert_true(size.x <= CreditsPanel.WIDTH, "%s tek satıra sığar (%.0f)" % [who, size.x])
+	for key in keys:
+		assert_true(rows.has(key), "%s çevirisi var" % key)
+		if not rows.has(key):
+			continue
+		for column in [1, 2]:
+			var text := UiKit.upper((rows[key] as PackedStringArray)[column])
+			var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, CreditsPanel.NAME_SIZE)
+			assert_true(size.x <= CreditsPanel.WIDTH, "%s (%s) tek satıra sığar: %.0f > %.0f" % [key, _lang(column),
+					size.x, CreditsPanel.WIDTH])
+
+
+## Finalden sonra son bölüm kendi sözüyle (Bekçi bırakıldı).
+func test_last_chapter_after_the_final() -> void:
+	var save := SaveData.create_new(1_700_000_000)
+	assert_eq(Story.tell(20, save), "UI_DEDE_STORY_20", "finalden önce bölümün kendi sözü")
+	var after := SaveData.create_new(1_700_000_000)
+	after.keeper = 1
+	assert_eq(Story.tell(20, after), "UI_DEDE_STORY_20_KEEPER", "Bekçi bırakıldıysa finalden sonraki sözü")
+	assert_eq(Moods.of("UI_DEDE_STORY_20_KEEPER"), Moods.STORY, "Dede anlatır")
+	assert_true(_csv_rows().has("UI_DEDE_STORY_20_KEEPER"), "çevirisi var")
+
+
 ## Ayarlar'daki HİKÂYE düğmesinin yazısı (büyük harfle: Â, İ) başlık fontunda var.
 func test_replay_button_in_font() -> void:
 	var rows := _csv_rows()
-	assert_true(rows.has("UI_STORY_REPLAY"), "UI_STORY_REPLAY çevirisi var")
-	if not rows.has("UI_STORY_REPLAY"):
-		return
 	var font := UiKit.display_font()
-	for column in [1, 2]:
-		var text := (rows["UI_STORY_REPLAY"] as PackedStringArray)[column].replace("i", "İ").to_upper()
-		for i in text.length():
-			var c := text.unicode_at(i)
-			assert_true(c == 32 or font.has_char(c), "UI_STORY_REPLAY (%s): başlık fontunda yok: %s" % [_lang(column), char(c)])
+	for key: String in ["UI_STORY_REPLAY", "UI_ENDING_REPLAY"]:
+		assert_true(rows.has(key), "%s çevirisi var" % key)
+		if not rows.has(key):
+			continue
+		for column in [1, 2]:
+			var text := (rows[key] as PackedStringArray)[column].replace("i", "İ").to_upper()
+			for i in text.length():
+				var c := text.unicode_at(i)
+				assert_true(c == 32 or font.has_char(c), "%s (%s): başlık fontunda yok: %s" % [key, _lang(column), char(c)])
 
 
 static func _lines(font: Font, text: String, width: float, size: int) -> int:

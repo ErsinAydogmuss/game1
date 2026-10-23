@@ -1020,6 +1020,20 @@ SONGS = {
             [(72, 2), (76, 2)], [(74, 3), (None, 1)],
         ],
     },
+    # Gölün Bekçisi (final): yavaş, gizemli; derin pad, uzak kalp atışı gibi iki pes vuruş, seyrek çelesta ezgisi
+    # ve uzak çanlar (sisli gece, X).
+    "keeper": {
+        "bpm": 64, "meter": 4, "lead": "celesta", "style": "keeper",
+        "chords": ["Em9", "Em9", "Cmaj7", "Cmaj7", "Am7", "Am7", "Bm7", "Bm7", "Em9", "Cmaj7", "Am7", "Bm7"],
+        "melody": [
+            [(76, 3), (None, 1)], [(79, 1.5), (78, 0.5), (76, 2)],
+            [(72, 3), (None, 1)], [(76, 1.5), (74, 0.5), (71, 2)],
+            [(69, 2), (72, 2)], [(76, 3), (None, 1)],
+            [(78, 2), (74, 2)], [(71, 3), (None, 1)],
+            [(83, 2), (79, 2)], [(81, 1.5), (79, 0.5), (76, 2)],
+            [(76, 2), (72, 2)], [(74, 3), (None, 1)],
+        ],
+    },
     # Nine'nin dükkânı: neşeli bir vals (3/4, "um-pa-pa"), 8 ölçülük ezgi üç kez (ikincisi bir oktav
     # yukarıda çelestayla, üçüncüsü marimbayla).
     "shop": {
@@ -1032,6 +1046,12 @@ SONGS = {
             [(79, 2), (74, 1)], [(71, 2), (None, 1)],
         ] * 3,
     },
+}
+# Bitiş filmi ve jenerik: sabahın ezgisi daha yavaş ve geniş (tema geri döner): kalimba, bir oktav yukarıda çelesta,
+# sıcak pad, dört ölçüde bir çan.
+SONGS["ending"] = {
+    "bpm": 76, "meter": 4, "lead": "kalimba", "style": "ending",
+    "chords": SONGS["morning"]["chords"], "melody": SONGS["morning"]["melody"],
 }
 MUSIC_RMS_DB = -21.0
 
@@ -1065,8 +1085,11 @@ def song(name):
         return pre + bar * bar_n + frames(beat * beat_s)
 
     # Pad: art arda aynı akorun ölçüleri tek akor (her ölçüde yeniden vurulmasın); sonu bir sonrakine örtüşür.
-    bright = {"morning": 1800.0, "noon": 2000.0, "evening": 1400.0, "night": 1000.0, "shop": 2200.0}[style]
-    pad_gain = {"morning": 0.12, "noon": 0.1, "evening": 0.15, "night": 0.2, "shop": 0.08}[style]
+    bright = {"morning": 1800.0, "noon": 2000.0, "evening": 1400.0, "night": 1000.0, "shop": 2200.0, "keeper": 850.0,
+              "ending": 2000.0}[style]
+    pad_gain = {"morning": 0.12, "noon": 0.1, "evening": 0.15, "night": 0.2, "shop": 0.08, "keeper": 0.24,
+                "ending": 0.16}[style]
+    slow_pad = style in ("night", "keeper")
     chords = spec["chords"]
     bar = 0
     while bar < bars:
@@ -1074,7 +1097,7 @@ def song(name):
         while bar + run < bars and chords[bar + run] == chords[bar]:
             run += 1
         _, voicing = MUSIC_CHORDS[chords[bar]]
-        left, right = pad(voicing, run * bar_n + frames(0.6), 0.35 if style != "night" else 0.9, 0.6, bright,
+        left, right = pad(voicing, run * bar_n + frames(0.6), 0.9 if slow_pad else 0.35, 0.6, bright,
                           seed + bar)
         m.add_stereo(left, right, at(bar, 0), pad_gain, 0.35)
         bar += run
@@ -1084,8 +1107,8 @@ def song(name):
         s = at(bar, 0)
         # Bas: dörtlükte kök ve beşli (gece tek, uzun), valsta yalnızca birinci vuruş.
         low = root + 12 if root < 40 else root
-        if style == "night":
-            m.add(bass(low, bar_n, seed + bar), s, 0.18, humanize=False)
+        if style in ("night", "keeper"):
+            m.add(bass(low, bar_n, seed + bar), s, 0.2 if style == "keeper" else 0.18, humanize=False)
         elif style == "shop":
             m.add(bass(low, frames(beat_s), seed + bar), s, 0.4, humanize=False)
         else:
@@ -1121,6 +1144,22 @@ def song(name):
             if bar % 4 == 0:
                 m.add(bell(tones[0] + 24, seed + bar, 1.0), s, 0.05, pan=-0.3, rev=0.8)
             m.add(kalimba(tones[1] + 12, seed + 40 + bar, 1.0, 1.2), at(bar, 2), 0.06, pan=0.35, rev=0.6)
+        elif style == "keeper":
+            # Bekçi: her ölçünün başında uzaktan kalp atışı gibi iki pes vuruş, üçüncü vuruşun arkasında yankılı
+            # çelesta pırıltısı, iki ölçüde bir uzak çan.
+            m.add(timpani(low, 0.9), s, 0.2, humanize=False)
+            m.add(timpani(low, 0.6), at(bar, 0.42), 0.12, humanize=False)
+            m.add(celesta(tones[-1] + 24, seed + 60 + bar, 1.0, 1.2), at(bar, 2.5), 0.05, pan=0.4, rev=0.85)
+            if bar % 2 == 0:
+                m.add(bell(tones[0] + 24, seed + 90 + bar, 1.0), at(bar, 1), 0.045, pan=-0.35, rev=0.9)
+        elif style == "ending":
+            # Bitiş: sabahın marimba arpeji (daha yumuşak), dört ölçüde bir çan.
+            pattern = [0, 2, 1, 3, 2, 1, 3, 2]
+            for k in range(8):
+                note = tones[pattern[k] % len(tones)]
+                m.add(marimba(note, seed + 8 * bar + k), at(bar, k * 0.5), 0.1, pan=-0.35, rev=0.4)
+            if bar % 4 == 0:
+                m.add(bell(tones[0] + 24, seed + 70 + bar, 1.0), s, 0.07, pan=0.3, rev=0.8)
         elif style == "shop":
             # Vals: "pa-pa" ikinci ve üçüncü vuruşta marimba akoru; yumuşak shaker.
             for b in (1, 2):
@@ -1142,6 +1181,10 @@ def song(name):
                 gain = {"kalimba": 0.3, "marimba": 0.28, "oud": 0.3, "celesta": 0.22}[kind]
                 m.add(_lead(kind, note + shift, seed + 100 * bar + k, beat_s, beats), at(bar, beat), gain,
                       pan=0.15, rev=0.45)
+                if style == "ending":
+                    # Bitiş: ezgiyi bir oktav yukarıda çelesta da çalar (geniş, parıltılı).
+                    m.add(_lead("celesta", note + 12, seed + 300 + 100 * bar + k, beat_s, beats), at(bar, beat), 0.08,
+                          pan=-0.25, rev=0.65)
             beat += beats
     left, right = m.render()
     # 35 Hz altı atılır (telefon çalamaz). Süzgeç katlamadan önce: FFT süzgeci diziyi dairesel saymaz,
@@ -1373,6 +1416,22 @@ def paper():
     return finish(x + 0.08 * reverb(x, 0.4)[:n], -4.0, 0.05)
 
 
+def dive():
+    """Gölün Bekçisi dalıyor: derinden gelen pes bir gümbürtü, aşağı süzülen su hışırtısı ve yükselen kabarcıklar."""
+    n = frames(1.9)
+    x = 0.7 * thump(46, n, 0.55, 0.6, 0.08)
+    whoosh = sweep_band(noise(n, 911), 2600.0, 240.0, 1.8) * env_ar(n, 0.06, 1.3)
+    x += 0.45 * unit(whoosh)
+    r = rng(912)
+    at = 0.18
+    for k in range(10):
+        bn = frames(r.uniform(0.08, 0.16))
+        b = bubble(r.uniform(420, 820), r.uniform(900, 1700), bn, r.uniform(0.03, 0.06))
+        place(x, 0.12 * unit(b), frames(at))
+        at += r.uniform(0.06, 0.12)
+    return finish(x + 0.35 * reverb(x, 1.5)[:n], -1.0, 0.35)
+
+
 def find_mythic():
     """Masalsı buluntu (Gölün Bekçisi): Efsanevi'nin fanfarı daha geniş, koro gibi pad ve çanlar."""
     n = frames(3.6)
@@ -1423,8 +1482,8 @@ def registry():
         "trap_place_1": lambda: trap_place(830), "trap_collect_1": trap_collect,
         "find_6_1": find_mythic, "thunder_1": thunder, "tea_1": tea, "phase_1": phase_chime,
         "lantern_1": lantern, "love_up_1": love_up, "trash_1": trash,
-        # Gölün Sırrı (Dalga 4, 5. adım): şişe ve mektup.
-        "bottle_1": bottle, "paper_1": paper,
+        # Gölün Sırrı (Dalga 4, 5. adım): şişe ve mektup; final: Bekçi'nin dalışı.
+        "bottle_1": bottle, "paper_1": paper, "dive_1": dive,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

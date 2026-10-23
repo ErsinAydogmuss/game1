@@ -5,7 +5,8 @@ extends Control
 ## şeritleri (üstte ve altta), başta oyunun logosu, altta konuşanın portresi (Dede ya da Nine; sözün
 ## ifadesiyle: Moods), adı ve en çok iki satır yazı. Dokununca (parmak kalkınca) sonraki söz; söz
 ## kendiliğinden de ilerler. Sağ üstte ATLA (güvenli alanda, 122 boy). Son sözde hediye rozeti:
-## bambu kamışın resmi ve "Dede'nin ilk oltası". Süreler _process(delta) toplamıyla.
+## bambu kamışın resmi ve "Dede'nin ilk oltası". Süreler _process(delta) toplamıyla. Bitiş filmi de aynı örtüyle
+## (play(Story.ENDING, false): logosuz başlar).
 ## line_started(sıra): main o sözün çekimine geçer; finished(atlandı mı): film bitti.
 
 signal line_started(index: int)
@@ -42,6 +43,8 @@ var _face: TextureRect
 var _name: Label
 var _text: Label
 var _gift: Control
+## Filmin sözleri (Story.LINES ya da Story.ENDING).
+var _lines: Array[Array] = Story.LINES
 var _index: int = -1
 ## Logo, sözler; sözün ne kadar sürdüğü ve kalan süresi (sn).
 var _in_logo: bool = false
@@ -75,20 +78,26 @@ func _ready() -> void:
 	hide()
 
 
-## Film baştan: logo, sonra sözler.
-func play() -> void:
+## Film baştan: logo (logo verilirse), sonra sözler (lines).
+func play(lines: Array[Array] = Story.LINES, logo: bool = true) -> void:
+	_lines = lines
 	_index = -1
-	_in_logo = true
+	_in_logo = logo
 	_age = 0.0
-	_left = LOGO_TIME
+	_left = LOGO_TIME if logo else 0.6
 	_armed = false
 	_bars = 0.0
-	_logo.visible = true
+	_logo.visible = logo
 	_logo.modulate.a = 0.0
 	_box.visible = false
 	_gift.visible = false
 	show()
 	_refresh_texts()
+
+
+## Oynayan filmin sözleri.
+func lines() -> Array[Array]:
+	return _lines
 
 
 ## Şu anki sözün sırası (logodayken -1).
@@ -138,10 +147,10 @@ func _next() -> void:
 	_in_logo = false
 	_logo.visible = false
 	_index += 1
-	if _index >= Story.LINES.size():
+	if _index >= _lines.size():
 		_finish(false)
 		return
-	var line: Array = Story.LINES[_index]
+	var line: Array = _lines[_index]
 	var speaker := str(line[1])
 	_face.texture = Moods.face(speaker, str(line[0]))
 	_face.visible = _face.texture != null
@@ -150,7 +159,7 @@ func _next() -> void:
 	_box.modulate.a = 0.0
 	_gift.visible = str(line[2]) == "gift"
 	_age = 0.0
-	_left = Story.line_time(_index, _text.text)
+	_left = Story.line_time(_index, _text.text, _lines)
 	Sounds.play("hint")
 	line_started.emit(_index)
 
@@ -158,8 +167,8 @@ func _next() -> void:
 ## Yazılar o anki dilde (film açılırken dil henüz uygulanmamış olabilir: dil değişince yenilenir).
 func _refresh_texts() -> void:
 	skip_button.text = UiKit.upper(tr("UI_INTRO_SKIP"))
-	if _index >= 0 and _index < Story.LINES.size():
-		var line: Array = Story.LINES[_index]
+	if _index >= 0 and _index < _lines.size():
+		var line: Array = _lines[_index]
 		_name.text = UiKit.upper(tr(str(NAMES[str(line[1])])))
 		_text.text = tr(str(line[0]))
 	_layout()
