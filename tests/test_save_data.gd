@@ -393,6 +393,44 @@ static func _rank_in(curve: Array[int], xp: int) -> int:
 	return rank
 
 
+## Dalga 4'ün gerçek bir kaydı (tests/fixtures/save_v5.json, değiştirilmez: denge botu final hazır olana kadar
+## oynadı (altı mektup, dört harita parçası, altın hamur); botun saniyeleri gerçek saate taşındı): okunur ve
+## gidiş-dönüşte aynı kalır. Oyun saati, Dede'nin istekleri ve sayaçları, Gölün Sırrı, göl sevgisi, bırakma ve çöp
+## sayaçları, tuzakta çöp alanı; final gecesi (Bekçi henüz bırakılmadı). Sonraki sürümün göçü bundan sınanır.
+func test_v5_save_reads_back() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v5.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v5 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	assert_eq(int((raw as Dictionary)["version"]), 5, "örnek v5 kaydı")
+	var db := content()
+	var rules := db.rules
+	var s := SaveData.from_dict(raw)
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "güncel sürüm")
+	assert_eq(s.clock_s, 6031, "oyun saati")
+	assert_eq(DayClock.day(rules, s.clock_s), 4, "dördüncü oyun günü")
+	assert_eq(DayClock.phase(rules, s.clock_s), "morning", "sabah")
+	assert_eq(s.letters, Secret.LETTERS.size(), "altı mektup")
+	assert_eq(s.map_pieces, SaveData.MAX_MAP_PIECES, "dört harita parçası")
+	assert_true(Secret.has_dough(s), "altın hamur")
+	assert_eq(s.keeper, 0, "Bekçi henüz bırakılmadı")
+	assert_true(Secret.final_ready(s) and Secret.keeper_night(s), "final hazır: final gecesi")
+	assert_true(LakeLove.level(rules, s.love) >= Secret.DOUGH_LOVE, "göl sevgisi altın hamurun seviyesinde")
+	assert_eq(s.request_serial, 19, "istek sırası")
+	assert_eq(s.request_day, 4, "bugünün istekleri doldu")
+	assert_true(not s.requests.is_empty(), "bekleyen istek var")
+	assert_true(int(s.stats["requests"]) > 0 and int(s.stats["released"]) > 0 and int(s.stats["trash"]) > 0,
+			"istek, bırakma ve çöp sayaçları")
+	assert_true(s.records.has("moon_pike"), "Ay Turnası defterde")
+	assert_eq(s.traps.size(), 1, "bir tuzak kurulu")
+	if s.traps.size() == 1:
+		assert_true((s.traps[0] as Dictionary).has("trash"), "tuzakta çöp alanı")
+	var cond := WorldState.conditions(db, s)
+	assert_eq(str(cond["phase"]), "morning", "koşullar kaydın saatinden")
+	var fresh := SaveData.from_dict(raw)
+	assert_eq(SaveData.from_dict(fresh.to_dict()).to_dict(), fresh.to_dict(), "gidiş-dönüşte aynı")
+
+
 func test_store_writes_atomically() -> void:
 	var path := "user://test_save_store.json"
 	var s := SaveData.create_new(77)
