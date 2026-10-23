@@ -4367,6 +4367,8 @@ func _video_ghost(center: Vector2, seconds: float) -> void:
 			wake = StoryFilm.WAKE_EVERY
 			rings.spawn(p - heading * StoryFilm.GHOST_LENGTH * 0.5, StoryFilm.GHOST_LENGTH * 0.4, 1.5,
 					Color(0.7, 1.0, 0.96, 0.6), 0.1)
+		if t >= 0.5 and not _taken.has("v6a_bekci_golge"):
+			await _shot_once("v6a_bekci_golge")
 		await get_tree().process_frame
 		age += get_process_delta_time()
 	var end := path[path.size() - 1]
