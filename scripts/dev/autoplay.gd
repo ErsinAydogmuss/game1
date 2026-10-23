@@ -4336,14 +4336,15 @@ func _play_video() -> void:
 	_quit()
 
 
-## Tanıtım videosu: Gölün Bekçisi'nin dev gölgesi center'ın (sandal) çevresinde yarım tur yüzer, belirip söner,
-## arkasında turkuaz iz halkaları; sonunda dalar (halkalar, ses, titreşim). Yalnızca görünüş (StoryFilm'in bitiş
-## çekimi gibi): oturuma ve gölgelerin kuralına dokunmaz.
+## Tanıtım videosu: Gölün Bekçisi'nin dev gölgesi center'ın (sandal) çevresinde yarım tur yüzer (çemberin
+## kameradan uzak yarısı: ekranın üst yarısı, alttaki düğmelerin uzağı), belirip söner, arkasında turkuaz iz
+## halkaları; sonunda dalar (halkalar, ses, titreşim). Yalnızca görünüş (StoryFilm'in bitiş çekimi gibi): oturuma
+## ve gölgelerin kuralına dokunmaz.
 func _video_ghost(center: Vector2, seconds: float) -> void:
 	var circle := Story.keeper_circle(GameState.db, str(main.get("spot_id")), center)
 	if circle.size() < 4:
 		return
-	var path := circle.slice(0, (circle.size() >> 1) + 1)
+	var path := circle.slice(circle.size() >> 1)
 	var layer: ShadowLayer = main.get("shadows")
 	var rings: Ripples = main.get("ripples")
 	var ghost := layer.make_ghost(StoryFilm.GHOST_LENGTH)
