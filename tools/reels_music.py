@@ -8,6 +8,11 @@ Sol'a oturur. Sazlar: marimba, çelesta ve çan, tel (Karplus-Strong), bas, pad,
 el çırpma, shaker, timpani, yükselen süpürme. Yapı taşları ve çalgılar tools/make_sounds.py'den (48 kHz;
 oyunun vakit müzikleriyle ortak).
 
+v0.5'in kesimleri (gece ve sır) için gizemli tarzlar: mist (sisli gece: koyu pad, alçak uğultu, kalp atışı, seyrek
+çan), drift (kutu müziği gibi kalimba arpeji ve kalp atışı), night (gece: kalimba ezgisi, ateşböceği gibi çelesta
+pırıltıları), storm (fırtına: titreyen pad, timpani gümbürtüsü), awe (masalsı belirme: bakır, zil ve timpani, sonra
+pad ve çan; davulsuz). Eski kesimler bu tarzları kullanmaz: müzikleri bit bit aynı.
+
 Kullanım:  python3 -I tools/reels_music.py --out /mutlak/klasör [--cut <kesim>|all] [--edl liste.json]
 Çıktı:     kurgu listesindeki her kesim için music_<kesim>.wav (kesimin süresi kadar: 45,00 ve 15,00 sn);
            48 kHz, stereo, 16 bit.
@@ -48,6 +53,8 @@ CHORDS = {
     "Dsus4": (38, [50, 55, 57, 62]),
     "Bm7": (35, [50, 54, 57, 59]),
     "G": (31, [55, 59, 62, 67, 71]),
+    # v0.5 (gece ve sır): Mi minörün gerilimi.
+    "B7": (35, [51, 54, 57, 59]),
 }
 
 
@@ -61,6 +68,7 @@ def b2n(beats):
 
 kick, clap, snare, shaker, hat, crash, timpani = ms.kick, ms.clap, ms.snare, ms.shaker, ms.hat, ms.crash, ms.timpani
 marimba, celesta, bell, pluck, pad, brass_chord = ms.marimba, ms.celesta, ms.bell, ms.pluck, ms.pad, ms.brass_chord
+kalimba = ms.kalimba
 Mix = ms.Mix
 
 
@@ -178,6 +186,82 @@ def section(m, cue, seed):
         for k in range(int(beats * 4)):
             m.add(snare(seed + 30 + k, 0.15 + 0.05 * k), at(k * 0.25), 0.5, pan=0.1, rev=0.2)
         m.add(riser(beats, seed + 4), start, 0.4, rev=0.3, humanize=False)
+    elif style == "mist":
+        # Sisli gece: koyu pad, alçak uğultu (kök ve beşli), yavaş kalp atışı (iki tok vuruş), seyrek yüksek çan
+        # (Mi minör pentatonik), uzun yankı; davul yok.
+        left, right = pad(voicing, n + b2n(1.0), 0.9, 0.9, 1100.0, seed)
+        m.add_stereo(left, right, start, 0.36, 0.55)
+        drone = ms.sine(ms.midi(root - 12), n) + 0.3 * ms.sine(ms.midi(root - 5), n)
+        m.add(drone * ms.env_ar(n, 0.8, 0.8), start, 0.16, humanize=False)
+        _heartbeat(m, start, beats, 0)
+        tones = [88, 83, 86, 81, 79, 76]
+        for k, b in enumerate([0.5, 2.25, 3.5, 5.0]):
+            if b < beats:
+                m.add(bell(tones[(k + seed) % len(tones)], seed + k, 1.0), at(b), 0.14,
+                      pan=-0.4 if k % 2 else 0.4, rev=0.9)
+    elif style == "drift":
+        # Gizem: kutu müziği gibi kalimba arpeji (sekizlik), koyu pad, kalp atışı, alçak bas.
+        left, right = pad(voicing, n, 0.4, 0.5, 1500.0, seed)
+        m.add_stereo(left, right, start, 0.3, 0.5)
+        notes = arp_notes(chord, 24, 6)
+        order = [0, 2, 4, 3, 5, 2, 1, 3]
+        for k in range(int(beats * 2)):
+            m.add(kalimba(notes[order[k % len(order)]], seed + k, 1.0, 0.8), at(k * 0.5),
+                  0.26 if k % 2 == 0 else 0.18, pan=-0.3 if k % 4 < 2 else 0.3, rev=0.55)
+        _heartbeat(m, start, beats, 0)
+        m.add(bass(root, min(2.0, beats), seed), start, 0.35)
+    elif style == "night":
+        # Gece: yumuşak pad, dörtlük kalimba ezgisi, ateşböceği gibi çelesta pırıltıları, sakin shaker; bas ilk
+        # vuruşta ve ortada.
+        left, right = pad(voicing, n, 0.5, 0.5, 2000.0, seed)
+        m.add_stereo(left, right, start, 0.28, 0.45)
+        m.add(bass(root, min(2.0, beats), seed), start, 0.4)
+        if beats >= 3:
+            m.add(bass(root + 7, 1.0, seed + 1), at(2), 0.3)
+        tune = arp_notes(chord, 24, 8)
+        for b in range(whole):
+            m.add(kalimba(tune[[0, 3, 2, 4, 1, 3, 5, 2][b % 8]], seed + b, 1.0, 1.0), at(b), 0.3, pan=-0.25, rev=0.5)
+            if b + 0.5 < beats:
+                m.add(shaker(seed + 10 + b, 0.6), at(b + 0.5), 0.12, pan=0.45)
+        sparkle = arp_notes(chord, 36, 6)
+        for k in range(int(beats)):
+            m.add(celesta(sparkle[(k * 2 + 1) % len(sparkle)], seed + 30 + k, 0.8, 0.6), at(k + 0.75), 0.12,
+                  pan=0.5 if k % 2 else -0.5, rev=0.75)
+    elif style == "storm":
+        # Fırtına: titreyen koyu pad, sekizlik timpani gümbürtüsü (gittikçe güçlenir), her vuruşta tok vuruş ve bas,
+        # sonda süpürme.
+        left, right = pad(voicing, n, 0.15, 0.3, 1300.0, seed)
+        trem = 0.7 + 0.3 * np.sin(2 * np.pi * 6.0 * ms.tl(n))
+        m.add_stereo(left * trem, right * trem, start, 0.32, 0.35)
+        drum = root if root >= 36 else root + 12
+        rolls = int(beats * 2)
+        for k in range(rolls):
+            m.add(timpani(drum, 0.3 + 0.5 * k / max(1, rolls - 1)), at(k * 0.5), 0.42, rev=0.35)
+        for b in range(whole):
+            m.add(kick(0.85), at(b), 0.8, humanize=False)
+            m.add(bass(root, 0.5, seed + b), at(b), 0.45)
+        rise = min(2.0, beats)
+        m.add(riser(rise, seed + 6), at(beats - rise), 0.35, rev=0.3, humanize=False)
+    elif style == "awe":
+        # Masalsı belirme: bakır akor, zil, timpani ve tok vuruş; sonra geniş pad, çelesta, seyrek çan ve geri dönen
+        # kalp atışı (davul yok).
+        big = brass_chord([v + 12 for v in voicing[:4]], 0.9, 1.0)
+        m.add(big, start, 0.4, rev=0.45, humanize=False)
+        m.add(crash(seed, 0.9, 2.6), start, 0.28, pan=0.2, rev=0.5, humanize=False)
+        m.add(timpani(root + 12 if root < 36 else root, 1.0), start, 0.55, rev=0.35, humanize=False)
+        m.add(kick(1.0), start, 0.95, humanize=False)
+        left, right = pad([v + 12 for v in voicing], n, 0.05, 0.7, 2600.0, seed)
+        m.add_stereo(left, right, start, 0.4, 0.45)
+        # Alçak uğultu (mist'teki gibi): bakırdan sonra ses düzeyi çökmesin.
+        drone = ms.sine(ms.midi(root - 12), n) + 0.3 * ms.sine(ms.midi(root - 5), n)
+        m.add(drone * ms.env_ar(n, 0.3, 0.8), start, 0.2, humanize=False)
+        m.add(bass(root, min(3.0, beats), seed), start, 0.5)
+        for k, note in enumerate(arp_notes(chord, 24, 6)):
+            m.add(celesta(note, seed + 20 + k, 1.0, 1.0), start + ms.frames(0.08 * k), 0.26,
+                  pan=-0.5 + 0.2 * k, rev=0.7, humanize=False)
+        for b in range(2, whole, 2):
+            m.add(bell(up[(b * 3) % len(up)], seed + 40 + b, 1.0), at(b), 0.15, pan=0.3 if b % 4 else -0.3, rev=0.85)
+        _heartbeat(m, start, beats, 2)
     elif style == "hush":
         left, right = pad(voicing, n, 0.2, 0.3, 1600.0, seed)
         m.add_stereo(left, right, start, 0.26, 0.5)
@@ -185,6 +269,14 @@ def section(m, cue, seed):
         for k, note in enumerate([81, 79, 76, 74, 76, 78]):
             m.add(celesta(note, seed + k, 1.0, 0.9), at(k * 0.5), 0.2, pan=0.3, rev=0.7)
         m.add(riser(1.5, seed + 5), at(beats - 1.5), 0.35, rev=0.3, humanize=False)
+
+
+def _heartbeat(m, start, beats, first):
+    """Kalp atışı: iki vuruşta bir, ikili tok vuruş (güçlü ve hemen ardından hafif); first'ten başlar."""
+    for b in range(first, int(np.ceil(beats - 1e-6)), 2):
+        m.add(kick(0.55), start + b2n(b), 0.55, humanize=False)
+        if b + 0.35 < beats:
+            m.add(kick(0.35), start + b2n(b + 0.35), 0.35, humanize=False)
 
 
 def _groove(m, start, beats, chord, seed, full=True):

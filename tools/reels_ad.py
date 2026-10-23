@@ -23,6 +23,12 @@ modda çalışır (kısa süreli ses düzeyi hedefe çekilir; mod günlüğe yaz
 olta_reels_<kesim>_muziksiz.mp4 (H.264 High, yuv420p BT.709, 30 fps, AAC 48 kHz, faststart),
 olta_reels_kapak.jpg, kontrol resimleri (kontrol_<kesim>.jpg).
 
+Çekim takımı: bot günlüğe REELS SET yazar (v04: 45 ve 15 sn; v05: Dalga 4'ün "gece" ve "sir" kesimleri,
+--reels-set=v05). Kesim kurgu listesinde takımını "set" ile söyler (yoksa v04); --cut all kaydın takımının
+kesimlerini keser. Kesimin kendi son kart arka planı (end_background), kapağı (cover: src, offset, title;
+olta_reels_<kesim>_kapak.jpg) ve ortam sesi (ambience: [{at, name}], vuruşla; assets/audio/ambience/<ad>.ogg,
+bölümler arasında bir vuruşluk geçiş) olabilir; yoksa listenin genel son kartı, kapağı ve göl ortamı.
+
 Kullanım:
   python3 -I tools/reels_ad.py --avi kayit.avi --log kayit.log --out klasor [--music klasor] [--cut <kesim>|all]
           [--check] (yalnızca kurgu listesini denetle) [--preview] (hızlı, düşük kalite)
@@ -51,7 +57,8 @@ EDL = json.load(open(EDL_PATH, encoding="utf-8"))
 DISPLAY_FONT = os.path.join(ROOT, "assets", "fonts", "LuckiestGuy-Regular.ttf")
 BODY_FONT = os.path.join(ROOT, "assets", "fonts", "Baloo2-Variable.ttf")
 LOGO = os.path.join(ROOT, "assets", "ui", "art", "logo.png")
-AMBIENCE = os.path.join(ROOT, "assets", "audio", "ambience", "lake.ogg")
+AMBIENCE_DIR = os.path.join(ROOT, "assets", "audio", "ambience")
+DEFAULT_COVER = {"src": "legend.show", "offset": 12, "title": "EFSANEVİ MERSİN!"}
 
 FPS = EDL["fps"]
 BEAT = EDL["beat_frames"]
@@ -78,8 +85,8 @@ def run(cmd, **kw):
 # --- Günlük -------------------------------------------------------------------------------
 
 def parse_log(path):
-    info = {"sync": None, "view": None, "end": None, "marks": {}, "cuts": [], "panels": {}, "toasts": [],
-            "takes": [], "aims": []}
+    info = {"sync": None, "view": None, "end": None, "set": "v04", "marks": {}, "cuts": [], "panels": {},
+            "toasts": [], "takes": [], "aims": []}
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
             if not line.startswith("REELS "):
@@ -106,6 +113,8 @@ def parse_log(path):
                 info["takes"].append((frame, rest))
             elif kind == "AIM":
                 info["aims"].append((frame, rest))
+            elif kind == "SET":
+                info["set"] = rest.strip()
             elif kind == "END":
                 info["end"] = frame
     if info["sync"] is None or info["end"] is None:
@@ -182,7 +191,7 @@ def resolve(cut, info, offset):
     if spec["frames"] - end_at <= 0:
         problems.append("son karta yer yok")
     else:
-        end_src = EDL["end_background"]
+        end_src = end_background(cut)
         try:
             start = mark_frame(info, end_src["src"]) + int(end_src.get("offset", 0))
             problems += check_range("son kart", start, start + spec["frames"] - end_at, info)
@@ -191,9 +200,22 @@ def resolve(cut, info, offset):
     return shots, problems
 
 
-def cover_problems(info):
+def end_background(cut):
+    """Son kartın arkasındaki görüntü: kesimin kendisininki ya da listenin geneli."""
+    return EDL["cuts"][cut].get("end_background", EDL["end_background"])
+
+
+def cover_spec(cut):
+    """Kapak: kesimin kendisininki (olta_reels_<kesim>_kapak.jpg) ya da listenin geneli (olta_reels_kapak.jpg)."""
+    own = EDL["cuts"][cut].get("cover")
+    if own:
+        return {**DEFAULT_COVER, **own}, "olta_reels_%s_kapak.jpg" % cut
+    return {**DEFAULT_COVER, **EDL.get("cover", {})}, "olta_reels_kapak.jpg"
+
+
+def cover_problems(info, cut):
     """Kapağın karesi kayıtta var mı (işaret, senk, kaydın sonu)."""
-    spec = EDL.get("cover", {"src": "legend.show", "offset": 12})
+    spec = cover_spec(cut)[0]
     try:
         frame = mark_frame(info, spec["src"]) + int(spec.get("offset", 0))
     except KeyError as e:
@@ -590,13 +612,45 @@ def write_wav(path, x):
         w.writeframes(data.tobytes())
 
 
+def ambience_bed(spec, total):
+    """Kesintisiz ortam sesi (-30 dB RMS): kesimin bölümleri (ambience: [{at, name}], vuruşla); bölüm
+    değişirken bir vuruşta eşit güçle geçiş. Bölüm yoksa yalnızca göl (lake)."""
+    n = total * SPF
+    sections = spec.get("ambience") or [{"at": 0, "name": "lake"}]
+    beds = {}
+    out = np.zeros((n, 2))
+    half = BEAT * SPF // 2
+    for k, sec in enumerate(sections):
+        name = sec["name"]
+        if name not in beds:
+            x = decode_audio(os.path.join(AMBIENCE_DIR, name + ".ogg"), total / FPS + 1.0, loop=True)[:n]
+            if len(x) < n:
+                x = np.vstack([x, np.zeros((n - len(x), 2))])
+            beds[name] = x / (np.sqrt(np.mean(x ** 2)) + 1e-9) * 10 ** (-30 / 20.0)
+        if len(sections) == 1:
+            return beds[name]
+        a = int(round(float(sec["at"]) * BEAT)) * SPF
+        b = int(round(float(sections[k + 1]["at"]) * BEAT)) * SPF if k + 1 < len(sections) else n
+        env = np.zeros(n)
+        lo, hi = max(0, a - half), min(n, b + half) if k + 1 < len(sections) else n
+        env[lo:hi] = 1.0
+        if k > 0:
+            ramp = np.clip((np.arange(lo, min(n, a + half)) - (a - half)) / float(2 * half), 0.0, 1.0)
+            env[lo: lo + len(ramp)] = np.sin(ramp * np.pi / 2)
+        if k + 1 < len(sections):
+            start = max(0, b - half)
+            ramp = np.clip((np.arange(start, hi) - (b - half)) / float(2 * half), 0.0, 1.0)
+            env[start:hi] = np.minimum(env[start:hi], np.cos(ramp * np.pi / 2))
+        out += beds[name] * env[:, None]
+    return out
+
+
 def mixes(cut, shots, avi_audio, music_dir, tmp):
     spec = EDL["cuts"][cut]
     total = spec["frames"]
     n = total * SPF
     sfx = game_audio(shots, avi_audio, total)
-    amb = decode_audio(AMBIENCE, total / FPS + 1.0, loop=True)[:n]
-    amb = amb / (np.sqrt(np.mean(amb ** 2)) + 1e-9) * 10 ** (-30 / 20.0)
+    amb = ambience_bed(spec, total)
     music_path = os.path.join(music_dir, "music_%s.wav" % cut)
     music = decode_audio(music_path)[:n]
     if len(music) < n:
@@ -672,9 +726,10 @@ def write_video(video_path, audio, path):
     return peak
 
 
-def cover(info, offset, avi, video, fonts, out_dir, tmp):
-    """Kapak: efsanevi mersin elde (altın ışık sütunu) kartta, üstte logo; 4:5 kırpmada da sığar."""
-    spec = EDL.get("cover", {"src": "legend.show", "offset": 12})
+def cover(info, offset, avi, video, fonts, out_dir, tmp, cut):
+    """Kapak: kesimin kapağının karesi kartta (v04: efsanevi mersin elde, altın ışık sütunu), üstte logo, kartın
+    altında başlık; 4:5 kırpmada da sığar. Yazılan dosyanın adını döner."""
+    spec, name = cover_spec(cut)
     frame = mark_frame(info, spec["src"]) + int(spec.get("offset", 0)) + offset
     # Tek karelik çizimde döngülü resim girdileri ana görüntüden önce biter: birkaç kare çizilir.
     shot = {"id": "cover", "frames": 4, "avi_start": frame, "crop": "center", "beats": 0}
@@ -687,12 +742,13 @@ def cover(info, offset, avi, video, fonts, out_dir, tmp):
     logo = Image.open(LOGO).convert("RGBA")
     logo = logo.resize((520, int(520 * logo.height / logo.width)), Image.LANCZOS)
     base.alpha_composite(logo, ((W - logo.width) // 2, 300))
-    title = text_block(fonts, "EFSANEVİ MERSİN!", "")
+    title = text_block(fonts, spec["title"], spec.get("sub", ""))
     base.alpha_composite(title, (0, CARD_Y + CARD - title.height - 20))
     note = note_image(fonts)
     # Not, başlığın resminin hemen üstünde (resmin üst payı İ'nin noktasını da kapsar: üst üste binmez).
     base.alpha_composite(note, ((W - note.width) // 2, CARD_Y + CARD - title.height - 24 - note.height))
-    base.convert("RGB").save(os.path.join(out_dir, "olta_reels_kapak.jpg"), quality=93)
+    base.convert("RGB").save(os.path.join(out_dir, name), quality=93)
+    return name
 
 
 def contact_sheet(cut, path, out_dir, shots, fonts):
@@ -777,7 +833,12 @@ def main():
         FPS, BEAT = EDL["fps"], EDL["beat_frames"]
         SPF = SR // FPS
     info = parse_log(args.log)
-    cuts = list(EDL["cuts"]) if args.cut == "all" else [args.cut]
+    if args.cut == "all":
+        cuts = [c for c in EDL["cuts"] if EDL["cuts"][c].get("set", "v04") == info["set"]]
+        if not cuts:
+            sys.exit("kurgu listesinde %s takımının kesimi yok" % info["set"])
+    else:
+        cuts = [args.cut]
     if any(c not in EDL["cuts"] for c in cuts):
         sys.exit("kesim yok: %s (kurgu listesinde: %s)" % (args.cut, ", ".join(EDL["cuts"])))
     offset = 0
@@ -799,9 +860,13 @@ def main():
         for t in toasts_in(info, shots):
             print("  bildirim: " + t)
         failed = failed or bool(problems)
-    for p in cover_problems(info):
-        print("  SORUN: " + p)
-        failed = True
+    covers = {}
+    for cut in cuts:
+        covers.setdefault(cover_spec(cut)[1], cut)
+    for name, cut in covers.items():
+        for p in cover_problems(info, cut):
+            print("  SORUN: %s (%s)" % (p, name))
+            failed = True
     if failed:
         sys.exit(1)
     if args.check:
@@ -833,7 +898,7 @@ def main():
                 print("  parça %s (%d kare)" % (s["id"], s["frames"]))
             spec = EDL["cuts"][cut]
             end_at = int(round(float(spec["end"]) * BEAT))
-            end_src = EDL["end_background"]
+            end_src = end_background(cut)
             end_shot = {"id": "son_kart", "frames": spec["frames"] - end_at, "crop": "full", "beats": 0,
                         "avi_start": mark_frame(info, end_src["src"]) + int(end_src.get("offset", 0)) + offset}
             path = os.path.join(tmp, "%s_99_end.mp4" % cut)
@@ -857,8 +922,9 @@ def main():
                 peak = write_video(video_only, audio[name], out)
                 print("yazıldı: %s (tepe %.1f dBTP)" % (out, peak))
             contact_sheet(cut, os.path.join(args.out, "olta_reels_%s.mp4" % cut), args.out, shots, fonts)
-        cover(info, offset, args.avi, video, fonts, args.out, tmp)
-        print("yazıldı: " + os.path.join(args.out, "olta_reels_kapak.jpg"))
+        for cut in covers.values():
+            name = cover(info, offset, args.avi, video, fonts, args.out, tmp, cut)
+            print("yazıldı: " + os.path.join(args.out, name))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

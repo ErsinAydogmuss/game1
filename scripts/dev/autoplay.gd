@@ -60,6 +60,10 @@ extends Node
 ##     sinekle alabalık, haritadan sandalla derin ortaya, efsanevi mersin (Dede haber verir) ve "Göle
 ##     bırak", defter. Kamerayı bot yönetir (aksiyon ortadaki kare kırpmada kalır); önemli anlar
 ##     günlüğe "REELS MARK <kare> <çekim>.<olay>" diye yazılır. --reels-only=gold,legend: yalnızca o çekimler.
+##     --reels-set=v05 (Dalga 4'ün iki videosu, "gece" ve "sir" kesimleri): akşamdan geceye iskele (saat hızla
+##     akar), fenerli gece, nilüferli koyda Ay Turnası, fırtınalı gecede derin ortada Kocabaş; sisli gecede sazlıkta
+##     şişe ve mektup, defterde haritanın dört parçası ve X, haritada X, X'te sandalın yanından geçen dev gölge,
+##     Gölün Bekçisi belirir, dalar ve misinayı koparır (tutulmaz).
 ##   rods: kamışlar ve makaralar (görsel denetim; KONTROL satırları): dükkândaki kamışlar teknik teknik
 ##     adlarıyla yan yana, makaralar yakından (çıkrık ve sinek makarası); elde kuşanılan kamış ve
 ##     makara, dipte sehpadaki kuşanılan dip kamışı (zil ucunda).
@@ -149,7 +153,28 @@ const REELS_RECORDS := [["rudd", 27, 3], ["carp", 66, 4], ["perch", 38, 3], ["si
 ## file (kova dolmasın), sandal.
 const REELS_GEAR := ["rod_float_carbon", "line_braid", "reel_pro", "hook_large", "bobber_bright", "rod_spin_heavy",
 		"lure_crank", "rod_carp_2", "feeder", "rod_fly_2", "fly_streamer", "trap_1", "keepnet_big", "boat", "net"]
+## Reels v0.5 (Dalga 4; --reels-set=v05; kurgu listesinde "gece" ve "sir" kesimleri): akşamdan geceye iskele,
+## fenerli gece, nilüferli koyda Ay Turnası, fırtınada derin ortada Kocabaş; sisli gecede sazlıkta şişe ve mektup,
+## defterde haritanın parçaları ve X, haritada X, X'te sandalın yanından geçen dev gölge, Gölün Bekçisi (tutulmaz).
+const REELS_V05_TAKES: Array[String] = ["dusk", "lantern", "moon", "storm", "bottle", "pieces", "xmap", "fog",
+		"keeper"]
+## Gün batımı: öğlenin saniyesinden (ışık sabit) başlar, saat karede REELS_DUSK_STEP oyun saniyesi ilerler (vaktin son
+## dakikası DayLook'un karışımı: 30 fps'te ~1,3 sn; LakeScene LOOK_RATE ile kayar): öğleden akşama, akşamın sabit
+## kısmı atlanır, akşamdan geceye. Gecenin saniyesi: v0.5'in gece çekimleri (vaktin son dakikasından uzak).
+const REELS_DUSK_FROM := 290
+const REELS_DUSK_STEP := 1.5
+const REELS_NIGHT_AT := 40
+## Efsanevilerin boy yüzdeliği (4★; takım taşır), Ay Turnası'nın ve Bekçi'nin çekişmesinde bırakma gecikmesi (kare:
+## sık çırpınan Ay Turnası 24 karede misinayı koparıyordu; Bekçi'de dalıştan önce kopmasın), dev gölgenin geçişi
+## (kare) ve sandala uzaklığı (m).
+const REELS_LEGEND_PERCENTILE := 750000
+const REELS_MOON_REACTION := 12
+const REELS_KEEPER_REACTION := 10
+const REELS_GHOST_FRAMES := 150
+const REELS_GHOST_SIDE := 1.9
 var _reels_only: PackedStringArray = PackedStringArray()
+## Çekim takımı: "v04" (45 ve 15 sn'lik kesimler) ya da "v05" (REELS_V05_TAKES).
+var _reels_set: String = "v04"
 ## Reels'te parmağın yeri: kırpmanın içinde, sağ altta (aksiyonu örtmez).
 var _finger := Vector2(260, 520)
 ## Kamera yönetmeni: her kare istenen çerçeve ({point, zoom, pitch}); geçersizse oyunun kamerası.
@@ -191,6 +216,8 @@ func _ready() -> void:
 			_only_fish = arg.get_slice("=", 1)
 		elif arg.begins_with("--reels-only="):
 			_reels_only = arg.get_slice("=", 1).split(",", false)
+		elif arg.begins_with("--reels-set="):
+			_reels_set = arg.get_slice("=", 1)
 		elif arg.begins_with("--world-part="):
 			_world_part = arg.get_slice("=", 1)
 	# Kamera yönetmeni ve olay günlüğü yalnızca reels'te (_process).
@@ -4427,7 +4454,17 @@ func _video_ghost(center: Vector2, seconds: float) -> void:
 ## Günlük: REELS SYNC (kayıtta beyaz parlama; satır beyazın çizildiği karede), TAKE, MARK, CUT (kamera sıçraması, kararma),
 ## PANEL (panelin ekrandaki yeri), TOAST, AIM, END; kare numarası Engine.get_frames_drawn().
 func _play_reels() -> void:
-	_reels_setup()
+	if not _reels_set in ["v04", "v05"]:
+		_check("reels: bilinmeyen çekim takımı %s (v04, v05)" % _reels_set, false)
+		for line in _results:
+			print("KONTROL ", line)
+		_quit()
+		return
+	var takes := REELS_V05_TAKES if _reels_set == "v05" else REELS_TAKES
+	if _reels_set == "v05":
+		await _reels_setup_v05()
+	else:
+		_reels_setup()
 	await _wait(1.2)
 	# Kurgu aracı kaydın karelerini günlükle bu parlamayla eşler: SYNC beyazın çizildiği karede yazılır.
 	var view := get_viewport().get_visible_rect().size
@@ -4435,11 +4472,13 @@ func _play_reels() -> void:
 	_overlay.call("flash", 2)
 	await flashed
 	_reels_log("SYNC", "%d %d" % [int(view.x), int(view.y)])
+	# Kurgu aracı --cut all'da bu takımın kesimlerini keser (kurgu listesinde "set").
+	_reels_log("SET", _reels_set)
 	await _wait(0.4)
 	var db := GameState.db
 	var save := GameState.save
 	var start_rank := Rank.rank(db, save)
-	for take in REELS_TAKES:
+	for take in takes:
 		if not _reels_only.is_empty() and not take in _reels_only:
 			continue
 		match take:
@@ -4457,6 +4496,24 @@ func _play_reels() -> void:
 				await _reels_legend()
 			"book":
 				await _reels_book()
+			"dusk":
+				await _reels_dusk()
+			"lantern":
+				await _reels_lantern()
+			"moon":
+				await _reels_moon()
+			"storm":
+				await _reels_storm()
+			"bottle":
+				await _reels_bottle()
+			"pieces":
+				await _reels_pieces()
+			"xmap":
+				await _reels_xmap()
+			"fog":
+				await _reels_fog()
+			"keeper":
+				await _reels_keeper()
 	_set_shot(Callable())
 	_check("reels: rütbe değişmedi (%d), kova dolmadı (%d/%d)" % [Rank.rank(db, save), save.bucket.size(),
 			Bucket.capacity(db, save)], Rank.rank(db, save) == start_rank and not Bucket.is_full(db, save))
@@ -4508,14 +4565,19 @@ func _reels_setup() -> void:
 	# Dipteki sehpa yakın çekimini (bir kez, kamera sıçraması) yönetmen yapar.
 	_taken["15b_sehpa_yakin"] = true
 	_park_fn = _reels_park_point
-	# İpucu çubuğu, sol üstteki durum hapları (para, kova, rütbe çubuğu) ve üst ortadaki saat çipi (Dalga 4)
-	# ortadaki kareye taşar, gizlenir.
+	_reels_quiet()
+
+
+## Reels'in ortak kurulumu: ipucu çubuğu, sol üstteki durum hapları (para, kova, rütbe çubuğu) ve üst ortadaki
+## saat çipi (Dalga 4) ortadaki kareye taşar, gizlenir; ortam sesi kayda girmez (kurgu kesintisiz ekler; görünüş
+## değişince açılanı _process durdurur); oyunun müziği kapalı (Reels'in kendi müziği var: tools/reels_music.py);
+## parmağın yeri.
+func _reels_quiet() -> void:
 	(_hud().get("_hint") as Control).modulate.a = 0.0
 	(_hud().get("_status") as Control).modulate.a = 0.0
 	_hud().world_chip().modulate.a = 0.0
 	for player: AudioStreamPlayer in (Sounds.get("_ambience") as Array):
 		player.stop()
-	# Reels'in kendi müziği var (tools/reels_music.py): oyunun vakit müziği ve dükkân valsi kayda girmesin.
 	GameState.save.settings["music"] = false
 	Sounds.apply_settings()
 	var view := get_viewport().get_visible_rect().size
@@ -4797,6 +4859,460 @@ func _reels_book() -> void:
 	await _wait(0.6)
 
 
+# --- Reels v0.5: Gölün Sırrı ve Gece (Dalga 4) ------------------------------------------
+
+## Reels v0.5 oyuncusu (--reels-set=v05): reels'teki dönen oyuncu (rütbe 9, takım, sandal); defterde Ay Turnası
+## ve Kocabaş yok (yeni tür kartları), göl sevgisi 6 (iki efsane bırakılınca seviye atlamaz: 180 + 2 × 40 < 270),
+## Nine'nin feneri çoktan verilmiş, Dede'nin vakit, hava ve sevgi sözleri söylenmiş. Öğle; saat donuk (gün
+## batımında bot ilerletir). Ortadaki kareye taşan arayüz reels'teki gibi gizli, bildirimler de (yazılar kurguda).
+func _reels_setup_v05() -> void:
+	_use_save(60)
+	var db := GameState.db
+	var rules := db.rules
+	var save := GameState.save
+	var spot := str(main.get("spot_id"))
+	save.coins = 2450
+	save.xp = db.rank_xp[8] + 100
+	save.love = rules.love_levels[Secret.DOUGH_LOVE - 1]
+	for id: String in REELS_GEAR:
+		if not id in save.owned:
+			save.owned.append(id)
+		Economy.equip(db, save, id)
+	for t: String in ContentDB.TECHNIQUES:
+		save.flags["told_open_" + t] = true
+		save.flags["told_tech_" + t] = true
+		save.flags["tech_casts_" + t] = 9
+	for key: String in ["told_open_trap", "told_trap_line", "told_trap_first", "told_snag", "told_fly_still",
+			str(main.get("LANTERN_FLAG")), str(main.get("LANTERN_TOLD")), "told_weather_storm"]:
+		save.flags[key] = true
+	for z in db.zones_of(spot):
+		save.flags["visited_" + str(z["id"])] = true
+		save.flags[Elder.SUGGEST_FLAG % str(z["id"])] = true
+	for phase: String in DayClock.PHASES:
+		save.flags["told_time_" + phase] = true
+	for kind: String in Weather.KINDS:
+		save.flags["told_weather_" + kind] = true
+	for level in range(2, LakeLove.max_level(rules) + 1):
+		save.flags["told_love_%d" % level] = true
+	save.clock_s = rules.phase_s + REELS_DUSK_FROM
+	main.call("_start_session")
+	main.call("_on_gear_changed")
+	await _wait_frames(2)
+	_park_fn = _reels_park_point
+	_reels_quiet()
+	var toast_box: Control = _hud().get("_toast_box")
+	(toast_box.get_parent() as Control).modulate.a = 0.0
+
+
+## İskele, öğleden geceye: geniş çekim, kamera yavaşça yaklaşır; saat hızla akar (öğleden akşama, akşamdan geceye;
+## karışımlar REELS_DUSK_STEP'le): ışık ısınır, gölgeler uzar, kararır; lambalar ve Nine'nin feneri yanar,
+## ateşböcekleri çıkar.
+func _reels_dusk() -> void:
+	var rules := GameState.db.rules
+	var save := GameState.save
+	var clock: WorldClock = main.get("world_clock")
+	var scene: LakeScene = main.get("scene")
+	var up := FollowCamera.screen_up()
+	var at := _angler().global_position.lerp(_elder().global_position, 0.35) + Vector3(up.x, 0.0, up.y) * 1.6
+	_set_shot(func() -> Dictionary: return _frame(at, _ease(1.3, 0.95, 7.0, _shot_t), deg_to_rad(50.0)))
+	await _reels_go("dock_cove")
+	await _reels_technique("float")
+	_park_all()
+	_take("dusk")
+	_mark("start")
+	await _wait(1.4)
+	_mark("fall")
+	var phase_s := rules.phase_s
+	# Öğlenin son dakikası, akşamın son dakikası (arası sabit akşam ışığı: atlanır), gecenin başı.
+	for leg: Vector2i in [Vector2i(phase_s + REELS_DUSK_FROM, 2 * phase_s), Vector2i(3 * phase_s - 60,
+			3 * phase_s + REELS_NIGHT_AT)]:
+		var now := float(maxi(leg.x, save.clock_s))
+		while now < leg.y:
+			now = minf(float(leg.y), now + REELS_DUSK_STEP)
+			save.clock_s = int(now)
+			clock.refresh(save)
+			await get_tree().process_frame
+		if leg.y == 2 * phase_s:
+			_mark("evening")
+	_mark("night")
+	await _wait(2.4)
+	var lamps := float(scene.look().get("lamps", 0.0))
+	_check("reels: gün batımı: gece oldu, lambalar yanar (%.2f)" % lamps, DayClock.phase(rules, save.clock_s) == "night"
+			and lamps > 0.5)
+
+
+## İskele, gece: fenerin ışığında balıkçı ve Dede yakından, ateşböcekleri; balıkçı karanlık suya atar, sonra sarar.
+func _reels_lantern() -> void:
+	var mid := _angler().global_position.lerp(_elder().global_position, 0.5) + Vector3(0.0, 0.3, 0.0)
+	_set_shot(func() -> Dictionary: return _frame(mid, _ease(0.66, 0.52, 5.0, _shot_t), deg_to_rad(44.0)))
+	_snap_shot()
+	_take("lantern")
+	_mark("start")
+	await _wait(1.6)
+	_hide_fingers = true
+	await _reels_cast(3.5)
+	_hide_fingers = false
+	await _wait(3.2)
+	if _session().line_out():
+		_hide_fingers = true
+		await _tap(_finger)
+		_hide_fingers = false
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	_check("reels: fenerli gece: ateşböcekleri", (main.get("ambient") as AmbientParticles).kind == "fireflies")
+
+
+## Nilüferli koy, gece: Ay Turnası'nın (Efsanevi, yalnızca gece) parlayan izli gölgesi şamandıraya süzülür
+## (yaklaşan kamera), dalar, VUR; çekişmede sudan sıçrar; elde altın ışık sütunu, kart ("Göle bırak").
+func _reels_moon() -> void:
+	_set_shot(func() -> Dictionary: return _game_frame(0.9))
+	await _reels_go("lily_cove")
+	await _reels_technique("float")
+	_take("moon")
+	await _wait(0.6)
+	var spot := _reels_spot(5.0, 0.0, 3.8)
+	if spot.is_empty():
+		_check("reels: nilüferli koy: atılacak su", false)
+		return
+	var land: Vector2 = spot[0]
+	var from := _reels_open_path(land, 3.0)
+	var fish := _shadow_at(from, land - from, "moon_pike", REELS_LEGEND_PERCENTILE)
+	await _tap_world(land)
+	if fish == null or not await _wait_state(FishingSession.State.WAITING, 3.0):
+		_check("reels: nilüferli koy: atış", false)
+		return
+	_set_shot(func() -> Dictionary:
+		if _state() in [FishingSession.State.WAITING, FishingSession.State.NIBBLING, FishingSession.State.BITING]:
+			var b := _session().bobber
+			var near := Vector3(b.x, 0.0, b.y).lerp(Vector3(fish.pos.x, 0.0, fish.pos.y), 0.35)
+			return _frame(near, _ease(0.9, 0.55, 4.5, _shot_t), float(main.get("LINE_PITCH")))
+		return _game_frame(0.88))
+	var caught := await _reels_bite("ay turnası", REELS_MOON_REACTION)
+	var shown := await _reels_show("ay turnası", 2.4)
+	_check("reels: nilüferli koy, gece: Ay Turnası tutulur, sudan sıçrar (%d), ışık sütunu ve kart" % int(_marks.get(
+			"moon.jump", 0)), caught and shown and _marks.has("moon.jump")
+			and str(_session().last_catch.get("fish", "")) == "moon_pike")
+
+
+## Derin orta, fırtınalı gece (yağmurlu gece; hava kararmada döner): şimşek, yağmur; dipte Kocabaş'ın (Efsanevi,
+## yalnızca fırtınada) dev gölgesi kurşuna süzülür (şimşek), koklar (zil tek tük), koşar (zil durmadan, sehpa
+## yakından): VUR, ağır çekişme; elde, kart.
+func _reels_storm() -> void:
+	var save := GameState.save
+	var fade: Fade = main.get("fade")
+	var stand: RodStand = main.get("stand")
+	await _reels_technique("bottom")
+	_set_shot(func() -> Dictionary: return _game_frame(1.0))
+	main.call("_go_boat", 1)
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return bool(main.get("in_boat")), 3.0)
+	_reels_weather("rain")
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	_take("storm")
+	_mark("start")
+	_park_all()
+	await _wait(0.4)
+	await _reels_lightning()
+	await _wait(1.2)
+	await _reels_cast(5.0)
+	if not await _wait_state(FishingSession.State.WAITING, 4.0):
+		_check("reels: fırtına: dip atışı", false)
+		return
+	await _wait(1.0)
+	var session := _session()
+	var lead := session.bobber
+	var dir := (lead - session.angler).normalized()
+	var lake := session.lake
+	var start := lead + dir * 3.0
+	for d: float in [6.5, 5.5, 4.5, 3.5]:
+		var p := lead + dir * d + dir.orthogonal() * 1.2
+		if lake.is_deep(p, 1.0):
+			start = p
+			break
+	var fish := _shadow_at(start, lead - start, "kocabas", REELS_LEGEND_PERCENTILE)
+	if fish == null:
+		_check("reels: fırtına: Kocabaş", false)
+		return
+	fish.mode = FishShadow.Mode.WANDER
+	fish.target = lead
+	fish.speed = 0.45
+	_set_shot(func() -> Dictionary:
+		var state := _state()
+		if state == FishingSession.State.BITING and stand.visible:
+			return _frame(stand.global_position.lerp(stand.tip_point(), 0.45) + Vector3(0.0, 0.2, 0.0), 0.55,
+					deg_to_rad(48.0))
+		if state in [FishingSession.State.WAITING, FishingSession.State.NIBBLING]:
+			var b := _session().bobber
+			var near := Vector3(b.x, 0.0, b.y).lerp(Vector3(fish.pos.x, 0.0, fish.pos.y), 0.4)
+			return _frame(near, _ease(1.0, 0.72, 5.0, _shot_t), float(main.get("LINE_PITCH")))
+		return _game_frame(0.9))
+	_mark("swim")
+	await _wait_until(func() -> bool: return fish.pos.distance_to(lead) < 3.2, 12.0)
+	await _reels_lightning()
+	if not await _wait_state(FishingSession.State.NIBBLING, 20.0):
+		_check("reels: fırtına: Kocabaş koklamadı", false)
+		return
+	if not await _wait_state(FishingSession.State.BITING, 15.0):
+		_check("reels: fırtına: Kocabaş koşmadı", false)
+		return
+	_snap_shot()
+	await _wait_frames(24)
+	_touch(1, _finger, true)
+	await _wait_frames(2)
+	_touch(1, _finger, false)
+	await _wait_frames(1)
+	if _state() == FishingSession.State.FIGHTING:
+		await _reels_lightning()
+		await _reel_like_player(REELS_LEGEND_REACTION, 60.0, _finger)
+	var caught := _state() == FishingSession.State.CAUGHT
+	var shown := caught and await _reels_show("kocabaş", 2.0)
+	_check("reels: fırtına: Kocabaş koklar, koşar, tutulur (şimşek %d)" % int(_marks.get("storm.flash", 0)), caught
+			and shown and str(_session().last_catch.get("fish", "")) == "kocabas" and int(_marks.get("storm.flash", 0)) >= 2)
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+
+
+## Sazlık, sisli gece (hava kararmada döner): suda parlayan şişe (Gölün Sırrı'nın ilk mektubu); dokununca kalkar,
+## mektup açılır, okunur, kapanır.
+func _reels_bottle() -> void:
+	var save := GameState.save
+	var bottle: BottleMarker = main.get("bottle")
+	var letters: LetterPanel = main.get("letter_panel")
+	var fade: Fade = main.get("fade")
+	await _reels_technique("float")
+	# Şişe (mektup 1, sazlık) burada belirir: bildirimi gizli, Dede'nin sözü gizli çubukta.
+	save.letter_at = save.catches - Secret.LETTER_GAP
+	main.call("_sync_bottle")
+	_set_shot(func() -> Dictionary:
+		if bottle.visible and not letters.visible:
+			return _frame(_angler().global_position.lerp(bottle.point(), 0.6), _ease(0.78, 0.58, 4.0, _shot_t),
+					deg_to_rad(46.0))
+		return _game_frame(0.85))
+	main.call("_travel", "reeds")
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not bool(main.get("in_boat")), 3.0)
+	_reels_weather("fog")
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	_take("bottle")
+	_mark("start")
+	_check("reels: sisli gece, sazlıkta şişe", bottle.visible and Weather.at(GameState.db.rules, save) == "fog")
+	await _wait(2.2)
+	_aim(_mark_tag + ".bottle", bottle.point())
+	_mark("tap")
+	await _tap_bottle(bottle)
+	if not await _wait_until(func() -> bool: return letters.visible, 6.0):
+		_check("reels: şişe: mektup açılmadı", false)
+		return
+	await _wait(0.4)
+	_panel_log("letter", letters.get("_panel"))
+	_mark("letter")
+	await _wait(3.6)
+	await _tap_control(letters.close_button)
+	await _wait(1.0)
+	_check("reels: şişeden mektup 1", save.letters == 1)
+
+
+## Defterde Gölün Sırrı: haritanın dört parçası birer birer yerine oturur (kâğıt sesi); dördüncüsüyle X belirir.
+func _reels_pieces() -> void:
+	var save := GameState.save
+	var book: BookPanel = main.get("book_panel")
+	save.letters = maxi(save.letters, 1)
+	save.map_pieces = 0
+	_take("pieces")
+	book.open_secret()
+	if not await _wait_until(func() -> bool: return book.visible, 2.0):
+		_check("reels: defter (Gölün Sırrı) açılmadı", false)
+		return
+	await _wait(0.5)
+	var map := book.find_child("Map", true, false) as SecretMap
+	_panel_log("pieces", map.get_parent().get_parent() as Control)
+	_panel_log("secret_book", book.get("_panel"))
+	_mark("open")
+	await _wait(1.0)
+	for k in range(1, SaveData.MAX_MAP_PIECES + 1):
+		save.map_pieces = k
+		book.refresh()
+		var last := k == SaveData.MAX_MAP_PIECES
+		Sounds.play("sting" if last else "paper")
+		_mark("p%d" % k)
+		await _wait(2.6 if last else 0.75)
+	_check("reels: haritanın dört parçası, X", map.pieces == SaveData.MAX_MAP_PIECES)
+	book.close_panel()
+	await _wait(0.6)
+
+
+## Harita: derin ortanın ilk şamandırasında X; derin ortaya dokununca sandalla X'e (kararma).
+func _reels_xmap() -> void:
+	var panel: MapPanel = main.get("map_panel")
+	var fade: Fade = main.get("fade")
+	_set_shot(func() -> Dictionary: return _game_frame(1.0))
+	_take("xmap")
+	await _tap_control(_hud().map_button)
+	if not await _wait_until(func() -> bool: return panel.visible, 2.0):
+		_check("reels: harita açılmadı", false)
+		return
+	await _wait(0.4)
+	_panel_log("xmap", panel.get("_panel"))
+	_mark("open")
+	await _wait(1.6)
+	_mark("tap")
+	await _tap_control(panel.view.badge("deep_water"))
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	_check("reels: haritadan sandalla X'e", bool(main.get("in_boat")) and int(main.get("_buoy")) == Secret.KEEPER_BUOY)
+
+
+## X'te, sisli gece: final hazır (6 mektup, 4 parça, altın hamur: Bekçi'nin gecesi); dev turkuaz bir gölge sandalın
+## yanından geçer ve dalar (yalnızca görünüş).
+func _reels_fog() -> void:
+	var save := GameState.save
+	save.letters = Secret.LETTERS.size()
+	save.letter_at = save.catches
+	save.map_pieces = SaveData.MAX_MAP_PIECES
+	save.flags[Secret.DOUGH_FLAG] = true
+	GameState.changed.emit()
+	(main.get("world_clock") as WorldClock).refresh(save)
+	await _reels_technique("bottom")
+	_park_all()
+	var boat := _angler().pos2()
+	_set_shot(func() -> Dictionary: return _frame(Vector3(boat.x, 0.0, boat.y), _ease(1.2, 1.05, 6.0, _shot_t),
+			deg_to_rad(56.0)))
+	_snap_shot()
+	_take("fog")
+	_check("reels: X'te final gecesi: sis", Secret.keeper_night(save) and Weather.at(GameState.db.rules, save) == "fog")
+	await _wait(0.8)
+	_mark("ghost")
+	await _reels_ghost_pass(boat, REELS_GHOST_FRAMES)
+	_mark("gone")
+	await _wait(1.2)
+
+
+## X'te dip: Gölün Bekçisi belirir (turkuaz halkalar), kurşuna süzülür, koklar, koşar: VUR; çekişmede dalışın
+## uyarısı ve dalış: bot bırakmaz, misina kopar, Bekçi kaçar (tutulmaz, bitiş görünmez: merak kalsın).
+func _reels_keeper() -> void:
+	_no_bites = false
+	_placed = null
+	_take("keeper")
+	_set_shot(func() -> Dictionary:
+		var session := _session()
+		var boat := _angler().global_position
+		var keeper := session.summoned()
+		if session.state == FishingSession.State.FIGHTING:
+			var p := session.fight_point()
+			var f := Vector3(p.x, 0.0, p.y)
+			return _frame(boat.lerp(f, 0.55), clampf(boat.distance_to(f) / 8.0, 0.85, 1.6), float(main.get("LINE_PITCH")))
+		var b := Vector3(session.bobber.x, 0.0, session.bobber.y)
+		var aim := b if keeper == null else b.lerp(Vector3(keeper.pos.x, 0.0, keeper.pos.y), 0.5)
+		return _frame(boat.lerp(aim, 0.5), clampf(boat.distance_to(aim) / 7.5, 1.0, 1.7), float(main.get("LINE_PITCH"))))
+	await _reels_cast(5.0)
+	if not await _wait_state(FishingSession.State.WAITING, 4.0):
+		_check("reels: X: dip atışı", false)
+		return
+	var rose := await _wait_until(func() -> bool: return _session().summoned() != null, KeeperPresenter.RISE_DELAY + 4.0)
+	var sniffed := rose and await _wait_state(FishingSession.State.NIBBLING, 30.0)
+	var ran := sniffed and await _wait_state(FishingSession.State.BITING, 20.0)
+	if not ran:
+		_check("reels: X: Bekçi belirir (%s), koklar (%s), koşar" % [rose, sniffed], false)
+		return
+	await _wait_frames(10)
+	_touch(1, _finger, true)
+	await _wait_frames(3)
+	var hooked := _state() == FishingSession.State.FIGHTING
+	# Oyuncu gibi çeker (çırpınmada REELS_KEEPER_REACTION kare sonra bırakır); dalışta bırakmaz: misina kopar.
+	var hold := true
+	var lag := 0
+	var frames := 0
+	while _state() == FishingSession.State.FIGHTING and frames < 3600:
+		var reel := _session().reel
+		var want := reel != null and (not reel.thrashing() or reel.diving())
+		lag = lag + 1 if want != hold else 0
+		if lag >= REELS_KEEPER_REACTION:
+			hold = want
+			lag = 0
+			_touch(1, _finger, hold)
+		await get_tree().process_frame
+		frames += 1
+	if hold:
+		_touch(1, _finger, false)
+	var snapped := _state() == FishingSession.State.LOST and _session().last_loss == "snapped"
+	_check("reels: X: Gölün Bekçisi belirir, koklar, koşar, dalar (%d), misina kopar" % int(_marks.get("keeper.dive", 0)),
+			hooked and snapped and _marks.has("keeper.dive_warn") and _marks.has("keeper.dive"))
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	await _wait(1.0)
+
+
+## Gölün Bekçisi'nin dev gölgesi sandalın yanından geçer (yalnızca görünüş, _video_ghost gibi: oturuma ve gölgelerin
+## kuralına dokunmaz): ekranın yukarısından (uzaktan) aşağısına, sandalın REELS_GHOST_SIDE m yanından (gölge su
+## yüzünün üstünde çizilir: sandalın altından geçemez); belirip söner, arkasında turkuaz iz halkaları; sandalın
+## hizasında kamera sarsılır, sonunda dalar. Süre kareyle.
+func _reels_ghost_pass(center: Vector2, frames: int) -> void:
+	var lake := _session().lake
+	var up := FollowCamera.screen_up()
+	var side := up.orthogonal()
+	for s: Vector2 in [side, -side]:
+		if lake.is_deep(center + s * REELS_GHOST_SIDE + up * 6.0, 1.0) and lake.is_deep(center + s * REELS_GHOST_SIDE - up * 4.0, 1.0):
+			side = s
+			break
+	var from := center + up * 7.5 + side * REELS_GHOST_SIDE
+	var to := center - up * 5.5 + side * REELS_GHOST_SIDE
+	var heading := (to - from).normalized()
+	var layer: ShadowLayer = main.get("shadows")
+	var rings: Ripples = main.get("ripples")
+	var camera: FollowCamera = main.get("camera")
+	var ghost := layer.make_ghost(StoryFilm.GHOST_LENGTH)
+	var material := ghost.material_override as ShaderMaterial
+	ghost.rotation = Vector3(0.0, atan2(-heading.x, -heading.y), 0.0)
+	Sounds.play("sting")
+	Sounds.haptic(40)
+	var shook := false
+	for f in frames:
+		var t := float(f) / float(frames - 1)
+		var p := from.lerp(to, t)
+		ghost.position = Vector3(p.x, ShadowLayer.Y, p.y)
+		var shown := smoothstep(0.0, 0.18, t) * (1.0 - smoothstep(0.82, 1.0, t))
+		material.set_shader_parameter("fade", shown)
+		if shown > 0.5 and f % 12 == 0:
+			rings.spawn(p - heading * StoryFilm.GHOST_LENGTH * 0.5, StoryFilm.GHOST_LENGTH * 0.4, 1.5,
+					Color(0.7, 1.0, 0.96, 0.6), 0.1)
+		if not shook and (p - center).dot(heading) >= 0.0:
+			shook = true
+			camera.shake(0.22)
+			Sounds.haptic(60)
+			_mark("beside")
+		await get_tree().process_frame
+	for r: Vector3 in StoryFilm.DIVE_RINGS:
+		rings.spawn(to, r.y, r.z, StoryFilm.TURQUOISE, 0.14)
+	Sounds.play("dive")
+	Sounds.haptic(80)
+	ghost.queue_free()
+
+
+## Suya atış: ekranın yukarısına doğru dist m'de bir nokta (_reels_spot: ekranda, düğmenin altında değil); yakın
+## çekimde bulunamazsa eylem düğmesine (AT: balıkçının baktığı yöne).
+func _reels_cast(dist: float) -> void:
+	var spot := _reels_spot(dist, 0.0)
+	if spot.is_empty():
+		print("reels: %s: atış noktası yok (ekranda ve düğmesiz): AT" % _mark_tag)
+		await _tap_control(_hud().action_button)
+	else:
+		await _tap_world(spot[0])
+
+
+## Bugünün havası (geliştirme düğmesinin bayrakları); koşul ve görünüş hemen (kararmanın karanlığında çağrılır).
+func _reels_weather(kind: String) -> void:
+	var rules := GameState.db.rules
+	var save := GameState.save
+	save.flags[Weather.DEBUG_DAY] = DayClock.day(rules, save.clock_s)
+	save.flags[Weather.DEBUG_KIND] = kind
+	(main.get("world_clock") as WorldClock).refresh(save)
+	(main.get("scene") as LakeScene).set_look(main.call("_current_look"), true)
+
+
+## Fırtınada şimşek hemen (main'in sırası: parlama, titreşim, biraz sonra gök gürültüsü); kendiliğinden gelen
+## şimşek çekim boyunca ertelenir (yalnızca botun istediği anlarda).
+func _reels_lightning() -> void:
+	main.set("_storm_wait", 0.0)
+	await _wait_frames(2)
+	main.set("_storm_wait", 1000.0)
+
 ## Şamandıra ısırması: dalınca bir vuruş (16 kare) sonra VUR, sonra bir oyuncu gibi çekişir (reaction
 ## kare gecikmeyle bırakır). Tutulduysa true.
 func _reels_bite(label: String, reaction: int) -> bool:
@@ -4859,17 +5375,20 @@ func _reels_technique(technique: String) -> void:
 ## Atış noktasından suya bir hedef: ekranın yukarısına en yakın yön (±15° adımlarla; dikey kırpmada
 ## balıkçı ile takım alt alta), dist m önde (bulunmazsa biraz uzak ya da yakın; menzilde), kıyıdan en
 ## az shore m (nilüferler kıyıdan 3,2 m'ye kadar: balık altlarında görünmez) ve iskeleden uzak; ötesinde
-## beyond m de öyle su (balık oraya konur). [nokta, yön] ya da bulunamazsa boş.
+## beyond m de öyle su (balık oraya konur); nokta ekranda ve bir düğmenin altında değil (Dalga 4: reels'te görünmez
+## saat çipine dokunan bot "Bugün" panelini açık bırakıyordu). [nokta, yön] ya da bulunamazsa boş.
 func _reels_spot(dist: float, beyond: float, shore: float = 1.0) -> Array:
 	var session := _session()
 	var lake := session.lake
+	var view := get_viewport().get_visible_rect().grow(-24.0)
 	for k in 24:
 		var dir := FollowCamera.screen_up().rotated(deg_to_rad(15.0 * ((k + 1) >> 1)) * (1.0 if k % 2 == 1 else -1.0))
 		for d: float in [dist, dist + 1.0, dist - 0.5, dist + 2.0]:
 			var p := session.angler + dir * minf(d, session.range_m() - 0.5)
 			var q := p + dir * beyond
 			if lake.is_water(p) and lake.shore_distance(p) > shore and not lake.on_dock(p) and lake.is_deep(q, 1.0) \
-					and lake.shore_distance(q) > shore and not lake.on_dock(q):
+					and lake.shore_distance(q) > shore and not lake.on_dock(q) \
+					and view.has_point(_screen(Vector3(p.x, 0.0, p.y))) and not _under_hud(p):
 				return [p, dir]
 	return []
 
@@ -4927,6 +5446,10 @@ func _process(delta: float) -> void:
 	_reels_watch()
 	if _cam_shot.is_valid():
 		_direct(delta)
+	# Görünüş değişince (gece, yağmur) main yeni ortam sesini açar: kayda girmesin (kurgu ekler).
+	for player: AudioStreamPlayer in (Sounds.get("_ambience") as Array):
+		if player.playing:
+			player.stop()
 
 
 ## Kamera _cam_shot'ın istediği çerçeveye gider: zoom ve eğim yumuşakça; kararma sürerken hemen (main'in
@@ -5032,6 +5555,13 @@ func _reels_watch() -> void:
 	_edge("jump", (main.get("fish_jump") as FishJump).is_jumping())
 	_edge("sniff", stand.visible and float(stand.get("_twitch")) > 0.0)
 	_edge("bell_run", stand.visible and bool(stand.get("_running")))
+	# v0.5: fırtınada şimşek, Gölün Bekçisi'nin belirişi, dalışın uyarısı ve dalış.
+	_edge("flash", float((main.get("scene") as LakeScene).get("_flash_age")) >= 0.0)
+	var summoned := session.summoned()
+	if _edge("rise", summoned != null):
+		_aim(_mark_tag + ".rise", Vector3(summoned.pos.x, 0.0, summoned.pos.y))
+	_edge("dive_warn", fighting and reel.phase == ReelModel.Phase.DIVE_WARN)
+	_edge("dive", fighting and reel.phase == ReelModel.Phase.DIVE)
 	var legends := (main.get("_announced") as Dictionary).size()
 	if legends > int(_watch.get("legends", 0)):
 		_mark("legend")
@@ -5066,6 +5596,13 @@ func _edge(event: String, on: bool, off_event: String = "") -> bool:
 
 
 func _take(take: String) -> void:
+	# Çekimden önce açık kalmış bir panel (bir dokunuş yanlış düğmeye düştüyse) kapanır: sonraki çekimler de
+	# bozulmasın. Kuru çekimde günlükte aranır.
+	for node in get_tree().get_nodes_in_group("modal"):
+		var panel := node as Dialog
+		if panel != null and panel.visible:
+			print("reels: %s çekiminden önce açık panel kapatıldı: %s" % [take, panel.name])
+			panel.close_panel()
 	_mark_tag = take
 	_reels_log("TAKE", take)
 

@@ -1,5 +1,5 @@
 {
-	"_note": "Reels reklamının kurgu listesi (tools/reels_ad.py ve tools/reels_music.py okur). Zaman vuruşla (bpm, beat_frames): 100 BPM'de bir vuruş tam 18 kare (30 fps, 0,6 sn). cuts: kesimler; adı çıktı dosyasının adıdır (45 → olta_reels_45.mp4). Okunsun diye: tek satırlık başlık en az 4 vuruş, başlık ve alt satır 4–5 vuruş, iki satırlık yazı 6 vuruş ekranda. shots: sırayla parçalar; src kaydın günlüğündeki işaret (REELS MARK <kare> <çekim>.<olay>; ad@last sonuncusu, ad@2 ikincisi), offset işaretten kaç kare önce/sonra başlar, beats uzunluk. crop: center (kaydın ortasındaki kare: yükseklik kadar genişlik; dx/dy kaydırma, zoom < 1 daha dar kare, aspect > 1 geniş dikdörtgen: uzun sözlü balık kartı gibi ortadaki kareden taşan arayüz; karta sığdırılır, boşluğu aynı görüntünün bulanığı doldurur) ya da panel:<ad> (REELS PANEL satırındaki dikdörtgen, pad payıyla; rect [x, y, w, h] o dikdörtgenin 0–1 arası bir parçası). through_cut: parça bilerek bir kesimden geçer (harita kararmayla biter). captions: from/to vuruş (bir yazı birkaç parçanın üstünde ya da bir parçanın ortasında değişebilir), title (Luckiest Guy; | satır böler), sub (Baloo 2). music: bölüm başına akor ve tarz (reels_music.py). end: son kartın başladığı vuruş; end_background son kartın arkasındaki görüntü, cover kapağın karesi.",
+	"_note": "Reels reklamının kurgu listesi (tools/reels_ad.py ve tools/reels_music.py okur). Zaman vuruşla (bpm, beat_frames): 100 BPM'de bir vuruş tam 18 kare (30 fps, 0,6 sn). cuts: kesimler; adı çıktı dosyasının adıdır (45 → olta_reels_45.mp4). Okunsun diye: tek satırlık başlık en az 4 vuruş, başlık ve alt satır 4–5 vuruş, iki satırlık yazı 6 vuruş ekranda. shots: sırayla parçalar; src kaydın günlüğündeki işaret (REELS MARK <kare> <çekim>.<olay>; ad@last sonuncusu, ad@2 ikincisi), offset işaretten kaç kare önce/sonra başlar, beats uzunluk. crop: center (kaydın ortasındaki kare: yükseklik kadar genişlik; dx/dy kaydırma, zoom < 1 daha dar kare, aspect > 1 geniş dikdörtgen: uzun sözlü balık kartı gibi ortadaki kareden taşan arayüz; karta sığdırılır, boşluğu aynı görüntünün bulanığı doldurur) ya da panel:<ad> (REELS PANEL satırındaki dikdörtgen, pad payıyla; rect [x, y, w, h] o dikdörtgenin 0–1 arası bir parçası). through_cut: parça bilerek bir kesimden geçer (harita kararmayla biter). captions: from/to vuruş (bir yazı birkaç parçanın üstünde ya da bir parçanın ortasında değişebilir), title (Luckiest Guy; | satır böler), sub (Baloo 2). music: bölüm başına akor ve tarz (reels_music.py). end: son kartın başladığı vuruş; end_background son kartın arkasındaki görüntü, cover kapağın karesi (kesimin kendi end_background'u ve cover'ı olabilir: cover'da title kapağın yazısı, dosyası olta_reels_<kesim>_kapak.jpg). set: kesimin çekim takımı (yoksa v04; v05: --reels-set=v05 kaydı); --cut all kaydın takımının kesimlerini keser. ambience: ortam sesinin bölümleri [{at, name}] (vuruş; göl lake, gece night, yağmur rain; yoksa göl).",
 	"fps": 30,
 	"bpm": 100,
 	"beat_frames": 18,
@@ -396,6 +396,347 @@
 					"style": "outro"
 				}
 			]
+		},
+		"gece": {
+			"set": "v05",
+			"frames": 756,
+			"end": 36,
+			"shots": [
+				{
+					"id": "aksam",
+					"beats": 6,
+					"src": "dusk.fall",
+					"offset": -24
+				},
+				{
+					"id": "fener",
+					"beats": 5,
+					"src": "lantern.start",
+					"offset": 6
+				},
+				{
+					"id": "parilti",
+					"beats": 4,
+					"src": "moon.waiting",
+					"offset": 20
+				},
+				{
+					"id": "vur",
+					"beats": 4,
+					"src": "moon.biting",
+					"offset": -8
+				},
+				{
+					"id": "ay_turnasi",
+					"beats": 3,
+					"src": "moon.show",
+					"offset": -4
+				},
+				{
+					"id": "firtina",
+					"beats": 4,
+					"src": "storm.start",
+					"offset": 0
+				},
+				{
+					"id": "dev",
+					"beats": 5,
+					"src": "storm.swim",
+					"offset": 30
+				},
+				{
+					"id": "kosu",
+					"beats": 5,
+					"src": "storm.biting",
+					"offset": 0
+				}
+			],
+			"captions": [
+				{
+					"from": 0,
+					"to": 6,
+					"title": "GECE GÖLDE|NE OLUR?"
+				},
+				{
+					"from": 6,
+					"to": 11,
+					"title": "FENERİNİ YAK",
+					"sub": "Ateşböcekleri uyanır"
+				},
+				{
+					"from": 11,
+					"to": 15,
+					"title": "PARLAYAN BİR GÖLGE…",
+					"sub": "Yalnızca gece çıkar"
+				},
+				{
+					"from": 15,
+					"to": 22,
+					"title": "AY TURNASI!",
+					"sub": "Efsanevi bir gece balığı"
+				},
+				{
+					"from": 22,
+					"to": 26,
+					"title": "FIRTINA KOPUNCA…"
+				},
+				{
+					"from": 26,
+					"to": 31,
+					"title": "DİPTEN BİR DEV GELİR",
+					"sub": "Kocabaş"
+				},
+				{
+					"from": 31,
+					"to": 36,
+					"title": "ONU TUTABİLİR MİSİN?"
+				}
+			],
+			"music": [
+				{
+					"at": 0,
+					"beats": 6,
+					"chord": "Cmaj7",
+					"style": "intro"
+				},
+				{
+					"at": 6,
+					"beats": 5,
+					"chord": "Em9",
+					"style": "night"
+				},
+				{
+					"at": 11,
+					"beats": 4,
+					"chord": "Bm7",
+					"style": "break"
+				},
+				{
+					"at": 15,
+					"beats": 4,
+					"chord": "Am7",
+					"style": "tension"
+				},
+				{
+					"at": 19,
+					"beats": 3,
+					"chord": "C",
+					"style": "hit"
+				},
+				{
+					"at": 22,
+					"beats": 4,
+					"chord": "Em",
+					"style": "storm"
+				},
+				{
+					"at": 26,
+					"beats": 5,
+					"chord": "Cmaj7",
+					"style": "storm"
+				},
+				{
+					"at": 31,
+					"beats": 5,
+					"chord": "B7",
+					"style": "tension"
+				},
+				{
+					"at": 36,
+					"beats": 6,
+					"chord": "G",
+					"style": "outro"
+				}
+			],
+			"ambience": [
+				{
+					"at": 0,
+					"name": "lake"
+				},
+				{
+					"at": 4,
+					"name": "night"
+				},
+				{
+					"at": 22,
+					"name": "rain"
+				},
+				{
+					"at": 36,
+					"name": "night"
+				}
+			],
+			"end_background": {
+				"src": "lantern.start",
+				"offset": 10
+			},
+			"cover": {
+				"src": "moon.show",
+				"offset": 16,
+				"title": "GECE BAŞKA|BİR GÖL"
+			}
+		},
+		"sir": {
+			"set": "v05",
+			"frames": 756,
+			"end": 36,
+			"shots": [
+				{
+					"id": "golge",
+					"beats": 6,
+					"src": "fog.ghost",
+					"offset": 20
+				},
+				{
+					"id": "sise",
+					"beats": 4,
+					"src": "bottle.tap",
+					"offset": -45
+				},
+				{
+					"id": "mektup",
+					"beats": 5,
+					"src": "bottle.letter",
+					"offset": -2,
+					"crop": "panel:letter",
+					"pad": 16
+				},
+				{
+					"id": "parcalar",
+					"beats": 6,
+					"src": "pieces.open",
+					"offset": 10,
+					"crop": "panel:pieces",
+					"pad": 16
+				},
+				{
+					"id": "harita",
+					"beats": 4,
+					"src": "xmap.open",
+					"offset": 0,
+					"crop": "panel:xmap",
+					"pad": 10,
+					"through_cut": true
+				},
+				{
+					"id": "bekci",
+					"beats": 6,
+					"src": "keeper.rise",
+					"offset": -20
+				},
+				{
+					"id": "dalis",
+					"beats": 5,
+					"src": "keeper.dive_warn",
+					"offset": -24
+				}
+			],
+			"captions": [
+				{
+					"from": 0,
+					"to": 6,
+					"title": "SANDALIN YANINDAN|NE GEÇTİ?"
+				},
+				{
+					"from": 6,
+					"to": 10,
+					"title": "SAZLIKTA BİR ŞİŞE…"
+				},
+				{
+					"from": 10,
+					"to": 15,
+					"title": "İÇİNDE BİR MEKTUP",
+					"sub": "Yıllar önce yazılmış"
+				},
+				{
+					"from": 15,
+					"to": 21,
+					"title": "HARİTANIN 4 PARÇASI",
+					"sub": "Dede'nin altın isteklerinde"
+				},
+				{
+					"from": 21,
+					"to": 25,
+					"title": "X İŞARETLİ YER",
+					"sub": "Derin orta, sisli bir gece"
+				},
+				{
+					"from": 25,
+					"to": 31,
+					"title": "GÖLÜN BEKÇİSİ!",
+					"sub": "Sisin içinden yükseldi"
+				},
+				{
+					"from": 31,
+					"to": 36,
+					"title": "BULABİLECEK MİSİN?"
+				}
+			],
+			"music": [
+				{
+					"at": 0,
+					"beats": 6,
+					"chord": "Em9",
+					"style": "mist"
+				},
+				{
+					"at": 6,
+					"beats": 4,
+					"chord": "Cmaj7",
+					"style": "drift"
+				},
+				{
+					"at": 10,
+					"beats": 5,
+					"chord": "Am7",
+					"style": "drift"
+				},
+				{
+					"at": 15,
+					"beats": 6,
+					"chord": "Am7",
+					"style": "build"
+				},
+				{
+					"at": 21,
+					"beats": 4,
+					"chord": "B7",
+					"style": "tension"
+				},
+				{
+					"at": 25,
+					"beats": 6,
+					"chord": "Em",
+					"style": "awe"
+				},
+				{
+					"at": 31,
+					"beats": 5,
+					"chord": "B7",
+					"style": "tension"
+				},
+				{
+					"at": 36,
+					"beats": 6,
+					"chord": "Em9",
+					"style": "outro"
+				}
+			],
+			"ambience": [
+				{
+					"at": 0,
+					"name": "night"
+				}
+			],
+			"end_background": {
+				"src": "fog.gone",
+				"offset": 0
+			},
+			"cover": {
+				"src": "keeper.rise",
+				"offset": 24,
+				"title": "GÖLÜN SIRRI"
+			}
 		}
 	},
 	"end_background": {
