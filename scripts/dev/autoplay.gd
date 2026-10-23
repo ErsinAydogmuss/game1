@@ -4211,103 +4211,170 @@ func _play_fish() -> void:
 	_quit()
 
 
-## Tanıtım videosu (Dalga 3, v0.4: teknikler). Oyun zamanı --fixed-fps ile kare kare akar; bekleyişler
-## oyun zamanıyla. Dönen bir oyuncu (rütbe 9; spin, dip ve sinek kamışı alınmış, sazlıkta dolu bir
-## tuzak): iskelede Takım Çantası'ndan spin, dur-kalk ve saldıran turna; haritadan sazlık, dolu tuzağı
-## topla (kerevit ×4), dip: uzağa atış, sehpa, zil tek tük ve durmadan, aynalı sazan; haritadan dere
-## ağzı, sinek: akıntıda süzülen sinek, halka, VUR, sudan sıçrayan alabalık.
+## Tanıtım videosu (Dalga 4, v0.5: canlı dünya). Oyun zamanı --fixed-fps ile kare kare akar; bekleyişler oyun
+## zamanıyla. Dönen bir oyuncu (rütbe 9, sandal, göl sevgisi 4, Dede'nin istekleri açık): akşam iskelede bir isteği
+## bitiren balık (bildirim, Dede'nin aferini); saat çipine dokununca "Bugün" paneli, Dede'yle çay: gece olur; Nine'nin
+## feneri (ilk gece), ateşböcekleri ve lambalar, gece balığı; sabah yağmur: damlalar ve halkalar, yağmurda balık;
+## sazlıkta suda bir şişe: haritadan oraya, dokununca mektup açılır, Dede yazanı tanır; sisli gece sandalla derin
+## ortada: turkuaz dev bir gölge sandalın çevresinde yüzüp dalar ve Dede söyler (Gölün Bekçisi yalnızca sezdirilir:
+## karşılaşma yok, gölge yalnızca görünüş).
 func _play_video() -> void:
-	_use_save(40)
+	_use_save(60)
 	var db := GameState.db
+	var rules := db.rules
 	var save := GameState.save
 	var spot := str(main.get("spot_id"))
-	save.coins = 1800
+	var hud := _hud()
+	var fade: Fade = main.get("fade")
+	var day_panel: DayPanel = main.get("day_panel")
+	var map_panel: MapPanel = main.get("map_panel")
+	var letters: LetterPanel = main.get("letter_panel")
+	var bottle: BottleMarker = main.get("bottle")
+	_roomy_bucket()
 	save.xp = db.rank_xp[8]
+	save.love = rules.love_levels[3]
+	save.coins = 1200
 	for f: Array in [["rudd", 26, 4], ["carp", 52, 3], ["perch", 31, 2], ["silverside", 14, 2], ["bream", 40, 3],
-			["tench", 38, 3], ["crayfish", 11, 3]]:
+			["tench", 38, 3], ["pike", 80, 3], ["zander", 60, 3], ["chub", 34, 2]]:
 		Records.add(save.records, f[0], f[1], f[2], 0)
-	# Büyük kova: turna, dört kerevit, aynalı sazan ve alabalık sığsın (kova dolu bildirimi videoda yok).
-	for id: String in ["rod_spin_light", "rod_carp_1", "rod_fly_1", "line_mono", "trap_1", "bucket_big"]:
+	for id: String in ["rod_spin_light", "rod_carp_1", Zones.BOAT]:
 		if not id in save.owned:
 			save.owned.append(id)
-		Economy.equip(db, save, id)
-	# Bot ekran görüntüsü almaz; dipteki sehpa yakın çekimi (kamera sıçraması) videoda yok.
-	_taken["15b_sehpa_yakin"] = true
-	# Sazlıkta dolu bir tuzak: atış noktasının önündeki sığ suda, oyun kapalıyken dolmuş.
-	var reeds := db.zone(spot, "reeds")
-	var stand: Vector2 = (reeds["stands"] as Array)[0]
-	var clock := GameState.clock
-	var t0 := clock.now_unix()
-	clock.fixed_unix = t0
-	var at := TrapSim.spot_near(db, save, spot, "reeds", stand, Vector2(0.0, -1.0))
-	if at != Dice.NO_POINT:
-		TrapSim.place(db, save, spot, "reeds", at, t0 - (db.rules.trap_max + 1) * db.rules.trap_fill_s)
-		TrapSim.update_all(db.rules, save, t0)
-	GameState.changed.emit()
-	main.call("_on_gear_changed")
-	var hud := _hud()
-	var bag: TechniquePanel = main.get("technique_panel")
-	var panel: MapPanel = main.get("map_panel")
-	var fade: Fade = main.get("fade")
-	var traps: TrapMarkers = main.get("traps")
-	var card: FishCard = main.get("card")
+	# Haritada "Yeni!" yok; Dede'nin vakit, hava ve sevgi sözleri çoktan söylenmiş (videoda yalnızca isteğin, çayın,
+	# fenerin, şişenin ve Bekçi'nin sözleri).
+	for z in db.zones_of(spot):
+		save.flags["visited_" + str(z["id"])] = true
+	for phase: String in DayClock.PHASES:
+		save.flags["told_time_" + phase] = true
+	for kind: String in Weather.KINDS:
+		save.flags["told_weather_" + kind] = true
+	for level in range(2, LakeLove.max_level(rules) + 1):
+		save.flags["told_love_%d" % level] = true
+	# Akşam (saat donuk: vakitler çay ve VAKİT + ile değişir); Dede'nin istekleri açık (öteki senaryolarda kapalı).
+	save.clock_s = 2 * rules.phase_s + 40
+	save.request_day = -1
+	main.call("_start_session")
+	await _wait(1.6)
+	_check("video: akşam, Dede'nin istekleri doldu", DayClock.phase(rules, save.clock_s) == "evening"
+			and not Requests.daily(db, save).is_empty())
+	# 1) Akşam iskelede bir yakalayışla biten istek (ilerleme bir eksik): bildirim, para, Dede'nin aferini.
+	var target := _request_by_catch(db, save)
+	if target.is_empty():
+		target = [{}, "rudd", 300_000]
+	elif not (target[0] as Dictionary).is_empty():
+		(target[0] as Dictionary)["progress"] = int((target[0] as Dictionary)["goal"]) - 1
+	var got := await _catch_at_dock(str(target[1]), int(target[2]))
+	_check("video: akşam istenen balık, istek biter (Dede'nin aferini)", got and await _wait_until(func() -> bool:
+			return str(main.get("_hint_shown")) == "UI_DEDE_REQ_DONE", 10.0))
 	await _wait(1.4)
-	# Takım Çantası: dört teknik ve tuzak; spin seçilir (kamış, yapay yem, Dede'nin sözü).
-	await _tap_control(hud.technique_button)
-	await _wait_until(func() -> bool: return bag.visible, 2.0)
-	await _wait(1.8)
-	await _shot("v1_canta")
-	await _tap_control(bag.find_child("Button_spin", true, false))
-	await _wait(1.2)
-	_check("video: spin elde", save.technique == "spin" and _session().technique.id == "spin")
-	# Spin: yemin ötesine atılır, basılı tutunca gelir; turna peşine düşer, dur-kalkta saldırır.
-	var spin := await _spin_cast(Vector2(0.4, -2.6), Vector2(0.4, -5.4), "pike")
-	_check("video: spinle turna tutulur", bool(spin["caught"]))
-	await _wait(0.6)
-	# Haritadan sazlığa: dolu tuzak (yeşil, nabız gibi atan 4/4 rozeti).
-	await _map_to(panel, fade, "reeds")
-	# Bölgenin adı sönsün: rozet (4/4, nabız gibi atan yeşil) açıkça görünsün.
+	await _shot("v1_aksam_istek")
+	# 2) Saat çipi: "Bugün" paneli (akşam, bugünün ve yarının havası, çay, göl sevgisi, istekler); ÇAY İÇ: gece.
+	await _tap_control(hud.world_button)
+	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
 	await _wait(2.6)
-	await _shot("v2_tuzak_dolu")
-	var trap_id := int(save.traps[0]["id"]) if not save.traps.is_empty() else -1
-	_check("video: sazlıkta dolu tuzak (%d)" % traps.shown_count(trap_id), trap_id >= 0
-			and traps.shown_count(trap_id) == db.rules.trap_max)
-	if trap_id >= 0:
-		await _tap(_screen(traps.mark_point(trap_id)))
-		await _wait(2.6)
-		await _shot("v3_kerevitler")
-		_check("video: tuzak toplanır (kerevitler kovada)", save.bucket.filter(
-				func(b: Dictionary) -> bool: return str(b["fish"]) == "crayfish").size() == db.rules.trap_max)
-	# Dip: çantadan; uzağa atış, olta sehpada; zil tek tük çalar (kokluyor), sonra durmadan: VUR.
-	await _tap_control(hud.technique_button)
-	await _wait_until(func() -> bool: return bag.visible, 2.0)
-	await _wait(1.0)
-	await _tap_control(bag.find_child("Button_bottom", true, false))
+	await _shot("v2_bugun")
+	var tea := day_panel.tea_button()
+	if tea != null and not tea.disabled:
+		await _tap_control(tea)
+	await _wait_until(func() -> bool: return DayClock.phase(rules, save.clock_s) == "night", 6.0)
+	await _wait_until(func() -> bool: return not fade.busy(), 6.0)
+	_check("video: Dede'yle çay, gece oldu", DayClock.phase(rules, save.clock_s) == "night")
+	# 3) Gece: Nine'nin feneri (ilk gece: bildirim, Dede), ateşböcekleri, lambaların ışığı; gece balığı.
+	await _wait(3.4)
+	await _shot("v3_gece_fener")
+	_check("video: ilk gece Nine'nin feneri", bool(save.flags.get("lantern", false)))
+	await _catch_at_dock("zander", 640_000)
+	await _wait(1.8)
+	# 4) Sabah yağmur (VAKİT +, HAVA): damlalar ve halkalar, yağmurun sesi; yağmurda balık.
+	main.call("_debug_time")
+	await _wait(0.5)
+	for i in Weather.KINDS.size():
+		if Weather.at(rules, save) == "rain":
+			break
+		main.call("_debug_weather")
+		await _wait_frames(2)
+	await _wait(2.6)
+	await _shot("v4_yagmur")
+	_check("video: sabah yağmur", DayClock.phase(rules, save.clock_s) == "morning" and Weather.at(rules, save) == "rain")
+	await _catch_at_dock("tench", 520_000)
 	await _wait(1.6)
-	var bottom := await _bottom_cast(true, "mirror_carp")
-	_check("video: dipte aynalı sazan tutulur", bool(bottom["caught"]))
-	await _wait(3.0)
-	await _shot("v4_aynali_sazan")
-	await _close_card(card)
-	await _wait_state(FishingSession.State.IDLE, 5.0)
-	await _wait(0.6)
-	# Haritadan dere ağzına; sinek: akıntıya at, sinek süzülür, alabalık altına gelir, halka: VUR.
-	await _map_to(panel, fade, "stream_mouth")
-	await _wait(0.8)
-	await _tap_control(hud.technique_button)
-	await _wait_until(func() -> bool: return bag.visible, 2.0)
+	# 5) Sazlıkta suda bir şişe (bildirim, Dede): haritadan sazlığa, dokununca mektup açılır; kapanınca Dede yazanı tanır.
+	save.letter_at = save.catches - Secret.LETTER_GAP
+	main.call("_sync_bottle")
+	await _wait_until(func() -> bool: return bottle.visible, 3.0)
+	await _wait(2.4)
+	await _map_to(map_panel, fade, "reeds")
 	await _wait(1.0)
-	await _tap_control(bag.find_child("Button_fly", true, false))
-	await _wait(1.6)
-	_check("video: sinek elde (dere ağzında)", save.technique == "fly")
-	var fly := await _fly_cast("trout", true)
-	_check("video: sinekle alabalık tutulur, sudan sıçrar", bool(fly["caught"]) and bool(fly["jumped"]))
-	await _wait(2.0)
-	await _shot("v5_son")
-	clock.fixed_unix = -1
+	if bottle.visible:
+		await _tap(_screen(bottle.point()))
+	_check("video: şişeye dokununca mektup açılır", await _wait_until(func() -> bool: return letters.visible, 4.0))
+	await _wait(3.6)
+	await _shot("v5_mektup")
+	await _tap_control(letters.close_button)
+	await _wait_until(func() -> bool: return str(main.get("_line")) == "UI_DEDE_LETTER_1", 3.0)
+	await _wait(2.6)
+	# 6) Sisli gece, sandalla derin orta: turkuaz dev bir gölge sandalın çevresinde yüzüp dalar; Dede söyler.
+	for i in 3:
+		main.call("_debug_time")
+		await _wait_frames(2)
+	for i in Weather.KINDS.size():
+		if Weather.at(rules, save) == "fog":
+			break
+		main.call("_debug_weather")
+		await _wait_frames(2)
+	await _map_to(map_panel, fade, "deep_water")
+	await _wait(1.8)
+	_check("video: sisli gece, sandal derin ortada", bool(main.get("in_boat")) and Weather.at(rules, save) == "fog"
+			and DayClock.phase(rules, save.clock_s) == "night")
+	await _video_ghost(_angler().pos2(), 4.8)
+	main.call("_say", "UI_DEDE_STORY_15")
+	await _wait(1.2)
+	await _shot("v6_bekci")
+	await _wait(2.6)
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Tanıtım videosu: Gölün Bekçisi'nin dev gölgesi center'ın (sandal) çevresinde yarım tur yüzer, belirip söner,
+## arkasında turkuaz iz halkaları; sonunda dalar (halkalar, ses, titreşim). Yalnızca görünüş (StoryFilm'in bitiş
+## çekimi gibi): oturuma ve gölgelerin kuralına dokunmaz.
+func _video_ghost(center: Vector2, seconds: float) -> void:
+	var circle := Story.keeper_circle(GameState.db, str(main.get("spot_id")), center)
+	if circle.size() < 4:
+		return
+	var path := circle.slice(0, (circle.size() >> 1) + 1)
+	var layer: ShadowLayer = main.get("shadows")
+	var rings: Ripples = main.get("ripples")
+	var ghost := layer.make_ghost(StoryFilm.GHOST_LENGTH)
+	var material := ghost.material_override as ShaderMaterial
+	var age := 0.0
+	var wake := 0.0
+	Sounds.play("sting")
+	Sounds.haptic(40)
+	while age < seconds:
+		var t := age / seconds
+		var f := t * float(path.size() - 1)
+		var i := mini(int(f), path.size() - 2)
+		var p := path[i].lerp(path[i + 1], f - float(i))
+		var heading := (path[i + 1] - path[i]).normalized()
+		ghost.position = Vector3(p.x, ShadowLayer.Y, p.y)
+		ghost.rotation = Vector3(0.0, atan2(-heading.x, -heading.y), 0.0)
+		var shown := smoothstep(0.0, 0.18, t) * (1.0 - smoothstep(0.8, 1.0, t))
+		material.set_shader_parameter("fade", shown)
+		wake -= get_process_delta_time()
+		if shown > 0.5 and wake <= 0.0:
+			wake = StoryFilm.WAKE_EVERY
+			rings.spawn(p - heading * StoryFilm.GHOST_LENGTH * 0.5, StoryFilm.GHOST_LENGTH * 0.4, 1.5,
+					Color(0.7, 1.0, 0.96, 0.6), 0.1)
+		await get_tree().process_frame
+		age += get_process_delta_time()
+	var end := path[path.size() - 1]
+	for r: Vector3 in StoryFilm.DIVE_RINGS:
+		rings.spawn(end, r.y, r.z, StoryFilm.TURQUOISE, 0.14)
+	Sounds.play("dive")
+	Sounds.haptic(80)
+	ghost.queue_free()
 
 
 # --- Reels: Instagram reklamının çekimi -------------------------------------------------
@@ -4400,9 +4467,11 @@ func _reels_setup() -> void:
 	# Dipteki sehpa yakın çekimini (bir kez, kamera sıçraması) yönetmen yapar.
 	_taken["15b_sehpa_yakin"] = true
 	_park_fn = _reels_park_point
-	# İpucu çubuğu ve sol üstteki durum hapları (para, kova, rütbe çubuğu) ortadaki kareye taşar, gizlenir.
+	# İpucu çubuğu, sol üstteki durum hapları (para, kova, rütbe çubuğu) ve üst ortadaki saat çipi (Dalga 4)
+	# ortadaki kareye taşar, gizlenir.
 	(_hud().get("_hint") as Control).modulate.a = 0.0
 	(_hud().get("_status") as Control).modulate.a = 0.0
+	_hud().world_chip().modulate.a = 0.0
 	for player: AudioStreamPlayer in (Sounds.get("_ambience") as Array):
 		player.stop()
 	# Reels'in kendi müziği var (tools/reels_music.py): oyunun vakit müziği ve dükkân valsi kayda girmesin.
