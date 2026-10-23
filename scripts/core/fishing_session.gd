@@ -23,15 +23,18 @@ extends RefCounted
 ## nibble {shadow, index} · bite {shadow} · early {shadow, startle} · retry {shadow} (ilk av
 ## kaçırılınca yeniden ısıracak) · hook {shadow, fish, distance, too_big} · warn · burst · burst_end ·
 ## strain · strain_end · lost {reason: early | missed | snapped | escaped, too_big} ·
-## catch {fish, fish_index, size_cm, stars, rarity, percentile, shadow, zone} · retrieve {reason} ·
-## idle · spawn {shadow} · despawn {shadow}. Tekniklerin olayları (Dalga 3): spinde strike {auto} ·
-## turn_away · snag; dipte sniff (koklama) · run (koşu: VUR); sinekte rise (halka: VUR); retrieve
-## nedenleri: spinde home / snag, sinekte drift / still.
+## catch {fish, fish_index, size_cm, stars, rarity, percentile, shadow, zone, story?} · retrieve {reason} ·
+## idle · spawn {shadow, summoned?} · despawn {shadow}. Dalışlı balıkta (Bekçi) dive_warn · dive · dive_end.
+## Tekniklerin olayları (Dalga 3): spinde strike {auto} · turn_away · snag; dipte sniff (koklama) · run
+## (koşu: VUR); sinekte rise (halka: VUR); retrieve nedenleri: spinde home / snag, sinekte drift / still.
 ##
 ## Bölgeli gölde gölgeler balıkçının çevresinde doğar (ShadowSim); balıkçının bölgesi zone().
 ## access: gölge doğabilen bölgeler (Zones.open_ids; boşsa sandalsız bütün bölgeler).
 ## Gölün koşulları (Dalga 4: vakit, hava, göl sevgisi; WorldState.conditions) set_conditions ile
 ## verilir: oranlar ve yağmurda takım profili ona göre. Verilmezse koşulsuz (testler, altın test).
+## Hikâyenin balığı (Gölün Bekçisi) summon ile çağrılır (ShadowSim.summon): takımı yalnızca o fark eder,
+## erken dokunuşu ve kaçan vuruşu bağışlar (ilk av gibi), ama dürter ve Kolay'da değilse gerçekten çekişir
+## (dalışlarıyla: ReelModel). Yakalanınca catch olayında "story": true; çöp çıkmaz.
 
 ## Durumlar sona eklenir (kayıt ve testler sıra numarasını tutar). FOLLOWING: spinde balık yemin
 ## peşinde (Dalga 3).
@@ -313,6 +316,26 @@ func set_pity_floor(floor: int) -> void:
 	sim.pity_floor = floor
 
 
+## Hikâyenin balığını çağırır (Gölün Bekçisi; sunum ne zaman ve nerede olduğuna karar verir: Secret.keeper_due,
+## keeper_point): point'te belirir, takıma o gelir. Döner: gölgenin kimliği (doğamazsa -1).
+func summon(fish_id: String, point: Vector2, percentile: int) -> int:
+	var s := sim.summon(fish_id, point, percentile)
+	if s == null:
+		return -1
+	push_event({ "type": "spawn", "shadow": s.id, "summoned": true })
+	return s.id
+
+
+## Göldeki çağrılan gölge (yoksa null).
+func summoned() -> FishShadow:
+	return sim.summoned_shadow()
+
+
+## Çağrılan gölge gider (sabah oldu): yaklaşıyor, dürtüyor ya da oltadaysa gitmez. Gittiyse true.
+func dismiss_summoned() -> bool:
+	return sim.dismiss_summoned()
+
+
 func state_name() -> String:
 	return str(State.find_key(state)).to_lower()
 
@@ -381,10 +404,10 @@ func open_window(type: String, extra: Dictionary = {}) -> void:
 	push_event(e)
 
 
-## Dürtmede (ısırmadan önce) dokunuş: balık irkilir ya da kaçar.
+## Dürtmede (ısırmadan önce) dokunuş: balık irkilir ya da kaçar (ilk av ve hikâye balığı hep irkilir).
 func early() -> void:
 	var s := sim.approacher
-	if BiteRules.early_outcome(easy, s.scripted, s.startles) == "startle":
+	if BiteRules.early_outcome(easy, s.scripted or s.summoned, s.startles) == "startle":
 		s.startles += 1
 		# İlk av sözünü tutar: sık sık dokunan çocuk da ısırmayı görsün (sayaç baştan başlamaz).
 		if not s.scripted:
@@ -396,11 +419,11 @@ func early() -> void:
 	lose("early")
 
 
-## Vuruş penceresi kaçtı: balık gider (ilk av gitmez, yeniden ısırır).
+## Vuruş penceresi kaçtı: balık gider (ilk av ve hikâye balığı gitmez, yeniden ısırır).
 func missed() -> void:
 	var s := sim.approacher
-	if s.scripted:
-		# İlk av: balık gitmez, biraz sonra yeniden ısırır.
+	if s.scripted or s.summoned:
+		# İlk av ve Bekçi: balık gitmez, biraz sonra yeniden ısırır.
 		state = State.NIBBLING
 		_nibbles_left = 0
 		timer = technique.roll_gap(s.rng)
@@ -492,15 +515,17 @@ func _step_fight() -> void:
 
 
 ## Balık tutuldu: last_catch (ve "catch" olayı). Dipte balığın yanında çöp çıkabilir ("trash": eşya ya da "";
-## zar gölgenin seed'inden: Trash.with_catch).
+## zar gölgenin seed'inden: Trash.with_catch); hikâyenin balığında çöp yok, "story": true.
 func _caught() -> void:
 	var s := hooked
 	last_catch = {
 		"fish": s.fish_id, "fish_index": s.fish_index, "size_cm": s.size_cm, "stars": s.stars,
 		"rarity": s.rarity, "percentile": s.percentile, "shadow": s.id, "seed": s.seed,
 		"zone": lake.zone_ids[s.zone] if s.zone >= 0 and s.zone < lake.zone_ids.size() else "",
-		"trash": Trash.with_catch(rules, s.seed, technique.id),
+		"trash": "" if s.summoned else Trash.with_catch(rules, s.seed, technique.id),
 	}
+	if s.summoned:
+		last_catch["story"] = true
 	sim.remove(s)
 	hooked = null
 	reel = null

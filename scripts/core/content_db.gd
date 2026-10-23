@@ -16,7 +16,9 @@ var rarities: Array[Dictionary] = []
 ## shadow_m, size_cm (Vector2i), weight, color, back, accent, fight { reel, pull, burst_pull,
 ## burst_every, burst_len (sn, Vector2), *_steps (Vector2i), run, heavy (iri tür), jumps (çırpınınca
 ## sudan sıçrar; yalnızca görünüş), first_burst_steps (varsa türün ilk çırpınması: alabalık takılır
-## takılmaz sıçrar; yoksa kuralların) },
+## takılmaz sıçrar; yoksa kuralların), stages (dalışların başladığı uzaklık payları, büyükten küçüğe;
+## boşsa dalış yok), dive_warn_steps, dive_len_steps (Vector2i), dive_run (m/sn), dive_pull },
+## story (hikâyenin balığı: hiçbir bölgenin tablosunda yok, oyun çağırır: Gölün Bekçisi),
 ## affinity { teknik: çarpan } (türün teknik yatkınlığı; yazılmayan teknikte 0, alan hiç yoksa
 ## yalnızca şamandıra 1), when { vakit: çarpan } ve weather { hava: çarpan } (Dalga 4: türün sevdiği
 ## vakit ve hava; yazılmayanda 1), only { phase: [vakitler], weather: [havalar] } (yalnızca o
@@ -39,7 +41,8 @@ var rank_xp: PackedInt32Array = []
 var rank_titles: Array[Dictionary] = []
 ## Atış noktaları (göller): id, basins [{center, radius, angle (radyan), zone, max_depth, shelf_m}],
 ## zones [_zone_def], dock (Rect2), start, max_shadows, fish_ids ve fish_weights (gölün bütün
-## türleri; bölgelerin toplamı), first_fish, first_shadow {pos, heading}. Eski şemadaki göl
+## türleri; bölgelerin toplamı), story_fish (hikâyenin balıkları: tabloda yok, defterde var), first_fish,
+## first_shadow {pos, heading}. Eski şemadaki göl
 ## (ellipses + tek derinlik + fish) tek bölgeli ("main") sayılır.
 var spots: Array[Dictionary] = []
 ## Oyunun açıldığı atış noktası (spots.json "main").
@@ -331,6 +334,17 @@ func _load_fish(raw: Dictionary) -> void:
 			# Çırpınınca sudan sıçrar (alabalıklar; yalnızca görünüş: FishJump).
 			"jumps": bool(raw_fight.get("jumps", false)),
 		}
+		# Dalışlar (Gölün Bekçisi): balık takıldığı uzaklığın bu paylarına gelince uyarır ve dalar.
+		var stages := PackedFloat32Array()
+		for v: Variant in raw_fight.get("stages", []):
+			stages.append(float(v))
+		fight["stages"] = stages
+		if not stages.is_empty():
+			var dive_len := _vec2(raw_fight.get("dive_len"), Vector2(2.0, 2.6))
+			fight["dive_warn_steps"] = FishingRules.to_steps(float(raw_fight.get("dive_warn", 1.2)))
+			fight["dive_len_steps"] = Vector2i(FishingRules.to_steps(dive_len.x), FishingRules.to_steps(dive_len.y))
+			fight["dive_run"] = float(raw_fight.get("dive_run", 1.8))
+			fight["dive_pull"] = float(raw_fight.get("dive_pull", 1.4))
 		# Türün ilk çırpınması (alabalık takılır takılmaz sıçrar); yazılmazsa kuralların reel.first_burst'ü.
 		if raw_fight.has("first_burst"):
 			var first := _vec2(raw_fight["first_burst"], Vector2(1.6, 2.4))
@@ -358,6 +372,7 @@ func _load_fish(raw: Dictionary) -> void:
 			"rarity": maxi(0, rarity_index(rarity_name)),
 			"value": int(d.get("value", 0)),
 			"release_only": bool(d.get("release_only", false)),
+			"story": bool(d.get("story", false)),
 			"shadow_m": float(d.get("shadow_m", 0.5)),
 			"size_cm": Vector2i(int(size.x), int(size.y)),
 			"weight": int(d.get("weight", 0)),
@@ -372,6 +387,15 @@ func _load_fish(raw: Dictionary) -> void:
 		}
 		_fish_index[id] = fish.size()
 		fish.append(def)
+
+
+## Ad listesi (dizi değilse boş).
+static func _names(raw: Variant) -> PackedStringArray:
+	var out := PackedStringArray()
+	if typeof(raw) == TYPE_ARRAY:
+		for n: Variant in raw:
+			out.append(str(n))
+	return out
 
 
 ## Ad -> çarpan sözlüğü (vakit ya da hava); sözlük değilse boş.
@@ -517,6 +541,7 @@ func _load_spots(raw: Dictionary) -> void:
 			"max_shadows": int(d.get("max_shadows", 4)),
 			"fish_ids": ids,
 			"fish_weights": weights,
+			"story_fish": _names(d.get("story_fish", [])),
 			"first_fish": str(d.get("first_fish", ids[0] if ids.size() > 0 else "")),
 			"first_shadow": {
 				"pos": _vec2(first_raw.get("pos"), Vector2.ZERO),
@@ -812,6 +837,20 @@ func _validate_fish(f: Dictionary) -> void:
 	# şişirmesin, nadir an göle sevgi versin (docs/gdd.md §10.5).
 	if not only.is_empty() and not bool(f["release_only"]):
 		errors.append("fish.json: %s: only (belli vakitte gelen) tür release_only olmalı" % id)
+	# Dalışlar: paylar 0 ile 1 arasında ve küçülerek; dalışta basılı tutmak kırmızıya çıkmalı.
+	var stages: PackedFloat32Array = fight["stages"]
+	for i in stages.size():
+		if stages[i] <= 0.0 or stages[i] >= 1.0 or (i > 0 and stages[i] >= stages[i - 1]):
+			errors.append("fish.json: %s: stages 0 ile 1 arasında, büyükten küçüğe olmalı" % id)
+			break
+	if not stages.is_empty():
+		var dive_len: Vector2i = fight["dive_len_steps"]
+		if float(fight["dive_pull"]) <= rules.limit or float(fight["dive_run"]) <= 0.0 \
+				or dive_len.x <= 0 or dive_len.y < dive_len.x or int(fight["dive_warn_steps"]) < rules.warn_steps:
+			errors.append("fish.json: %s: dalış geçersiz (dive_pull sınırın üstünde, dive_run ve dive_len pozitif, dive_warn uyarıdan kısa değil)" % id)
+	# Hikâyenin balığı (Gölün Bekçisi) satılmaz, göle bırakılır.
+	if bool(f["story"]) and not bool(f["release_only"]):
+		errors.append("fish.json: %s: story (hikâyenin balığı) release_only olmalı" % id)
 
 
 ## geometry: göl şekli kurulup başlangıç, atış noktaları, şamandıralar ve bölgeler de denetlensin.
@@ -834,6 +873,12 @@ func _validate_spot(s: Dictionary, geometry: bool = true) -> void:
 			errors.append("spots.json: %s: havzanın bölgesi bilinmiyor: %s" % [id, b["zone"]])
 	if fish_index(str(s["first_fish"])) < 0:
 		errors.append("spots.json: %s: ilk av balığı bilinmiyor" % id)
+	var table: PackedStringArray = s["fish_ids"]
+	for story_id: String in s["story_fish"]:
+		if fish_index(story_id) < 0 or not bool(fish_by_id(story_id)["story"]):
+			errors.append("spots.json: %s: story_fish story işaretli bir balık olmalı: %s" % [id, story_id])
+		elif story_id in table:
+			errors.append("spots.json: %s: hikâyenin balığı bir bölgenin tablosunda: %s" % [id, story_id])
 	if int(s["max_shadows"]) < 1:
 		errors.append("spots.json: %s: max_shadows en az 1" % id)
 	if not geometry:

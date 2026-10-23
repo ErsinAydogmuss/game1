@@ -29,7 +29,11 @@ var target := Vector2.ZERO
 var timer: int = 0
 ## İlk av (senaryolu): hep fark eder, korkmaz, dürtmez, kaçmaz.
 var scripted: bool = false
-## Senaryolu gölgenin dolaştığı yer.
+## Çağrılan hikâye balığı (Gölün Bekçisi; ShadowSim.summon): göldeyken takımı yalnızca o fark eder;
+## korkmaz, vazgeçmez, erken dokunuşu ve kaçan vuruşu bağışlar (ilk av gibi) ama dürter ve gerçekten
+## çekişir. Gölgelerin sayısına girmez, gidince yerine yenisi doğmaz.
+var summoned: bool = false
+## Senaryolu ve çağrılan gölgenin dolaştığı yer.
 var home := Vector2.ZERO
 ## Kolay modda erken dokunuşla kaç kez irkildi.
 var startles: int = 0

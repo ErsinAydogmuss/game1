@@ -78,7 +78,11 @@ func test_guide_covers_the_game() -> void:
 	var rarities := {}
 	for tile in GuidePages.tiles_of(db, "rarity"):
 		rarities[int(tile["rarity"])] = true
+	# Hikâyenin balığının nadirliği (Gölün Bekçisi, Masalsı) rehberde yok: finalin sürprizi.
 	for f in BookPanel.species(db, db.main_spot):
+		if bool(f["story"]):
+			assert_true(not rarities.has(int(f["rarity"])), "hikâyenin nadirliği rehberde yok: " + db.rarity_id(int(f["rarity"])))
+			continue
 		assert_true(rarities.has(int(f["rarity"])), "nadirlik rehberde yok: " + db.rarity_id(int(f["rarity"])))
 	var categories := {}
 	for p in GuidePages.PAGES:

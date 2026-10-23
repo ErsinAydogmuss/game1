@@ -19,12 +19,21 @@ extends RefCounted
 ##   altında). Yıldızı takımın taşımasını (carry) aşan balık fazla iridir (excess = fazla yıldız):
 ##   sakinken de basılı tutmak kırmızıya çıkar, patlama sertleşir, bırakınca daha hızlı uzaklaşır.
 ##   Kolay modda kopmaz, kaçmaz; yalnızca yavaş gelir.
+## - Dalışlar (fight.stages; Gölün Bekçisi): balık takıldığı uzaklığın bu paylarına yaklaşınca, sakin
+##   evredeyse, "dive_warn" (dive_warn_steps uyarı) ve "dive" gelir: dalış boyunca bırakınca balık dive_run
+##   hızla uzaklaşır (en çok kaçma sınırının DIVE_MARGIN içine), basılı tutunca gerilim dive_pull'a (sınırın
+##   üstüne) çıkar: koparır. Dalış bitince "dive_end". Kolay modda dalış EASY_DIVE kadar hızlı, kopma yok.
+##   Dalışın zarı yalnızca dalışlı balıkta çekilir (öteki balıkların zar sırası aynı kalır).
 
-enum Phase { CALM, WARN, BURST }
+## Evreler sona eklenir (DIVE_WARN, DIVE: Gölün Bekçisi'nin dalışları).
+enum Phase { CALM, WARN, BURST, DIVE_WARN, DIVE }
 enum Outcome { NONE, CAUGHT, SNAPPED, ESCAPED }
 
 ## Kopma sayacının birimi: sınır üstündeki her adım UNIT ekler.
 const UNIT := 1000
+## Dalış balığı kaçma sınırına en çok bu kadar (m) yaklaştırır; Kolay modda dalışın hız çarpanı.
+const DIVE_MARGIN := 0.5
+const EASY_DIVE := 0.6
 const STEP := 1.0 / FishingRules.HZ
 
 var distance: float = 0.0
@@ -63,6 +72,17 @@ var _strained_pull: float = 0.5
 var _strained_burst: float = 1.1
 var _strained_drift: float = 0.25
 var _easy_reel: float = 1.0
+## Dalışlar: kalan paylar (uzaklık takıldığı uzaklığın bu payına inince), takıldığı uzaklık, uyarı ve
+## dalış süresi (adım), dalışta kaçış hızı ve basılı tutunca gerilim.
+var _stages := PackedFloat32Array()
+var _start: float = 0.0
+var _dive_warn: int = 72
+var _dive_len := Vector2i(120, 156)
+var _dive_run: float = 1.8
+var _dive_pull: float = 1.4
+## Dalış bekliyor (pay geçildi, sakin evre bekleniyor) ve dalışlı balık mı.
+var _dive_due: bool = false
+var _has_dives: bool = false
 var _rng := RandomNumberGenerator.new()
 
 
@@ -106,6 +126,15 @@ func _init(rules: FishingRules, fight: Dictionary, reel_speed: float, start_dist
 		_strained_burst = _burst_pull + rules.over_burst * excess
 		_strained_drift = _drift * (1.0 + rules.over_drift * excess)
 		_easy_reel = _reel_speed * rules.over_easy_reel
+	var stages: PackedFloat32Array = fight.get("stages", PackedFloat32Array())
+	if not stages.is_empty():
+		_has_dives = true
+		_stages = stages.duplicate()
+		_dive_warn = int(fight["dive_warn_steps"])
+		_dive_len = fight["dive_len_steps"]
+		_dive_run = float(fight["dive_run"])
+		_dive_pull = float(fight["dive_pull"])
+	_start = start_distance
 	_rng.seed = seed
 	distance = start_distance
 	max_distance = max_dist
@@ -125,7 +154,16 @@ func step() -> PackedStringArray:
 		return out
 	steps += 1
 	phase_steps -= 1
-	if phase_steps <= 0:
+	# Dalışın payı geçildiyse sakin evrede dalış uyarısı başlar (patlama sürüyorsa bitince).
+	if not _stages.is_empty() and distance <= _start * _stages[0]:
+		_stages.remove_at(0)
+		_dive_due = true
+	if _dive_due and phase == Phase.CALM:
+		_dive_due = false
+		phase = Phase.DIVE_WARN
+		phase_steps = _dive_warn
+		out.append("dive_warn")
+	elif phase_steps <= 0:
 		match phase:
 			Phase.CALM:
 				phase = Phase.WARN
@@ -139,6 +177,17 @@ func step() -> PackedStringArray:
 				phase = Phase.CALM
 				phase_steps = maxi(1, Dice.between(_rng, _every) - _rules.warn_steps)
 				out.append("burst_end")
+			Phase.DIVE_WARN:
+				phase = Phase.DIVE
+				phase_steps = Dice.between(_rng, _dive_len)
+				out.append("dive")
+			Phase.DIVE:
+				phase = Phase.CALM
+				phase_steps = maxi(1, Dice.between(_rng, _every) - _rules.warn_steps)
+				out.append("dive_end")
+	if phase == Phase.DIVE:
+		_dive_step()
+		return _finish(out)
 	var bursting := phase == Phase.BURST
 	var strained := excess > 0 and not easy
 	if holding:
@@ -157,6 +206,25 @@ func step() -> PackedStringArray:
 		distance -= (_easy_reel if easy else _reel_speed) * STEP
 	else:
 		distance += (_strained_drift if strained else _drift) * STEP
+	return _finish(out)
+
+
+## Dalışta bir adım: basılı tutunca gerilim dive_pull'a çıkar (Kolay'da sınırda durur), bırakınca düşer;
+## balık dalış hızıyla uzaklaşır (Kolay'da yavaş), kaçma sınırının DIVE_MARGIN içinde durur.
+func _dive_step() -> void:
+	if holding:
+		tension = move_toward(tension, _dive_pull, _rules.rise * STEP)
+	else:
+		tension = move_toward(tension, 0.0, _rules.fall * STEP)
+	if easy:
+		tension = minf(tension, _rules.limit)
+	var speed := _dive_run * (EASY_DIVE if easy else 1.0)
+	if not holding or easy:
+		distance = maxf(distance, minf(distance + speed * STEP, max_distance - DIVE_MARGIN))
+
+
+## Adımın sonu: kırmızı, kopma sayacı, tutma ve kaçma (her evrede aynı).
+func _finish(out: PackedStringArray) -> PackedStringArray:
 	var red := tension > _rules.limit
 	if red != in_red:
 		in_red = red
@@ -195,9 +263,19 @@ func strain() -> float:
 	return clampf(float(over) / _snap_units, 0.0, 1.0)
 
 
-## Uyarı ya da patlama sürüyor mu (sunum: çırpınma)?
+## Uyarı ya da patlama sürüyor mu (sunum: çırpınma; dalış ve uyarısı da)?
 func thrashing() -> bool:
 	return phase != Phase.CALM
+
+
+## Dalış ya da uyarısı sürüyor mu (sunum: "BIRAK! Bekçi dalıyor")?
+func diving() -> bool:
+	return phase == Phase.DIVE_WARN or phase == Phase.DIVE
+
+
+## Dalışlı balık mı (fight.stages)?
+func has_dives() -> bool:
+	return _has_dives
 
 
 func seconds() -> float:

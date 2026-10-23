@@ -35,9 +35,12 @@ static func drink_tea(rules: FishingRules, save: SaveData) -> Dictionary:
 
 ## Bir balık göle bırakıldı (kovadan, karttan, kova dolu olduğu için ya da koruma altındaki tür): deftere
 ## (bırakılan sayısı), göl sevgisine (nadirliğine göre: rarities.json love) ve sayaca yazılır. Para
-## vermez. Döner: { love: eklenen, old_level, new_level } (seviye atladıysa bildirim).
+## vermez. Gölün Bekçisi bırakılınca final biter (Secret.release_keeper: geceler eski havasına döner). Döner:
+## { love: eklenen, old_level, new_level } (seviye atladıysa bildirim).
 static func release(db: ContentDB, save: SaveData, fish_id: String) -> Dictionary:
 	Records.release(save.records, fish_id)
+	if fish_id == Secret.KEEPER_ID:
+		Secret.release_keeper(save, DayClock.day(db.rules, save.clock_s))
 	var rarity := int(db.fish_by_id(fish_id).get("rarity", 0))
 	var love := int(db.rarity_def(rarity).get("love", 0))
 	var out := LakeLove.add(db.rules, save, love)

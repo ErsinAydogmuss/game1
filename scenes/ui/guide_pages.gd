@@ -392,11 +392,13 @@ static func _carry_stars(db: ContentDB, category: String) -> Array:
 	return [int(start.get("carry", 0)), best]
 
 
-## Gölün nadirlikleri (gölde türü olanlar): rozet, gölge ipucu, rütbe puanı ve şans garantisi.
+## Gölün nadirlikleri (gölde türü olanlar): rozet, gölge ipucu, rütbe puanı ve şans garantisi. Hikâyenin
+## balığı (Gölün Bekçisi, Masalsı) sayılmaz: finalin sürprizi.
 static func _rarity_tiles(db: ContentDB) -> Array[Dictionary]:
 	var seen := {}
 	for f in BookPanel.species(db, db.main_spot):
-		seen[int(f["rarity"])] = true
+		if not bool(f.get("story", false)):
+			seen[int(f["rarity"])] = true
 	var out: Array[Dictionary] = []
 	for r in db.rarities.size():
 		if not seen.has(r):

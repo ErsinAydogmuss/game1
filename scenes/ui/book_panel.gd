@@ -167,12 +167,15 @@ func _conditions_pill(db: ContentDB, save: SaveData) -> PanelContainer:
 	return pill
 
 
-## Gölün türleri, defterin sırasıyla: nadirlik, sonra fish.json sırası.
+## Gölün türleri, defterin sırasıyla: nadirlik, sonra fish.json sırası. Hikâyenin balıkları da (Gölün
+## Bekçisi: bölgelerin tablosunda yok, spots.json story_fish).
 static func species(db: ContentDB, spot: String) -> Array[Dictionary]:
-	var ids: PackedStringArray = db.spot(spot).get("fish_ids", PackedStringArray())
+	var def := db.spot(spot)
+	var ids: PackedStringArray = def.get("fish_ids", PackedStringArray())
+	var story: PackedStringArray = def.get("story_fish", PackedStringArray())
 	var out: Array[Dictionary] = []
 	for f in db.fish:
-		if str(f["id"]) in ids:
+		if str(f["id"]) in ids or str(f["id"]) in story:
 			out.append(f)
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return int(a["rarity"]) < int(b["rarity"]) if int(a["rarity"]) != int(b["rarity"]) \

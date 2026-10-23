@@ -6,6 +6,11 @@ extends RefCounted
 ## defter ve denge botu aynı kuralı kullanır. Kayıtta okunan mektup sayısı (letters), sıradaki şişenin
 ## sayıldığı balık (letter_at), harita parçaları (map_pieces) ve altın hamurun bayrağı. Süresi dolan ya da
 ## kaybolan bir şey yok (gelir kuralı 7): şişe alınana kadar suda bekler.
+##
+## Final (6. adım): Gölün Bekçisi haritanın X'inde (derin ortanın KEEPER_BUOY şamandırası) sisli bir gecede,
+## altın hamurlu dip takımına gelir (keeper_due). Final hazırken Bekçi bırakılana kadar her gece sisli
+## (Weather.at: keeper_night); bırakılınca (WorldState.release → release_keeper) geceler eski havasına döner,
+## Bekçi kendiliğinden sisli gecelerde X'te yine çıkabilir (günde bir; filmsiz).
 
 ## Mektuplar, okunma sırasıyla: şişenin çıktığı bölge ve rütbesi (her bölgeden bir; sonuncusu sandalla).
 const LETTERS: Array[Dictionary] = [
@@ -30,6 +35,22 @@ const REACH := 5.0
 ## Altın hamur: göl sevgisinin bu seviyesinde Nine verir (dükkâna uğrayınca; bayrak kayıtta).
 const DOUGH_LOVE := 6
 const DOUGH_FLAG := "golden_dough"
+## Gölün Bekçisi: hikâyenin balığı (fish.json story; hiçbir bölgenin tablosunda yok, spots.json story_fish).
+const KEEPER_ID := "keeper"
+## Haritanın X'i: derin ortanın bu şamandırası (sandal ona bağlanınca Bekçi çıkabilir).
+const KEEPER_BUOY := 0
+## Bekçi'nin boy yüzdeliği (ppm; 5★, ~517 cm, gölgesi ~5 m): boyu hep aynı.
+const KEEPER_PERCENTILE := 925000
+## Bekçi sandaldan bu uzaklıklarda (m) belirir, takıma doğru bakan yönden bu açılarla (derece) sapan
+## yönlerde (sırayla denenir; ilk uygun yer). X derin ortanın batı ucunda: derin su doğuya, gölün ortasına
+## uzanır; takım başka yöne atıldıysa Bekçi çemberin öbür yanından gelir.
+const KEEPER_FROM: Array[float] = [8.0, 7.0, 9.0, 6.0]
+const KEEPER_TURN: Array[float] = [25.0, -25.0, 40.0, -40.0, 10.0, -10.0, 60.0, -60.0, 0.0, 80.0, -80.0, 100.0,
+		-100.0, 120.0, -120.0, 140.0, -140.0, 160.0, -160.0, 180.0]
+## Bekçi'nin belirdiği yer takımdan en az bu kadar (m) uzak: yaklaşırken görünsün.
+const KEEPER_GAP := 3.0
+## Bekçi'nin son bırakıldığı oyun günü (bayrak): aynı gün yeniden çıkmaz.
+const KEEPER_DAY_FLAG := "keeper_day"
 
 
 ## Sıradaki mektubun sırası (0'dan; hepsi okunduysa -1).
@@ -142,3 +163,54 @@ static func give_dough(db: ContentDB, save: SaveData) -> bool:
 ## Final hazır mı: altı mektup, dört harita parçası ve altın hamur (6. adım: sisli gece, derin orta, Bekçi).
 static func final_ready(save: SaveData) -> bool:
 	return save.letters >= LETTERS.size() and save.map_pieces >= SaveData.MAX_MAP_PIECES and has_dough(save)
+
+
+## Final gecesi: final hazır ve Bekçi henüz bırakılmadı. Bu sürede her gece sisli (Weather.at): sisli gece
+## kendiliğinden ~10 günde bir gelir, final için beklemek ceza gibi olmasın.
+static func keeper_night(save: SaveData) -> bool:
+	return save.keeper == 0 and final_ready(save)
+
+
+## Bekçi çıkar mı: gece, sis, sandal X'te (at_x: derin ortanın KEEPER_BUOY şamandırasında), elindeki teknik
+## dip (altın hamur dipte kullanılır) ve altın hamur var; ilk kez final hazırken, sonra (oyun sonrası) her
+## sisli gecede ama bırakıldığı gün değil (day: şimdiki oyun günü).
+static func keeper_due(save: SaveData, phase: String, weather: String, at_x: bool, technique: String, day: int) -> bool:
+	if phase != "night" or weather != "fog" or not at_x or technique != "bottom" or not has_dough(save):
+		return false
+	if save.keeper == 0:
+		return final_ready(save)
+	return int(save.flags.get(KEEPER_DAY_FLAG, -1)) != day
+
+
+## Bekçi göle bırakıldı (WorldState.release): sayaç bir artar, bugün yeniden çıkmaz.
+static func release_keeper(save: SaveData, day: int) -> void:
+	save.keeper += 1
+	save.flags[KEEPER_DAY_FLAG] = day
+
+
+## Haritanın X'i (derin ortanın KEEPER_BUOY şamandırası; yoksa Dice.NO_POINT).
+static func keeper_x(db: ContentDB, spot_id: String) -> Vector2:
+	for z in db.zones_of(spot_id):
+		if bool(z["boat"]):
+			var buoys: Array[Vector2] = z["buoys"]
+			return buoys[KEEPER_BUOY] if KEEPER_BUOY < buoys.size() else Dice.NO_POINT
+	return Dice.NO_POINT
+
+
+## Bekçi'nin belirdiği yer: sandaldan (boat) takıma (rig) bakan yönden KEEPER_TURN açılarıyla sapan yönlerde,
+## KEEPER_FROM uzaklıklarında takımın bölgesinin derin suyu (bölgenin min_depth'i), takımdan en az KEEPER_GAP
+## uzakta (önce yön, sonra uzaklık). Yer yoksa Dice.NO_POINT.
+static func keeper_point(db: ContentDB, spot_id: String, boat: Vector2, rig: Vector2) -> Vector2:
+	var lake := db.lake(spot_id)
+	var k := lake.zone_at(rig)
+	if k < 0:
+		return Dice.NO_POINT
+	var depth := float(db.zone(spot_id, lake.zone_ids[k]).get("min_depth", db.rules.min_depth))
+	var to := rig - boat
+	var dir := to.normalized() if to.length_squared() > 0.0001 else Vector2(0.0, -1.0)
+	for turn: float in KEEPER_TURN:
+		for d: float in KEEPER_FROM:
+			var p := boat + dir.rotated(deg_to_rad(turn)) * d
+			if lake.zone_at(p) == k and lake.is_deep(p, depth) and p.distance_to(rig) >= KEEPER_GAP:
+				return p
+	return Dice.NO_POINT

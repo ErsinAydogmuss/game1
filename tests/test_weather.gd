@@ -84,3 +84,39 @@ func test_debug_cycle_changes_only_today() -> void:
 	for i in 4:
 		kinds[Weather.cycle_debug(rules, save)] = true
 	assert_eq(kinds.size(), 4, "dört hava sırayla")
+
+
+## Final hazırken (Gölün Bekçisi bırakılana kadar) her gece sisli, fırtına yok; öteki vakitler günün havasıyla.
+## Bekçi bırakılınca geceler yine günün havasına döner (yağmurlu gece fırtına, Kocabaş).
+func test_final_nights_are_foggy_until_the_keeper_is_released() -> void:
+	var db := content()
+	var rules := db.rules
+	var save := SaveData.create_new(1_700_000_000)
+	save.seed = 4242
+	save.letters = Secret.LETTERS.size()
+	save.map_pieces = SaveData.MAX_MAP_PIECES
+	save.flags[Secret.DOUGH_FLAG] = true
+	var rain_day := -1
+	for day in range(1, 60):
+		var start := day * DayClock.day_s(rules)
+		var kind := Weather.of_day(rules, save.seed, day)
+		for i in 4:
+			var clock := start + i * rules.phase_s + 10
+			var phase := DayClock.phase(rules, clock)
+			var now := Weather.at(rules, save, clock)
+			if phase == "night":
+				assert_eq(now, "fog", "final gecesi sisli (gün %d)" % day)
+				assert_true(not Weather.stormy(now, phase), "final gecesinde fırtına yok (gün %d)" % day)
+			elif kind != "fog":
+				assert_eq(now, kind, "gündüz günün havası (gün %d, %s)" % [day, phase])
+		if kind == "rain" and rain_day < 0:
+			rain_day = day
+	assert_true(rain_day > 0, "60 günde yağmurlu gün var")
+	if rain_day < 0:
+		return
+	save.clock_s = rain_day * DayClock.day_s(rules) + 3 * rules.phase_s + 10
+	assert_eq(WorldState.conditions(db, save)["weather"], "fog", "koşullarda final gecesinin sisi")
+	save.records[Secret.KEEPER_ID] = { "count": 1, "best_cm": 517, "best_stars": 5, "first_unix": 0, "released": 0 }
+	WorldState.release(db, save, Secret.KEEPER_ID)
+	assert_eq(Weather.at(rules, save), "rain", "Bekçi bırakılınca yağmurlu gece yine yağmur")
+	assert_true(Weather.stormy(Weather.at(rules, save), "night"), "ve fırtına")

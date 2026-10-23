@@ -115,6 +115,7 @@ Türlerin teknik yatkınlığı (çarpan; boş: o teknikle gelmez) ve tuzağa gi
 | Kerevit | Sıradan |  |  | ×0,5 |  | Sazlık, Kayalık Burun |
 | Ay Turnası | Efsanevi | ×1 | ×1,4 | ×0,2 |  |  |
 | Kocabaş | Efsanevi | ×0,5 |  | ×1,5 |  |  |
+| Gölün Bekçisi | Masalsı |  |  | ×1 |  |  |
 
 ## Vakit ve hava
 
@@ -146,6 +147,7 @@ Türlerin teknik yatkınlığı (çarpan; boş: o teknikle gelmez) ve tuzağa gi
 | Kerevit | 0,8 | 0,6 | 1 | 1,6 |  |
 | Ay Turnası | — | — | — | ✓ | bulutlu 0,8, yağmurlu 0,6 |
 | Kocabaş | — | — | — | ✓ | yalnızca yağmurlu |
+| Gölün Bekçisi | — | — | — | ✓ | yalnızca sisli |
 
 **Göl sevgisi:** bırakılan balık (nadirliğe göre), toplanan çöp ve istekler verir; hiç azalmaz. Her seviye
 Nadir ve üstü türlerin ağırlığını %4 artırır:

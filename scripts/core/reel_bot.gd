@@ -1,8 +1,9 @@
 class_name ReelBot
 extends RefCounted
 ## Çekişme botu: bir oyuncu tarzını taklit eder (testler ve tools/reel_report.gd için).
-## - PERFECT: patlama başlamadan hemen önce bırakır, biter bitmez yeniden basar.
-## - REACT: uyarıdan (warn) reaction adım sonra bırakır, patlama bitişinden reaction adım sonra basar.
+## - PERFECT: patlama (ve dalış) başlamadan hemen önce bırakır, biter bitmez yeniden basar.
+## - REACT: uyarıdan (warn, dive_warn) reaction adım sonra bırakır, patlama ya da dalış bitişinden reaction adım
+##   sonra basar.
 ## - ALWAYS: hep basılı tutar. NEVER: hiç basmaz.
 ## - PUMP: kusursuz usta: PERFECT gibi bırakır; sakinken de gerilim sınırı geçecekse bırakır
 ##   ("pompalar": fazla iri balığın en iyi denenebileceği yol).
@@ -34,16 +35,15 @@ func decide(model: ReelModel, events: PackedStringArray) -> bool:
 		Style.NEVER:
 			return false
 		Style.PERFECT:
-			return not (model.phase == ReelModel.Phase.BURST
-					or (model.phase == ReelModel.Phase.WARN and model.phase_steps <= 1))
+			return not _letting_go(model)
 		Style.PUMP:
-			if model.phase == ReelModel.Phase.BURST or (model.phase == ReelModel.Phase.WARN and model.phase_steps <= 1):
+			if _letting_go(model):
 				return false
 			return model.tension + model.rise_step <= model.limit
 	for e in events:
-		if e == "warn":
+		if e == "warn" or e == "dive_warn":
 			_release_at = model.steps + reaction
-		elif e == "burst_end":
+		elif e == "burst_end" or e == "dive_end":
 			_press_at = model.steps + reaction
 	var hold := model.holding
 	if _release_at >= 0 and model.steps >= _release_at:
@@ -55,15 +55,29 @@ func decide(model: ReelModel, events: PackedStringArray) -> bool:
 	return hold
 
 
+## Kusursuz oyuncu bırakır mı: patlamada ya da dalışta, ya da uyarılarının son adımında.
+static func _letting_go(model: ReelModel) -> bool:
+	match model.phase:
+		ReelModel.Phase.BURST, ReelModel.Phase.DIVE:
+			return true
+		ReelModel.Phase.WARN, ReelModel.Phase.DIVE_WARN:
+			return model.phase_steps <= 1
+	return false
+
+
 ## Bir çekişmeyi baştan sona oynar. Döner: { outcome (ReelModel.Outcome), seconds, red (kırmızıda
-## geçen sn) }.
+## geçen sn), dives (dalış sayısı) }.
 static func play(model: ReelModel, bot: ReelBot) -> Dictionary:
 	model.holding = bot.style != Style.NEVER
 	var events := PackedStringArray()
 	var red_steps := 0
+	var dives := 0
 	while model.outcome == ReelModel.Outcome.NONE and model.steps < LIMIT_STEPS:
 		model.holding = bot.decide(model, events)
 		events = model.step()
 		if model.in_red:
 			red_steps += 1
-	return { "outcome": model.outcome, "seconds": model.seconds(), "red": float(red_steps) / FishingRules.HZ }
+		if "dive" in events:
+			dives += 1
+	return { "outcome": model.outcome, "seconds": model.seconds(), "red": float(red_steps) / FishingRules.HZ,
+			"dives": dives }

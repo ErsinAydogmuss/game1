@@ -181,6 +181,93 @@ func test_letters_are_written_and_fit_the_paper() -> void:
 					LetterPanel.TEXT_H])
 
 
+## Final hazır bir kayıt: altı mektup, dört parça, altın hamur.
+func _final_save() -> SaveData:
+	var save := _save(13)
+	save.letters = Secret.LETTERS.size()
+	save.map_pieces = SaveData.MAX_MAP_PIECES
+	save.flags[Secret.DOUGH_FLAG] = true
+	return save
+
+
+## Bekçi yalnızca hepsi birden tutunca çıkar: gece, sis, sandal X'te, elde dip, altın hamur, final hazır. Bırakılınca
+## (oyun sonrası) kendiliğinden sisli gecelerde yine çıkar, ama bırakıldığı gün değil.
+func test_keeper_needs_night_fog_x_bottom_and_the_final() -> void:
+	var save := _final_save()
+	assert_true(Secret.keeper_due(save, "night", "fog", true, "bottom", 3), "hepsi tamam: Bekçi çıkar")
+	assert_true(not Secret.keeper_due(save, "evening", "fog", true, "bottom", 3), "gece değil")
+	assert_true(not Secret.keeper_due(save, "night", "clear", true, "bottom", 3), "sis değil")
+	assert_true(not Secret.keeper_due(save, "night", "fog", false, "bottom", 3), "sandal X'te değil")
+	assert_true(not Secret.keeper_due(save, "night", "fog", true, "float", 3), "elde dip değil")
+	var early := _final_save()
+	early.map_pieces -= 1
+	assert_true(not Secret.keeper_due(early, "night", "fog", true, "bottom", 3), "final hazır değil")
+	var no_dough := _final_save()
+	no_dough.flags.erase(Secret.DOUGH_FLAG)
+	assert_true(not Secret.keeper_due(no_dough, "night", "fog", true, "bottom", 3), "altın hamursuz değil")
+	# Oyun sonrası: Bekçi bırakıldı; aynı gün çıkmaz, ertesi sisli gecede çıkar.
+	Secret.release_keeper(save, 3)
+	assert_eq(save.keeper, 1, "Bekçi bir kez bırakıldı")
+	assert_true(not Secret.keeper_night(save), "final gecesi bitti")
+	assert_true(not Secret.keeper_due(save, "night", "fog", true, "bottom", 3), "bırakıldığı gün yeniden çıkmaz")
+	assert_true(Secret.keeper_due(save, "night", "fog", true, "bottom", 4), "sonraki sisli gecede yine çıkar")
+	assert_true(not Secret.keeper_due(save, "night", "rain", true, "bottom", 4), "sonra da yalnızca sisli gecede")
+
+
+## Bekçi'yi göle bırakmak (WorldState.release) finali bitirir: sayaç, bugünün bayrağı, sevgi; para yok.
+func test_releasing_the_keeper_ends_the_final() -> void:
+	var db := content()
+	var save := _final_save()
+	save.clock_s = 7 * DayClock.day_s(db.rules) + 3 * db.rules.phase_s + 30
+	var coins := save.coins
+	assert_true(Secret.keeper_night(save), "final gecesi")
+	Records.add(save.records, Secret.KEEPER_ID, 517, 5, 0)
+	var out := WorldState.release(db, save, Secret.KEEPER_ID)
+	assert_eq(save.keeper, 1, "Bekçi bırakıldı")
+	assert_eq(int(save.flags.get(Secret.KEEPER_DAY_FLAG, -1)), 7, "bırakıldığı gün")
+	assert_true(not Secret.keeper_night(save), "geceler eski havasına döner")
+	assert_eq(int(out["love"]), int(db.rarity_def(db.rarity_index("mythic"))["love"]), "Masalsı sevgi")
+	assert_eq(save.coins, coins, "para vermez")
+	assert_eq(int((save.records.get(Secret.KEEPER_ID, {}) as Dictionary).get("released", 0)), 1, "defterde bırakıldı")
+
+
+## Bekçi haritanın X'inde (derin ortanın KEEPER_BUOY şamandırası) çıkar: sandaldan her yöne atılan dip takımına
+## (kurşun derin ortanın suyunda kalır) karşı sandaldan 6–9 m ötede, derin ortanın derin suyunda, takımdan en az
+## KEEPER_GAP uzakta belirir.
+func test_keeper_rises_in_deep_water_near_the_boat() -> void:
+	var db := content()
+	var lake := db.lake(SPOT)
+	var x := Secret.keeper_x(db, SPOT)
+	assert_true(Dice.is_point(x), "haritanın X'i var")
+	if not Dice.is_point(x):
+		return
+	var deep := lake.zone_index("deep_water")
+	assert_eq(lake.zone_at(x), deep, "X derin ortada")
+	var boat := x + LakeScene.BUOY_MOOR
+	var depth := float(db.zone(SPOT, "deep_water")["min_depth"])
+	var technique := BottomTechnique.new(db.rules)
+	var session := FishingSession.new(db, SPOT, GearStats.best(db, "bottom"), 3, false, false, -1,
+			PackedStringArray(["deep_water"]))
+	session.relocate(boat)
+	var cast := 0
+	for k in 16:
+		# Kıyıya bakan yönlerde (güney ve batı) derin ortanın suyu kurşunun en kısa atışından dar: atılmaz.
+		var rig := technique.landing_point(session, boat + Vector2.from_angle(TAU * k / 16.0) * 10.0)
+		if not Dice.is_point(rig):
+			continue
+		cast += 1
+		assert_eq(lake.zone_at(rig), deep, "%d. yönde kurşun derin ortaya düşer" % k)
+		var p := Secret.keeper_point(db, SPOT, boat, rig)
+		assert_true(Dice.is_point(p), "%d. yönde Bekçi'nin yeri var" % k)
+		if not Dice.is_point(p):
+			continue
+		assert_eq(lake.zone_at(p), deep, "%d. yön: derin ortada" % k)
+		assert_true(lake.is_deep(p, depth), "%d. yön: derin suda" % k)
+		assert_between(p.distance_to(boat), 6.0 - 0.001, 9.0 + 0.001, "%d. yön: sandaldan uzaklık" % k)
+		assert_true(p.distance_to(rig) >= Secret.KEEPER_GAP, "%d. yön: takımdan uzak" % k)
+	assert_true(cast >= 8, "X'ten en az sekiz yöne dip atılır (%d)" % cast)
+
+
 func _save(rank: int) -> SaveData:
 	var save := SaveData.create_new(0)
 	save.seed = 4242

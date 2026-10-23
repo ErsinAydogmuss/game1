@@ -15,6 +15,11 @@ extends RefCounted
 ## avlanılan bölgede doğar. Balıkçı sandaldaysa (suyun üstünde) gölgeler sandaldan BOAT_CLEAR
 ## uzakta dolaşır: sandalın altına girmez (şamandıraya yaklaşan ve kaçan gölge girebilir). Tek
 ## bölgeli göl (eski şema) bugünkü gibi çalışır (altın test).
+##
+## Hikâye balığı (Gölün Bekçisi; summon): sunumun çağırdığı tek gölge. Göldeyken takımı yalnızca o fark eder
+## (senaryolu ilk av gibi; öteki gölgeler süs olarak dolaşır), korkmaz, vazgeçmez, evinin çevresinde dolaşır;
+## bölgesinden, balıkçıdan uzaklığından ve gölün koşulundan çekilmez. Gölgelerin sayısına girmez, gidince
+## yerine yenisi doğmaz; kimliği ve zarı ayrı (SUMMON_ID, SUMMON_SALT): öteki gölgelerin zarı kaymaz.
 
 const STEP := 1.0 / FishingRules.HZ
 ## Önü kapalıysa denenecek sapma açıları (radyan): kıyı boyunca kayar.
@@ -26,6 +31,11 @@ const BOAT_CLEAR := 2.0
 ## Balıkçının durduğu yerin bölgesi kapalıysa (kilitli bölgenin çitinin önü) açık bölge bu
 ## yarıçaplarda (m) halka halka aranır.
 const FISHING_SEARCH: Array[float] = [1.0, 2.0, 3.0, 4.5, 6.0, 8.0]
+## Çağrılan gölgelerin kimlikleri buradan başlar (dolaşan gölgelerin sırası kaymaz) ve zarının tuzu.
+const SUMMON_ID := 1 << 30
+const SUMMON_SALT := 9091
+## Çağrılan gölge evinin bu yarıçapında (m) dolaşır.
+const SUMMON_ROAM := 3.0
 
 var shadows: Array[FishShadow] = []
 ## Şamandıraya yaklaşan (ya da dürten) gölge.
@@ -43,6 +53,8 @@ var _lake: LakeShape
 var _spot: Dictionary
 var _seed: int = 0
 var _serial: int = 0
+## Çağrılan gölgelerin sırası (summon).
+var _summons: int = 0
 var _max: int = 4
 ## Bekleyen doğumlar: her biri için kalan adım.
 var _pending := PackedInt32Array()
@@ -132,7 +144,7 @@ func step(angler: Vector2, bobber: Vector2, listening: bool, waiting_steps: int)
 				if _approach(s, bobber):
 					s.mode = FishShadow.Mode.NIBBLE
 					out.append({ "type": "arrive", "shadow": s.id })
-				elif not s.scripted and s.timer > rig.give_up_steps:
+				elif not (s.scripted or s.summoned) and s.timer > rig.give_up_steps:
 					lose_interest(s)
 					# Aynı adımda yeniden fark edip aynı kapalı yola girmesin.
 					s.bored = true
@@ -147,18 +159,19 @@ func step(angler: Vector2, bobber: Vector2, listening: bool, waiting_steps: int)
 					remove(s)
 					out.append({ "type": "despawn", "shadow": s.id })
 	if listening and approacher == null:
-		# İlk av gölde oldukça şamandıraya yalnızca o gelir.
+		# İlk av (ya da çağrılan hikâye balığı) gölde oldukça şamandıraya yalnızca o gelir.
 		var only_scripted := _has_scripted()
 		var best: FishShadow = null
 		var best_d := INF
 		for s in shadows:
 			if s.mode != FishShadow.Mode.WANDER and s.mode != FishShadow.Mode.PAUSE:
 				continue
-			if only_scripted and not s.scripted:
+			if only_scripted and not (s.scripted or s.summoned):
 				continue
 			if s.bored:
 				continue
-			if not (s.scripted or BiteRules.notices_in(s, bobber, rig.notice_front, rig.notice_side, rig.notice_cos)):
+			if not (s.scripted or s.summoned or BiteRules.notices_in(s, bobber, rig.notice_front, rig.notice_side,
+					rig.notice_cos)):
 				continue
 			var d := s.pos.distance_squared_to(bobber)
 			if d < best_d:
@@ -172,13 +185,13 @@ func step(angler: Vector2, bobber: Vector2, listening: bool, waiting_steps: int)
 	return out
 
 
-## Şamandıra point'e düştü: yakındaki gölgeler korkup kaçar (ilk av korkmaz). Vazgeçmiş
+## Şamandıra point'e düştü: yakındaki gölgeler korkup kaçar (ilk av ve hikâye balığı korkmaz). Vazgeçmiş
 ## balıklar yeni şamandırayı yeniden fark edebilir. stealth: misinanın görünmezliği.
 func scare(point: Vector2, stealth: float = 0.0) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for s in shadows:
 		s.bored = false
-		if s.scripted or s.mode == FishShadow.Mode.FLEE or s.mode == FishShadow.Mode.HOOKED:
+		if s.scripted or s.summoned or s.mode == FishShadow.Mode.FLEE or s.mode == FishShadow.Mode.HOOKED:
 			continue
 		if BiteRules.scares(s, point, _rules, stealth):
 			flee(s, point)
@@ -200,7 +213,7 @@ func flee(s: FishShadow, from: Vector2) -> void:
 ## hedef seçer (toplanma zarıyla, kendi zarından). Şamandırada çağrılmaz.
 func call_to_rig(bobber: Vector2, waiting_steps: int) -> void:
 	for s in shadows:
-		if s.scripted or s == approacher or s.bored:
+		if s.scripted or s.summoned or s == approacher or s.bored:
 			continue
 		if s.mode == FishShadow.Mode.WANDER or s.mode == FishShadow.Mode.PAUSE:
 			_pick_target(s, bobber, true, waiting_steps)
@@ -228,16 +241,18 @@ func hook(s: FishShadow) -> void:
 		approacher = null
 
 
-## Gölgeyi gölden çıkarır (tutuldu ya da kaçtı) ve yerine yenisinin doğmasını planlar.
+## Gölgeyi gölden çıkarır (tutuldu ya da kaçtı) ve yerine yenisinin doğmasını planlar (çağrılan gölgenin
+## yerine doğmaz: sayıya girmiyordu).
 func remove(s: FishShadow) -> void:
 	shadows.erase(s)
 	if approacher == s:
 		approacher = null
-	_pending.append(Dice.between(s.rng, _rules.recycle_steps if s.recycled else _rules.respawn_steps))
+	if not s.summoned:
+		_pending.append(Dice.between(s.rng, _rules.recycle_steps if s.recycled else _rules.respawn_steps))
 
 
-## Balıkçı başka yere geçti (harita, sandal): oltadaki ve senaryolu dışındaki gölgeler sessizce
-## kalkar, yenileri hemen yeni yerin çevresinde doğar. Olayları döndürür (despawn, spawn).
+## Balıkçı başka yere geçti (harita, sandal): oltadaki ve senaryolu dışındaki gölgeler (çağrılan hikâye
+## balığı da) sessizce kalkar, yenileri hemen yeni yerin çevresinde doğar. Olayları döndürür (despawn, spawn).
 func relocate(angler: Vector2) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	_angler = angler
@@ -251,11 +266,11 @@ func relocate(angler: Vector2) -> Array[Dictionary]:
 			approacher = null
 		out.append({ "type": "despawn", "shadow": s.id })
 	_pending.clear()
-	while shadows.size() < _max:
+	while _wild_count() < _max:
 		var born := _spawn(angler, Vector2.ZERO, false)
 		if born == null:
 			_pending.append(FishingRules.HZ)
-			if shadows.size() + _pending.size() >= _max:
+			if _wild_count() + _pending.size() >= _max:
 				break
 			continue
 		out.append({ "type": "spawn", "shadow": born.id })
@@ -293,6 +308,73 @@ func find(id: int) -> FishShadow:
 	return null
 
 
+## Hikâye balığını çağırır (Gölün Bekçisi): point'te (suda) doğar, türü ve boy yüzdeliği verilir (zar yok);
+## hareketi kendi zarından (SUMMON_SALT). Takıma yaklaşmakta olan öteki balık ilgisini kaybeder: yolu
+## bundan sonra yalnızca onun. Gölde zaten çağrılan bir gölge varsa o kalkar. Doğamazsa (kara, bilinmeyen
+## tür) null.
+func summon(fish_id: String, point: Vector2, percentile: int) -> FishShadow:
+	var index := _db.fish_index(fish_id)
+	if index < 0 or not _lake.is_water(point):
+		return null
+	for old: FishShadow in shadows.duplicate():
+		if old.summoned and old.mode != FishShadow.Mode.HOOKED:
+			shadows.erase(old)
+			if approacher == old:
+				approacher = null
+	var s := FishShadow.new()
+	s.id = SUMMON_ID + _summons
+	s.seed = Dice.derive(_seed, SUMMON_SALT, _summons)
+	_summons += 1
+	s.rng.seed = s.seed
+	s.summoned = true
+	var def := _db.fish_def(index)
+	s.fish_index = index
+	s.fish_id = fish_id
+	s.rarity = int(def["rarity"])
+	s.percentile = clampi(percentile, 0, Dice.PPM - 1)
+	s.size_cm = FishTable.size_cm(def, s.percentile)
+	s.stars = FishTable.stars(s.percentile)
+	s.length = FishTable.shadow_length(def, s.percentile)
+	s.speed = s.rng.randf_range(_rules.shadow_speed.x, _rules.shadow_speed.y)
+	s.pos = point
+	s.home = point
+	s.zone = _lake.zone_at(point)
+	s.heading = Dice.direction(s.rng)
+	s.mode = FishShadow.Mode.PAUSE
+	s.timer = FishingRules.HZ
+	if approacher != null and approacher.mode == FishShadow.Mode.APPROACH:
+		lose_interest(approacher)
+	shadows.append(s)
+	return s
+
+
+## Göldeki çağrılan gölge (yoksa null).
+func summoned_shadow() -> FishShadow:
+	for s in shadows:
+		if s.summoned:
+			return s
+	return null
+
+
+## Çağrılan gölge gider (sabah oldu, sis kalktı): balıkçıdan uzağa kaçar ve kaybolur. Takıma yaklaşan,
+## dürten ya da oltadaki gölgeye dokunulmaz (o iş kendi sonucuyla biter). Gittiyse true.
+func dismiss_summoned() -> bool:
+	var s := summoned_shadow()
+	if s == null or s == approacher or s.mode == FishShadow.Mode.HOOKED or s.mode == FishShadow.Mode.FLEE:
+		return false
+	flee(s, _angler)
+	return true
+
+
+## Dolaşan gölgelerin sayısı (çağrılan gölge girmez: max_shadows yalnızca onları sınırlar).
+func _wild_count() -> int:
+	var n := 0
+	for s in shadows:
+		if not s.summoned:
+			n += 1
+	return n
+
+
 ## Bekleyen doğumlar (test ve hata ayıklama için).
 func pending_spawns() -> int:
 	return _pending.size()
@@ -308,11 +390,11 @@ func set_odds(odds: Dictionary) -> void:
 
 
 ## Gölün koşulu değişti (set_odds'tan sonra; vakit, hava): o koşulda gelmeyen türün (oranı yok)
-## dolaşan ya da duraklayan gölgesi çekilir (kaçar, yerine yakında yenisi doğar). Yaklaşan, oltadaki
-## ve senaryolu gölgeye dokunulmaz. Zar atılmaz.
+## dolaşan ya da duraklayan gölgesi çekilir (kaçar, yerine yakında yenisi doğar). Yaklaşan, oltadaki,
+## senaryolu ve çağrılan gölgeye dokunulmaz. Zar atılmaz.
 func recycle_unfit() -> void:
 	for s in shadows:
-		if s.scripted or s == approacher or (s.mode != FishShadow.Mode.WANDER and s.mode != FishShadow.Mode.PAUSE):
+		if s.scripted or s.summoned or s == approacher or (s.mode != FishShadow.Mode.WANDER and s.mode != FishShadow.Mode.PAUSE):
 			continue
 		var species: Dictionary = _zone_species[s.zone] if _zoned and s.zone >= 0 and s.zone < _zone_species.size() \
 				else _species
@@ -331,10 +413,11 @@ func species_odds() -> Dictionary:
 
 # --- İç işler ----------------------------------------------------------------------
 
-## Senaryolu ilk av yakında mı? (Bölgeli gölde balıkçı uzaklaşınca öteki balıklar da gelir.)
+## Senaryolu ilk av ya da çağrılan hikâye balığı yakında mı? (Bölgeli gölde balıkçı uzaklaşınca öteki
+## balıklar da gelir.)
 func _has_scripted() -> bool:
 	for s in shadows:
-		if s.scripted and (not _zoned or s.pos.distance_to(_angler) <= _reach + _rules.leash_extra):
+		if (s.scripted or s.summoned) and (not _zoned or s.pos.distance_to(_angler) <= _reach + _rules.leash_extra):
 			return true
 	return false
 
@@ -360,7 +443,7 @@ func _follow(angler: Vector2) -> void:
 	_check = _rules.recycle_check_steps
 	var far := _reach + _rules.leash_extra
 	for s in shadows:
-		if s.scripted or s == approacher or (s.mode != FishShadow.Mode.WANDER and s.mode != FishShadow.Mode.PAUSE):
+		if s.scripted or s.summoned or s == approacher or (s.mode != FishShadow.Mode.WANDER and s.mode != FishShadow.Mode.PAUSE):
 			continue
 		if s.pos.distance_to(angler) > far or (player_zone >= 0 and s.zone != player_zone):
 			s.recycled = true
@@ -417,7 +500,7 @@ func _has_pity() -> bool:
 
 
 func _spawn(angler: Vector2, bobber: Vector2, bobber_active: bool) -> FishShadow:
-	if shadows.size() >= _max:
+	if _wild_count() >= _max:
 		return null
 	var s := FishShadow.new()
 	s.id = _serial
@@ -498,7 +581,8 @@ func _spawn_point(rng: RandomNumberGenerator, angler: Vector2, bobber: Vector2, 
 					continue
 				var crowded := false
 				for o in shadows:
-					if o.pos.distance_to(p) < _rules.spacing:
+					# Çağrılan gölge sayılmaz: öteki gölgelerin zarı onun varlığıyla kaymaz.
+					if not o.summoned and o.pos.distance_to(p) < _rules.spacing:
 						crowded = true
 						break
 				if crowded:
@@ -508,7 +592,7 @@ func _spawn_point(rng: RandomNumberGenerator, angler: Vector2, bobber: Vector2, 
 
 
 ## Yeni bir dolaşma hedefi seçer. Takım uzun süredir sudaysa gölgeler (profile göre, şamandırada
-## yarı yarıya) onun çevresine yönelir; ilk av evinin yakınında dolaşır.
+## yarı yarıya) onun çevresine yönelir; ilk av ve hikâye balığı evinin yakınında dolaşır.
 func _pick_target(s: FishShadow, bobber: Vector2, listening: bool, waiting_steps: int) -> void:
 	# Kısa devre sırası şamandırada v0.3'teki gibi: zar yalnızca toplanma açıkken atılır.
 	var gather := listening and rig.gather_ppm > 0 and waiting_steps >= rig.gather_after_steps \
@@ -528,12 +612,14 @@ func _pick_target(s: FishShadow, bobber: Vector2, listening: bool, waiting_steps
 			p = bobber + Dice.in_disc(s.rng, rig.gather_radius)
 		elif s.scripted:
 			p = s.home + Dice.in_disc(s.rng, 1.5)
+		elif s.summoned:
+			p = s.home + Dice.in_disc(s.rng, SUMMON_ROAM)
 		else:
 			p = Vector2(s.rng.randf_range(bounds.position.x, bounds.end.x),
 					s.rng.randf_range(bounds.position.y, bounds.end.y))
 		# Sığda kalmış balığın yolunu adım adım _wander denetler (başlangıç zaten sınır dışında).
 		var path_ok := stranded or _lake.segment_is_deep(s.pos, p, depth * 0.75)
-		var home_zone := not own or gather or s.scripted or _lake.zone_at(p) == s.zone
+		var home_zone := not own or gather or s.scripted or s.summoned or _lake.zone_at(p) == s.zone
 		if _lake.is_deep(p, depth) and path_ok and home_zone and _clear_of_boat(s.pos, p):
 			s.target = p
 			s.mode = FishShadow.Mode.WANDER

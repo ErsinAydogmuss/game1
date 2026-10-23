@@ -5,12 +5,16 @@ extends SceneTree
 ##   godot --headless --path . -s res://tools/reel_report.gd -- --gear=mid   (cam elyafı kamış + naylon misina)
 ##   godot --headless --path . -s res://tools/reel_report.gd -- --gear=top   (en iyi şamandıra takımı)
 ##   godot --headless --path . -s res://tools/reel_report.gd -- --technique=bottom [--gear=mid|top]
+##   godot --headless --path . -s res://tools/reel_report.gd -- --fish=keeper [--gear=mid|top]
 ## --technique= (spin, bottom, fly): o teknikle gelen türler (fish.json affinity; şamandırada bütün
 ## türler, karşılaştırma için), tekniğin kamışı
 ## (start: ilk kamışı, mid: ikincisi + naylon misina, top: tekniğin en iyi takımı) ve balığın
 ## takıldığı uzaklık oyundan ölçülen aralıkta (data/sim.json techniques.<teknik>.start_m; dipte
 ## uzakta takılır, çekişme uzun sürer). Çekişme her teknikte aynı kurallarla (alabalığın ilk çırpınması
 ## fight.first_burst, sıçrayışı yalnızca görünüş).
+## --fish= yalnızca o tür (virgülle birkaç). Hikâyenin balığı (Gölün Bekçisi; bölgelerin tablosunda yok) yalnızca
+## böyle bakılır: tekniği dip, takıldığı uzaklık takımın menzili (kurşun menzilin sonuna düşer), dalışları
+## (fight.stages) ayrı sütunda.
 ## Hedefler (docs/gdd.md §5): iyi oyuncu (kusursuz, 0,4 sn) takımın taşıdığı her balığı tutar;
 ## Kızılkanat 4–7 sn, Yayın 14–20 sn; hep basılı tutan Normal'de koparır, Kolay'da tutar. İri türün
 ## taşımayı aşan (fazla iri) 4–5★'ını iyi oyuncu tutamaz, kusursuz pompalayan da çoğunlukla kaçırır.
@@ -29,11 +33,22 @@ func _initialize() -> void:
 		printerr("İçerik hatası: " + e)
 	var mode := "start"
 	var technique := "float"
+	var only := PackedStringArray()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--gear="):
 			mode = arg.get_slice("=", 1)
 		elif arg.begins_with("--technique="):
 			technique = arg.get_slice("=", 1)
+		elif arg.begins_with("--fish="):
+			only = arg.get_slice("=", 1).split(",", false)
+	for id in only:
+		if db.fish_by_id(id).is_empty():
+			printerr("Bilinmeyen balık: " + id)
+			quit(1)
+			return
+		# Hikâyenin balığı dipte gelir (altın hamur).
+		if bool(db.fish_by_id(id)["story"]):
+			technique = "bottom"
 	if not db.has_technique(technique):
 		printerr("Bilinmeyen teknik: " + technique)
 		quit(1)
@@ -44,6 +59,8 @@ func _initialize() -> void:
 		return
 	var gear := gear_for(db, mode, technique)
 	var distances := distances_for(technique)
+	if not only.is_empty() and bool(db.fish_by_id(only[0])["story"]):
+		distances = story_distances(gear)
 	var max_distance: float = gear.range_m + db.rules.escape_extra + gear.escape_extra
 	var bots := [
 		["kusursuz", ReelBot.Style.PERFECT, 0.0],
@@ -59,10 +76,10 @@ func _initialize() -> void:
 	for easy: bool in [false, true]:
 		print("")
 		print("== %s ==" % ("KOLAY" if easy else "NORMAL"))
-		print("%-12s %-5s %-11s %7s %7s %7s %7s %8s %8s %8s" % ["balık", "boy", "bot", "tutar", "koparır", "kaçar",
-				"bitmedi", "ort sn", "en çok", "kırmızı"])
+		print("%-12s %-5s %-11s %7s %7s %7s %7s %8s %8s %8s %6s" % ["balık", "boy", "bot", "tutar", "koparır", "kaçar",
+				"bitmedi", "ort sn", "en çok", "kırmızı", "dalış"])
 		for f in db.fish:
-			if not _reported(db, str(f["id"]), technique):
+			if not _wanted(db, str(f["id"]), technique, only):
 				continue
 			var fight: Dictionary = f["fight"]
 			for g: Array in GROUPS:
@@ -79,11 +96,13 @@ func _initialize() -> void:
 					var total_s := 0.0
 					var max_s := 0.0
 					var red := 0.0
+					var dives := 0
 					for i in RUNS:
 						var start: float = distances[i % distances.size()]
 						var model := ReelModel.new(db.rules, fight, gear.reel_speed, start, max_distance, easy,
 								Dice.derive(4242, i), gear, percentile_in(g, i, RUNS))
 						var result := ReelBot.play(model, ReelBot.make(b[1], b[2]))
+						dives += int(result.get("dives", 0))
 						match int(result["outcome"]):
 							ReelModel.Outcome.CAUGHT:
 								caught += 1
@@ -95,18 +114,18 @@ func _initialize() -> void:
 								escaped += 1
 						red += float(result["red"])
 					var unfinished := RUNS - caught - snapped - escaped
-					print("%-12s %-5s %-11s %6.0f%% %6.0f%% %6.0f%% %6.0f%% %8.1f %8.1f %8.2f" % [f["id"], str(g[0]) + heavy_mark,
-							b[0], 100.0 * caught / RUNS, 100.0 * snapped / RUNS, 100.0 * escaped / RUNS,
-							100.0 * unfinished / RUNS, total_s / maxi(1, caught), max_s, red / RUNS])
+					print("%-12s %-5s %-11s %6.0f%% %6.0f%% %6.0f%% %6.0f%% %8.1f %8.1f %8.2f %6.2f" % [f["id"],
+							str(g[0]) + heavy_mark, b[0], 100.0 * caught / RUNS, 100.0 * snapped / RUNS, 100.0 * escaped / RUNS,
+							100.0 * unfinished / RUNS, total_s / maxi(1, caught), max_s, red / RUNS, float(dives) / RUNS])
 	print("")
 	print("* fazla iri: iri türün yıldızı takımın taşımasını aşıyor. bitmedi: %d sn'de sonuçlanmadı (pompalayan" % roundi(float(ReelBot.LIMIT_STEPS) / FishingRules.HZ))
-	print("  fazla iri balığı yerinde tutabilir ama getiremez; bırakınca kaçar).")
+	print("  fazla iri balığı yerinde tutabilir ama getiremez; bırakınca kaçar). dalış: çekişme başına (Bekçi).")
 	print("")
 	# Süreler orta uzaklıkta (şamandırada eskisi gibi 6 m).
 	var middle: float = 6.0 if technique == "float" else (distances[0] + distances[-1]) * 0.5
 	print("Süreler (%.1f m, kusursuz, Normal, 1–3★): " % middle)
 	for f in db.fish:
-		if not _reported(db, str(f["id"]), technique):
+		if not _wanted(db, str(f["id"]), technique, only):
 			continue
 		var times: Array[float] = []
 		for i in RUNS:
@@ -117,6 +136,13 @@ func _initialize() -> void:
 		times.sort()
 		print("  %-12s en az %.1f  ortanca %.1f  en çok %.1f sn" % [f["id"], times[0], times[times.size() >> 1], times[-1]])
 	quit()
+
+
+## Raporda yer alan tür: --fish= verildiyse yalnızca onlar; yoksa _reported (hikâyenin balığı hiç).
+static func _wanted(db: ContentDB, fish_id: String, technique: String, only: PackedStringArray) -> bool:
+	if not only.is_empty():
+		return fish_id in only
+	return not bool(db.fish_by_id(fish_id)["story"]) and _reported(db, fish_id, technique)
 
 
 ## Raporda yer alan tür: şamandırada hepsi (çekişme modelinin karşılaştırması; docs/gdd.md §5
@@ -169,6 +195,15 @@ static func distances_for(technique: String) -> Array[float]:
 	var hi := float((span as Array)[1])
 	for i in DISTANCES.size():
 		out.append(lerpf(lo, hi, float(i) / (DISTANCES.size() - 1)))
+	return out
+
+
+## Hikâyenin balığının takıldığı uzaklıklar (m): kurşun menzilin sonuna düşer (derin ortada su menzilden geniş);
+## menzil ile 2 m kısası arasında DISTANCES kadar eşit aralıklı.
+static func story_distances(gear: GearStats) -> Array[float]:
+	var out: Array[float] = []
+	for i in DISTANCES.size():
+		out.append(gear.range_m - 2.0 * float(i) / (DISTANCES.size() - 1))
 	return out
 
 

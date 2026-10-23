@@ -6,7 +6,7 @@ func test_loads_without_errors() -> void:
 	var db := content()
 	assert_eq(db.errors.size(), 0, "içerik hataları: " + ", ".join(db.errors))
 	assert_eq(db.rarities.size(), 6, "6 nadirlik (Masalsı eklendi)")
-	assert_eq(db.fish.size(), 18, "18 balık (Dalga 2'de 7 tür, Dalga 3'te aynalı sazan, iki alabalık ve kerevit, Dalga 4'te Ay Turnası ve Kocabaş)")
+	assert_eq(db.fish.size(), 19, "19 balık (Dalga 2'de 7 tür, Dalga 3'te aynalı sazan, iki alabalık ve kerevit, Dalga 4'te Ay Turnası, Kocabaş ve Gölün Bekçisi)")
 	assert_true(not db.spot("home_lake").is_empty(), "testlerin gölü")
 	assert_eq(db.main_spot, "big_lake", "oyun Köy Gölü'nde açılır")
 	assert_true(db.gear.size() >= 30, "dükkân takımı okundu")
@@ -27,11 +27,12 @@ func test_fish_follow_the_design() -> void:
 			assert_eq(db.rarity_id(int(f["rarity"])), expected[id], id + " nadirliği")
 	assert_eq(db.fish_by_id("rudd")["size_cm"], Vector2i(15, 30), "Kızılkanat 15–30 cm")
 	assert_eq(db.fish_by_id("wels")["size_cm"], Vector2i(100, 250), "Yayın 100–250 cm")
-	# Mersin koruma altında; Ay Turnası (gece) ve Kocabaş (yağmurlu gece) efsane: satılmaz, yalnızca
-	# bırakılır (Dalga 4, Ersin'in seçimi); ötekiler satılır.
-	var released := ["sturgeon", "moon_pike", "kocabas"]
+	# Mersin koruma altında; Ay Turnası (gece) ve Kocabaş (yağmurlu gece) efsane, Gölün Bekçisi hikâyenin
+	# balığı: satılmaz, yalnızca bırakılır (Dalga 4, Ersin'in seçimi); ötekiler satılır.
+	var released := ["sturgeon", "moon_pike", "kocabas", "keeper"]
 	for f in db.fish:
-		assert_eq(bool(f["release_only"]), str(f["id"]) in released, "%s: yalnızca mersin, Ay Turnası ve Kocabaş bırakılır" % f["id"])
+		assert_eq(bool(f["release_only"]), str(f["id"]) in released,
+				"%s: yalnızca mersin, Ay Turnası, Kocabaş ve Gölün Bekçisi bırakılır" % f["id"])
 	assert_eq(int(db.fish_by_id("sturgeon")["value"]), 0, "mersin satılmaz")
 	assert_eq(db.rarity_id(int(db.fish_by_id("moon_pike")["rarity"])), "legendary", "Ay Turnası Efsanevi")
 	assert_eq(db.rarity_id(int(db.fish_by_id("kocabas")["rarity"])), "legendary", "Kocabaş Efsanevi")
