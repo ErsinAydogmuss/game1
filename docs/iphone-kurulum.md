@@ -201,7 +201,7 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 
 ### 11. Geri bildirim
 
-Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v0.3.1: berrak görüntü ve iri balık; v0.4: teknikler, 13–19; v0.4.1: Ersin'in telefon geri bildirimi, 20–26). Eski kayıt kendiliğinden yeni biçime geçer: v2'den v3'e rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır; v3'ten v4'e şamandıra takımı aynen kalır, makara ve misina bütün tekniklerde ortak olur. Para, kova, takım ve defter aynen kalır.
+Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v0.3.1: berrak görüntü ve iri balık; v0.4: teknikler, 13–19; v0.4.1: Ersin'in telefon geri bildirimi, 20–26; v0.5: canlı dünya ve Gölün Sırrı, 27–36). Eski kayıt kendiliğinden yeni biçime geçer: v2'den v3'e rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır; v3'ten v4'e şamandıra takımı aynen kalır, makara ve misina bütün tekniklerde ortak olur; v4'ten v5'e oyun saati sabahtan başlar, Dede'nin istekleri hemen gelir (rütbe 2'den sonra), ilk şişe 15 balık sonra suya düşer (rütbe 3'ten sonra). Para, kova, takım ve defter aynen kalır.
 
 1. Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
 2. Rütben güncellemeden önceki gibi mi? (Sayı değişebilir; rütbe ve çubuk aynı kalmalı.)
@@ -233,6 +233,43 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
 24. **v0.4.1: Kumdaki gölge.** Sazlıkta kıyıdan iri bir balık çek: son metrelerde balık, gölgesi, şamandıra ve halkalar suyun kenarında kalıyor mu, kuma taşmıyor mu?
 25. **v0.4.1: Kamışlar.** Dükkândan farklı kamışlar al ve tak: her kamış dükkân resmindeki gibi mi (bambu boğumlu, karbon siyah ve altın, sinekte uzun mantar sap)? Makara rengi taktığın makaradan mı? Dipte sehpadaki kamış senin dip kamışın mı?
 26. **v0.4.1: Deneme düğmeleri** (12. adımdaki ölçüm açıkken): **+1.000** ve **+10.000** para sol üstte görünüyor mu? **RÜTBE +1**'den sonra ayarları kapatınca rütbe bildirimi, açılan yer ya da teknik ve Dede'nin sözü geliyor mu?
+27. **v0.5: Saat ve hava.** Üst ortada saat çipi var: vaktin ikonu ve saat ("06:24"), hava açık değilse havanın ikonu. Saat yalnızca oynarken akar; 6 dakikada bir vakit değişir (sabah, öğle, akşam, gece) ve bildirim çıkar.
+    - Ayarlar açıkken saat duruyor mu? Uygulamayı kapatıp açınca kaldığı yerden devam ediyor mu?
+    - Akşam turuncu, gece ay ışığı: gölgeler gece de okunuyor mu?
+    - Yağmurda damlalar ve su halkaları; yağmurlu gecede yumuşak şimşek ve gök gürültüsü. Sisli havada uzak kıyı puslu, balıkçının önü açık mı?
+    - Her vaktin kendi müziği, dükkânda vals, gece cırcır böcekleri var mı?
+28. **v0.5: "Bugün" paneli ve çay.** Çipe dokun: vakit, bugünün ve yarının havası, Dede'yle çay, göl sevgisi, Dede'nin istekleri. Panel çentiğe takılmadan, küçülmeden sığıyor mu? **ÇAY İÇ:** ekran kararır, sonraki vakit gelir; Dede yakındaysa kamera ona yaklaşır. Balık tutmadan ikinci çay içilmiyor mu ("Önce bir balık tut")?
+29. **v0.5: Gece ve fener.** İlk gece Nine fener hediye eder (bildirim, Dede): balıkçının çevresi aydınlık mı? Kamp ateşi, fener direği ve dükkân yanıyor, ateşböcekleri uçuyor mu? Gece nilüferli koyda defterde Ay Turnası çıkıyor mu? Yağmurlu gecede derin ortada dipte Kocabaş gelebiliyor mu?
+30. **v0.5: Tut-bırak ve göl sevgisi.** Sol üstteki kovaya dokun: Kova paneli (tür başına BIRAK, HEPSİNİ BIRAK iki dokunuşla, SAT). Yeni tür kartında da "Göle bırak" var.
+    - Bırakınca para gelmez, göl sevgisi artar. Seviye atlayınca kalpli bildirim çıkıyor, Dede konuşuyor mu?
+    - Sevgi arttıkça çiçekler ve çiçekli nilüferler çoğalıyor, su berraklaşıyor mu? 3. seviyeden sonra gündüz kelebekler var mı?
+    - Defterin başlığında sevginin Nadir+ payı yazıyor mu?
+31. **v0.5: Çöp.** Dipte arada balığın yanında çizme, teneke, plastik şişe ya da paslı anahtar çıkar; tuzaktan da. Resmiyle bildirim, sevgi ve Dede'nin ilk sözü geliyor mu? Çöp kovaya girmemeli.
+32. **v0.5: Dede'nin istekleri** (rütbe 2'den sonra). Çipin köşesinde kırmızı rozet çıkar, Dede "saate dokun" der.
+    - "Bugün" panelinde 3 istek var mı, yazıları anlaşılır mı?
+    - Bir isteği bitir: "İstek tamam!", para, rütbe puanı ve sevgi geliyor, Dede "aferin" diyor mu?
+    - Değiştir düğmesi günde bir kez çalışıyor mu?
+    - Yeni günde (VAKİT + ile geceden sabaha) boş yuvalar doluyor mu?
+33. **v0.5: Şişeler ve mektuplar** (rütbe 3'ten sonra). Sazlıkta suda parlayan bir şişe belirir (bildirim, haritada işaret, Dede). Dokun: balıkçı gidip alır, genç Nine'nin mektubu açılır.
+    - Mektup kaydırmadan okunuyor mu?
+    - Defterin altında "Gölün Sırrı" düğmesi var mı, mektuplar yeniden okunuyor mu?
+    - Altı mektup var, her bölgeden bir; sonuncusu sandalla derin ortada. Hikâye hoşuna gitti mi?
+34. **v0.5: Altın istekler ve harita.** 3. mektuptan sonra Dede'nin altın isteği gelir ("Bugün" panelinde altın şerit); bitince haritanın bir parçası.
+    - Defterde 2×2 yapboz doluyor mu?
+    - Dört parça tamamsa haritada X çıkıyor mu?
+    - Göl sevgisi 6'da Nine'ye uğra: altın hamuru veriyor mu? Takım Çantası'nın dip karosunda rozeti var mı?
+35. **v0.5: Final: Gölün Bekçisi.** Hepsi tamam olunca Dede "Bu gece sis basacak" der; Bekçi bırakılana kadar her gece sisli.
+    - Gece haritada Derin Orta'ya dokun: sandal X'e gider. Dip kamışıyla at.
+    - Bekçi belirince zil çalınca VUR. "BIRAK! Bekçi dalıyor!" çıkınca parmağını kaldır: iki dalış var. Kaçarsa 25 sn sonra geri geliyor mu?
+    - Tutunca kart ve "Göle bırak": bitiş filmi (şafak, göl çiçek açar, Dede ve Nine sevinir) ve jenerik.
+    - Çekişme zor mu, uzun mu? Film ve jenerik hoş mu? Sonra Ayarlar'daki **BİTİŞ** filmi yeniden oynatıyor mu?
+36. **v0.5: Hızlı deneme yolu.** Normal oyunda final ≈ 2,5–3,5 saatte gelir. Hızlı görmek için 12. adımdaki ölçümü aç ve ikinci satırdaki düğmeleri kullan:
+    - **HEPSİNİ AÇ** (sandal ve dip kamışı için);
+    - **SIR +:** sıradaki şişe hemen suya düşer (rütbesi yoksa verilir), dokunup al. Altın istek varken SIR + onu bitirir ve parçayı verir;
+    - **SEVGİ +50** dört kez (seviye 6), sonra Nine;
+    - **VAKİT +** ile gece.
+
+    Deneme düğmeleri kaydı değiştirir; bitince istersen **Kaydı sıfırla**.
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
@@ -244,10 +281,17 @@ Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte
 
 1. Telefonu prize tak ya da şarjı yüksek tut. **Düşük Güç Modu** kapalı olsun: açıkken telefon kendini yavaşlatır.
 2. Oyunda **Ayarlar**'ı (dişli) aç. Dil satırının altındaki sürüm yazısına ("Olta: Gölün Sırrı · v…") arka arkaya **5 kez** dokun. Yazının sonuna "ölçüm açık" eklenir. Sol üstte "60 FPS · 140 çizim · 244k üçgen" gibi bir yazı belirir. Kapatmak için yine 5 dokunuş.
-3. Ölçüm açıkken debug derlemede iki geliştirici satırı da görünür. Üstteki satırda dört deneme düğmesi var:
+3. Ölçüm açıkken debug derlemede üç geliştirici satırı da görünür. Üstteki satırda dört deneme düğmesi var:
    - **HEPSİNİ AÇ:** rütbe 9 olur; sandal, spin, dip ve sinek kamışları ve bir tuzak verilir; para ve defter değişmez.
    - **+1.000** ve **+10.000:** para eklenir (sol üstte görünür).
    - **RÜTBE +1:** bir sonraki rütbe. Ayarları kapatınca rütbe bildirimi, açılan bölge ya da teknik gelir, Dede söyler. En yüksek rütbede düğme soluk.
+
+   İkinci satır canlı dünya için (v0.5):
+   - **VAKİT +:** sonraki vakit.
+   - **HAVA:** bugünün havası sıradakine geçer.
+   - **SEVGİ +50:** göl sevgisi.
+   - **İSTEK BİTİR:** Dede'nin ilk bitmemiş isteği biter ve öder.
+   - **SIR +:** altın istek varsa biter, yoksa sıradaki şişe suya düşer.
 
    Alttaki satır **Kaydı sıfırla**. Deneme düğmeleri kaydı değiştirir: istersen denemeden sonra **Kaydı sıfırla** ile baştan başla.
 4. Haritadan sırayla her bölgeye geç: iskele koyu, sazlık, nilüferli koy, kayalık burun, dere ağzı. Sonra haritada **Derin Orta**'ya dokun: sandalla derin ortaya açılırsın. Her yerde 10 saniye bekle ve sol üstteki üç sayıyı yaz.

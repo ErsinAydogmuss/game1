@@ -17,9 +17,9 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 
 ## 2. Tasarım sütunları
 
-1. **Her gölge bir soru.** Gölgenin boyu balığın boyunu ele verir, türünü vermez. Nadir gölgeler arada pırıldar, ama yine türünü söylemez 🔜. "Bu kocaman gölge ne?" merakı oyunun motorudur.
-2. **Tek parmak, her yaş.** Dokun-yürü, dokun-at, değdiği an VUR, basılı tut-çek. Yeni teknikler de tek parmakla oynanır: bas-bırak, dokun 🔜. Okumadan oynanır.
-3. **Keşfet, kur, sergile** 🔜. Bölge, teknik, yem, saat ve hava hangi balığın geleceğini belirler; takımını sen kurarsın. Balık Defteri her türün nerede ve ne zaman çıktığını, oranlarıyla birlikte gösterir. En iyileri akvaryumda yaşar.
+1. **Her gölge bir soru.** Gölgenin boyu balığın boyunu ele verir, türünü vermez. Nadir gölgeler arada pırıldar, ama yine türünü söylemez. "Bu kocaman gölge ne?" merakı oyunun motorudur.
+2. **Tek parmak, her yaş.** Dokun-yürü, dokun-at, değdiği an VUR, basılı tut-çek. Yeni teknikler de tek parmakla oynanır: bas-bırak, dokun. Okumadan oynanır.
+3. **Keşfet, kur, sergile.** Bölge, teknik, yem, saat ve hava hangi balığın geleceğini belirler; takımını sen kurarsın. Balık Defteri her türün nerede ve ne zaman çıktığını, oranlarıyla birlikte gösterir. En iyileri akvaryumda yaşar 🔜 (Dalga 5).
 4. **Sakin ve adil.** Oyuncu yokken ceza yok; parayla şans satılmaz; kötü şansa karşı garanti var.
 5. **Kısa oturum.** Bir atış 15–40 saniye; bir oturum 5–10 dakika.
 
@@ -28,8 +28,8 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 | Döngü | Süre | İçerik | Durum |
 |---|---|---|---|
 | Çekirdek | 15–40 sn | Dokun → at → gölge yaklaşır, dürter → ısırır → VUR → çek → balık elde, kart | ✅ |
-| Oturum | 5–10 dk | Kova dolar → Nine'ye sat (her türün en iyisi akvaryuma) → takım al → yeni teknik ya da bölge → Dede'nin isteğini bitir | 🔜 (H2) |
-| Haftalar | günler | Balık Defteri (siluetler, ipuçları, oranlar), rütbe, gece ve hava balıkları, göl sevgisi, "Gölün Sırrı" hikâyesi ve Gölün Bekçisi; sonra yeni sular, sezonluk türler | 🔜 |
+| Oturum | 5–10 dk | Kova dolar → Nine'ye sat (her türün en iyisi akvaryuma) → takım al → yeni teknik ya da bölge → Dede'nin isteğini bitir | ✅ (akvaryum 🔜) |
+| Haftalar | günler | Balık Defteri (siluetler, ipuçları, oranlar), rütbe, gece ve hava balıkları, göl sevgisi, "Gölün Sırrı" hikâyesi ve Gölün Bekçisi; sonra yeni sular, sezonluk türler | ✅ (yeni sular ve sezonlar 🔜) |
 
 ## 4. Kontroller ✅
 
@@ -54,9 +54,9 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 
 **Mac:** tıkla (yürü, at), WASD (yürü), Space (VUR; basılı tutunca sar).
 
-**H2'de eklenecekler 🔜** (ayrıntı §10.3):
+**H2'de gelenler** (ayrıntı §10.3):
 
-- **Dünyada dokunulanlar:** Nine → dükkân; Dede → öğüt ve istekler; kedi → sev.
+- **Dünyada dokunulanlar** ✅: Nine → dükkân; Dede → öğüt (istekler üstteki saat çipinin "Bugün" panelinde); sandal, kerevit tuzağı, suda şişe; sol üstte kova → Kova paneli. Kedi → sev 🔜 (Dalga 5).
 
 ## 5. Kurallar ve başlangıç sayıları ✅
 
@@ -421,7 +421,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - **Erişilebilirlik:** gerilim çubuğu renk + ikon + sarsıntı + "BIRAK!" yazısı. Her sesin bir görsel ve titreşim karşılığı var.
 - **H2 görsel hedefleri 🔜:**
   - **Su:** normal haritası, gök rengine göre fresnel, sığda kostik, derede akış, yağmur halkaları.
-    - ✅ Dalga 2'deki hâli: renk derinliğin metresine göre; iki katlı dalgacık ve güneş parıltısı; kıyıda kıpırdayan köpük ve kıyıya doğru gelip sönen, parça parça ince dalga çizgileri; dere ağzında akıntı yönünde kayan kısa, kıvrımlı akıntı çizgileri (dar derede güçlü, derenin açıldığı havuzda zayıf; dalgalar da akıntıyla kayar). Fresnel, kostik ve yağmur sonraki dalgalarda.
+    - ✅ Dalga 2'deki hâli: renk derinliğin metresine göre; iki katlı dalgacık ve güneş parıltısı; kıyıda kıpırdayan köpük ve kıyıya doğru gelip sönen, parça parça ince dalga çizgileri; dere ağzında akıntı yönünde kayan kısa, kıvrımlı akıntı çizgileri (dar derede güçlü, derenin açıldığı havuzda zayıf; dalgalar da akıntıyla kayar). Fresnel ve kostik sonraki dalgalarda; yağmur halkaları Dalga 4'te ✅ (Işık maddesi).
   - **Zemin:** dokulu (çimen, kum, çamur, patika; Ersin'in dikişsiz dokuları ya da kodla).
     - ✅ Dalga 2'deki hâli (kodla; Ersin'in zemin karoları gelince onlarla): açık ve koyu çimen öbekleri; yürünmeyen yerde (orman, dünyanın kenarı) koyu orman zemini; kıyıdan ~2,6 m'de gölü dolaşan, kıvrılan toprak kıyı yolu (çalı, çimen öbeği ve çiçek yola düşmez); kenarı dalgalı kumsal, suya değen yeri ıslak; kayalık burnun karasında öbek öbek yosunlu taş.
   - **Doğa:** Forest Nature ve Quaternius doğa modelleri, nilüferler.
@@ -644,7 +644,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | Yem | tür çekimi; tükenir, solucan bedava ve sınırsız | 6 |
 | Yapay yem, sinek | yırtıcı ve alabalık çekimi; kalıcı | 6 + 3 |
 | Şamandıra | hassasiyet (VUR süresi +), görünürlük | 3 |
-| Ekstra | kepçe (son anda bir kaçışı kurtarır), sandal, tuzak, kova kapasitesi; fener (gece) 🔜 | — |
+| Ekstra | kepçe (son anda bir kaçışı kurtarır), sandal, tuzak, kova kapasitesi (fener satılmaz: ilk gece Nine'nin hediyesi ✅) | — |
 
 - ✅ **Takım çantası:** her teknik için kuşanılmış bir set (kamış ve küçük takım); makara ve misina ortak (kayıt v4: `loadouts.shared`). Teknik düğmesiyle geçilir (§10.3).
 - **Kova ve satış:**
@@ -1101,7 +1101,7 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
 - **Motor:** Godot 4.7, statik tipli GDScript, Compatibility renderer.
 - **Oyun mantığı** `scripts/core/` altında, saf ve testli: `FishingSession`, `ShadowSim`, `BiteRules`, `ReelModel`, `FishTable`, `LakeShape`, `Records`.
   - ✅ H2'de gelenler: takım ve para (`GearStats`, `Economy`, `Bucket`, `Rank`, `CatchOdds`: oranlar ve şans garantisi); göl (`LakeShape` havzaları ve bölgeleri, `Zones`, `ShorePath`); teknikler (`Technique` stratejileri `FloatTechnique`, `SpinTechnique`, `BottomTechnique`, `FlyTechnique`; `TechniqueRules`, teknik başına takım seti, kerevit tuzağı `TrapSim`).
-  - H2'de eklenecekler 🔜: canlı dünya (`DayClock`, `Weather`, `LakeLove`, `Requests`, `Story`).
+  - ✅ Dalga 4'te gelenler: canlı dünya (`DayClock`, `Weather`, `LakeLove`, `WorldState`, `Trash`, `Requests`, `Secret`, `Story`).
   - ✅ Denge botu (`SessionSim`, `tools/economy_report.gd`, süreler `tools/session_timing.gd`) ile korkuluk testleri; oran kataloğu (`tools/fish_catalog.gd` → `balik-katalogu.md`).
   - Çekişme sayıları `tools/reel_report.gd` ile denetlenir; `tests/test_reel_model.gd` sınırları korur.
   - İç adım sabit 1/60 sn; sonuç fps'e ve video kaydına bağlı değil.
