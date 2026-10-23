@@ -4161,13 +4161,15 @@ func _play_fish() -> void:
 		var rarity := int(def["rarity"])
 		var info := {"fish": id, "size_cm": FishTable.size_cm(def, percentile),
 				"stars": FishTable.stars(percentile), "rarity": rarity}
-		catch_fx.show_catch(def, int(info["size_cm"]), tr("FISH_" + id), UiKit.rarity_color(db, rarity),
-				func() -> Vector3: return show, rarity >= Records.CARD_RARITY,
-				func() -> Vector3: return _angler().global_position, UiKit.rarity_icon(db, rarity))
-		# Oyundaki gösteri kamerası (main: SHOW_ZOOM, odak gösteri noktasının biraz altı).
-		_frame_on(show + Vector3(0.0, -0.2, 0.0), float(main.get("SHOW_ZOOM")))
-		await _wait(0.7)
-		await _shot("%d_%s_elde" % [index, id])
+		# Hikâyenin balığı (Gölün Bekçisi, 5 m) oyunda elde gösterilmez: yalnızca kartı.
+		if not bool(def.get("story", false)):
+			catch_fx.show_catch(def, int(info["size_cm"]), tr("FISH_" + id), UiKit.rarity_color(db, rarity),
+					func() -> Vector3: return show, rarity >= Records.CARD_RARITY,
+					func() -> Vector3: return _angler().global_position, UiKit.rarity_icon(db, rarity))
+			# Oyundaki gösteri kamerası (main: SHOW_ZOOM, odak gösteri noktasının biraz altı).
+			_frame_on(show + Vector3(0.0, -0.2, 0.0), float(main.get("SHOW_ZOOM")))
+			await _wait(0.7)
+			await _shot("%d_%s_elde" % [index, id])
 		card.show_catch(db, info, {"new_species": true})
 		await _wait(0.5)
 		await _shot("%d_%s_kart" % [index, id])
