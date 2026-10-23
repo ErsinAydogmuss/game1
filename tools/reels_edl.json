@@ -616,6 +616,7 @@
 					"offset": 0,
 					"crop": "panel:xmap",
 					"pad": 10,
+					"rect": [0.13, 0.16, 0.54, 0.565],
 					"through_cut": true
 				},
 				{
