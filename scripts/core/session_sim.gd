@@ -56,6 +56,10 @@ extends RefCounted
 ##    bırakma isteği günlük bırakma isteği gibi satıştan önce en ucuz balıklarla. Göl sevgisi 6'da Nine altın hamuru
 ##    verir (satışta, dükkân açıkken). İlk dakikalar: letter_<n>, golden_<parça> (altın istek geldi), piece_<parça>,
 ##    dough, final_ready (altı mektup, dört parça, altın hamur).
+## 14. Final (Dalga 4, 6. adım): final gecesinde gece olunca oyuncu sandalla X'e (derin orta) gider, dibe atar: Gölün
+##    Bekçisi gelir (keeper_s), dalışlarıyla çekişir (ReelModel, ReelBot); tutulunca göle bırakılır (final biter),
+##    bitiş filmi ve jenerik (ending_s; saat durur), şafakta sonraki sabah. Kaçarsa Secret.KEEPER_RETURN_S bekleyip
+##    yeniden atar. İlk dakikası "keeper". Oyun sonrası Bekçi kovalanmaz.
 ## Aynı seed aynı sonucu verir.
 
 const SIM_PATH := "res://data/sim.json"
@@ -103,7 +107,7 @@ var rerolls: int = 0
 ## "trap_set" (ilk tuzak bırakıldı), "trap" (tuzaktan ilk kerevit), "release" (ilk bırakılan balık), "trash"
 ## (ilk çöp), "love_<seviye>" (göl sevgisinin seviyesi), "requests" (ilk istekler), "request_1" (ilk biten
 ## istek), "requests_10" (onuncusu), "letter_<n>" (okunan mektup), "golden_<parça>" (altın istek geldi),
-## "piece_<parça>" (harita parçası), "dough" (altın hamur), "final_ready".
+## "piece_<parça>" (harita parçası), "dough" (altın hamur), "final_ready", "keeper" (Gölün Bekçisi göle döndü).
 var milestones: Dictionary = {}
 ## Botun elindeki teknik ve her teknikte geçen süre (sn).
 var technique: String = "float"
@@ -166,6 +170,8 @@ func cast_once() -> void:
 			break
 		_sell_and_shop()
 	_tend_secret()
+	if _tend_keeper():
+		return
 	var phase := str(conditions()["phase"])
 	if phase != _last_phase:
 		if not _last_phase.is_empty():
@@ -235,7 +241,10 @@ func _on_catch(def: Dictionary, percentile: int, cond: Dictionary = {}) -> void:
 	var outcome := Records.add(save.records, fish_id, size_cm, stars, int(elapsed))
 	catches += 1
 	save.catches += 1
-	CatchOdds.note_catch(db, save, rarity, _spot, technique, cond)
+	# Hikâyenin balığı (Gölün Bekçisi) şans garantisine sayılmaz, yanında çöp çıkmaz.
+	var story := bool(def.get("story", false))
+	if not story:
+		CatchOdds.note_catch(db, save, rarity, _spot, technique, cond)
 	var ranked := Rank.add_xp(db, save, Rank.catch_xp(db, rarity, stars))
 	# Dede'nin istekleri: av sayılır (bölge botunki, vakit ve hava atışınki); biten isteğin puanı da rütbeye.
 	var paid := _note_request({ "type": "catch", "fish": fish_id, "size_cm": size_cm, "rarity": rarity,
@@ -253,7 +262,8 @@ func _on_catch(def: Dictionary, percentile: int, cond: Dictionary = {}) -> void:
 			full_released += 1
 		_released(fish_id)
 	# Dipte balığın yanında çöp (oyunda zarı gölgenin seed'inden; botta kendi tuzlu zarı).
-	_found(Trash.with_catch(db.rules, Dice.derive(save.seed, TRASH_SALT, catches), technique))
+	if not story:
+		_found(Trash.with_catch(db.rules, Dice.derive(save.seed, TRASH_SALT, catches), technique))
 	elapsed += _num("show_s", 2.4)
 	if Records.wants_card(rarity, outcome):
 		elapsed += _num("card_s", 2.5)
@@ -638,6 +648,61 @@ func _golden_score(t: String, odds: Dictionary) -> float:
 	if want.has("fish"):
 		share = float(odds.get(str(want["fish"]), 0)) / ContentDB.PPM
 	return share * GOLDEN_WORTH
+
+
+## Final gecesinde gece: sandalla X'e (derin orta), dip takımı, Bekçi gelir ve çekişir (dalışlarıyla, tepkili oyuncu).
+## Tutulursa göle döner (WorldState.release: final biter), bitiş filmi ve jenerik (ending_s, saat durur), şafakta
+## sonraki sabahın başı; kaçarsa KEEPER_RETURN_S bekler. Bekçi'yle uğraşıldıysa true (atış sayılır).
+func _tend_keeper() -> bool:
+	if not Secret.keeper_night(save) or not Economy.technique_ready(db, save, "bottom"):
+		return false
+	var cond := conditions()
+	if str(cond["phase"]) != "night":
+		return false
+	var deep: Dictionary = {}
+	for z in db.zones_of(spot_id):
+		if bool(z["boat"]) and Zones.unlocked(db, save, z):
+			deep = z
+	if deep.is_empty():
+		return false
+	var before := elapsed
+	var id := str(deep["id"])
+	if zone_id != id:
+		_travel()
+		zone_id = id
+		_spot = deep
+		_mark("zone:" + id)
+	if technique != "bottom":
+		technique = "bottom"
+		elapsed += _num("switch_s", 3.0)
+		_paused_s += _num("switch_s", 3.0)
+	_mark("tech:bottom")
+	casts += 1
+	elapsed += _num("cast_s", 1.6) + _range("keeper_s", Vector2(8.0, 14.0))
+	var rules := db.rules
+	var gear := Economy.gear_for(db, save, "bottom")
+	var def := db.fish_by_id(Secret.KEEPER_ID)
+	var model := ReelModel.new(rules, def["fight"], gear.reel_speed, gear.range_m,
+			gear.range_m + rules.escape_extra + gear.escape_extra, false, rng.randi(), gear, Secret.KEEPER_PERCENTILE)
+	var fight := ReelBot.play(model, ReelBot.make(ReelBot.Style.REACT, _num("reaction_s", 0.45)))
+	elapsed += float(fight["seconds"])
+	if int(fight["outcome"]) != ReelModel.Outcome.CAUGHT:
+		lost += 1
+		elapsed += _num("lost_s", 2.5) + Secret.KEEPER_RETURN_S
+		_count_zone(before, cond)
+		return true
+	_on_catch(def, Secret.KEEPER_PERCENTILE, cond)
+	_mark("keeper")
+	var ending := _num("ending_s", 65.0)
+	elapsed += ending
+	_paused_s += ending
+	var now := maxi(0, int(elapsed - _paused_s))
+	if DayClock.phase(rules, now) == "night":
+		_paused_s -= float(DayClock.next_phase_start(rules, now) - now)
+	_count_zone(before, cond)
+	_choose_zone()
+	_choose_technique()
+	return true
 
 
 ## Final hazır olduysa (altı mektup, dört parça, altın hamur) ilk dakikası.

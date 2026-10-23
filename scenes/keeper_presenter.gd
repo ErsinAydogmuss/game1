@@ -3,7 +3,8 @@ extends Node
 ## Gölün Bekçisi'nin karşılaşması (Dalga 4, final; docs/gdd.md §10.5). Sisli gecede sandal haritanın X'indeyken
 ## (derin ortanın Secret.KEEPER_BUOY şamandırası), elde dip ve altın hamur varken kurşun suya düşüp RISE_DELAY
 ## beklenince Bekçi çağrılır (Secret.keeper_due, keeper_point; FishingSession.summon): turkuaz halkalar, "sting",
-## titreşim, bildirim, Dede'nin sözü ve Bekçi'nin müziği (presence_changed: main müziği değiştirir). Dalışın
+## titreşim, bildirim, Dede'nin sözü ve Bekçi'nin müziği (presence_changed: main müziği değiştirir). O gece X'te
+## takım Bekçi'nin (FishingSession.reserve): o belirmeden ya da kaçıp dönmeden öteki balıklar yemi kapmaz. Dalışın
 ## uyarısında ve dalışta turkuaz halka, sarsıntı, ses ve titreşim (ipucu main'de: UI_HINT_KEEPER_DIVE). Kaçarsa
 ## RETURN_TIME sn sonra yine gelir (Dede söyler); sabah olunca gider. X'te dip kamışı elde değilse ya da final
 ## gecesi henüz gelmediyse Dede ne yapılacağını söyler (oturum başına bir kez). main kurar (setup), her oyun
@@ -17,8 +18,8 @@ signal presence_changed(present: bool)
 
 ## Kurşun suya düştükten (takım bekliyor) bu kadar sn sonra Bekçi belirir.
 const RISE_DELAY := 1.6
-## Kaçarsa (misina koptu, kaçtı) bu kadar sn sonra yine gelir.
-const RETURN_TIME := 25.0
+## Kaçarsa (misina koptu, kaçtı) bu kadar sn sonra yine gelir (denge botu da bekler).
+const RETURN_TIME := Secret.KEEPER_RETURN_S
 ## Belirişin halkaları: (gecikme sn, yarıçap m, ömür sn); dalışınkiler.
 const RISE_RINGS: Array[Vector3] = [Vector3(0.0, 2.4, 1.8), Vector3(0.35, 3.4, 2.0), Vector3(0.8, 4.4, 2.3)]
 const DIVE_RINGS: Array[Vector3] = [Vector3(0.0, 1.8, 1.2), Vector3(0.25, 2.8, 1.5), Vector3(0.55, 3.8, 1.8)]
@@ -85,6 +86,8 @@ func update(delta: float, session: FishingSession, save: SaveData, cond: Diction
 	var day := DayClock.day(db.rules, save.clock_s)
 	var technique := session.technique.id
 	var due := Secret.keeper_due(save, phase, weather, at_x, technique, day)
+	# Bekçi'nin gecesinde X'te takım onun: belirmeden önce yakındaki bir balık yemi kapmasın.
+	session.reserve(due)
 	var keeper := session.summoned()
 	if not due:
 		_rises = 0

@@ -216,6 +216,23 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - fazla iriyi iyi oyuncu en çok %5, kusursuz pompalayan en çok %25 tutar (ölçüm: %0);
   - o yıldızı taşıyan takımla iyi oyuncu en az %90 tutar;
   - Kolay modda fazla iri balık hep tutulur (hep basılı tutan da 0,7 sn tepkili oyuncu da), en çok 75 sn ve 3★'ın en çok 1,75 katı sürer; Kolay çekişme sırasında açılsa da.
+- **Gölün Bekçisi** (Dalga 4, final; `fight.stages`, §10.5): iri tür değil (takımın taşıması aranmaz), iki dalışı var.
+  - Balık takıldığı uzaklığın %60'ına ve %30'una gelince, sakinse, 1,2 sn uyarır: turkuaz halka, gıcırtı, titreşim,
+    ipucu "BIRAK! Bekçi dalıyor!".
+  - Sonra 2–2,6 sn dalar: bırakınca 1,8 m/sn uzaklaşır (en çok kaçış sınırının 0,5 m içine, kaçmaz); basılı tutunca
+    gerilim sınırın üstüne çıkar, misina kopar. Kolay modda dalış 0,6 kat hızlı, kopma yok.
+  - Dalışın zarı yalnızca dalışlı balıkta çekilir: öteki balıkların çekişmesi ve altın test aynı kalır.
+  - Dipte 12–14 m'de takılır (`tools/reel_report.gd -- --fish=keeper`, `--gear=mid`, `--gear=top`; her çekişmede iki dalış):
+
+| Dip takımı | Kusursuz | İyi oyuncu (0,4 sn) | Yavaş (0,7 sn) | Hep basılı | Kolay: iyi oyuncu / hep basılı |
+|---|---|---|---|---|---|
+| İlk dip kamışı | 35,2 sn | 47,2 sn | 50,6 sn | koparır | 40,4 / 32,5 sn |
+| İkinci dip kamışı + naylon | 36,4 sn | 48,9 sn | 52,0 sn | koparır | 42,2 / 33,9 sn |
+| En iyi dip takımı | 30,5 sn | 40,3 sn | 42,5 sn | koparır | 35,4 / 28,1 sn |
+
+  Hedef Normal'de ~35–55 sn, Kolay'da ~25–45 sn'ydi; ilk ayarla tuttu. Korkuluklar (`test_reel_model`): her dalıştan
+  önce uyarı gelir, dalış kaçış sınırını aşmaz; kusursuz usta ve tepkili oyuncu Normal'de ve Kolay'da tutar; dalışta
+  basılı tutan Normal'de koparır.
 
 **Sonuç**
 
@@ -247,7 +264,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 ## 6. Balıklar ✅
 
-İlk beşi prototipten, yedisi Dalga 2'de (bölge balıkları), aynalı sazan, alabalıklar ve kerevit Dalga 3'te (teknik balıkları), Ay Turnası ve Kocabaş Dalga 4'te (vakit ve hava). Kimlikler değişmez; görünüş kodla
+İlk beşi prototipten, yedisi Dalga 2'de (bölge balıkları), aynalı sazan, alabalıklar ve kerevit Dalga 3'te (teknik balıkları), Ay Turnası ve Kocabaş Dalga 4'te (vakit ve hava), Gölün Bekçisi Dalga 4'ün finalinde (hikâyenin balığı). Kimlikler değişmez; görünüş kodla
 (`scenes/world/fish_mesh.gd`), oranlar bölgeden (§10.1; tam tablo [`balik-katalogu.md`](balik-katalogu.md)).
 
 | Kimlik | TR | EN | Taban gölge | Nadirlik | Boy | Değer | Çekiş | Bölgeler | Görünüş |
@@ -270,8 +287,9 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | `crayfish` | Kerevit | Crayfish | 0,3 m | Sıradan | 6–14 cm | 10 | hafif | sazlık, kayalık burun (tuzak; az da dip) | kızıl kahve kabuk, halkalı kuyruk, iki iri kıskaç, duyargalar, saplı gözler |
 | `moon_pike` | Ay Turnası | Moon Pike | 1,25 m | Efsanevi | 90–140 cm | satılmaz | ani, güçlü, sıçrar (iri tür) | nilüferli koy, yalnızca gece (şamandıra ×1, spin ×1,4, dip ×0,2) | gümüş-mavi turna, soluk ay benekleri, sarı göz |
 | `kocabas` | Kocabaş | Old Bighead | 2,1 m | Efsanevi | 240–320 cm | satılmaz | çok ağır, uzun koşular (iri tür) | derin orta, yalnızca yağmurlu gece (dip ×1,5, şamandıra ×0,5) | dev yayın: yosunlu sırt, uzun bıyıklar |
+| `keeper` | Gölün Bekçisi | Keeper of the Lake | 4,4 m | Masalsı | 480–520 cm (hep ~517 cm, 5★) | satılmaz | iki dalış: BIRAK! (§5) | derin ortada haritanın X'i (ilk şamandıra), sisli gece, dip ve altın hamurla; bölgelerin tablosunda yok, oyun çağırır (§10.5) | uzun turkuaz gövde, açık plakalar ve benekler, bıyık, dört sırt yüzgeci |
 
-**Nadirlikler:** Sıradan (gri), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın), Masalsı (turkuaz; H2'de eklendi, yalnızca Gölün Bekçisi). Efsaneviler mersin, Ay Turnası (gece) ve Kocabaş (yağmurlu gece); Masalsı balık henüz yok (Gölün Bekçisi, finalde). Nadirlikler yalnızca sona eklenir; her kademenin bir simgesi, rütbe puanı ve göl sevgisi değeri var (§10.2, `data/rarities.json`).
+**Nadirlikler:** Sıradan (gri), Güzel (yeşil), Nadir (mavi), Destansı (mor), Efsanevi (altın), Masalsı (turkuaz; H2'de eklendi, yalnızca Gölün Bekçisi). Efsaneviler mersin, Ay Turnası (gece) ve Kocabaş (yağmurlu gece); tek Masalsı balık Gölün Bekçisi (Dalga 4'ün finali, §10.5). Nadirlikler yalnızca sona eklenir; her kademenin bir simgesi, rütbe puanı ve göl sevgisi değeri var (§10.2, `data/rarities.json`).
 
 **Değerler (para, orta boy):** yukarıdaki tabloda; boy çarpanı 0,6–1,6.
 
@@ -283,7 +301,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 **Dalga 3 türleri** sona eklenir ve şamandırayla gelmez: şamandıranın oranları, kataloğu ve altın testi değişmez. ✅ Aynalı sazan yalnızca dipte (sazlıkta 12, derin ortada 60 ağırlık). ✅ Alabalık ve dere alabalığı dere ağzında (30 ve 4 ağırlık): sinekle (yatkınlık 1), az da spinle (0,6 ve 0,4). Çekişmede çırpınınca sudan sıçrarlar (`fight.jumps`; yalnızca görünüş). ✅ Kerevit tuzakta (sazlık ve kayalık burun) ve az da dipte (yatkınlık 0,5; 8 ağırlık).
 
-**H2 türleri** (19 tür; ilk 5 kimlik korunur, sazan Güzel'e çıkar). Dalga 3'le 16'sı oyunda; Dalga 4'te Ay Turnası ve Kocabaş (18, ✅), Gölün Bekçisi hikâyenin sonunda gelir. Bölge, teknik ve vakit ayrıntısı §10.1 ve §10.3'te.
+**H2 türleri** (19 tür; ilk 5 kimlik korunur, sazan Güzel'e çıkar). Dalga 3'le 16'sı oyunda; Dalga 4'te Ay Turnası ve Kocabaş (18, ✅) ve hikâyenin sonunda Gölün Bekçisi (19, ✅). Bölge, teknik ve vakit ayrıntısı §10.1 ve §10.3'te.
 
 | Kademe | Türler |
 |---|---|
@@ -803,6 +821,12 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   artırır: 310. dakikada saatte 5.141–5.777 para (önce 4.948–5.394; korkuluk 6.500), 16 saatte 7.332–7.807. Günlük
   istekler saatte 3,7–4,4 (altın istekler bu sayaca girmez); botun seyri değiştiği için onuncu günlük istek 97–248.
   dakikada (ortalama aynı, ~180; korkuluk 80–300).
+- ✅ **Dalga 4, finalin ölçümü** (6. adım; `economy_report.gd -- --hours=16 --seeds=6`): denge botu final gecesinde gece
+  olunca sandalla X'e gider, dibe atar; Bekçi gelir (`sim.json` `keeper_s` 8–14 sn), tepkili botla dalışlarıyla
+  çekişir, göle döner; bitiş filmi ve jenerik `ending_s` 65 sn (saat durur), gece bitmediyse saat sonraki sabaha.
+  Final hazır 151–188. dakikada (değişmedi): dördüncü parça gece derin ortada geldiği için bot çoğunlukla aynı gece
+  X'e geçer, Bekçi 1–1,5 dakika sonra göle döner; final gündüz hazır olursa geceyi bekler (bir seed'de 188 → 209). Bekçi
+  152–209. dakikada (korkuluk 120–270; insan için ~5–6 saat). Kazanç aynı: 16 saatte saatte 7.436–7.826 para, 163–167 av.
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
@@ -957,9 +981,47 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   4. ✅ **Altın hamur.** Göl sevgisi 6 olunca Dede "Nine'ye uğra" der; dükkâna ilk uğrayışta Nine verir ("Al evladım,
      ninemin altın hamuru! Dipte kullan."), bildirim. Anahtar eşya: dükkânda kartı yok, satılmaz; Takım Çantası'nın dip
      karosunda rozeti, defterde "Altın hamur sende".
-  5. Final hazır: altı mektup, dört parça, altın hamur (denge botu 151–188. dakikada, rütbe 13–14; §10.4).
-  6. Final 🔜 (6. adım): gece ve sisli bir havada, derin ortada, dip tekniği ve altın hamurla Bekçi'nin gölgesi çıkar.
-     Çok evreli bir çekişme olur; Bekçi tutulur ve yalnızca bırakılır. Bitiş sahnesi oynar, jenerik akar, göl çiçek açar.
+  5. Final hazır: altı mektup, dört parça, altın hamur (denge botu 151–188. dakikada, rütbe 13–14; Bekçi 152–209. dakikada; §10.4).
+  6. ✅ **Final: Gölün Bekçisi** (6. adım; `Secret.keeper_due`, `KeeperPresenter`, `Story.ENDING`, `CreditsPanel`):
+     - Final hazır olunca Dede söyler: "Hepsi tamam! Bu gece sis basacak, sandalla X'e git." Bekçi bırakılana kadar
+       her gece sisli, fırtınasız (sisli gece kendiliğinden ~10 günde bir gelir; beklemek ceza gibi olmasın; Kocabaş
+       finalden sonra döner). "Bugün" panelinde "Gece sis: Bekçi'nin gecesi".
+     - Gece, sandal haritanın X'inde (derin ortanın ilk şamandırası), elde dip ve altın hamur varken kurşun suya düşüp
+       1,6 sn geçince Bekçi belirir: sandaldan 6–9 m ötede, takımdan en az 3 m uzakta turkuaz halkalar, "sting",
+       titreşim, "Gölün Bekçisi geldi!", Dede'nin sözü ("İşte o, Gölün Bekçisi! Zil çalınca vur evlat!") ve Bekçi'nin
+       müziği. Gündüz X'te Dede "Bekçi gece gelir evlat. Çay içip geceyi bekleyelim." der; elde dip yoksa "Altın hamur
+       dipte işe yarar evlat: dip kamışını al!".
+     - Takıma yalnızca o gelir: o gece X'te öteki balıklar dibe atılan yemi kapmaz (Bekçi belirmeden, kaçıp dönmeden
+       de; ilk denemede belirmeden önceki 1,6 sn'de yakındaki bir balık yemi kapıyordu); korkmaz, vazgeçmez, boyu hep
+       aynı (~5,2 m, 5★). Koklarken
+       dokunmak ve kaçan koşu onu kaçırmaz (ilk av gibi irkilir, yeniden koklar); koşuda VUR. Çekişme gerçek (Kolay
+       modda Kolay): iki dalış (§5); dalışın uyarısında ipucu "BIRAK! Bekçi dalıyor!", turkuaz halka, ses, sarsıntı,
+       titreşim.
+     - Kaçarsa (misina koptu): Dede "Kaçırdık! Bekle, geri gelecek."; 25 sn sonra yeniden atınca gelir ("Geri geldi!
+       Bu sefer dalınca bırak evlat."). Sabah olunca derinlere döner ("Sabah oldu, Bekçi derinlere döndü."). Ceza yok.
+     - Tutulunca elde gösterilmez (5 m): sudan çıktığı yerde turkuaz halkalar, herkes sevinir; Masalsı kart (koruma
+       sözü), tek düğme "Göle bırak". Şans garantisine sayılmaz, yanında çöp çıkmaz. Bırakmak finali bitirir
+       (`save.keeper`), Masalsı kademenin göl sevgisi 100.
+     - **Bitiş filmi** (kart kapanınca, bir kez; ~32 sn; açılış filmi gibi göl arkada yaşar; dokununca sonraki söz,
+       ATLA; kendi müziği):
+
+       | # | Konuşan · çekim | Söz |
+       |---|---|---|
+       | 1 | Dede · Bekçi sandalın çevresinde döner ve dalar | Bak evlat... Bekçi sandalın çevresinde dönüyor. Sana teşekkür ediyor! |
+       | 2 | Nine · şafak (ekran kararır, iskeleye dönülür, gece bitmediyse sonraki sabah) | Sabah oldu. Bakın, sis kalkıyor! |
+       | 3 | Nine · göl çiçek açar (göl sevgisinin en üst görünüşü, kalıcı) | Göl hiç bu kadar güzel olmamıştı. Senin sayende evladım. |
+       | 4 | Dede · Dede ve Nine sevinir | Aferin evlat! Gölün sırrı artık senin de sırrın. |
+       | 5 | Nine · göl, geniş | Bu göl artık senin de evin. Ne zaman istersen gel evladım! |
+
+     - **Jenerik** (filmden sonra; kendiliğinden yukarı kayar, ATLA): logo; Fikir ve görseller: Ersin; Kod: Claude;
+       3B modeller: KayKit · Kay Lousberg, Kenney; Yazı tipleri: Luckiest Guy · Astigmatic, Baloo 2 · Ek Type; Sesler ve
+       müzik: kodla üretildi; Teşekkürler: oynayan herkese; son söz "Gölün Bekçisi'ni göle bıraktın. Göl seni bekliyor!".
+     - **Oyun sonrası:** geceler normal havaya döner; rütbe 20'nin sözü Bekçi'den sonra "Artık gölün efsanesisin. Bekçi
+       bile sana selam verdi!"; Ayarlar'da BİTİŞ filmi ve jeneriği yeniden oynatır (saat ve kayıt değişmez);
+       kendiliğinden gelen sisli gecelerde X'te Bekçi yine çıkar, filmsiz ("Bekçi yine sana göründü evlat!"; bırakıldığı
+       gün değil). Defterde 19. tür (ipucu "Haritanın X'inde, sisli bir gecede, altın hamurla."), Gölün Sırrı
+       görünüşünde "Gölün Bekçisi'ni göle bıraktın. Göl seni seviyor!".
+     - Denge botu finali oynar (`SessionSim`; §10.4).
 
 ### 10.6 Yuva ve kişilik
 

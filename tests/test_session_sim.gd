@@ -76,12 +76,15 @@ const PACING := [
 	["piece_4", 110.0, 200.0],
 	["dough", 120.0, 240.0],
 	["final_ready", 120.0, 240.0],
+	# Final (6. adım): final gecesinde (en geç bir oyun günü sonra) gece sandalla X'e, dipte Bekçi.
+	["keeper", 120.0, 270.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.
 ## Mektuplar sırayla okunur; altın istek mektubundan sonra gelir, parçası ondan sonra.
 const BEFORE := [["buy:line_mono", "buy:rod_carp_1"], ["letter_1", "letter_2"], ["letter_5", "letter_6"],
-		["letter_3", "golden_1"], ["golden_1", "piece_1"], ["letter_6", "piece_4"], ["piece_4", "final_ready"]]
+		["letter_3", "golden_1"], ["golden_1", "piece_1"], ["letter_6", "piece_4"], ["piece_4", "final_ready"],
+		["final_ready", "keeper"]]
 
 
 func test_same_seed_same_session() -> void:

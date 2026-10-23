@@ -1,7 +1,8 @@
 extends BaseTest
 ## Gölün Bekçisi oturumda (Dalga 4, final; docs/gdd.md §10.5). Sunum onu sandalın yanına çağırır
-## (summon): göldeyken takımı yalnızca o fark eder, kurşundan korkmaz, vazgeçmez; koklamada dokunmayı ve
-## kaçan koşuyu bağışlar (ilk av gibi) ama dürter ve dalışlarıyla gerçekten çekişir. Tutulunca çöp çıkmaz,
+## (summon): göldeyken takımı yalnızca o fark eder (gecesinde X'te takım ona ayrılır: reserve), kurşundan korkmaz,
+## vazgeçmez; koklamada dokunmayı ve kaçan koşuyu bağışlar (ilk av gibi) ama dürter ve dalışlarıyla gerçekten
+## çekişir. Tutulunca çöp çıkmaz,
 ## yerine yeni gölge doğmaz; varlığı öteki gölgelerin zarını kaydırmaz; sabah olunca gider, balıkçı başka
 ## yere geçince kalkar.
 
@@ -129,6 +130,42 @@ func test_only_the_keeper_comes_to_the_rig() -> void:
 	assert_true(session.sim.approacher == keeper, "takıma gelen Bekçi")
 	for e in _of_type(log, "notice"):
 		assert_eq(int(e["shadow"]), keeper.id, "takımı yalnızca Bekçi fark eder")
+
+
+## Bekçi'nin gecesinde X'te takım onun (reserve: Bekçi belirmeden ya da kaçıp dönmeden): kurşunun dibindeki
+## balık bile fark etmez, dip kokusuna kimse toplanmaz; Bekçi çağrılınca o gelir. Ayrılmamış takımı aynı balık
+## fark eder (deneme anlamlı).
+func test_reserved_rig_waits_for_the_keeper() -> void:
+	for reserved: bool in [false, true]:
+		var session := _x_session(53)
+		session.reserve(reserved)
+		var log: Array[Dictionary] = []
+		assert_true(session.cast(_boat() + EAST * 10.0), "dip takımı atılır")
+		assert_true(_run_until(session, FishingSession.State.WAITING, 4.0, log), "kurşun suya düşer")
+		assert_true(not _wild(session).is_empty(), "gölde başka gölge var")
+		if _wild(session).is_empty():
+			return
+		var fish := _wild(session)[0]
+		fish.pos = session.bobber + Vector2(0.8, 0.0)
+		fish.heading = Vector2(-1, 0)
+		fish.mode = FishShadow.Mode.PAUSE
+		fish.timer = 1
+		log.clear()
+		_steps(session, session.sim.rig.gather_after_steps + 2 * HZ, log)
+		var noticed := not _of_type(log, "notice").is_empty()
+		if not reserved:
+			assert_true(noticed, "ayrılmamış takımı dibindeki balık fark eder")
+			continue
+		assert_true(not noticed, "Bekçi'ye ayrılmış takımı öteki balıklar fark etmez")
+		assert_eq(session.state, FishingSession.State.WAITING, "takım bekliyor")
+		var gathering := false
+		for s in _wild(session):
+			gathering = gathering or s.gathering
+		assert_true(not gathering, "dip kokusuna kimse toplanmaz")
+		var point := Secret.keeper_point(content(), SPOT, _boat(), session.bobber)
+		var keeper := session.sim.find(session.summon(Secret.KEEPER_ID, point, Secret.KEEPER_PERCENTILE))
+		assert_true(_run_until(session, FishingSession.State.NIBBLING, 30.0, log), "Bekçi gelir ve koklar")
+		assert_true(keeper != null and session.sim.approacher == keeper, "takıma gelen Bekçi")
 
 
 ## Kurşun Bekçi'nin dibine düşse de korkmaz; yaklaşmakta olan öteki balık Bekçi çağrılınca ilgisini kaybeder.

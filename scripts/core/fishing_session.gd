@@ -336,6 +336,12 @@ func dismiss_summoned() -> bool:
 	return sim.dismiss_summoned()
 
 
+## Takımı hikâye balığına ayırır (Gölün Bekçisi'nin gecesi, X'te dip: KeeperPresenter her kare verir): açıkken
+## öteki gölgeler takımı fark etmez, ona toplanmaz (ShadowSim.reserved); Bekçi belirmeden yem kapılmasın.
+func reserve(on: bool) -> void:
+	sim.reserved = on
+
+
 func state_name() -> String:
 	return str(State.find_key(state)).to_lower()
 

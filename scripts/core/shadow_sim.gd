@@ -43,6 +43,11 @@ var approacher: FishShadow = null
 ## Şans garantisi: yakında doğan sıradaki gölge en az bu nadirlikte (-1 = garanti yok). Aynı
 ## anda yalnızca bir garanti gölgesi olur.
 var pity_floor: int = -1
+## Takım hikâye balığına ayrıldı (Gölün Bekçisi'nin gecesi, X'te dip; sunum verir: FishingSession.reserve):
+## dolaşan gölgeler takımı fark etmez ve ona toplanmaz; çağrılan gölge belirince yalnızca o gelir. Bekçi
+## belirmeden önce (KeeperPresenter.RISE_DELAY) ya da kaçtıktan sonra dönene kadar yakındaki bir balık yemi
+## kapmasın. Varsayılanı kapalı (altın test).
+var reserved: bool = false
 ## Takım profili (tekniğin fark etme, yaklaşma, vazgeçme ve toplanma sayıları; FishingSession
 ## verir). Varsayılanı şamandıranınki.
 var rig: TechniqueRules
@@ -159,8 +164,9 @@ func step(angler: Vector2, bobber: Vector2, listening: bool, waiting_steps: int)
 					remove(s)
 					out.append({ "type": "despawn", "shadow": s.id })
 	if listening and approacher == null:
-		# İlk av (ya da çağrılan hikâye balığı) gölde oldukça şamandıraya yalnızca o gelir.
-		var only_scripted := _has_scripted()
+		# İlk av (ya da çağrılan hikâye balığı) gölde oldukça şamandıraya yalnızca o gelir; takım hikâye balığına
+		# ayrıldıysa da (reserved) öteki gölgeler gelmez.
+		var only_scripted := reserved or _has_scripted()
 		var best: FishShadow = null
 		var best_d := INF
 		for s in shadows:
@@ -210,8 +216,11 @@ func flee(s: FishShadow, from: Vector2) -> void:
 
 
 ## Takımın kokusu yayıldı (dip): dolaşan ve duraklayan gölgeler yolculuğunu bitirmeden hemen yeni
-## hedef seçer (toplanma zarıyla, kendi zarından). Şamandırada çağrılmaz.
+## hedef seçer (toplanma zarıyla, kendi zarından). Şamandırada çağrılmaz; takım hikâye balığına ayrıldıysa
+## kimse toplanmaz (reserved).
 func call_to_rig(bobber: Vector2, waiting_steps: int) -> void:
+	if reserved:
+		return
 	for s in shadows:
 		if s.scripted or s.summoned or s == approacher or s.bored:
 			continue
@@ -594,8 +603,9 @@ func _spawn_point(rng: RandomNumberGenerator, angler: Vector2, bobber: Vector2, 
 ## Yeni bir dolaşma hedefi seçer. Takım uzun süredir sudaysa gölgeler (profile göre, şamandırada
 ## yarı yarıya) onun çevresine yönelir; ilk av ve hikâye balığı evinin yakınında dolaşır.
 func _pick_target(s: FishShadow, bobber: Vector2, listening: bool, waiting_steps: int) -> void:
-	# Kısa devre sırası şamandırada v0.3'teki gibi: zar yalnızca toplanma açıkken atılır.
-	var gather := listening and rig.gather_ppm > 0 and waiting_steps >= rig.gather_after_steps \
+	# Kısa devre sırası şamandırada v0.3'teki gibi: zar yalnızca toplanma açıkken atılır (takım hikâye
+	# balığına ayrıldıysa toplanılmaz: reserved).
+	var gather := listening and not reserved and rig.gather_ppm > 0 and waiting_steps >= rig.gather_after_steps \
 			and Dice.chance(s.rng, rig.gather_ppm)
 	var bounds := _lake.water_bounds
 	var depth := _min_depth(s)

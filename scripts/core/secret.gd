@@ -51,6 +51,8 @@ const KEEPER_TURN: Array[float] = [25.0, -25.0, 40.0, -40.0, 10.0, -10.0, 60.0, 
 const KEEPER_GAP := 3.0
 ## Bekçi'nin son bırakıldığı oyun günü (bayrak): aynı gün yeniden çıkmaz.
 const KEEPER_DAY_FLAG := "keeper_day"
+## Kaçan Bekçi bu kadar sn sonra yine gelir (sunum ve denge botu).
+const KEEPER_RETURN_S := 25.0
 
 
 ## Sıradaki mektubun sırası (0'dan; hepsi okunduysa -1).

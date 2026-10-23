@@ -83,6 +83,16 @@ extends Node
 ##     dolu kovaya dokun → Kova paneli küçülmeden sığar; BIRAK (en küçüğü, sevgi, para aynı), HEPSİNİ BIRAK
 ##     (önce "Emin misin?"), seviye bildirimi ve Dede; yeni tür kartında "Göle bırak"; olta sudayken kovaya
 ##     dokunmak oyuna geçer; dipte çöp (bildirim, sevgi, Dede); paneldeki SAT Nine'nin Kova sekmesine götürür.
+##   keeper: Gölün Bekçisi ve final (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN): final
+##     hazır kayıt (6 mektup, 4 parça, altın hamur; rütbe 13, dip kamışı ve sandal). Dede "bu gece sis basacak";
+##     Bugün panelinde gecenin sisi; X'te gündüz Dede "gece gelir"; gece sisli, fırtına yok; X'te şamandırayla Dede
+##     "dip kamışı"; dipte at → Bekçi belirir (bildirim, Dede, müziği), takıma o gelir, koklarken dokunmak onu
+##     kaçırmaz, koşuda VUR. İlk çekişmede dalışta basılı tutulur: misina kopar, Dede "geri gelecek", 25 sn sonra
+##     yine gelir ("geri geldi"); ikinci çekişmede dalış uyarısında ipucu BIRAK, iki dalış, tutulur → elde
+##     gösterilmez, Masalsı kart ("Göle bırak"); kart kapanınca bitiş filmi (5 çekim; şafakta balıkçı iskelede,
+##     saat sabah; göl çiçek açar), jenerik (ATLA). Sonra: final gecesi bitti, defterde Bekçi, Ayarlar'da BİTİŞ
+##     (yeniden izlenir, saat değişmez), kendiliğinden sisli gecede X'te Bekçi yine gelir (Dede "yine göründü").
+##     Her çekimde ÇİZİM ≤ TOUR_DRAWS.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -231,6 +241,8 @@ func _ready() -> void:
 			_play_requests.call_deferred()
 		"secret":
 			_play_secret.call_deferred()
+		"keeper":
+			_play_keeper.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -3142,6 +3154,290 @@ func _catch_here(fish_id: String, percentile: int = 300_000) -> bool:
 		await _close_card(card)
 	await _wait_state(FishingSession.State.IDLE, 6.0)
 	return caught
+
+
+## Gölün Bekçisi ve final (yukarıdaki keeper senaryosu).
+func _play_keeper() -> void:
+	_use_save(200)
+	var db := GameState.db
+	var save := GameState.save
+	var rules := db.rules
+	var fade: Fade = main.get("fade")
+	var card: FishCard = main.get("card")
+	var story: StoryPanel = main.get("story_panel")
+	var credits: CreditsPanel = main.get("credits_panel")
+	var keeper: KeeperPresenter = main.get("keeper")
+	var scene: LakeScene = main.get("scene")
+	var clock: WorldClock = main.get("world_clock")
+	_roomy_bucket()
+	save.xp = db.rank_xp[12]
+	save.letters = Secret.LETTERS.size()
+	save.letter_at = save.catches
+	save.map_pieces = SaveData.MAX_MAP_PIECES
+	save.flags[Secret.DOUGH_FLAG] = true
+	save.love = db.rules.love_levels[Secret.DOUGH_LOVE - 1]
+	# Göl sevgisinin seviye sözleri söylenmiş (finalin sözünü beklemesin).
+	for at in [2, 6, 10]:
+		save.flags["told_love_%d" % at] = true
+	for id: String in ["rod_carp_2", "sinker", "line_braid", "reel_strong", Zones.BOAT]:
+		if not id in save.owned:
+			save.owned.append(id)
+	Economy.equip(db, save, "rod_carp_2", "bottom")
+	Economy.equip(db, save, "sinker", "bottom")
+	Economy.equip(db, save, "line_braid", "bottom")
+	Economy.equip(db, save, "reel_strong", "bottom")
+	GameState.changed.emit()
+	await _wait(1.0)
+	_check("final hazır: final gecesi", Secret.final_ready(save) and Secret.keeper_night(save))
+	_check("Dede: bu gece sis basacak", await _wait_until(func() -> bool: return str(main.get("_line")) == "UI_DEDE_FINAL", 10.0))
+	await _shot("01_final_hazir")
+	var day: DayPanel = main.get("day_panel")
+	await _tap_control(_hud().world_button)
+	await _wait_until(func() -> bool: return day.visible, 2.0)
+	await _wait(0.6)
+	_check("Bugün panelinde gecenin sisi (Bekçi'nin gecesi)", _label_with_text(day, tr("UI_DAY_DETAIL_keeper")) != null)
+	_check("Bugün paneli küçülmeden sığar (%.2f)" % day.fit_scale(), day.fit_scale() > 0.999 and _panel_inside(day))
+	await _shot("02_bugun_final")
+	day.close_panel()
+	await _wait(0.4)
+	# Gündüz X'te: Dede gece gelir der.
+	main.call("_go_boat", Secret.KEEPER_BUOY)
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	_check("sandal X'te", bool(main.get("in_boat")) and int(main.get("_buoy")) == Secret.KEEPER_BUOY)
+	_check("gündüz X'te Dede: Bekçi gece gelir", await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_KEEPER_WAIT", 6.0))
+	# Gece: sisli, fırtına yok; şamandırayla Dede dip kamışını söyler.
+	for i in 3:
+		main.call("_debug_time")
+		await _wait(0.4)
+	var cond := clock.conditions()
+	_check("gece (%s): sisli, fırtınasız" % str(cond["weather"]), str(cond["phase"]) == "night"
+			and str(cond["weather"]) == "fog" and not Weather.stormy(str(cond["weather"]), "night"))
+	_check("X'te şamandırayla Dede: dip kamışı", await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_KEEPER_BOTTOM", 8.0))
+	await _wait(1.0)
+	main.call("_on_technique_selected", "bottom")
+	await _wait_frames(4)
+	_check("elde dip", _session().technique.id == "bottom")
+	await _wait_until(func() -> bool: return float(main.get("_line_time")) <= 0.0, 8.0)
+	# İlk deneme: Bekçi gelir; koklarken dokunmak onu kaçırmaz; koşuda VUR; dalışta basılı tutulur, misina kopar.
+	var first := await _keeper_cast(true)
+	_check("dipte at: Bekçi belirir (bildirim, Dede, müziği)", bool(first["rose"]) and bool(first["toast"])
+			and bool(first["dede"]) and bool(first["music"]))
+	_check("ÇİZİM Bekçi gölde, sisli gecede: %d (≤%d)" % [int(first["draws"]), TOUR_DRAWS],
+			int(first["draws"]) > 0 and int(first["draws"]) <= TOUR_DRAWS)
+	_check("takıma Bekçi gelir, koklar", bool(first["sniffed"]))
+	_check("koklarken dokunmak Bekçi'yi kaçırmaz (irkilir)", bool(first["forgiven"]))
+	_check("koşuda VUR: çekişme, dalışlı", bool(first["hooked"]) and bool(first["dives"]))
+	_check("dalışta basılı tutunca misina kopar", bool(first["snapped"]))
+	_check("Dede: kaçırdık, geri gelecek", await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_KEEPER_LOST", 6.0))
+	# Bekçi kaçtı: RETURN_TIME geçmeden gelmez; sonra yeniden atılınca gelir ("geri geldi").
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	await _wait(2.0)
+	await _tap_world(_session().angler + Vector2(10.0, 0.0))
+	await _wait_state(FishingSession.State.WAITING, 4.0)
+	await _wait(KeeperPresenter.RISE_DELAY + 1.0)
+	_check("kaçan Bekçi hemen gelmez", _session().summoned() == null)
+	await _tap(Vector2(260, 520))
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	await _wait_until(func() -> bool: return float(keeper.get("_return_wait")) <= 0.0, KeeperPresenter.RETURN_TIME + 5.0)
+	var second := await _keeper_cast(false)
+	_check("%d sn sonra Bekçi yine gelir (Dede: geri geldi)" % roundi(KeeperPresenter.RETURN_TIME), bool(second["rose"])
+			and bool(second["back"]))
+	_check("dalış uyarısında ipucu: BIRAK! Bekçi dalıyor", bool(second["dive_hint"]))
+	_check("ÇİZİM çekişmede, dalışta: %d (≤%d)" % [int(second["fight_draws"]), TOUR_DRAWS],
+			int(second["fight_draws"]) > 0 and int(second["fight_draws"]) <= TOUR_DRAWS)
+	_check("iki dalış, Bekçi tutulur", int(second["dive_count"]) == 2 and bool(second["caught"]))
+	_check("Bekçi elde gösterilmez", not bool(second["in_hand"]))
+	_check("Masalsı kart, düğmesi Göle bırak", await _wait_until(func() -> bool: return card.visible, 3.0)
+			and card.ok_button != null and card.ok_button.text == UiKit.upper(tr("UI_CARD_RELEASE")))
+	_check("Bekçi göle döndü: final bitti, sevgi, defterde", save.keeper == 1 and not Secret.keeper_night(save)
+			and save.records.has(Secret.KEEPER_ID))
+	await _wait(0.6)
+	await _shot("05_bekci_kart")
+	await _close_card(card)
+	# Bitiş filmi: beş çekim; her çekimde görüntü ve çizim.
+	_check("kart kapanınca bitiş filmi", await _wait_until(func() -> bool:
+			return story.visible and story.lines() == Story.ENDING, 3.0) and not _hud().visible)
+	_check("bitişin müziği", await _wait_until(func() -> bool: return Sounds.music_name() == "ending", 4.0))
+	var worst := { "draws": 0, "shot": "" }
+	var morning := false
+	var docked := false
+	for i in Story.ENDING.size():
+		var kind := str(Story.ENDING[i][2])
+		await _wait_until(func() -> bool: return story.index() == i or not story.visible, 15.0)
+		await _wait(StoryFilm.MOVE_TIME + 0.6)
+		var draws := int((await _measure_draws(20))["draws"])
+		if draws > int(worst["draws"]):
+			worst = { "draws": draws, "shot": kind }
+		await _shot("06_bitis_%d_%s" % [i + 1, kind])
+		if kind == "dawn":
+			await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+			morning = DayClock.phase(rules, save.clock_s) == "morning"
+			docked = not bool(main.get("in_boat")) and _angler().pos2().distance_to(db.spot(str(main.get("spot_id")))["start"]) < 0.5
+		elif kind == "bloom":
+			_check("göl çiçek açar: sevginin en üst görünüşü", scene.love_level() == LakeLove.max_level(rules))
+	_check("şafakta balıkçı iskelede, saat sabah", morning and docked)
+	_check("ÇİZİM bitiş filminde: en çok %d (%s) (≤%d)" % [int(worst["draws"]), worst["shot"], TOUR_DRAWS],
+			int(worst["draws"]) <= TOUR_DRAWS)
+	_check("film bitince jenerik", await _wait_until(func() -> bool: return credits.visible, 15.0) and not story.visible)
+	await _wait(2.5)
+	await _shot("07_jenerik")
+	await _wait(2.0)
+	await _shot("08_jenerik_2")
+	_check("jeneriğin ATLA'sı büyük ve güvenli alanda", _inside_safe(credits.skip_button)
+			and credits.skip_button.size.y >= 122.0)
+	await _tap_control(credits.skip_button)
+	_check("ATLA: oyun geri", await _wait_until(func() -> bool: return not credits.visible and _hud().visible, 3.0))
+	await _wait(1.5)
+	_check("bitiş görüldü (kayıtta)", save.flags.has(Story.ENDING_FLAG))
+	# Defterde Bekçi.
+	var book: BookPanel = main.get("book_panel")
+	book.open_book(Secret.KEEPER_ID)
+	await _wait_until(func() -> bool: return book.visible, 2.0)
+	await _wait(0.6)
+	_check("defterde Bekçi seçili, tutulmuş", book.selected() == Secret.KEEPER_ID)
+	_check("defter güvenli alanda", _panel_inside(book))
+	await _shot("09_defter_bekci")
+	book.close_panel()
+	await _wait(0.4)
+	# Ayarlar'da BİTİŞ: yeniden izlenir, saat değişmez.
+	var settings: SettingsPanel = main.get("settings_panel")
+	await _tap_control(_hud().settings_button)
+	await _wait_until(func() -> bool: return settings.visible, 2.0)
+	await _wait(0.5)
+	var ending := settings.find_child("Ending", true, false) as Button
+	_check("Ayarlar'da BİTİŞ (büyük, güvenli alanda); panel küçülmeden sığar (%.2f)" % settings.fit_scale(),
+			ending != null and ending.is_visible_in_tree() and not ending.disabled and ending.size.y >= 122.0
+			and _inside_safe(ending) and settings.fit_scale() > 0.999)
+	await _shot("10_ayarlar_bitis")
+	var clock_before := save.clock_s
+	if ending != null:
+		await _tap_control(ending)
+	_check("BİTİŞ: film baştan", await _wait_until(func() -> bool:
+			return story.visible and story.lines() == Story.ENDING, 5.0))
+	await _wait(1.0)
+	await _tap_control(story.skip_button)
+	_check("ATLA: jenerik", await _wait_until(func() -> bool: return credits.visible, 3.0))
+	await _tap_control(credits.skip_button)
+	await _wait_until(func() -> bool: return not credits.visible, 3.0)
+	await _wait(0.5)
+	_check("yeniden izlemek saati değiştirmez", save.clock_s == clock_before)
+	# Oyun sonrası: kendiliğinden sisli bir gecede X'te Bekçi yine gelir (filmsiz).
+	main.call("_debug_time")
+	main.call("_debug_time")
+	main.call("_debug_time")
+	await _wait(0.5)
+	while Weather.day_kind(rules, save, DayClock.day(rules, save.clock_s)) != "fog":
+		main.call("_debug_weather")
+		await _wait_frames(2)
+	await _wait(0.6)
+	cond = clock.conditions()
+	_check("oyun sonrası sisli gece (%s, %s)" % [str(cond["phase"]), str(cond["weather"])], str(cond["phase"]) == "night"
+			and str(cond["weather"]) == "fog")
+	main.call("_go_boat", Secret.KEEPER_BUOY)
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+	await _wait(0.5)
+	main.call("_on_technique_selected", "bottom")
+	await _wait_frames(4)
+	await _tap_world(_session().angler + Vector2(10.0, 0.0))
+	await _wait_state(FishingSession.State.WAITING, 4.0)
+	_check("oyun sonrası sisli gecede Bekçi yine gelir (Dede: yine göründü)", await _wait_until(func() -> bool:
+			return _session().summoned() != null, 6.0) and await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_KEEPER_AGAIN", 4.0))
+	await _shot("11_oyun_sonrasi")
+	_finish_checks()
+
+
+## Bekçi'ye dip atışı (sandal X'te, gece sisli): doğuya atar, Bekçi belirir, koklar; ilk koklamada dokunur (bağışlanır),
+## koşuda VUR; snap ise ilk dalışta basılı tutar (misina kopar), değilse oyuncu gibi çeker (uyarıda bırakır).
+func _keeper_cast(snap: bool) -> Dictionary:
+	var out := { "rose": false, "toast": false, "dede": false, "back": false, "music": false, "draws": 0, "sniffed": false,
+			"forgiven": false, "hooked": false, "dives": false, "snapped": false, "dive_hint": false, "dive_count": 0,
+			"fight_draws": 0, "caught": false, "in_hand": false }
+	var finger := Vector2(260, 520)
+	await _tap_world(_session().angler + Vector2(10.0, 0.0))
+	if not await _wait_state(FishingSession.State.WAITING, 4.0):
+		return out
+	out["rose"] = await _wait_until(func() -> bool: return _session().summoned() != null, KeeperPresenter.RISE_DELAY + 3.0)
+	out["toast"] = await _wait_toast(UiKit.upper(tr("UI_KEEPER_RISE")), 2.0)
+	out["dede"] = await _wait_until(func() -> bool: return str(main.get("_line")) == "UI_DEDE_KEEPER_RISE", 2.0)
+	out["back"] = str(main.get("_line")) == "UI_DEDE_KEEPER_BACK"
+	out["music"] = await _wait_until(func() -> bool: return Sounds.music_name() == "keeper", 3.0)
+	await _wait(1.2)
+	await _shot_once("03_bekci_geldi")
+	# Sınır kalıcı görünüşe bakar: geçici yazılar (bildirim, Dede'nin sözü) sönünce (öteki botlar gibi).
+	var toast: Control = _hud().get("_toast")
+	var hint: Control = _hud().get("_hint")
+	await _wait_until(func() -> bool: return not toast.is_visible_in_tree() and not hint.visible, 6.0)
+	out["draws"] = int((await _measure_draws(20))["draws"])
+	if not await _wait_state(FishingSession.State.NIBBLING, 30.0):
+		return out
+	out["sniffed"] = _session().sim.approacher == _session().summoned()
+	await _tap(finger)
+	await _wait_frames(3)
+	out["forgiven"] = _state() == FishingSession.State.NIBBLING and _session().sim.approacher != null \
+			and _session().sim.approacher.summoned
+	if not await _wait_state(FishingSession.State.BITING, 20.0):
+		return out
+	await _wait_frames(6)
+	_touch(1, finger, true)
+	await _wait_frames(3)
+	out["hooked"] = _state() == FishingSession.State.FIGHTING
+	out["dives"] = _session().reel != null and _session().reel.has_dives()
+	if not bool(out["hooked"]):
+		_touch(1, finger, false)
+		return out
+	var hold := true
+	var lag := 0
+	var elapsed := 0.0
+	var was_diving := false
+	while _state() == FishingSession.State.FIGHTING and elapsed < 120.0:
+		var reel := _session().reel
+		var diving := reel != null and reel.phase == ReelModel.Phase.DIVE
+		if diving and not was_diving:
+			out["dive_count"] = int(out["dive_count"]) + 1
+			if not snap:
+				await _shot_once("04_bekci_daliyor")
+				out["fight_draws"] = maxi(int(out["fight_draws"]), int((await _measure_draws(5))["draws"]))
+		was_diving = diving
+		if reel != null and reel.diving() and str(main.get("_hint_shown")) == "UI_HINT_KEEPER_DIVE":
+			out["dive_hint"] = true
+		# Oyuncu gibi: çırpınma ya da dalış uyarısında 6 kare sonra bırakır; snap'te dalışta basılı tutar.
+		var want := reel != null and (not reel.thrashing() or (snap and reel.diving()))
+		lag = lag + 1 if want != hold else 0
+		if lag >= 6:
+			hold = want
+			lag = 0
+			_touch(1, finger, hold)
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+	if hold:
+		_touch(1, finger, false)
+	out["snapped"] = _state() == FishingSession.State.LOST and _session().last_loss == "snapped"
+	out["caught"] = _state() == FishingSession.State.CAUGHT and bool(_session().last_catch.get("story", false))
+	await _wait_frames(4)
+	out["in_hand"] = (main.get("catch_fx") as CatchFx).is_showing()
+	return out
+
+
+## Bir düğümün altında yazısı bu olan etiket (yoksa null).
+static func _label_with_text(root: Node, text: String) -> Label:
+	for node in root.find_children("*", "Label", true, false):
+		if (node as Label).text == text:
+			return node as Label
+	return null
+
+
+## Düğme ekranın güvenli alanının içinde mi?
+func _inside_safe(control: Control) -> bool:
+	var view := get_viewport().get_visible_rect()
+	var inset := UiKit.safe_insets(control)
+	var safe := Rect2(view.position + Vector2(inset.x, inset.y), view.size - Vector2(inset.x + inset.z, inset.y + inset.w))
+	return safe.encloses(control.get_global_rect())
 
 
 ## İskelede şamandırayla bir balık tutar: gölgeyi koyar, atar, VUR, oyuncu gibi çeker; kart açılırsa kapatır,
