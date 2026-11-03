@@ -17,6 +17,11 @@ const NAME_SIZE := 52
 const END_SIZE := 46
 ## Son sözden önceki resimlerin (genç Nine ve Dede, zıplayan Bekçi) boyu.
 const PICTURE := 300.0
+## Bitiş resminin üstünde yazıların arkasındaki koyu şerit: yazı sütununun iki yanından BAND_PAD taşar, sonra
+## BAND_FADE boyunca yumuşakça söner (sert kenar resmi keserdi: Nine'nin kolu).
+const BAND_COLOR := Color(0.02, 0.03, 0.06, 0.55)
+const BAND_PAD := 40.0
+const BAND_FADE := 220.0
 const SKIP_SIZE := Vector2(260, 122)
 ## ATLA ancak bu kadar sn sonra çalışır: filmin ATLA'sına çift dokunuş jeneriği de atlamasın (iki düğme aynı yerde).
 const SKIP_GUARD := 0.8
@@ -39,7 +44,7 @@ var held: bool = false
 ## Ersin'in bitiş resmi (Parti 5a ending; varsa jeneriğin arkasında, göl gizlenir) ve yazıların arkasındaki koyu
 ## şerit (resmin üstünde yazı okunsun).
 var _backdrop: TextureRect
-var _band: ColorRect
+var _band: TextureRect
 var _dim: ColorRect
 var _column: VBoxContainer
 var _offset: float = 0.0
@@ -69,8 +74,11 @@ func _ready() -> void:
 	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_dim)
 	if ending != null:
-		_band = ColorRect.new()
-		_band.color = Color(0.02, 0.03, 0.06, 0.55)
+		_band = TextureRect.new()
+		_band.name = "Band"
+		_band.texture = band_texture()
+		_band.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_band.stretch_mode = TextureRect.STRETCH_SCALE
 		_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_band)
 	_column = VBoxContainer.new()
@@ -98,6 +106,22 @@ func play() -> void:
 ## Yarıda kesildi (kayıt değişti): örtü gizlenir, finished yayılmaz.
 func stop() -> void:
 	hide()
+
+
+## Koyu şeridin dokusu: yatay geçiş, iki yanı saydam, ortası BAND_COLOR (tek çizim).
+static func band_texture() -> GradientTexture2D:
+	var width := WIDTH + 2.0 * (BAND_PAD + BAND_FADE)
+	var edge := BAND_FADE / width
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, edge, 1.0 - edge, 1.0])
+	gradient.colors = PackedColorArray([Color(BAND_COLOR, 0.0), BAND_COLOR, BAND_COLOR, Color(BAND_COLOR, 0.0)])
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.width = 256
+	texture.height = 1
+	texture.fill_from = Vector2(0.0, 0.0)
+	texture.fill_to = Vector2(1.0, 0.0)
+	return texture
 
 
 ## Yazıların toplam yüksekliği (bot ve testler: süre).
@@ -215,5 +239,6 @@ func _layout() -> void:
 	_column.size = Vector2(WIDTH, content_height())
 	_column.position = Vector2((view.x - WIDTH) * 0.5, view.y - _offset)
 	if _band != null:
-		_band.position = Vector2((view.x - WIDTH) * 0.5 - 60.0, 0.0)
-		_band.size = Vector2(WIDTH + 120.0, view.y)
+		var side := BAND_PAD + BAND_FADE
+		_band.position = Vector2((view.x - WIDTH) * 0.5 - side, 0.0)
+		_band.size = Vector2(WIDTH + 2.0 * side, view.y)
