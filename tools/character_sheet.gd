@@ -8,8 +8,8 @@ extends SceneTree
 ##   --model=res://.../Barbarian.glb  başka bir model (Dede ya da erkek balıkçı denemesi)
 ##   --raw                             dokuyu boyamadan ve parça gizlemeden çiz
 ##   --angler                          AnglerBody'yi (olta, şapka) oyundaki duruşlarla çiz
-##   --boy                             --angler ile: balıkçı oğlan (Knight; Dalga 5); --model ile Knight'ı oğlanın
-##                                     dokusuyla giydirir
+##   --boy                             --angler ile: balıkçı oğlan (Knight; Dalga 5). --model=…/Knight.glb tek
+##                                     başına da oğlanın dokusuyla giydirir
 ##   --elder                           Dede'yi (Elder: kasket, çay, balon) oyundaki duruşlarla, iskele
 ##                                     tahtasının kenarında oturtarak çiz (oturuş denetimi)
 ##   --nine                            Nine'yi (yazma, önlük, gözlük) oyundaki duruşlarla, ayakta çiz

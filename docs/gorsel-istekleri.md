@@ -744,7 +744,7 @@ bowl with a little silver fish in it.
 | `wardrobe` | dolap (balıkçıya dokununca açılan panelin başlığı, "Yeni kıyafet" bildirimi) |
 | `camera` | fotoğraf modu (Ayarlar'ın başlığı, balık kartı, "Fotoğraf kaydedildi" bildirimi) |
 | `cat_tekir` | Tekir (bildirimler, rehber, dolapta "Tekir'in hediyesi" kilidi) |
-| `gift` | Tekir'in hediyesi ("Tekir sana bir hediye getirdi!") |
+| `gift` | Tekir'in hediyesi ("Tekir sana hediye getirdi: Hasır şapka!" bildirimi; görsel gelene kadar dolap ikonu) |
 | `donation_box` | akvaryumun bağış kutusu (Akvaryum paneli, "Ziyaretçiler bağış bıraktı" bildirimi) |
 | `cat_bowl` | acıkan Tekir'in balonu |
 
@@ -770,8 +770,8 @@ Ortasına bir şey çizilmişse: "Keep the frames exactly the same but make the 
 |---|---|
 | `photo_wood` | ahşap çerçeve |
 | `photo_polaroid` | anlık fotoğraf çerçevesi |
-| `photo_lotus` | nilüferli çerçeve |
-| `photo_paper` | eski kâğıt çerçeve |
+| `photo_lotus` | çiçekli (nilüferli) çerçeve |
+| `photo_paper` | eski kâğıt çerçeve (oyunda kodla çizilen hâli var: sarımsı kâğıt, yırtık kenar, pusula) |
 
 **3. `aquarium_bg.png`: akvaryumun arka planı**
 

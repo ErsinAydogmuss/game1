@@ -38,6 +38,18 @@ func test_feeding_takes_the_cheapest_fish() -> void:
 	assert_eq(save.cat_meal_at, save.catches, "son besleme şimdiki balık sayısında")
 	assert_eq(int(save.stats["cat_fed"]), 1, "sayaç")
 	assert_true(not CatRules.is_hungry(db.rules, save), "beslenince tok")
+	# En ucuz: ne en küçük ne son giren (çapak 25 cm 4 para; kızılkanat 30 cm 8, gümüş 18 cm 6).
+	var other := _save(db.rules.cat_meal_every)
+	other.bucket = [{ "fish": "rudd", "size_cm": 30, "stars": 2 }, { "fish": "bream", "size_cm": 25, "stars": 1 },
+			{ "fish": "silverside", "size_cm": 18, "stars": 3 }]
+	assert_eq(str(CatRules.feed(db, other).get("fish", "")), "bream", "en ucuz balık: ne en küçük ne son giren")
+	# Değer eşitse küçüğü (çapak 25 cm ve gümüş 12 cm: ikisi de 4 para; ilk giren çapak).
+	var tie := _save(db.rules.cat_meal_every)
+	tie.bucket = [{ "fish": "bream", "size_cm": 25, "stars": 1 }, { "fish": "rudd", "size_cm": 30, "stars": 2 },
+			{ "fish": "silverside", "size_cm": 12, "stars": 1 }]
+	assert_eq(Economy.fish_value(db, "bream", 25), Economy.fish_value(db, "silverside", 12), "örnekte değerler eşit")
+	var eaten := CatRules.feed(db, tie)
+	assert_eq([str(eaten.get("fish", "")), int(eaten.get("size_cm", 0))], ["silverside", 12], "değer eşitse küçüğü")
 	assert_eq(CatRules.feed(db, save), {}, "tokken yemez, kova aynı")
 	assert_eq(save.bucket.size(), 3, "tok kedi balık almaz")
 

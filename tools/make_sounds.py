@@ -1554,7 +1554,7 @@ def registry():
         "lantern_1": lantern, "love_up_1": love_up, "trash_1": trash,
         # Gölün Sırrı (Dalga 4, 5. adım): şişe ve mektup; final: Bekçi'nin dalışı.
         "bottle_1": bottle, "paper_1": paper, "dive_1": dive,
-        # Tekir (Dalga 5): miyav, mırlama, yeme.
+        # Tekir (Dalga 5): miyav, mırlama, yeme; fotoğraf modunun deklanşörü.
         "meow_1": meow, "purr_1": purr, "cat_eat_1": cat_eat, "shutter_1": shutter,
     }
     for name, fn in singles.items():

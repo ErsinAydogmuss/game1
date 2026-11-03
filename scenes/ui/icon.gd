@@ -37,7 +37,7 @@ const ART_NAMES := {
 	"weather_rain": "weather_rain", "weather_fog": "weather_fog", "weather_storm": "weather_storm",
 	"tea": "tea", "love": "love", "requests": "requests", "lantern": "lantern_lit",
 	# Dalga 5 (Parti 5b): akvaryumun bağış kutusu (görseli yoksa kodla).
-	"donation_box": "donation_box", "wardrobe": "wardrobe", "camera": "camera", "cat": "cat_tekir",
+	"donation_box": "donation_box", "wardrobe": "wardrobe", "camera": "camera", "cat": "cat_tekir", "gift": "gift",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem, Ekstra ve tekniğe özel sekmeleri (yapay yem, kurşun, sinek).
@@ -46,7 +46,7 @@ const GEAR_ART := {"line": "line_braid", "bait": "bait_worm", "net": "net", "boa
 ## Yalnızca görselle çizilen adların görseli yokken kodla çizilen yedeği (teknik düğmeleri,
 ## takım çantası, tekniğe özel sekmeler).
 const FALLBACK := {"lure": "bait", "rig": "bait", "fly": "bait", "tech_float": "bobber", "tech_spin": "rod",
-		"tech_bottom": "rod", "tech_fly": "rod", "tech_trap": "net", "tackle_bag": "bucket"}
+		"tech_bottom": "rod", "tech_fly": "rod", "tech_trap": "net", "tackle_bag": "bucket", "gift": "wardrobe"}
 
 ## Nadirlik şekli (rarities.json "shape") → arayüz kitindeki rozet görseli (assets/icons/ui).
 ## Görsel varsa renk tint'ten değil görselden gelir; test_art_sheet her nadirliği denetler.

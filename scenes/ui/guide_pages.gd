@@ -1,6 +1,6 @@
 class_name GuidePages
 extends RefCounted
-## "Nasıl oynanır?" rehberinin içeriği (GuidePanel çizer, test_guide denetler). Rehber 10 sayfa;
+## "Nasıl oynanır?" rehberinin içeriği (GuidePanel çizer, test_guide denetler). Rehber 11 sayfa;
 ## her sayfada bir giriş cümlesi ve karolar var. Bir karo şunlardan oluşur:
 ## - görsel ve başlık;
 ## - metin: biçimli; sayıları veriden gelir;
@@ -369,6 +369,8 @@ static func _text_args(db: ContentDB, key: String) -> Array:
 			return [roundi(DayClock.day_s(db.rules) / 60.0)]
 		"UI_GUIDE_REQUESTS_TEXT":
 			return [db.requests.slots]
+		"UI_GUIDE_CAT_TEXT":
+			return [db.rules.cat_gift_every, db.outfits.cat_gift_count()]
 	return []
 
 

@@ -180,6 +180,8 @@ var wardrobe_panel: WardrobePanel
 var photo: PhotoMode
 ## Fotoğraf karttan açıldı: kart gizli, balık balıkçının önünde; çıkınca kart geri gelir.
 var _photo_from_card: bool = false
+## Karttan fotoğrafta balıkçı kameraya döner; çıkınca bu yöne geri döner (sıfır: dönmedi).
+var _photo_facing := Vector2.ZERO
 ## Yeni oyunda balıkçı seçiliyor: seçilince açılış filmi başlar.
 var _choosing: bool = false
 ## "Bugün" paneli (saat çipine dokununca): vakit, bugünün ve yarının havası, Dede'yle çay, göl sevgisi.
@@ -745,7 +747,7 @@ func _build_input() -> void:
 	input.line_out = func() -> bool: return session.line_out()
 	input.hit_targets = [
 		# Tekir küçük ve dar dokunma alanlı: Dede'den önce (Dede'nin yanında oturabilir).
-		["cat", func(screen: Vector2) -> bool: return cat.hit(camera, screen)],
+		["cat", func(screen: Vector2) -> bool: return not in_boat and cat.hit(camera, screen)],
 		# Balıkçının kendisi: dolap (sandalda değil: orada her dokunuş atış).
 		["angler", func(screen: Vector2) -> bool: return not in_boat and angler.hit(camera, screen)],
 		["dede", func(screen: Vector2) -> bool: return elder.hit(camera, screen)],
@@ -2754,9 +2756,16 @@ func _open_photo(from_card: bool) -> void:
 					false)
 			catch_fx.held = true
 			angler.cheer()
+			# Kupa fotoğrafı: balıkçı kameraya döner, balık önünde; çıkınca eski yönüne.
+			_photo_facing = angler.facing
+			angler.face_now(Vector2(sin(FollowCamera.YAW), cos(FollowCamera.YAW)))
 	elif session.state != FishingSession.State.IDLE:
 		return
 	_photo_from_card = from_card
+	# Donuk karede yürüyüş sürmesin, çıkınca bekleyen atış patlamasın.
+	angler.stop()
+	_pending_cast = Dice.NO_POINT
+	_forget_pickups()
 	input.release_all()
 	hud.visible = false
 	# Karttan: kamera balıkçıya yaklaşır (tutulan balık fotoğrafta seçilsin).
@@ -2770,6 +2779,9 @@ func _on_photo_closed() -> void:
 		catch_fx.held = false
 		catch_fx.clear()
 		card.visible = true
+		if _photo_facing != Vector2.ZERO:
+			angler.face_now(_photo_facing)
+			_photo_facing = Vector2.ZERO
 
 
 # --- Kıyafetler (Dalga 5) -----------------------------------------------------------
@@ -2800,12 +2812,16 @@ func _check_outfits() -> void:
 		return
 	Outfits.announce(save, fresh)
 	var text: String
+	var icon := "wardrobe"
 	if fresh.size() == 1:
 		var name := tr("OUTFIT_" + fresh[0])
-		text = (tr("UI_OUTFIT_GIFT") if str(db.outfits.item(fresh[0])["unlock"]) == "cat" else tr("UI_OUTFIT_NEW")) % name
+		var gift := str(db.outfits.item(fresh[0])["unlock"]) == "cat"
+		text = (tr("UI_OUTFIT_GIFT") if gift else tr("UI_OUTFIT_NEW")) % name
+		if gift:
+			icon = "gift"
 	else:
 		text = tr("UI_OUTFIT_NEW_MANY") % fresh.size()
-	hud.toast_later(text, UiKit.SUCCESS, "equip", "wardrobe", "outfit")
+	hud.toast_later(text, UiKit.SUCCESS, "equip", icon, "outfit")
 	if not save.flags.has(OUTFIT_TOLD_FLAG):
 		_world_line_due = true
 	GameState.save_game()
@@ -2836,7 +2852,7 @@ func _cat_target() -> Vector2:
 	return open if Dice.is_point(open) else _cat_home()
 
 
-## Oturumun başında kedi hemen yerinde (balıkçının arkasında ya da evinde), balıkçıya bakar.
+## Oturumun başında kedi hemen yerinde (balıkçının yanında ya da evinde), balıkçıya bakar.
 func _place_cat() -> void:
 	var target := _cat_target()
 	cat.place(target, angler.pos2() - target)
@@ -2848,7 +2864,8 @@ func _update_cat() -> void:
 	var look := angler.pos2() if not in_boat and zone_id == _cat_zone else _cat_home() + Vector2(0.0, 1.0)
 	cat.go_to(_cat_target(), look)
 	var hungry := CatRules.is_hungry(GameState.db.rules, GameState.save)
-	cat.hungry = hungry
+	# Filmde (açılış, bitiş, HİKÂYE) balıklı balon çıkmaz: arayüz ve sözler de gizli.
+	cat.hungry = hungry and _film == null
 	if hungry and not _cat_was_hungry and not GameState.save.flags.has(CAT_HUNGRY_FLAG):
 		_world_line_due = true
 	_cat_was_hungry = hungry
@@ -2903,6 +2920,9 @@ func _on_aquarium() -> void:
 	_forget_pickups()
 	input.release_all()
 	_sync_aquarium()
+	# Tankı kendisi bulan oyuncuya Nine sonradan "tanka dokun" demez (balık varken: Nine'nin sözü de öyle).
+	if not Aquarium.fish(GameState.db, GameState.save).is_empty():
+		GameState.save.flags[AQUARIUM_FLAG] = true
 	aquarium_panel.open()
 
 
@@ -3315,6 +3335,8 @@ func _on_shop() -> void:
 		line = "UI_NINE_AQUARIUM"
 		GameState.save.flags[AQUARIUM_FLAG] = true
 		GameState.save_game()
+		if coins > 0:
+			hud.toast_later(tr("UI_AQUARIUM_GOT") % UiKit.format_int(coins), UiKit.ACCENT, "", "donation_box", "aquarium")
 	elif coins > 0:
 		line = "UI_NINE_AQUARIUM_COINS"
 		args = [UiKit.format_int(coins)]

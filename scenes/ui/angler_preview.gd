@@ -64,6 +64,19 @@ func _init() -> void:
 	_world.add_child(_pivot)
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED or what == NOTIFICATION_ENTER_TREE:
+		_sync_processing()
+
+
+## Gizliyken (dolap kapalı, başka sekme) önizlemenin dünyası işlemez: animasyon ağacı, iskelet ve oltanın yönü her
+## karede boşa çalışmasın (UPDATE_WHEN_VISIBLE yalnızca çizimi durdurur).
+func _sync_processing() -> void:
+	var shown := is_inside_tree() and is_visible_in_tree()
+	_viewport.process_mode = Node.PROCESS_MODE_INHERIT if shown else Node.PROCESS_MODE_DISABLED
+	set_process(shown)
+
+
 ## Görünüşü kurar ya da değiştirir (girl, boy).
 func show_look(kind: String) -> void:
 	if kind == look and _body != null:

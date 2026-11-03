@@ -2,8 +2,8 @@ class_name CreditsPanel
 extends Control
 ## Jenerik (docs/gdd.md §10.5; bitiş filminden sonra): StoryPanel gibi "modal" örtü, Dialog değil: göl arkada
 ## yaşar, oyun girdisi kapalı. Koyu yarı saydam zemin; ortada aşağıdan yukarı kendiliğinden kayan yazılar: logo,
-## emek verenler (ROLES: Ersin fikir ve görseller, Claude kod, KayKit ve Kenney 3B modeller, yazı tipleri, kodla
-## üretilen sesler), teşekkür ve son söz. Sağ üstte ATLA (güvenli alanda, 122 boy; açıldıktan SKIP_GUARD sn
+## emek verenler (ROLES: Ersin fikir ve görseller, Claude kod, KayKit, Kenney ve Quaternius 3B modeller, yazı
+## tipleri, kodla üretilen sesler), teşekkür ve son söz. Sağ üstte ATLA (güvenli alanda, 122 boy; açıldıktan SKIP_GUARD sn
 ## sonra çalışır); yazılar bitince ya da ATLA'da finished. Süreler _process(delta) toplamıyla.
 
 signal finished(skipped: bool)
@@ -23,7 +23,7 @@ const MAX_STEP := 0.1
 const ROLES: Array[Array] = [
 	["UI_CREDITS_IDEA", ["Ersin"]],
 	["UI_CREDITS_CODE", ["Claude"]],
-	["UI_CREDITS_MODELS", ["KayKit · Kay Lousberg", "Kenney"]],
+	["UI_CREDITS_MODELS", ["KayKit · Kay Lousberg", "Kenney", "Quaternius"]],
 	["UI_CREDITS_FONTS", ["Luckiest Guy · Astigmatic", "Baloo 2 · Ek Type"]],
 	["UI_CREDITS_SOUND", ["UI_CREDITS_SOUND_BY"]],
 	["UI_CREDITS_THANKS", ["UI_CREDITS_PLAYERS"]],

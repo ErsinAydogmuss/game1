@@ -695,15 +695,15 @@ UI_AQUARIUM_CAP,"Fills while you're away, up to %d hours","Sen yokken de dolar, 
 UI_AQUARIUM_FULL,The box is full! Collect it so it fills again.,Kutu doldu! Topla da yine dolsun.
 UI_AQUARIUM_COLLECT,Collect,Topla
 UI_AQUARIUM_EMPTY,The tank is empty. Catch a fish: the biggest of each kind swims here.,Tank boş. Bir balık tut: her türün en irisi burada yüzer.
-UI_AQUARIUM_NOTE,The biggest of each kind joins the tank by itself; the fish in your bucket can still be sold. Protected fish go back to the lake. Visiting the shop empties the box.,Her türün en irisi tanka kendiliğinden girer; kovadaki balık yine satılır. Koruma altındaki balıklar göle döner. Dükkâna uğrayınca kutu boşalır.
+UI_AQUARIUM_NOTE,The biggest of each kind joins the tank by itself; the fish in your bucket can still be sold. Protected fish go back to the lake. Visiting the shop collects the box.,Her türün en irisi tanka kendiliğinden girer; kovadaki balık yine satılır. Koruma altındaki balıklar göle döner. Dükkâna uğrayınca kutudaki para sana geçer.
 UI_AQUARIUM_GOT,Aquarium visitors left %s coins,Akvaryuma gelenler %s para bıraktı
 UI_NINE_AQUARIUM,Tap the tank on my counter! Your fish swim there.,Tezgâhtaki tanka dokun! Balıkların orada yüzüyor.
 UI_NINE_AQUARIUM_COINS,Visitors left %s coins at the tank. Here!,Tanka gelenler %s para bıraktı. Al bakalım!
 UI_CAT_ATE,Yum! Tekir ate: %s,Tekir afiyetle yedi: %s
 UI_DEDE_CAT_HELLO,"That's Tekir, the dock cat. Tekir loves a small fish.","Bu Tekir, iskelenin kedisi. Arada bir balık ister."
 UI_DEDE_CAT_HUNGRY,Tekir is hungry! Tap Tekir to share a small fish.,"Tekir acıktı! Dokun, kovandan küçük bir balık yesin."
-UI_DEDE_CAT_FED,Well done! Tekir likes you and will tag along.,"Afiyet olsun! Tekir seni sevdi, hep peşinde artık."
-UI_DEDE_CAT_EMPTY,"Tekir is hungry, but your bucket is empty.",Tekir aç ama kovan boş. Önce bir balık tut.
+UI_DEDE_CAT_FED,Good kitty! Tekir really likes you now.,Afiyet olsun! Tekir seni çok sevdi.
+UI_DEDE_CAT_EMPTY,"Tekir is hungry, but your bucket is empty. Catch a fish first.",Tekir aç ama kovan boş. Önce bir balık tut.
 UI_WARDROBE,Wardrobe,Dolap
 UI_WARDROBE_NOTE,Switch your angler any time. Your progress stays the same.,Balıkçını istediğin zaman değiştir. İlerlemen aynen kalır.
 UI_CHAR_TITLE,Choose your angler,Balıkçını seç
@@ -720,28 +720,28 @@ OUTFIT_hat_cap,Flat cap,Kasket
 OUTFIT_hat_fly,Fly hat,Sinekçi şapkası
 OUTFIT_hat_crown,Flower crown,Çiçek tacı
 OUTFIT_hat_keeper,Keeper's hat,Bekçi'nin şapkası
-OUTFIT_vest_yellow,Yellow,Sarı
-OUTFIT_vest_red,Red,Kırmızı
-OUTFIT_vest_green,Green,Yeşil
-OUTFIT_vest_blue,Blue,Mavi
-OUTFIT_vest_purple,Purple,Mor
-OUTFIT_vest_pink,Pink,Pembe
-OUTFIT_vest_navy,Navy,Lacivert
+OUTFIT_vest_yellow,Yellow vest,Sarı yelek
+OUTFIT_vest_red,Red vest,Kırmızı yelek
+OUTFIT_vest_green,Green vest,Yeşil yelek
+OUTFIT_vest_blue,Blue vest,Mavi yelek
+OUTFIT_vest_purple,Purple vest,Mor yelek
+OUTFIT_vest_pink,Pink vest,Pembe yelek
+OUTFIT_vest_navy,Navy vest,Lacivert yelek
 OUTFIT_rod_plain,Natural,Doğal
 OUTFIT_rod_red,Red wrap,Kırmızı kaplama
 OUTFIT_rod_flower,Flower wrap,Çiçekli kaplama
 OUTFIT_rod_night,Night wrap,Gece kaplaması
-OUTFIT_rod_keeper,Keeper's wrap,Bekçi kaplaması
+OUTFIT_rod_keeper,Keeper's wrap,Bekçi'nin kaplaması
 UI_OUTFIT_RANK,Rank %d,Rütbe %d
 UI_OUTFIT_SPECIES,%d species in the book,Defterde %d tür
-UI_OUTFIT_REQUESTS,%d requests done,%d istek
+UI_OUTFIT_REQUESTS,Finish %d requests,%d istek bitir
 UI_OUTFIT_LOVE,Lake love %d,Göl sevgisi %d
-UI_OUTFIT_KEEPER,The Lake Keeper,Gölün Bekçisi
+UI_OUTFIT_KEEPER,Let the Lake Keeper go,Gölün Bekçisi'ni göle bırak
 UI_OUTFIT_CAT,Tekir's gift %d,Tekir'in %d. hediyesi
 UI_OUTFIT_NEW,New outfit: %s! Tap your angler.,Yeni kıyafet: %s! Balıkçına dokun.
 UI_OUTFIT_GIFT,Tekir brought you a gift: %s!,Tekir sana hediye getirdi: %s!
 UI_OUTFIT_NEW_MANY,%d new outfits in the wardrobe! Tap your angler.,Dolapta %d yeni kıyafet! Balıkçına dokun.
-UI_DEDE_OUTFIT_FIRST,A new outfit for you! Tap yourself to open the wardrobe.,"Yeni bir kıyafetin var evlat! Kendine dokun, dolap açılsın."
+UI_DEDE_OUTFIT_FIRST,A new outfit for you! Tap your angler to open the wardrobe.,"Yeni bir kıyafetin var evlat! Balıkçına dokun, dolap açılsın."
 UI_WARDROBE_TAB_ANGLER,Angler,Balıkçı
 UI_WARDROBE_TAB_HAT,Hats,Şapka
 UI_WARDROBE_TAB_VEST,Vests,Yelek
@@ -757,11 +757,12 @@ UI_PHOTO_FRAME_NONE,No frame,Çerçevesiz
 UI_PHOTO_FRAME_WOOD,Wood,Ahşap
 UI_PHOTO_FRAME_POLAROID,Polaroid,Polaroid
 UI_PHOTO_FRAME_FLOWER,Flowers,Çiçekli
+UI_PHOTO_FRAME_PAPER,Old paper,Eski kâğıt
 UI_GUIDE_HOME,Home,Yuva
 UI_GUIDE_HOME_LEAD,"A home by the lake: the aquarium, Tekir, your wardrobe and photos.","Göl kenarında bir yuva: akvaryum, Tekir, dolap ve fotoğraflar."
 UI_GUIDE_AQUARIUM_TEXT,The biggest of each species swims in Nana's tank. Visitors drop coins in the box; collect them at the shop.,"Nine'nin tankında her türün en irisi yüzer. Ziyaretçiler kutuya para bırakır, dükkâna uğrayınca toplanır."
 UI_GUIDE_CAT,Tekir,Tekir
-UI_GUIDE_CAT_TEXT,Tekir follows you. Tap when hungry: Tekir eats the cheapest fish. Every 5 meals brings a gift (5 in all).,"Peşinden gelir. Acıkınca dokun, kovadaki en ucuz balığı yer. Her 5 beslemede bir hediye getirir (5 hediye)."
+UI_GUIDE_CAT_TEXT,Tekir follows you. Tap when hungry: Tekir eats the cheapest fish. Every %d meals brings a gift (%d in all).,"Peşinden gelir. Acıkınca dokun, kovadaki en ucuz balığı yer. Her %d beslemede bir hediye getirir (%d hediye)."
 UI_GUIDE_WARDROBE_TEXT,"Tap your angler: girl or boy, hats, vests and rod wraps. New ones unlock as you play.","Balıkçına dokun: kız ya da oğlan, şapka, yelek, olta kaplaması. Oynadıkça yenileri açılır."
 UI_GUIDE_PHOTO,Photo,Fotoğraf
-UI_GUIDE_PHOTO_TEXT,"The camera in Settings or on a fish card: drag, pick a frame, snap! Saved in the Olta folder in Files.","Ayarlar'daki ya da balık kartındaki kamera: sürükle, çerçeve seç, çek! Dosyalar'da Olta klasöründe."
+UI_GUIDE_PHOTO_TEXT,"The camera in Settings or on a fish card: drag, pick a frame, snap! Photos go to the Olta folder in Files.","Ayarlar'daki ya da balık kartındaki kamera: sürükle, çerçeve seç, çek! Fotoğraflar Dosyalar'da, Olta klasöründe."

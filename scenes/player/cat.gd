@@ -38,6 +38,8 @@ var _body: Node3D
 var _target := Dice.NO_POINT
 var _route := PackedVector2Array()
 var _route_goal := Dice.NO_POINT
+## Son aranan yol hedefe varmıyor (yarıda bitiyor): hedef REPATH'ten çok kaymadıkça yeniden aranmaz.
+var _partial: bool = false
 ## Yüzün yönü (dünya xz) ve varınca bakılacak nokta.
 var _facing := Vector2(1.0, 0.0)
 var _look := Dice.NO_POINT
@@ -132,8 +134,14 @@ func _walk(delta: float) -> void:
 		_turn_to(_look, delta)
 		return
 	if _route.is_empty() or not Dice.is_point(_route_goal) or _route_goal.distance_to(_target) > REPATH:
+		if _route.is_empty() and _partial and Dice.is_point(_route_goal) and _route_goal.distance_to(_target) <= REPATH:
+			# Hedefe yol yok (kapalı çitin ardı): yolun ucunda bekler; hedef kaymadıkça yeniden aramaz (her karede
+			# arama bütün yürünebilen alanı tarardı).
+			_turn_to(_look, delta)
+			return
 		_route = path.route(here, _target)
 		_route_goal = _target
+		_partial = _route.is_empty() or _route[_route.size() - 1].distance_to(_target) > ARRIVE
 		if _route.is_empty():
 			return
 	var left := ShorePath.length_of(here, _route)

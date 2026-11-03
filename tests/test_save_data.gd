@@ -496,7 +496,7 @@ func test_v6_save_reads_back() -> void:
 	assert_eq(Records.species_count(s.records), 19, "19 tür defterde")
 	assert_eq(Rank.rank(db, s), 16, "rütbe 16")
 	# Akvaryum: satılan türlerin hepsi tankta, kutu kaydın saatinde; saat ilerleyince üst sınırda durur.
-	assert_eq(Aquarium.fish(db, s).size(), Aquarium.capacity(db), "tank dolu")
+	assert_eq(Aquarium.fish(db, s).size(), 15, "tankta v0.6'nın 15 satılan türü")
 	assert_eq(s.aquarium_box, 2422, "kutudaki birikim")
 	assert_eq(s.aquarium_unix, 1762011862, "kutunun saati gerçek saatte")
 	var later := s.aquarium_unix + 10 * 3600
@@ -511,9 +511,15 @@ func test_v6_save_reads_back() -> void:
 	assert_eq(Outfits.equipped(db, s, "rod"), db.outfits.default_of("rod"), "olta varsayılan")
 	assert_eq(Outfits.new_count(db, s, "rod"), 4, "dört yeni kamış kaplaması")
 	assert_eq(Outfits.new_count(db, s, "hat") + Outfits.new_count(db, s, "vest"), 0, "şapka ve yelek görüldü")
-	assert_true(Outfits.fresh(db, s).is_empty(), "açılan her kıyafet duyuruldu")
-	for e in db.outfits.items:
-		assert_true(Outfits.unlocked(db, s, str(e["id"])), "bütün kıyafetler açık: %s" % e["id"])
+	# v0.6'nın 20 kıyafeti (sonradan eklenen kıyafetler bu örneği bozmasın): hepsi açık, başlangıçtakiler dışında
+	# hepsi duyurulmuş.
+	var v06 := ["hat_bucket", "hat_straw", "hat_red", "hat_beanie", "hat_cap", "hat_fly", "hat_crown", "hat_keeper",
+			"vest_yellow", "vest_red", "vest_green", "vest_blue", "vest_purple", "vest_pink", "vest_navy",
+			"rod_plain", "rod_red", "rod_flower", "rod_night", "rod_keeper"]
+	for id: String in v06:
+		assert_true(Outfits.unlocked(db, s, id), "v0.6'nın kıyafeti açık: %s" % id)
+		if not id in ["hat_bucket", "vest_yellow", "rod_plain"]:
+			assert_true(s.flags.has(Outfits.FLAG % id), "duyurulmuş: %s" % id)
 	assert_eq(s.traps.size(), 3, "üç tuzak kurulu")
 	assert_true(DayClock.day(rules, s.clock_s) > int(s.flags["keeper_day"]), "Bekçi'nin gecesinden sonraki bir gün")
 	var fresh := SaveData.from_dict(raw)

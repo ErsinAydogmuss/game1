@@ -50,10 +50,10 @@ extends Node
 ##     dokunuş (ölçüm açılır: sol üstte FPS, çizim, üçgen); sonra her bölgenin atış noktasına ve
 ##     sandalla derin ortaya geçer; her yerde ÇİZİM satırı (çizim ve üçgen sayısı) ve ekran görüntüsü;
 ##     KONTROL: her yerde en çok TOUR_DRAWS çizim.
-##   video: v0.5 tanıtımı, canlı dünya (--write-movie ile kaydedilir): rütbe 9'un oyuncusu; akşam iskelede Dede'nin
-##     isteği biter; Bugün paneli ve çay; Nine'nin feneriyle gece, ateşböcekleri; sabah yağmur; sazlıkta şişe ve
-##     mektup; sisli gecede sandalla derin orta, Bekçi'nin dev gölgesi sandalın çevresinde yüzüp dalar (yalnızca
-##     görünüş).
+##   video: v0.6 tanıtımı, yuva ve kişilik (--write-movie ile kaydedilir): yeni oyunda "Balıkçını seç" (oğlan),
+##     film başlar ve atlanır; dönen bir oyuncunun kaydı: yeni türün kartından fotoğraf (polaroid), Tekir mırlar,
+##     acıkır, yer ve hasır şapka getirir; dolapta kıyafetler; tezgâhta akvaryum ve TOPLA; akşam Ayarlar'dan
+##     fotoğraf modu (kamera döner, çiçekli çerçeve).
 ##   reels: Instagram Reels reklamının çekimi (--write-movie ile; tools/reels_ad.py dikey videoyu kurgular):
 ##     rütbe 9'un oyuncusu. İskelede Nine ve Dede yakın çekim, uzaklaşan geniş çekim; nilüferli koyda
 ##     altın sazan, kayalık burunda spinle turna, sazlıkta dolu tuzak ve dipte aynalı sazan, dere ağzında
@@ -109,11 +109,12 @@ extends Node
 ##   aquarium: akvaryum (Dalga 5). Boş tank: tezgâhta balık yok, tanka dokun → panel küçülmeden sığar, "Tank boş",
 ##     TOPLA pasif; deftere türler girince tezgâhın tankında en değerli 5 balık, iskelede ÇİZİM ≤ TOUR_DRAWS; tanka
 ##     dokun → panelde her satılan türün en irisi yüzer (mersin yok), 3 saat sonra kutu üst sınırda ("doldu"), TOPLA
-##     → para, kutu boş; Nine'ye dokun → dükkân açılır (akvaryum değil), kutu kendiliğinden toplanır, ilk seferde
-##     Nine tanka dokunmayı söyler, sonraki seferde bıraktıkları parayı; telefon oranında, --safe-inset=130, TR ve EN.
-##   cat: Tekir (Dalga 5). Oturum başında balıkçının arkasında; balıkçı karada yürüyünce peşinden gelir; dokun → mırlar
+##     → para, kutu boş; Nine'ye dokun → dükkân açılır (akvaryum değil), kutu kendiliğinden toplanır; tanka dokunmuş
+##     oyuncuya Nine bıraktıkları parayı söyler, tanka hiç dokunmamışa bir kez tanka dokunmayı; telefon oranında,
+##     --safe-inset=130, TR ve EN.
+##   cat: Tekir (Dalga 5). Oturum başında balıkçının yanında; balıkçı karada yürüyünce peşinden gelir; dokun → mırlar
 ##     (kalpli balon, Dede tanıştırır, balıkçı yürümez); yeterince balık tutulunca acıkır (balıklı balon, Dede söyler);
-##     kova boşken dokun → yemez (Dede söyler); kovada iki balık → en ucuzunu yer (bildirim, Dede); balıkçı başka
+##     kova boşken dokun → yemez (Dede söyler); kovada üç balık → en ucuzunu yer (bildirim, Dede); balıkçı başka
 ##     bölgeye geçince evine döner, iskeleye dönünce yine gelir; sandala binince evine; iskelede ÇİZİM ≤ TOUR_DRAWS
 ##     (temiz, ve yağmurda Dede konuşurken); telefon oranında, --safe-inset=130, TR ve EN.
 ##   character: karakter seçimi ve dolap (Dalga 5). Yeni oyunda filmden önce "Balıkçını seç" (kapatma yok, küçülmeden
@@ -128,7 +129,7 @@ extends Node
 ##     oğlana geçince kıyafet aynen; telefon oranında, --safe-inset=130, TR ve EN.
 ##   photo: fotoğraf modu (Dalga 5). Ayarlar'ın kamera düğmesi → fotoğraf modu (arayüz gizli, oyun donuk, dünyadaki
 ##     2B yazılar görüntüye girmez, düğmeler ≥122 ve güvenli alanda); sürükle → kamera döner ve eğilir; yakınlaştır;
-##     polaroid çerçeve; deklanşör → user://photos'ta PNG, boyu görüntünün boyu, düğmeler fotoğrafa girmez; çıkışta
+##     polaroid ve eski kâğıt çerçeve; deklanşör → user://photos'ta PNG, boyu görüntünün boyu, düğmeler fotoğrafa girmez; çıkışta
 ##     kamera eski açısında, arayüz geri; balık kartının kamera düğmesi → kart gizli, balık elde; çıkınca kart geri;
 ##     telefon oranında, --safe-inset=130, TR ve EN.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
@@ -4313,176 +4314,238 @@ func _play_fish() -> void:
 	_quit()
 
 
-## Tanıtım videosu (Dalga 4, v0.5: canlı dünya). Oyun zamanı --fixed-fps ile kare kare akar; bekleyişler oyun
-## zamanıyla. Dönen bir oyuncu (rütbe 9, sandal, göl sevgisi 4, Dede'nin istekleri açık): akşam iskelede bir isteği
-## bitiren balık (bildirim, Dede'nin aferini); saat çipine dokununca "Bugün" paneli, Dede'yle çay: gece olur; Nine'nin
-## feneri (ilk gece), ateşböcekleri ve lambalar, gece balığı; sabah yağmur: damlalar ve halkalar, yağmurda balık;
-## sazlıkta suda bir şişe: haritadan oraya, dokununca mektup açılır, Dede yazanı tanır; sisli gece sandalla derin
-## ortada: turkuaz dev bir gölge sandalın çevresinde yüzüp dalar ve Dede söyler (Gölün Bekçisi yalnızca sezdirilir:
-## karşılaşma yok, gölge yalnızca görünüş).
+## Tanıtım videosu (Dalga 5, v0.6: yuva ve kişilik). Oyun zamanı --fixed-fps ile kare kare akar; bekleyişler oyun
+## zamanıyla. Yeni oyun: "Balıkçını seç" ekranında oğlan seçilir, film onunla başlar (birkaç söz, ATLA). Kararmada
+## dönen bir oyuncunun kaydı (rütbe 8, 12 tür, göl sevgisi 4, Tekir dört kez beslenmiş, akvaryumun kutusu dolu):
+## iskelede yeni bir tür (sudak), kartın kamerasıyla fotoğraf (balık elde, polaroid); Tekir'e dokun: mırlar, Dede
+## tanıştırır; Tekir acıkır, kovadaki en ucuz balığı yer ve beşinci beslemede hasır şapka getirir; balıkçıya dokun:
+## dolap (hasır şapka, mavi yelek, kırmızı kamış kaplaması; Balıkçı sekmesinde iki balıkçı da kıyafetle); tezgâhtaki tanka
+## dokun: akvaryum, TOPLA; tezgâha yürür (Tekir peşinden), kıyafetle yakın çekim; akşam olur, Ayarlar'ın kamerasıyla
+## fotoğraf modu: kamera döner, çiçekli çerçeve, deklanşör.
 func _play_video() -> void:
-	_use_save(60)
+	_intro = true
+	_use_save(0)
 	var db := GameState.db
 	var rules := db.rules
 	var save := GameState.save
-	var spot := str(main.get("spot_id"))
 	var hud := _hud()
 	var fade: Fade = main.get("fade")
-	var day_panel: DayPanel = main.get("day_panel")
-	var map_panel: MapPanel = main.get("map_panel")
-	var letters: LetterPanel = main.get("letter_panel")
-	var bottle: BottleMarker = main.get("bottle")
-	_roomy_bucket()
-	save.xp = db.rank_xp[8]
-	save.love = rules.love_levels[3]
-	save.coins = 1200
-	for f: Array in [["rudd", 26, 4], ["carp", 52, 3], ["perch", 31, 2], ["silverside", 14, 2], ["bream", 40, 3],
-			["tench", 38, 3], ["pike", 80, 3], ["zander", 60, 3], ["chub", 34, 2]]:
-		Records.add(save.records, f[0], f[1], f[2], 0)
-	for id: String in ["rod_spin_light", "rod_carp_1", Zones.BOAT]:
-		if not id in save.owned:
-			save.owned.append(id)
-	# Haritada "Yeni!" yok; Dede'nin vakit, hava ve sevgi sözleri çoktan söylenmiş (videoda yalnızca isteğin, çayın,
-	# fenerin, şişenin ve Bekçi'nin sözleri).
-	for z in db.zones_of(spot):
-		save.flags["visited_" + str(z["id"])] = true
-	for phase: String in DayClock.PHASES:
-		save.flags["told_time_" + phase] = true
-	for kind: String in Weather.KINDS:
-		save.flags["told_weather_" + kind] = true
-	for level in range(2, LakeLove.max_level(rules) + 1):
-		save.flags["told_love_%d" % level] = true
-	# Akşam (saat donuk: vakitler çay ve VAKİT + ile değişir); Dede'nin istekleri açık (öteki senaryolarda kapalı).
-	save.clock_s = 2 * rules.phase_s + 40
-	save.request_day = -1
-	main.call("_start_session")
+	var story: StoryPanel = main.get("story_panel")
+	var wardrobe: WardrobePanel = main.get("wardrobe_panel")
+	var card: FishCard = main.get("card")
+	var photo: PhotoMode = main.get("photo")
+	var settings: SettingsPanel = main.get("settings_panel")
+	var aquarium: AquariumPanel = main.get("aquarium_panel")
+	var shop: ShopStall = main.get("shop")
+	var camera: FollowCamera = main.get("camera")
+	var cat: Cat = main.get("cat")
+	var angler := _angler()
+	var view := get_viewport().get_visible_rect().size
 	await _wait(1.6)
-	_check("video: akşam, Dede'nin istekleri doldu", DayClock.phase(rules, save.clock_s) == "evening"
-			and not Requests.daily(db, save).is_empty())
-	# 1) Akşam iskelede bir yakalayışla biten istek (ilerleme bir eksik): bildirim, para, Dede'nin aferini.
-	var target := _request_by_catch(db, save)
-	if target.is_empty():
-		target = [{}, "rudd", 300_000]
-	elif not (target[0] as Dictionary).is_empty():
-		(target[0] as Dictionary)["progress"] = int((target[0] as Dictionary)["goal"]) - 1
-	var got := await _catch_at_dock(str(target[1]), int(target[2]))
-	_check("video: akşam istenen balık, istek biter (Dede'nin aferini)", got and await _wait_until(func() -> bool:
-			return str(main.get("_hint_shown")) == "UI_DEDE_REQ_DONE", 10.0))
-	await _wait(1.4)
-	await _shot("v1_aksam_istek")
-	# 2) Saat çipi: "Bugün" paneli (akşam, bugünün ve yarının havası, çay, göl sevgisi, istekler); ÇAY İÇ: gece.
-	await _tap_control(hud.world_button)
-	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
-	await _wait(2.6)
-	await _shot("v2_bugun")
-	var tea := day_panel.tea_button()
-	if tea != null and not tea.disabled:
-		await _tap_control(tea)
-	await _wait_until(func() -> bool: return DayClock.phase(rules, save.clock_s) == "night", 6.0)
-	await _wait_until(func() -> bool: return not fade.busy(), 6.0)
-	_check("video: Dede'yle çay, gece oldu", DayClock.phase(rules, save.clock_s) == "night")
-	# 3) Gece: Nine'nin feneri (ilk gece: bildirim, Dede), ateşböcekleri, lambaların ışığı; gece balığı.
-	await _wait(3.4)
-	await _shot("v3_gece_fener")
-	_check("video: ilk gece Nine'nin feneri", bool(save.flags.get("lantern", false)))
-	await _catch_at_dock("zander", 640_000)
-	await _wait(1.8)
-	# 4) Sabah yağmur (VAKİT +, HAVA): damlalar ve halkalar, yağmurun sesi; yağmurda balık.
-	main.call("_debug_time")
-	await _wait(0.5)
-	for i in Weather.KINDS.size():
-		if Weather.at(rules, save) == "rain":
-			break
-		main.call("_debug_weather")
-		await _wait_frames(2)
-	await _wait(2.6)
-	await _shot("v4_yagmur")
-	_check("video: sabah yağmur", DayClock.phase(rules, save.clock_s) == "morning" and Weather.at(rules, save) == "rain")
-	await _catch_at_dock("tench", 520_000)
-	await _wait(1.6)
-	# 5) Sazlıkta suda bir şişe (bildirim, Dede): haritadan sazlığa, dokununca mektup açılır; kapanınca Dede yazanı tanır.
-	save.letter_at = save.catches - Secret.LETTER_GAP
-	main.call("_sync_bottle")
-	await _wait_until(func() -> bool: return bottle.visible, 3.0)
+	# 1) Yeni oyun: "Balıkçını seç"; oğlan seçilir, film onunla başlar; birkaç söz, ATLA.
+	_check("video: yeni oyunda seçim ekranı", wardrobe.visible and wardrobe.is_first())
 	await _wait(2.4)
-	await _map_to(map_panel, fade, "reeds")
+	await _shot("v1_secim")
+	await _tap_control(wardrobe.find_child("Button_boy", true, false) as Control)
+	await _wait_until(func() -> bool: return story.visible, 2.0)
+	_check("video: oğlan seçildi, film başladı", save.character == "boy" and story.visible)
+	await _wait_until(func() -> bool: return story.index() >= 1, StoryPanel.LOGO_TIME + 12.0)
+	await _wait(2.4)
+	await _shot("v2_film")
+	await _tap(story.skip_button.get_global_rect().get_center())
+	await _wait_until(func() -> bool: return main.get("_film") == null and hud.visible, 6.0)
+	await _wait(1.2)
+	# Kararmada dönen bir oyuncunun kaydı: oturum yeniden kurulur (rütbe, bölgeler, Tekir, akvaryum hazır).
+	var now := GameState.clock.now_unix()
+	GameState.clock.fixed_unix = now
+	var setup := func() -> void:
+		save.catches = 40
+		save.xp = db.rank_xp[7]
+		save.love = rules.love_levels[3]
+		save.coins = 1200
+		for f: Array in [["rudd", 26], ["carp", 52], ["perch", 31], ["silverside", 14], ["bream", 40], ["tench", 38],
+				["pike", 80], ["chub", 34], ["wels", 150], ["golden_carp", 60], ["crayfish", 11], ["mirror_carp", 55]]:
+			Records.add(save.records, str(f[0]), int(f[1]), 3, now)
+		for z in db.zones_of(str(main.get("spot_id"))):
+			save.flags["visited_" + str(z["id"])] = true
+		for phase: String in DayClock.PHASES:
+			save.flags["told_time_" + phase] = true
+		for kind: String in Weather.KINDS:
+			save.flags["told_weather_" + kind] = true
+		for level in range(2, LakeLove.max_level(rules) + 1):
+			save.flags["told_love_%d" % level] = true
+		save.bucket = [{ "fish": "rudd", "size_cm": 22, "stars": 2 }, { "fish": "silverside", "size_cm": 12, "stars": 1 },
+				{ "fish": "perch", "size_cm": 28, "stars": 2 }]
+		# Tekir dört kez beslenmiş (beşincide hasır şapka: o şapka duyurulmamış); şimdilik tok.
+		save.cat_fed = rules.cat_gift_every - 1
+		save.cat_meal_at = save.catches
+		save.flags.erase(Outfits.FLAG % "hat_straw")
+		# Akvaryumun kutusu üç saattir doluyor: üst sınırda.
+		save.aquarium_box = 0
+		save.aquarium_unix = now - 3 * 3600
+		_roomy_bucket()
+		main.call("_start_session")
+	fade.play(setup)
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy(), 6.0)
 	await _wait(1.0)
-	if bottle.visible:
-		await _tap(_screen(bottle.point()))
-	_check("video: şişeye dokununca mektup açılır", await _wait_until(func() -> bool: return letters.visible, 4.0))
-	await _wait(3.6)
-	await _shot("v5_mektup")
-	await _tap_control(letters.close_button)
-	await _wait_until(func() -> bool: return str(main.get("_line")) == "UI_DEDE_LETTER_1", 3.0)
+	_check("video: dönen oyuncu, oğlan, Tekir yanında", save.catches >= 40 and angler.character == "boy"
+			and cat.pos2().distance_to(angler.pos2()) < 2.0)
+	# 2) Yeni tür (sudak): kart; kartın kamerasıyla fotoğraf (balık elde), polaroid, deklanşör.
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "zander", 600_000)
+	await _tap_world(Vector2(1.0, -1.0))
+	var bit := await _wait_state(FishingSession.State.BITING, 25.0)
+	if bit:
+		await _reel_like_player(6, 40.0)
+	var carded := await _wait_until(func() -> bool: return card.visible, 6.0)
+	_check("video: sudak tutuldu, yeni tür kartı", bit and carded)
 	await _wait(2.6)
-	# 6) Sisli gece, sandalla derin orta: turkuaz dev bir gölge sandalın çevresinde yüzüp dalar; Dede söyler.
-	for i in 3:
+	await _shot("v3_kart")
+	var card_photo := card.find_child("Photo", true, false) as Control
+	if card_photo != null and card.visible:
+		await _tap_control(card_photo)
+	await _wait(1.6)
+	_check("video: karttan fotoğraf modu, balık elde", photo.visible and not card.visible)
+	# Kamera alçalır ve biraz döner: balıkçı ve balık yandan görünsün.
+	var drag_from := view * Vector2(0.5, 0.32)
+	_touch(0, drag_from, true)
+	await _wait_frames(2)
+	for i in 24:
+		await _drag(0, drag_from + Vector2(-3.0 * (i + 1), 4.5 * (i + 1)))
+		await _wait_frames(1)
+	_touch(0, drag_from + Vector2(-72, 108), false)
+	await _wait(1.2)
+	await _tap_control(photo.find_child("Frame_polaroid", true, false) as Control)
+	await _wait(1.6)
+	await _shot("v4_polaroid")
+	await _press_shutter(photo)
+	_check("video: fotoğraf kaydedildi", await _wait_until(func() -> bool: return not photo.last_path.is_empty(), 5.0))
+	await _wait(2.2)
+	await _tap_control(photo.find_child("Close", true, false) as Control)
+	await _wait(1.0)
+	await _close_card(card)
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	await _wait(1.0)
+	# 3) Tekir: dokun → mırlar (kalp), Dede tanıştırır; kamera kediye yaklaşır (balıkçı da kadrajda).
+	await _tap(_screen(cat.global_position + Vector3(0.0, 0.2, 0.0)))
+	await _wait(0.2)
+	main.set("bot_camera", true)
+	_frame_on(cat.global_position.lerp(angler.global_position, 0.3) + Vector3(0.0, 0.3, 0.0), 0.46)
+	await _wait(0.7)
+	await _shot("v5_tekir")
+	await _wait(2.4)
+	main.set("bot_camera", false)
+	await _wait(1.6)
+	# 4) Tekir acıkır (balıklı balon): dokun → en ucuz balığı yer; beşinci besleme: hasır şapka hediye.
+	save.cat_meal_at = save.catches - rules.cat_meal_every
+	await _wait_until(func() -> bool: return cat.bubble.is_showing() and cat.bubble.kind == SpeechBubble.Kind.FISH,
+			5.0)
+	await _wait(1.6)
+	await _tap(_screen(cat.global_position + Vector3(0.0, 0.2, 0.0)))
+	var toast: Label = hud.get("_toast")
+	var gift_text := UiKit.upper(tr("UI_OUTFIT_GIFT") % tr("OUTFIT_hat_straw"))
+	var gifted := await _wait_until(func() -> bool: return toast.visible and toast.text == gift_text, 8.0)
+	_check("video: Tekir yedi, hasır şapka hediye", save.cat_fed == rules.cat_gift_every and gifted)
+	await _wait(1.0)
+	await _shot("v6_hediye")
+	await _wait(2.0)
+	# 5) Balıkçıya dokun: dolap (Şapka: hasır şapka yeni); hasır şapka, mavi yelek, kırmızı kaplama; Balıkçı sekmesi.
+	await _tap(_screen(angler.global_position + Vector3(0.0, 0.8, 0.0)))
+	await _wait_until(func() -> bool: return wardrobe.visible, 2.0)
+	_check("video: dolap Şapka sekmesinde", wardrobe.visible and wardrobe.current_tab() == "hat")
+	await _wait(1.6)
+	for pick: Array in [["hat_straw", ""], ["vest_blue", "Tab_vest"], ["rod_red", "Tab_rod"]]:
+		if not str(pick[1]).is_empty():
+			await _tap_control(wardrobe.find_child(str(pick[1]), true, false) as Control)
+			await _wait(1.2)
+		await _tap_control(wardrobe.find_child("Item_" + str(pick[0]), true, false) as Control)
+		await _wait(1.6)
+		if pick[0] == "hat_straw":
+			await _shot("v7_dolap")
+	_check("video: hasır şapka, mavi yelek, kırmızı kaplama giyildi", Outfits.equipped(db, save, "hat") == "hat_straw"
+			and Outfits.equipped(db, save, "vest") == "vest_blue" and Outfits.equipped(db, save, "rod") == "rod_red")
+	await _tap_control(wardrobe.find_child("Tab_angler", true, false) as Control)
+	await _wait(2.6)
+	await _tap(wardrobe.close_button.get_global_rect().get_center())
+	await _wait(1.2)
+	# 6) İskelenin başından tezgâhtaki tanka dokun: akvaryum, her türün en irisi yüzer; kutu dolu, TOPLA.
+	var rect := shop.tank_screen_rect(camera)
+	await _tap(rect.get_center())
+	_check("video: tanka dokun → akvaryum", await _wait_until(func() -> bool: return aquarium.visible, 2.0))
+	await _wait(2.8)
+	await _shot("v9_akvaryum")
+	var collect := aquarium.find_child("Button_collect", true, false) as Button
+	var coins := save.coins
+	if collect != null and not collect.disabled:
+		await _tap_control(collect)
+	await _wait(1.6)
+	_check("video: TOPLA → para", save.coins > coins)
+	await _tap(aquarium.close_button.get_global_rect().get_center())
+	await _wait(1.2)
+	# Tezgâha yürür, Tekir peşinden gelir.
+	var stall: Vector2 = main.call("_sell_spot")
+	await _tap_world(stall)
+	await _wait_until(func() -> bool: return not angler.is_walking(), 14.0)
+	await _wait(1.0)
+	_check("video: tezgâhta, Tekir peşinden geldi", angler.pos2().distance_to(stall) < 1.2
+			and cat.pos2().distance_to(angler.pos2()) < 2.0)
+	# Yakın çekim: balıkçı kameraya döner; alçak kamerada hasır şapka, mavi yelek ve kırmızı kaplama.
+	angler.face(Vector2(sin(FollowCamera.YAW), cos(FollowCamera.YAW)))
+	await _wait(0.8)
+	main.set("bot_camera", true)
+	_frame_on(angler.global_position + Vector3(0.0, 0.8, 0.0), 0.34, deg_to_rad(28.0))
+	await _wait(3.0)
+	await _shot("v8_kiyafetli")
+	main.set("bot_camera", false)
+	await _wait(1.4)
+	# 7) Akşam: Ayarlar'ın kamerasıyla fotoğraf modu; sürükle → kamera döner, çiçekli çerçeve, deklanşör.
+	for i in 2:
 		main.call("_debug_time")
 		await _wait_frames(2)
-	for i in Weather.KINDS.size():
-		if Weather.at(rules, save) == "fog":
-			break
-		main.call("_debug_weather")
-		await _wait_frames(2)
-	await _map_to(map_panel, fade, "deep_water")
-	await _wait(1.8)
-	_check("video: sisli gece, sandal derin ortada", bool(main.get("in_boat")) and Weather.at(rules, save) == "fog"
-			and DayClock.phase(rules, save.clock_s) == "night")
-	await _video_ghost(_angler().pos2(), 4.8)
-	main.call("_say", "UI_DEDE_STORY_15")
+	var toast_box: Control = hud.get("_toast_box")
+	await _wait_until(func() -> bool: return not toast_box.visible, 8.0)
+	await _wait(1.0)
+	await _tap_control(hud.settings_button)
+	await _wait(0.8)
+	await _tap_control(settings.find_child("Photo", true, false) as Control)
+	await _wait(1.0)
+	_check("video: akşam, fotoğraf modu", photo.visible and DayClock.phase(rules, save.clock_s) == "evening")
+	var from := view * Vector2(0.62, 0.45)
+	_touch(0, from, true)
+	await _wait_frames(2)
+	for i in 30:
+		await _drag(0, from + Vector2(-9.0 * (i + 1), 2.6 * (i + 1)))
+		await _wait_frames(1)
+	_touch(0, from + Vector2(-270, 78), false)
 	await _wait(1.2)
-	await _shot("v6_bekci")
-	await _wait(2.6)
+	await _tap_control(photo.find_child("ZoomIn", true, false) as Control)
+	await _wait(1.0)
+	await _tap_control(photo.find_child("Frame_flower", true, false) as Control)
+	await _wait(1.8)
+	await _shot("v10_cicekli")
+	var before := photo.last_path
+	await _press_shutter(photo)
+	_check("video: akşam fotoğrafı kaydedildi", await _wait_until(func() -> bool: return photo.last_path != before, 5.0))
+	await _wait(2.4)
+	await _tap_control(photo.find_child("Close", true, false) as Control)
+	await _wait(2.4)
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
 
 
-## Tanıtım videosu: Gölün Bekçisi'nin dev gölgesi center'ın (sandal) çevresinde yarım tur yüzer (çemberin
-## kameradan uzak yarısı: ekranın üst yarısı, alttaki düğmelerin uzağı), belirip söner, arkasında turkuaz iz
-## halkaları; sonunda dalar (halkalar, ses, titreşim). Yalnızca görünüş (StoryFilm'in bitiş çekimi gibi): oturuma
-## ve gölgelerin kuralına dokunmaz.
-func _video_ghost(center: Vector2, seconds: float) -> void:
-	var circle := Story.keeper_circle(GameState.db, str(main.get("spot_id")), center)
-	if circle.size() < 4:
-		return
-	var path := circle.slice(circle.size() >> 1)
-	var layer: ShadowLayer = main.get("shadows")
-	var rings: Ripples = main.get("ripples")
-	var ghost := layer.make_ghost(StoryFilm.GHOST_LENGTH)
-	var material := ghost.material_override as ShaderMaterial
-	var age := 0.0
-	var wake := 0.0
-	Sounds.play("sting")
-	Sounds.haptic(40)
-	while age < seconds:
-		var t := age / seconds
-		var f := t * float(path.size() - 1)
-		var i := mini(int(f), path.size() - 2)
-		var p := path[i].lerp(path[i + 1], f - float(i))
-		var heading := (path[i + 1] - path[i]).normalized()
-		ghost.position = Vector3(p.x, ShadowLayer.Y, p.y)
-		ghost.rotation = Vector3(0.0, atan2(-heading.x, -heading.y), 0.0)
-		var shown := smoothstep(0.0, 0.18, t) * (1.0 - smoothstep(0.8, 1.0, t))
-		material.set_shader_parameter("fade", shown)
-		wake -= get_process_delta_time()
-		if shown > 0.5 and wake <= 0.0:
-			wake = StoryFilm.WAKE_EVERY
-			rings.spawn(p - heading * StoryFilm.GHOST_LENGTH * 0.5, StoryFilm.GHOST_LENGTH * 0.4, 1.5,
-					Color(0.7, 1.0, 0.96, 0.6), 0.1)
-		if t >= 0.5 and not _taken.has("v6a_bekci_golge"):
-			await _shot_once("v6a_bekci_golge")
-		await get_tree().process_frame
-		age += get_process_delta_time()
-	var end := path[path.size() - 1]
-	for r: Vector3 in StoryFilm.DIVE_RINGS:
-		rings.spawn(end, r.y, r.z, StoryFilm.TURQUOISE, 0.14)
-	Sounds.play("dive")
-	Sounds.haptic(80)
-	ghost.queue_free()
+## Tanıtım videosu: deklanşöre basar; botun parmak izi katmanı o an gizlenir (fotoğrafa girmesin: README'deki
+## fotoğraf o kayıttan).
+func _press_shutter(photo: PhotoMode) -> void:
+	_overlay.visible = false
+	await _tap_control(photo.find_child("Shutter", true, false) as Control)
+	await _wait(0.5)
+	_overlay.visible = true
 
 
 # --- Reels: Instagram reklamının çekimi -------------------------------------------------
+
 
 ## Reels reklamının çekimi (kurgu: tools/reels_ad.py; CLAUDE.md "Reels videosu"). Dönen bir oyuncu
 ## (rütbe 9, en iyi takımın çoğu, sandal, sazlıkta dolu tuzak); her çekim bir bölgede. Kamerayı bot
@@ -5288,7 +5351,7 @@ func _reels_keeper() -> void:
 	await _wait(1.0)
 
 
-## Gölün Bekçisi'nin dev gölgesi sandalın yanından geçer (yalnızca görünüş, _video_ghost gibi: oturuma ve gölgelerin
+## Gölün Bekçisi'nin dev gölgesi sandalın yanından geçer (yalnızca görünüş, StoryFilm'in bitiş çekimi gibi: oturuma ve gölgelerin
 ## kuralına dokunmaz): ekranın yukarısından (uzaktan) aşağısına, sandalın REELS_GHOST_SIDE m yanından (gölge su
 ## yüzünün üstünde çizilir: sandalın altından geçemez); belirip söner, arkasında turkuaz iz halkaları; sandalın
 ## hizasında kamera sarsılır, sonunda dalar. Süre kareyle.
@@ -5842,8 +5905,9 @@ func _play_aquarium() -> void:
 	_check("boş defterde tezgâhın tankı boş", shop.tank_fish_count() == 0)
 	var rect := shop.tank_screen_rect(camera)
 	print("AKVARYUM tank ekranda %s (iskelenin başında)" % str(rect))
-	_check("tank iskelenin başından ekranda ve dokunulacak kadar büyük (%.0f×%.0f)" % [rect.size.x, rect.size.y],
-			get_viewport().get_visible_rect().encloses(rect) and maxf(rect.size.x, rect.size.y) >= 60.0)
+	var touch := minf(rect.size.x, rect.size.y) + 2.0 * ShopStall.TANK_TOUCH_PX
+	_check("tank iskelenin başından ekranda ve dokunulacak kadar büyük (%.0f×%.0f, dokunma alanının kısa kenarı %.0f)"
+			% [rect.size.x, rect.size.y, touch], get_viewport().get_visible_rect().encloses(rect) and touch >= 60.0)
 	await _tap(rect.get_center())
 	await _wait_frames(3)
 	_check("tanka dokun → Akvaryum paneli (dükkân değil)", panel.visible and not shop_panel.visible)
@@ -5901,8 +5965,8 @@ func _play_aquarium() -> void:
 			and int(save.stats.get("aquarium_coins", 0)) == cap)
 	await _tap(panel.close_button.get_global_rect().get_center())
 	await _wait_frames(3)
-	# 4) Dükkân: Nine'ye dokun → dükkân açılır (akvaryum değil), kutu kendiliğinden toplanır; ilk seferde Nine tanka
-	# dokunmayı söyler.
+	# 4) Dükkân: Nine'ye dokun → dükkân açılır (akvaryum değil), kutu kendiliğinden toplanır; tanka dokunmuş oyuncuya
+	# Nine "tanka dokun" demez, ziyaretçilerin bıraktığı parayı söyler.
 	var nine := _nine()
 	clock.fixed_unix = start + 3 * 3600 + 1800
 	var half := Aquarium.pending(db, save, clock.fixed_unix)
@@ -5911,7 +5975,8 @@ func _play_aquarium() -> void:
 	await _wait_frames(3)
 	_check("Nine'ye dokun → dükkân (akvaryum değil)", shop_panel.visible and not panel.visible)
 	_check("dükkânda kutu toplanır: +%d" % half, half > 0 and save.coins == coins + half and save.aquarium_box < Aquarium.UNIT)
-	_check("ilk seferde Nine tanka dokunmayı söyler", str(shop_panel.get("_line_key")) == "UI_NINE_AQUARIUM")
+	_check("tankı bulan oyuncuya Nine tanka dokunmayı söylemez, parayı söyler",
+			str(shop_panel.get("_line_key")) == "UI_NINE_AQUARIUM_COINS")
 	await _wait(0.4)
 	await _shot("05_dukkan_nine")
 	await _tap(shop_panel.close_button.get_global_rect().get_center())
@@ -5927,6 +5992,17 @@ func _play_aquarium() -> void:
 			and (tr("UI_NINE_AQUARIUM_COINS") % UiKit.format_int(hour)) in _texts_in(shop_panel))
 	await _wait(0.4)
 	await _shot("06_dukkan_para")
+	await _tap(shop_panel.close_button.get_global_rect().get_center())
+	await _wait(0.5)
+	# 6) Tanka hiç dokunmamış oyuncu (bayrak yok): Nine ilk seferde tanka dokunmayı söyler, bir kez.
+	save.flags.erase("told_aquarium")
+	clock.fixed_unix += 1200
+	await _tap(_screen(nine.head_point()))
+	await _wait_frames(3)
+	_check("tanka dokunmamış oyuncuya Nine bir kez tanka dokunmayı söyler", shop_panel.visible
+			and str(shop_panel.get("_line_key")) == "UI_NINE_AQUARIUM" and bool(save.flags.get("told_aquarium", false)))
+	await _wait(0.4)
+	await _shot("07_dukkan_ilk")
 	await _tap(shop_panel.close_button.get_global_rect().get_center())
 	await _wait(0.5)
 	_check_buttons()
@@ -5961,9 +6037,11 @@ func _play_character() -> void:
 	# 2) Oğlanı seç: kayıtta, gövde oğlan, panel kapanır, film başlar; hediyede oğlan oltayı alır.
 	await _tap_control(boy_button)
 	await _wait(0.6)
-	_check("oğlan seçilince kayıtta, gövde oğlan, film başlar", save.character == "boy"
-			and save.flags.has("chose_character") and angler.character == "boy" and not panel.visible
-			and main.get("_film") != null and story.visible)
+	var body := angler.get("_body") as AnglerBody
+	_check("oğlan seçilince kayıtta, gövde iskeletli oğlan, film başlar", save.character == "boy"
+			and save.flags.has("chose_character") and angler.character == "boy" and angler.is_rigged()
+			and body != null and body.look == "boy" and not panel.visible and main.get("_film") != null
+			and story.visible)
 	await _wait_until(func() -> bool: return story.index() == 0, StoryPanel.LOGO_TIME + 1.0)
 	var last := Story.LINES.size() - 1
 	for _i in 20:
@@ -6075,7 +6153,7 @@ func _play_photo() -> void:
 	_check("sürükle → kamera döner (%.0f°) ve eğilir (%.0f°)" % [rad_to_deg(camera.yaw_offset), rad_to_deg(camera.pitch)],
 			absf(target.x) > deg_to_rad(10.0) and absf(camera.yaw_offset - target.x) < deg_to_rad(2.0)
 			and absf(target.y - pitch0) > deg_to_rad(5.0))
-	# 3) Yakınlaştır, polaroid çerçeve.
+	# 3) Yakınlaştır, polaroid çerçeve; sonra eski kâğıt.
 	await _tap_control(photo.find_child("ZoomIn", true, false) as Control)
 	await _wait(0.6)
 	await _tap_control(photo.find_child("Frame_polaroid", true, false) as Control)
@@ -6083,6 +6161,10 @@ func _play_photo() -> void:
 	_check("yakınlaştır ve polaroid çerçeve (%.2f)" % camera.zoom, photo.view_target().z < zoom0 - 0.05
 			and photo.frame_kind() == "polaroid")
 	await _shot("02_cerceve")
+	await _tap_control(photo.find_child("Frame_paper", true, false) as Control)
+	await _wait(0.6)
+	_check("eski kâğıt çerçeve seçilir", photo.frame_kind() == "paper")
+	await _shot("02b_kagit")
 	# 4) Deklanşör: user://photos'ta PNG, boyu görüntünün boyu; düğmeler fotoğrafa girmez.
 	await _tap_control(photo.find_child("Shutter", true, false) as Control)
 	var shot := await _wait_until(func() -> bool: return not photo.last_path.is_empty(), 5.0)
@@ -6187,8 +6269,11 @@ func _play_outfits() -> void:
 	await _tap_control(panel.find_child("Item_vest_red", true, false) as Control)
 	await _wait_frames(3)
 	var material := body.get("_material") as ShaderMaterial
-	_check("kırmızı yelek giyilir (malzemede yeleğin rengi)", Outfits.equipped(db, save, "vest") == "vest_red"
-			and material != null and bool(material.get_shader_parameter("vest_on")))
+	var red := Color(str(db.outfits.item("vest_red")["color"]))
+	var worn: Variant = material.get_shader_parameter("vest_color") if material != null else null
+	_check("kırmızı yelek giyilir (malzemede yeleğin rengi %s)" % str(worn), Outfits.equipped(db, save, "vest") == "vest_red"
+			and material != null and bool(material.get_shader_parameter("vest_on")) and worn is Color
+			and (worn as Color).is_equal_approx(red))
 	await _wait(0.4)
 	await _shot("04_yelek")
 	# 6) Olta sekmesi: 5 kaplama, doğal giyili; Balıkçı sekmesi; panelin boyu sekmelerde aynı.
@@ -6272,7 +6357,7 @@ func _play_cat() -> void:
 	GameState.changed.emit()
 	await _wait(1.5)
 	var home: Vector2 = main.call("_cat_home")
-	# 1) Oturumun başında kedi balıkçının arkasında; iskelede çizim.
+	# 1) Oturumun başında kedi balıkçının yanında; iskelede çizim.
 	var start := cat.pos2().distance_to(angler.pos2())
 	_check("kedi balıkçının yanında başlar (%.2f m)" % start, start < 1.6)
 	_check("kedi ekranda", get_viewport().get_visible_rect().has_point(_screen(cat.global_position)))
@@ -6321,15 +6406,19 @@ func _play_cat() -> void:
 	_check("kova boşken dokun → yemez, aç bekler, Dede söyler", CatRules.is_hungry(rules, save) and save.cat_fed == 0
 			and str(main.get("_line")) == "UI_DEDE_CAT_EMPTY")
 	await _wait(1.0)
-	# 6) Kovada iki balık: dokun → en ucuzunu yer (gümüş balığı), tok, bildirim, Dede.
-	save.bucket = [{ "fish": "rudd", "size_cm": 25, "stars": 2 }, { "fish": "silverside", "size_cm": 12, "stars": 1 }]
+	# 6) Kovada üç balık: dokun → en ucuzunu yer (çapak 25 cm, 4 para: ne en küçük ne son giren), tok, bildirim, Dede.
+	save.bucket = [{ "fish": "rudd", "size_cm": 30, "stars": 2 }, { "fish": "bream", "size_cm": 25, "stars": 1 },
+			{ "fish": "silverside", "size_cm": 18, "stars": 3 }]
 	await _tap(_screen(cat.global_position + Vector3(0.0, 0.2, 0.0)))
 	await _wait_frames(3)
 	var toast: Label = _hud().get("_toast")
-	_check("dokun → kovadaki en ucuz balığı yer, tok, Dede ve bildirim", save.bucket.size() == 1
-			and str(save.bucket[0]["fish"]) == "rudd" and save.cat_fed == 1 and not CatRules.is_hungry(rules, save)
+	var left := PackedStringArray()
+	for e: Dictionary in save.bucket:
+		left.append(str(e["fish"]))
+	_check("dokun → kovadaki en ucuz balığı yer (kalan %s), tok, Dede ve bildirim" % ", ".join(left),
+			save.bucket.size() == 2 and not "bream" in left and save.cat_fed == 1 and not CatRules.is_hungry(rules, save)
 			and str(main.get("_line")) == "UI_DEDE_CAT_FED"
-			and toast.text == UiKit.upper(tr("UI_CAT_ATE") % tr("FISH_silverside")))
+			and toast.text == UiKit.upper(tr("UI_CAT_ATE") % tr("FISH_bream")))
 	await _wait(0.3)
 	await _shot("04_yedi")
 	# 7) Balıkçı başka bölgede: kedi evine döner; iskeleye dönünce yine gelir.
@@ -6378,6 +6467,9 @@ func _play_cat() -> void:
 	var plain := await _measure_draws()
 	await _tap(_screen(_elder().head_point()))
 	await _wait(0.8)
+	var wardrobe: WardrobePanel = main.get("wardrobe_panel")
+	_check("Dede'ye dokun → konuşur (dolap açılmaz): %s" % str(main.get("_line")),
+			str(main.get("_line")).begins_with("UI_DEDE_") and not wardrobe.visible)
 	var rain := await _measure_draws()
 	cat.visible = false
 	var without := await _measure_draws()
@@ -6441,9 +6533,9 @@ func _use_save(catches: int) -> void:
 		save.settings["locale"] = _locale
 	if not _intro:
 		Story.mark_seen(save)
-	# Balıkçı seçilmiş sayılır (yeni oyunun seçim ekranı yalnızca character senaryosunda: film botları seçim
-	# ekranına takılmasın).
-	if _scenario != "character":
+	# Balıkçı seçilmiş sayılır (yeni oyunun seçim ekranı yalnızca character ve video senaryolarında: film botları
+	# seçim ekranına takılmasın).
+	if _scenario != "character" and _scenario != "video":
 		save.flags["chose_character"] = true
 	# Kıyafetlerin duyurusu yalnızca outfits senaryosunda: ötekilerde her kıyafet görülmüş sayılır (yeni kıyafet
 	# bildirimi ve Dede'nin dolap sözü eski denetimlerin bildirimlerini, sözlerini ve çizimini şaşırtmasın).
@@ -6461,6 +6553,10 @@ func _use_save(catches: int) -> void:
 	# bildirim, Dede'nin sözü ve çizim eski denetimleri şaşırtmasın).
 	if _scenario != "secret":
 		save.letter_at = 1 << 30
+	# Tekir yalnızca cat, outfits ve video senaryolarında acıkır: ötekilerde hep tok (balıklı balonun çizimi ve
+	# Dede'nin açlık sözü eski denetimlerin çizimini ve sözlerini şaşırtmasın).
+	if not _scenario in ["cat", "outfits", "video"]:
+		save.cat_meal_at = 1 << 30
 	# Oyun saati donuk: senaryolar sabah ve açık havada, görüntüler eskisi gibi (world saati kendisi sürer).
 	(main.get("world_clock") as WorldClock).frozen = true
 	GameState.use_save(save)

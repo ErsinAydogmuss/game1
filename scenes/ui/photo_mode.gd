@@ -6,7 +6,8 @@ extends Control
 ## görüntüye girmez.
 ## - Sürükle: kamera döner (yatayda ±YAW_RANGE, eğim PITCH_MIN..PITCH_MAX; FollowCamera.yaw_offset ve pitch).
 ##   Yakınlaştırma düğmeleri (ZOOM_MIN..ZOOM_MAX). Kamera hedefe yumuşakça gider (_process).
-## - Çerçeve seçimi (PhotoFrame.KINDS: yok, ahşap, polaroid, çiçek); köşede oyunun logosu: ikisi de fotoğrafa girer.
+## - Çerçeve seçimi (PhotoFrame.KINDS: yok, ahşap, polaroid, çiçek, eski kâğıt); köşede oyunun logosu: ikisi de
+##   fotoğrafa girer.
 ## - Deklanşör: düğmeler bir kare gizlenir, görüntü alınır, user://photos/olta_<tarih>.png'ye yazılır (iPhone'da
 ##   Dosyalar → Olta → photos); flaş, ses, titreşim, "Fotoğraf kaydedildi". Çıkışta kamera eski açısına döner.
 
@@ -270,11 +271,13 @@ func shoot() -> void:
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	_ui.visible = true
-	var path := save_photo(image)
-	_shooting = false
+	# Geri bildirim hemen (flaş, ses, titreşim); PNG'yi yazmak telefonda bir an sürer: bir kare sonra.
 	_flash.color.a = 0.85
 	Sounds.play("shutter")
 	Sounds.haptic(40)
+	await get_tree().process_frame
+	var path := save_photo(image)
+	_shooting = false
 	_note.text = UiKit.upper(tr("UI_PHOTO_SAVED") if not path.is_empty() else tr("UI_PHOTO_FAILED"))
 	_note.visible = true
 	_note_time = 2.4

@@ -3,8 +3,8 @@ extends SceneTree
 ## alımlarının ve türlerin ilk görüldüğü dakikaları (belli vakitte gelen efsaneler dahil), saatlik
 ## para ve av sayısını, Dede'nin isteklerini (biten, para, değiştirme), Gölün Sırrı'nı (mektuplar, altın
 ## istekler, harita parçaları, altın hamur, final hazır, Gölün Bekçisi), akvaryumun bağış kutusunu (Dalga 5: toplanan
-## para, kazançtaki payı, sondaki saatlik bağış ve tür sayısı), bölgelerde, tekniklerde, vakitlerde ve havalarda geçen
-## zamanı yazar.
+## para, kazançtaki payı, sondaki saatlik bağış ve tür sayısı), Tekir'in yediği balıkları, kıyafetlerin açıldığı
+## dakikaları (outfit:<kimlik>), bölgelerde, tekniklerde, vakitlerde ve havalarda geçen zamanı yazar.
 ##   godot --headless --path . -s res://tools/economy_report.gd [-- --hours=8 --seeds=3]
 ## Hedefler docs/gdd.md §8 ve §10.4'te; korkuluklar tests/test_session_sim.gd'de.
 
