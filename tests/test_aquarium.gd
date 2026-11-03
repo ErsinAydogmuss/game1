@@ -1,7 +1,7 @@
 extends BaseTest
 ## Akvaryum (Dalga 5): tankta her tutulmuş türün en irisi (defterden; satılmayan türler girmez), kutu
 ## gerçek saatle dolar ve üst sınırda durur, saatin geri alınması bir şey kaybettirmez ya da kazandırmaz,
-## kesir kaybolmaz (her saniye güncelleyen oyun ile tek seferde güncelleyen bot aynı parayı bulur),
+## kesir kaybolmaz (tank değişmedikçe her saniye güncelleyen oyun ile tek seferde güncelleyen bot aynı parayı bulur),
 ## toplama paraya ve sayaca girer, kesir kutuda kalır.
 
 const T0 := 1_700_000_000

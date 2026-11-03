@@ -299,18 +299,15 @@ static func migrate(raw: Dictionary) -> Dictionary:
 	if v < 6:
 		# v6 (Dalga 5, yuva): akvaryumun kutusu boş, saati ilk açılışta başlar; Tekir şimdiki balık sayısından
 		# sayar (eski oyuncunun kedisi de birkaç balık sonra acıkır); kıyafet yok. Eski oyuncunun balıkçısı
-		# kız (v5'e kadar tek balıkçı "rogue"); seçim ekranı ona çıkmaz (dolaptan değiştirir).
+		# kız (v5'e kadar tek balıkçı "rogue"). Seçim ekranı yalnızca yeni oyunda çıkar (Story.wants_intro: film
+		# görülmedi, hiç balık yok): balık tutmuş eski oyuncu dolaptan değiştirir, v0.5'te hiç oynamamış kayıt
+		# seçer (bayrak yazılmaz).
 		d["aquarium_box"] = 0
 		d["aquarium_unix"] = -1
 		d["cat_fed"] = 0
 		d["cat_meal_at"] = maxi(0, _int(d, "catches", 0))
 		d["outfit"] = {}
 		d["character"] = CHARACTERS[0]
-		var flags: Variant = d.get("flags", {})
-		if typeof(flags) == TYPE_DICTIONARY:
-			(flags as Dictionary)["chose_character"] = true
-		else:
-			d["flags"] = { "chose_character": true }
 		v = 6
 	d["version"] = v
 	return d

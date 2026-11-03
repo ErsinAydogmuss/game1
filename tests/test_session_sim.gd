@@ -298,19 +298,31 @@ func test_shop_buys_the_new_technique_first() -> void:
 
 
 ## Akvaryum (Dalga 5): bot dükkâna her uğrayışta bağış kutusunu toplar (oyundaki gibi); para kazancın içinde,
-## sayaç kayıtla aynı, kutu hiçbir zaman üst sınırı aşmaz; satılmayan türler tanka girmez.
+## sayaç kayıtla aynı, bir uğrayışta toplanan para üst sınırı aşmaz (uzun aradan sonra tam üst sınır);
+## satılmayan türler tanka girmez.
 func test_bot_collects_the_aquarium() -> void:
 	var db := content()
 	var sim := SessionSim.new(db, db.main_spot, SEEDS[0])
-	var top := 0
+	var sells := 0
+	var got := 0
+	var over := PackedStringArray()
 	while sim.minutes() < 90.0:
 		sim.cast_once()
-		top = maxi(top, sim.save.aquarium_box - Aquarium.rate_ph(db, sim.save) * db.rules.aquarium_cap_s)
+		if sim.sells != sells:
+			var gain := sim.aquarium_coins - got
+			# Tank yalnızca büyür: satıştan sonraki üst sınır satıştakinden küçük değil.
+			if gain > Aquarium.cap_coins(db, sim.save):
+				over.append("%d > %d" % [gain, Aquarium.cap_coins(db, sim.save)])
+			sells = sim.sells
+			got = sim.aquarium_coins
 	assert_true(sim.aquarium_coins > 0 and sim.aquarium_coins < sim.earned,
 			"kutunun parası kazancın içinde (%d / %d)" % [sim.aquarium_coins, sim.earned])
 	assert_eq(int(sim.save.stats.get("aquarium_coins", 0)), sim.aquarium_coins, "sayaç kayıtla aynı")
 	assert_true(sim.milestones.has("aquarium"), "ilk bağış dönüm noktası")
-	assert_true(top <= 0, "kutu üst sınırı aşmaz")
+	assert_true(sells > 3 and over.is_empty(), "bir uğrayışta en çok üst sınır (%d satış; %s)" % [sells, ", ".join(over)])
+	var now := int(sim.elapsed)
+	var cap := Aquarium.cap_coins(db, sim.save)
+	assert_eq(Aquarium.collect(db, sim.save, now + 86400), cap, "bir gün uzak kalınca kutuda tam üst sınır (%d)" % cap)
 	for f in Aquarium.fish(db, sim.save):
 		assert_true(int(f["value"]) > 0, "tanktaki %s satılan bir tür" % f["fish"])
 	# Oyun sonunda saatte ~400 para (docs/gdd.md §10.6; 16 sa × 6 seed: 398–426). Bot türleri çabuk toplar: 90
@@ -338,5 +350,6 @@ func test_bot_feeds_the_cat() -> void:
 	assert_eq(int(sim.save.stats.get("cat_fed", 0)), sim.cat_meals, "sayaç")
 	assert_true(most <= 1, "bir satışta en çok bir öğün")
 	assert_true(sim.milestones.has("cat"), "ilk besleme dönüm noktası")
-	# Kedi her cat_meal_every balıkta bir acıkır, ama yalnızca dükkâna uğrayınca beslenir: öğün sayısı satışlardan çok olamaz.
-	assert_true(sim.cat_meals <= sim.sells, "öğünler satışlardan fazla değil")
+	# Kedi her cat_meal_every balıkta bir acıkır (tokken yemez): öğün sayısı balık sayısının o kadarda biri kadar.
+	var meals_max := floori(float(sim.save.catches) / db.rules.cat_meal_every)
+	assert_true(sim.cat_meals <= meals_max, "kedi tokken yemez (%d öğün, %d balık)" % [sim.cat_meals, sim.save.catches])

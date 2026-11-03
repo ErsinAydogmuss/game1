@@ -145,8 +145,6 @@ func test_world_rules_are_validated() -> void:
 	rules["weather"] = { "chance": { "clear": 50, "hail": 5 }, "first_day": "storm", "fog_phases": ["dusk"],
 		"fog_else": "fog", "rain_notice": 0.5 }
 	rules["love"] = { "levels": [0, 20, 10], "rare_bonus": 0.5, "rare_from": "shiny" }
-	rules["aquarium"] = { "cap_s": 30, "species_ph": -1, "value_ph": 0.4 }
-	rules["cat"] = { "meal_every": 0, "gift_every": 5 }
 	FishingRules.from_dict(rules, errors)
 	var all := " | ".join(errors)
 	assert_true("weather.chance: bilinmeyen hava: hail" in all, "bilinmeyen hava")
@@ -154,8 +152,20 @@ func test_world_rules_are_validated() -> void:
 	assert_true("geçersiz: hava" in all, "ilk gün ya da sisin yerine bilinmeyen hava, bilinmeyen vakit")
 	assert_true("geçersiz: yağmur" in all, "yağmur fark etmeyi azaltamaz")
 	assert_true("geçersiz: göl sevgisi" in all, "eşikler artmalı, pay en çok 0,1")
-	assert_true("geçersiz: akvaryum" in all, "kutunun üst sınırı en az 1 dk, kazanç eksi olamaz")
-	assert_true("geçersiz: kedi" in all, "kedi en az bir balıkta acıkır")
+	# Akvaryum ve kedi: her bozuk değer tek başına yakalanır (hediye 0 olsaydı CatRules.feed sıfıra bölerdi).
+	var bad := [
+		["aquarium", { "cap_s": 30, "species_ph": 8, "value_ph": 0.4 }, "akvaryum", "kutunun üst sınırı en az 1 dk"],
+		["aquarium", { "cap_s": 7200, "species_ph": -1, "value_ph": 0.4 }, "akvaryum", "tür başına kazanç eksi olamaz"],
+		["aquarium", { "cap_s": 7200, "species_ph": 8, "value_ph": -0.1 }, "akvaryum", "değer payı eksi olamaz"],
+		["cat", { "meal_every": 0, "gift_every": 5 }, "kedi", "kedi en az bir balıkta acıkır"],
+		["cat", { "meal_every": 8, "gift_every": 0 }, "kedi", "hediye en az bir beslemede"],
+	]
+	for b: Array in bad:
+		var one := JSON.parse_string(FileAccess.get_file_as_string("res://data/rules.json")) as Dictionary
+		one[str(b[0])] = b[1]
+		var errs := PackedStringArray()
+		FishingRules.from_dict(one, errs)
+		assert_true(("geçersiz: " + str(b[2])) in " | ".join(errs), str(b[3]))
 	var clean := PackedStringArray()
 	FishingRules.from_dict(JSON.parse_string(FileAccess.get_file_as_string("res://data/rules.json")) as Dictionary, clean)
 	assert_eq(clean.size(), 0, "oyunun kuralları temiz: " + " | ".join(clean))

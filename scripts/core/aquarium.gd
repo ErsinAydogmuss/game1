@@ -11,8 +11,11 @@ extends RefCounted
 ##   rules.aquarium_cap_s'lik birikimde durur (boşta biriken üst sınırda durur: gelir kuralı 7). Saat
 ##   geri alınırsa bir şey kaybolmaz ya da kazanılmaz (yalnızca dayanak aquarium_unix yenilenir).
 ##   Dükkâna uğrayınca ya da Akvaryum panelinde toplanır.
-## - Kutu 1/UNIT'lik birimle tutulur (saatlik kazanç × geçen saniye): kesir kaybolmaz, her saniye
-##   güncellenen oyun da tek seferde güncellenen denge botu da aynı parayı bulur.
+## - Kutu 1/UNIT'lik birimle tutulur (saatlik kazanç × geçen saniye): kesir kaybolmaz; tank değişmedikçe her
+##   saniye güncellenen oyun da tek seferde güncellenen denge botu da aynı parayı bulur. Bot kutuyu yalnızca
+##   satışta günceller: araya giren yeni tür önceki satıştan beri tankta sayılır (300 dakikada ~15 para, ihmal
+##   edilir).
+@warning_ignore_start("integer_division")
 
 ## Kutunun birimi: bir para = UNIT birim (saatte rate_ph para = saniyede rate_ph birim).
 const UNIT := 3600

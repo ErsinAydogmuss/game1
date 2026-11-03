@@ -442,7 +442,8 @@ func test_v5_save_reads_back() -> void:
 
 ## v0.5'in gerçek kaydı (tests/fixtures/save_v5.json) v6'ya göçer: akvaryumun kutusu boş ve saati başlamadı,
 ## Tekir kaydın balık sayısından sayar (eski oyuncunun kedisi de yeni balıklarla acıkır), kıyafet yok; balıkçı
-## kız ve seçim ekranı ona çıkmaz (bayrak chose_character); v5'in her şeyi aynen.
+## kız ve seçim ekranı ona çıkmaz (balık tutmuş: yeni oyun değil, Story.wants_intro); v5'in her şeyi aynen.
+## v0.5'te hiç oynamamış kayıt (film görülmedi, balık yok) yeni oyun gibi seçim ekranını görür.
 func test_v5_save_migrates_to_v6() -> void:
 	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v5.json"))
 	assert_eq(typeof(raw), TYPE_DICTIONARY, "v5 kaydı okunur")
@@ -459,7 +460,7 @@ func test_v5_save_migrates_to_v6() -> void:
 	assert_true(s.catches > 0, "örnek kayıtta balık var")
 	assert_eq(s.outfit, {}, "kıyafet yok")
 	assert_eq(s.character, "girl", "eski balıkçı kız")
-	assert_true(bool(s.flags.get("chose_character", false)), "seçim ekranı eski oyuncuya çıkmaz")
+	assert_true(not Story.wants_intro(s), "seçim ekranı ve film eski oyuncuya çıkmaz (balık tutmuş)")
 	assert_eq(s.coins, int(old["coins"]), "para aynen")
 	assert_eq(s.records.size(), (old["records"] as Dictionary).size(), "defter aynen")
 	assert_eq(s.clock_s, int(old["clock_s"]), "oyun saati aynen")
@@ -468,8 +469,9 @@ func test_v5_save_migrates_to_v6() -> void:
 	for key: Variant in flags:
 		assert_eq(s.flags.get(key), flags[key], "bayrak aynen: %s" % key)
 	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "göçten sonra gidiş-dönüşte aynı")
-	var bare := SaveData.migrate({ "version": 5, "flags": "bozuk" })
-	assert_eq(bare["flags"], { "chose_character": true }, "bozuk bayraklar yerine seçim bayrağı")
+	var fresh := SaveData.from_dict({ "version": 5, "catches": 0, "flags": {} })
+	assert_true(Story.wants_intro(fresh) and not fresh.flags.has("chose_character"),
+			"v0.5'te hiç oynamamış kayıt: yeni oyun gibi önce seçim ekranı")
 
 
 ## v0.6'nın gerçek kaydı (tests/fixtures/save_v6.json): denge botu (seed 6006) 200 dakika oynadı; final bitti

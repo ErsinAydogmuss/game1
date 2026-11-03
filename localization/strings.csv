@@ -761,7 +761,7 @@ UI_GUIDE_HOME,Home,Yuva
 UI_GUIDE_HOME_LEAD,"A home by the lake: the aquarium, Tekir, your wardrobe and photos.","Göl kenarında bir yuva: akvaryum, Tekir, dolap ve fotoğraflar."
 UI_GUIDE_AQUARIUM_TEXT,The biggest of each species swims in Nana's tank. Visitors drop coins in the box; collect them at the shop.,"Nine'nin tankında her türün en irisi yüzer. Ziyaretçiler kutuya para bırakır, dükkâna uğrayınca toplanır."
 UI_GUIDE_CAT,Tekir,Tekir
-UI_GUIDE_CAT_TEXT,Tekir follows you. Tap when hungry: Tekir eats the cheapest fish. Every 5 meals brings a gift.,"Peşinden gelir. Acıkınca dokun, kovadaki en ucuz balığı yer. Her 5 beslemede bir hediye getirir."
+UI_GUIDE_CAT_TEXT,Tekir follows you. Tap when hungry: Tekir eats the cheapest fish. Every 5 meals brings a gift (5 in all).,"Peşinden gelir. Acıkınca dokun, kovadaki en ucuz balığı yer. Her 5 beslemede bir hediye getirir (5 hediye)."
 UI_GUIDE_WARDROBE_TEXT,"Tap your angler: girl or boy, hats, vests and rod wraps. New ones unlock as you play.","Balıkçına dokun: kız ya da oğlan, şapka, yelek, olta kaplaması. Oynadıkça yenileri açılır."
 UI_GUIDE_PHOTO,Photo,Fotoğraf
 UI_GUIDE_PHOTO_TEXT,"The camera in Settings or on a fish card: drag, pick a frame, snap! Saved in the Olta folder in Files.","Ayarlar'daki ya da balık kartındaki kamera: sürükle, çerçeve seç, çek! Dosyalar'da Olta klasöründe."
