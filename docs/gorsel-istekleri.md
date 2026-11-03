@@ -853,7 +853,7 @@ Hepsi geldi (13 sayfa), kesildi ve oyuna bağlandı:
 | `ending` | jeneriğin arkasında (yazılar koyu şeridin üstünde) |
 | `photo_frames` | fotoğraf modunun dört çerçevesi (9 dilimli; köşe süsleri gerilmez, logo süsün yanında) |
 | `aquarium_bg` | Akvaryum panelindeki tankın arka planı |
-| `angler_portraits` | dolabın Balıkçı sekmesinde seçili balıkçının yüzü (`tekir` şimdilik yedekte: tanıtım ve mağaza için) |
+| `angler_portraits` | yeni oyunun "Balıkçını seç" ekranında kartların resmi ve dolabın Balıkçı sekmesinde seçili balıkçının yüzü (`tekir` şimdilik yedekte: tanıtım ve mağaza için) |
 | `store_art` | README'nin başında (`docs/img/tanitim.jpg`) |
 
 ## Teknik not (Claude için)
@@ -869,7 +869,7 @@ Sayfa adları, kesim şekli (`fit`) ve kesilen adlar `data/art_sheets.json`'da. 
 
 Mor ve pembe nesneli sayfalarda (`rarity_frames`, `rarity_badges`, `zone_badges`, `map_stickers`, `time_icons`, `keeper`) `"despill": "edge"`: macenta temizliği yalnızca kenar bandında yapılır, Destansı moru ve nilüferin pembesi solmaz. Zemin dokuları `"fit": "tile"`: kare örneğin içinden kesilir ve dikişsiz yapılır (`ArtSheet.make_tile`). Harita ve mektup kâğıdı `"fit": "trim"`: saydam payı kırpılır, 9 dilimli çerçeve olarak `assets/ui/frames/`'e gider.
 
-Oyuna bağlama (v0.4'teki durum):
+Oyuna bağlama (v0.6 sonrası, Parti 5a–5b gelince):
 
 | Görsel | Çıktı | Bağlantı |
 |---|---|---|
@@ -891,16 +891,16 @@ Oyuna bağlama (v0.4'teki durum):
 | `gear_lures`, `gear_flies` | `assets/icons/gear/` | ✅ `ItemArt.gear`: dükkânın yapay yem, sinek ve kurşun kartları, yem sepeti, takım çantasının karoları; `bell` dipte koşuda sehpanın üstündeki 2B zil (`BellMark`). Yoksa kodla çizilen ikon. |
 | `technique_icons` | `assets/icons/ui/` | ✅ `GameIcon.ART_NAMES` (`tech_float`, `tech_spin`, `tech_bottom`, `tech_fly`, `tech_trap`, `tackle_bag`): sol alttaki teknik düğmesi, Takım Çantası'nın başlığı ve karoları, dükkânın başlığındaki teknik düğmeleri, "Yeni teknik" ve tuzak bildirimleri. Yoksa kodla çizilen ikon. |
 | `catch_items` | `assets/icons/items/` | ✅ `ItemArt.item`: kerevit (defter, kart, tuzak rozeti). Çöp (çizme, şişe) ve hikâye eşyaları (mesajlı şişe, anahtar) Dalga 4'te. |
-| `time_icons` | `assets/icons/ui/` (`despill: edge`: pembe gök ve nilüfer solmasın) | 🔜 `GameIcon.ART_NAMES`: saat çipi ve "Bugün" paneli (vakitler), çay düğmesi, göl sevgisi. Yoksa kodla çizilen ikon. |
-| `weather_icons` | `assets/icons/ui/` | 🔜 `GameIcon.ART_NAMES`: saat çipinin hava ikonu, bugünün ve yarının havası, isteklerin ikonu ve çipin rozeti. |
-| `story_items` | `assets/icons/items/` | 🔜 `ItemArt.item`: altın hamur, harita parçası, boy isteğinin cetveli, mektup, yanan fener, Bekçi'nin pulu. |
-| `letter_paper` | `assets/ui/frames/letter_paper.png` (`fit: trim`) | 🔜 Mektup panelinin çerçevesi (`UiKit.framed`, 9 dilim payları `FRAME_SLICES`). Yoksa kodla çizilen kâğıt. |
-| `secret_map` | `assets/ui/art/secret_map.png` (`fit: box`) | 🔜 Defterin Gölün Sırrı sekmesindeki harita yapbozu: kodla dörde yırtılır, gelen parça yerine oturur. Yoksa kodla çizilen parşömen. |
-| `keeper` | `assets/icons/items/` (`despill: edge`) | 🔜 `ItemArt.item` (`ItemArt.fish` önce ona bakar): Bekçi'nin kartı ve defteri, haritada X'in yanı, bitiş ve jenerik. |
-| `portraits_young` | `assets/ui/portraits/` | 🔜 İsteğe bağlı: mektupların imzası, jenerik. |
-| `ending` | `assets/ui/art/ending.png` (`fit: box`, `key: false`) | 🔜 İsteğe bağlı: jeneriğin arka planı. |
-| `home_icons` | `assets/icons/ui/` | 🔜 `GameIcon.ART_NAMES` (`wardrobe`, `camera`, `cat_tekir`, `gift`, `donation_box`, `cat_bowl`): dolap, fotoğraf, Tekir, hediye, bağış kutusu, acıkan Tekir'in balonu. Yoksa kodla çizilen ikon. |
-| `photo_frames` | `assets/ui/frames/photo_*.png` (`fit: trim`) | 🔜 Fotoğraf modunun çerçeveleri (9 dilim); yoksa kodla çizilen çerçeve. |
-| `aquarium_bg` | `assets/ui/art/aquarium_bg.png` (`fit: box`, `key: false`) | 🔜 Akvaryum panelinde 3D balıkların arkası. Yoksa kodla çizilen su ve kum. |
-| `angler_portraits` | `assets/ui/portraits/` | 🔜 İsteğe bağlı: karakter seçme ekranı, dolap. Yoksa 3D modelden çekilen görüntü. |
-| `store_art` | `docs/img/tanitim.jpg` (yalnızca referans, pakete girmez) | 🔜 İsteğe bağlı: mağaza ve sosyal medya; oyunda kullanılmaz. |
+| `time_icons` | `assets/icons/ui/` (`despill: edge`: pembe gök ve nilüfer solmasın) | ✅ `GameIcon.ART_NAMES`: saat çipi (`ChipSky`: vaktin ve havanın ikonu tek atlasta, tek çizim) ve "Bugün" paneli (vakitler), çay kartı, göl sevgisi (Bugün ve Kova paneli), defterin koşul hapı, rehberin "Göl yaşıyor" sayfası. Yoksa kodla çizilen ikon. |
+| `weather_icons` | `assets/icons/ui/` | ✅ `GameIcon.ART_NAMES`: saat çipinin hava ikonu, bugünün ve yarının havası, yağmur isteği; `requests` Dede'nin isteklerinin başlığı ve rehberdeki karosu. |
+| `story_items` | `assets/icons/items/` (`despill: glow`: macentaya karışan ışıltı saydam olur) | ✅ `ItemArt.item`: altın hamur (Takım Çantası'nın rozeti, bildirim, defter), harita parçası (altın istek, bildirim, defterin başlığı), boy isteğinin cetveli, mektup (mektup paneli, defterin mektup kartları), yanan fener (Nine'nin feneri bildirimi), Bekçi'nin pulu (defterde, Bekçi bırakılınca). |
+| `letter_paper` | `assets/ui/frames/letter_paper.png` (`fit: trim`) | ✅ Mektup panelinin kâğıdı (`UiKit.framed`, 9 dilim payları `FRAME_SLICES`; köşe `LetterPanel.PAPER_CORNER`: leke ve balık çizimi gerilmez, imza balığa binmez). Yoksa kodla çizilen kâğıt. |
+| `secret_map` | `assets/ui/art/secret_map.png` (`fit: box`) | ✅ Defterin Gölün Sırrı sekmesindeki harita yapbozu: dörde bölünür, bulunan parça yerine oturur. Yoksa kodla çizilen parşömen. |
+| `keeper` | `assets/icons/items/` (`despill: edge`) | ✅ `ItemArt.item` (`ItemArt.fish` önce ona bakar): Bekçi'nin kartı ve defteri (`keeper`), göle çıkınca bildirimde kuşbakışı (`keeper_top`), jenerikte zıplayan Bekçi (`keeper_leap`). |
+| `portraits_young` | `assets/ui/portraits/` | ✅ Mektubun başlığında yazanın genç portresi (`young_nine`, `young_dede`), jenerikte ikisi birlikte (`young_both`). |
+| `ending` | `assets/ui/art/ending.png` (`fit: box`, `key: false`) | ✅ Jeneriğin arka planı (yazıların arkası kenarları yumuşak koyu şerit). |
+| `home_icons` | `assets/icons/ui/` | ✅ `GameIcon.ART_NAMES` (`wardrobe`, `camera`, `cat_tekir`, `gift`, `donation_box`, `cat_bowl`): dolabın başlığı ve yeni kıyafet bildirimi, kamera düğmeleri (Ayarlar, balık kartı, fotoğraf modu), rehberin "Yuva" sayfası, Tekir'in hediyesi, bağış kutusu (akvaryum paneli, bildirim), acıkan Tekir'in balonu. Yoksa kodla çizilen ikon. |
+| `photo_frames` | `assets/ui/frames/photo_*.png` (`fit: trim`) | ✅ Fotoğraf modunun çerçeveleri (`PhotoFrame.art_box`: 9 dilim, köşe süsleri gerilmez; logo süsün solunda `logo_inset`); seçim düğmelerinde küçük önizleme. Yoksa kodla çizilen çerçeve. |
+| `aquarium_bg` | `assets/ui/art/aquarium_bg.png` (`fit: box`, `key: false`) | ✅ Akvaryum panelinde 3D balıkların arkası. Yoksa kodla çizilen su ve kum. |
+| `angler_portraits` | `assets/ui/portraits/` | ✅ Yeni oyunun "Balıkçını seç" ekranında kartların resmi, dolabın Balıkçı sekmesinde seçili balıkçının yüzü; `tekir` şimdilik yedekte (tanıtım ve mağaza). Yoksa 3D modelden önizleme. |
+| `store_art` | `docs/img/tanitim.jpg` (yalnızca referans, pakete girmez) | ✅ README'nin başında; mağaza ve sosyal medya için. Oyunda kullanılmaz. |

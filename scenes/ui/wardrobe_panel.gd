@@ -9,7 +9,8 @@ extends Dialog
 ## Yeni kıyafet olan sekmede kırmızı rozet; sekme açılınca kıyafetleri görülmüş sayılır (Outfits.mark_seen).
 ## Panelin boyu sekmeden sekmeye değişmez (içerik aynı yükseklikte).
 ## Yeni oyunda açılış filminden önce seçim ekranı olarak açılır (open_first: başlık "Balıkçını seç", sekme ve
-## kapatma yok, yalnızca balıkçı kartları; seçmeden geçilmez).
+## kapatma yok, yalnızca balıkçı kartları; seçmeden geçilmez). Seçim ekranının kartlarında Ersin'in balıkçı portreleri
+## (Parti 5b angler_girl, angler_boy; yoksa canlı önizleme); dolabın Balıkçı sekmesinde canlı önizleme (kıyafetiyle).
 
 signal chosen(kind: String)
 ## Açık bir kıyafete dokunuldu (main giydirir: Outfits.equip, balıkçı, kayıt).
@@ -48,6 +49,8 @@ var _cards: Dictionary = {}
 var _buttons: Dictionary = {}
 var _names: Dictionary = {}
 var _previews: Dictionary = {}
+## Seçim ekranındaki portreler (görsel → kimlik; görseli olmayan balıkçının kartında canlı önizleme).
+var _faces: Dictionary = {}
 var _outfit_row: HBoxContainer
 var _outfit_preview: AnglerPreview
 var _grid: GridContainer
@@ -85,6 +88,18 @@ func _build_cards() -> void:
 		panel.name = "Card_" + kind
 		_cards[kind] = panel
 		column.alignment = BoxContainer.ALIGNMENT_CENTER
+		var portrait := ItemArt.portrait("angler_" + kind)
+		if portrait != null:
+			var face := TextureRect.new()
+			face.name = "Face_" + kind
+			face.texture = portrait
+			face.custom_minimum_size = PREVIEW
+			face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+			face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			column.add_child(face)
+			_faces[kind] = face
 		var preview := AnglerPreview.new()
 		preview.custom_minimum_size = PREVIEW
 		preview.show_look(kind)
@@ -267,7 +282,13 @@ func _refresh_cards(look: Dictionary) -> void:
 		button.disabled = picked
 		var panel: PanelContainer = _cards[kind]
 		panel.add_theme_stylebox_override("panel", UiKit.card_style(UiKit.SUCCESS if picked else UiKit.CREAM_EDGE))
-		(_previews[kind] as AnglerPreview).set_outfit(look)
+		# Seçim ekranında portre (varsa), dolapta canlı önizleme: gizli önizlemenin dünyası işlemez.
+		var face := _faces.get(kind) as TextureRect
+		if face != null:
+			face.visible = _first
+		var preview: AnglerPreview = _previews[kind]
+		preview.visible = not _first or face == null
+		preview.set_outfit(look)
 
 
 func _refresh_outfits(look: Dictionary) -> void:
