@@ -10,6 +10,8 @@ extends Node3D
 ## tekniğin ilk kamışının görünüşü (style → STYLES). Hepsi build()'den (ağaca eklenince) önce verilir.
 ## Parçalar Props ile kurulur, MeshBatch ile birleşir: sabit kısım ve her eklem birer ağ (olta 4
 ## çizim; eklemler ayrı kaldığı için bükülme sürer).
+## Kaplama (Dalga 5, kıyafetler; skin): kamışın rengi (dip parçası da) ve sargıları kaplamanın renginde; boy,
+## kalınlık, halkalar, sap ve makara kamışınki.
 
 ## Tekniğe göre varsayılan görünüş (gear_id bilinmiyorsa): tekniğin ilk kamışı.
 const STYLES := { "float": "rod_bamboo", "spin": "rod_spin_light", "bottom": "rod_carp_1", "fly": "rod_fly_1" }
@@ -68,6 +70,8 @@ var tip: Node3D
 var style: String = "float"
 var gear_id: String = ""
 var reel_id: String = ""
+## Kaplama: { color, band } ("#rrggbb"; boşsa kamışın kendi renkleri). build()'den önce verilir.
+var skin: Dictionary = {}
 
 var _joints: Array[Node3D] = []
 var _clock: float = 0.0
@@ -116,14 +120,15 @@ func build() -> void:
 	var parent: Node3D = self
 	var segment := float(look["length"]) / 3.0
 	var thick := float(look["thick"])
-	var blank := Color(str(look["blank"]))
-	var wrap := Color(str(look["wrap"]))
+	var blank := Color(str(skin.get("color", look["blank"])))
+	var wrap := Color(str(skin.get("band", look["wrap"])))
+	var butt := blank if skin.has("color") else Color(str(look.get("butt", look["blank"])))
 	var guide := Color(str(look["guide"]))
 	for i in 3:
 		var joint := Props.pivot(parent, Vector3(0, 0, JOINT0_Z if i == 0 else -segment), "Joint%d" % i)
 		var r0 := (0.022 - 0.006 * i) * thick
 		var r1 := maxf(r0 - 0.006 * thick, 0.005)
-		var color := Color(str(look.get("butt", look["blank"]))) if i == 0 else blank
+		var color := butt if i == 0 else blank
 		Props.cylinder(joint, r1, r0, segment, Vector3(0, 0, -segment * 0.5), color, 6, -x90)
 		# Parçaların birleşimi.
 		if i < 2:

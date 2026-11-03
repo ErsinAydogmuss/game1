@@ -20,6 +20,8 @@ const CARRY_DIR := Vector3(0.45, 0.9, 0.12)
 const ROD_LENGTH := 0.4
 
 var look: String = "girl"
+## Giyilen kıyafet (Outfits.look): şapka ve yelek gövdede, olta kaplaması oltada.
+var outfit: Dictionary = {}
 
 var _viewport: SubViewport
 var _world: Node3D
@@ -78,24 +80,46 @@ func show_look(kind: String) -> void:
 		_body = body
 	else:
 		_body = ToyAngler.new()
+	if _body.has_method("set_outfit"):
+		_body.call("set_outfit", outfit.get("hat", {}), outfit.get("vest", {}))
 	# Olta el yuvasına gövde hazır olunca (yuva gövdenin _ready'sinde kurulur; panel kurulurken önizleme henüz
 	# ağaçta değil).
 	_body.ready.connect(_add_rod.bind(_body), CONNECT_ONE_SHOT)
 	_pivot.add_child(_body)
 
 
+## Kıyafeti giyer (Outfits.look): şapka ve yelek gövdede; olta kaplaması değiştiyse olta yeniden kurulur.
+func set_outfit(worn: Dictionary) -> void:
+	outfit = worn
+	if _body == null:
+		return
+	if _body.has_method("set_outfit"):
+		_body.call("set_outfit", outfit.get("hat", {}), outfit.get("vest", {}))
+	var skin := Angler.skin_of(outfit.get("rod", {}))
+	if _rod != null and (_rod as RodModel).skin != skin:
+		var mount := _rod.get_parent() as Node3D
+		mount.remove_child(_rod)
+		_rod.queue_free()
+		_rod = _new_rod(mount)
+
+
 func _add_rod(body: Node3D) -> void:
 	var mount := body.get("rod_mount") as Node3D
 	if mount == null or body != _body:
 		return
-	var rod := RodModel.new()
-	rod.style = "float"
-	mount.add_child(rod)
-	_rod = rod
+	_rod = _new_rod(mount)
 	var skeleton := body.find_child("Skeleton3D", true, false) as Skeleton3D
 	if skeleton != null:
 		skeleton.skeleton_updated.connect(_carry_rod)
 		_synced = true
+
+
+func _new_rod(mount: Node3D) -> RodModel:
+	var rod := RodModel.new()
+	rod.style = "float"
+	rod.skin = Angler.skin_of(outfit.get("rod", {}))
+	mount.add_child(rod)
+	return rod
 
 
 ## Olta gövdeye göre dik ve kısaltılmış (boyu oltanın -Z ekseninde): el yuvası kemikten güncellendikten sonra.

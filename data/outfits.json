@@ -1,0 +1,24 @@
+{
+  "items": [
+    { "id": "hat_bucket", "slot": "hat", "unlock": "start", "shape": "bucket", "color": "#2c7d96", "band": "#f0b637" },
+    { "id": "hat_straw", "slot": "hat", "unlock": "cat", "value": 1, "shape": "straw", "color": "#e3c27a", "band": "#c0392b" },
+    { "id": "hat_red", "slot": "hat", "unlock": "rank", "value": 3, "shape": "bucket", "color": "#c8443a", "band": "#f4ecdc" },
+    { "id": "hat_beanie", "slot": "hat", "unlock": "species", "value": 8, "shape": "beanie", "color": "#3f69a6", "band": "#f4ecdc" },
+    { "id": "hat_cap", "slot": "hat", "unlock": "requests", "value": 10, "shape": "cap", "color": "#6b5844", "band": "#4a3c2e" },
+    { "id": "hat_fly", "slot": "hat", "unlock": "rank", "value": 7, "shape": "fly", "color": "#6e7d4a", "band": "#5a4630" },
+    { "id": "hat_crown", "slot": "hat", "unlock": "cat", "value": 5, "shape": "crown", "color": "#5aa84a", "band": "#f28cb4" },
+    { "id": "hat_keeper", "slot": "hat", "unlock": "keeper", "shape": "keeper", "color": "#3fbfb0", "band": "#e8f6f0" },
+    { "id": "vest_yellow", "slot": "vest", "unlock": "start", "color": "#f0b637" },
+    { "id": "vest_red", "slot": "vest", "unlock": "rank", "value": 2, "color": "#d2453a" },
+    { "id": "vest_green", "slot": "vest", "unlock": "cat", "value": 2, "color": "#4fa84a" },
+    { "id": "vest_blue", "slot": "vest", "unlock": "species", "value": 12, "color": "#3d7fd1" },
+    { "id": "vest_purple", "slot": "vest", "unlock": "love", "value": 4, "color": "#8a5ac8" },
+    { "id": "vest_pink", "slot": "vest", "unlock": "cat", "value": 4, "color": "#e87aa8" },
+    { "id": "vest_navy", "slot": "vest", "unlock": "species", "value": 18, "color": "#2b3d6e" },
+    { "id": "rod_plain", "slot": "rod", "unlock": "start" },
+    { "id": "rod_red", "slot": "rod", "unlock": "rank", "value": 4, "color": "#c8443a", "band": "#f4ecdc" },
+    { "id": "rod_flower", "slot": "rod", "unlock": "cat", "value": 3, "color": "#f2a7c3", "band": "#ffffff" },
+    { "id": "rod_night", "slot": "rod", "unlock": "love", "value": 8, "color": "#1f2f5c", "band": "#e0b030" },
+    { "id": "rod_keeper", "slot": "rod", "unlock": "keeper", "color": "#3fbfb0", "band": "#e8f6f0" }
+  ]
+}

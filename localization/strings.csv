@@ -712,3 +712,40 @@ UI_CHAR_GIRL,Girl,Kız
 UI_CHAR_BOY,Boy,Oğlan
 UI_CHAR_PICK,Choose,Seç
 UI_CHAR_PICKED,Chosen,Seçili
+OUTFIT_hat_bucket,Bucket hat,Kova şapka
+OUTFIT_hat_straw,Straw hat,Hasır şapka
+OUTFIT_hat_red,Red hat,Kırmızı şapka
+OUTFIT_hat_beanie,Beanie,Bere
+OUTFIT_hat_cap,Flat cap,Kasket
+OUTFIT_hat_fly,Fly hat,Sinekçi şapkası
+OUTFIT_hat_crown,Flower crown,Çiçek tacı
+OUTFIT_hat_keeper,Keeper's hat,Bekçi'nin şapkası
+OUTFIT_vest_yellow,Yellow,Sarı
+OUTFIT_vest_red,Red,Kırmızı
+OUTFIT_vest_green,Green,Yeşil
+OUTFIT_vest_blue,Blue,Mavi
+OUTFIT_vest_purple,Purple,Mor
+OUTFIT_vest_pink,Pink,Pembe
+OUTFIT_vest_navy,Navy,Lacivert
+OUTFIT_rod_plain,Natural,Doğal
+OUTFIT_rod_red,Red wrap,Kırmızı kaplama
+OUTFIT_rod_flower,Flower wrap,Çiçekli kaplama
+OUTFIT_rod_night,Night wrap,Gece kaplaması
+OUTFIT_rod_keeper,Keeper's wrap,Bekçi kaplaması
+UI_OUTFIT_RANK,Rank %d,Rütbe %d
+UI_OUTFIT_SPECIES,%d species in the book,Defterde %d tür
+UI_OUTFIT_REQUESTS,%d requests done,%d istek
+UI_OUTFIT_LOVE,Lake love %d,Göl sevgisi %d
+UI_OUTFIT_KEEPER,The Lake Keeper,Gölün Bekçisi
+UI_OUTFIT_CAT,Tekir's gift %d,Tekir'in %d. hediyesi
+UI_OUTFIT_NEW,New outfit: %s! Tap your angler.,Yeni kıyafet: %s! Balıkçına dokun.
+UI_OUTFIT_GIFT,Tekir brought you a gift: %s!,Tekir sana hediye getirdi: %s!
+UI_OUTFIT_NEW_MANY,%d new outfits in the wardrobe! Tap your angler.,Dolapta %d yeni kıyafet! Balıkçına dokun.
+UI_DEDE_OUTFIT_FIRST,A new outfit for you! Tap yourself to open the wardrobe.,"Yeni bir kıyafetin var evlat! Kendine dokun, dolap açılsın."
+UI_WARDROBE_TAB_ANGLER,Angler,Balıkçı
+UI_WARDROBE_TAB_HAT,Hats,Şapka
+UI_WARDROBE_TAB_VEST,Vests,Yelek
+UI_WARDROBE_TAB_ROD,Rods,Olta
+UI_OUTFIT_LOCKED,%s · locked: %s,%s · kilitli: %s
+UI_OUTFIT_WORN,Wearing: %s,Giyilen: %s
+UI_OUTFIT_NEW_BADGE,New!,Yeni!

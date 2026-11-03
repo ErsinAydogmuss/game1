@@ -75,6 +75,10 @@ func _initialize() -> void:
 	keys.append("dough")
 	keys.append("final_ready")
 	keys.append("keeper")
+	# Kıyafetler (Dalga 5): açıldığı dakika (satışta bakılır).
+	for e in db.outfits.items:
+		if str(e["unlock"]) != "start":
+			keys.append("outfit:" + str(e["id"]))
 	for n in range(1, db.fish.size() + 1):
 		keys.append("species_%d" % n)
 	for r in db.rarities:

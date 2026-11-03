@@ -5,6 +5,8 @@ extends Node3D
 ## boyanır (tools/recolor_texture.gd); kızda pelerin, bıçaklar, arbaletler ve bomba, oğlanda miğfer, pelerin,
 ## kılıçlar ve kalkanlar gizlenir. Kodla bir balıkçı şapkası başa takılır; olta sağ elin yuvasına (handslot_r)
 ## bağlanır (rod_mount).
+## Kıyafetler (Dalga 5, set_outfit): şapka HatModel'in biçimlerinden (tek ağ), yelek rengi gövdenin malzemesinde
+## (angler.gdshader: dokunun yelek hücresi boyanır; tek malzeme, çizim eklemez).
 ##
 ## Animasyonlar AnimationTree ile karışır:
 ## - free: hıza göre bekleme / yürüme;
@@ -49,16 +51,27 @@ const ROD_TILT := deg_to_rad(35.0)
 const LEAN_BACK := 0.32
 const HAT_COLOR := Color("#2c7d96")
 const HAT_BAND := Color("#f0b637")
+## Boyanmış dokuda yeleğin rengi (iki görünüşte de; tools/recolor_texture.gd): shader parlaklığını buna oranlar.
+const VEST_PAINT := Color("#f0b637")
+const SHADER := preload("res://scenes/player/angler.gdshader")
+## KayKit dokusunun renk ızgarası (8 sütun, 4 satır).
+const GRID := Vector2(8, 4)
 ## Görünüşler (SaveData.CHARACTERS): model, boyanmış doku, gizlenen ve gölgesi kapalı parçalar, şapkanın baş
-## kemiğinden yüksekliği (modelin biriminde).
+## kemiğinden yüksekliği (modelin biriminde) ve büyüklüğü (oğlanın saçı hacimli: hasır, bere ve kasket içinden
+## taşmasın), yeleğin dokudaki hücresi (sütun, satır: kızda tunik ve kollar, oğlanda yağmurluk ve çizmeler).
 const LOOKS := {
-	"girl": { "scene": SCENE_PATH, "texture": TEXTURE_PATH, "hidden": HIDDEN, "shadowless": SHADOWLESS, "hat_y": 0.74 },
+	"girl": { "scene": SCENE_PATH, "texture": TEXTURE_PATH, "hidden": HIDDEN, "shadowless": SHADOWLESS, "hat_y": 0.74,
+		"hat_scale": 1.0, "vest_cell": Vector2i(0, 1) },
 	"boy": { "scene": BOY_SCENE, "texture": BOY_TEXTURE, "hidden": BOY_HIDDEN, "shadowless": BOY_SHADOWLESS,
-		"hat_y": 0.88 },
+		"hat_y": 0.88, "hat_scale": 1.12, "vest_cell": Vector2i(3, 0) },
 }
 
 ## Görünüş (LOOKS'un anahtarı); ağaca eklenmeden önce verilir.
 var look: String = "girl"
+## Kıyafet (OutfitRules satırları: şapka { shape, color, band }, yelek { color, unlock }); boşsa varsayılan
+## (kova şapka, dokunun sarısı). Ağaca eklenmeden önce de verilebilir (set_outfit).
+var hat_look: Dictionary = {}
+var vest_look: Dictionary = {}
 
 ## Olta buraya bağlanır: el yuvasının çocuğu, modelin ölçeği geri alınmış; -Z oltanın ucu.
 var rod_mount: Node3D
@@ -68,6 +81,9 @@ var _tree: AnimationTree
 var _aim: AimModifier
 var _hand: Node3D
 var _pose: String = "free"
+var _material: ShaderMaterial
+var _hat: Node3D
+var _hat_key: String = ""
 
 
 ## Görünüşün model dosyası ve dokusu projede var mı?
@@ -83,8 +99,9 @@ func _ready() -> void:
 	_model.scale = Vector3.ONE * MODEL_SCALE
 	_model.rotation.y = PI
 	add_child(_model)
-	dress(_model, look)
-	_add_hat(float(spec["hat_y"]))
+	_material = dress(_model, look)
+	_apply_vest()
+	_build_hat()
 	_hand = _model.find_child("handslot_r", true, false) as Node3D
 	rod_mount = Props.pivot(_hand, Vector3.ZERO, "RodMount")
 	# Rogue'un el yuvasında nişan duruşlarında +X ileri, +Y yukarı bakar (tools/character_sheet.gd
@@ -98,14 +115,46 @@ func _ready() -> void:
 	_build_tree(_model.find_child("AnimationPlayer", true, false) as AnimationPlayer)
 
 
-## Kıyafet: boyanmış doku, dış çizgi, gizlenen parçalar (görünüşün). Karakter sayfası aracı da kullanır.
-static func dress(model: Node3D, kind: String = "girl") -> void:
+## Kıyafet: boyanmış doku (yeleği boyanabilen malzeme), dış çizgi, gizlenen parçalar (görünüşün). Karakter
+## sayfası aracı da kullanır. Döner: gövdenin malzemesi (yeleğin rengi onda: set_vest_color).
+static func dress(model: Node3D, kind: String = "girl") -> ShaderMaterial:
 	var spec: Dictionary = LOOKS.get(kind, LOOKS["girl"])
 	var hidden: Array[String] = []
 	hidden.assign(spec["hidden"])
 	var shadowless: Array[String] = []
 	shadowless.assign(spec["shadowless"])
-	CharacterKit.dress(model, load(str(spec["texture"])), hidden, shadowless)
+	var material := ShaderMaterial.new()
+	material.shader = SHADER
+	material.set_shader_parameter("albedo_texture", load(str(spec["texture"])))
+	var cell: Vector2i = spec["vest_cell"]
+	material.set_shader_parameter("vest_cell", Vector4(cell.x / GRID.x, cell.y / GRID.y, 1.0 / GRID.x, 1.0 / GRID.y))
+	var paint := VEST_PAINT.srgb_to_linear()
+	material.set_shader_parameter("vest_base", 0.2126 * paint.r + 0.7152 * paint.g + 0.0722 * paint.b)
+	material.next_pass = CharacterKit.outline(CharacterKit.OUTLINE_WIDTH)
+	CharacterKit.apply(model, material, hidden, shadowless)
+	return material
+
+
+## Yeleğin rengi: boyanmış dokunun sarısı yerine (default true: dokunun kendi rengi).
+static func set_vest_color(material: ShaderMaterial, color: Color, default: bool) -> void:
+	material.set_shader_parameter("vest_on", not default)
+	material.set_shader_parameter("vest_color", color)
+
+
+## Kıyafeti giyer (Dalga 5): şapka değiştiyse yeniden kurulur, yeleğin rengi malzemede. Boş satır varsayılan.
+func set_outfit(hat: Dictionary, vest: Dictionary) -> void:
+	hat_look = hat
+	vest_look = vest
+	if _model == null:
+		return
+	_apply_vest()
+	_build_hat()
+
+
+func _apply_vest() -> void:
+	var start := vest_look.is_empty() or str(vest_look.get("unlock", "start")) == "start"
+	var color := Color(str(vest_look.get("color", VEST_PAINT.to_html(false))))
+	set_vest_color(_material, color, start)
 
 
 ## Her kare. speed: yatay hız (m/sn). pose: free, hold ya da reel. tension: çekişmede gerilim (0..1+).
@@ -140,20 +189,32 @@ func hand_point() -> Vector3:
 
 # --- Kurulum ---------------------------------------------------------------------
 
-## Kova biçimli balıkçı şapkası: baş kemiğine bağlanan düğümde (modelin ölçeğinde), kemikten height yukarıda.
-## Rogue'da baş yuvası yok; CharacterKit.bone_slot kurar (Knight'ın miğfer yuvası gizli kalır).
-func _add_hat(height: float) -> void:
+## Şapka (HatModel'in biçimi; varsayılan turkuaz kova şapka): baş kemiğine bağlanan düğümde (modelin ölçeğinde),
+## kemikten görünüşün hat_y'si kadar yukarıda (bere ve taç biraz aşağıda: HatModel.DROP). Tek ağ (bir çizim, bir
+## dış çizgi, bir gölge). Biçim ve renkler değişmediyse yeniden kurulmaz. Rogue'da baş yuvası yok;
+## CharacterKit.bone_slot kurar (Knight'ın miğfer yuvası gizli kalır).
+func _build_hat() -> void:
+	var shape := str(hat_look.get("shape", "bucket"))
+	var color := Color(str(hat_look.get("color", HAT_COLOR.to_html(false))))
+	var band := Color(str(hat_look.get("band", HAT_BAND.to_html(false))))
+	var key := "%s|%s|%s" % [shape, color.to_html(), band.to_html()]
+	if key == _hat_key:
+		return
 	var head := CharacterKit.bone_slot(_model, "head", "HeadSlot")
 	if head == null:
 		return
-	var hat := Props.pivot(head, Vector3(0, height, 0.0), "Hat")
-	Props.cylinder(hat, 0.42, 0.52, 0.34, Vector3(0, 0.13, 0), HAT_COLOR, 14)
-	# Aşağı eğik geniş kenar (kova şapka).
-	Props.cylinder(hat, 0.53, 0.76, 0.09, Vector3(0, -0.07, 0), HAT_COLOR.darkened(0.12), 18)
-	Props.cylinder(hat, 0.515, 0.515, 0.08, Vector3(0, 0.0, 0), HAT_BAND, 14)
-	# Tek ağ (bir çizim, bir dış çizgi, bir gölge).
-	MeshBatch.merge(hat)
-	CharacterKit.outline_parts(hat, CharacterKit.OUTLINE_WIDTH / MODEL_SCALE * 0.5)
+	_hat_key = key
+	if _hat != null:
+		_hat.get_parent().remove_child(_hat)
+		_hat.queue_free()
+	var spec: Dictionary = LOOKS.get(look, LOOKS["girl"])
+	var scale := float(spec["hat_scale"])
+	_hat = Props.pivot(head, Vector3(0, float(spec["hat_y"]) - HatModel.drop(shape) * scale, 0.0), "Hat")
+	_hat.scale = Vector3.ONE * scale
+	var node := HatModel.build(shape, color, band).build(_hat, "HatMesh", MeshBatch.vertex_material())
+	var material := (node.material_override as StandardMaterial3D).duplicate() as StandardMaterial3D
+	material.next_pass = CharacterKit.outline(CharacterKit.OUTLINE_WIDTH / MODEL_SCALE * 0.5)
+	node.material_override = material
 
 
 func _build_tree(player: AnimationPlayer) -> void:

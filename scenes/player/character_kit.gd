@@ -23,6 +23,12 @@ static func dress(model: Node3D, texture: Texture2D, hidden: Array[String], shad
 	material.rim = 0.25
 	material.rim_tint = 0.6
 	material.next_pass = outline(OUTLINE_WIDTH)
+	apply(model, material, hidden, shadowless)
+
+
+## Modelin parçalarına tek malzeme verir (dış çizgisi malzemenin next_pass'inde); gizlenenler gizlenir, gölgesi
+## görünmeyenlerin gölgesi kapanır. Balıkçı kendi malzemesiyle (yeleği boyanır: AnglerBody.dress) kullanır.
+static func apply(model: Node3D, material: Material, hidden: Array[String], shadowless: Array[String] = []) -> void:
 	for node in model.find_children("*", "MeshInstance3D", true, false):
 		var mesh := node as MeshInstance3D
 		if hidden.has(str(mesh.name)):

@@ -365,7 +365,35 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ Seçim ekranı: yeni oyunda açılış filminden önce "Balıkçını seç": iki kart, her birinde dönen canlı önizleme ve SEÇ; seçmeden geçilmez (kapatma yok). Film seçilen balıkçıyla oynar (hediyede oltayı o alır). Eski kayıtlar kız balıkçıyla sürer, seçim ekranı çıkmaz.
   - ✅ Dolap: balıkçına dokununca açılır (olta boşken). İlk bölümü balıkçı: seçilen hemen değişir, ilerleme aynen kalır. Kıyafet sekmeleri (şapka, yelek, olta) 4. adımda.
   - Metinler cinsiyetsiz: balıkçıya dair sözler iki görünüşte de aynı.
-  - Kıyafetler 🔜: şapka, yelek rengi, olta kaplaması. H2'de rütbe, defter ve isteklerle kazanılır; gerçek parayla satış Faz 3'te.
+  - ✅ Kıyafetler (Dalga 5): 8 şapka, 7 yelek rengi, 5 olta kaplaması (`data/outfits.json`). Satılmaz, oynayarak açılır:
+    rütbe, defterdeki tür, biten istek, göl sevgisi, Gölün Bekçisi ve Tekir'in hediyeleri. Açılma kayıttan türer
+    (eski kayıtta da geriye dönük açılır). Gerçek parayla satış Faz 3'te.
+    - Dolabın Şapka, Yelek, Olta sekmeleri: solda balıkçının canlı önizlemesi, sağda karolar. Açık karoya dokununca
+      hemen giyilir; kilitlide nasıl açılacağı ve ilerlemesi yazar ("Rütbe 7 (3/7)").
+    - Yeni açılan kıyafet bir kez duyurulur ("Yeni kıyafet: Kırmızı şapka! Balıkçına dokun."); ilk seferde Dede
+      dolabı söyler. Dolapta yeni kıyafetin karosunda "Yeni!", sekmesinde rozet.
+    - Şapkalar kodla, tek ağ (eski kova şapkayla aynı çizim). Yelek rengi gövdenin malzemesinde boyanır (tek
+      malzeme, çizim eklemez). Kamış kaplaması kamışın ve sargıların rengi. İskelede kıyafetle 145 çizim.
+    - Açılma sırası (denge botu, 16 saat × 6 seed, ortalama dakika):
+
+      | Kıyafet | Şart | Dakika |
+      |---|---|---|
+      | Kırmızı yelek | Rütbe 2 | 3 |
+      | Kırmızı şapka | Rütbe 3 | 13 |
+      | Bere | Defterde 8 tür | 17 |
+      | Kırmızı kaplama | Rütbe 4 | 21 |
+      | Hasır şapka | Tekir'in 1. hediyesi | 27 |
+      | Mavi yelek | Defterde 12 tür | 31 |
+      | Sinekçi şapkası | Rütbe 7 | 55 |
+      | Yeşil yelek | Tekir'in 2. hediyesi | 55 |
+      | Çiçekli kaplama | Tekir'in 3. hediyesi | 74 |
+      | Mor yelek | Göl sevgisi 4 | 88 |
+      | Pembe yelek | Tekir'in 4. hediyesi | 90 |
+      | Çiçek tacı | Tekir'in 5. hediyesi | 108 |
+      | Kasket | 10 istek | 130 |
+      | Bekçi'nin şapkası ve kaplaması | Gölün Bekçisi | 176 |
+      | Lacivert yelek | Defterde 18 tür | 176 |
+      | Gece kaplaması | Göl sevgisi 8 | 198 |
 - **Dede:**
   - Köyün yaşlı balıkçısı.
   - ✅ İskelenin kenarında oturur, bacakları suya sarkar; yanında ince belli çay bardağı. KayKit Barbarian, yeniden boyanmış: beyaz sakal ve kaşlar, tuğla kırmızısı örgü kazak, kodla kasket. Miğfer, silahlar ve kupa gizli (kupa bira bardağına benziyor; oyun her yaşa).
@@ -398,8 +426,9 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - Son beslenmeden beri 8 balık tutulunca acıkır (`rules.json` `cat`; gerçek saat değil: oyuncu yokken aç kalmaz,
     ceza yok). Açken arada bir balıklı balon çıkar; ilk seferde Dede nasıl besleneceğini söyler. Dokununca
     kovadaki en ucuz balığı yer (bildirim, kalp); kova boşsa bekler.
-  - Her 5 beslemede sıradaki hediyeyi getirir (sabit sırayla, zar yok): hediyeler kıyafet ve süsler, 4. adımda
-    (kıyafetler) gelir. Besleme sayısı şimdiden sayılır: önceden kazanılan hediyeler o zaman açılır.
+  - ✅ Her 5 beslemede sıradaki hediyeyi getirir (sabit sırayla, zar yok): hasır şapka, yeşil yelek, çiçekli kaplama,
+    pembe yelek, çiçek tacı ("Tekir sana hediye getirdi: Hasır şapka!"). Hediyeler besleme sayısından türer:
+    önceden beslenen kedinin hediyeleri geriye dönük açılır. Beş hediyeden sonra Tekir yine yer, hediye getirmez.
 
 ## 8. Görünüm
 

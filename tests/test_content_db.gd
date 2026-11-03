@@ -316,6 +316,12 @@ func test_every_content_id_has_translations() -> void:
 		keys.append(str(Elder.TECH_TIPS[id]))
 	for i in range(1, Nine.LINE_COUNT + 1):
 		keys.append(Nine.LINE_KEY % i)
+	# Kıyafetler (Dalga 5): adları ve kilitlinin nasıl açılacağı (Outfits.reason; birleştirilen anahtar).
+	for e in db.outfits.items:
+		keys.append("OUTFIT_" + str(e["id"]))
+		var why := Outfits.reason(db, str(e["id"]))
+		if not why.is_empty() and not str(why[0]) in keys:
+			keys.append(str(why[0]))
 	# Dede'nin karttaki sözleri: Nadir ve üstü her nadirlik için; koruma altındaki türde koruma sözü.
 	for r in db.rarities:
 		var line := FishCard.dede_line(db, db.rarity_index(str(r["id"])), {})

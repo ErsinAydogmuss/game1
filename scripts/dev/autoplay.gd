@@ -120,6 +120,12 @@ extends Node
 ##     sığar, düğmeler ≥122 ve güvenli alanda; film henüz yok); oğlanı seç → kayıtta, gövde oğlan, film başlar (ATLA);
 ##     balıkçıya dokun → dolap (oğlan seçili), kıza geç → gövde hemen değişir, panel açık; iskelede iki görünüşte de
 ##     ÇİZİM ≤ TOUR_DRAWS; telefon oranında, --safe-inset=130, TR ve EN.
+##   outfits: kıyafetler (Dalga 5). Rütbe 3'e gelince iki yeni kıyafet bir kez duyurulur (bildirim), Dede dolabı
+##     söyler; balıkçıya dokun → dolap yeni kıyafetin sekmesinde (Şapka; karoda "Yeni!", Yelek'te rozet), küçülmeden
+##     sığar, düğmeler ≥122 ve güvenli alanda; kilitli karo şartını yazar, giyilmez; kırmızı şapka ve yelek giyilir
+##     (kayıt, gövdenin şapkası, malzemede yeleğin rengi); sekmede rozet söner; panelin boyu sekmelerde aynı; Olta
+##     sekmesi; iskelede kıyafetle ÇİZİM ≤ TOUR_DRAWS; Tekir'in beşinci beslemesi hasır şapka getirir (bildirim);
+##     oğlana geçince kıyafet aynen; telefon oranında, --safe-inset=130, TR ve EN.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -301,6 +307,8 @@ func _ready() -> void:
 			_play_cat.call_deferred()
 		"character":
 			_play_character.call_deferred()
+		"outfits":
+			_play_outfits.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -6019,6 +6027,139 @@ func _play_character() -> void:
 	_quit()
 
 
+## Kıyafetler (Dalga 5): bkz. dosyanın başı.
+func _play_outfits() -> void:
+	_use_save(5)
+	var db := GameState.db
+	var save := GameState.save
+	var panel: WardrobePanel = main.get("wardrobe_panel")
+	var cat: Cat = main.get("cat")
+	var angler := _angler()
+	var toast: Label = _hud().get("_toast")
+	await _wait(1.0)
+	# 1) Rütbe 3: kırmızı yelek (rütbe 2) ve kırmızı şapka (rütbe 3) açılır, ikisi birden sayısıyla duyurulur.
+	save.xp = db.rank_xp[2]
+	var many := UiKit.upper(tr("UI_OUTFIT_NEW_MANY") % 2)
+	var shown := await _wait_until(func() -> bool: return toast.visible and toast.text == many, 6.0)
+	_check("rütbe 3'te iki yeni kıyafet bir kez duyurulur (%s)" % toast.text, shown and Outfits.is_new(save, "hat_red")
+			and Outfits.is_new(save, "vest_red") and Outfits.fresh(db, save).is_empty())
+	var told := await _wait_until(func() -> bool: return str(main.get("_line")) == "UI_DEDE_OUTFIT_FIRST", 10.0)
+	_check("Dede dolabı söyler", told)
+	await _shot("01_bildirim")
+	await _wait(1.5)
+	# 2) Balıkçıya dokun: dolap yeni kıyafetin sekmesinde; karoda "Yeni!", Yelek sekmesinde rozet.
+	await _tap(_screen(angler.global_position + Vector3(0.0, 0.8, 0.0)))
+	await _wait_frames(3)
+	var tiles := panel.find_child("Tiles", true, false) as Control
+	var red_hat := panel.find_child("Item_hat_red", true, false) as Control
+	var vest_badge := (panel.find_child("Tab_vest", true, false) as Control).find_child("Badge", false, false) as Label
+	var hat_badge := (panel.find_child("Tab_hat", true, false) as Control).find_child("Badge", false, false) as Label
+	_check("dolap Şapka sekmesinde açılır: 8 şapka, kırmızıda Yeni!, Yelek'te rozet, Şapka'da yok", panel.visible
+			and not panel.is_first() and panel.current_tab() == "hat" and tiles.get_child_count() == 8 and red_hat != null
+			and red_hat.find_child("New", false, false) != null and vest_badge.visible and vest_badge.text == "1"
+			and not hat_badge.visible)
+	_check("dolap küçülmeden sığar (ölçek %.3f)" % panel.fit_scale(), panel.fit_scale() > 0.999 and _panel_inside(panel))
+	_check_panel_buttons(panel, "dolabın düğmeleri")
+	var heights := { "hat": panel.panel_rect().size.y }
+	await _wait(0.8)
+	await _shot("02_sapkalar")
+	# 3) Kilitli karo: şartını yazar, giyilmez.
+	await _tap_control(panel.find_child("Item_hat_fly", true, false) as Control)
+	await _wait_frames(2)
+	var status := panel.find_child("Status", true, false) as Label
+	_check("kilitli şapkaya dokun → şartı yazar (%s), giyilmez" % status.text,
+			status.text == WardrobePanel.status_text(db, save, "hat_fly") and "7" in status.text
+			and Outfits.equipped(db, save, "hat") == "hat_bucket")
+	# 4) Kırmızı şapka: giyilir (kayıt ve balıkçının şapkası hemen).
+	await _tap_control(panel.find_child("Item_hat_red", true, false) as Control)
+	await _wait_frames(3)
+	var body := angler.get("_body") as AnglerBody
+	_check("kırmızı şapkaya dokun → giyilir (kayıt, balıkçının şapkası)", Outfits.equipped(db, save, "hat") == "hat_red"
+			and str(save.outfit.get("hat", "")) == "hat_red" and body != null and str(body.hat_look.get("id", "")) == "hat_red"
+			and status.text == WardrobePanel.status_text(db, save, "hat_red"))
+	await _wait(0.4)
+	await _shot("03_kirmizi_sapka")
+	# 5) Yelek sekmesi: rozet söner; kırmızı yelek giyilir (gövdenin malzemesinde yeleğin rengi).
+	await _tap_control(panel.find_child("Tab_vest", true, false) as Control)
+	await _wait_frames(2)
+	heights["vest"] = panel.panel_rect().size.y
+	_check("Yelek sekmesi açılınca rozet söner, 7 yelek", not vest_badge.visible and tiles.get_child_count() == 7)
+	await _tap_control(panel.find_child("Item_vest_red", true, false) as Control)
+	await _wait_frames(3)
+	var material := body.get("_material") as ShaderMaterial
+	_check("kırmızı yelek giyilir (malzemede yeleğin rengi)", Outfits.equipped(db, save, "vest") == "vest_red"
+			and material != null and bool(material.get_shader_parameter("vest_on")))
+	await _wait(0.4)
+	await _shot("04_yelek")
+	# 6) Olta sekmesi: 5 kaplama, doğal giyili; Balıkçı sekmesi; panelin boyu sekmelerde aynı.
+	await _tap_control(panel.find_child("Tab_rod", true, false) as Control)
+	await _wait_frames(2)
+	heights["rod"] = panel.panel_rect().size.y
+	_check("Olta sekmesinde 5 kaplama, doğal giyili", tiles.get_child_count() == 5
+			and status.text == WardrobePanel.status_text(db, save, "rod_plain"))
+	await _shot("05_olta")
+	await _tap_control(panel.find_child("Tab_angler", true, false) as Control)
+	await _wait_frames(2)
+	heights["angler"] = panel.panel_rect().size.y
+	var steady := true
+	for key: String in heights:
+		steady = steady and absf(float(heights[key]) - float(heights["hat"])) < 2.0
+	_check("panelin boyu sekmelerde aynı (%s)" % str(heights), steady)
+	# 7) Kapat: iskelede kıyafetle çizim; yakın çekim.
+	await _tap(panel.close_button.get_global_rect().get_center())
+	await _wait(2.0)
+	var draws := await _measure_draws()
+	print("ÇİZİM iskelede kıyafetle: %d çizim" % int(draws["draws"]))
+	_check("ÇİZİM iskelede kıyafetle: %d (≤%d)" % [int(draws["draws"]), TOUR_DRAWS], int(draws["draws"]) <= TOUR_DRAWS)
+	main.set("bot_camera", true)
+	_frame_on(angler.global_position + Vector3(0.0, 0.7, 0.0), 0.3)
+	await _wait(0.5)
+	await _shot("06_kiyafetli")
+	main.set("bot_camera", false)
+	await _wait(0.8)
+	# 8) Tekir'in beşinci beslemesi: hasır şapka hediye (bildirim; dolapta yeni).
+	save.cat_fed = db.rules.cat_gift_every - 1
+	save.catches += db.rules.cat_meal_every
+	save.bucket = [{ "fish": "rudd", "size_cm": 25, "stars": 2 }]
+	await _wait(1.0)
+	await _tap(_screen(cat.global_position + Vector3(0.0, 0.2, 0.0)))
+	var gift_text := UiKit.upper(tr("UI_OUTFIT_GIFT") % tr("OUTFIT_hat_straw"))
+	var gifted := await _wait_until(func() -> bool: return toast.visible and toast.text == gift_text, 8.0)
+	_check("Tekir'in beşinci beslemesi → hasır şapka hediye (%s)" % toast.text, gifted
+			and save.cat_fed == db.rules.cat_gift_every and Outfits.is_new(save, "hat_straw"))
+	await _shot("07_hediye")
+	await _wait(1.0)
+	# 9) Oğlana geç: kıyafet aynen (şapka, yelek).
+	await _tap(_screen(angler.global_position + Vector3(0.0, 0.8, 0.0)))
+	await _wait_frames(3)
+	_check("hediyeden sonra dolap Şapka sekmesinde (hasır şapka yeni)", panel.visible and panel.current_tab() == "hat"
+			and (panel.find_child("Item_hat_straw", true, false) as Control).find_child("New", false, false) != null)
+	await _tap_control(panel.find_child("Tab_angler", true, false) as Control)
+	await _wait_frames(2)
+	await _tap_control(panel.find_child("Button_boy", true, false) as Control)
+	await _wait_frames(3)
+	var boy := angler.get("_body") as AnglerBody
+	var boy_material := boy.get("_material") as ShaderMaterial if boy != null else null
+	_check("oğlana geçince kıyafet aynen (kırmızı şapka ve yelek)", save.character == "boy" and boy != null
+			and boy.look == "boy" and str(boy.hat_look.get("id", "")) == "hat_red" and boy_material != null
+			and bool(boy_material.get_shader_parameter("vest_on")))
+	await _tap(panel.close_button.get_global_rect().get_center())
+	await _wait(1.5)
+	main.set("bot_camera", true)
+	_frame_on(angler.global_position + Vector3(0.0, 0.7, 0.0), 0.3)
+	await _wait(0.5)
+	await _shot("08_oglan_kiyafetli")
+	main.set("bot_camera", false)
+	# 10) Kayıt gidiş-dönüş.
+	var back := SaveData.from_dict(save.to_dict())
+	_check("kıyafet kayıtla döner", Outfits.equipped(db, back, "hat") == "hat_red"
+			and Outfits.equipped(db, back, "vest") == "vest_red" and not Outfits.is_new(back, "hat_red"))
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
 ## Tekir (Dalga 5): bkz. dosyanın başı.
 func _play_cat() -> void:
 	_use_save(5)
@@ -6204,6 +6345,12 @@ func _use_save(catches: int) -> void:
 	# ekranına takılmasın).
 	if _scenario != "character":
 		save.flags["chose_character"] = true
+	# Kıyafetlerin duyurusu yalnızca outfits senaryosunda: ötekilerde her kıyafet görülmüş sayılır (yeni kıyafet
+	# bildirimi ve Dede'nin dolap sözü eski denetimlerin bildirimlerini, sözlerini ve çizimini şaşırtmasın).
+	if _scenario != "outfits":
+		for e in GameState.db.outfits.items:
+			save.flags[Outfits.FLAG % str(e["id"])] = Outfits.SEEN
+		save.flags["told_outfit"] = true
 	# Dede'nin istekleri yalnızca requests senaryosunda: ötekilerde yuvalar hiç dolmaz, Dede'nin istek sözü yok
 	# (rütbe 2'den sonra gelen istekler sözlerin sırasını, sevgiyi ve parayı değiştirip eski denetimleri
 	# şaşırtmasın).

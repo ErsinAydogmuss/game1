@@ -183,7 +183,9 @@ Ersin'in seçimleri (hepsi önerilen): akvaryuma her türün en irisi kendiliği
 - [x] 3. Karakter seçimi ve erkek balıkçı: KayKit Knight sarı yağmurlukla (kızınkiyle aynı iskelet, duruşlar ve
   çizim), yeni oyunda filmden önce seçim ekranı (canlı önizlemeler), balıkçına dokununca dolap (seçim hemen değişir),
   `character` botu.
-- [ ] Kıyafetler.
+- [x] 4. Kıyafetler: 8 şapka (kodla, tek ağ), 7 yelek rengi (gövdenin malzemesinde), 5 olta kaplaması; rütbe, defter,
+  istek, göl sevgisi, Bekçi ve Tekir'in beş hediyesiyle açılır (geriye dönük); dolabın Şapka, Yelek, Olta sekmeleri
+  (canlı önizleme, karolar, kilitlide şart ve ilerleme, yeni rozeti); yeni kıyafet bildirimi ve Dede; `outfits` botu.
 - [ ] Fotoğraf modu.
 - [ ] Son geçiş: telefonda hız ölçümü, tam inceleme.
 

@@ -78,13 +78,13 @@ func build() -> void:
 
 ## Sehpadaki kamış kuşanılan dip kamışı ve makarası (RodModel.LOOKS): değiştiyse kamış yeniden
 ## kurulur, zil yeni ucuna taşınır.
-func set_rod(rod_id: String, reel_id: String) -> void:
+func set_rod(rod_id: String, reel_id: String, skin: Dictionary = {}) -> void:
 	if rod == null:
 		build()
-	if rod.gear_id == rod_id and rod.reel_id == reel_id:
+	if rod.gear_id == rod_id and rod.reel_id == reel_id and rod.skin == skin:
 		return
 	var old := rod
-	rod = _make_rod(rod_id, reel_id)
+	rod = _make_rod(rod_id, reel_id, skin)
 	_bell.get_parent().remove_child(_bell)
 	rod.tip.add_child(_bell)
 	remove_child(old)
@@ -92,13 +92,14 @@ func set_rod(rod_id: String, reel_id: String) -> void:
 	add_child(rod)
 
 
-## Sehpada yatan dip kamışı (kurulmuş; çağıran ekler).
-func _make_rod(rod_id: String, reel_id: String) -> RodModel:
+## Sehpada yatan dip kamışı (kurulmuş; çağıran ekler). skin: olta kaplaması (Angler.skin_of; boşsa kamışın rengi).
+func _make_rod(rod_id: String, reel_id: String, skin: Dictionary = {}) -> RodModel:
 	var r := RodModel.new()
 	r.name = "Rod"
 	r.style = "bottom"
 	r.gear_id = rod_id
 	r.reel_id = reel_id
+	r.skin = skin
 	r.build()
 	r.position = ROD_AT
 	r.rotation = Vector3(RISE, 0, 0)

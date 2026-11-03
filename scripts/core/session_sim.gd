@@ -309,6 +309,7 @@ func _sell_and_shop() -> void:
 	if Secret.give_dough(db, save):
 		_mark("dough")
 		_check_final()
+	_note_outfits()
 	_tend_traps()
 	_trips += 1
 	_choose_zone()
@@ -890,6 +891,15 @@ func next_upgrade(category: String) -> Dictionary:
 func _mark(id: String) -> void:
 	if not milestones.has(id):
 		milestones[id] = minutes()
+
+
+## Kıyafetler (Dalga 5): açılanların ilk görüldüğü dakika ("outfit:<kimlik>"; satışta bakılır: rütbe, defter,
+## istek, sevgi, Tekir'in hediyesi ve Bekçi o ana kadar birikmiştir). Oyunu değiştirmez (giyilmez).
+func _note_outfits() -> void:
+	for e in db.outfits.items:
+		var id := str(e["id"])
+		if str(e["unlock"]) != "start" and not milestones.has("outfit:" + id) and Outfits.unlocked(db, save, id):
+			_mark("outfit:" + id)
 
 
 ## Sayı: elindeki tekniğin ölçümü (sim.json techniques.<teknik>) varsa o, yoksa genel değer.

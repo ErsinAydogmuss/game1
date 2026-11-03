@@ -3,6 +3,8 @@ extends Node3D
 ## Balıkçı: göl düzleminde 2B yürür; karada ve iskelede durabilir, suya giremez (kıyıda durur).
 ## Görünüm AnglerBody (kız KayKit Rogue, oğlan Knight: character) ya da yedek ToyAngler; olta (RodModel) elin yuvasında.
 ## Gövde oyun sürerken değişebilir (set_body: karakter seçimi, dolap); olta yeni gövdenin eline geçer.
+## Kıyafet (set_outfit; Dalga 5): şapka ve yelek gövdede, olta kaplaması RodModel'de; gövde ya da olta
+## değişince yeniden giyilir.
 ## Sunum her kare pose / tension verir (free, hold, reel); atış, gösterme ve sevinç tek seferlik.
 ## Kare başı hareket _process'te (Tween yok).
 
@@ -43,6 +45,8 @@ var tension: float = 0.0
 var rod: RodModel
 ## Balıkçının görünüşü (SaveData.CHARACTERS: girl, boy); ağaca eklenmeden önce ya da set_body ile.
 var character: String = "girl"
+## Giyilen kıyafet (Outfits.look: yuva → OutfitRules satırı); set_outfit ile.
+var outfit: Dictionary = {}
 ## Dipte olta sehpada (RodStand): eldeki olta gizlenir, eller serbest.
 var rod_on_stand: bool = false
 ## Açılış filminde olta henüz elde değil (Dede'nin hediyesi, StoryFilm): gizli.
@@ -89,6 +93,28 @@ func set_body(kind: String) -> void:
 	rod.transform = held
 
 
+## Kıyafeti giyer (Outfits.look): şapka ve yelek gövdede (yedek gövdede yok), olta kaplaması değiştiyse olta
+## aynı kamışla yeniden kurulur.
+func set_outfit(look: Dictionary) -> void:
+	outfit = look
+	if _body != null and _body.has_method("set_outfit"):
+		_body.call("set_outfit", look.get("hat", {}), look.get("vest", {}))
+	if rod != null and rod.skin != rod_skin():
+		_rebuild_rod(rod.style, rod.gear_id, rod.reel_id)
+
+
+## Olta kaplaması (kıyafetin rod satırı: { color, band }; varsayılan kamışta boş).
+func rod_skin() -> Dictionary:
+	return skin_of(outfit.get("rod", {}))
+
+
+## Kıyafetin olta satırından kaplama (başlangıç kaplaması, yani kamışın kendi rengi, boş).
+static func skin_of(item: Dictionary) -> Dictionary:
+	if item.is_empty() or str(item.get("unlock", "start")) == "start" or str(item.get("color", "")).is_empty():
+		return {}
+	return { "color": str(item["color"]), "band": str(item.get("band", item["color"])) }
+
+
 func _add_body() -> void:
 	if AnglerBody.available(character) and not force_toy:
 		var body := AnglerBody.new()
@@ -99,6 +125,8 @@ func _add_body() -> void:
 	_body.name = "Body"
 	add_child(_body)
 	(_body.get("rod_mount") as Node3D).add_child(rod)
+	if not outfit.is_empty() and _body.has_method("set_outfit"):
+		_body.call("set_outfit", outfit.get("hat", {}), outfit.get("vest", {}))
 	# Taşınan oltanın yönü, el yuvası kemikten güncellendikten sonra verilir (bir kare geride
 	# kalıp yürürken titremesin). Kodla kurulan modelde iskelet yok: _process'te verilir.
 	var skeleton := _body.find_child("Skeleton3D", true, false) as Skeleton3D
@@ -114,8 +142,13 @@ func pos2() -> Vector2:
 ## Elindeki kamış: tekniği, kamışın ve makaranın kimliği (görünüşü RodModel.LOOKS ve REEL_LOOKS'tan;
 ## bilinmeyen kamışta tekniğin ilki). Biri değiştiyse olta yeniden kurulur.
 func set_rod(technique: String, rod_id: String = "", reel_id: String = "") -> void:
-	if rod != null and rod.style == technique and rod.gear_id == rod_id and rod.reel_id == reel_id:
+	if rod != null and rod.style == technique and rod.gear_id == rod_id and rod.reel_id == reel_id \
+			and rod.skin == rod_skin():
 		return
+	_rebuild_rod(technique, rod_id, reel_id)
+
+
+func _rebuild_rod(technique: String, rod_id: String, reel_id: String) -> void:
 	var mount := rod.get_parent() as Node3D
 	var old_transform := rod.transform
 	mount.remove_child(rod)
@@ -125,6 +158,7 @@ func set_rod(technique: String, rod_id: String = "", reel_id: String = "") -> vo
 	rod.style = technique
 	rod.gear_id = rod_id
 	rod.reel_id = reel_id
+	rod.skin = rod_skin()
 	mount.add_child(rod)
 	rod.transform = old_transform
 

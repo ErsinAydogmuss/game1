@@ -126,6 +126,8 @@ const CAT_HUNGRY_FLAG := "told_cat_hungry"
 const CAT_FED_FLAG := "told_cat_fed"
 ## Balıkçı seçildi (Dalga 5): yeni oyunda açılış filminden önce seçim ekranı; eski kayıtların göçü bayrağı koyar.
 const CHOSE_FLAG := "chose_character"
+## Dede dolabı söyledi (ilk yeni kıyafette; oyuncu dolabı kendisi açtıysa söylenmiş sayılır).
+const OUTFIT_TOLD_FLAG := "told_outfit"
 const KEEPER_RINGS: Array[Vector2] = [Vector2(2.4, 1.6), Vector2(3.6, 2.0)]
 const TURQUOISE := Color(0.62, 1.0, 0.95, 0.85)
 
@@ -424,6 +426,7 @@ func _start_session() -> void:
 	hud.set_boat(false)
 	_follow_zone()
 	angler.set_body(save.character)
+	_sync_outfit()
 	angler.place(session.angler)
 	angler.face(Vector2(0, -1))
 	_place_cat()
@@ -706,6 +709,7 @@ func _process(delta: float) -> void:
 	if _trap_clock >= TRAP_SYNC_EVERY:
 		_trap_clock = 0.0
 		_refresh_traps()
+		_check_outfits()
 	session.advance(delta)
 	for e in session.poll_events():
 		_on_event(e)
@@ -1636,6 +1640,11 @@ func _world_line() -> bool:
 		_say("UI_DEDE_FINAL")
 		_line_time = ADVICE_TIME
 		return true
+	# İlk yeni kıyafet: Dede dolabı söyler (oyuncu dolabı o arada açtıysa söylemez).
+	if Outfits.new_count(db, save) > 0 and not save.flags.has(OUTFIT_TOLD_FLAG):
+		save.flags[OUTFIT_TOLD_FLAG] = true
+		_say("UI_DEDE_OUTFIT_FIRST")
+		return true
 	# Tekir ilk kez acıktı: Dede nasıl besleneceğini söyler (kedi o arada beslendiyse söylemez).
 	if cat.hungry and not save.flags.has(CAT_HUNGRY_FLAG):
 		save.flags[CAT_HUNGRY_FLAG] = true
@@ -2115,12 +2124,13 @@ func _sync_technique() -> void:
 	var save := GameState.save
 	var rod_id := Economy.equipped(db, save, "rod", technique)
 	var reel_id := Economy.equipped(db, save, "reel", technique)
-	var look := "%s|%s|%s" % [technique, rod_id, reel_id]
+	# Olta kaplaması (kıyafet) da görünüşün parçası: dolaptan değişince sehpadaki kamış da.
+	var look := "%s|%s|%s|%s" % [technique, rod_id, reel_id, Outfits.equipped(db, save, "rod")]
 	if look != _shown_look:
 		_shown_look = look
 		angler.set_rod(technique, rod_id, reel_id)
 		if technique == "bottom":
-			stand.set_rod(rod_id, reel_id)
+			stand.set_rod(rod_id, reel_id, angler.rod_skin())
 	if technique == _shown_technique:
 		return
 	_shown_technique = technique
@@ -2700,6 +2710,8 @@ func _on_angler() -> void:
 	_pending_cast = Dice.NO_POINT
 	_forget_pickups()
 	input.release_all()
+	# Dolabı kendisi buldu: Dede'nin dolap sözü gerekmez.
+	GameState.save.flags[OUTFIT_TOLD_FLAG] = true
 	wardrobe_panel.open_wardrobe()
 
 
@@ -2714,6 +2726,45 @@ func _on_character_chosen(kind: String) -> void:
 	if _choosing:
 		_choosing = false
 		_play_intro()
+
+
+# --- Kıyafetler (Dalga 5) -----------------------------------------------------------
+
+## Giyilen kıyafetler balıkçıda (şapka, yelek, olta kaplaması); dipte sehpadaki kamış _sync_technique'te.
+func _sync_outfit() -> void:
+	angler.set_outfit(Outfits.look(GameState.db, GameState.save))
+	_sync_technique()
+
+
+## Dolapta açık bir kıyafete dokunuldu: giyilir (balıkçı hemen değişir), kayda.
+func _on_outfit_chosen(id: String) -> void:
+	if Outfits.equip(GameState.db, GameState.save, id):
+		_sync_outfit()
+		GameState.save_game()
+
+
+## Yeni açılan kıyafetler (her saniye ve Tekir'in hediyesinde; olta boşken, film yokken): bir kez duyurulur.
+## Tek kıyafette adıyla (Tekir'in hediyesinde onun sözüyle), birkaçında sayısıyla; sırada tek kıyafet bildirimi
+## (anahtar "outfit"). İlk yeni kıyafette Dede dolabı söyler (_world_line).
+func _check_outfits() -> void:
+	if session.state != FishingSession.State.IDLE or _film != null:
+		return
+	var db := GameState.db
+	var save := GameState.save
+	var fresh := Outfits.fresh(db, save)
+	if fresh.is_empty():
+		return
+	Outfits.announce(save, fresh)
+	var text: String
+	if fresh.size() == 1:
+		var name := tr("OUTFIT_" + fresh[0])
+		text = (tr("UI_OUTFIT_GIFT") if str(db.outfits.item(fresh[0])["unlock"]) == "cat" else tr("UI_OUTFIT_NEW")) % name
+	else:
+		text = tr("UI_OUTFIT_NEW_MANY") % fresh.size()
+	hud.toast_later(text, UiKit.SUCCESS, "equip", "wardrobe", "outfit")
+	if not save.flags.has(OUTFIT_TOLD_FLAG):
+		_world_line_due = true
+	GameState.save_game()
 
 
 # --- Tekir (Dalga 5) ---------------------------------------------------------------
@@ -2777,6 +2828,9 @@ func _on_cat() -> void:
 			if not save.flags.has(CAT_FED_FLAG):
 				save.flags[CAT_FED_FLAG] = true
 				_say("UI_DEDE_CAT_FED")
+			# Tekir'in hediyesi (her beşinci beslemede sıradaki kıyafet): yemenin bildiriminden sonra.
+			if not str(fed["gift_id"]).is_empty():
+				_check_outfits()
 			GameState.save_game()
 			_refresh_status()
 			return
@@ -3349,6 +3403,7 @@ func _build_ui() -> void:
 	wardrobe_panel = WardrobePanel.new()
 	layer.add_child(wardrobe_panel)
 	wardrobe_panel.chosen.connect(_on_character_chosen)
+	wardrobe_panel.outfit_chosen.connect(_on_outfit_chosen)
 	aquarium_panel = AquariumPanel.new()
 	layer.add_child(aquarium_panel)
 	aquarium_panel.collect_requested.connect(func() -> void:
