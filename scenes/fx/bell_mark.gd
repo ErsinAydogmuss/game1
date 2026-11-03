@@ -19,6 +19,8 @@ var _age: float = 0.0
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Dünyadaki 2B yazı: fotoğraf modunda görüntüye girmez (PhotoMode.WORLD_LABELS).
+	visibility_layer = PhotoMode.WORLD_LABELS
 	size = Vector2(SIZE, SIZE)
 	# Tepesinden asılı gibi sallanır.
 	pivot_offset = Vector2(SIZE * 0.5, SIZE * 0.08)

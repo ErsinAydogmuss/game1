@@ -128,6 +128,8 @@ const CAT_FED_FLAG := "told_cat_fed"
 const CHOSE_FLAG := "chose_character"
 ## Dede dolabı söyledi (ilk yeni kıyafette; oyuncu dolabı kendisi açtıysa söylenmiş sayılır).
 const OUTFIT_TOLD_FLAG := "told_outfit"
+## Karttan açılan fotoğraf modunda kameranın başlangıç uzaklığı (balıkçı ve tutulan balık yakın).
+const PHOTO_CARD_ZOOM := 0.5
 const KEEPER_RINGS: Array[Vector2] = [Vector2(2.4, 1.6), Vector2(3.6, 2.0)]
 const TURQUOISE := Color(0.62, 1.0, 0.95, 0.85)
 
@@ -174,6 +176,10 @@ var technique_panel: TechniquePanel
 var trap_panel: TrapPanel
 var aquarium_panel: AquariumPanel
 var wardrobe_panel: WardrobePanel
+## Fotoğraf modu (Dalga 5): Ayarlar'dan ya da balık kartından; açıkken oyun donar (_panel_open), arayüz gizli.
+var photo: PhotoMode
+## Fotoğraf karttan açıldı: kart gizli, balık balıkçının önünde; çıkınca kart geri gelir.
+var _photo_from_card: bool = false
 ## Yeni oyunda balıkçı seçiliyor: seçilince açılış filmi başlar.
 var _choosing: bool = false
 ## "Bugün" paneli (saat çipine dokununca): vakit, bugünün ve yarının havası, Dede'yle çay, göl sevgisi.
@@ -2582,8 +2588,10 @@ func _end_quick_catch() -> void:
 		session.acknowledge()
 
 
-## Açık bir panel (Dialog) var mı? Varken oyun donar.
+## Açık bir panel (Dialog) ya da fotoğraf modu var mı? Varken oyun donar.
 func _panel_open() -> bool:
+	if photo != null and photo.visible:
+		return true
 	for node in get_tree().get_nodes_in_group("modal"):
 		if node is Dialog and (node as Dialog).visible:
 			return true
@@ -2726,6 +2734,42 @@ func _on_character_chosen(kind: String) -> void:
 	if _choosing:
 		_choosing = false
 		_play_intro()
+
+
+# --- Fotoğraf modu (Dalga 5) ---------------------------------------------------------
+
+## Fotoğraf modu: Ayarlar'dan (olta boşken) ya da balık kartından (kart gizlenir, tutulan balık balıkçının önünde
+## durur, balıkçı sevinir). Oyun donar, arayüz gizli; kamera fotoğraf modunun.
+func _open_photo(from_card: bool) -> void:
+	if photo.visible or _film != null:
+		return
+	if from_card:
+		if not card.visible or _card_info.is_empty():
+			return
+		card.visible = false
+		var fish_id := str(_card_info.get("fish", ""))
+		var def := GameState.db.fish_by_id(fish_id)
+		if not def.is_empty() and not bool(def.get("story", false)):
+			catch_fx.show_catch(def, int(_card_info.get("size_cm", 30)), tr("FISH_" + fish_id), Color.WHITE, _show_point,
+					false)
+			catch_fx.held = true
+			angler.cheer()
+	elif session.state != FishingSession.State.IDLE:
+		return
+	_photo_from_card = from_card
+	input.release_all()
+	hud.visible = false
+	# Karttan: kamera balıkçıya yaklaşır (tutulan balık fotoğrafta seçilsin).
+	photo.open_photo(camera, PHOTO_CARD_ZOOM if from_card else 0.0)
+
+
+func _on_photo_closed() -> void:
+	hud.visible = true
+	if _photo_from_card:
+		_photo_from_card = false
+		catch_fx.held = false
+		catch_fx.clear()
+		card.visible = true
 
 
 # --- Kıyafetler (Dalga 5) -----------------------------------------------------------
@@ -3439,6 +3483,11 @@ func _build_ui() -> void:
 	credits_panel = CreditsPanel.new()
 	layer.add_child(credits_panel)
 	credits_panel.finished.connect(_on_credits_finished)
+	photo = PhotoMode.new()
+	layer.add_child(photo)
+	photo.closed.connect(_on_photo_closed)
+	settings_panel.photo_requested.connect(func() -> void: _open_photo(false))
+	card.photo_requested.connect(func() -> void: _open_photo(true))
 	var top := CanvasLayer.new()
 	top.layer = 20
 	add_child(top)
@@ -3491,6 +3540,7 @@ func _build_ui() -> void:
 		_stop_loops()
 		# Hikâye yalnızca olta boşken yeniden izlenir (film iskelede baştan oynar).
 		settings_panel.story_ready = session.state == FishingSession.State.IDLE and not _card_up() and _film == null
+		settings_panel.photo_ready = settings_panel.story_ready and not fade.busy()
 		settings_panel.open())
 	hud.action_down.connect(func() -> void: input.pointer(InputRouter.BUTTON_POINTER, true))
 	hud.action_up.connect(func() -> void: input.pointer(InputRouter.BUTTON_POINTER, false))

@@ -126,6 +126,11 @@ extends Node
 ##     (kayıt, gövdenin şapkası, malzemede yeleğin rengi); sekmede rozet söner; panelin boyu sekmelerde aynı; Olta
 ##     sekmesi; iskelede kıyafetle ÇİZİM ≤ TOUR_DRAWS; Tekir'in beşinci beslemesi hasır şapka getirir (bildirim);
 ##     oğlana geçince kıyafet aynen; telefon oranında, --safe-inset=130, TR ve EN.
+##   photo: fotoğraf modu (Dalga 5). Ayarlar'ın kamera düğmesi → fotoğraf modu (arayüz gizli, oyun donuk, dünyadaki
+##     2B yazılar görüntüye girmez, düğmeler ≥122 ve güvenli alanda); sürükle → kamera döner ve eğilir; yakınlaştır;
+##     polaroid çerçeve; deklanşör → user://photos'ta PNG, boyu görüntünün boyu, düğmeler fotoğrafa girmez; çıkışta
+##     kamera eski açısında, arayüz geri; balık kartının kamera düğmesi → kart gizli, balık elde; çıkınca kart geri;
+##     telefon oranında, --safe-inset=130, TR ve EN.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -309,6 +314,8 @@ func _ready() -> void:
 			_play_character.call_deferred()
 		"outfits":
 			_play_outfits.call_deferred()
+		"photo":
+			_play_photo.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -6021,6 +6028,99 @@ func _play_character() -> void:
 	# 5) Seçim kalıcı: kayıt yeniden açılınca oğlan.
 	var reloaded := SaveData.from_dict(save.to_dict())
 	_check("seçim kayıtla döner", reloaded.character == "boy" and reloaded.flags.has("chose_character"))
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Fotoğraf modu (Dalga 5): bkz. dosyanın başı.
+func _play_photo() -> void:
+	_use_save(5)
+	var db := GameState.db
+	var settings: SettingsPanel = main.get("settings_panel")
+	var photo: PhotoMode = main.get("photo")
+	var camera: FollowCamera = main.get("camera")
+	var card: FishCard = main.get("card")
+	var catch_fx: CatchFx = main.get("catch_fx")
+	var hud := _hud()
+	var view := get_viewport().get_visible_rect().size
+	await _wait(1.5)
+	var pitch0 := camera.pitch
+	var zoom0 := camera.zoom
+	# 1) Ayarlar'ın kamera düğmesi: fotoğraf modu; arayüz gizli, oyun donuk, dünyadaki yazılar görüntüye girmez.
+	await _tap_control(hud.settings_button)
+	await _wait_frames(3)
+	var photo_button := settings.find_child("Photo", true, false) as Control
+	_check("Ayarlar'da kamera düğmesi (olta boşken açık)", photo_button != null and photo_button.is_visible_in_tree()
+			and not (photo_button as BaseButton).disabled)
+	await _tap_control(photo_button)
+	await _wait(0.6)
+	var mask := get_viewport().canvas_cull_mask
+	_check("fotoğraf modu açık: ayarlar kapalı, arayüz gizli, oyun donuk, dünyadaki yazılar gizli", photo.visible
+			and not settings.visible and not hud.visible and bool(main.call("_panel_open"))
+			and (mask & PhotoMode.WORLD_LABELS) == 0)
+	_check_panel_buttons(photo, "fotoğraf modunun düğmeleri")
+	await _shot("01_foto_modu")
+	# 2) Sürükle: kamera döner ve eğilir.
+	var from := view * Vector2(0.62, 0.45)
+	_touch(0, from, true)
+	await _wait_frames(2)
+	for i in 12:
+		await _drag(0, from + Vector2(-22.0 * (i + 1), 9.0 * (i + 1)))
+		await _wait_frames(1)
+	_touch(0, from + Vector2(-264, 108), false)
+	await _wait(0.8)
+	var target := photo.view_target()
+	_check("sürükle → kamera döner (%.0f°) ve eğilir (%.0f°)" % [rad_to_deg(camera.yaw_offset), rad_to_deg(camera.pitch)],
+			absf(target.x) > deg_to_rad(10.0) and absf(camera.yaw_offset - target.x) < deg_to_rad(2.0)
+			and absf(target.y - pitch0) > deg_to_rad(5.0))
+	# 3) Yakınlaştır, polaroid çerçeve.
+	await _tap_control(photo.find_child("ZoomIn", true, false) as Control)
+	await _wait(0.6)
+	await _tap_control(photo.find_child("Frame_polaroid", true, false) as Control)
+	await _wait(0.6)
+	_check("yakınlaştır ve polaroid çerçeve (%.2f)" % camera.zoom, photo.view_target().z < zoom0 - 0.05
+			and photo.frame_kind() == "polaroid")
+	await _shot("02_cerceve")
+	# 4) Deklanşör: user://photos'ta PNG, boyu görüntünün boyu; düğmeler fotoğrafa girmez.
+	await _tap_control(photo.find_child("Shutter", true, false) as Control)
+	var shot := await _wait_until(func() -> bool: return not photo.last_path.is_empty(), 5.0)
+	var image := Image.load_from_file(ProjectSettings.globalize_path(photo.last_path)) if shot else null
+	var window := DisplayServer.window_get_size()
+	var size_ok: bool = image != null and image.get_size() == window
+	_check("deklanşör → fotoğraf kaydedildi (%s, %s; pencere %s)" % [photo.last_path,
+			str(image.get_size()) if image != null else "-", str(window)],
+			shot and FileAccess.file_exists(photo.last_path) and size_ok and photo.last_path.begins_with(PhotoMode.PHOTO_DIR))
+	if image != null and not _shots_dir.is_empty():
+		image.save_png(_shots_dir.path_join("03_fotograf.png"))
+	await _wait(0.4)
+	await _shot("04_kaydedildi")
+	# 5) Kapat: kamera eski açısında, arayüz ve dünyadaki yazılar geri.
+	await _tap_control(photo.find_child("Close", true, false) as Control)
+	await _wait(0.6)
+	_check("çıkış: kamera eski açısında, arayüz geri, oyun akar", not photo.visible and hud.visible
+			and absf(camera.yaw_offset) < 0.001 and absf(camera.pitch - pitch0) < 0.001
+			and absf(camera.zoom - zoom0) < 0.001 and (get_viewport().canvas_cull_mask & PhotoMode.WORLD_LABELS) != 0
+			and not bool(main.call("_panel_open")))
+	# 6) Balık kartından: kart gizlenir, balık elde; çıkınca kart geri.
+	var info := { "fish": "rudd", "rarity": 0, "size_cm": 24, "stars": 2 }
+	main.set("_card_info", info)
+	card.show_catch(db, info, { "new_species": true, "new_record": true, "kept": true })
+	await _wait(1.2)
+	var card_photo := card.find_child("Photo", true, false) as Control
+	_check("balık kartında kamera düğmesi", card_photo != null and card_photo.is_visible_in_tree())
+	await _tap_control(card_photo)
+	await _wait(0.8)
+	_check("karttan fotoğraf: kart gizli, balık elde, kamera yakın (%.2f)" % photo.view_target().z, photo.visible
+			and not card.visible and catch_fx.held and catch_fx.is_showing() and photo.view_target().z < 0.7)
+	await _shot("05_karttan")
+	await _tap_control(photo.find_child("Close", true, false) as Control)
+	await _wait(0.6)
+	_check("çıkınca kart geri, balık gider", not photo.visible and card.visible and not catch_fx.held
+			and not catch_fx.is_showing())
+	card.close_card()
+	await _wait(0.5)
 	_check_buttons()
 	for line in _results:
 		print("KONTROL ", line)

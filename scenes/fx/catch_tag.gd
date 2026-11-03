@@ -17,6 +17,8 @@ var _hold: float = 2.2
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Dünyadaki 2B yazı: fotoğraf modunda görüntüye girmez (PhotoMode.WORLD_LABELS).
+	visibility_layer = PhotoMode.WORLD_LABELS
 	visible = false
 
 

@@ -20,7 +20,7 @@ extends Control
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box", "wardrobe"]
+		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box", "wardrobe", "camera"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -37,7 +37,7 @@ const ART_NAMES := {
 	"weather_rain": "weather_rain", "weather_fog": "weather_fog", "weather_storm": "weather_storm",
 	"tea": "tea", "love": "love", "requests": "requests", "lantern": "lantern_lit",
 	# Dalga 5 (Parti 5b): akvaryumun bağış kutusu (görseli yoksa kodla).
-	"donation_box": "donation_box", "wardrobe": "wardrobe",
+	"donation_box": "donation_box", "wardrobe": "wardrobe", "camera": "camera",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem, Ekstra ve tekniğe özel sekmeleri (yapay yem, kurşun, sinek).
@@ -207,6 +207,8 @@ func _draw() -> void:
 			_donation_box()
 		"wardrobe":
 			_wardrobe()
+		"camera":
+			_camera()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -558,6 +560,18 @@ func _wardrobe() -> void:
 	draw_polyline(PackedVector2Array([Vector2(36, 18), Vector2(50, 8), Vector2(64, 18), Vector2(36, 18)]), STEEL_DARK,
 			4.0, true)
 	draw_arc(Vector2(50, 6), 4.0, PI, TAU * 1.1, 10, STEEL_DARK, 3.0, true)
+
+
+## Fotoğraf makinesi (fotoğraf modu): koyu gövde, deklanşör, büyük mavi mercek, flaş.
+func _camera() -> void:
+	_round_rect(Rect2(12, 30, 76, 54), INK, 12)
+	_round_rect(Rect2(30, 20, 26, 14), INK, 4)
+	_round_rect(Rect2(66, 22, 14, 10), RED, 3)
+	draw_circle(Vector2(50, 57), 21.0, STEEL)
+	draw_circle(Vector2(50, 57), 15.0, Color("#2a63d6"))
+	draw_circle(Vector2(50, 57), 8.0, Color("#1b2f5e"))
+	draw_circle(Vector2(44, 51), 4.0, Color(1, 1, 1, 0.7))
+	_round_rect(Rect2(18, 36, 12, 7), GOLD, 2)
 
 
 ## Akvaryumun bağış kutusu: kırmızı ahşap kutu, üstünde para yuvası, yuvaya düşen altın para.

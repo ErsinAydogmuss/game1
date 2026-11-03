@@ -1099,9 +1099,17 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     5.946–6.353 para, kazancın %4,7–5,1'i. Bot türleri çabuk toplar: 90. dakikada saatte ~360. İnsan oyuncu için
     asıl değeri dönüşte: 2 saat uzak kalan, dükkâna uğrayınca ~800 para bulur (balıkla ~10 dakikalık kazanç).
 - **Kedi, erkek balıkçı ve kıyafetler:** §7.
-- **Fotoğraf modu:**
-  - Arayüz gizlenir, kamera biraz döndürülür, çerçeve seçilir.
-  - PNG `user://photos`'a kaydedilir ve iPhone'un Dosyalar uygulamasında görünür.
+- ✅ **Fotoğraf modu (Dalga 5):** Ayarlar'ın başlığındaki kamera düğmesinden (olta boşken) ya da balık kartının kamera
+  düğmesinden (kart gizlenir, tutulan balık balıkçının önünde durur, balıkçı sevinir; çıkınca kart geri gelir).
+  - Oyun donar, arayüz gizlenir; dünyadaki yazılar (konuşma balonları, balığın etiketi, tuzak rozeti) fotoğrafa
+    girmez. Göl arkada yaşar (su dalgalanır, balıkçı nefes alır).
+  - Sürükle: kamera döner (yatayda ±40°) ve eğilir (30–72°); yakınlaştırma düğmeleri.
+  - Çerçeve: yok, ahşap, polaroid (altta şeritte oyunun adı), çiçekli; köşede oyunun logosu. İkisi de fotoğrafa girer;
+    düğmeler girmez. Parti 5b'nin çerçeve görselleri gelince onlarla çizilebilir.
+  - Deklanşör: flaş, ses, titreşim, "Fotoğraf kaydedildi!". PNG `user://photos/olta_<tarih>.png`'ye yazılır: iPhone'da
+    Dosyalar → Bu iPhone'da → Olta → photos (dışa aktarma ayarı `user_data/accessible_from_files_app`). Bedeli:
+    Dosyalar'da kayıt dosyası da görünür, oyuncu silebilir.
+  - Çıkışta kamera eski açısına döner.
   - Doğrudan Fotoğraflar'a kaydetmek yerel bir eklenti ister; sonraya kalır.
 
 ### 10.7 Ekran düzeni
@@ -1125,7 +1133,7 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 - ✅ **Sol alt:** yürüme halkası (252; sağ kenarı ipucu çubuğunun payının solunda; olta sudayken yok, sandalda yerinde "Kıyıya dön") ve üstünde teknik düğmesi (132).
 - **Sağ alt:** eylem düğmesi (300).
 - **Alt orta:** Dede'nin ipucu çubuğu.
-- **Fotoğraf:** balık kartındaki ve ayarlardaki kamera düğmesi.
+- ✅ **Fotoğraf:** balık kartındaki ve ayarlardaki kamera düğmesi (§10.6).
 - ✅ **"Nasıl oynanır?" rehberi:** oyunun baştan sona anlatımı, 10 sayfa.
   - **Sayfalar:**
     1. balık tutmak (AT, BEKLE, VUR!, SAR, BIRAK!);

@@ -42,6 +42,8 @@ var _art: Texture2D
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Dünyadaki 2B yazı: fotoğraf modunda görüntüye girmez (PhotoMode.WORLD_LABELS).
+	visibility_layer = PhotoMode.WORLD_LABELS
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_art = ItemArt.frame("bubble")
 	size = ART_SIZE if _art != null else BODY + Vector2(0.0, TAIL)

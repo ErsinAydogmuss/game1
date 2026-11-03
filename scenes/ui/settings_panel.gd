@@ -14,6 +14,8 @@ extends Dialog
 signal rank_up_requested
 ## Açılış filmi yeniden izlensin (main iskelede baştan oynatır; kayıt değişmez).
 signal story_requested
+## Fotoğraf modu (Dalga 5; başlıktaki kamera düğmesi; olta boşken: photo_ready).
+signal photo_requested
 ## Bitiş filmi ve jenerik yeniden izlensin (Gölün Bekçisi bir kez bırakıldıysa; kayıt ve saat değişmez).
 signal ending_requested
 ## Geliştirme sürümü (Dalga 4): saat sonraki vakte, bugünün havası sıradakine, göl sevgisi artsın
@@ -45,6 +47,8 @@ var _rows: VBoxContainer
 var _guide: Button
 var _story: Button
 var story_ready: bool = true
+var _photo: Button
+var photo_ready: bool = true
 ## BİTİŞ (bitiş filmi; yalnızca Bekçi göle bırakıldıysa görünür, HİKÂYE gibi story_ready'yle).
 var _ending: Button
 var _taps: int = 0
@@ -66,6 +70,21 @@ func _build() -> void:
 		_icon.get_parent().add_child(rect)
 		_icon.get_parent().move_child(rect, _icon.get_index())
 		_icon.visible = false
+	# Fotoğraf modu: başlıkta kamera düğmesi (122; Dalga 5).
+	_photo = Button.new()
+	_photo.name = "Photo"
+	_photo.custom_minimum_size = Vector2(122, 122)
+	_photo.focus_mode = Control.FOCUS_NONE
+	UiKit.style_button(_photo, UiKit.SECONDARY)
+	var lens := GameIcon.make("camera", 84)
+	lens.position = Vector2(19, 19)
+	lens.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_photo.add_child(lens)
+	_photo.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		close_panel()
+		photo_requested.emit())
+	header_extra.add_child(_photo)
 	# Hikâye ve rehber: başlıkta yazılı düğmeler (satır eklenince panel telefonda küçülürdü; başlıkta yer var).
 	_story = UiKit.button("", UiKit.SECONDARY, UiKit.SIZE_SMALL, Vector2(0, 122))
 	_story.name = "Story"
@@ -99,6 +118,7 @@ func refresh() -> void:
 	set_header(tr("UI_SETTINGS"), "settings", WIDTH)
 	_story.text = UiKit.upper(tr("UI_STORY_REPLAY"))
 	_story.disabled = not story_ready
+	_photo.disabled = not photo_ready
 	_ending.text = UiKit.upper(tr("UI_ENDING_REPLAY"))
 	_ending.visible = GameState.save.keeper > 0
 	_ending.disabled = not story_ready

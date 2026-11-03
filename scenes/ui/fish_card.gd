@@ -16,6 +16,8 @@ extends Control
 signal closed
 ## "Göle bırak" (korunmayan, kovaya girmiş balık): main kovadan çıkarıp bırakır.
 signal release_requested(fish_id: String)
+## Fotoğraf (Dalga 5): kartın kamera düğmesi; main kartı gizleyip fotoğraf modunu açar (balık elde).
+signal photo_requested
 
 ## Bu kadar sn geçmeden dokunuş kartı kapatmaz (çekerken basılı kalan parmak kapatmasın).
 const MIN_OPEN := 0.6
@@ -29,6 +31,7 @@ const FRAMED_ART := 200.0
 const OK_SIZE := Vector2(420, 136)
 ## İkinci düğme ("Göle bırak"; korunmayan türde).
 const RELEASE_SIZE := Vector2(380, 136)
+const PHOTO_SIZE := Vector2(136, 136)
 const CONFETTI_COLORS: Array[Color] = [Color("#ffcf3c"), Color("#ff5a7a"), Color("#4fd2ff"), Color("#7cf06a"), Color("#c47bff"), Color.WHITE]
 
 var ok_button: Button
@@ -159,6 +162,22 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 				release_requested.emit(fish_id)
 				close_card())
 		buttons.add_child(release_button)
+	# Fotoğraf: Gölün Bekçisi elde gösterilmez (5 m), onun kartında yok.
+	if not bool(db.fish_by_id(fish_id).get("story", false)):
+		var photo := Button.new()
+		photo.name = "Photo"
+		photo.custom_minimum_size = PHOTO_SIZE
+		photo.focus_mode = Control.FOCUS_NONE
+		UiKit.style_button(photo, UiKit.SECONDARY)
+		var lens := GameIcon.make("camera", 84)
+		lens.position = (PHOTO_SIZE - Vector2(84, 84)) * 0.5
+		lens.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		photo.add_child(lens)
+		photo.pressed.connect(func() -> void:
+			if _age >= MIN_OPEN:
+				Sounds.play("ui_tap")
+				photo_requested.emit())
+		buttons.add_child(photo)
 	column.add_child(buttons)
 	add_child(_card)
 	show()

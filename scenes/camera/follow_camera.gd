@@ -1,7 +1,8 @@
 class_name FollowCamera
 extends Camera3D
 ## Hedefi sabit bir eğik açıdan ("diorama") yumuşakça izleyen kamera (Kazı'dan).
-## Açı dönmez; yürüme yönleri bu açıya göre hesaplanır. Atışta eğim değiştirilebilir (pitch).
+## Açı oyunda dönmez; yürüme yönleri bu açıya göre hesaplanır. Atışta eğim değiştirilebilir (pitch).
+## Fotoğraf modunda (Dalga 5) yatay açı farkı yaw_offset (oyun donukken; çıkışta 0'a döner).
 
 const YAW := deg_to_rad(32.0)
 const PITCH := deg_to_rad(50.0)
@@ -17,6 +18,8 @@ var distance: float = SURFACE_DISTANCE
 var zoom: float = 1.0
 ## Bakış eğimi (radyan); oyunda sabit, yakın çekimde değiştirilebilir.
 var pitch: float = PITCH
+## Yatay açı farkı (radyan; yalnızca fotoğraf modu: oyunun yönleri sabit YAW'a göre).
+var yaw_offset: float = 0.0
 
 var _focus := Vector3.ZERO
 var _shake: float = 0.0
@@ -87,6 +90,7 @@ func _process(delta: float) -> void:
 
 
 func _place(offset: Vector3) -> void:
-	var back := Vector3(sin(YAW) * cos(pitch), sin(pitch), cos(YAW) * cos(pitch))
+	var yaw := YAW + yaw_offset
+	var back := Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch))
 	position = _focus + back * distance * zoom + offset
-	rotation = Vector3(-pitch, YAW, 0.0)
+	rotation = Vector3(-pitch, yaw, 0.0)

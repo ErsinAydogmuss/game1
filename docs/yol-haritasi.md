@@ -186,7 +186,9 @@ Ersin'in seçimleri (hepsi önerilen): akvaryuma her türün en irisi kendiliği
 - [x] 4. Kıyafetler: 8 şapka (kodla, tek ağ), 7 yelek rengi (gövdenin malzemesinde), 5 olta kaplaması; rütbe, defter,
   istek, göl sevgisi, Bekçi ve Tekir'in beş hediyesiyle açılır (geriye dönük); dolabın Şapka, Yelek, Olta sekmeleri
   (canlı önizleme, karolar, kilitlide şart ve ilerleme, yeni rozeti); yeni kıyafet bildirimi ve Dede; `outfits` botu.
-- [ ] Fotoğraf modu.
+- [x] 5. Fotoğraf modu: Ayarlar'dan ve balık kartından; arayüz ve dünyadaki yazılar gizli, oyun donuk; sürükle-döndür,
+  yakınlaştırma, dört çerçeve (yok, ahşap, polaroid, çiçek) ve logo; deklanşör PNG'yi `user://photos`'a yazar (iPhone'da
+  Dosyalar → Olta → photos); `photo` botu.
 - [ ] Son geçiş: telefonda hız ölçümü, tam inceleme.
 
 **5 kişilik test** (Kazı'nın 5 kişilik testiyle birlikte yapılabilir). Sorular:

@@ -1508,6 +1508,22 @@ def cat_eat(seed=152):
     return finish(x + 0.06 * reverb(x, 0.4, seed)[:n], -3.0, 0.05)
 
 
+def shutter(seed=161):
+    """Fotoğraf makinesi (Dalga 5, fotoğraf modu): iki kısa mekanik tık (perde açılır, kapanır) ve aralarında
+    hafif bir hışırtı."""
+    n = frames(0.22)
+    x = np.zeros(n)
+    for k, at in enumerate((0.0, 0.085)):
+        cn = frames(0.03)
+        click = band(noise(cn, seed + k), 1800, 7000) * env_exp(cn, 0.006, 0.001)
+        place(x, (0.9 if k == 0 else 0.7) * unit(click), frames(at))
+        place(x, 0.35 * thump(320.0 - 60 * k, frames(0.025), 0.008), frames(at))
+    hn = frames(0.07)
+    hiss = band(noise(hn, seed + 7), 3000, 9000) * env_ar(hn, 0.01, 0.05)
+    place(x, 0.18 * unit(hiss), frames(0.012))
+    return finish(x, -2.0, 0.01)
+
+
 # --- Liste ve çalıştırma ----------------------------------------------------------------
 
 def registry():
@@ -1539,7 +1555,7 @@ def registry():
         # Gölün Sırrı (Dalga 4, 5. adım): şişe ve mektup; final: Bekçi'nin dalışı.
         "bottle_1": bottle, "paper_1": paper, "dive_1": dive,
         # Tekir (Dalga 5): miyav, mırlama, yeme.
-        "meow_1": meow, "purr_1": purr, "cat_eat_1": cat_eat,
+        "meow_1": meow, "purr_1": purr, "cat_eat_1": cat_eat, "shutter_1": shutter,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

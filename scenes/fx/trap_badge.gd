@@ -22,6 +22,8 @@ var _clock: float = 0.0
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Dünyadaki 2B yazı: fotoğraf modunda görüntüye girmez (PhotoMode.WORLD_LABELS).
+	visibility_layer = PhotoMode.WORLD_LABELS
 	size = SIZE + Vector2(0.0, TAIL)
 	pivot_offset = Vector2(SIZE.x * 0.5, SIZE.y + TAIL)
 	_art = ItemArt.item("crayfish")

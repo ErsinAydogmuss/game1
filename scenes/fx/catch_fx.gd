@@ -20,6 +20,8 @@ var _hand: Callable
 var _origin: Callable
 var _age: float = -1.0
 var _beam_age: float = -1.0
+## Fotoğraf modu (karttan): balık süresiz elde kalır (clear çağrılana kadar).
+var held: bool = false
 
 
 ## def: balığın tanımı; size_cm: boyu; title: çevrilmiş adı; color: nadirlik rengi;
@@ -85,7 +87,9 @@ func _process(delta: float) -> void:
 		var b := _beam_age / BEAM_TIME
 		_beam_material.albedo_color.a = 0.55 * clampf((1.0 - b) * 2.0, 0.0, 1.0) * clampf(_beam_age * 5.0, 0.0, 1.0)
 		_beam.scale = Vector3(1.0 + b * 0.3, minf(1.0, _beam_age * 3.0), 1.0 + b * 0.3)
-	if _age >= HOLD_TIME:
+	if held:
+		_age = minf(_age, HOLD_TIME * 0.5)
+	elif _age >= HOLD_TIME:
 		clear()
 
 

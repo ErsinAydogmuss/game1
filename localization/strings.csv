@@ -749,3 +749,11 @@ UI_WARDROBE_TAB_ROD,Rods,Olta
 UI_OUTFIT_LOCKED,%s · locked: %s,%s · kilitli: %s
 UI_OUTFIT_WORN,Wearing: %s,Giyilen: %s
 UI_OUTFIT_NEW_BADGE,New!,Yeni!
+UI_PHOTO_HINT,Drag to turn · pick a frame · snap!,Sürükle: döndür · çerçeve seç · çek!
+UI_PHOTO_SAVED,Photo saved!,Fotoğraf kaydedildi!
+UI_PHOTO_FAILED,Could not save the photo.,Fotoğraf kaydedilemedi.
+UI_PHOTO_TITLE,Olta: Secret of the Lake,Olta: Gölün Sırrı
+UI_PHOTO_FRAME_NONE,No frame,Çerçevesiz
+UI_PHOTO_FRAME_WOOD,Wood,Ahşap
+UI_PHOTO_FRAME_POLAROID,Polaroid,Polaroid
+UI_PHOTO_FRAME_FLOWER,Flowers,Çiçekli

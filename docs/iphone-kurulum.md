@@ -313,6 +313,16 @@ Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte
 
 İstersen bir de `--export-release` ile kur (8. adım) ve açık bölgelerde ölç. Release derlemede deneme düğmeleri (HEPSİNİ AÇ, para, RÜTBE +1) yoktur; sayılar debug'dan biraz daha iyi çıkar.
 
+### 13. Fotoğraflar nerede (v0.6)
+
+Oyundaki fotoğraf modunda (Ayarlar'daki kamera düğmesi ya da balık kartındaki kamera) çekilen fotoğraflar telefonda
+**Dosyalar** uygulamasında: **Bu iPhone'da → Olta → photos** (`olta_<tarih>.png`). Paylaşmak ya da Fotoğraflar'a
+kaydetmek için dosyaya basılı tut → **Paylaş** → **Görüntüyü Kaydet**.
+
+- Bunun için dışa aktarma ayarında `user_data/accessible_from_files_app=true` açık (`export_presets.cfg`). Ayar
+  Xcode projesine işlenir: proje 8. adımda yeniden üretilmeli (eski projeyle derlersen klasör görünmez).
+- Aynı klasörde oyunun kaydı da durur (`save.json`): silinirse oyun baştan başlar. Kullanıcıya söyle.
+
 ## Sonraki güncellemeler (kısa yol)
 
 Bulut oturumu yeni kod gönderdiğinde repo klasöründe:
