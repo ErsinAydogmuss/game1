@@ -54,7 +54,8 @@ const LINE_MIN := 490.0
 const HEADER_GAP := 12
 ## Nine'nin başlıktaki sözleri (test_shop_panel her birini ölçer; sayılı olanlar en geniş sayıyla).
 const LINE_KEYS: Array[String] = ["UI_NINE_SHOP_HELLO", "UI_NINE_BOUGHT", "UI_NINE_FLY_ZONE", "UI_NINE_TRAP",
-		"UI_NINE_NO_COINS", "UI_NINE_EQUIP", "UI_NINE_RANK", "UI_NINE_SOLD", "UI_NINE_DOUGH"]
+		"UI_NINE_NO_COINS", "UI_NINE_EQUIP", "UI_NINE_RANK", "UI_NINE_SOLD", "UI_NINE_DOUGH", "UI_NINE_AQUARIUM",
+		"UI_NINE_AQUARIUM_COINS"]
 const STATS := {
 	"rod": [["range_m", "UI_STAT_RANGE", "m"], ["carry", "UI_STAT_CARRY", "★"]],
 	"reel": [["reel_speed", "UI_STAT_SPEED", ""], ["drag", "UI_STAT_DRAG", ""]],
@@ -191,8 +192,9 @@ func _show_line() -> void:
 ## Açar: kovada balık varsa Kova sekmesi, yoksa en son bakılan takım sekmesi (ilk açılışta Kamış).
 ## look: bakılacak teknik (boşsa elindeki). remote: uzaktan açıldı (takım çantası): kova
 ## satılmaz, Kova sekmesinde tezgâha gelinmesi söylenir. line: Nine'nin karşılama yerine söylediği söz (altın
-## hamuru verirken).
-func open_shop(tab: String = "", look: String = "", remote: bool = false, line: String = "") -> void:
+## hamuru verirken, akvaryumun bağış kutusunu toplarken); line_args sözün değerleri.
+func open_shop(tab: String = "", look: String = "", remote: bool = false, line: String = "",
+		line_args: Array = []) -> void:
 	technique = look if not look.is_empty() else GameState.save.technique
 	_remote = remote
 	if not tab.is_empty():
@@ -201,7 +203,10 @@ func open_shop(tab: String = "", look: String = "", remote: bool = false, line: 
 		_tab = "sell"
 	elif _tab == "sell":
 		_tab = _last_gear_tab
-	_say(line if not line.is_empty() else "UI_NINE_SHOP_HELLO")
+	if line.is_empty():
+		_say("UI_NINE_SHOP_HELLO")
+	else:
+		_say(line, line_args)
 	open()
 
 

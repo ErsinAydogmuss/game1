@@ -2,7 +2,9 @@ class_name ShopStall
 extends Node3D
 ## Nine'nin dükkânı: iskelenin kara ucunun yanında, kodla kurulan ahşap bir tezgâh. Alçak bir
 ## döşeme, arkada raflı duvar (yem kavanozları, kutular), önde tezgâh (solucan kovası, kavanozlar,
-## mısır kasası, pirinç zil), yanda olta sehpası, üstte turkuaz-krem çizgili tente ve tabela.
+## akvaryum, bağış kutusu, pirinç zil), yanda olta sehpası, üstte turkuaz-krem çizgili tente ve tabela.
+## Akvaryum (Dalga 5): tezgâhta küçük bir tank; su opak (aynı ağda: çizim eklemez), camın ardındaki
+## balıklar ön ve yan yüzde kabartma. Tanktaki türler değişince ağ yeniden kurulur (set_tank).
 ## Nine tezgâhın arkasında durur (keeper_spot). Yanında KayKit fıçı ve kasa (tek ağ).
 ## Parçalar köşe renkli tek ağda birleşir (MeshBatch): ~120 parça tek çizim (gölgesiyle iki).
 ## Yerel eksen: +z dükkânın önü (müşteri tarafı); kök döşemenin ön kenarının ortası, zemin hizası.
@@ -36,6 +38,25 @@ const STRIPE_A := Color("#2a9d96")
 const STRIPE_B := Color("#f4ead2")
 const BRASS := Color("#d9a83a")
 const SIGN_TEXT := Color("#ffe6a3")
+## Akvaryum: tezgâhın üstünde, sağda (yerel x merkezi; genişlik, yükseklik, derinlik m).
+const TANK_X := 0.3
+const TANK_W := 0.5
+const TANK_H := 0.3
+const TANK_D := 0.24
+const TANK_Z := COUNTER_Z + 0.05
+## Tezgâhtaki tankta en çok bu kadar balık görünür (paneldeki tankta hepsi).
+const TANK_SHOWN := 5
+const WATER := Color("#3f9fc4")
+const WATER_TOP := Color("#86d2e6")
+const SAND := Color("#e6cc93")
+const TANK_FRAME := Color("#2f2a26")
+const PLANT := Color("#4c9a46")
+## Bağış kutusu: tankın sağında, tezgâhın önüne yakın.
+const BOX_X := 0.66
+const BOX_SIZE := Vector3(0.13, 0.12, 0.11)
+const BOX_COLOR := Color("#b5452f")
+## Akvaryumun dokunma payı (viewport yüksekliği 1080'e göre piksel).
+const TANK_TOUCH_PX := 14.0
 const SIGN_INK := Color("#3a2414")
 ## Dokunma: ekranda dükkânın çevresine eklenen pay (viewport yüksekliği 1080'e göre piksel).
 const TOUCH_PX := 24.0
@@ -46,8 +67,12 @@ const TURN := deg_to_rad(30.0)
 const CLEAR := 2.4
 
 var _sign: Label3D
-## Dokunma için dükkânın köşe noktaları (yerel).
+## Dokunma için dükkânın ve akvaryumun köşe noktaları (yerel).
 var _outline: Array[Vector3] = []
+var _tank_outline: Array[Vector3] = []
+## Dükkânın tek ağı (akvaryumun balıkları değişince yeniden kurulur) ve tankta görünen balıkların renkleri.
+var _mesh: MeshInstance3D
+var _tank_fish: Array[Color] = []
 
 
 ## İskelenin yanındaki dükkânın ön kenarının ortası (dünya xz; main yerleştirir).
@@ -72,21 +97,45 @@ func build(front_center: Vector3, facing: Vector2, ground_at: Callable = Callabl
 	var f := facing.normalized()
 	rotation = Vector3(0.0, atan2(f.x, f.y), 0.0)
 	position = front_center
-	var batch := MeshBatch.new()
-	_build_floor(batch)
-	_build_wall(batch)
-	_build_counter(batch)
-	_build_rod_rack(batch)
-	_build_awning(batch)
-	_build_sign(batch)
-	batch.build(self, "Stall").cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	_build_mesh()
 	_add_props(ground_at)
 	var half := WIDTH * 0.5
 	for p: Vector3 in [Vector3(-half, 0, 0.1), Vector3(half, 0, 0.1), Vector3(half, 0, WALL_Z),
 			Vector3(-half, 0, WALL_Z), Vector3(-half, AWNING_BACK, WALL_Z), Vector3(half, AWNING_BACK, WALL_Z),
 			Vector3(half, AWNING_FRONT, AWNING_FRONT_Z), Vector3(-half, AWNING_FRONT, AWNING_FRONT_Z)]:
 		_outline.append(p)
+	var on := _counter_top()
+	var tank_left := TANK_X - TANK_W * 0.5
+	var box_right := BOX_X + BOX_SIZE.x * 0.5
+	var back := TANK_Z - TANK_D * 0.5
+	var front := COUNTER_Z + COUNTER_D * 0.5 + 0.02
+	for p: Vector3 in [Vector3(tank_left, on, front), Vector3(box_right, on, front), Vector3(box_right, on, back),
+			Vector3(tank_left, on, back), Vector3(tank_left, on + TANK_H, front), Vector3(TANK_X + TANK_W * 0.5, on + TANK_H, front),
+			Vector3(TANK_X + TANK_W * 0.5, on + TANK_H, back), Vector3(tank_left, on + TANK_H, back)]:
+		_tank_outline.append(p)
 	refresh()
+
+
+## Tezgâhın tankında görünen balıklar (renkleri; en çok TANK_SHOWN). Değişince dükkânın ağı yeniden kurulur
+## (yeni tür ya da daha iri balık tanka girince: ~120 parça, birkaç ms).
+func set_tank(colors: Array[Color]) -> void:
+	var shown := colors.slice(0, TANK_SHOWN)
+	if shown == _tank_fish:
+		return
+	_tank_fish = shown
+	if _mesh != null:
+		_build_mesh()
+
+
+## Tankta görünen balık sayısı (testler ve bot).
+func tank_fish_count() -> int:
+	return _tank_fish.size()
+
+
+## Akvaryumun ön yüzünün ortası (dünya; bot dokunur).
+func tank_point() -> Vector3:
+	var local := Vector3(TANK_X, _counter_top() + TANK_H * 0.5, TANK_Z + TANK_D * 0.5)
+	return to_global(local) if is_inside_tree() else transform * local
 
 
 ## Dil değişince tabela yeniden yazılır.
@@ -116,10 +165,29 @@ func blockers() -> Array[Vector3]:
 
 ## Ekrandaki bir nokta dükkânın üstünde mi (köşelerinin ekrandaki dış zarfı, biraz paylı)?
 func hit(view: Camera3D, screen: Vector2) -> bool:
-	if not is_visible_in_tree() or view == null or _outline.is_empty():
+	return _hull_hit(view, screen, _outline, TOUCH_PX)
+
+
+## Ekrandaki bir nokta akvaryumun (tank ve bağış kutusu) üstünde mi? Dükkânınkinden önce bakılır
+## (dükkânın zarfı tankı da kapsar).
+func tank_hit(view: Camera3D, screen: Vector2) -> bool:
+	return _hull_hit(view, screen, _tank_outline, TANK_TOUCH_PX)
+
+
+## Akvaryumun ekrandaki kutusu (köşelerinin sınırları; bot dokunma alanının boyunu ölçer).
+func tank_screen_rect(view: Camera3D) -> Rect2:
+	var rect := Rect2()
+	for i in _tank_outline.size():
+		var p := view.unproject_position(to_global(_tank_outline[i]))
+		rect = Rect2(p, Vector2.ZERO) if i == 0 else rect.expand(p)
+	return rect
+
+
+func _hull_hit(view: Camera3D, screen: Vector2, outline: Array[Vector3], touch_px: float) -> bool:
+	if not is_visible_in_tree() or view == null or outline.is_empty():
 		return false
 	var points := PackedVector2Array()
-	for local in _outline:
+	for local in outline:
 		var p := to_global(local)
 		if view.is_position_behind(p):
 			return false
@@ -127,7 +195,7 @@ func hit(view: Camera3D, screen: Vector2) -> bool:
 	var hull := Geometry2D.convex_hull(points)
 	if Geometry2D.is_point_in_polygon(screen, hull):
 		return true
-	var pad := TOUCH_PX * view.get_viewport().get_visible_rect().size.y / 1080.0
+	var pad := touch_px * view.get_viewport().get_visible_rect().size.y / 1080.0
 	for i in hull.size() - 1:
 		if Geometry2D.get_closest_point_to_segment(screen, hull[i], hull[i + 1]).distance_to(screen) <= pad:
 			return true
@@ -135,6 +203,27 @@ func hit(view: Camera3D, screen: Vector2) -> bool:
 
 
 # --- Kurulum ---------------------------------------------------------------------
+
+## Dükkânın tek ağı: eskisi varsa yerine yenisi (aynı ad; eskisi hemen ağaçtan çıkar).
+func _build_mesh() -> void:
+	if _mesh != null:
+		remove_child(_mesh)
+		_mesh.queue_free()
+	var batch := MeshBatch.new()
+	_build_floor(batch)
+	_build_wall(batch)
+	_build_counter(batch)
+	_build_tank(batch)
+	_build_rod_rack(batch)
+	_build_awning(batch)
+	_build_sign(batch)
+	_mesh = batch.build(self, "Stall")
+	_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+
+
+## Tezgâhın üst tahtasının üstü (eşyalar buna oturur).
+static func _counter_top() -> float:
+	return FLOOR + COUNTER_H + 0.05
 
 ## Döşeme: enine tahtalar, altında kiriş ve zemine inen etek (eğimli kıyıda boşluk kalmasın).
 func _build_floor(batch: MeshBatch) -> void:
@@ -198,14 +287,77 @@ func _build_counter(batch: MeshBatch) -> void:
 		var x := -0.38 + i * 0.17
 		batch.cylinder(0.06, 0.06, 0.14, Vector3(x, on + 0.07, COUNTER_Z + 0.04), colors[i], 10)
 		batch.cylinder(0.065, 0.065, 0.03, Vector3(x, on + 0.155, COUNTER_Z + 0.04), Color("#c0392b") if i == 1 else WOOD_DARK, 10)
-	# Mısır kasası.
-	batch.box(Vector3(0.34, 0.12, 0.24), Vector3(0.28, on + 0.06, COUNTER_Z), WOOD_DARK)
-	for i in 6:
-		batch.sphere(0.045, Vector3(0.16 + (i % 3) * 0.12, on + 0.13, COUNTER_Z - 0.05 + floorf(i / 3.0) * 0.1), Color("#f2c33d"))
-	# Pirinç zil.
-	batch.cylinder(0.05, 0.05, 0.015, Vector3(0.74, on + 0.008, COUNTER_Z + 0.06), WOOD_DARK, 10)
-	batch.sphere(0.055, Vector3(0.74, on + 0.04, COUNTER_Z + 0.06), BRASS, Vector3(1.0, 0.85, 1.0))
-	batch.sphere(0.015, Vector3(0.74, on + 0.095, COUNTER_Z + 0.06), BRASS)
+	# Pirinç zil (tankın ve bağış kutusunun sağında).
+	batch.cylinder(0.05, 0.05, 0.015, Vector3(0.88, on + 0.008, COUNTER_Z + 0.06), WOOD_DARK, 10)
+	batch.sphere(0.055, Vector3(0.88, on + 0.04, COUNTER_Z + 0.06), BRASS, Vector3(1.0, 0.85, 1.0))
+	batch.sphere(0.015, Vector3(0.88, on + 0.095, COUNTER_Z + 0.06), BRASS)
+
+
+## Akvaryum: koyu çerçeveli tank (kum, opak su, açık renk yüzey, bitkiler, kabarcıklar) ve camın ardında
+## yüzen balıklar (ön yüzde ve kameraya bakan sol yüzde kabartma); yanında para yuvalı bağış kutusu.
+func _build_tank(batch: MeshBatch) -> void:
+	var on := _counter_top()
+	var half := TANK_W * 0.5
+	var front := TANK_Z + TANK_D * 0.5
+	var left := TANK_X - half
+	# Ahşap kaide.
+	batch.box(Vector3(TANK_W + 0.05, 0.035, TANK_D + 0.05), Vector3(TANK_X, on + 0.0175, TANK_Z), WOOD_DARK)
+	var bottom := on + 0.035
+	var sand := 0.045
+	var water_h := TANK_H - 0.035 - sand - 0.02
+	batch.box(Vector3(TANK_W - 0.01, sand, TANK_D - 0.01), Vector3(TANK_X, bottom + sand * 0.5, TANK_Z), SAND)
+	var water_y := bottom + sand
+	batch.box(Vector3(TANK_W - 0.01, water_h, TANK_D - 0.01), Vector3(TANK_X, water_y + water_h * 0.5, TANK_Z), WATER)
+	batch.box(Vector3(TANK_W - 0.03, 0.006, TANK_D - 0.03), Vector3(TANK_X, water_y + water_h + 0.003, TANK_Z), WATER_TOP)
+	# Çerçeve: dört köşe dikmesi ve üst kenar.
+	var top := bottom + TANK_H - 0.035
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			batch.box(Vector3(0.018, TANK_H - 0.035, 0.018), Vector3(TANK_X + sx * half, bottom + (TANK_H - 0.035) * 0.5,
+					TANK_Z + sz * TANK_D * 0.5), TANK_FRAME)
+	for sz: float in [-1.0, 1.0]:
+		batch.box(Vector3(TANK_W + 0.018, 0.018, 0.018), Vector3(TANK_X, top, TANK_Z + sz * TANK_D * 0.5), TANK_FRAME)
+	for sx: float in [-1.0, 1.0]:
+		batch.box(Vector3(0.018, 0.018, TANK_D), Vector3(TANK_X + sx * half, top, TANK_Z), TANK_FRAME)
+	# Bitkiler ve taş (ön yüzde, kumdan yükselir).
+	for spec: Array in [[-0.19, 0.15, 0.12], [-0.15, 0.1, -0.2], [0.17, 0.17, -0.1], [0.2, 0.11, 0.18]]:
+		var h: float = spec[1]
+		batch.box(Vector3(0.016, h, 0.008), Vector3(TANK_X + float(spec[0]), water_y + h * 0.5, front + 0.002), PLANT,
+				Vector3(0.0, 0.0, float(spec[2])))
+	batch.sphere(0.03, Vector3(TANK_X + 0.05, water_y + 0.01, front - 0.004), Color("#8a8f94"), Vector3(1.4, 0.8, 0.5), 8, 4)
+	# Kabarcıklar.
+	for spec: Vector2 in [Vector2(0.13, 0.12), Vector2(0.15, 0.17), Vector2(0.12, 0.2)]:
+		batch.sphere(0.008, Vector3(TANK_X + spec.x, water_y + spec.y, front + 0.001), Color("#e8f7fb"), Vector3.ONE, 6, 3)
+	# Balıklar: ön yüzde dört yer, sol yüzde bir (kameraya bakan yan).
+	var slots: Array[Vector3] = [Vector3(-0.1, 0.15, 1.0), Vector3(0.09, 0.08, -1.0), Vector3(-0.02, 0.05, 1.0),
+			Vector3(0.12, 0.17, -1.0)]
+	for i in mini(_tank_fish.size(), slots.size()):
+		var slot := slots[i]
+		_tank_fish_part(batch, Vector3(TANK_X + slot.x, water_y + slot.y, front - 0.003), slot.z, _tank_fish[i], false)
+	if _tank_fish.size() > slots.size():
+		_tank_fish_part(batch, Vector3(left - 0.003, water_y + 0.11, TANK_Z + 0.02), 1.0, _tank_fish[slots.size()], true)
+	# Bağış kutusu: kırmızı ahşap kutu, üstünde para yuvası, önünde pirinç para.
+	var box_z := COUNTER_Z + 0.08
+	batch.box(BOX_SIZE, Vector3(BOX_X, on + BOX_SIZE.y * 0.5, box_z), BOX_COLOR)
+	batch.box(Vector3(BOX_SIZE.x + 0.016, 0.02, BOX_SIZE.z + 0.016), Vector3(BOX_X, on + BOX_SIZE.y + 0.01, box_z), WOOD_DARK)
+	batch.box(Vector3(0.06, 0.006, 0.012), Vector3(BOX_X, on + BOX_SIZE.y + 0.021, box_z), Color("#1c1410"))
+	batch.cylinder(0.03, 0.03, 0.008, Vector3(BOX_X, on + BOX_SIZE.y * 0.5, box_z + BOX_SIZE.z * 0.5 + 0.003), BRASS, 12,
+			Vector3(PI * 0.5, 0.0, 0.0))
+
+
+## Tankın camının ardındaki bir balık: yassı gövde ve kuyruk; dir 1 sağa (+x), -1 sola yüzer. side: sol yüzde
+## (boyu z ekseninde).
+static func _tank_fish_part(batch: MeshBatch, at: Vector3, dir: float, color: Color, side: bool) -> void:
+	var along := Vector3(0.0, 0.0, dir) if side else Vector3(dir, 0.0, 0.0)
+	var body := Vector3(0.3, 0.85, 1.55) if side else Vector3(1.55, 0.85, 0.3)
+	batch.sphere(0.032, at, color, body, 10, 5)
+	var tail := at - along * 0.058
+	var rot := Vector3(PI * 0.25, 0.0, 0.0) if side else Vector3(0.0, 0.0, PI * 0.25)
+	var tail_size := Vector3(0.012, 0.034, 0.034) if side else Vector3(0.034, 0.034, 0.012)
+	batch.box(tail_size, tail, color.darkened(0.2), rot)
+	# Göz (camdan bakan yanda).
+	var eye := at + along * 0.03 + Vector3(0.0, 0.008, 0.0) + (Vector3(-0.009, 0, 0) if side else Vector3(0, 0, 0.009))
+	batch.sphere(0.006, eye, Color("#1c1410"), Vector3.ONE, 6, 3)
 
 
 ## Olta sehpası: dükkânın sağ önünde, eğik duran üç olta (renkli makaralar) ve bir kepçe.
@@ -274,6 +426,9 @@ func _build_sign(batch: MeshBatch) -> void:
 	batch.box(Vector3(1.96, 0.05, 0.08), pivot + basis * Vector3(0, -0.235, 0), WOOD, tilt)
 	for side: float in [-1.0, 1.0]:
 		batch.box(Vector3(0.06, 0.5, 0.06), pivot + Vector3(side * 0.8, -0.32, -0.12), WOOD_DARK)
+	# Yazı bir kez kurulur (ağ yeniden kurulunca yazı yerinde kalır).
+	if _sign != null:
+		return
 	_sign = Label3D.new()
 	_sign.font = UiKit.display_font()
 	_sign.font_size = 64

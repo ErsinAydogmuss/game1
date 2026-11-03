@@ -170,8 +170,14 @@ Ersin'in seçimleri (hepsi önerilen): balık kovadan ve yeni tür kartından g�
 
 **Dalga 5 — Yuva ve kişilik → v0.6**
 
+Ersin'in seçimleri (hepsi önerilen): akvaryuma her türün en irisi kendiliğinden girer; ziyaretçi kutusu para verir, en
+çok 2 saatlik; Tekir'i beslemek kıyafet ve süs getirir; kıyafetler balıkçına dokununca açılan dolaptan.
+
+- [x] 0. Parti 5b görsel promptları (`docs/gorsel-istekleri.md`: ev ikonları, fotoğraf çerçeveleri, akvaryumun arka planı).
+- [x] 1. Akvaryum ve kayıt v6: tezgâhta tank (dükkânın ağında, çizim eklemez), Akvaryum paneli (canlı tank), bağış
+  kutusu (gerçek saatle, en çok 2 saatlik), dükkânda kendiliğinden toplama, denge botu, `aquarium` botu. Kayıt v6
+  dalganın bütün alanlarını tek göçle ekler (akvaryum, Tekir, kıyafet, balıkçı).
 - [ ] Kedi.
-- [ ] Akvaryum.
 - [ ] Karakter seçimi ve erkek balıkçı.
 - [ ] Kıyafetler.
 - [ ] Fotoğraf modu.

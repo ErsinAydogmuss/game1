@@ -12,7 +12,7 @@ func test_roundtrip_keeps_every_field() -> void:
 	s.records = { "carp": { "count": 2, "best_cm": 61, "best_stars": 3, "first_unix": 1200, "released": 1 } }
 	s.settings = { "sfx": false, "easy": true, "locale": "tr" }
 	s.flags = { "seen_card": true }
-	s.character = "rogue"
+	s.character = "boy"
 	s.bucket = [{ "fish": "rudd", "size_cm": 22, "stars": 3 }]
 	s.owned = PackedStringArray(["reel_smooth", "bucket_big"])
 	s.loadouts = { "shared": { "reel": "reel_smooth" }, "float": { "bait": "bait_corn" }, "spin": { "rod": "rod_spin_light" } }
@@ -37,6 +37,12 @@ func test_roundtrip_keeps_every_field() -> void:
 	s.letter_at = 6
 	s.map_pieces = 1
 	s.keeper = 0
+	# v6 (Dalga 5): akvaryumun kutusu, Tekir, kıyafet.
+	s.aquarium_box = 3600 * 12 + 5
+	s.aquarium_unix = 1400
+	s.cat_fed = 3
+	s.cat_meal_at = 8
+	s.outfit = { "hat": "hat_straw", "vest": "vest_red" }
 	var back := SaveData.from_dict(s.to_dict())
 	assert_eq(back.to_dict(), s.to_dict(), "bütün alanlar aynen döner")
 	assert_eq(back.to_dict()["version"], SaveData.VERSION, "sürüm yazılır")
@@ -77,7 +83,7 @@ func test_bad_values_are_sanitized() -> void:
 	assert_true(not back.records.has("pike"), "sayısı 0 olan kayıt düşer")
 	assert_true(not back.records.has("bad"), "bozuk kayıt düşer")
 	assert_eq(back.settings, {}, "bozuk ayarlar boş sözlük olur")
-	assert_eq(back.character, "rogue", "boş karakter varsayılana döner")
+	assert_eq(back.character, "girl", "boş karakter varsayılana döner")
 	assert_eq(back.bucket.size(), 1, "kovada yalnızca geçerli satır kalır")
 	assert_eq(int(back.bucket[0]["stars"]), 1, "eksik yıldız 1 olur")
 	assert_eq(back.owned, PackedStringArray(["reel_smooth"]), "takım listesi tekrarsız ve yalnızca yazı")
@@ -290,7 +296,7 @@ func test_v4_save_migrates_to_v5() -> void:
 	assert_eq(int((raw as Dictionary)["version"]), 4, "örnek v4 kaydı")
 	var s := SaveData.from_dict(raw)
 	var db := content()
-	assert_eq(int(s.to_dict()["version"]), 5, "v5'e göçtü")
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "güncel sürüme göçtü")
 	assert_eq(s.clock_s, 0, "oyun saati sabahtan")
 	assert_eq(DayClock.phase(db.rules, s.clock_s), "morning", "ilk vakit sabah")
 	assert_eq(s.tea_at, -1, "çay içilmedi")
@@ -432,6 +438,58 @@ func test_v5_save_reads_back() -> void:
 	assert_eq(str(cond["phase"]), "morning", "koşullar kaydın saatinden")
 	var fresh := SaveData.from_dict(raw)
 	assert_eq(SaveData.from_dict(fresh.to_dict()).to_dict(), fresh.to_dict(), "gidiş-dönüşte aynı")
+
+
+## v0.5'in gerçek kaydı (tests/fixtures/save_v5.json) v6'ya göçer: akvaryumun kutusu boş ve saati başlamadı,
+## Tekir kaydın balık sayısından sayar (eski oyuncunun kedisi de yeni balıklarla acıkır), kıyafet yok; balıkçı
+## kız ve seçim ekranı ona çıkmaz (bayrak chose_character); v5'in her şeyi aynen.
+func test_v5_save_migrates_to_v6() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v5.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v5 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var old: Dictionary = raw
+	assert_eq(int(old["version"]), 5, "örnek v5 kaydı")
+	var s := SaveData.from_dict(old)
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "güncel sürüme göçtü")
+	assert_eq(s.aquarium_box, 0, "akvaryumun kutusu boş")
+	assert_eq(s.aquarium_unix, -1, "kutunun saati başlamadı")
+	assert_eq(s.cat_fed, 0, "Tekir hiç beslenmedi")
+	assert_eq(s.cat_meal_at, s.catches, "Tekir şimdiki balık sayısından sayar")
+	assert_true(s.catches > 0, "örnek kayıtta balık var")
+	assert_eq(s.outfit, {}, "kıyafet yok")
+	assert_eq(s.character, "girl", "eski balıkçı kız")
+	assert_true(bool(s.flags.get("chose_character", false)), "seçim ekranı eski oyuncuya çıkmaz")
+	assert_eq(s.coins, int(old["coins"]), "para aynen")
+	assert_eq(s.records.size(), (old["records"] as Dictionary).size(), "defter aynen")
+	assert_eq(s.clock_s, int(old["clock_s"]), "oyun saati aynen")
+	assert_eq(s.love, int(old["love"]), "göl sevgisi aynen")
+	var flags: Dictionary = old["flags"]
+	for key: Variant in flags:
+		assert_eq(s.flags.get(key), flags[key], "bayrak aynen: %s" % key)
+	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "göçten sonra gidiş-dönüşte aynı")
+	var bare := SaveData.migrate({ "version": 5, "flags": "bozuk" })
+	assert_eq(bare["flags"], { "chose_character": true }, "bozuk bayraklar yerine seçim bayrağı")
+
+
+## v6'nın alanları bozuksa ayıklanır: eksi kutu sıfır, saat en az -1, kedinin sayacı tutulan balıkta kalır,
+## kıyafette yalnızca bilinen yuvalar ve yazı kimlikler, bilinmeyen balıkçı kız olur.
+func test_v6_bad_values_are_sanitized() -> void:
+	var s := SaveData.from_dict({
+		"version": 6, "catches": 5, "aquarium_box": -40, "aquarium_unix": -9, "cat_fed": -2, "cat_meal_at": 90,
+		"outfit": { "hat": 5, "vest": "", "cape": "hat_straw", "rod": "rod_gold" }, "character": "dragon",
+	})
+	assert_eq(s.aquarium_box, 0, "eksi kutu sıfırlanır")
+	assert_eq(s.aquarium_unix, -1, "kutunun saati en az -1")
+	assert_eq(s.cat_fed, 0, "eksi besleme sıfırlanır")
+	assert_eq(s.cat_meal_at, 5, "kedinin sayacı balık sayısında kalır")
+	assert_eq(s.outfit, { "rod": "rod_gold" }, "kıyafette bilinmeyen yuva, boş ve yazı olmayan kimlik düşer")
+	assert_eq(s.character, "girl", "bilinmeyen balıkçı kız olur")
+	assert_eq(SaveData.from_dict({ "version": 6, "character": "boy" }).character, "boy", "oğlan okunur")
+	assert_eq(SaveData.from_dict({ "version": 6, "outfit": "bozuk" }).outfit, {}, "bozuk kıyafet boş")
+	# Kedinin sayacı yoksa balık sayısından sayılır (0 olsaydı eski kayıtta kedi hemen acıkırdı).
+	assert_eq(SaveData.from_dict({ "version": 6, "catches": 9 }).cat_meal_at, 9, "eksik kedi sayacı balık sayısı")
+	assert_true(not SaveData.create_new(5).flags.has("chose_character"), "yeni oyunda balıkçı seçilmedi")
 
 
 func test_store_writes_atomically() -> void:

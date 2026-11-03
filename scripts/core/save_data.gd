@@ -4,7 +4,7 @@ extends RefCounted
 ## taşınabilir. Alan eklerken VERSION'ı artır, migrate()'e adım ekle ve test_save_data.gd'ye
 ## göç testi yaz.
 
-const VERSION := 5
+const VERSION := 6
 ## Kayıtta en çok bu kadar tuzak ve tuzak başına içerik tutulur (bozuk kayıt büyümesin).
 const MAX_TRAPS := 8
 const MAX_TRAP_ITEMS := 8
@@ -13,6 +13,10 @@ const MAX_REQUESTS := 4
 ## Gölün Sırrı (v5): her bölgeden bir mektup, dört harita parçası.
 const MAX_LETTERS := 6
 const MAX_MAP_PIECES := 4
+## Seçilebilen balıkçılar (v6): kız (KayKit Rogue) ve oğlan (KayKit Knight). İlki varsayılan.
+const CHARACTERS: Array[String] = ["girl", "boy"]
+## Kıyafetin yuvaları (v6): şapka, yelek, oltanın kaplaması.
+const OUTFIT_SLOTS: Array[String] = ["hat", "vest", "rod"]
 ## Rütbe eğrileri (progression.json "xp"): kaydın sürümüyle değişen eğri, göçte rütbe puanı yeni
 ## eğriye taşınır (rütbe düşmesin). Bunlar o sürümün eğrisidir, değiştirilmez; eğri yeniden
 ## değişirse yeni sürüm ve yeni sabit eklenir (test_save_data denetler).
@@ -40,8 +44,9 @@ var hint_step: int = 0
 var flags: Dictionary = {}
 ## sfx, music, vibration (bool), locale ("tr"/"en"), easy (Kolay çekme, bool).
 var settings: Dictionary = {}
-## Seçilen balıkçı (KayKit karakteri). H2'de seçim ekranı gelir.
-var character: String = "rogue"
+## Seçilen balıkçı (v6): CHARACTERS'tan biri. Yeni oyunda açılış filminden önce seçilir (bayrak
+## chose_character), sonra dolaptan değişir.
+var character: String = "girl"
 ## Kovadaki balıklar (satılmayı bekleyen): [{ fish, size_cm, stars }].
 var bucket: Array[Dictionary] = []
 ## Satın alınan takım kimlikleri (gear.json). Fiyatı 0 olan başlangıç takımı hep sahiplidir.
@@ -87,6 +92,18 @@ var letters: int = 0
 var letter_at: int = 0
 var map_pieces: int = 0
 var keeper: int = 0
+## Akvaryum (v6, docs/gdd.md §10.6): ziyaretçi kutusundaki para 1/3600'lük birimle (saatlik kazanç ×
+## geçen gerçek saniye: kesir kaybolmaz) ve kutunun son güncellendiği gerçek saat (-1 = başlamadı).
+## Kutu gerçek saatle dolar, üst sınırda durur (gelir kuralı 7; Aquarium).
+var aquarium_box: int = 0
+var aquarium_unix: int = -1
+## Tekir (v6): kaç kez beslendi ve son beslendiğinde (ya da geldiğinde) tutulan balık sayısı; acıkması
+## balık sayısından türer (gerçek saatten değil: oyuncu yokken aç kalmaz).
+var cat_fed: int = 0
+var cat_meal_at: int = 0
+## Kıyafetler (v6): yuva (OUTFIT_SLOTS) -> kıyafet kimliği; eksik yuva varsayılan. Hangilerinin açık
+## olduğu kayıttan türer (rütbe, defter, istekler, Bekçi, Tekir'in hediyeleri): ayrı liste yok.
+var outfit: Dictionary = {}
 
 
 static func create_new(now_unix: int) -> SaveData:
@@ -146,6 +163,11 @@ func to_dict() -> Dictionary:
 		"letter_at": letter_at,
 		"map_pieces": map_pieces,
 		"keeper": keeper,
+		"aquarium_box": aquarium_box,
+		"aquarium_unix": aquarium_unix,
+		"cat_fed": cat_fed,
+		"cat_meal_at": cat_meal_at,
+		"outfit": outfit.duplicate(),
 	}
 
 
@@ -170,8 +192,8 @@ static func from_dict(raw: Dictionary) -> SaveData:
 	var raw_settings: Variant = d.get("settings", {})
 	if typeof(raw_settings) == TYPE_DICTIONARY:
 		s.settings = (raw_settings as Dictionary).duplicate()
-	var character := _text(d, "character", "rogue")
-	s.character = character if not character.is_empty() else "rogue"
+	var character := _text(d, "character", CHARACTERS[0])
+	s.character = character if character in CHARACTERS else CHARACTERS[0]
 	s.bucket = _bucket(d.get("bucket", []))
 	s.owned = _ids(d.get("owned", []))
 	s.loadouts = _loadouts(d.get("loadouts", {}))
@@ -204,6 +226,12 @@ static func from_dict(raw: Dictionary) -> SaveData:
 	s.letter_at = clampi(_int(d, "letter_at", s.catches), 0, s.catches)
 	s.map_pieces = clampi(_int(d, "map_pieces", 0), 0, MAX_MAP_PIECES)
 	s.keeper = maxi(0, _int(d, "keeper", 0))
+	s.aquarium_box = maxi(0, _int(d, "aquarium_box", 0))
+	s.aquarium_unix = maxi(-1, _int(d, "aquarium_unix", -1))
+	s.cat_fed = maxi(0, _int(d, "cat_fed", 0))
+	# Kedinin sayacı da tutulan balıktan büyük olamaz (bozuk kayıtta kedi o kadar balık beklemesin).
+	s.cat_meal_at = clampi(_int(d, "cat_meal_at", s.catches), 0, s.catches)
+	s.outfit = _outfit(d.get("outfit", {}))
 	return s
 
 
@@ -268,6 +296,22 @@ static func migrate(raw: Dictionary) -> Dictionary:
 		d["map_pieces"] = 0
 		d["keeper"] = 0
 		v = 5
+	if v < 6:
+		# v6 (Dalga 5, yuva): akvaryumun kutusu boş, saati ilk açılışta başlar; Tekir şimdiki balık sayısından
+		# sayar (eski oyuncunun kedisi de birkaç balık sonra acıkır); kıyafet yok. Eski oyuncunun balıkçısı
+		# kız (v5'e kadar tek balıkçı "rogue"); seçim ekranı ona çıkmaz (dolaptan değiştirir).
+		d["aquarium_box"] = 0
+		d["aquarium_unix"] = -1
+		d["cat_fed"] = 0
+		d["cat_meal_at"] = maxi(0, _int(d, "catches", 0))
+		d["outfit"] = {}
+		d["character"] = CHARACTERS[0]
+		var flags: Variant = d.get("flags", {})
+		if typeof(flags) == TYPE_DICTIONARY:
+			(flags as Dictionary)["chose_character"] = true
+		else:
+			d["flags"] = { "chose_character": true }
+		v = 6
 	d["version"] = v
 	return d
 
@@ -306,6 +350,19 @@ static func _records(raw: Variant) -> Dictionary:
 			"first_unix": maxi(0, _int(e, "first_unix", 0)),
 			"released": clampi(_int(e, "released", 0), 0, count),
 		}
+	return out
+
+
+## Kıyafet: yalnızca bilinen yuvalar ve boş olmayan yazı kimlikler (kimliği bilinmeyen kıyafet oyunda
+## varsayılana döner: Outfits).
+static func _outfit(raw: Variant) -> Dictionary:
+	var out := {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return out
+	for slot: String in OUTFIT_SLOTS:
+		var id: Variant = (raw as Dictionary).get(slot)
+		if typeof(id) == TYPE_STRING and not str(id).is_empty():
+			out[slot] = str(id)
 	return out
 
 

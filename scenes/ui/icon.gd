@@ -20,7 +20,7 @@ extends Control
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark"]
+		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -36,6 +36,8 @@ const ART_NAMES := {
 	"phase_night": "phase_night", "weather_clear": "weather_clear", "weather_cloudy": "weather_cloudy",
 	"weather_rain": "weather_rain", "weather_fog": "weather_fog", "weather_storm": "weather_storm",
 	"tea": "tea", "love": "love", "requests": "requests", "lantern": "lantern_lit",
+	# Dalga 5 (Parti 5b): akvaryumun bağış kutusu (görseli yoksa kodla).
+	"donation_box": "donation_box",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem, Ekstra ve tekniğe özel sekmeleri (yapay yem, kurşun, sinek).
@@ -201,6 +203,8 @@ func _draw() -> void:
 			_bottle()
 		"x_mark":
 			_x_mark()
+		"donation_box":
+			_donation_box()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -540,6 +544,19 @@ func _bottle() -> void:
 			Color("#a8743f"))
 	draw_line(Vector2(24, 50), Vector2(56, 38), Color(1, 1, 1, 0.55), 3.0, true)
 	draw_line(Vector2(10, 80), Vector2(90, 80), WATER, 5.0, true)
+
+
+## Akvaryumun bağış kutusu: kırmızı ahşap kutu, üstünde para yuvası, yuvaya düşen altın para.
+func _donation_box() -> void:
+	_round_rect(Rect2(18, 40, 64, 46), Color("#7a2e1e"), 8)
+	_round_rect(Rect2(22, 44, 56, 38), Color("#c0503a"), 6)
+	_round_rect(Rect2(14, 34, 72, 12), WOOD_DARK, 4)
+	_round_rect(Rect2(36, 37, 28, 5), Color("#1c1410"), 2)
+	draw_circle(Vector2(50, 22), 13, Color("#b8860b"))
+	draw_circle(Vector2(50, 22), 10, GOLD)
+	draw_line(Vector2(50, 15), Vector2(50, 29), Color("#b8860b"), 3.0, true)
+	draw_circle(Vector2(50, 64), 9, GOLD)
+	draw_circle(Vector2(50, 64), 6, Color("#e8b830"))
 
 
 ## Hazine haritasının kırmızı X'i (koyu kenarlı; haritada Bekçi'nin yeri).

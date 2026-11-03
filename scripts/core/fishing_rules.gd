@@ -134,6 +134,15 @@ var trash_ids := PackedStringArray(["boot", "tin_can", "plastic_bottle", "rusty_
 var trash_weights := PackedInt32Array([35, 35, 25, 5])
 var trash_love := PackedInt32Array([3, 3, 3, 5])
 
+# --- Akvaryum (Dalga 5, docs/gdd.md §10.6) -----------------------------------------------------
+## Ziyaretçilerin bağış kutusu gerçek saatle dolar; en çok aquarium_cap_s'lik birikimde durur (boşta
+## biriken üst sınırda durur: gelir kuralı 7).
+var aquarium_cap_s: int = 7200
+## Saatte tanktaki tür başına aquarium_species_ph para ve tanktaki balıkların değerinin binde
+## aquarium_value_pm'i (her türün en irisinin değeri: Economy.fish_value).
+var aquarium_species_ph: int = 8
+var aquarium_value_pm: int = 400
+
 
 ## Tekniklerin profilleri (kimlik → TechniqueRules). Şamandıranınki üst düzey bölümlerden.
 var _techniques: Dictionary = {}
@@ -265,6 +274,10 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 			r.trash_ids.append(str(it.get("id", "")))
 			r.trash_weights.append(int(it.get("weight", 0)))
 			r.trash_love.append(int(it.get("love", 0)))
+	var aquarium: Dictionary = d.get("aquarium", {})
+	r.aquarium_cap_s = int(aquarium.get("cap_s", r.aquarium_cap_s))
+	r.aquarium_species_ph = int(aquarium.get("species_ph", r.aquarium_species_ph))
+	r.aquarium_value_pm = roundi(float(aquarium.get("value_ph", r.aquarium_value_pm / 1000.0)) * 1000.0)
 	r._validate(errors)
 	# Teknikler: şamandıra üst düzey bölümlerden; ötekiler "techniques" bölümünden.
 	var base := r.technique("float")
@@ -312,6 +325,8 @@ func _validate(errors: PackedStringArray) -> void:
 		"çöp (olasılıklar 0–1, en az bir eşya, kimlikler dolu ve eşsiz, ağırlıklar pozitif, sevgi 0–100)": \
 				trash_bottom_ppm >= 0 and trash_bottom_ppm <= Dice.PPM and trash_trap_ppm >= 0 \
 				and trash_trap_ppm <= Dice.PPM and _trash_ok(),
+		"akvaryum (kutunun üst sınırı en az 1 dk, kazançlar sıfır ya da pozitif)": aquarium_cap_s >= 60 \
+				and aquarium_species_ph >= 0 and aquarium_value_pm >= 0,
 	}
 	for label: String in checks:
 		if not bool(checks[label]):

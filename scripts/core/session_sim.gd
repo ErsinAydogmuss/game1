@@ -102,12 +102,15 @@ var trash: int = 0
 var requests_done: int = 0
 var request_coins: int = 0
 var rerolls: int = 0
+## Akvaryumun bağış kutusundan toplanan para (earned'in içinde; satışta toplanır: dükkâna uğrayınca).
+var aquarium_coins: int = 0
 ## Olayların ilk olduğu dakika: "rank_3", "buy" (ilk alışveriş), "buy:<takım>", "sell", "species_4",
 ## "rarity_<id>", "zone:<bölge>" (o bölgede ilk avlanış), "tech:<teknik>" (o teknikle ilk atış),
 ## "trap_set" (ilk tuzak bırakıldı), "trap" (tuzaktan ilk kerevit), "release" (ilk bırakılan balık), "trash"
 ## (ilk çöp), "love_<seviye>" (göl sevgisinin seviyesi), "requests" (ilk istekler), "request_1" (ilk biten
 ## istek), "requests_10" (onuncusu), "letter_<n>" (okunan mektup), "golden_<parça>" (altın istek geldi),
-## "piece_<parça>" (harita parçası), "dough" (altın hamur), "final_ready", "keeper" (Gölün Bekçisi göle döndü).
+## "piece_<parça>" (harita parçası), "dough" (altın hamur), "final_ready", "keeper" (Gölün Bekçisi göle döndü),
+## "aquarium" (bağış kutusundan ilk para).
 var milestones: Dictionary = {}
 ## Botun elindeki teknik ve her teknikte geçen süre (sn).
 var technique: String = "float"
@@ -143,6 +146,8 @@ func _init(content: ContentDB, spot: String, seed_value: int, sim_timing: Dictio
 	save = SaveData.create_new(0)
 	save.seed = seed_value
 	save.catches = 1
+	# Akvaryumun kutusunun saati oyunun ilk açılışındaki gibi baştan (botun saniyeleri gerçek saat yerine).
+	Aquarium.update(db, save, 0)
 	rng.seed = seed_value
 	timing = sim_timing if not sim_timing.is_empty() else load_timing()
 	if not _home.is_empty():
@@ -286,6 +291,13 @@ func _sell_and_shop() -> void:
 	earned += Economy.sell_all(db, save)
 	sells += 1
 	_mark("sell")
+	# Dükkâna uğrayınca akvaryumun bağış kutusu kendiliğinden toplanır (oyundaki gibi; botun saniyeleri gerçek
+	# saat yerine: bot hep oynar, kutu oyuncu yokken dolmaz).
+	var box := Aquarium.collect(db, save, int(elapsed))
+	if box > 0:
+		earned += box
+		aquarium_coins += box
+		_mark("aquarium")
 	shop()
 	# Göl sevgisi 6'da Nine altın hamuru verir (dükkân açılınca).
 	if Secret.give_dough(db, save):

@@ -12,6 +12,8 @@ extends BaseTest
 const SEEDS := [1000, 1077, 1154]
 ## Korkulukların ölçüldüğü oyun süresi (dk).
 const MINUTES := 310.0
+## Şansa çok bağlı geç olaylar için bot sonra bu süreye kadar sürer (saatlik para ve av MINUTES'ta ölçülür).
+const LATE_MINUTES := 370.0
 ## [olay, en erken dk, en geç dk]: her seed'de olay bu aralıkta ilk kez olmalı.
 const PACING := [
 	["sell", 0.0, 5.0],            # ilk satış (kova dolar, Nine'ye gidilir)
@@ -49,7 +51,6 @@ const PACING := [
 	# 6 seed'de 26–119 dk). İlk gecelerde gelmesi şansa bağlı: pay geniş. Mersin (sandalla derin ortada) ve
 	# Kocabaş (fırtınalı gece, derin ortada dip) daha geç.
 	["rarity_legendary", 20.0, 300.0],
-	["fish:moon_pike", 20.0, 300.0],
 	# Tut-bırak ve çöp (Dalga 4; sim.json: rütbe 9'dan sonra satıştan önce 5 paralık balık göle bırakılır;
 	# baştan bırakan bot erken alışverişleri geciktiriyordu, büyük kova 103 dk). 6 seed'de ilk bırakış 26–104 dk
 	# (koruma altındaki Ay Turnası ya da rütbe 9), ilk çöp 35–53 dk (dip açılınca), göl sevgisi 2'si 26–119 dk,
@@ -78,6 +79,12 @@ const PACING := [
 	["final_ready", 120.0, 240.0],
 	# Final (6. adım): final gecesinde (en geç bir oyun günü sonra) gece sandalla X'e, dipte Bekçi.
 	["keeper", 120.0, 270.0],
+]
+## Geç olaylar (LATE_MINUTES'a kadar). Ay Turnası yalnızca gece nilüferli koyda (gecede %0,4–2,5): bot her gece
+## oraya gider ama gelmesi şansa bağlı. Dalga 5'te akvaryumun parası alışverişleri öne alınca seed 1000'de 185.
+## dakikadan 343. dakikaya kaydı (bot o güne kadar nilüferli koyda 116 gece atışı yaptı; öteki seed'ler 27–154 dk).
+const LATE := [
+	["fish:moon_pike", 20.0, 360.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.
@@ -120,6 +127,12 @@ func test_pacing_guard_rails() -> void:
 		var hours := sim.elapsed / 3600.0
 		assert_between(sim.earned / hours, 2500.0, 6500.0, "seed %d: saatte para" % seed_value)
 		assert_between(sim.catches / hours, 120.0, 280.0, "seed %d: saatte av" % seed_value)
+		sim.run(LATE_MINUTES)
+		for row: Array in LATE:
+			var key: String = row[0]
+			assert_true(sim.milestones.has(key), "seed %d: %s %d dk içinde hiç olmadı" % [seed_value, key, int(LATE_MINUTES)])
+			if sim.milestones.has(key):
+				assert_between(float(sim.milestones[key]), row[1], row[2], "seed %d: %s (dk)" % [seed_value, key])
 
 
 ## Dede'nin istekleri: bot rütbe 2'de istek alır, biten istekler öder (para kazanca girer), günde en çok bir
@@ -282,3 +295,25 @@ func test_shop_buys_the_new_technique_first() -> void:
 	assert_eq(sim.technique, "spin", "yeni tekniği dener (merak)")
 	sim.cast_once()
 	assert_true(sim.milestones.has("tech:spin"), "spinle ilk atış sayılır")
+
+
+## Akvaryum (Dalga 5): bot dükkâna her uğrayışta bağış kutusunu toplar (oyundaki gibi); para kazancın içinde,
+## sayaç kayıtla aynı, kutu hiçbir zaman üst sınırı aşmaz; satılmayan türler tanka girmez.
+func test_bot_collects_the_aquarium() -> void:
+	var db := content()
+	var sim := SessionSim.new(db, db.main_spot, SEEDS[0])
+	var top := 0
+	while sim.minutes() < 90.0:
+		sim.cast_once()
+		top = maxi(top, sim.save.aquarium_box - Aquarium.rate_ph(db, sim.save) * db.rules.aquarium_cap_s)
+	assert_true(sim.aquarium_coins > 0 and sim.aquarium_coins < sim.earned,
+			"kutunun parası kazancın içinde (%d / %d)" % [sim.aquarium_coins, sim.earned])
+	assert_eq(int(sim.save.stats.get("aquarium_coins", 0)), sim.aquarium_coins, "sayaç kayıtla aynı")
+	assert_true(sim.milestones.has("aquarium"), "ilk bağış dönüm noktası")
+	assert_true(top <= 0, "kutu üst sınırı aşmaz")
+	for f in Aquarium.fish(db, sim.save):
+		assert_true(int(f["value"]) > 0, "tanktaki %s satılan bir tür" % f["fish"])
+	# Oyun sonunda saatte ~400 para (docs/gdd.md §10.6; 16 sa × 6 seed: 398–426). Bot türleri çabuk toplar: 90
+	# dakikada tankın çoğu dolu, bağış saatte ~360 (balıktan saatte ~5.000'in yanında küçük bir pay).
+	var rate := Aquarium.rate_ph(db, sim.save)
+	assert_between(float(rate), 150.0, 450.0, "90 dakikada saatlik bağış (%d tür)" % Aquarium.fish(db, sim.save).size())

@@ -113,6 +113,8 @@ const REQ_TOLD_FLAG := "told_requests"
 const REQ_SEEN_FLAG := "requests_seen"
 ## Final (Gölün Bekçisi): Dede'nin "bu gece sis basacak" sözünün bayrağı; Bekçi'nin sudan çıktığı yerin halkaları.
 const FINAL_TOLD_FLAG := "told_final"
+## Nine'nin akvaryumu tanıttığı söz bir kez (tankta ilk balık varken dükkân açılınca).
+const AQUARIUM_FLAG := "told_aquarium"
 const KEEPER_RINGS: Array[Vector2] = [Vector2(2.4, 1.6), Vector2(3.6, 2.0)]
 const TURQUOISE := Color(0.62, 1.0, 0.95, 0.85)
 
@@ -152,6 +154,7 @@ var map_panel: MapPanel
 var technique_panel: TechniquePanel
 ## Boş tuzağın paneli (bekle ya da kaldır).
 var trap_panel: TrapPanel
+var aquarium_panel: AquariumPanel
 ## "Bugün" paneli (saat çipine dokununca): vakit, bugünün ve yarının havası, Dede'yle çay, göl sevgisi.
 var day_panel: DayPanel
 ## Kova paneli (kovaya dokununca): tür başına göle bırak, hepsini bırak, sat.
@@ -698,6 +701,8 @@ func _build_input() -> void:
 	input.line_out = func() -> bool: return session.line_out()
 	input.hit_targets = [
 		["dede", func(screen: Vector2) -> bool: return elder.hit(camera, screen)],
+		# Tezgâhtaki akvaryum dükkândan önce (dükkânın zarfı tankı da kapsar).
+		["aquarium", func(screen: Vector2) -> bool: return shop.tank_hit(camera, screen)],
 		["shop", func(screen: Vector2) -> bool: return nine.hit(camera, screen) or shop.hit(camera, screen)],
 		["boat", func(screen: Vector2) -> bool: return not in_boat and scene.boat_hit(camera, screen)],
 		["bottle", func(screen: Vector2) -> bool: return bottle.hit(camera, screen)],
@@ -2580,6 +2585,8 @@ func _on_target(id: String) -> void:
 			_on_talk()
 		"shop":
 			_on_shop()
+		"aquarium":
+			_on_aquarium()
 		"boat":
 			_on_boat()
 		"trap":
@@ -2606,11 +2613,57 @@ func _on_boat() -> void:
 # --- Kerevit tuzakları --------------------------------------------------------------
 
 ## Tuzakların dolması şimdiye getirilir (gerçek saat; oyun kapalıyken de dolar) ve işaretler kayda
-## uyar.
+## uyar; akvaryumun bağış kutusu da (_sync_aquarium).
 func _refresh_traps() -> void:
 	var save := GameState.save
 	TrapSim.update_all(GameState.db.rules, save, GameState.clock.now_unix())
 	traps.sync(save, GameState.db.rules)
+	_sync_aquarium()
+
+
+# --- Akvaryum (Dalga 5) -------------------------------------------------------------
+
+## Akvaryumun bağış kutusu şimdiye getirilir (gerçek saat; oyun kapalıyken de dolar, üst sınırda durur) ve
+## tezgâhtaki tankta en değerli balıklar görünür (ağı yalnızca balıklar değişince yeniden kurulur).
+func _sync_aquarium() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	Aquarium.update(db, save, GameState.clock.now_unix())
+	var tank := Aquarium.fish(db, save)
+	# Sıra kararlı (değer, eşitse kimlik): her saniye aynı dizi, ağ boşuna yeniden kurulmaz.
+	tank.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a["value"]) != int(b["value"]):
+			return int(a["value"]) > int(b["value"])
+		return str(a["fish"]) < str(b["fish"]))
+	var colors: Array[Color] = []
+	for f in tank:
+		colors.append(db.fish_by_id(str(f["fish"]))["color"])
+	shop.set_tank(colors)
+
+
+## Tezgâhtaki akvaryuma dokunuldu (olta boşta): Akvaryum paneli (her türün en irisi, bağış kutusu, TOPLA).
+func _on_aquarium() -> void:
+	if session.state != FishingSession.State.IDLE or _card_up():
+		return
+	Sounds.haptic(10)
+	angler.stop()
+	_pending_cast = Dice.NO_POINT
+	_forget_pickups()
+	input.release_all()
+	_sync_aquarium()
+	aquarium_panel.open()
+
+
+## Bağış kutusu toplanır (dükkân tezgâhta açılınca kendiliğinden, Akvaryum panelinde TOPLA): para, ses,
+## titreşim. Döner: toplanan para.
+func _collect_aquarium() -> int:
+	var coins := Aquarium.collect(GameState.db, GameState.save, GameState.clock.now_unix())
+	if coins > 0:
+		GameState.save_game()
+		Sounds.play("coins")
+		Sounds.haptic(25)
+		_refresh_status()
+	return coins
 
 
 ## Takım çantasında "Tuzak bırak": balıkçının yakınındaki sığ suya (baktığı yöne en yakın uygun yer)
@@ -2996,7 +3049,24 @@ func _on_shop() -> void:
 		GameState.save_game()
 		hud.toast_later(tr("UI_DOUGH_GIVEN"), UiKit.ACCENT, "buy", "item:golden_dough", "dough")
 		Sounds.haptic(30)
-	shop_panel.open_shop("", "", false, "UI_NINE_DOUGH" if dough else "")
+	# Akvaryum: tezgâha gelince bağış kutusu kendiliğinden toplanır; Nine söyler (ilk seferde tanka dokunmayı).
+	# Altın hamurun sözü önce: o zaman kutunun parası bildirimle.
+	var coins := _collect_aquarium()
+	var line := ""
+	var args: Array = []
+	if dough:
+		line = "UI_NINE_DOUGH"
+		if coins > 0:
+			hud.toast_later(tr("UI_AQUARIUM_GOT") % UiKit.format_int(coins), UiKit.ACCENT, "", "donation_box", "aquarium")
+	elif not bool(GameState.save.flags.get(AQUARIUM_FLAG, false)) \
+			and not Aquarium.fish(GameState.db, GameState.save).is_empty():
+		line = "UI_NINE_AQUARIUM"
+		GameState.save.flags[AQUARIUM_FLAG] = true
+		GameState.save_game()
+	elif coins > 0:
+		line = "UI_NINE_AQUARIUM_COINS"
+		args = [UiKit.format_int(coins)]
+	shop_panel.open_shop("", "", false, line, args)
 
 
 ## Dükkân kapandı: tezgâhta açıldıysa Nine uğurlar (ipucu çubuğunda, sırayla uğurlama ve öğüt
@@ -3122,6 +3192,11 @@ func _build_ui() -> void:
 	trap_panel = TrapPanel.new()
 	layer.add_child(trap_panel)
 	trap_panel.remove_requested.connect(_on_trap_remove)
+	aquarium_panel = AquariumPanel.new()
+	layer.add_child(aquarium_panel)
+	aquarium_panel.collect_requested.connect(func() -> void:
+		_collect_aquarium()
+		aquarium_panel.refresh())
 	day_panel = DayPanel.new()
 	layer.add_child(day_panel)
 	day_panel.tea_requested.connect(_on_tea)

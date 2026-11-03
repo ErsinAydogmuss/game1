@@ -106,6 +106,11 @@ extends Node
 ##     saat sabah; göl çiçek açar), jenerik (ATLA). Sonra: final gecesi bitti, defterde Bekçi, Ayarlar'da BİTİŞ
 ##     (yeniden izlenir, saat değişmez), kendiliğinden sisli gecede X'te Bekçi yine gelir (Dede "yine göründü").
 ##     Her çekimde ÇİZİM ≤ TOUR_DRAWS.
+##   aquarium: akvaryum (Dalga 5). Boş tank: tezgâhta balık yok, tanka dokun → panel küçülmeden sığar, "Tank boş",
+##     TOPLA pasif; deftere türler girince tezgâhın tankında en değerli 5 balık, iskelede ÇİZİM ≤ TOUR_DRAWS; tanka
+##     dokun → panelde her satılan türün en irisi yüzer (mersin yok), 3 saat sonra kutu üst sınırda ("doldu"), TOPLA
+##     → para, kutu boş; Nine'ye dokun → dükkân açılır (akvaryum değil), kutu kendiliğinden toplanır, ilk seferde
+##     Nine tanka dokunmayı söyler, sonraki seferde bıraktıkları parayı; telefon oranında, --safe-inset=130, TR ve EN.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -281,6 +286,8 @@ func _ready() -> void:
 			_play_secret.call_deferred()
 		"keeper":
 			_play_keeper.call_deferred()
+		"aquarium":
+			_play_aquarium.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -5786,6 +5793,118 @@ func _check_joystick() -> void:
 	await _tap(book.close_button.get_global_rect().get_center())
 	await _wait_frames(3)
 	await _shot("01b_yurume_halkasi")
+
+
+## Akvaryum (Dalga 5): bkz. dosyanın başı. Saat bot süresince sabit (fixed_unix): kutu yalnızca bot saati
+## ileri alınca dolar.
+func _play_aquarium() -> void:
+	_use_save(5)
+	var db := GameState.db
+	var save := GameState.save
+	var clock := GameState.clock
+	var start := clock.now_unix()
+	clock.fixed_unix = start
+	var shop: ShopStall = main.get("shop")
+	var shop_panel: ShopPanel = main.get("shop_panel")
+	var panel: AquariumPanel = main.get("aquarium_panel")
+	var camera: Camera3D = main.get("camera")
+	GameState.changed.emit()
+	await _wait(1.5)
+	# 1) Boş tank: tezgâhta balık yok; tanka dokun → panel, "Tank boş", TOPLA pasif.
+	_check("boş defterde tezgâhın tankı boş", shop.tank_fish_count() == 0)
+	var rect := shop.tank_screen_rect(camera)
+	print("AKVARYUM tank ekranda %s (iskelenin başında)" % str(rect))
+	_check("tank iskelenin başından ekranda ve dokunulacak kadar büyük (%.0f×%.0f)" % [rect.size.x, rect.size.y],
+			get_viewport().get_visible_rect().encloses(rect) and maxf(rect.size.x, rect.size.y) >= 60.0)
+	await _tap(rect.get_center())
+	await _wait_frames(3)
+	_check("tanka dokun → Akvaryum paneli (dükkân değil)", panel.visible and not shop_panel.visible)
+	_check("boş tankta balık yok, yazı ve TOPLA pasif", panel.swimmer_count() == 0
+			and tr("UI_AQUARIUM_EMPTY") in _texts_in(panel)
+			and (panel.find_child("Button_collect", true, false) as Button).disabled)
+	await _wait(0.4)
+	await _shot("01_bos_tank")
+	await _tap(panel.close_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	# 2) Türler deftere girer (mersin satılmaz: tanka girmez); tezgâhın tankında en değerli beşi.
+	var catches := [["rudd", 27], ["carp", 71], ["perch", 38], ["pike", 104], ["tench", 49], ["silverside", 15],
+			["bream", 52], ["wels", 190], ["golden_carp", 66], ["crayfish", 12], ["sturgeon", 170]]
+	for c: Array in catches:
+		Records.add(save.records, str(c[0]), int(c[1]), 3, start)
+	var tank := Aquarium.fish(db, save)
+	await _wait(1.3)
+	_check("tezgâhın tankında %d balık (en çok %d)" % [shop.tank_fish_count(), ShopStall.TANK_SHOWN],
+			shop.tank_fish_count() == mini(tank.size(), ShopStall.TANK_SHOWN))
+	_check("mersin tanka girmez (%d tür)" % tank.size(), tank.size() == catches.size() - 1)
+	var dock := await _measure_draws()
+	print("ÇİZİM iskelede akvaryumla: %d çizim, %d üçgen" % [int(dock["draws"]), int(dock["primitives"])])
+	_check("ÇİZİM iskelede akvaryumla: %d (≤%d)" % [int(dock["draws"]), TOUR_DRAWS], int(dock["draws"]) <= TOUR_DRAWS)
+	await _shot("02_iskele")
+	main.set("bot_camera", true)
+	_frame_on(shop.tank_point() + Vector3(0.0, -0.1, 0.0), 0.3)
+	await _wait(0.3)
+	await _shot("03_tezgah_yakin")
+	main.set("bot_camera", false)
+	await _wait(0.6)
+	# 3) Panel: her türün en irisi yüzer; 3 saat sonra kutu üst sınırda.
+	save.aquarium_box = 0
+	save.aquarium_unix = start
+	clock.fixed_unix = start + 3 * 3600
+	await _tap(shop.tank_screen_rect(camera).get_center())
+	await _wait(1.2)
+	var cap := Aquarium.cap_coins(db, save)
+	var box_label := panel.find_child("Box", true, false) as Label
+	_check("panel açık ve küçülmeden sığar (ölçek %.3f)" % panel.fit_scale(), panel.visible and panel.fit_scale() > 0.999
+			and _panel_inside(panel))
+	_check("tankta %d balık yüzer" % panel.swimmer_count(), panel.swimmer_count() == tank.size())
+	_check("tür sayısı %d/%d" % [tank.size(), Aquarium.capacity(db)],
+			("%d/%d" % [tank.size(), Aquarium.capacity(db)]) in _texts_in(panel))
+	_check("3 saat sonra kutu üst sınırda: %s para (%d)" % [box_label.text, cap],
+			box_label.text == UiKit.format_int(cap) and tr("UI_AQUARIUM_FULL") in _texts_in(panel))
+	var collect := panel.find_child("Button_collect", true, false) as Button
+	var r := collect.get_global_rect()
+	_check("TOPLA büyük (%.0f×%.0f)" % [r.size.x, r.size.y], minf(r.size.x, r.size.y) >= 121.5 and not collect.disabled)
+	await _wait(1.0)
+	await _shot("04_akvaryum")
+	var coins := save.coins
+	await _tap_control(collect)
+	await _wait_frames(3)
+	_check("TOPLA → +%d para, kutu boş" % cap, save.coins == coins + cap and box_label.text == "0" and collect.disabled
+			and int(save.stats.get("aquarium_coins", 0)) == cap)
+	await _tap(panel.close_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	# 4) Dükkân: Nine'ye dokun → dükkân açılır (akvaryum değil), kutu kendiliğinden toplanır; ilk seferde Nine tanka
+	# dokunmayı söyler.
+	var nine := _nine()
+	clock.fixed_unix = start + 3 * 3600 + 1800
+	var half := Aquarium.pending(db, save, clock.fixed_unix)
+	coins = save.coins
+	await _tap(_screen(nine.head_point()))
+	await _wait_frames(3)
+	_check("Nine'ye dokun → dükkân (akvaryum değil)", shop_panel.visible and not panel.visible)
+	_check("dükkânda kutu toplanır: +%d" % half, half > 0 and save.coins == coins + half and save.aquarium_box < Aquarium.UNIT)
+	_check("ilk seferde Nine tanka dokunmayı söyler", str(shop_panel.get("_line_key")) == "UI_NINE_AQUARIUM")
+	await _wait(0.4)
+	await _shot("05_dukkan_nine")
+	await _tap(shop_panel.close_button.get_global_rect().get_center())
+	await _wait(1.0)
+	# 5) Bir saat sonra yine: Nine bıraktıkları parayı söyler.
+	clock.fixed_unix += 3600
+	var hour := Aquarium.pending(db, save, clock.fixed_unix)
+	coins = save.coins
+	await _tap(_screen(nine.head_point()))
+	await _wait_frames(3)
+	_check("sonraki seferde Nine parayı söyler: +%d" % hour, hour > 0 and save.coins == coins + hour
+			and str(shop_panel.get("_line_key")) == "UI_NINE_AQUARIUM_COINS"
+			and (tr("UI_NINE_AQUARIUM_COINS") % UiKit.format_int(hour)) in _texts_in(shop_panel))
+	await _wait(0.4)
+	await _shot("06_dukkan_para")
+	await _tap(shop_panel.close_button.get_global_rect().get_center())
+	await _wait(0.5)
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
 
 
 func _check_buttons() -> void:

@@ -827,6 +827,13 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   Final hazır 151–188. dakikada (değişmedi): dördüncü parça gece derin ortada geldiği için bot çoğunlukla aynı gece
   X'e geçer, Bekçi 1–1,5 dakika sonra göle döner; final gündüz hazır olursa geceyi bekler (bir seed'de 188 → 209). Bekçi
   152–209. dakikada (korkuluk 120–270; insan için ~5–6 saat). Kazanç aynı: 16 saatte saatte 7.436–7.826 para, 163–167 av.
+- ✅ **Dalga 5, akvaryumun ölçümü** (1. adım; `economy_report.gd -- --hours=16 --seeds=6`): denge botu her satışta
+  (dükkâna uğrayınca) bağış kutusunu toplar. Kutunun parası 16 saatte 5.946–6.353 (kazancın %4,7–5,1'i); oyun sonunda
+  saatte 398–426 (15/15 tür). 16 saatte saatte 7.728–8.053 para (önce 7.436–7.826), 163–167 av (aynı); korkuluğun üç
+  seed'inde 310. dakikada saatte 5.784–5.844 (önce 5.210–5.492; korkuluk 6.500). Alışverişler birkaç dakika öne kayar
+  (ör. karbon şamandıra kamışı 278–303 → 275–284. dakika). Ay Turnası şansa bağlı: botun yolu değişince seed 1000'de
+  185 → 343. dakika (bot o güne kadar nilüferli koyda 116 gece atışı yaptı); korkuluğu artık uzatılmış koşuda (370 dk,
+  sınır 360).
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 
@@ -1028,9 +1035,24 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
 
 ### 10.6 Yuva ve kişilik
 
-- **Akvaryum (Nine'nin dükkânında):**
-  - Bulunan her türden biri konabilir; tanktaki balıklar 3D yüzer.
-  - Ziyaretçi kutusu tanktaki türlere göre para biriktirir; en çok 2 saatlik birikimde durur.
+- ✅ **Akvaryum (Nine'nin dükkânında; Dalga 5, 1. adım):**
+  - Ersin'in seçimi: her türün en irisi tanka **kendiliğinden** girer (defterden türer: `Aquarium.fish`, ayrı bir
+    liste yok). Tanktaki, tutulan balığın kopyasıdır: kovadaki balık yine satılır. Satılmayan türler (koruma
+    altındaki mersin, Ay Turnası, Kocabaş, Gölün Bekçisi) göle döner, tanka girmez: tank 15 türü alır.
+  - Tezgâhta küçük bir cam tank ve yanında kırmızı bağış kutusu. Dükkânın tek ağında (çizim eklemez): su opak, camın
+    ardındaki en değerli 5 balık ön ve yan yüzde kabartma; tanktaki türler değişince dükkânın ağı yeniden kurulur.
+  - Tanka dokununca **Akvaryum paneli**: canlı tank (kendi dünyası olan SubViewport; her tür bir balık, dış
+    çizgisiz, kendi şeridinde gidip döner, kerevit kumda yürür; arka plan Ersin'in `aquarium_bg` görseli, yoksa
+    kodla), "12/15 tür", saatlik bağış, bağış kutusu ("Sen yokken de dolar, en çok 2 saatlik"; dolunca "Kutu
+    doldu!") ve TOPLA. Boş tankta "Bir balık tut".
+  - **Bağış kutusu** (Ersin'in seçimi: para, en çok 2 saatlik): saatte tanktaki tür başına 8 para ve balıkların
+    değerinin %40'ı (`rules.json` `aquarium`: `cap_s`, `species_ph`, `value_ph`). Gerçek saatle dolar, oyuncu
+    yokken de (tuzak gibi); en çok 2 saatlik birikimde durur (gelir kuralı 7). Saat geri alınırsa kayıp da kazanç da
+    yok. Kayıtta 1/3600'lük birimle tutulur: kesir kaybolmaz. Dükkâna (tezgâhta) uğrayınca kendiliğinden toplanır:
+    para sesi, Nine ilk seferde tanka dokunmayı, sonra ziyaretçilerin bıraktığı parayı söyler.
+  - Ölçüm (`economy_report.gd -- --hours=16 --seeds=6`): oyun sonunda saatte 398–426 para (15/15 tür); 16 saatte
+    5.946–6.353 para, kazancın %4,7–5,1'i. Bot türleri çabuk toplar: 90. dakikada saatte ~360. İnsan oyuncu için
+    asıl değeri dönüşte: 2 saat uzak kalan, dükkâna uğrayınca ~800 para bulur (balıkla ~10 dakikalık kazanç).
 - **Kedi, erkek balıkçı ve kıyafetler:** §7.
 - **Fotoğraf modu:**
   - Arayüz gizlenir, kamera biraz döndürülür, çerçeve seçilir.

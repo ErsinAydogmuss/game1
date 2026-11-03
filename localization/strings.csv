@@ -687,3 +687,15 @@ UI_SECRET_X_READY,X: the first buoy in Deep Water. Go by boat at night and fish 
 UI_SECRET_KEEPER_DONE,You let the Lake Keeper go. The lake loves you!,Gölün Bekçisi'ni göle bıraktın. Göl seni seviyor!
 UI_DAY_DETAIL_keeper,Fog tonight: the Keeper's night,Gece sis: Bekçi'nin gecesi
 UI_DEDE_STORY_20_KEEPER,You're the lake's legend now. Even the Keeper greeted you!,Artık gölün efsanesisin. Bekçi bile sana selam verdi!
+UI_AQUARIUM,Aquarium,Akvaryum
+UI_AQUARIUM_SPECIES,species,tür
+UI_AQUARIUM_RATE,Visitors give %s coins an hour,Ziyaretçiler saatte %s para bırakır
+UI_AQUARIUM_BOX,Donation box,Bağış kutusu
+UI_AQUARIUM_CAP,"Fills while you're away, up to %d hours","Sen yokken de dolar, en çok %d saatlik"
+UI_AQUARIUM_FULL,The box is full! Collect it so it fills again.,Kutu doldu! Topla da yine dolsun.
+UI_AQUARIUM_COLLECT,Collect,Topla
+UI_AQUARIUM_EMPTY,The tank is empty. Catch a fish: the biggest of each kind swims here.,Tank boş. Bir balık tut: her türün en irisi burada yüzer.
+UI_AQUARIUM_NOTE,The biggest of each kind joins the tank by itself; the fish in your bucket can still be sold. Protected fish go back to the lake. Visiting the shop empties the box.,Her türün en irisi tanka kendiliğinden girer; kovadaki balık yine satılır. Koruma altındaki balıklar göle döner. Dükkâna uğrayınca kutu boşalır.
+UI_AQUARIUM_GOT,Aquarium visitors left %s coins,Akvaryuma gelenler %s para bıraktı
+UI_NINE_AQUARIUM,Tap the tank on my counter! Your fish swim there.,Tezgâhtaki tanka dokun! Balıkların orada yüzüyor.
+UI_NINE_AQUARIUM_COINS,Visitors left %s coins at the tank. Here!,Tanka gelenler %s para bıraktı. Al bakalım!
