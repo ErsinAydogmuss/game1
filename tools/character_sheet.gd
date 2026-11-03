@@ -8,6 +8,8 @@ extends SceneTree
 ##   --model=res://.../Barbarian.glb  başka bir model (Dede ya da erkek balıkçı denemesi)
 ##   --raw                             dokuyu boyamadan ve parça gizlemeden çiz
 ##   --angler                          AnglerBody'yi (olta, şapka) oyundaki duruşlarla çiz
+##   --boy                             --angler ile: balıkçı oğlan (Knight; Dalga 5); --model ile Knight'ı oğlanın
+##                                     dokusuyla giydirir
 ##   --elder                           Dede'yi (Elder: kasket, çay, balon) oyundaki duruşlarla, iskele
 ##                                     tahtasının kenarında oturtarak çiz (oturuş denetimi)
 ##   --nine                            Nine'yi (yazma, önlük, gözlük) oyundaki duruşlarla, ayakta çiz
@@ -50,6 +52,7 @@ const ANGLER_SPECS: Array[Array] = [
 var _out := "user://character_sheet.png"
 var _model_path := AnglerBody.SCENE_PATH
 var _raw: bool = false
+var _boy: bool = false
 var _angler: bool = false
 var _elder: bool = false
 var _nine: bool = false
@@ -71,6 +74,8 @@ func _initialize() -> void:
 			_model_path = arg.substr(8)
 		elif arg == "--raw":
 			_raw = true
+		elif arg == "--boy":
+			_boy = true
 		elif arg == "--angler":
 			_angler = true
 		elif arg == "--elder":
@@ -112,6 +117,7 @@ func _initialize() -> void:
 			_slots.append(pos)
 		elif _angler:
 			var body := AnglerBody.new()
+			body.look = "boy" if _boy else "girl"
 			world.add_child(body)
 			body.position = pos
 			body.rotation.y = -PI * 0.5 + 0.35
@@ -129,6 +135,8 @@ func _initialize() -> void:
 						NineBody.dress(model)
 					ElderBody.SCENE_PATH:
 						ElderBody.dress(model)
+					AnglerBody.BOY_SCENE:
+						AnglerBody.dress(model, "boy")
 					_:
 						AnglerBody.dress(model)
 			var player := model.find_child("AnimationPlayer", true, false) as AnimationPlayer

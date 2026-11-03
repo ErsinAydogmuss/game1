@@ -1,8 +1,10 @@
 class_name AnglerBody
 extends Node3D
-## Balıkçı kız: KayKit "Rogue" modelinden (CC0, bkz. assets/CREDITS.md). Doku balıkçı renklerine
-## boyanır (tools/recolor_texture.gd); pelerin, bıçaklar, arbaletler ve bomba gizlenir. Kodla bir
-## balıkçı şapkası başa takılır; olta sağ elin yuvasına (handslot_r) bağlanır (rod_mount).
+## Balıkçı: kız KayKit "Rogue", oğlan KayKit "Knight" modelinden (CC0, bkz. assets/CREDITS.md; Dalga 5:
+## görünüş `look`, SaveData.CHARACTERS). İkisi aynı iskelet ve animasyonları taşır. Doku balıkçı renklerine
+## boyanır (tools/recolor_texture.gd); kızda pelerin, bıçaklar, arbaletler ve bomba, oğlanda miğfer, pelerin,
+## kılıçlar ve kalkanlar gizlenir. Kodla bir balıkçı şapkası başa takılır; olta sağ elin yuvasına (handslot_r)
+## bağlanır (rod_mount).
 ##
 ## Animasyonlar AnimationTree ile karışır:
 ## - free: hıza göre bekleme / yürüme;
@@ -15,6 +17,12 @@ extends Node3D
 
 const SCENE_PATH := "res://assets/models/characters/Rogue.glb"
 const TEXTURE_PATH := "res://assets/models/characters/angler_texture.png"
+## Balıkçı oğlan (Dalga 5): KayKit Knight.
+const BOY_SCENE := "res://assets/models/characters/Knight.glb"
+const BOY_TEXTURE := "res://assets/models/characters/angler_boy_texture.png"
+const BOY_HIDDEN: Array[String] = ["Knight_Helmet", "Knight_Cape", "1H_Sword", "1H_Sword_Offhand", "2H_Sword",
+		"Badge_Shield", "Rectangle_Shield", "Round_Shield", "Spike_Shield"]
+const BOY_SHADOWLESS: Array[String] = ["Knight_ArmLeft", "Knight_ArmRight", "Knight_Head"]
 ## Modelin boyu ~2,2 birim; balıkçı ~1,45 m.
 const MODEL_SCALE := 0.66
 const HIDDEN: Array[String] = ["Rogue_Cape", "Knife", "Knife_Offhand", "1H_Crossbow", "2H_Crossbow", "Throwable"]
@@ -41,6 +49,16 @@ const ROD_TILT := deg_to_rad(35.0)
 const LEAN_BACK := 0.32
 const HAT_COLOR := Color("#2c7d96")
 const HAT_BAND := Color("#f0b637")
+## Görünüşler (SaveData.CHARACTERS): model, boyanmış doku, gizlenen ve gölgesi kapalı parçalar, şapkanın baş
+## kemiğinden yüksekliği (modelin biriminde).
+const LOOKS := {
+	"girl": { "scene": SCENE_PATH, "texture": TEXTURE_PATH, "hidden": HIDDEN, "shadowless": SHADOWLESS, "hat_y": 0.74 },
+	"boy": { "scene": BOY_SCENE, "texture": BOY_TEXTURE, "hidden": BOY_HIDDEN, "shadowless": BOY_SHADOWLESS,
+		"hat_y": 0.88 },
+}
+
+## Görünüş (LOOKS'un anahtarı); ağaca eklenmeden önce verilir.
+var look: String = "girl"
 
 ## Olta buraya bağlanır: el yuvasının çocuğu, modelin ölçeği geri alınmış; -Z oltanın ucu.
 var rod_mount: Node3D
@@ -52,19 +70,21 @@ var _hand: Node3D
 var _pose: String = "free"
 
 
-## Model dosyası ve dokusu projede var mı?
-static func available() -> bool:
-	return ResourceLoader.exists(SCENE_PATH) and ResourceLoader.exists(TEXTURE_PATH)
+## Görünüşün model dosyası ve dokusu projede var mı?
+static func available(kind: String = "girl") -> bool:
+	var spec: Dictionary = LOOKS.get(kind, LOOKS["girl"])
+	return ResourceLoader.exists(str(spec["scene"])) and ResourceLoader.exists(str(spec["texture"]))
 
 
 func _ready() -> void:
-	var scene: PackedScene = load(SCENE_PATH)
+	var spec: Dictionary = LOOKS.get(look, LOOKS["girl"])
+	var scene: PackedScene = load(str(spec["scene"]))
 	_model = scene.instantiate() as Node3D
 	_model.scale = Vector3.ONE * MODEL_SCALE
 	_model.rotation.y = PI
 	add_child(_model)
-	dress(_model)
-	_add_hat()
+	dress(_model, look)
+	_add_hat(float(spec["hat_y"]))
 	_hand = _model.find_child("handslot_r", true, false) as Node3D
 	rod_mount = Props.pivot(_hand, Vector3.ZERO, "RodMount")
 	# Rogue'un el yuvasında nişan duruşlarında +X ileri, +Y yukarı bakar (tools/character_sheet.gd
@@ -78,9 +98,14 @@ func _ready() -> void:
 	_build_tree(_model.find_child("AnimationPlayer", true, false) as AnimationPlayer)
 
 
-## Kıyafet: boyanmış doku, dış çizgi, gizlenen parçalar. Karakter sayfası aracı da kullanır.
-static func dress(model: Node3D) -> void:
-	CharacterKit.dress(model, load(TEXTURE_PATH), HIDDEN, SHADOWLESS)
+## Kıyafet: boyanmış doku, dış çizgi, gizlenen parçalar (görünüşün). Karakter sayfası aracı da kullanır.
+static func dress(model: Node3D, kind: String = "girl") -> void:
+	var spec: Dictionary = LOOKS.get(kind, LOOKS["girl"])
+	var hidden: Array[String] = []
+	hidden.assign(spec["hidden"])
+	var shadowless: Array[String] = []
+	shadowless.assign(spec["shadowless"])
+	CharacterKit.dress(model, load(str(spec["texture"])), hidden, shadowless)
 
 
 ## Her kare. speed: yatay hız (m/sn). pose: free, hold ya da reel. tension: çekişmede gerilim (0..1+).
@@ -115,13 +140,13 @@ func hand_point() -> Vector3:
 
 # --- Kurulum ---------------------------------------------------------------------
 
-## Kova biçimli balıkçı şapkası: baş kemiğine bağlanan düğümde (modelin ölçeğinde).
-## Rogue'da baş yuvası yok; CharacterKit.bone_slot kurar.
-func _add_hat() -> void:
+## Kova biçimli balıkçı şapkası: baş kemiğine bağlanan düğümde (modelin ölçeğinde), kemikten height yukarıda.
+## Rogue'da baş yuvası yok; CharacterKit.bone_slot kurar (Knight'ın miğfer yuvası gizli kalır).
+func _add_hat(height: float) -> void:
 	var head := CharacterKit.bone_slot(_model, "head", "HeadSlot")
 	if head == null:
 		return
-	var hat := Props.pivot(head, Vector3(0, 0.74, 0.0), "Hat")
+	var hat := Props.pivot(head, Vector3(0, height, 0.0), "Hat")
 	Props.cylinder(hat, 0.42, 0.52, 0.34, Vector3(0, 0.13, 0), HAT_COLOR, 14)
 	# Aşağı eğik geniş kenar (kova şapka).
 	Props.cylinder(hat, 0.53, 0.76, 0.09, Vector3(0, -0.07, 0), HAT_COLOR.darkened(0.12), 18)

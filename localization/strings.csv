@@ -704,3 +704,11 @@ UI_DEDE_CAT_HELLO,"That's Tekir, the dock cat. Tekir loves a small fish.","Bu Te
 UI_DEDE_CAT_HUNGRY,Tekir is hungry! Tap Tekir to share a small fish.,"Tekir acıktı! Dokun, kovandan küçük bir balık yesin."
 UI_DEDE_CAT_FED,Well done! Tekir likes you and will tag along.,"Afiyet olsun! Tekir seni sevdi, hep peşinde artık."
 UI_DEDE_CAT_EMPTY,"Tekir is hungry, but your bucket is empty.",Tekir aç ama kovan boş. Önce bir balık tut.
+UI_WARDROBE,Wardrobe,Dolap
+UI_WARDROBE_NOTE,Switch your angler any time. Your progress stays the same.,Balıkçını istediğin zaman değiştir. İlerlemen aynen kalır.
+UI_CHAR_TITLE,Choose your angler,Balıkçını seç
+UI_CHAR_NOTE_FIRST,You can change later: tap your angler to open the wardrobe.,"Sonra değiştirebilirsin: balıkçına dokun, dolap açılsın."
+UI_CHAR_GIRL,Girl,Kız
+UI_CHAR_BOY,Boy,Oğlan
+UI_CHAR_PICK,Choose,Seç
+UI_CHAR_PICKED,Chosen,Seçili

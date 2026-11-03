@@ -12,18 +12,18 @@ Kaynak: https://kaylousberg.com · https://github.com/KayKit-Game-Assets
 | `assets/models/kaykit_forest/` | KayKit Forest Nature Pack 1.0 | yuvarlak ağaçlar ve çamlar (Tree_1, Tree_3, Tree_4), çalılar, çimen öbekleri, yuvarlak kayalar (Rock_3) |
 | `assets/models/medieval/` | KayKit Medieval Hexagon Pack 1.0 | uzaktaki dağlar ve tepeler, fıçı, kasa, çuval, kova |
 | `assets/models/halloween/` | KayKit Halloween Bits 1.0 | fenerli direk |
-| `assets/models/characters/` | KayKit Character Pack: Adventures 1.0 | Rogue (balıkçı kız), Barbarian (Dede) ve Mage (Nine); iskeletleri ve animasyonlarıyla |
+| `assets/models/characters/` | KayKit Character Pack: Adventures 1.0 | Rogue (balıkçı kız), Knight (balıkçı oğlan), Barbarian (Dede) ve Mage (Nine); iskeletleri ve animasyonlarıyla |
 
 Orman paketi Ersin'in Mac'inde indirildi (lisansı `assets/models/kaykit_forest/License.txt`); kullanılmayan
 modelleri `assets/incoming/models/` altında sonraki dalgaları bekler. Ortaçağ ve cadılar bayramı modelleri
-ile Barbarian Kazı projesinden değiştirilmeden kopyalandı. Rogue ve Mage,
+ile Barbarian Kazı projesinden değiştirilmeden kopyalandı. Rogue, Knight ve Mage,
 https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0 deposundan alındı.
 Dokular `tools/recolor_texture.gd` ile yeniden boyandı (orman: daha koyu yaprak, kahverengi kabuk, sıcak
-gri kaya; ortaçağ: ahşap ve ağaç yeşili; Rogue: balıkçı renkleri; Barbarian: Dede'nin beyaz sakalı ve
+gri kaya; ortaçağ: ahşap ve ağaç yeşili; Rogue: balıkçı renkleri; Knight: sarı yağmurluk, turkuaz yaka, kahverengi saç; Barbarian: Dede'nin beyaz sakalı ve
 kazağı; Mage: Nine'nin gümüş saçı ve hardal hırkası); orijinaller `assets/models/kaykit_forest/source/`,
 `assets/models/medieval/source/` ve `assets/models/characters/source/` altında. Kayaların yosunu
 `scenes/world/moss.gdshader` ile çizilir.
-Karakterlerin pelerinleri, silahları, Barbarian'ın miğferi ile kupası ve Mage'in şapkası oyunda gizlenir;
+Karakterlerin pelerinleri, silahları ve kalkanları, Knight'ın ve Barbarian'ın miğferi, Barbarian'ın kupası ve Mage'in şapkası oyunda gizlenir;
 balıkçı şapkası, Dede'nin kasketi ve çay bardağı, Nine'nin yazması, önlüğü ve gözlüğü, olta ve Nine'nin
 dükkânı kodla kurulur.
 Hangi modelin oyunda hangi ölçekle kullanıldığı `scenes/world/model_library.gd` içinde.

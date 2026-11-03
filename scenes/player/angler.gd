@@ -1,7 +1,8 @@
 class_name Angler
 extends Node3D
 ## Balıkçı: göl düzleminde 2B yürür; karada ve iskelede durabilir, suya giremez (kıyıda durur).
-## Görünüm AnglerBody (KayKit Rogue) ya da yedek ToyAngler; olta (RodModel) elin yuvasında.
+## Görünüm AnglerBody (kız KayKit Rogue, oğlan Knight: character) ya da yedek ToyAngler; olta (RodModel) elin yuvasında.
+## Gövde oyun sürerken değişebilir (set_body: karakter seçimi, dolap); olta yeni gövdenin eline geçer.
 ## Sunum her kare pose / tension verir (free, hold, reel); atış, gösterme ve sevinç tek seferlik.
 ## Kare başı hareket _process'te (Tween yok).
 
@@ -17,6 +18,8 @@ const BODY := 0.22
 const CARRY_DIR := Vector3(0.12, 0.9, -0.42)
 ## Balığı gösterirken olta gizlenir (sn).
 const SHOW_TIME := 1.6
+## Dokunma (dolap; Dalga 5): ayaktan başa çizgiye ekranda bu kadar (viewport yüksekliği 1080'e göre piksel).
+const TOUCH_PX := 44.0
 ## Uzun bir karede (takılma) yürüme en çok bu kadarlık parçalarla işlenir: adım engelin
 ## (Dede) içinden atlamasın.
 const MOVE_STEP := 0.05
@@ -38,6 +41,8 @@ var pose: String = "free"
 ## Çekişmede gerilim (0..1+): olta bükülür, balıkçı geriye yaslanır.
 var tension: float = 0.0
 var rod: RodModel
+## Balıkçının görünüşü (SaveData.CHARACTERS: girl, boy); ağaca eklenmeden önce ya da set_body ile.
+var character: String = "girl"
 ## Dipte olta sehpada (RodStand): eldeki olta gizlenir, eller serbest.
 var rod_on_stand: bool = false
 ## Açılış filminde olta henüz elde değil (Dede'nin hediyesi, StoryFilm): gizli.
@@ -60,14 +65,39 @@ var _synced_carry: bool = false
 
 
 func _ready() -> void:
-	if AnglerBody.available() and not force_toy:
-		_body = AnglerBody.new()
+	rod = RodModel.new()
+	rod.name = "Rod"
+	_add_body()
+
+
+## Gövdeyi değiştirir (karakter seçimi, dolap): eski gövde gider, olta ve tutuşu yeni gövdenin eline geçer.
+func set_body(kind: String) -> void:
+	if kind == character:
+		return
+	character = kind
+	if _body == null:
+		return
+	var held := rod.transform
+	rod.get_parent().remove_child(rod)
+	var skeleton := _body.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skeleton != null and skeleton.skeleton_updated.is_connected(_apply_carry):
+		skeleton.skeleton_updated.disconnect(_apply_carry)
+	_synced_carry = false
+	remove_child(_body)
+	_body.queue_free()
+	_add_body()
+	rod.transform = held
+
+
+func _add_body() -> void:
+	if AnglerBody.available(character) and not force_toy:
+		var body := AnglerBody.new()
+		body.look = character
+		_body = body
 	else:
 		_body = ToyAngler.new()
 	_body.name = "Body"
 	add_child(_body)
-	rod = RodModel.new()
-	rod.name = "Rod"
 	(_body.get("rod_mount") as Node3D).add_child(rod)
 	# Taşınan oltanın yönü, el yuvası kemikten güncellendikten sonra verilir (bir kare geride
 	# kalıp yürürken titremesin). Kodla kurulan modelde iskelet yok: _process'te verilir.
@@ -97,6 +127,20 @@ func set_rod(technique: String, rod_id: String = "", reel_id: String = "") -> vo
 	rod.reel_id = reel_id
 	mount.add_child(rod)
 	rod.transform = old_transform
+
+
+## Ekrandaki bir nokta balıkçının gövdesinin üstünde mi (dizden başa çizgiye yakın; dolap)?
+func hit(view: Camera3D, screen: Vector2) -> bool:
+	if not is_visible_in_tree() or view == null:
+		return false
+	var low := global_position + Vector3(0.0, 0.35, 0.0)
+	var high := global_position + Vector3(0.0, 1.25, 0.0)
+	if view.is_position_behind(low) or view.is_position_behind(high):
+		return false
+	var pad := TOUCH_PX * view.get_viewport().get_visible_rect().size.y / 1080.0
+	var a := view.unproject_position(low)
+	var b := view.unproject_position(high)
+	return Geometry2D.get_closest_point_to_segment(screen, a, b).distance_to(screen) <= pad
 
 
 ## KayKit modeli mi kullanılıyor?

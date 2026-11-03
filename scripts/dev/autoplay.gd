@@ -116,6 +116,10 @@ extends Node
 ##     kova boşken dokun → yemez (Dede söyler); kovada iki balık → en ucuzunu yer (bildirim, Dede); balıkçı başka
 ##     bölgeye geçince evine döner, iskeleye dönünce yine gelir; sandala binince evine; iskelede ÇİZİM ≤ TOUR_DRAWS
 ##     (temiz, ve yağmurda Dede konuşurken); telefon oranında, --safe-inset=130, TR ve EN.
+##   character: karakter seçimi ve dolap (Dalga 5). Yeni oyunda filmden önce "Balıkçını seç" (kapatma yok, küçülmeden
+##     sığar, düğmeler ≥122 ve güvenli alanda; film henüz yok); oğlanı seç → kayıtta, gövde oğlan, film başlar (ATLA);
+##     balıkçıya dokun → dolap (oğlan seçili), kıza geç → gövde hemen değişir, panel açık; iskelede iki görünüşte de
+##     ÇİZİM ≤ TOUR_DRAWS; telefon oranında, --safe-inset=130, TR ve EN.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -295,6 +299,8 @@ func _ready() -> void:
 			_play_aquarium.call_deferred()
 		"cat":
 			_play_cat.call_deferred()
+		"character":
+			_play_character.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -5914,6 +5920,105 @@ func _play_aquarium() -> void:
 	_quit()
 
 
+## Karakter seçimi ve dolap (Dalga 5): bkz. dosyanın başı.
+func _play_character() -> void:
+	_intro = true
+	_use_save(0)
+	var save := GameState.save
+	var panel: WardrobePanel = main.get("wardrobe_panel")
+	var story: StoryPanel = main.get("story_panel")
+	var angler := _angler()
+	var view := get_viewport().get_visible_rect().size
+	var center := view * Vector2(0.5, 0.42)
+	await _wait(1.5)
+	# 1) Yeni oyun: filmden önce seçim ekranı; kapatma yok; sığar; film yok; yazılar oyunun dilinde.
+	var boy_button := panel.find_child("Button_boy", true, false) as Button
+	var girl_button := panel.find_child("Button_girl", true, false) as Button
+	_check("yeni oyunda seçim ekranı açık, kapatma düğmesi yok, film başlamadı", panel.visible and panel.is_first()
+			and not panel.close_button.visible and main.get("_film") == null and not story.visible)
+	_check("seçim ekranının yazısı oyunun dilinde (%s)" % boy_button.text,
+			boy_button.text == UiKit.upper(tr("UI_CHAR_PICK")))
+	_check("seçim ekranı küçülmeden sığar (ölçek %.3f)" % panel.fit_scale(), panel.fit_scale() > 0.999
+			and _panel_inside(panel))
+	_check_panel_buttons(panel, "seçim ekranının düğmeleri")
+	await _wait(1.0)
+	await _shot("01_secim")
+	# 2) Oğlanı seç: kayıtta, gövde oğlan, panel kapanır, film başlar; hediyede oğlan oltayı alır.
+	await _tap_control(boy_button)
+	await _wait(0.6)
+	_check("oğlan seçilince kayıtta, gövde oğlan, film başlar", save.character == "boy"
+			and save.flags.has("chose_character") and angler.character == "boy" and not panel.visible
+			and main.get("_film") != null and story.visible)
+	await _wait_until(func() -> bool: return story.index() == 0, StoryPanel.LOGO_TIME + 1.0)
+	var last := Story.LINES.size() - 1
+	for _i in 20:
+		if not story.visible or story.index() >= last:
+			break
+		var at := story.index()
+		await _wait(0.4)
+		await _tap(center)
+		await _wait_until(func() -> bool: return story.index() > at, 2.0)
+	await _wait(StoryFilm.MOVE_TIME + 0.5)
+	_check("filmin hediyesinde oğlan, olta elinde", story.visible and str(Story.LINES[story.index()][2]) == "gift"
+			and angler.character == "boy" and angler.rod.visible)
+	await _shot("02_film_hediye")
+	await _tap(story.skip_button.get_global_rect().get_center())
+	await _wait(3.0)
+	_check("ATLA: film biter, oyun oğlanla", main.get("_film") == null and _hud().visible and angler.character == "boy")
+	# İki gövde aynı anda ölçülür (aynı parçalar: kollar, gövde, baş, bacaklar).
+	var boy_film := await _measure_draws()
+	angler.set_body("girl")
+	await _wait(0.5)
+	var girl_film := await _measure_draws()
+	angler.set_body("boy")
+	await _wait(0.5)
+	print("ÇİZİM filmden sonra: oğlan %d, kız %d" % [int(boy_film["draws"]), int(girl_film["draws"])])
+	_check("oğlan kızdan çok çizmez (%d, %d)" % [int(boy_film["draws"]), int(girl_film["draws"])],
+			int(boy_film["draws"]) <= int(girl_film["draws"]))
+	main.set("bot_camera", true)
+	_frame_on(angler.global_position + Vector3(0.0, 0.7, 0.0), 0.3)
+	await _wait(0.5)
+	await _shot("03_oglan_yakin")
+	main.set("bot_camera", false)
+	await _wait(0.6)
+	# 3) Balıkçıya dokun: dolap (oğlan seçili); kıza geç: gövde hemen değişir, panel açık kalır.
+	await _tap(_screen(angler.global_position + Vector3(0.0, 0.8, 0.0)))
+	await _wait_frames(3)
+	_check("balıkçıya dokun → dolap, oğlan seçili, kapatma düğmesi var", panel.visible and not panel.is_first()
+			and panel.close_button.visible and boy_button.disabled and not angler.is_walking())
+	_check("dolap küçülmeden sığar (ölçek %.3f)" % panel.fit_scale(), panel.fit_scale() > 0.999 and _panel_inside(panel))
+	_check_panel_buttons(panel, "dolabın düğmeleri")
+	await _wait(0.6)
+	await _shot("04_dolap")
+	await _tap_control(girl_button)
+	await _wait_frames(3)
+	_check("dolapta kıza geç → gövde ve kayıt kız, panel açık, kız seçili", save.character == "girl"
+			and angler.character == "girl" and panel.visible and girl_button.disabled and not boy_button.disabled)
+	await _tap(panel.close_button.get_global_rect().get_center())
+	await _wait(2.0)
+	var girl := await _measure_draws()
+	_check("ÇİZİM iskelede kızla: %d (≤%d)" % [int(girl["draws"]), TOUR_DRAWS], int(girl["draws"]) <= TOUR_DRAWS)
+	await _shot("05_kiz")
+	# 4) Yine oğlana: dolaptan.
+	await _tap(_screen(angler.global_position + Vector3(0.0, 0.8, 0.0)))
+	await _wait_frames(3)
+	await _tap_control(boy_button)
+	await _wait_frames(3)
+	await _tap(panel.close_button.get_global_rect().get_center())
+	await _wait(2.0)
+	var boy := await _measure_draws()
+	print("ÇİZİM iskelede: oğlan %d, kız %d" % [int(boy["draws"]), int(girl["draws"])])
+	_check("ÇİZİM iskelede oğlanla: %d (≤%d)" % [int(boy["draws"]), TOUR_DRAWS], save.character == "boy"
+			and angler.character == "boy" and int(boy["draws"]) <= TOUR_DRAWS)
+	# 5) Seçim kalıcı: kayıt yeniden açılınca oğlan.
+	var reloaded := SaveData.from_dict(save.to_dict())
+	_check("seçim kayıtla döner", reloaded.character == "boy" and reloaded.flags.has("chose_character"))
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
 ## Tekir (Dalga 5): bkz. dosyanın başı.
 func _play_cat() -> void:
 	_use_save(5)
@@ -6095,6 +6200,10 @@ func _use_save(catches: int) -> void:
 		save.settings["locale"] = _locale
 	if not _intro:
 		Story.mark_seen(save)
+	# Balıkçı seçilmiş sayılır (yeni oyunun seçim ekranı yalnızca character senaryosunda: film botları seçim
+	# ekranına takılmasın).
+	if _scenario != "character":
+		save.flags["chose_character"] = true
 	# Dede'nin istekleri yalnızca requests senaryosunda: ötekilerde yuvalar hiç dolmaz, Dede'nin istek sözü yok
 	# (rütbe 2'den sonra gelen istekler sözlerin sırasını, sevgiyi ve parayı değiştirip eski denetimleri
 	# şaşırtmasın).

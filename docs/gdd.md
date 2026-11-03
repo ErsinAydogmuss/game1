@@ -361,7 +361,10 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ 1. hafta kız balıkçıyla çıkar (KayKit Rogue, yeniden boyanmış; pelerin ve silahlar gizli; kodla kova biçimli balıkçı şapkası).
   - ✅ Duruşlar: bekleme, yürüme, atış (Throw), olta suda (tek el nişan), çekme (iki el nişan, gerilimle geriye yaslanır), gösterme ve sevinç (Cheer).
   - Model dosyası yoksa kodla kurulan basit bir balıkçı çıkar (aynı duruşlar).
-  - Erkek balıkçı ve seçim ekranı 🔜 (H2, Dalga 5). İlk açılışta kız ya da erkek seçilir, ayarlardan değişir. Model KayKit Adventurers ve Mac'te indirilen paketlerden karakter sayfasıyla seçilir.
+  - ✅ Erkek balıkçı (Dalga 5): KayKit Knight, kızınkiyle aynı iskelet ve duruşlar. Sarı yağmurluk, turkuaz yaka, kahverengi saç; miğfer, pelerin, kılıç ve kalkanlar gizli; aynı kodla yapılmış balıkçı şapkası. Çizimi kızınkiyle aynı.
+  - ✅ Seçim ekranı: yeni oyunda açılış filminden önce "Balıkçını seç": iki kart, her birinde dönen canlı önizleme ve SEÇ; seçmeden geçilmez (kapatma yok). Film seçilen balıkçıyla oynar (hediyede oltayı o alır). Eski kayıtlar kız balıkçıyla sürer, seçim ekranı çıkmaz.
+  - ✅ Dolap: balıkçına dokununca açılır (olta boşken). İlk bölümü balıkçı: seçilen hemen değişir, ilerleme aynen kalır. Kıyafet sekmeleri (şapka, yelek, olta) 4. adımda.
+  - Metinler cinsiyetsiz: balıkçıya dair sözler iki görünüşte de aynı.
   - Kıyafetler 🔜: şapka, yelek rengi, olta kaplaması. H2'de rütbe, defter ve isteklerle kazanılır; gerçek parayla satış Faz 3'te.
 - **Dede:**
   - Köyün yaşlı balıkçısı.

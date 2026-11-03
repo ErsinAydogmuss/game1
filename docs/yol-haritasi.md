@@ -180,7 +180,9 @@ Ersin'in seçimleri (hepsi önerilen): akvaryuma her türün en irisi kendiliği
 - [x] 2. Tekir (kedi): Quaternius kedisi gri tekir deseniyle (tek çizim), iskele koyunda balıkçının yanında yürür,
   başka bölgede evine döner, dokununca mırlar, 8 balıkta bir acıkır ve kovadaki en ucuz balığı yer; sesler (miyav,
   mırlama, yeme); saat çipinde vakit ve hava ikonu tek çizim (kediye yer açar); `cat` botu. Hediyeleri 4. adımda.
-- [ ] Karakter seçimi ve erkek balıkçı.
+- [x] 3. Karakter seçimi ve erkek balıkçı: KayKit Knight sarı yağmurlukla (kızınkiyle aynı iskelet, duruşlar ve
+  çizim), yeni oyunda filmden önce seçim ekranı (canlı önizlemeler), balıkçına dokununca dolap (seçim hemen değişir),
+  `character` botu.
 - [ ] Kıyafetler.
 - [ ] Fotoğraf modu.
 - [ ] Son geçiş: telefonda hız ölçümü, tam inceleme.

@@ -15,25 +15,32 @@ const VIEW_DRAWS := 36
 const VIEW_ASPECT := 2532.0 / 1170.0
 
 
+## Her balıkçı görünüşünün (kız Rogue, oğlan Knight; Dalga 5) modeli ve dokusu var; aynı parçalar (el yuvası),
+## kemikler (şapka başa, eğilme omurga ve göğse) ve animasyonlar; gizlenecek ve gölgesi kapatılacak parçalar modelde.
 func test_angler_model_has_parts_and_animations() -> void:
-	assert_true(AnglerBody.available(), "balıkçı modeli ve dokusu var")
-	if not AnglerBody.available():
-		return
-	var model := (load(AnglerBody.SCENE_PATH) as PackedScene).instantiate() as Node3D
-	for part: String in AnglerBody.REQUIRED_NODES:
-		assert_true(model.find_child(part, true, false) != null, "modelde parça yok: " + part)
-	var skeleton := model.find_child("Skeleton3D", true, false) as Skeleton3D
-	if skeleton != null:
-		for bone: String in AnglerBody.REQUIRED_BONES:
-			assert_true(skeleton.find_bone(bone) >= 0, "iskelette kemik yok: " + bone)
-	for part: String in AnglerBody.HIDDEN:
-		assert_true(model.find_child(part, true, false) != null, "gizlenecek parça yok (adı değişmiş olabilir): " + part)
-	var player := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
-	assert_true(player != null, "animasyon oynatıcı var")
-	if player != null:
-		for anim: String in AnglerBody.REQUIRED_ANIMS:
-			assert_true(player.has_animation(anim), "animasyon yok: " + anim)
-	model.free()
+	for kind: String in SaveData.CHARACTERS:
+		assert_true(AnglerBody.LOOKS.has(kind), "görünüş tanımlı: " + kind)
+		assert_true(AnglerBody.available(kind), "balıkçı modeli ve dokusu var: " + kind)
+		if not AnglerBody.available(kind):
+			continue
+		var spec: Dictionary = AnglerBody.LOOKS[kind]
+		var model := (load(str(spec["scene"])) as PackedScene).instantiate() as Node3D
+		for part: String in AnglerBody.REQUIRED_NODES:
+			assert_true(model.find_child(part, true, false) != null, "%s modelinde parça yok: %s" % [kind, part])
+		var skeleton := model.find_child("Skeleton3D", true, false) as Skeleton3D
+		if skeleton != null:
+			for bone: String in AnglerBody.REQUIRED_BONES:
+				assert_true(skeleton.find_bone(bone) >= 0, "%s iskeletinde kemik yok: %s" % [kind, bone])
+		for list: String in ["hidden", "shadowless"]:
+			for part: String in (spec[list] as Array):
+				assert_true(model.find_child(part, true, false) != null,
+						"%s: %s parça yok (adı değişmiş olabilir): %s" % [kind, list, part])
+		var player := model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		assert_true(player != null, "animasyon oynatıcı var: " + kind)
+		if player != null:
+			for anim: String in AnglerBody.REQUIRED_ANIMS:
+				assert_true(player.has_animation(anim), "%s animasyonu yok: %s" % [kind, anim])
+		model.free()
 
 
 func test_elder_model_has_parts_and_animations() -> void:

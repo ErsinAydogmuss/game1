@@ -124,6 +124,8 @@ const CAT_TOWARD := 0.3
 const CAT_HELLO_FLAG := "told_cat"
 const CAT_HUNGRY_FLAG := "told_cat_hungry"
 const CAT_FED_FLAG := "told_cat_fed"
+## Balıkçı seçildi (Dalga 5): yeni oyunda açılış filminden önce seçim ekranı; eski kayıtların göçü bayrağı koyar.
+const CHOSE_FLAG := "chose_character"
 const KEEPER_RINGS: Array[Vector2] = [Vector2(2.4, 1.6), Vector2(3.6, 2.0)]
 const TURQUOISE := Color(0.62, 1.0, 0.95, 0.85)
 
@@ -169,6 +171,9 @@ var technique_panel: TechniquePanel
 ## Boş tuzağın paneli (bekle ya da kaldır).
 var trap_panel: TrapPanel
 var aquarium_panel: AquariumPanel
+var wardrobe_panel: WardrobePanel
+## Yeni oyunda balıkçı seçiliyor: seçilince açılış filmi başlar.
+var _choosing: bool = false
 ## "Bugün" paneli (saat çipine dokununca): vakit, bugünün ve yarının havası, Dede'yle çay, göl sevgisi.
 var day_panel: DayPanel
 ## Kova paneli (kovaya dokununca): tür başına göle bırak, hepsini bırak, sat.
@@ -308,6 +313,7 @@ func _ready() -> void:
 		Sounds.play("splash")
 		Sounds.haptic(20))
 	angler = Angler.new()
+	angler.character = GameState.save.character
 	angler.lake = lake
 	angler.height_at = scene.stand_height
 	add_child(angler)
@@ -417,6 +423,7 @@ func _start_session() -> void:
 	scene.dock_boat()
 	hud.set_boat(false)
 	_follow_zone()
+	angler.set_body(save.character)
 	angler.place(session.angler)
 	angler.face(Vector2(0, -1))
 	_place_cat()
@@ -443,8 +450,14 @@ func _start_session() -> void:
 	camera.pitch = FollowCamera.PITCH
 	camera.zoom = 1.0
 	camera.snap(_focus())
+	_choosing = false
 	if Story.wants_intro(save):
-		_play_intro()
+		if save.flags.has(CHOSE_FLAG):
+			_play_intro()
+		else:
+			# Yeni oyun: önce balıkçı seçilir (dolabın seçim ekranı), film seçilenle oynar.
+			_choosing = true
+			wardrobe_panel.open_first()
 	elif save.keeper > 0 and not save.flags.has(Story.ENDING_FLAG):
 		# Bekçi göle döndü ama bitiş filmi görülmedi (kart açıkken uygulama kapandı): film şimdi.
 		_play_ending()
@@ -723,6 +736,8 @@ func _build_input() -> void:
 	input.hit_targets = [
 		# Tekir küçük ve dar dokunma alanlı: Dede'den önce (Dede'nin yanında oturabilir).
 		["cat", func(screen: Vector2) -> bool: return cat.hit(camera, screen)],
+		# Balıkçının kendisi: dolap (sandalda değil: orada her dokunuş atış).
+		["angler", func(screen: Vector2) -> bool: return not in_boat and angler.hit(camera, screen)],
 		["dede", func(screen: Vector2) -> bool: return elder.hit(camera, screen)],
 		# Tezgâhtaki akvaryum dükkândan önce (dükkânın zarfı tankı da kapsar).
 		["aquarium", func(screen: Vector2) -> bool: return shop.tank_hit(camera, screen)],
@@ -2618,6 +2633,8 @@ func _on_target(id: String) -> void:
 			_on_aquarium()
 		"cat":
 			_on_cat()
+		"angler":
+			_on_angler()
 		"boat":
 			_on_boat()
 		"trap":
@@ -2670,6 +2687,33 @@ func _sync_aquarium() -> void:
 	for f in tank:
 		colors.append(db.fish_by_id(str(f["fish"]))["color"])
 	shop.set_tank(colors)
+
+
+# --- Balıkçı ve dolap (Dalga 5) -----------------------------------------------------
+
+## Balıkçıya dokunuldu (olta boşta): dolap.
+func _on_angler() -> void:
+	if session.state != FishingSession.State.IDLE or _card_up():
+		return
+	Sounds.haptic(10)
+	angler.stop()
+	_pending_cast = Dice.NO_POINT
+	_forget_pickups()
+	input.release_all()
+	wardrobe_panel.open_wardrobe()
+
+
+## Balıkçı seçildi (yeni oyunun seçim ekranı ya da dolap): gövde hemen değişir, kayda; yeni oyunda açılış filmi
+## başlar.
+func _on_character_chosen(kind: String) -> void:
+	var save := GameState.save
+	save.character = kind
+	save.flags[CHOSE_FLAG] = true
+	angler.set_body(kind)
+	GameState.save_game()
+	if _choosing:
+		_choosing = false
+		_play_intro()
 
 
 # --- Tekir (Dalga 5) ---------------------------------------------------------------
@@ -3302,6 +3346,9 @@ func _build_ui() -> void:
 	trap_panel = TrapPanel.new()
 	layer.add_child(trap_panel)
 	trap_panel.remove_requested.connect(_on_trap_remove)
+	wardrobe_panel = WardrobePanel.new()
+	layer.add_child(wardrobe_panel)
+	wardrobe_panel.chosen.connect(_on_character_chosen)
 	aquarium_panel = AquariumPanel.new()
 	layer.add_child(aquarium_panel)
 	aquarium_panel.collect_requested.connect(func() -> void:

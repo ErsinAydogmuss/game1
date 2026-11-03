@@ -20,7 +20,7 @@ extends Control
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box"]
+		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box", "wardrobe"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -37,7 +37,7 @@ const ART_NAMES := {
 	"weather_rain": "weather_rain", "weather_fog": "weather_fog", "weather_storm": "weather_storm",
 	"tea": "tea", "love": "love", "requests": "requests", "lantern": "lantern_lit",
 	# Dalga 5 (Parti 5b): akvaryumun bağış kutusu (görseli yoksa kodla).
-	"donation_box": "donation_box",
+	"donation_box": "donation_box", "wardrobe": "wardrobe",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem, Ekstra ve tekniğe özel sekmeleri (yapay yem, kurşun, sinek).
@@ -205,6 +205,8 @@ func _draw() -> void:
 			_x_mark()
 		"donation_box":
 			_donation_box()
+		"wardrobe":
+			_wardrobe()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -544,6 +546,18 @@ func _bottle() -> void:
 			Color("#a8743f"))
 	draw_line(Vector2(24, 50), Vector2(56, 38), Color(1, 1, 1, 0.55), 3.0, true)
 	draw_line(Vector2(10, 80), Vector2(90, 80), WATER, 5.0, true)
+
+
+## Dolap (balıkçının kıyafetleri): iki kapaklı ahşap dolap, tepesinde askı, kapak tokmakları.
+func _wardrobe() -> void:
+	_round_rect(Rect2(16, 22, 68, 70), WOOD_DARK, 8)
+	_round_rect(Rect2(20, 26, 29, 62), WOOD, 5)
+	_round_rect(Rect2(51, 26, 29, 62), WOOD, 5)
+	draw_circle(Vector2(45, 57), 3.5, GOLD)
+	draw_circle(Vector2(55, 57), 3.5, GOLD)
+	draw_polyline(PackedVector2Array([Vector2(36, 18), Vector2(50, 8), Vector2(64, 18), Vector2(36, 18)]), STEEL_DARK,
+			4.0, true)
+	draw_arc(Vector2(50, 6), 4.0, PI, TAU * 1.1, 10, STEEL_DARK, 3.0, true)
 
 
 ## Akvaryumun bağış kutusu: kırmızı ahşap kutu, üstünde para yuvası, yuvaya düşen altın para.

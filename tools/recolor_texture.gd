@@ -27,6 +27,24 @@ const JOBS: Array[Dictionary] = [
 		},
 	},
 	{
+		# Balıkçı oğlan (Knight, Dalga 5): miğfer, pelerin, kılıç ve kalkanlar gizli. Zırh plakaları sarı
+		# yağmurluk (kollar, gövde, bacaklar: kız balıkçının yeleğiyle aynı sarı, çimende ve suda seçilsin), zincir
+		# zırh turkuaz kazak, deri kahverengi, koyu gri kot mavisi, kırmızı göğüslük turkuaz yelek, saç kahve.
+		"source": "res://assets/models/characters/source/knight_texture.png",
+		"output": "res://assets/models/characters/angler_boy_texture.png",
+		"swatches": {
+			Vector2i(1, 0): "#5a3a24", # saç → kahve
+			Vector2i(3, 0): "#f0b637", # zırh plakaları → sarı yağmurluk
+			Vector2i(4, 0): "#245c6e", # koyu kol ayrıntısı
+			Vector2i(6, 0): "#7a4a2a", # deri: kemer, eldiven, çizme
+			Vector2i(7, 0): "#2c7d96", # zincir zırh → turkuaz kazak
+			Vector2i(0, 1): "#2a9d96", # kırmızı göğüslük (pelerin de bunu kullanır, gizli) → turkuaz yelek
+			Vector2i(1, 1): "#efe3c8", # gümüş süsler → krem
+			Vector2i(2, 1): "#2c7d96", # gövdenin gri ayrıntısı → turkuaz
+			Vector2i(7, 1): "#3f69a6", # koyu gri → kot
+		},
+	},
+	{
 		# Dede (Barbarian): beyaz sakal ve saç; mavi suda ve yeşil çimende seçilsin diye tuğla
 		# kırmızısı örgü kazak, krem yün yaka; kahverengi pantolon. Kutular Kazı'daki eşlemeden.
 		"source": "res://assets/models/characters/source/barbarian_texture.png",
