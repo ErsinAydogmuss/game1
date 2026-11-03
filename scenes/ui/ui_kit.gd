@@ -58,6 +58,12 @@ const FRAME_SLICES := {
 	"map_paper": [0.13, 0.13, 0.13, 0.13],
 	# Mektup kâğıdı (Parti 5a): harita kâğıdı gibi; görsel gelince kesilen resimde ölçülür.
 	"letter_paper": [0.13, 0.13, 0.13, 0.13],
+	# Fotoğraf çerçeveleri (Parti 5b, fotoğraf modu): süs kenarlarda ve köşelerde; görsel gelince kesilen
+	# resimde ölçülür. Anlık fotoğrafın alt kenarı geniş.
+	"photo_wood": [0.14, 0.14, 0.14, 0.14],
+	"photo_polaroid": [0.1, 0.1, 0.1, 0.24],
+	"photo_lotus": [0.16, 0.16, 0.16, 0.16],
+	"photo_paper": [0.13, 0.13, 0.13, 0.13],
 }
 ## İçerik çerçevenin süsüne binmesin: süslü kenarın kalınlığı (düz kremin başladığı yer),
 ## kısa kenara oranla. framed() içerik payını en az bu kadar (+ CONTENT_PAD) yapar.

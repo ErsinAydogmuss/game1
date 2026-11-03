@@ -66,6 +66,14 @@
 			"names": ["keeper", "keeper_top", "keeper_leap"] },
 		{ "file": "portraits_young", "out": "res://assets/ui/portraits", "size": 320, "grid": [3, 1],
 			"names": ["young_nine", "young_dede", "young_both"] },
-		{ "file": "ending", "out": "res://assets/ui/art", "size": 1536, "fit": "box", "key": false, "names": ["ending"] }
+		{ "file": "ending", "out": "res://assets/ui/art", "size": 1536, "fit": "box", "key": false, "names": ["ending"] },
+		{ "file": "home_icons", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
+			"names": ["wardrobe", "camera", "cat_tekir", "gift", "donation_box", "cat_bowl"] },
+		{ "file": "photo_frames", "out": "res://assets/ui/frames", "size": 768, "fit": "trim", "grid": [2, 2], "despill": "edge",
+			"names": ["photo_wood", "photo_polaroid", "photo_lotus", "photo_paper"] },
+		{ "file": "aquarium_bg", "out": "res://assets/ui/art", "size": 1536, "fit": "box", "key": false, "names": ["aquarium_bg"] },
+		{ "file": "angler_portraits", "out": "res://assets/ui/portraits", "size": 320, "grid": [3, 1],
+			"names": ["angler_girl", "angler_boy", "tekir"] },
+		{ "file": "store_art", "reference": true, "out": "res://docs/img/tanitim.jpg" }
 	]
 }

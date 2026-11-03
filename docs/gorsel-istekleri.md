@@ -21,9 +21,9 @@ Görseller partiler hâlinde geliyor; her parti bir dalgadan önce. **Hepsini bi
 | 3. Göl | ✅ geldi, oyunda | 5 | bölge rozetleri, harita kâğıdı, harita çıkartmaları ve ikonları, zemin dokuları |
 | 4. Teknikler | ✅ geldi, oyunda (v0.4) | 4 | yapay yemler, sinekler ve dip takımı, teknik ikonları, takım çantası, kerevit (çöp ve hikâye eşyaları Dalga 4'te) |
 | 5a. Hikâye ve canlı dünya | Dalga 4 (promptlar aşağıda) | 6 + 2 isteğe bağlı | vakit ve hava ikonları, çay, göl sevgisi, istekler, altın hamur, mektup kâğıdı, sırrın haritası, Gölün Bekçisi |
-| 5b. Yuva | Dalga 5'ten önce | ~4 | kedi, kıyafetler, akvaryum, karakter seçimi, tanıtım görseli |
+| 5b. Yuva | Dalga 5 (promptlar aşağıda) | 3 + 2 isteğe bağlı | dolap, fotoğraf makinesi, Tekir, hediye, bağış kutusu, fotoğraf çerçeveleri, akvaryumun arka planı |
 
-5a'nın promptları aşağıda; 5b'ninkileri (kedi, kıyafetler) Dalga 5'ten önce eklerim: kedinin modeli ve kıyafetlerin tasarımı o zaman belli olacak.
+5a ve 5b'nin promptları aşağıda. Kıyafetlerin (şapka, yelek, kamış kaplaması) ve akvaryumdaki balıkların ikonları oyunun kendi 3D modellerinden çekiliyor, görsel istemiyor.
 
 ## Nasıl teslim edersin?
 
@@ -716,6 +716,111 @@ turquoise shimmer of a huge friendly fish. Warm golden morning light. No text.
 
 ---
 
+## Parti 5b — Yuva
+
+Dalga 5'te göl bir yuvaya dönüşüyor:
+
+- **Akvaryum:** Nine'nin tezgâhında; tuttuğun her türün en irisi orada yüzer, gezen ziyaretçiler bağış kutusuna para bırakır.
+- **Tekir:** iskelede yaşayan kedi; seni takip eder, sevince mırlar, acıkınca küçük bir balık ister, her 5 beslemede bir hediye getirir.
+- **Karakter ve kıyafetler:** kız ya da erkek balıkçı; şapka, yelek rengi, kamış kaplaması. Balıkçına dokununca dolap açılır.
+- **Fotoğraf modu:** arayüz gizlenir, kamerayı çevirirsin, bir çerçeve seçip fotoğraf çekersin.
+
+Bu sayfalar onları süsler. Görseller gelene kadar oyun kodla çizilen yedekleri kullanır; iş beklemez. Önce 1 (ikonlar her yerde görünür), sonra 2 ve 3.
+
+**1. `home_icons.png`: yuvanın ikonları**
+
+```
+(ui_1 ile aynı stil cümleleri.) Icons, left to right, top row then bottom row: a small wooden
+wardrobe with its doors open, a yellow raincoat and a blue bucket hat hanging inside; a cute
+retro photo camera in brown leather and silver with a big round lens and a small flash; the
+round face of a friendly gray-brown striped tabby cat with green eyes, smiling, whiskers out; a
+small gift box with a red ribbon and a tiny paw-print tag; a small wooden donation box with a
+coin slot and a painted blue fish on the front, two gold coins leaning on it; a small round blue
+bowl with a little silver fish in it.
+```
+
+| Kesilen ad | Nerede |
+|---|---|
+| `wardrobe` | dolap (balıkçıya dokununca açılan panelin başlığı, "Yeni kıyafet" bildirimi) |
+| `camera` | fotoğraf modu (Ayarlar'ın başlığı, balık kartı, "Fotoğraf kaydedildi" bildirimi) |
+| `cat_tekir` | Tekir (bildirimler, rehber, dolapta "Tekir'in hediyesi" kilidi) |
+| `gift` | Tekir'in hediyesi ("Tekir sana bir hediye getirdi!") |
+| `donation_box` | akvaryumun bağış kutusu (Akvaryum paneli, "Ziyaretçiler bağış bıraktı" bildirimi) |
+| `cat_bowl` | acıkan Tekir'in balonu |
+
+**2. `photo_frames.png` (2×2): fotoğraf çerçeveleri**
+
+Fotoğraf modunda seçilen çerçeveler. Oyun her çerçeveyi fotoğrafın boyuna gerer: süsler kenarlarda ve köşelerde olsun, ortası tamamen boş kalsın.
+
+```
+Sheet of 4 decorative photo frames in a 2x2 grid for a cozy fishing game, exactly matching the
+attached style reference, flat front view. Each frame is a wide landscape rectangle with a
+completely empty middle, decorations only along the edges and in the corners. Left to right, top
+row then bottom row: a rustic wooden frame with rope tied at the corners and a few small green
+reeds; a white instant-photo frame with a wider bottom border and a strip of clear tape at the
+top; a frame of pink lotus flowers, green lily pads and tiny butterflies; an old parchment frame
+with slightly torn edges and a tiny compass in one corner. Same size in each cell. No text, no
+shadows.
+Solid flat pure magenta background (#FF00FF) everywhere, including inside each frame.
+```
+
+Ortasına bir şey çizilmişse: "Keep the frames exactly the same but make the middle of each frame completely empty magenta".
+
+| Kesilen ad | Nerede |
+|---|---|
+| `photo_wood` | ahşap çerçeve |
+| `photo_polaroid` | anlık fotoğraf çerçevesi |
+| `photo_lotus` | nilüferli çerçeve |
+| `photo_paper` | eski kâğıt çerçeve |
+
+**3. `aquarium_bg.png`: akvaryumun arka planı**
+
+Tam resim, arka planı silinmez. Akvaryum panelinde 3D balıkların arkasında durur; balıkları oyun kendisi koyar, resimde balık olmasın.
+
+```
+A wide landscape illustration of the inside of a small freshwater aquarium for a cozy fishing
+game, exactly matching the attached style reference, stylized low-poly 3D look, front view:
+golden sand and round pebbles on the bottom, a few tall green water plants and soft mossy rocks
+on the sides, a tiny sunken wooden rowing boat half buried in the sand, soft light rays coming
+down from the surface, clear teal water fading to deeper blue at the back, a few small air
+bubbles. The middle stays open water for swimming fish. No fish, no animals, no text, no frame.
+```
+
+Balık çıkarsa: "Keep the picture exactly the same but remove all the fish".
+
+**4. İsteğe bağlı: `angler_portraits.png` (3×1): balıkçılar ve Tekir**
+
+Karakter seçme ekranında ve dolapta. Erkek balıkçının 3D görünüşünü 3. adımda gönderiyorum; bunu ondan sonra, iki görüntüyü referans ekleyerek üret.
+
+```
+Sheet of 3 portrait busts in a 3x1 grid, exactly matching the attached style reference,
+stylized low-poly 3D look, matching the attached in-game character pictures. Left to right: a
+cheerful young girl angler with a blue bucket hat and a yellow fishing vest, a brown braid;
+a cheerful young boy angler with a blue bucket hat and a yellow fishing vest, short brown hair
+and freckles; a friendly gray-brown striped tabby cat sitting and looking up, green eyes. Head
+and shoulders, the cat fully visible. Same size and framing in each cell.
+Solid flat pure magenta background (#FF00FF). No text, no shadows.
+```
+
+Kesilen adlar: `angler_girl`, `angler_boy`, `tekir`.
+
+**5. İsteğe bağlı: `store_art.png`: tanıtım görseli**
+
+Tam resim, arka planı silinmez. Mağaza sayfasının ve sosyal medyanın büyük görseli; üstte oyunun adına yer kalsın.
+
+```
+A wide landscape key art illustration for a cozy family fishing game, exactly matching the
+attached style reference, stylized low-poly 3D look: a small U-shaped lake at golden hour, a
+young angler in a blue bucket hat casting from a small wooden dock, a gray-brown tabby cat
+sitting next to them, a grandfather in a brown flat cap waving from a stool, a small market
+stall with a striped awning and a little aquarium on its counter, a grandmother in a white
+flowered headscarf behind the counter, a rowing boat tied to the dock, dark fish shadows and one
+glowing golden shadow under the clear teal water, pink lotus flowers, butterflies. The top third
+of the image is calm sky with nothing in it, room for the game logo. No text.
+```
+
+---
+
 ## Teknik not (Claude için)
 
 Görseller `assets/incoming/` altına gelince:
@@ -759,3 +864,8 @@ Oyuna bağlama (v0.4'teki durum):
 | `keeper` | `assets/icons/items/` (`despill: edge`) | 🔜 `ItemArt.item` (`ItemArt.fish` önce ona bakar): Bekçi'nin kartı ve defteri, haritada X'in yanı, bitiş ve jenerik. |
 | `portraits_young` | `assets/ui/portraits/` | 🔜 İsteğe bağlı: mektupların imzası, jenerik. |
 | `ending` | `assets/ui/art/ending.png` (`fit: box`, `key: false`) | 🔜 İsteğe bağlı: jeneriğin arka planı. |
+| `home_icons` | `assets/icons/ui/` | 🔜 `GameIcon.ART_NAMES` (`wardrobe`, `camera`, `cat_tekir`, `gift`, `donation_box`, `cat_bowl`): dolap, fotoğraf, Tekir, hediye, bağış kutusu, acıkan Tekir'in balonu. Yoksa kodla çizilen ikon. |
+| `photo_frames` | `assets/ui/frames/photo_*.png` (`fit: trim`) | 🔜 Fotoğraf modunun çerçeveleri (9 dilim); yoksa kodla çizilen çerçeve. |
+| `aquarium_bg` | `assets/ui/art/aquarium_bg.png` (`fit: box`, `key: false`) | 🔜 Akvaryum panelinde 3D balıkların arkası. Yoksa kodla çizilen su ve kum. |
+| `angler_portraits` | `assets/ui/portraits/` | 🔜 İsteğe bağlı: karakter seçme ekranı, dolap. Yoksa 3D modelden çekilen görüntü. |
+| `store_art` | `docs/img/tanitim.jpg` (yalnızca referans, pakete girmez) | 🔜 İsteğe bağlı: mağaza ve sosyal medya; oyunda kullanılmaz. |
