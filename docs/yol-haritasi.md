@@ -189,12 +189,12 @@ Ersin'in seçimleri (hepsi önerilen): akvaryuma her türün en irisi kendiliği
 - [x] 5. Fotoğraf modu: Ayarlar'dan ve balık kartından; arayüz ve dünyadaki yazılar gizli, oyun donuk; sürükle-döndür,
   yakınlaştırma, çerçeveler (yok, ahşap, polaroid, çiçek; kapanışta eski kâğıt) ve logo; deklanşör PNG'yi `user://photos`'a yazar (iPhone'da
   Dosyalar → Olta → photos); `photo` botu.
-- [ ] 6. Kapanış (v0.6): üç inceleme ajanı (çekirdek, sunum, araçlar ve belgeler; düzeltilenler: v0.5'te hiç
+- [x] 6. Kapanış (v0.6): üç inceleme ajanı (çekirdek, sunum, araçlar ve belgeler; düzeltilenler: v0.5'te hiç
   oynamamış kayıt da balıkçısını seçer, Nine tanka kendisi dokunmuş oyuncuya "tanka dokun" demez, yelek adları
   "Mavi yelek" gibi, Tekir'in hediyesinde hediye ikonu, rehberde Tekir'in sayıları veriden, jenerikte Quaternius,
   botlarda Tekir tok, bot ve test denetimleri sıkılaştı), karttan fotoğrafta balıkçı kameraya döner, eski kâğıt
   çerçevesi, rehberin 11. sayfası "Yuva", `save_v6.json` örneği ve okuma testi, bütün KONTROL botları telefon
-  oranında ve çentik payıyla (yazısı çok olanlar İngilizce de), dışa aktarma paketi, tanıtım videosu (seçim ekranı,
+  oranında ve çentik payıyla (yazısı çok olanlar İngilizce de; 30 koşu, hepsi TAMAM), dışa aktarma paketi, tanıtım videosu (seçim ekranı,
   oğlan balıkçı, karttan fotoğraf, Tekir'in hediyesi, dolap, akvaryum, akşam fotoğrafı), README görüntüleri,
   belgeler; sürüm 0.6.
 - [ ] Ersin telefonda dener ([`iphone-kurulum.md`](iphone-kurulum.md) 37–44) ve hızı ölçer.

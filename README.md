@@ -30,6 +30,9 @@
 | ![Kova paneli: tür başına BIRAK, HEPSİNİ BIRAK ve SAT](docs/ekran/24_kova.jpg) | ![Göl sevgisi 10: çiçekler, çiçekli nilüferler, berrak su ve kelebekler](docs/ekran/25_gol_sevgisi.jpg) |
 | ![Sazlıkta suda parlayan şişe](docs/ekran/26_sise.jpg) | ![Genç Nine'nin ilk mektubu: Kuruyan Sazlar](docs/ekran/27_mektup.jpg) |
 | ![Dört parça tamam: haritada X, derin ortanın ilk şamandırası](docs/ekran/28_harita_x.jpg) | ![Gölün Bekçisi dalıyor: BIRAK!](docs/ekran/29_bekci.jpg) |
+| ![Yeni oyun: Balıkçını seç, kız ya da oğlan](docs/ekran/30_secim.jpg) | ![Tekir mırlıyor, Dede tanıştırıyor](docs/ekran/31_tekir.jpg) |
+| ![Dolap: Şapka sekmesi, Tekir'in getirdiği hasır şapka giyildi](docs/ekran/32_dolap.jpg) | ![Oğlan balıkçı Nine'nin tezgâhında: hasır şapka, mavi yelek, kırmızı kamış kaplaması; yanında Tekir](docs/ekran/33_kiyafetli.jpg) |
+| ![Akvaryum: 13 türün en irisi yüzüyor, ziyaretçiler saatte 270 para bırakıyor, TOPLA](docs/ekran/34_akvaryum.jpg) | ![Karttan çekilen fotoğraf: polaroid çerçeve, elde yeni tutulan sudak, yanında Tekir](docs/ekran/35_fotograf.jpg) |
 
 ## Nasıl oynanır
 
