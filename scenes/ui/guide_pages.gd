@@ -119,6 +119,14 @@ const PAGES: Array[Dictionary] = [
 			{ "id": "secret", "icon": "bottle", "title": "UI_SECRET_TITLE", "text": "UI_GUIDE_SECRET_TEXT",
 				"lock": "secret" },
 		] },
+	# Dalga 5: yuva (akvaryum, Tekir, dolap, fotoğraf).
+	{ "id": "home", "icon": "aquarium", "title": "UI_GUIDE_HOME", "lead": "UI_GUIDE_HOME_LEAD", "layout": "row4",
+		"tiles": [
+			{ "id": "aquarium", "icon": "aquarium", "title": "UI_AQUARIUM", "text": "UI_GUIDE_AQUARIUM_TEXT" },
+			{ "id": "cat", "icon": "cat", "title": "UI_GUIDE_CAT", "text": "UI_GUIDE_CAT_TEXT" },
+			{ "id": "wardrobe", "icon": "wardrobe", "title": "UI_WARDROBE", "text": "UI_GUIDE_WARDROBE_TEXT" },
+			{ "id": "photo", "icon": "camera", "title": "UI_GUIDE_PHOTO", "text": "UI_GUIDE_PHOTO_TEXT" },
+		] },
 ]
 
 ## Tekniklerin karo metni (nasıl oynanır, kısaca).

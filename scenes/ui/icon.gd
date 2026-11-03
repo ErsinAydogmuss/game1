@@ -20,7 +20,7 @@ extends Control
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box", "wardrobe", "camera"]
+		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box", "wardrobe", "camera", "cat"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -37,7 +37,7 @@ const ART_NAMES := {
 	"weather_rain": "weather_rain", "weather_fog": "weather_fog", "weather_storm": "weather_storm",
 	"tea": "tea", "love": "love", "requests": "requests", "lantern": "lantern_lit",
 	# Dalga 5 (Parti 5b): akvaryumun bağış kutusu (görseli yoksa kodla).
-	"donation_box": "donation_box", "wardrobe": "wardrobe", "camera": "camera",
+	"donation_box": "donation_box", "wardrobe": "wardrobe", "camera": "camera", "cat": "cat_tekir",
 }
 ## Arayüz görseli olmayan kod adları -> takım resmi (assets/icons/gear/<ad>.png): dükkânın
 ## Misina, Yem, Ekstra ve tekniğe özel sekmeleri (yapay yem, kurşun, sinek).
@@ -209,6 +209,8 @@ func _draw() -> void:
 			_wardrobe()
 		"camera":
 			_camera()
+		"cat":
+			_cat()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -560,6 +562,27 @@ func _wardrobe() -> void:
 	draw_polyline(PackedVector2Array([Vector2(36, 18), Vector2(50, 8), Vector2(64, 18), Vector2(36, 18)]), STEEL_DARK,
 			4.0, true)
 	draw_arc(Vector2(50, 6), 4.0, PI, TAU * 1.1, 10, STEEL_DARK, 3.0, true)
+
+
+## Tekir'in yüzü (rehber; Parti 5b'nin cat_tekir görseli yoksa): gri tekir, sivri kulaklar, çizgiler, bıyıklar.
+func _cat() -> void:
+	var fur := Color("#aaa69e")
+	var stripe := Color("#55504a")
+	for side: float in [-1.0, 1.0]:
+		draw_colored_polygon(PackedVector2Array([Vector2(50 + side * 34, 50), Vector2(50 + side * 30, 14),
+				Vector2(50 + side * 12, 32)]), fur)
+		draw_colored_polygon(PackedVector2Array([Vector2(50 + side * 29, 44), Vector2(50 + side * 27, 22),
+				Vector2(50 + side * 17, 34)]), Color("#e99aa0"))
+	draw_circle(Vector2(50, 58), 32.0, fur)
+	for x: float in [40.0, 50.0, 60.0]:
+		draw_line(Vector2(x, 28), Vector2(x, 40), stripe, 4.0, true)
+	draw_circle(Vector2(50, 70), 12.0, Color("#f4ecdc"))
+	for side: float in [-1.0, 1.0]:
+		draw_circle(Vector2(50 + side * 13, 56), 5.5, Color("#3b6e2f"))
+		draw_circle(Vector2(50 + side * 13, 56), 2.5, Color("#14100c"))
+		for k in 2:
+			draw_line(Vector2(50 + side * 10, 70 + k * 5), Vector2(50 + side * 38, 66 + k * 9), Color("#3a3f47"), 1.6, true)
+	draw_colored_polygon(PackedVector2Array([Vector2(46, 64), Vector2(54, 64), Vector2(50, 69)]), Color("#e99aa0"))
 
 
 ## Fotoğraf makinesi (fotoğraf modu): koyu gövde, deklanşör, büyük mavi mercek, flaş.
