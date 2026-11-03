@@ -2,15 +2,15 @@
 
 **"Kıyını süsle, havayı bekle: bu gece oltana ne takılacak?"** Her yaşa hitap eden, rahat bir 3D mobil balıkçılık oyunu (iOS + Android, yatay ekran). Kendi balıkçınla yazı Dede'nin göl köyünde geçiriyorsun. Suda balık gölgeleri dolaşıyor; gölgenin önüne atıyorsun, gölge yaklaşıp dürtüyor, ısırınca VUR ve çek. Ersin'in Kazı'dan sonraki oyunu; kodu Claude yazıyor.
 
-> **Durum (Ekim 2026): v0.5 (H2 "Büyük Göl", Dalga 4 "Canlı dünya").** Göl artık yaşıyor:
+> **Durum (Kasım 2026): v0.6 (H2 "Büyük Göl", Dalga 5 "Yuva ve kişilik").** Göl kenarında bir yuva:
 >
-> - **Oyun saati ve hava:** 24 dakikalık oyun günü (sabah, öğle, akşam, gece) ve her günün havası (açık, bulutlu, yağmur, sis; yağmurlu gece fırtınalı) hangi balığın geleceğini değiştirir. Akşam turuncu, gece ay ışığı, Nine'nin feneri ve ateşböcekleri; yağmurda damlalar ve halkalar. Üstteki saat çipine dokununca **"Bugün" paneli:** yarının havası, Dede'yle çay (sonraki vakte geçer), göl sevgisi ve Dede'nin istekleri.
-> - **Tut-bırak ve göl sevgisi:** balık kovadan ya da kartından göle bırakılır. Göl sevgisi artar, göl güzelleşir (çiçekler, çiçekli nilüferler, berrak su, kelebekler), nadir balıklar biraz sıklaşır. Dipte ve tuzakta çöp çıkar; toplamak da sevgi verir.
-> - **Dede'nin istekleri:** üç yuvada küçük işler; her oyun günü boş yuvalar dolar, süresi dolmaz, günde bir istek değiştirilir.
-> - **Gölün Sırrı:** rütbe 3'ten sonra her bölgede suda bir şişe, içinde genç Nine ile Dede'nin mektubu (altı mektup). Dede'nin dört altın isteği haritanın dört parçasını verir; göl sevgisi 6'da Nine altın hamuru verir. Sonunda sisli bir gecede haritanın X'inde **Gölün Bekçisi** (iki dalışlı çekişme), bitiş filmi ve jenerik.
-> - İki gece efsanesi: **Ay Turnası** (gece, nilüferli koy) ve **Kocabaş** (yağmurlu gece, derin orta). Defterde 19 tür.
+> - **Balıkçını seç:** yeni oyunda kız ya da oğlan balıkçı (oğlan sarı yağmurluklu). Sonradan balıkçına dokununca açılan dolaptan değişir.
+> - **Kıyafetler:** dolapta 8 şapka, 7 yelek rengi ve 5 olta kaplaması. Rütbe, defterdeki türler, Dede'nin istekleri, göl sevgisi, Gölün Bekçisi ve Tekir'in hediyeleri açar.
+> - **Tekir:** iskele koyunda peşinden gelen tekir kedi. Dokununca mırlar; 8 balıkta bir acıkır, kovadaki en ucuz balığı yer; her 5 beslemede bir kıyafet getirir (beş hediye).
+> - **Akvaryum:** Nine'nin tezgâhındaki tankta tuttuğun her türün en irisi yüzer. Ziyaretçiler bağış kutusuna para bırakır (sen yokken de, en çok 2 saatlik); dükkâna uğrayınca toplanır.
+> - **Fotoğraf modu:** Ayarlar'dan ya da balık kartından: kamerayı çevir, çerçeve seç (ahşap, polaroid, çiçekli, eski kâğıt), çek. Fotoğraflar iPhone'da Dosyalar → Olta → photos.
 >
-> **Önceki sürümler:** v0.4.1'de açılış filmi ve hikâyenin devamı, sol altta yürüme halkası, kova dolunca SAT, her kamışın kendi görünüşü; v0.4'te (Dalga 3) spin, kerevit tuzağı, dip, sinek ve Takım Çantası; Dalga 1–2'de dükkân, nadirlik ve büyük göl (altı bölge, harita, sandal, kıyı yolu). Sırada Dalga 5: yuva ve kişilik ([yol haritası](docs/yol-haritasi.md)).
+> **Önceki sürümler:** v0.5'te (Dalga 4) oyun saati ve hava, tut-bırak ve göl sevgisi, Dede'nin istekleri, Gölün Sırrı ve final: Gölün Bekçisi; v0.4.1'de açılış filmi ve hikâyenin devamı, sol altta yürüme halkası, kova dolunca SAT, her kamışın kendi görünüşü; v0.4'te (Dalga 3) spin, kerevit tuzağı, dip, sinek ve Takım Çantası; Dalga 1–2'de dükkân, nadirlik ve büyük göl (altı bölge, harita, sandal, kıyı yolu). "Büyük Göl"ün beş dalgası bitti; sırada telefonda deneme ve 5 kişilik test ([yol haritası](docs/yol-haritasi.md)).
 
 ![İskele koyu: balıkçı, Dede, Nine'nin dükkânı ve bağlı sandal; kıyı yolu gölü dolaşıyor](docs/ekran/01_iskele.jpg)
 
@@ -64,18 +64,24 @@
 24. **Gölün Sırrı:** rütbe 3'ten sonra sazlıkta suda bir şişe belirir (haritada işareti var). Dokun: balıkçı gidip alır, içinden genç Nine ile Dede'nin mektubu çıkar. Her bölgede bir şişe, altı mektup; sonuncusu sandalla derin ortada. Defterin altındaki "Gölün Sırrı" düğmesi mektupları ve haritayı gösterir. Dede'nin dört altın isteği haritanın dört parçasını verir; göl sevgisi 6'da Nine altın hamur verir (dipte kendiliğinden kullanılır).
 25. **Gölün Bekçisi:** hepsi tamam olunca Dede "Bu gece sis basacak" der. Gece sandalla haritanın X'ine git, dip kamışıyla at: Bekçi gelir. Zil çalınca VUR; Bekçi dalınca ("BIRAK! Bekçi dalıyor!") parmağını kaldır. Kaçarsa 25 saniye sonra geri gelir. Göle bırakınca bitiş filmi ve jenerik oynar; sonra Ayarlar'daki BİTİŞ filmi yeniden oynatır.
 
+26. **Balıkçın ve dolap:** yeni oyunda filmden önce kız ya da oğlan balıkçını seçersin. Balıkçına dokun (olta boşken): dolap açılır. Balıkçı sekmesinde balıkçını değiştirirsin; Şapka, Yelek ve Olta sekmelerinde kıyafetler. Kilitli karoya dokununca nasıl açılacağı ve ilerlemesi yazar.
+27. **Kıyafetler:** rütbe (2'de kırmızı yelek, 3'te kırmızı şapka, 4'te kırmızı kamış kaplaması, 7'de sinekçi şapkası), defterdeki tür sayısı, Dede'nin istekleri, göl sevgisi, Gölün Bekçisi ve Tekir'in hediyeleri açar. Açılınca bildirim çıkar, dolapta "Yeni!" yazar.
+28. **Tekir:** iskele koyunda peşinden gelir; başka bölgede ya da sandaldayken iskelenin yanındaki evinde bekler. Dokununca mırlar. 8 balıkta bir acıkır (balıklı balon): dokun, kovadaki en ucuz balığı yer. Kova boşsa bekler, ceza yok. Beş hediyesi var, her 5 beslemede sıradaki: hasır şapka, yeşil yelek, çiçekli kamış kaplaması, pembe yelek, çiçek tacı.
+29. **Akvaryum:** Nine'nin tezgâhındaki tankta tuttuğun her türün en irisi yüzer (koruma altındakiler göle döner). Tanka dokun: Akvaryum paneli. Ziyaretçilerin bağış kutusu gerçek saatle dolar (sen yokken de, en çok 2 saatlik); TOPLA ile ya da dükkâna uğrayınca toplanır. Tankta tür arttıkça bağış artar.
+30. **Fotoğraf:** Ayarlar'ın başlığındaki ya da balık kartındaki kamera düğmesi (kartta balıkçı balığıyla kameraya döner). Arayüz gizlenir; sürükleyince kamera döner, + ve - ile yakınlaşır; çerçeveyi seç, deklanşöre bas. Fotoğraflar iPhone'da Dosyalar → Bu iPhone'da → Olta → photos.
+
 - **Yürü:** sol alttaki halkayı sürükle (az itersen yavaş) ya da karaya veya iskeleye dokun. Dokununca önü su ise balıkçı kıyı yolundan dolaşır; kilitli bölgenin çitinde durur, Dede ne zaman geçileceğini söyler.
 - **Dede:** ilk 3 balığa kadar ipucu verir. Ona dokununca her zaman bir öğüt söyler.
-- **Ayarlar** (sağ üst): ses, müzik, titreşim, dil, **Kolay çekme** (misina kopmaz, balık kaçmaz); başlıkta HİKÂYE, finalden sonra BİTİŞ ve "Nasıl oynanır?". Sürüm yazısına 5 kez dokununca sol üstte FPS ve çizim sayısı çıkar (telefonda hız ölçümü); geliştirme sürümünde deneme düğmeleri de çıkar (HEPSİNİ AÇ, +1.000 ve +10.000 para, RÜTBE +1; VAKİT +, HAVA, SEVGİ +50, İSTEK BİTİR, SIR +).
+- **Ayarlar** (sağ üst): ses, müzik, titreşim, dil, **Kolay çekme** (misina kopmaz, balık kaçmaz); başlıkta kamera (fotoğraf modu), HİKÂYE, finalden sonra BİTİŞ ve "Nasıl oynanır?". Sürüm yazısına 5 kez dokununca sol üstte FPS ve çizim sayısı çıkar (telefonda hız ölçümü); geliştirme sürümünde deneme düğmeleri de çıkar (HEPSİNİ AÇ, +1.000 ve +10.000 para, RÜTBE +1; VAKİT +, HAVA, SEVGİ +50, İSTEK BİTİR, SIR +).
 - **Mac:** tıkla (yürü, at), WASD ya da oklar (yürü), Space (eylem; basılı tutunca sar).
 
-Kısa tanıtım videosu bot ile çekilir (`video` senaryosu, bkz. [CLAUDE.md](CLAUDE.md)): akşam iskelede Dede'nin isteği, "Bugün" paneli ve çay, Nine'nin feneriyle gece ve ateşböcekleri, yağmur, sazlıkta şişe ve mektup, sisli gecede derin ortada Gölün Bekçisi'nin dev gölgesi.
+Kısa tanıtım videosu bot ile çekilir (`video` senaryosu, bkz. [CLAUDE.md](CLAUDE.md)): yeni oyunda "Balıkçını seç" ve oğlan balıkçı, yeni türün kartından fotoğraf, Tekir'in mırlaması ve hediyesi, dolapta kıyafetler, Nine'nin tezgâhında akvaryum, akşam ışığında fotoğraf modu.
 
 ## Çalıştırma
 
 - **Mac'te:** Godot 4.7.2'yi kur, bu klasörü aç, F5. Ya da Terminal'de: `/Applications/Godot.app/Contents/MacOS/Godot --path .`
 - **iPhone'da:** Mac'teki Claude Code'a [`docs/iphone-kurulum.md`](docs/iphone-kurulum.md) dosyasını uygulat. Ücretsiz Apple hesabı yeter; uygulama 7 günde bir yeniden yüklenir, en fazla 3 uygulama yüklenebilir (Kazı da biri).
-- **Testler ve botlar:** komutlar [CLAUDE.md](CLAUDE.md)'de (testler, `controls` / `first` / `story` / `film` / `hero` / `fish` / `shop` / `rarity` / `map` / `boat` / `tour` / `technique` / `fly` / `trap` / `rods` / `guide` / `world` / `release` / `requests` / `secret` / `keeper` / `video` / `reels` senaryoları, çekişme ve ekonomi raporları, balık kataloğu, gölün kuşbakışı önizlemesi).
+- **Testler ve botlar:** komutlar [CLAUDE.md](CLAUDE.md)'de (testler, `controls` / `first` / `story` / `film` / `hero` / `fish` / `shop` / `rarity` / `map` / `boat` / `tour` / `technique` / `fly` / `trap` / `rods` / `guide` / `world` / `release` / `requests` / `secret` / `keeper` / `aquarium` / `cat` / `character` / `outfits` / `photo` / `video` / `reels` senaryoları, çekişme ve ekonomi raporları, balık kataloğu, gölün kuşbakışı önizlemesi).
 
 ## Belgeler
 

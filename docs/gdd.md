@@ -1,6 +1,6 @@
 # Olta: Gölün Sırrı — Oyun Tasarım Belgesi (H2: Büyük Göl)
 
-> Prototipin (v0.1) kuralları ✅ ile, H2 "Büyük Göl" güncellemesinin tasarımı 🔜 ile işaretli (§10). Sıra ve adımlar: [`yol-haritasi.md`](yol-haritasi.md). H2'nin sayıları taslaktır; denge botuyla ayarlanır. Fikrin neden seçildiği: [`fikirler.md`](fikirler.md).
+> Prototipin (v0.1) ve H2 "Büyük Göl" güncellemesinin (v0.2–v0.6, beş dalga; §10) yapılanları ✅ ile, sonraya kalanlar 🔜 ile işaretli. Sıra ve adımlar: [`yol-haritasi.md`](yol-haritasi.md). H2'nin sayıları taslaktır; denge botuyla ayarlanır. Fikrin neden seçildiği: [`fikirler.md`](fikirler.md).
 
 ## 1. Vizyon
 
@@ -19,7 +19,7 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 
 1. **Her gölge bir soru.** Gölgenin boyu balığın boyunu ele verir, türünü vermez. Nadir gölgeler arada pırıldar, ama yine türünü söylemez. "Bu kocaman gölge ne?" merakı oyunun motorudur.
 2. **Tek parmak, her yaş.** Dokun-yürü, dokun-at, değdiği an VUR, basılı tut-çek. Yeni teknikler de tek parmakla oynanır: bas-bırak, dokun. Okumadan oynanır.
-3. **Keşfet, kur, sergile.** Bölge, teknik, yem, saat ve hava hangi balığın geleceğini belirler; takımını sen kurarsın. Balık Defteri her türün nerede ve ne zaman çıktığını, oranlarıyla birlikte gösterir. En iyileri akvaryumda yaşar 🔜 (Dalga 5).
+3. **Keşfet, kur, sergile.** Bölge, teknik, yem, saat ve hava hangi balığın geleceğini belirler; takımını sen kurarsın. Balık Defteri her türün nerede ve ne zaman çıktığını, oranlarıyla birlikte gösterir. En iyileri Nine'nin akvaryumunda yaşar ✅.
 4. **Sakin ve adil.** Oyuncu yokken ceza yok; parayla şans satılmaz; kötü şansa karşı garanti var.
 5. **Kısa oturum.** Bir atış 15–40 saniye; bir oturum 5–10 dakika.
 
@@ -28,7 +28,7 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 | Döngü | Süre | İçerik | Durum |
 |---|---|---|---|
 | Çekirdek | 15–40 sn | Dokun → at → gölge yaklaşır, dürter → ısırır → VUR → çek → balık elde, kart | ✅ |
-| Oturum | 5–10 dk | Kova dolar → Nine'ye sat (her türün en iyisi akvaryuma) → takım al → yeni teknik ya da bölge → Dede'nin isteğini bitir | ✅ (akvaryum 🔜) |
+| Oturum | 5–10 dk | Kova dolar → Nine'ye sat (her türün en iyisi akvaryuma) → takım al → yeni teknik ya da bölge → Dede'nin isteğini bitir | ✅ |
 | Haftalar | günler | Balık Defteri (siluetler, ipuçları, oranlar), rütbe, gece ve hava balıkları, göl sevgisi, "Gölün Sırrı" hikâyesi ve Gölün Bekçisi; sonra yeni sular, sezonluk türler | ✅ (yeni sular ve sezonlar 🔜) |
 
 ## 4. Kontroller ✅
@@ -56,7 +56,7 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 
 **H2'de gelenler** (ayrıntı §10.3):
 
-- **Dünyada dokunulanlar** ✅: Nine → dükkân; Dede → öğüt (istekler üstteki saat çipinin "Bugün" panelinde); sandal, kerevit tuzağı, suda şişe; sol üstte kova → Kova paneli. Kedi → sev 🔜 (Dalga 5).
+- **Dünyada dokunulanlar** ✅: Nine → dükkân; Dede → öğüt (istekler üstteki saat çipinin "Bugün" panelinde); sandal, kerevit tuzağı, suda şişe; sol üstte kova → Kova paneli. Dalga 5'te Tekir → sev ve besle, balıkçı → dolap, Nine'nin tankı → akvaryum.
 
 ## 5. Kurallar ve başlangıç sayıları ✅
 
@@ -411,7 +411,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
     (sudak), fırtına ("Kocabaş böyle gecelerde derinde gezer"); ilk gecenin sözü Nine'nin feneri. Öğütlerine çay
     da katıldı ("Saate dokun evlat, benimle bir çay iç").
 - **Nine** (Dede'nin eşi):
-  - ✅ İskelenin kara ucunun solundaki küçük ahşap dükkânı işletir: tezgâhın arkasında ayakta durur, yüzü iskeleye ve kameraya dönük. Balıkçı yaklaşınca ona bakar. Ona ya da dükkâna dokununca selam verir (balon, baş sallama, tezgâha uzanır); sözü ipucu çubuğunda kendi yüzüyle çıkar. Dükkân paneli 🔜 (Dalga 1, 6. adım).
+  - ✅ İskelenin kara ucunun solundaki küçük ahşap dükkânı işletir: tezgâhın arkasında ayakta durur, yüzü iskeleye ve kameraya dönük. Balıkçı yaklaşınca ona bakar. Ona ya da dükkâna dokununca selam verir (balon, baş sallama, tezgâha uzanır); sözü ipucu çubuğunda kendi yüzüyle çıkar. Dükkân paneli ✅ (Dalga 1).
   - ✅ KayKit Mage, yeniden boyanmış: gümüş saç, hardal sarısı hırka. Kodla beyaz, mavi çiçekli yazma (çenenin altında bağlı), turkuaz puantiyeli önlük, yuvarlak gözlük ve pembe yanaklar (Ersin'in portre tarifi). Büyücü şapkası, asa ve kitap gizli. Model yoksa kodla kurulan yedek çıkar.
   - ✅ Dükkân kodla kurulur: alçak döşeme, raflı arka duvar (yem kavanozları, kutular), tezgâh (solucan kovası, kavanozlar, mısır kasası, zil), olta sehpası ve kepçe, turkuaz-krem çizgili tente, "Nine'nin Dükkânı" tabelası; yanında fıçı, kasa, çuval. Kamera yukarıdan baktığı için tente yüksek ve kısa: Nine'nin başı altından görünür. Balıkçı dükkânın içinden geçmez.
   - ✅ Hikâyede gençliğini anlatır (şişelerdeki tek numaralı mektuplar onun); göl sevgisi 6 olunca dükkâna ilk
@@ -510,10 +510,10 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - ✅ Dip: zil (iki tınlama; koklamada tek tük), koşuda durmadan çalan zil döngüsü, kurşunun pes şapırtısı. Zilin görseli sehpada sallanan zil ve koşuda 2B zil işareti; her birinin titreşimi var.
 - ✅ Sinek: halka (yüzeyde küçük şapırtı ve emiş kabarcığı; iki çeşit), sineğin konuşu kısık tıkırtı, sıçrayan alabalığın çıkış ve dalış şapırtısı. Görseli halka, suya çekilen sinek ve sıçrayan balık; her birinin titreşimi var.
 - ✅ Tuzak: bırakma ve toplama (§10.3); her birinin görseli ve titreşimi var.
-- 🔜 Yeni sesler: kedi mırlaması.
+- ✅ Dalga 5: Tekir'in miyavı, mırlaması ve yemesi; fotoğrafın deklanşörü. Her birinin görseli (balon, kalp, flaş) ve titreşimi var.
 - iPhone'un sessiz anahtarı açıkken oyunun sesi çıkmaz (Kazı deneyimi).
 
-## 10. H2 sistemleri 🔜
+## 10. H2 sistemleri ✅
 
 Sıra ve adımlar [`yol-haritasi.md`](yol-haritasi.md)'de (Dalga 1–5). Sayılar taslaktır, denge botuyla ayarlanır.
 
@@ -1104,7 +1104,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - Oyun donar, arayüz gizlenir; dünyadaki yazılar (konuşma balonları, balığın etiketi, tuzak rozeti) fotoğrafa
     girmez. Göl arkada yaşar (su dalgalanır, balıkçı nefes alır).
   - Sürükle: kamera döner (yatayda ±40°) ve eğilir (30–72°); yakınlaştırma düğmeleri.
-  - Çerçeve: yok, ahşap, polaroid (altta şeritte oyunun adı), çiçekli; köşede oyunun logosu. İkisi de fotoğrafa girer;
+  - Çerçeve: yok, ahşap, polaroid (altta şeritte oyunun adı), çiçekli, eski kâğıt (yırtık kenar, köşede pusula: Gölün
+    Sırrı'nın haritası gibi); köşede oyunun logosu. İkisi de fotoğrafa girer;
     düğmeler girmez. Parti 5b'nin çerçeve görselleri gelince onlarla çizilebilir.
   - Deklanşör: flaş, ses, titreşim, "Fotoğraf kaydedildi!". PNG `user://photos/olta_<tarih>.png`'ye yazılır: iPhone'da
     Dosyalar → Bu iPhone'da → Olta → photos (dışa aktarma ayarı `user_data/accessible_from_files_app`). Bedeli:
@@ -1134,7 +1135,7 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 - **Sağ alt:** eylem düğmesi (300).
 - **Alt orta:** Dede'nin ipucu çubuğu.
 - ✅ **Fotoğraf:** balık kartındaki ve ayarlardaki kamera düğmesi (§10.6).
-- ✅ **"Nasıl oynanır?" rehberi:** oyunun baştan sona anlatımı, 10 sayfa.
+- ✅ **"Nasıl oynanır?" rehberi:** oyunun baştan sona anlatımı, 11 sayfa.
   - **Sayfalar:**
     1. balık tutmak (AT, BEKLE, VUR!, SAR, BIRAK!);
     2. oyunun döngüsü;
@@ -1145,7 +1146,8 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
     7. ekstralar;
     8. bölgeler;
     9. göl yaşıyor (Dalga 4): vakit, hava, Dede'yle çay, göl sevgisi, Dede'nin istekleri (rütbe 2'ye kadar kilitli);
-    10. Dede, Nine, defter ve hedef.
+    10. Dede, Nine, defter ve hedef;
+    11. yuva (Dalga 5): akvaryum, Tekir, dolap, fotoğraf.
   - **Girişler:** Ayarlar'ın başlığındaki "Nasıl oynanır?" (yanında HİKÂYE: açılış filmi yeniden, §10.5). Takım Çantası'ndaki "?" Teknikler'i, dükkândaki "?" açık sekmenin sayfasını açar.
   - **Kilitler:** henüz açılmamış teknik, bölge ve takım da görünür; kilidinde açıldığı rütbe, derin ortada sandal yazar.
   - **Sayılar veriden gelir:** rütbeler, tuzağın süresi, kovalar, şans garantisi, yıldızlar. Oyun değişince rehber eskimez.

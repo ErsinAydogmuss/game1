@@ -201,7 +201,7 @@ xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersina
 
 ### 11. Geri bildirim
 
-Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v0.3.1: berrak görüntü ve iri balık; v0.4: teknikler, 13–19; v0.4.1: Ersin'in telefon geri bildirimi, 20–26; v0.5: canlı dünya ve Gölün Sırrı, 27–36). Eski kayıt kendiliğinden yeni biçime geçer: v2'den v3'e rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır; v3'ten v4'e şamandıra takımı aynen kalır, makara ve misina bütün tekniklerde ortak olur; v4'ten v5'e oyun saati sabahtan başlar, Dede'nin istekleri hemen gelir (rütbe 2'den sonra), ilk şişe 15 balık sonra suya düşer (rütbe 3'ten sonra). Para, kova, takım ve defter aynen kalır.
+Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v0.3.1: berrak görüntü ve iri balık; v0.4: teknikler, 13–19; v0.4.1: Ersin'in telefon geri bildirimi, 20–26; v0.5: canlı dünya ve Gölün Sırrı, 27–36; v0.6: yuva ve kişilik, 37–44). Eski kayıt kendiliğinden yeni biçime geçer: v2'den v3'e rütbe ve rütbe çubuğundaki ilerleme aynı kalır, yalnızca rütbe puanının sayısı yeni (daha uzun) rütbe eğrisine taşınır; v3'ten v4'e şamandıra takımı aynen kalır, makara ve misina bütün tekniklerde ortak olur; v4'ten v5'e oyun saati sabahtan başlar, Dede'nin istekleri hemen gelir (rütbe 2'den sonra), ilk şişe 15 balık sonra suya düşer (rütbe 3'ten sonra); v5'ten v6'ya balıkçı kız kalır (seçim ekranı çıkmaz, dolaptan değişir), akvaryumun bağış kutusu ilk açılışta saymaya başlar, Tekir 8 balık sonra acıkır, açılmış kıyafetler bir kez duyurulur. Para, kova, takım ve defter aynen kalır.
 
 1. Önce iPhone'un sessiz anahtarını kapat (yoksa oyunun hiç sesi çıkmaz).
 2. Rütben güncellemeden önceki gibi mi? (Sayı değişebilir; rütbe ve çubuk aynı kalmalı.)
@@ -270,6 +270,28 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     - **VAKİT +** ile gece.
 
     Deneme düğmeleri kaydı değiştirir; bitince istersen **Kaydı sıfırla**.
+37. **v0.6: Karakter seçimi.** Yeni oyunda (**Kaydı sıfırla**) filmden önce "Balıkçını seç" ekranı çıkar: kız ya da oğlan balıkçı. Kartlar ve düğmeler çentiğe takılmadan sığıyor mu? Oğlanı seç: film onunla oynuyor, hediyede oltayı o alıyor mu? Uygulamayı kapatıp açınca seçim kalıyor mu? Eski kayıtla açınca bu ekran çıkmamalı (balıkçı kız kalır).
+38. **v0.6: Dolap.** Balıkçına dokun (olta boşken): dolap açılır.
+    - **Balıkçı** sekmesinde öbür balıkçıyı seç: gövde hemen değişiyor, panel açık kalıyor mu?
+    - **Şapka**, **Yelek**, **Olta** sekmeleri: kilitli karoya dokununca altta şartı ve ilerlemesi yazıyor mu ("Rütbe 7 (3/7)")? Açık karoya dokununca hemen giyiliyor mu?
+    - Oğlanda şapkanın altından saç taşıyor mu? Yeleğin rengi gövdede doğru yerde mi (kızda tunik, oğlanda yağmurluk)?
+39. **v0.6: Yeni kıyafetler.** Rütbe 2'de kırmızı yelek, 3'te kırmızı şapka, 4'te kırmızı kamış kaplaması; defterdeki tür sayısı, Dede'nin istekleri, göl sevgisi ve Gölün Bekçisi de kıyafet açar. Açılınca bildirim ("Yeni kıyafet"), ilk seferde Dede dolabı söyler; dolapta "Yeni!" ve sekmede kırmızı sayı. Hızlı denemek için **RÜTBE +1**.
+40. **v0.6: Tekir.** İskele koyunda balıkçının yanında yürüyen tekir kedi. Dokun: mırlar (kalp).
+    - 8 balıkta bir acıkır (balıklı balon, Dede). Dokununca kovadaki en ucuz balığı yer (bildirim); kova boşsa bekler.
+    - Her 5 beslemede bir kıyafet getirir: beş hediye, ilki hasır şapka.
+    - Başka bölgede ya da sandaldayken iskelenin yanındaki evine gidip oturuyor mu? Dönünce yine peşinden geliyor mu?
+    - Kedi balıkçının önüne geçip onu örtüyor mu, takılıyor mu?
+41. **v0.6: Akvaryum.** Nine'nin tezgâhında küçük bir cam tank: tuttuğun türlerin en değerli beşi içinde. Tanka dokun: Akvaryum paneli (her türün en irisi yüzer, "10/15 tür", saatlik bağış, kutu, TOPLA).
+    - Oyunu kapat, 1–2 saat sonra aç: kutuda para birikmiş mi? En çok 2 saatlik birikir.
+    - Nine'ye dokununca dükkân açılır ve kutu kendiliğinden toplanır. Tanka hiç dokunmadıysan Nine bir kez tanka dokunmayı söylüyor mu? Sonra ziyaretçilerin bıraktığı parayı mı söylüyor?
+    - Panel açıkken balıklar akıcı yüzüyor mu?
+42. **v0.6: Fotoğraf modu.** Ayarlar'ın başlığındaki kamera düğmesi (olta boşken):
+    - Arayüz gizlenir. Sürükleyince kamera dönüyor ve eğiliyor mu? **+** ve **-** ile yakınlaşıp uzaklaşıyor mu?
+    - Çerçeveyi seç (yok, ahşap, polaroid, çiçekli, eski kâğıt), deklanşöre bas: flaş, ses, "Fotoğraf kaydedildi!".
+    - Fotoğraf Dosyalar uygulamasında mı (13. bölüm)? Düğmeler fotoğrafa girmemiş mi? Çıkınca kamera yerine oturuyor mu?
+    - Balık kartındaki kamera düğmesi: balıkçı kameraya dönüp balığı gösteriyor, kamera yakın; çıkınca kart geri geliyor mu?
+43. **v0.6: Rehber.** Ayarlar → **Nasıl oynanır?**: 11. sayfa "Yuva" (akvaryum, Tekir, dolap, fotoğraf). Sığıyor mu, anlaşılır mı?
+44. **v0.6: Hız.** 12. adımdaki ölçümle iskelede Tekir ve kıyafetle FPS ve çizim sayısı; dolap ve akvaryum paneli açıkken FPS (fotoğraf modunda arayüz gizli: ölçüm yazısı görünmez; akıcı mı, gözle bak). Bulutta iskelede 142–145 çizim (kedi +1); telefonda çok farklıysa not et.
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
@@ -306,6 +328,8 @@ Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte
 | Dere ağzı | | | |
 | Derin orta (sandal) | | | |
 | Çekişme anında | | | |
+| Akvaryum paneli açık (v0.6) | | | |
+| Dolap açık (v0.6) | | | |
 
 - **Hedef:** her yerde 60 FPS, en az 50.
 - **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken; v0.5): iskelede 142, öteki yerlerde 90–116, sandalda 97. Vakit, hava ve Dede'nin sözüyle iskelede en çok 150 (yağmurda); suda şişe varken +1 (halkasıyla +2). Telefondaki sayı bundan çok farklıysa not et.
