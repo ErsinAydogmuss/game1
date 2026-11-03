@@ -291,7 +291,7 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     - Fotoğraf Dosyalar uygulamasında mı (13. bölüm)? Düğmeler fotoğrafa girmemiş mi? Çıkınca kamera yerine oturuyor mu?
     - Balık kartındaki kamera düğmesi: balıkçı kameraya dönüp balığı gösteriyor, kamera yakın; çıkınca kart geri geliyor mu?
 43. **v0.6: Rehber.** Ayarlar → **Nasıl oynanır?**: 11. sayfa "Yuva" (akvaryum, Tekir, dolap, fotoğraf). Sığıyor mu, anlaşılır mı?
-44. **v0.6: Hız.** 12. adımdaki ölçümle iskelede Tekir ve kıyafetle FPS ve çizim sayısı; dolap ve akvaryum paneli açıkken FPS (fotoğraf modunda arayüz gizli: ölçüm yazısı görünmez; akıcı mı, gözle bak). Bulutta iskelede 142–145 çizim (kedi +1); telefonda çok farklıysa not et.
+44. **v0.6: Hız.** 12. adımdaki ölçümle iskelede Tekir ve kıyafetle FPS ve çizim sayısı; dolap ve akvaryum paneli açıkken FPS (fotoğraf modunda arayüz gizli: ölçüm yazısı görünmez; akıcı mı, gözle bak). Bulutta iskelede 142–145 çizim (Tekir +1, kıyafetle 145; yağmurda Dede konuşurken 149); telefonda çok farklıysa not et.
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
@@ -332,7 +332,7 @@ Büyük göl telefonda akıcı mı, bunu ölçmek için. Kullanıcıyla birlikte
 | Dolap açık (v0.6) | | | |
 
 - **Hedef:** her yerde 60 FPS, en az 50.
-- **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken; v0.5): iskelede 142, öteki yerlerde 90–116, sandalda 97. Vakit, hava ve Dede'nin sözüyle iskelede en çok 150 (yağmurda); suda şişe varken +1 (halkasıyla +2). Telefondaki sayı bundan çok farklıysa not et.
+- **Bulutta ölçülen çizim sayısı** (`tour` botu, ölçüm yazısı açıkken; v0.6): iskelede 143 (Tekir yanında), öteki yerlerde 90–116, sandalda 97. Kıyafetle iskelede 145. Vakit, hava ve Dede'nin sözüyle iskelede en çok 149 (yağmurda, Tekir'le; kedisiz 148); suda şişe varken +1 (halkasıyla +2). Telefondaki sayı bundan çok farklıysa not et.
 - FPS 50'nin altındaysa şunları da yaz: hangi yerde düştüğü, telefonun ısınıp ısınmadığı, ilk açılışta mı yoksa sürekli mi olduğu.
 
 İstersen bir de `--export-release` ile kur (8. adım) ve açık bölgelerde ölç. Release derlemede deneme düğmeleri (HEPSİNİ AÇ, para, RÜTBE +1) yoktur; sayılar debug'dan biraz daha iyi çıkar.
