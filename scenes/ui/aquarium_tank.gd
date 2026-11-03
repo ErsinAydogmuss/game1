@@ -3,7 +3,8 @@ extends Control
 ## Akvaryum panelinin canlı tankı (Dalga 5, docs/gdd.md §10.6). Üç kat: arka plan (Ersin'in aquarium_bg
 ## görseli; yoksa kodla: derinleşen su, ışık hüzmeleri, kum, taşlar, uzak bitkiler), kendi dünyası olan saydam
 ## bir SubViewport'ta yüzen balıklar (her türün en irisi; FishMesh, dış çizgisiz: balık başına bir çizim) ve
-## ön kat (öndeki bitkiler, yükselen kabarcıklar). Çerçeve en üstte. Balıklar görünür alanın içinde kendi
+## ön kat (öndeki bitkiler yalnızca kodla çizilen tankta: Ersin'in resminde bitkiler var, düz yapraklar boyalı resmin
+## önünde sırıtıyordu; yükselen kabarcıklar). Çerçeve en üstte. Balıklar görünür alanın içinde kendi
 ## şeritlerinde gidip döner, hafifçe iner kalkar; kerevit kumda yürür. Yerleşim türün sırasından tohumlanır:
 ## her açılışta aynı. Tank yalnızca görünürken çizilir.
 
@@ -219,6 +220,11 @@ func _face(s: Dictionary, turn: float) -> void:
 	fish.rotation = Vector3(0.0, (0.0 + PI * t) if right else (PI - PI * t), 0.0)
 
 
+## Arka planda Ersin'in resmi mi var (aquarium_bg; yoksa kodla çizilen su ve kum)?
+func has_art() -> bool:
+	return _art.visible
+
+
 ## Arka ve ön kat: kodla çizilen su, ışık, kum, taş ve bitkiler; önde bitkiler ve kabarcıklar. Her kat tek
 ## üçgen dizisi (tek çizim).
 class _Layer:
@@ -285,10 +291,11 @@ class _Layer:
 					AquariumTank.STONE)
 
 	func _front_layer(points: PackedVector2Array, colors: PackedColorArray, w: float, h: float) -> void:
-		# Öndeki bitkiler köşelerde (balıkları örtmesin).
-		for spec: Vector4 in [Vector4(0.03, 0.42, 0.03, 0.05), Vector4(0.06, 0.3, 0.025, -0.04), Vector4(0.95, 0.38, 0.03, -0.05),
-				Vector4(0.92, 0.26, 0.022, 0.04)]:
-			_blade(points, colors, Vector2(spec.x * w, h), spec.y * h, spec.z * w, spec.w * w, AquariumTank.PLANT_LIGHT)
+		# Öndeki bitkiler köşelerde (balıkları örtmesin); Ersin'in resmi varsa onun bitkileri yeter.
+		if not _tank.has_art():
+			for spec: Vector4 in [Vector4(0.03, 0.42, 0.03, 0.05), Vector4(0.06, 0.3, 0.025, -0.04),
+					Vector4(0.95, 0.38, 0.03, -0.05), Vector4(0.92, 0.26, 0.022, 0.04)]:
+				_blade(points, colors, Vector2(spec.x * w, h), spec.y * h, spec.z * w, spec.w * w, AquariumTank.PLANT_LIGHT)
 		# Kabarcıklar: sağ köşedeki taştan yükselir, yüzeyde söner.
 		var t := _tank._time
 		for i in AquariumTank.BUBBLES:

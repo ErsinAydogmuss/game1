@@ -3388,6 +3388,11 @@ func _play_keeper() -> void:
 	await _shot("07_jenerik")
 	await _wait(2.0)
 	await _shot("08_jenerik_2")
+	# Yazıların ortası ve sondaki resimler (Ersin'in bitiş resminin üstünde okunuyor mu: görsel denetim).
+	await _wait(8.0)
+	await _shot("08b_jenerik_adlar")
+	await _wait(14.0)
+	await _shot("08c_jenerik_resimler")
 	_check("jeneriğin ATLA'sı büyük ve güvenli alanda", _inside_safe(credits.skip_button)
 			and credits.skip_button.get_global_rect().size.y >= 121.5)
 	await _tap_control(credits.skip_button)
