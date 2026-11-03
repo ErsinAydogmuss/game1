@@ -168,7 +168,9 @@ func _rise(session: FishingSession, save: SaveData) -> bool:
 	Sounds.play("sting")
 	Sounds.haptic(60)
 	camera.shake(0.06)
-	hud.toast(tr("UI_KEEPER_RISE"), UiKit.rarity_color(db, db.rarity_index("mythic")), "rarity:medallion")
+	# Bildirimde Bekçi'nin sudaki kuşbakışı resmi (Parti 5a keeper_top; yoksa Masalsı rozeti).
+	var icon := "item:keeper_top" if ItemArt.item("keeper_top") != null else "rarity:medallion"
+	hud.toast(tr("UI_KEEPER_RISE"), UiKit.rarity_color(db, db.rarity_index("mythic")), icon)
 	if _lost_tonight:
 		speak.emit("UI_DEDE_KEEPER_BACK")
 	elif save.keeper > 0:

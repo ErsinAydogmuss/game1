@@ -848,7 +848,7 @@ Hepsi geldi (13 sayfa), kesildi ve oyuna bağlandı:
 | `story_items` | altın hamur, harita parçası, mektup, yanan fener (Nine'nin hediyesi), cetvel (Dede'nin boy istekleri), Bekçi'nin pulu (finalden sonra defterin Gölün Sırrı sayfasında). Işıltılar macentaya karışmıştı: kesim aracının `glow` temizliği onları saydam ve kendi renginde bırakır |
 | `letter_paper` | mektup paneli (9 dilimli; leke ve balık çizimi köşelerde kalır, imza balığa binmez) |
 | `secret_map` | defterde Gölün Sırrı'nın dört parçalık haritası |
-| `keeper` | Bekçi'nin Masalsı kartı ve defterdeki resmi; `keeper_top` haritada X'in yanında; `keeper_leap` jenerikte |
+| `keeper` | Bekçi'nin Masalsı kartı ve defterdeki resmi; `keeper_top` Bekçi göle çıkınca bildirimde; `keeper_leap` jenerikte |
 | `portraits_young` | mektupların başlığında genç Nine ve Dede; ikisi birlikte jenerikte |
 | `ending` | jeneriğin arkasında (yazılar koyu şeridin üstünde) |
 | `photo_frames` | fotoğraf modunun dört çerçevesi (9 dilimli; köşe süsleri gerilmez, logo süsün yanında) |

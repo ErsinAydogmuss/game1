@@ -444,16 +444,8 @@ func _mark(kind: String) -> Control:
 		"bottle":
 			return GameIcon.make("bottle", MARK)
 		"secret_x":
-			# Gölün Sırrı: dört parça tamam, Bekçi'nin yeri (derin ortanın ilk şamandırası); X'in yanında Bekçi'nin
-			# kuşbakışı resmi (Parti 5a keeper_top, varsa).
-			var x := GameIcon.make("x_mark", MARK)
-			var top := ItemArt.item("keeper_top")
-			if top != null:
-				var keeper := _art_rect(top, MARK * 1.25)
-				keeper.name = "Keeper"
-				keeper.position = Vector2(MARK * 0.85, -MARK * 0.45)
-				x.add_child(keeper)
-			return x
+			# Gölün Sırrı: dört parça tamam, Bekçi'nin yeri (derin ortanın ilk şamandırası).
+			return GameIcon.make("x_mark", MARK)
 	return null
 
 

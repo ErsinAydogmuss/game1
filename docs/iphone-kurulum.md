@@ -292,6 +292,16 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     - Balık kartındaki kamera düğmesi: balıkçı kameraya dönüp balığı gösteriyor, kamera yakın; çıkınca kart geri geliyor mu?
 43. **v0.6: Rehber.** Ayarlar → **Nasıl oynanır?**: 11. sayfa "Yuva" (akvaryum, Tekir, dolap, fotoğraf). Sığıyor mu, anlaşılır mı?
 44. **v0.6: Hız.** 12. adımdaki ölçümle iskelede Tekir ve kıyafetle FPS ve çizim sayısı; dolap ve akvaryum paneli açıkken FPS (fotoğraf modunda arayüz gizli: ölçüm yazısı görünmez; akıcı mı, gözle bak). Bulutta iskelede 142–145 çizim (Tekir +1, kıyafetle 145; yağmurda Dede konuşurken en çok 150); telefonda çok farklıysa not et.
+45. **v0.6 sonrası: Ersin'in görselleri (Parti 5a–5b).** Bunlara bak, bozuk ya da tuhaf duranı not et:
+    - **Saat çipi ve "Bugün" paneli:** vaktin ve havanın ikonları senin çizimlerin mi, net mi? Paneldeki çay, sevgi ve istek ikonları da. Boy isteğinde cetvel ikonu çıkıyor mu?
+    - **Mektup:** kâğıdın köşesinde leke, altta balık çizimi var mı? İmza balığın üstüne binmiyor mu? Başlıkta genç Nine ya da genç Dede'nin portresi var mı?
+    - **Defterin Gölün Sırrı sayfası:** harita parçaları senin haritandan mı? Altın hamur ve harita parçası resimleri de. Bekçi bırakılınca notun yanında Bekçi'nin pulu çıkıyor mu?
+    - **Fotoğraf çerçeveleri (ahşap, polaroid, nilüferli, eski kâğıt):** köşe süsleri ekrana sığıyor mu? Logo süse binmiyor mu? Kaydedilen fotoğrafta da öyle mi?
+    - **Tekir acıkınca:** balonda mama kabı görünüyor mu?
+    - **Akvaryum paneli:** arka plan senin resmin mi? Balıklar önünde rahat seçiliyor mu?
+    - **Dolap:** Balıkçı sekmesinin ikonunda seçili balıkçının portresi var mı?
+    - **Gölün Bekçisi:** göle çıkınca bildirimde kuşbakışı resmi, kartta ve defterde Bekçi'nin resmi görünüyor mu?
+    - **Jenerik:** arkada bitiş resmi var mı, yazılar okunuyor mu? Genç Nine ve Dede ile zıplayan Bekçi de görünüyor mu?
 
 Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
 
