@@ -143,6 +143,12 @@ var aquarium_cap_s: int = 7200
 var aquarium_species_ph: int = 8
 var aquarium_value_pm: int = 400
 
+# --- Tekir (Dalga 5, docs/gdd.md §7) -------------------------------------------------------
+## Kedi son beslenmeden beri bu kadar balık tutulunca acıkır (gerçek saat değil: oyuncu yokken aç kalmaz);
+## her cat_gift_every beslemede sıradaki hediyeyi getirir.
+var cat_meal_every: int = 8
+var cat_gift_every: int = 5
+
 
 ## Tekniklerin profilleri (kimlik → TechniqueRules). Şamandıranınki üst düzey bölümlerden.
 var _techniques: Dictionary = {}
@@ -278,6 +284,9 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 	r.aquarium_cap_s = int(aquarium.get("cap_s", r.aquarium_cap_s))
 	r.aquarium_species_ph = int(aquarium.get("species_ph", r.aquarium_species_ph))
 	r.aquarium_value_pm = roundi(float(aquarium.get("value_ph", r.aquarium_value_pm / 1000.0)) * 1000.0)
+	var cat: Dictionary = d.get("cat", {})
+	r.cat_meal_every = int(cat.get("meal_every", r.cat_meal_every))
+	r.cat_gift_every = int(cat.get("gift_every", r.cat_gift_every))
 	r._validate(errors)
 	# Teknikler: şamandıra üst düzey bölümlerden; ötekiler "techniques" bölümünden.
 	var base := r.technique("float")
@@ -327,6 +336,7 @@ func _validate(errors: PackedStringArray) -> void:
 				and trash_trap_ppm <= Dice.PPM and _trash_ok(),
 		"akvaryum (kutunun üst sınırı en az 1 dk, kazançlar sıfır ya da pozitif)": aquarium_cap_s >= 60 \
 				and aquarium_species_ph >= 0 and aquarium_value_pm >= 0,
+		"kedi (acıkma ve hediye en az 1)": cat_meal_every >= 1 and cat_gift_every >= 1,
 	}
 	for label: String in checks:
 		if not bool(checks[label]):

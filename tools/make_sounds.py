@@ -1454,6 +1454,60 @@ def find_mythic():
     return finish(out + 0.4 * reverb(out, 2.2)[:n], -1.0, 0.5)
 
 
+# --- Tekir (Dalga 5) ---------------------------------------------------------------------
+
+def meow(seed=150):
+    """Tekir'in miyavı: perdesi yükselip alçalan harmonikli ses ("mi-yaav"); başta parlak, sonda koyu (ağız
+    kapanır), hafif titreme."""
+    n = frames(0.62)
+    t = tl(n)
+    u = t / t[-1]
+    f0 = 520.0 + 260.0 * np.sin(np.pi * np.clip(u * 1.15, 0.0, 1.0)) - 120.0 * u
+    f0 = f0 * (1.0 + 0.012 * np.sin(2 * np.pi * 6.5 * t))
+    phase = 2 * np.pi * np.cumsum(f0) / SR
+    bright = 0.25 + 0.75 * np.sin(np.pi * np.clip(u * 1.1, 0.0, 1.0)) * (1.0 - 0.55 * u)
+    x = np.zeros(n)
+    for k in range(1, 9):
+        x += np.sin(k * phase) * (bright ** (k - 1)) / k
+    x += 0.04 * band(noise(n, seed), 2000, 6000) * env_ar(n, 0.02, 0.3)
+    x *= env_ar(n, 0.05, 0.22)
+    return finish(x + 0.08 * reverb(x, 0.4, seed)[:n], -3.0, 0.05)
+
+
+def purr(seed=151):
+    """Mırlama: alçak, saniyede ~26 vuruşlu hırıltı; nefes alıp verir gibi iki bölüm (verirken biraz pes)."""
+    n = frames(1.5)
+    t = tl(n)
+    x = np.zeros(n)
+    for k, (start, dur, rate) in enumerate(((0.0, 0.68, 26.0), (0.74, 0.7, 23.5))):
+        sn = frames(dur)
+        st = tl(sn)
+        grain = band(noise(sn, seed + k), 50, 520, 2.0)
+        pulse = (0.5 + 0.5 * np.sin(2 * np.pi * rate * st)) ** 2.2
+        body = grain * pulse + 0.5 * np.sin(2 * np.pi * rate * 2.0 * st) * pulse
+        place(x, unit(body) * env_ar(sn, 0.12, 0.2) * (1.0 - 0.15 * k), frames(start))
+    return finish(x, -4.0, 0.05)
+
+
+def cat_eat(seed=152):
+    """Tekir yiyor: üç küçük çıtırtı (çiğneme) ve sonunda memnun, kısa bir "mrrp"."""
+    n = frames(1.05)
+    x = np.zeros(n)
+    for k, at in enumerate((0.0, 0.2, 0.38)):
+        cn = frames(0.09)
+        crunch = band(noise(cn, seed + k), 1200, 5000) * env_exp(cn, 0.02, 0.002)
+        place(x, 0.55 * unit(crunch), frames(at))
+        place(x, 0.25 * thump(180.0 + 30 * k, frames(0.06), 0.02), frames(at))
+    mn = frames(0.3)
+    mt = tl(mn)
+    f0 = 600.0 + 180.0 * np.clip(mt / 0.3, 0.0, 1.0)
+    trill = 0.6 + 0.4 * np.sin(2 * np.pi * 32.0 * mt)
+    phase = 2 * np.pi * np.cumsum(f0) / SR
+    mrrp = (np.sin(phase) + 0.4 * np.sin(2 * phase) + 0.15 * np.sin(3 * phase)) * trill * env_ar(mn, 0.03, 0.12)
+    place(x, 0.5 * mrrp, frames(0.68))
+    return finish(x + 0.06 * reverb(x, 0.4, seed)[:n], -3.0, 0.05)
+
+
 # --- Liste ve çalıştırma ----------------------------------------------------------------
 
 def registry():
@@ -1484,6 +1538,8 @@ def registry():
         "lantern_1": lantern, "love_up_1": love_up, "trash_1": trash,
         # Gölün Sırrı (Dalga 4, 5. adım): şişe ve mektup; final: Bekçi'nin dalışı.
         "bottle_1": bottle, "paper_1": paper, "dive_1": dive,
+        # Tekir (Dalga 5): miyav, mırlama, yeme.
+        "meow_1": meow, "purr_1": purr, "cat_eat_1": cat_eat,
     }
     for name, fn in singles.items():
         items.append(("sfx", name, fn))

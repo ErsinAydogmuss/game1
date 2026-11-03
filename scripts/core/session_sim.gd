@@ -104,13 +104,15 @@ var request_coins: int = 0
 var rerolls: int = 0
 ## Akvaryumun bağış kutusundan toplanan para (earned'in içinde; satışta toplanır: dükkâna uğrayınca).
 var aquarium_coins: int = 0
+## Tekir'e verilen balık (dükkâna uğrayınca kedi açsa: kovadaki en ucuz balık).
+var cat_meals: int = 0
 ## Olayların ilk olduğu dakika: "rank_3", "buy" (ilk alışveriş), "buy:<takım>", "sell", "species_4",
 ## "rarity_<id>", "zone:<bölge>" (o bölgede ilk avlanış), "tech:<teknik>" (o teknikle ilk atış),
 ## "trap_set" (ilk tuzak bırakıldı), "trap" (tuzaktan ilk kerevit), "release" (ilk bırakılan balık), "trash"
 ## (ilk çöp), "love_<seviye>" (göl sevgisinin seviyesi), "requests" (ilk istekler), "request_1" (ilk biten
 ## istek), "requests_10" (onuncusu), "letter_<n>" (okunan mektup), "golden_<parça>" (altın istek geldi),
 ## "piece_<parça>" (harita parçası), "dough" (altın hamur), "final_ready", "keeper" (Gölün Bekçisi göle döndü),
-## "aquarium" (bağış kutusundan ilk para).
+## "aquarium" (bağış kutusundan ilk para), "cat" (Tekir ilk kez beslendi).
 var milestones: Dictionary = {}
 ## Botun elindeki teknik ve her teknikte geçen süre (sn).
 var technique: String = "float"
@@ -287,6 +289,10 @@ func _sell_and_shop() -> void:
 	elapsed += _num("sell_s", 30.0)
 	# Dükkân açıkken oyun saati durur.
 	_paused_s += _num("sell_s", 30.0)
+	# Tekir iskelede: açsa oyuncu gibi kovadaki en ucuz balığı verir (satıştan önce).
+	if not CatRules.feed(db, save).is_empty():
+		cat_meals += 1
+		_mark("cat")
 	_release_cheap()
 	earned += Economy.sell_all(db, save)
 	sells += 1

@@ -20,6 +20,7 @@
 		{ "id": "boot", "weight": 35, "love": 3 }, { "id": "tin_can", "weight": 35, "love": 3 },
 		{ "id": "plastic_bottle", "weight": 25, "love": 3 }, { "id": "rusty_key", "weight": 5, "love": 5 } ] },
 	"aquarium": { "cap_s": 7200, "species_ph": 8, "value_ph": 0.4 },
+	"cat": { "meal_every": 8, "gift_every": 5 },
 	"techniques": {
 		"spin": { "notice": { "cone_deg": 60.0, "front_m": 4.0, "side_m": 2.2 }, "approach_speed": 2.0, "give_up": 8.0,
 			"gather_chance": 0.0, "follow_speed": 1.5, "lure_speed": 0.8, "moving_grace": 0.5, "min_cast_m": 2.0, "end_m": 1.2,

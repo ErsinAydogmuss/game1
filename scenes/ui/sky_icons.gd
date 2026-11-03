@@ -43,6 +43,25 @@ static func draw(item: CanvasItem, kind: String, origin: Vector2, scale: float) 
 	RenderingServer.canvas_item_add_triangle_array(item.get_canvas_item(), shape.indices, out, shape.colors)
 
 
+## Birkaç ikonu tek üçgen dizisiyle çizer (saat çipinde vaktin ve havanın ikonu: tek çizim). origins: her
+## ikonun tasarım alanının sol üstü.
+static func draw_many(item: CanvasItem, kinds: Array[String], origins: Array[Vector2], scale: float) -> void:
+	var points := PackedVector2Array()
+	var colors := PackedColorArray()
+	var indices := PackedInt32Array()
+	for k in kinds.size():
+		var shape := SkyIcons.new()
+		shape.build(kinds[k])
+		var base := points.size()
+		for i in shape.points.size():
+			points.append(origins[k] + shape.points[i] * scale)
+		colors.append_array(shape.colors)
+		for index in shape.indices:
+			indices.append(base + index)
+	if not points.is_empty():
+		RenderingServer.canvas_item_add_triangle_array(item.get_canvas_item(), indices, points, colors)
+
+
 func build(kind: String) -> void:
 	match kind:
 		"phase_morning":

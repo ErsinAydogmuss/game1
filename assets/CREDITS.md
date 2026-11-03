@@ -28,6 +28,19 @@ balıkçı şapkası, Dede'nin kasketi ve çay bardağı, Nine'nin yazması, ön
 dükkânı kodla kurulur.
 Hangi modelin oyunda hangi ölçekle kullanıldığı `scenes/world/model_library.gd` içinde.
 
+## 3D model: Quaternius — CC0 1.0
+
+Lisans: Creative Commons Zero (kamu malı). Atıf zorunlu değil; teşekkür olarak burada anıyoruz.
+Kaynak: https://opengameart.org/content/animated-animales-low-poly (Animated Animales Low Poly, Animal Pack Vol. 2;
+paket Ersin'in Mac'inde indirildi, lisansı `assets/models/cat/License.txt`).
+
+| Klasör | Paket | Kullanılanlar |
+|---|---|---|
+| `assets/models/cat/` | Animated Animales Low Poly | kedi (Cat.fbx: iskeleti, Idle ve Walking animasyonlarıyla): Tekir |
+
+Modelin dokusu yok: üç yüzeyi oyunda tek yüzeyde birleştirilir, gri tekir deseni (çizgiler, beyaz patiler, pembe
+kulak içi) `scenes/player/cat.gdshader` ile kodla çizilir (`scenes/player/cat_body.gd`).
+
 ## 3D modeller: Kenney — CC0 1.0
 
 Lisans: Creative Commons Zero (kamu malı). Atıf zorunlu değil; teşekkür olarak burada anıyoruz.

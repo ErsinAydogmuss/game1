@@ -177,7 +177,9 @@ Ersin'in seçimleri (hepsi önerilen): akvaryuma her türün en irisi kendiliği
 - [x] 1. Akvaryum ve kayıt v6: tezgâhta tank (dükkânın ağında, çizim eklemez), Akvaryum paneli (canlı tank), bağış
   kutusu (gerçek saatle, en çok 2 saatlik), dükkânda kendiliğinden toplama, denge botu, `aquarium` botu. Kayıt v6
   dalganın bütün alanlarını tek göçle ekler (akvaryum, Tekir, kıyafet, balıkçı).
-- [ ] Kedi.
+- [x] 2. Tekir (kedi): Quaternius kedisi gri tekir deseniyle (tek çizim), iskele koyunda balıkçının yanında yürür,
+  başka bölgede evine döner, dokununca mırlar, 8 balıkta bir acıkır ve kovadaki en ucuz balığı yer; sesler (miyav,
+  mırlama, yeme); saat çipinde vakit ve hava ikonu tek çizim (kediye yer açar); `cat` botu. Hediyeleri 4. adımda.
 - [ ] Karakter seçimi ve erkek balıkçı.
 - [ ] Kıyafetler.
 - [ ] Fotoğraf modu.

@@ -110,9 +110,9 @@ var _rank: Label
 var _rank_bar: RankBar
 ## Üst ortadaki saat çipinin hapı ve gösterdiği vakit ile hava (değişince ikon yenilenir).
 var _world_chip: PanelContainer
-var _phase_icon: GameIcon
 var _time_label: Label
-var _weather_icon: GameIcon
+## Saat çipinin vakit ve hava ikonları (tek çizim).
+var _sky: ChipSky
 var _world_key: String = ""
 ## Çipin rozeti (yeni istek; konumu her kare çipin köşesinden: kapsayıcı dizmesin diye top_level).
 var _world_badge: Panel
@@ -403,10 +403,7 @@ func set_world(phase: String, weather_icon: String, time_text: String) -> void:
 	if key == _world_key:
 		return
 	_world_key = key
-	_phase_icon.kind = "phase_" + phase
-	_weather_icon.visible = not weather_icon.is_empty()
-	if _weather_icon.visible:
-		_weather_icon.kind = weather_icon
+	_sky.set_icons("phase_" + phase, weather_icon)
 
 
 ## Saat çipinin hapı, yazısı ve ikonları (bot denetimi; dokunma kutusu world_button).
@@ -419,10 +416,7 @@ func world_text() -> String:
 
 
 func world_icons() -> PackedStringArray:
-	var out := PackedStringArray([_phase_icon.kind])
-	if _weather_icon.visible:
-		out.append(_weather_icon.kind)
-	return out
+	return _sky.kinds()
 
 
 ## Eylem düğmesinin işi: cast, retrieve, wait, hook, reel ya da "" (gizli).
@@ -554,8 +548,8 @@ func _build_world_chip() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_world_chip.add_child(row)
-	_phase_icon = GameIcon.make("phase_morning", 58)
-	row.add_child(_phase_icon)
+	_sky = ChipSky.new()
+	row.add_child(_sky)
 	_time_label = _pill_label("06:00")
 	_time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var font := UiKit.display_font()
@@ -565,9 +559,6 @@ func _build_world_chip() -> void:
 	_time_label.custom_minimum_size.x = ceilf(widest * 4.0
 			+ font.get_string_size(":", HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.SIZE_BODY + 4).x) + 4.0
 	row.add_child(_time_label)
-	_weather_icon = GameIcon.make("weather_cloudy", 58)
-	_weather_icon.visible = false
-	row.add_child(_weather_icon)
 	_world_badge = Panel.new()
 	_world_badge.name = "WorldBadge"
 	_world_badge.top_level = true

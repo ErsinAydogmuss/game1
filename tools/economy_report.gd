@@ -31,14 +31,14 @@ func _initialize() -> void:
 			(Time.get_ticks_msec() - started) / 1000.0])
 	for sim in sims:
 		var hours := sim.elapsed / 3600.0
-		print("  seed %d: %d atış, %d av, %d kaçan, %d satış, %d para kazanıldı (saatte %.0f para, %.0f av), rütbe %d, tuzaktan %d kerevit (%d tuzak), %d bırakılan, %d çöp, göl sevgisi %d (seviye %d), %d istek (saatte %.1f; %d para, kazançta payı %%%.1f; %d değiştirme), %d mektup, %d parça, altın hamur %s, Bekçi %d, akvaryum %d para (kazançta payı %%%.1f; sonunda saatte %d, %d/%d tür)" % [
+		print("  seed %d: %d atış, %d av, %d kaçan, %d satış, %d para kazanıldı (saatte %.0f para, %.0f av), rütbe %d, tuzaktan %d kerevit (%d tuzak), %d bırakılan, %d çöp, göl sevgisi %d (seviye %d), %d istek (saatte %.1f; %d para, kazançta payı %%%.1f; %d değiştirme), %d mektup, %d parça, altın hamur %s, Bekçi %d, akvaryum %d para (kazançta payı %%%.1f; sonunda saatte %d, %d/%d tür), Tekir %d balık" % [
 				sim.rng.seed, sim.casts, sim.catches, sim.lost, sim.sells, sim.earned, sim.earned / hours,
 				sim.catches / hours, Rank.rank(db, sim.save), sim.trapped, sim.save.traps.size(), sim.released, sim.trash,
 				sim.save.love, LakeLove.level(db.rules, sim.save.love), sim.requests_done, sim.requests_done / hours,
 				sim.request_coins, 100.0 * sim.request_coins / maxf(1.0, sim.earned), sim.rerolls, sim.save.letters,
 				sim.save.map_pieces, "var" if Secret.has_dough(sim.save) else "yok", sim.save.keeper, sim.aquarium_coins,
 				100.0 * sim.aquarium_coins / maxf(1.0, sim.earned), Aquarium.rate_ph(db, sim.save),
-				Aquarium.fish(db, sim.save).size(), Aquarium.capacity(db)])
+				Aquarium.fish(db, sim.save).size(), Aquarium.capacity(db), sim.cat_meals])
 	print("")
 	print("%-28s %s" % ["olay (ilk kez, dakika)", "  ".join(range(_seeds).map(func(i: int) -> String: return "seed%d" % (i + 1)))])
 	var keys: Array[String] = []
@@ -55,6 +55,7 @@ func _initialize() -> void:
 			keys.append("buy:" + str(g["id"]))
 	keys.append("sell")
 	keys.append("aquarium")
+	keys.append("cat")
 	keys.append("trap_set")
 	keys.append("trap")
 	keys.append("release")

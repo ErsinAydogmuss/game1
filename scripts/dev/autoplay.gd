@@ -111,6 +111,11 @@ extends Node
 ##     dokun → panelde her satılan türün en irisi yüzer (mersin yok), 3 saat sonra kutu üst sınırda ("doldu"), TOPLA
 ##     → para, kutu boş; Nine'ye dokun → dükkân açılır (akvaryum değil), kutu kendiliğinden toplanır, ilk seferde
 ##     Nine tanka dokunmayı söyler, sonraki seferde bıraktıkları parayı; telefon oranında, --safe-inset=130, TR ve EN.
+##   cat: Tekir (Dalga 5). Oturum başında balıkçının arkasında; balıkçı karada yürüyünce peşinden gelir; dokun → mırlar
+##     (kalpli balon, Dede tanıştırır, balıkçı yürümez); yeterince balık tutulunca acıkır (balıklı balon, Dede söyler);
+##     kova boşken dokun → yemez (Dede söyler); kovada iki balık → en ucuzunu yer (bildirim, Dede); balıkçı başka
+##     bölgeye geçince evine döner, iskeleye dönünce yine gelir; sandala binince evine; iskelede ÇİZİM ≤ TOUR_DRAWS
+##     (temiz, ve yağmurda Dede konuşurken); telefon oranında, --safe-inset=130, TR ve EN.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -288,6 +293,8 @@ func _ready() -> void:
 			_play_keeper.call_deferred()
 		"aquarium":
 			_play_aquarium.call_deferred()
+		"cat":
+			_play_cat.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -5901,6 +5908,140 @@ func _play_aquarium() -> void:
 	await _shot("06_dukkan_para")
 	await _tap(shop_panel.close_button.get_global_rect().get_center())
 	await _wait(0.5)
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Tekir (Dalga 5): bkz. dosyanın başı.
+func _play_cat() -> void:
+	_use_save(5)
+	var db := GameState.db
+	var rules := db.rules
+	var save := GameState.save
+	var cat: Cat = main.get("cat")
+	var angler := _angler()
+	var fade: Fade = main.get("fade")
+	GameState.changed.emit()
+	await _wait(1.5)
+	var home: Vector2 = main.call("_cat_home")
+	# 1) Oturumun başında kedi balıkçının arkasında; iskelede çizim.
+	var start := cat.pos2().distance_to(angler.pos2())
+	_check("kedi balıkçının yanında başlar (%.2f m)" % start, start < 1.6)
+	_check("kedi ekranda", get_viewport().get_visible_rect().has_point(_screen(cat.global_position)))
+	var clean := await _measure_draws()
+	print("ÇİZİM iskelede kediyle: %d çizim, %d üçgen" % [int(clean["draws"]), int(clean["primitives"])])
+	_check("ÇİZİM iskelede kediyle: %d (≤%d)" % [int(clean["draws"]), TOUR_DRAWS], int(clean["draws"]) <= TOUR_DRAWS)
+	await _shot("01_iskele")
+	# 2) Balıkçı karaya yürür: kedi peşinden gelir.
+	var dest := home + Vector2(-0.8, 1.6)
+	await _tap_world(dest)
+	await _wait_until(func() -> bool: return not angler.is_walking() and not cat.is_walking(), 12.0)
+	await _wait(0.6)
+	var follow := cat.pos2().distance_to(angler.pos2())
+	_check("balıkçı karada yürüyünce kedi peşinden gelir (%.2f m)" % follow, follow < 1.6
+			and angler.pos2().distance_to(dest) < 1.2)
+	# 3) Dokun: mırlar (kalpli balon, sıçrayış), Dede tanıştırır, balıkçı yürümez.
+	await _tap(_screen(cat.global_position + Vector3(0.0, 0.2, 0.0)))
+	await _wait_frames(3)
+	_check("kediye dokun → mırlar (kalpli balon), Dede tanıştırır, balıkçı yürümez", cat.bubble.is_showing()
+			and cat.bubble.kind == SpeechBubble.Kind.HEART and str(main.get("_line")) == "UI_DEDE_CAT_HELLO"
+			and not angler.is_walking())
+	main.set("bot_camera", true)
+	_frame_on(cat.global_position + Vector3(0.0, 0.25, 0.0), 0.32)
+	await _wait(0.4)
+	await _shot("02_mirlar")
+	main.set("bot_camera", false)
+	await _wait(2.5)
+	# 4) Acıkma: yeterince balık → balıklı balon, Dede ilk açlığı söyler (olta boşken, söz bitince).
+	save.catches += rules.cat_meal_every
+	var bubbled := await _wait_until(func() -> bool:
+		return cat.bubble.is_showing() and cat.bubble.kind == SpeechBubble.Kind.FISH, 4.0)
+	_check("acıkınca balıklı balon", bubbled and cat.hungry)
+	var told := await _wait_until(func() -> bool: return str(main.get("_line")) == "UI_DEDE_CAT_HUNGRY", 10.0)
+	_check("Dede kedinin ilk açlığını söyler", told)
+	main.set("bot_camera", true)
+	_frame_on(cat.global_position + Vector3(0.0, 0.25, 0.0), 0.32)
+	await _wait_until(func() -> bool: return cat.bubble.is_showing(), 10.0)
+	await _wait(0.3)
+	await _shot("03_acikti")
+	main.set("bot_camera", false)
+	await _wait(0.5)
+	# 5) Kova boş: dokun → yemez, aç bekler, Dede söyler.
+	save.bucket.clear()
+	await _tap(_screen(cat.global_position + Vector3(0.0, 0.2, 0.0)))
+	await _wait_frames(3)
+	_check("kova boşken dokun → yemez, aç bekler, Dede söyler", CatRules.is_hungry(rules, save) and save.cat_fed == 0
+			and str(main.get("_line")) == "UI_DEDE_CAT_EMPTY")
+	await _wait(1.0)
+	# 6) Kovada iki balık: dokun → en ucuzunu yer (gümüş balığı), tok, bildirim, Dede.
+	save.bucket = [{ "fish": "rudd", "size_cm": 25, "stars": 2 }, { "fish": "silverside", "size_cm": 12, "stars": 1 }]
+	await _tap(_screen(cat.global_position + Vector3(0.0, 0.2, 0.0)))
+	await _wait_frames(3)
+	var toast: Label = _hud().get("_toast")
+	_check("dokun → kovadaki en ucuz balığı yer, tok, Dede ve bildirim", save.bucket.size() == 1
+			and str(save.bucket[0]["fish"]) == "rudd" and save.cat_fed == 1 and not CatRules.is_hungry(rules, save)
+			and str(main.get("_line")) == "UI_DEDE_CAT_FED"
+			and toast.text == UiKit.upper(tr("UI_CAT_ATE") % tr("FISH_silverside")))
+	await _wait(0.3)
+	await _shot("04_yedi")
+	# 7) Balıkçı başka bölgede: kedi evine döner; iskeleye dönünce yine gelir.
+	main.call("_travel", "reeds")
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy() and str(main.get("zone_id")) == "reeds", 5.0)
+	var homed := await _wait_until(func() -> bool:
+		return cat.pos2().distance_to(home) < 0.4 and not cat.is_walking(), 30.0)
+	_check("balıkçı sazlıkta → kedi evine döner (%.2f m)" % cat.pos2().distance_to(home), homed)
+	main.call("_travel", "dock_cove")
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy() and str(main.get("zone_id")) == "dock_cove", 5.0)
+	var back := await _wait_until(func() -> bool:
+		return cat.pos2().distance_to(angler.pos2()) < 1.6 and not cat.is_walking(), 30.0)
+	_check("iskeleye dönünce kedi yine gelir (%.2f m)" % cat.pos2().distance_to(angler.pos2()), back)
+	# 8) Sandal: kedi evine döner (sandal ve derin orta bot için açılır).
+	save.owned.append("boat")
+	save.xp = db.rank_xp[8]
+	GameState.changed.emit()
+	await _wait(1.0)
+	main.call("_go_boat", 0)
+	await _wait_until(func() -> bool: return bool(main.get("in_boat")) and not fade.busy(), 6.0)
+	var boat_home := await _wait_until(func() -> bool:
+		return cat.pos2().distance_to(home) < 0.4 and not cat.is_walking(), 30.0)
+	_check("sandaldayken kedi evinde", bool(main.get("in_boat")) and boat_home)
+	main.call("_return_to_shore")
+	await _wait_until(func() -> bool: return not bool(main.get("in_boat")) and not fade.busy(), 6.0)
+	await _wait_until(func() -> bool: return cat.pos2().distance_to(angler.pos2()) < 1.6 and not cat.is_walking(), 30.0)
+	# 9) Çizim: iskelenin ucunda (öteki botların ölçtüğü yer) yağmurda, Dede konuşurken, kedi ekranda (en kötü kalıcı
+	# görünüş); bildirimler sönünce. Kedinin payı: kedi gizliyken de ölçülür.
+	main.call("_travel", "dock_cove")
+	await _wait_until(func() -> bool: return fade.busy(), 1.0)
+	await _wait_until(func() -> bool: return not fade.busy(), 5.0)
+	await _wait_until(func() -> bool: return cat.pos2().distance_to(angler.pos2()) < 1.6 and not cat.is_walking(), 30.0)
+	var clock: WorldClock = main.get("world_clock")
+	var scene: LakeScene = main.get("scene")
+	var day := 9
+	save.clock_s = day * DayClock.day_s(rules) + (rules.phase_s >> 1)
+	save.flags[Weather.DEBUG_DAY] = day
+	save.flags[Weather.DEBUG_KIND] = "rain"
+	clock.refresh(save)
+	scene.set_look(DayLook.at(rules, save), true)
+	var toast_box: Control = _hud().get("_toast_box")
+	await _wait_until(func() -> bool: return not toast_box.visible, 8.0)
+	await _wait(0.5)
+	var plain := await _measure_draws()
+	await _tap(_screen(_elder().head_point()))
+	await _wait(0.8)
+	var rain := await _measure_draws()
+	cat.visible = false
+	var without := await _measure_draws()
+	cat.visible = true
+	print("ÇİZİM iskelede yağmurda: %d; Dede konuşurken kediyle %d, kedisiz %d" % [int(plain["draws"]),
+			int(rain["draws"]), int(without["draws"])])
+	_check("ÇİZİM iskelede yağmurda Dede konuşurken kediyle: %d (≤%d; kedisiz %d)" % [int(rain["draws"]), TOUR_DRAWS,
+			int(without["draws"])], int(rain["draws"]) <= TOUR_DRAWS
+			and get_viewport().get_visible_rect().has_point(_screen(cat.global_position)))
+	await _shot("05_yagmur")
 	_check_buttons()
 	for line in _results:
 		print("KONTROL ", line)

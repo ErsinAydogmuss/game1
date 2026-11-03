@@ -115,6 +115,15 @@ const REQ_SEEN_FLAG := "requests_seen"
 const FINAL_TOLD_FLAG := "told_final"
 ## Nine'nin akvaryumu tanıttığı söz bir kez (tankta ilk balık varken dükkân açılınca).
 const AQUARIUM_FLAG := "told_aquarium"
+## Tekir (Dalga 5): evi iskelenin kara ucuna göre (sağında, çimende); balıkçının ekranda yanında (kameranın sağı ya da
+## solu: kedi kendine yakın yanı seçer) ve biraz kameraya doğru yürür: arkasında kalsa balıkçının gövdesi örterdi
+## (m); Dede'nin ilk sözleri (bir kez): tanışma (ilk dokunuş), ilk açlık, ilk besleme.
+const CAT_HOME := Vector2(1.3, 0.9)
+const CAT_SIDE := 0.8
+const CAT_TOWARD := 0.3
+const CAT_HELLO_FLAG := "told_cat"
+const CAT_HUNGRY_FLAG := "told_cat_hungry"
+const CAT_FED_FLAG := "told_cat_fed"
 const KEEPER_RINGS: Array[Vector2] = [Vector2(2.4, 1.6), Vector2(3.6, 2.0)]
 const TURQUOISE := Color(0.62, 1.0, 0.95, 0.85)
 
@@ -124,6 +133,11 @@ var scene: LakeScene
 var angler: Angler
 var elder: Elder
 var nine: Nine
+var cat: Cat
+## Kedinin evinin bölgesi (iskele koyu: balıkçı orada değilse ya da sandaldaysa kedi evine döner) ve az önce aç mıydı
+## (ilk açlıkta Dede söyler).
+var _cat_zone: String = ""
+var _cat_was_hungry: bool = false
 var shop: ShopStall
 var bobber: Bobber
 var line: FishingLine
@@ -303,8 +317,13 @@ func _ready() -> void:
 	add_child(shop)
 	nine = Nine.new()
 	add_child(nine)
+	cat = Cat.new()
+	cat.height_at = scene.stand_height
+	add_child(cat)
 	_seat_elder()
 	_place_shop()
+	cat.path = path
+	_cat_zone = str(Zones.at(GameState.db, spot_id, _cat_home()).get("id", ""))
 	bobber = Bobber.new()
 	add_child(bobber)
 	stand = RodStand.new()
@@ -321,6 +340,7 @@ func _ready() -> void:
 	add_child(ambient)
 	elder.camera = camera
 	nine.camera = camera
+	cat.camera = camera
 	line = FishingLine.new()
 	line.camera = camera
 	line.visible = false
@@ -399,6 +419,7 @@ func _start_session() -> void:
 	_follow_zone()
 	angler.place(session.angler)
 	angler.face(Vector2(0, -1))
+	_place_cat()
 	bobber.hide_bobber()
 	line.visible = false
 	angler.rod_on_stand = false
@@ -700,6 +721,8 @@ func _build_input() -> void:
 	input.ground_point = ground_point
 	input.line_out = func() -> bool: return session.line_out()
 	input.hit_targets = [
+		# Tekir küçük ve dar dokunma alanlı: Dede'den önce (Dede'nin yanında oturabilir).
+		["cat", func(screen: Vector2) -> bool: return cat.hit(camera, screen)],
 		["dede", func(screen: Vector2) -> bool: return elder.hit(camera, screen)],
 		# Tezgâhtaki akvaryum dükkândan önce (dükkânın zarfı tankı da kapsar).
 		["aquarium", func(screen: Vector2) -> bool: return shop.tank_hit(camera, screen)],
@@ -1598,6 +1621,11 @@ func _world_line() -> bool:
 		_say("UI_DEDE_FINAL")
 		_line_time = ADVICE_TIME
 		return true
+	# Tekir ilk kez acıktı: Dede nasıl besleneceğini söyler (kedi o arada beslendiyse söylemez).
+	if cat.hungry and not save.flags.has(CAT_HUNGRY_FLAG):
+		save.flags[CAT_HUNGRY_FLAG] = true
+		_say("UI_DEDE_CAT_HUNGRY")
+		return true
 	if bool(save.flags.get(LANTERN_FLAG, false)) and not save.flags.has(LANTERN_TOLD):
 		save.flags[LANTERN_TOLD] = true
 		_say("UI_DEDE_LANTERN")
@@ -1845,6 +1873,7 @@ func _use_technique_gear() -> void:
 func _present(delta: float) -> void:
 	_follow_zone()
 	_sync_technique()
+	_update_cat()
 	var reel := session.reel
 	var fighting := session.state == FishingSession.State.FIGHTING and reel != null
 	shadows.sync(session.sim, angler.pos2(), fighting and reel.thrashing(), delta)
@@ -2587,6 +2616,8 @@ func _on_target(id: String) -> void:
 			_on_shop()
 		"aquarium":
 			_on_aquarium()
+		"cat":
+			_on_cat()
 		"boat":
 			_on_boat()
 		"trap":
@@ -2639,6 +2670,85 @@ func _sync_aquarium() -> void:
 	for f in tank:
 		colors.append(db.fish_by_id(str(f["fish"]))["color"])
 	shop.set_tank(colors)
+
+
+# --- Tekir (Dalga 5) ---------------------------------------------------------------
+
+## Kedinin evi: iskelenin kara ucunun sağında, çimende (Nine'nin dükkânının karşı yanı; yürünebilen en yakın yer).
+func _cat_home() -> Vector2:
+	var land := Vector2(lake.dock.get_center().x, lake.dock.end.y)
+	var home := land + CAT_HOME
+	return path.nearest_open(home) if path != null else home
+
+
+## Kedinin gideceği yer: balıkçı iskele koyunda ve karadaysa ekranda yanı (kendine yakın yan, biraz kameraya doğru),
+## değilse evi.
+func _cat_target() -> Vector2:
+	if in_boat or zone_id != _cat_zone or _cat_zone.is_empty():
+		return _cat_home()
+	var right3 := camera.global_transform.basis.x
+	var right := Vector2(right3.x, right3.z).normalized()
+	var toward := Vector2(-right.y, right.x)
+	var at := angler.pos2()
+	if (cat.pos2() - at).dot(right) < 0.0:
+		right = -right
+	var p := at + right * CAT_SIDE + toward * CAT_TOWARD
+	var open := path.nearest_open(p)
+	return open if Dice.is_point(open) else _cat_home()
+
+
+## Oturumun başında kedi hemen yerinde (balıkçının arkasında ya da evinde), balıkçıya bakar.
+func _place_cat() -> void:
+	var target := _cat_target()
+	cat.place(target, angler.pos2() - target)
+	_cat_was_hungry = CatRules.is_hungry(GameState.db.rules, GameState.save)
+
+
+## Her kare: kedinin hedefi ve açlığı. İlk açlıkta Dede söyler (olta boşa dönünce: _world_line).
+func _update_cat() -> void:
+	var look := angler.pos2() if not in_boat and zone_id == _cat_zone else _cat_home() + Vector2(0.0, 1.0)
+	cat.go_to(_cat_target(), look)
+	var hungry := CatRules.is_hungry(GameState.db.rules, GameState.save)
+	cat.hungry = hungry
+	if hungry and not _cat_was_hungry and not GameState.save.flags.has(CAT_HUNGRY_FLAG):
+		_world_line_due = true
+	_cat_was_hungry = hungry
+
+
+## Tekir'e dokunuldu (olta boşta): açsa kovadaki en ucuz balığı yer (kova boşsa bekler: miyavlar, Dede
+## söyler); tokken mırlar. Her sesin görseli (balon, sıçrayış) ve titreşimi var.
+func _on_cat() -> void:
+	if session.state != FishingSession.State.IDLE or _card_up():
+		return
+	var db := GameState.db
+	var save := GameState.save
+	if CatRules.is_hungry(db.rules, save):
+		var fed := CatRules.feed(db, save)
+		if not fed.is_empty():
+			cat.eat()
+			Sounds.play("cat_eat")
+			Sounds.haptic(25)
+			hud.toast(tr("UI_CAT_ATE") % tr("FISH_" + str(fed["fish"])), UiKit.ACCENT, "fish:" + str(fed["fish"]))
+			_cat_was_hungry = false
+			if not save.flags.has(CAT_FED_FLAG):
+				save.flags[CAT_FED_FLAG] = true
+				_say("UI_DEDE_CAT_FED")
+			GameState.save_game()
+			_refresh_status()
+			return
+		# Kova boş: kedi aç bekler (ceza yok).
+		cat.bubble.pop(SpeechBubble.Kind.FISH, Cat.HUNGRY_HOLD)
+		Sounds.play("meow")
+		Sounds.haptic(12)
+		_say("UI_DEDE_CAT_EMPTY")
+		return
+	cat.purr()
+	Sounds.play("purr")
+	Sounds.haptic(35)
+	if not save.flags.has(CAT_HELLO_FLAG):
+		save.flags[CAT_HELLO_FLAG] = true
+		GameState.save_game()
+		_say("UI_DEDE_CAT_HELLO")
 
 
 ## Tezgâhtaki akvaryuma dokunuldu (olta boşta): Akvaryum paneli (her türün en irisi, bağış kutusu, TOPLA).

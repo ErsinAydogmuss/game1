@@ -385,9 +385,18 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - ✅ Dükkân kodla kurulur: alçak döşeme, raflı arka duvar (yem kavanozları, kutular), tezgâh (solucan kovası, kavanozlar, mısır kasası, zil), olta sehpası ve kepçe, turkuaz-krem çizgili tente, "Nine'nin Dükkânı" tabelası; yanında fıçı, kasa, çuval. Kamera yukarıdan baktığı için tente yüksek ve kısa: Nine'nin başı altından görünür. Balıkçı dükkânın içinden geçmez.
   - ✅ Hikâyede gençliğini anlatır (şişelerdeki tek numaralı mektuplar onun); göl sevgisi 6 olunca dükkâna ilk
     uğrayışta "altın hamur"u verir (§10.5).
-- **Kedi (Tekir)** 🔜:
-  - İskelede bekler, peşinden biraz gelir. Dokununca mırlar (titreşim).
-  - Küçük balık isteyebilir; her 5 beslemede sıradaki hediyeyi getirir (sabit sırayla, zar yok).
+- ✅ **Kedi (Tekir; Dalga 5, 2. adım):**
+  - Quaternius'un CC0 kedisi, gri tekir: model dokusuz geldiği için üç yüzeyi tek yüzeyde birleşir, çizgiler
+    kalıp pozdaki yerden shader'da çizilir (gövdeyle kıvrılır, yürürken kaymaz), beyaz patiler, pembe kulak içi. Dış
+    çizgi yerine kenar koyulaşması, gölgesiz: tek çizim. Gerçeğinden iri (oyun kamerasından seçilsin).
+  - İskele koyunda balıkçının ekranda yanında yürür (kıyı yolundan; uzaksa koşar): arkasında kalsa balıkçının
+    gövdesi örterdi. Balıkçı başka bölgeye ya da sandala geçince evine döner (iskelenin başı, çimende).
+  - Dokununca mırlar: kalpli balon, küçük bir sıçrayış, ses ve titreşim; ilk seferde Dede tanıştırır.
+  - Son beslenmeden beri 8 balık tutulunca acıkır (`rules.json` `cat`; gerçek saat değil: oyuncu yokken aç kalmaz,
+    ceza yok). Açken arada bir balıklı balon çıkar; ilk seferde Dede nasıl besleneceğini söyler. Dokununca
+    kovadaki en ucuz balığı yer (bildirim, kalp); kova boşsa bekler.
+  - Her 5 beslemede sıradaki hediyeyi getirir (sabit sırayla, zar yok): hediyeler kıyafet ve süsler, 4. adımda
+    (kıyafetler) gelir. Besleme sayısı şimdiden sayılır: önceden kazanılan hediyeler o zaman açılır.
 
 ## 8. Görünüm
 
@@ -834,6 +843,10 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   (ör. karbon şamandıra kamışı 278–303 → 275–284. dakika). Ay Turnası şansa bağlı: botun yolu değişince seed 1000'de
   185 → 343. dakika (bot o güne kadar nilüferli koyda 116 gece atışı yaptı); korkuluğu artık uzatılmış koşuda (370 dk,
   sınır 360).
+- ✅ **Dalga 5, Tekir'in ölçümü** (2. adım; `economy_report.gd -- --hours=16 --seeds=6`): denge botu dükkâna
+  uğrayınca kedi açsa kovadaki en ucuz balığı verir: 16 saatte 131–139 balık (saatte ~8,5; ilk besleme 4,4–5,7.
+  dakikada). Kazanca etkisi ihmal edilir; botun seyri değiştiği için 16 saatte saatte 7.764–8.480 para (akvaryumla
+  7.728–8.053), korkuluğun üç seed'inde 310. dakikada 5.786–6.106 (korkuluk 6.500).
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 

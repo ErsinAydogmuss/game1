@@ -699,3 +699,8 @@ UI_AQUARIUM_NOTE,The biggest of each kind joins the tank by itself; the fish in 
 UI_AQUARIUM_GOT,Aquarium visitors left %s coins,Akvaryuma gelenler %s para bıraktı
 UI_NINE_AQUARIUM,Tap the tank on my counter! Your fish swim there.,Tezgâhtaki tanka dokun! Balıkların orada yüzüyor.
 UI_NINE_AQUARIUM_COINS,Visitors left %s coins at the tank. Here!,Tanka gelenler %s para bıraktı. Al bakalım!
+UI_CAT_ATE,Yum! Tekir ate: %s,Tekir afiyetle yedi: %s
+UI_DEDE_CAT_HELLO,"That's Tekir, the dock cat. Tekir loves a small fish.","Bu Tekir, iskelenin kedisi. Arada bir balık ister."
+UI_DEDE_CAT_HUNGRY,Tekir is hungry! Tap Tekir to share a small fish.,"Tekir acıktı! Dokun, kovandan küçük bir balık yesin."
+UI_DEDE_CAT_FED,Well done! Tekir likes you and will tag along.,"Afiyet olsun! Tekir seni sevdi, hep peşinde artık."
+UI_DEDE_CAT_EMPTY,"Tekir is hungry, but your bucket is empty.",Tekir aç ama kovan boş. Önce bir balık tut.

@@ -317,3 +317,26 @@ func test_bot_collects_the_aquarium() -> void:
 	# dakikada tankın çoğu dolu, bağış saatte ~360 (balıktan saatte ~5.000'in yanında küçük bir pay).
 	var rate := Aquarium.rate_ph(db, sim.save)
 	assert_between(float(rate), 150.0, 450.0, "90 dakikada saatlik bağış (%d tür)" % Aquarium.fish(db, sim.save).size())
+
+
+## Tekir (Dalga 5): bot dükkâna uğrayınca kedi açsa kovadaki en ucuz balığı verir; sayaçlar kayıtla aynı, kedi hiçbir
+## satışta bir öğünden fazla yemez (tokken yemez).
+func test_bot_feeds_the_cat() -> void:
+	var db := content()
+	var sim := SessionSim.new(db, db.main_spot, SEEDS[1])
+	var sells := 0
+	var most := 0
+	var fed := 0
+	while sim.minutes() < 120.0:
+		sim.cast_once()
+		if sim.sells != sells:
+			most = maxi(most, sim.cat_meals - fed)
+			sells = sim.sells
+			fed = sim.cat_meals
+	assert_true(sim.cat_meals > 0, "120 dakikada kedi beslendi (%d)" % sim.cat_meals)
+	assert_eq(sim.save.cat_fed, sim.cat_meals, "kayıttaki besleme sayısı")
+	assert_eq(int(sim.save.stats.get("cat_fed", 0)), sim.cat_meals, "sayaç")
+	assert_true(most <= 1, "bir satışta en çok bir öğün")
+	assert_true(sim.milestones.has("cat"), "ilk besleme dönüm noktası")
+	# Kedi her cat_meal_every balıkta bir acıkır, ama yalnızca dükkâna uğrayınca beslenir: öğün sayısı satışlardan çok olamaz.
+	assert_true(sim.cat_meals <= sim.sells, "öğünler satışlardan fazla değil")
