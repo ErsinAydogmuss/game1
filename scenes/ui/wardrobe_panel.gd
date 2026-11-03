@@ -41,6 +41,8 @@ var _tabs: HBoxContainer
 var _tab_buttons: Dictionary = {}
 var _tab_labels: Dictionary = {}
 var _tab_badges: Dictionary = {}
+## Balıkçı sekmesinin portresi (görseli yoksa null: sekmede kodla çizilen balıkçı).
+var _angler_face: TextureRect
 var _cards_row: HBoxContainer
 var _cards: Dictionary = {}
 var _buttons: Dictionary = {}
@@ -136,7 +138,18 @@ func _tab_button(id: String, icon_kind: String) -> Button:
 	b.name = "Tab_" + id
 	b.custom_minimum_size = TAB
 	b.focus_mode = Control.FOCUS_NONE
-	var icon := OutfitIcon.make(icon_kind, {}, TAB_ICON)
+	var icon: Control = OutfitIcon.make(icon_kind, {}, TAB_ICON)
+	if id == "angler" and ItemArt.portrait("angler_girl") != null:
+		# Balıkçı sekmesinde seçili balıkçının portresi (Parti 5b angler_portraits; refresh günceller).
+		icon.free()
+		_angler_face = TextureRect.new()
+		_angler_face.name = "Face"
+		_angler_face.size = Vector2(TAB_ICON, TAB_ICON)
+		_angler_face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_angler_face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_angler_face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		_angler_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon = _angler_face
 	icon.position = Vector2((TAB.x - TAB_ICON) * 0.5, 10)
 	b.add_child(icon)
 	var label := UiKit.ink("", 21, UiKit.INK, HORIZONTAL_ALIGNMENT_CENTER)
@@ -216,6 +229,9 @@ func refresh() -> void:
 	_cards_row.visible = angler_tab
 	_outfit_row.visible = not angler_tab
 	var look := Outfits.look(db, save)
+	if _angler_face != null:
+		var face := ItemArt.portrait("angler_" + save.character)
+		_angler_face.texture = face if face != null else ItemArt.portrait("angler_girl")
 	for t: Array in TABS:
 		var id := str(t[0])
 		var selected := id == _tab

@@ -84,6 +84,45 @@ func test_edge_despill_keeps_purple() -> void:
 	assert_true(soft > 10, "kenar yumuşak (yarı saydam piksel: %d)" % soft)
 
 
+## Işıltı (despill "glow"; altın hamur, Bekçi'nin pulu): koyu çizgili sarı diskin çevresinde macentaya
+## karışan sıcak ışıltı. "all"da ışıltı opak ve pembe kalır (krem panelde pembe hale); "glow"da ışıltının
+## payı kadar saydam ve kendi renginde (pembe değil), dış ucu söner; diskin içi ve çizgisi aynı.
+func test_glow_despill_softens_halo() -> void:
+	var img := Image.create_empty(160, 120, false, Image.FORMAT_RGBA8)
+	img.fill(MAGENTA)
+	var center := Vector2(80, 60)
+	var warm := Color8(255, 210, 80)
+	for y in 120:
+		for x in 160:
+			var d := Vector2(x + 0.5, y + 0.5).distance_to(center)
+			if d > 30.0 and d < 50.0:
+				img.set_pixel(x, y, MAGENTA.lerp(warm, 0.8 * (50.0 - d) / 20.0))
+	_disc(img, center, 31, Color8(60, 30, 20))
+	_disc(img, center, 26, Color8(245, 200, 30))
+	var all := ArtSheet.new().remove_background(img, "all")
+	var glow := ArtSheet.new().remove_background(img, "glow")
+	var mid := Vector2i(80 + 40, 60)
+	assert_true(all.get_pixel(mid.x, mid.y).a > 0.95 and all.get_pixel(mid.x, mid.y).r > all.get_pixel(mid.x, mid.y).g + 0.2,
+			"all: ışıltı opak ve pembe kalır (%s)" % all.get_pixel(mid.x, mid.y))
+	var halo := glow.get_pixel(mid.x, mid.y)
+	assert_between(halo.a, 0.25, 0.6, "glow: ışıltının ortası yarı saydam")
+	assert_true(halo.b < halo.g, "glow: ışıltı pembe değil, sıcak (%s)" % halo)
+	assert_true(glow.get_pixel(80 + 48, 60).a < 0.2, "glow: ışıltının dış ucu söner")
+	assert_true(glow.get_pixel(80, 60).is_equal_approx(Color8(245, 200, 30)), "glow: diskin içi aynı")
+	assert_true(glow.get_pixel(80 + 29, 60).a > 0.95, "glow: koyu çizgi opak kalır")
+	# Nesnenin kapattığı boşluktan görünen gölgeli macenta (fenerin camıyla sapı arası) pembe kalmaz;
+	# kırmızı (mühür) aynı kalır.
+	var gap := Image.create_empty(120, 80, false, Image.FORMAT_RGBA8)
+	gap.fill(MAGENTA)
+	_disc(gap, Vector2(40, 40), 30, Color8(60, 30, 20))
+	_disc(gap, Vector2(40, 40), 8, Color8(150, 25, 60))
+	_disc(gap, Vector2(95, 40), 15, Color8(200, 30, 40))
+	var shaded := ArtSheet.new().remove_background(gap, "glow")
+	var hole := shaded.get_pixel(40, 40)
+	assert_true(hole.a < 0.8 and hole.b < hole.g + 0.05, "glow: kapalı boşluktaki koyu macenta pembe kalmaz (%s)" % hole)
+	assert_true(shaded.get_pixel(95, 40).is_equal_approx(Color8(200, 30, 40)), "glow: kırmızı aynı kalır")
+
+
 func test_sheet_splits_into_objects() -> void:
 	var sheet := ArtSheet.new()
 	var pieces := sheet.split(sheet.remove_background(_sheet()), 3, 2)
@@ -160,7 +199,7 @@ func test_art_sheets_are_consistent() -> void:
 		if bool(def.get("reference", false)):
 			continue
 		# Bilinmeyen değer sessizce "none" sayılırdı (ArtSheet.remove_background).
-		assert_true(str(def.get("despill", "all")) in ["all", "edge", "none"], "%s: despill all, edge ya da none" % file)
+		assert_true(str(def.get("despill", "all")) in ["all", "edge", "glow", "none"], "%s: despill all, edge, glow ya da none" % file)
 		# Bilinmeyen kesim sessizce "square" sayılırdı (tools/process_images.gd).
 		assert_true(str(def.get("fit", "square")) in ["square", "box", "trim", "tile"], "%s: fit bilinen bir kesim" % file)
 		var names: Array = def["names"]

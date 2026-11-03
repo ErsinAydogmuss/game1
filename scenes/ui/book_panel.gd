@@ -630,7 +630,17 @@ func _build_secret(db: ContentDB, save: SaveData) -> void:
 		note = tr("UI_SECRET_GOLDEN") % DayPanel.text_of(db, golden)
 	else:
 		note = tr("UI_SECRET_PIECES_HINT")
-	_secret_lines.add_child(_wrapped(note, 26, UiKit.INK_SOFT))
+	if save.keeper > 0 and ItemArt.item("keeper_scale") != null:
+		# Finalden sonra Bekçi'nin pulu (Parti 5a) notun yanında.
+		var done := HBoxContainer.new()
+		done.add_theme_constant_override("separation", 10)
+		done.add_child(GameIcon.make("item:keeper_scale", 52))
+		var done_label := _wrapped(note, 26, UiKit.INK_SOFT)
+		done_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		done.add_child(done_label)
+		_secret_lines.add_child(done)
+	else:
+		_secret_lines.add_child(_wrapped(note, 26, UiKit.INK_SOFT))
 	var dough := HBoxContainer.new()
 	dough.add_theme_constant_override("separation", 10)
 	_secret_lines.add_child(dough)

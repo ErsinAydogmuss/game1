@@ -344,8 +344,9 @@ func _layout() -> void:
 		_logo.size = Vector2(h * 2.2, h)
 		_logo.position = Vector2(view.x - b - _logo.size.x - 12.0, view.y - PhotoFrame.strip_height(rect) * 0.9)
 	else:
+		# Ersin'in çerçevesinde köşe süsünün (sazlar, nilüfer, pusula) solunda (PhotoFrame.logo_inset).
 		_logo.size = Vector2(h * 2.2, h)
-		_logo.position = Vector2(view.x - b - _logo.size.x - 16.0, view.y - b - h - 12.0)
+		_logo.position = view - PhotoFrame.logo_inset(rect, _frame.kind) - _logo.size
 
 
 ## Düğmedeki küçük çerçeve önizlemesi (yok: çizgili kutu).

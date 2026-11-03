@@ -20,10 +20,10 @@ Görseller partiler hâlinde geliyor; her parti bir dalgadan önce. **Hepsini bi
 | 2. Ekipman | ✅ geldi, oyunda (v0.2.1) | 7 | Nine'nin dükkânındaki 42 eşya (bugün satılan 33'ü görünüyor; kalanı Dalga 2–4'te) |
 | 3. Göl | ✅ geldi, oyunda | 5 | bölge rozetleri, harita kâğıdı, harita çıkartmaları ve ikonları, zemin dokuları |
 | 4. Teknikler | ✅ geldi, oyunda (v0.4) | 4 | yapay yemler, sinekler ve dip takımı, teknik ikonları, takım çantası, kerevit (çöp ve hikâye eşyaları Dalga 4'te) |
-| 5a. Hikâye ve canlı dünya | Dalga 4 (promptlar aşağıda) | 6 + 2 isteğe bağlı | vakit ve hava ikonları, çay, göl sevgisi, istekler, altın hamur, mektup kâğıdı, sırrın haritası, Gölün Bekçisi |
-| 5b. Yuva | Dalga 5 (promptlar aşağıda) | 3 + 2 isteğe bağlı | dolap, fotoğraf makinesi, Tekir, hediye, bağış kutusu, fotoğraf çerçeveleri, akvaryumun arka planı |
+| 5a. Hikâye ve canlı dünya | ✅ geldi, oyunda (v0.6 sonrası) | 6 + 2 isteğe bağlı | vakit ve hava ikonları, çay, göl sevgisi, istekler, altın hamur, mektup kâğıdı, sırrın haritası, Gölün Bekçisi |
+| 5b. Yuva | ✅ geldi, oyunda (v0.6 sonrası) | 3 + 2 isteğe bağlı | dolap, fotoğraf makinesi, Tekir, hediye, bağış kutusu, fotoğraf çerçeveleri, akvaryumun arka planı |
 
-5a ve 5b'nin promptları aşağıda. Kıyafetlerin (şapka, yelek, kamış kaplaması) ve akvaryumdaki balıkların ikonları oyunun kendi 3D modellerinden çekiliyor, görsel istemiyor.
+5a ve 5b'nin promptları aşağıda; ikisi de geldi ve oyunda (nerede kullanıldıkları: "Parti 5a–5b oyunda"). Kıyafetlerin (şapka, yelek, kamış kaplaması) ve akvaryumdaki balıkların ikonları oyunun kendi 3D modellerinden çekiliyor, görsel istemiyor.
 
 ## Nasıl teslim edersin?
 
@@ -836,6 +836,25 @@ of the image is calm sky with nothing in it, room for the game logo. No text.
 ```
 
 ---
+
+## Parti 5a–5b oyunda
+
+Hepsi geldi (13 sayfa), kesildi ve oyuna bağlandı:
+
+| Görsel | Oyunda nerede |
+|---|---|
+| `time_icons`, `weather_icons` | saat çipi (vaktin ve havanın ikonu tek atlasta: tek çizim), "Bugün" paneli, defter, bildirimler; çay, göl sevgisi, istekler |
+| `home_icons` | dolap, kamera, Tekir, hediye ("Tekir sana hediye getirdi"), bağış kutusu; mama kabı acıkan Tekir'in balonunda |
+| `story_items` | altın hamur, harita parçası, mektup, yanan fener (Nine'nin hediyesi), cetvel (Dede'nin boy istekleri), Bekçi'nin pulu (finalden sonra defterin Gölün Sırrı sayfasında). Işıltılar macentaya karışmıştı: kesim aracının `glow` temizliği onları saydam ve kendi renginde bırakır |
+| `letter_paper` | mektup paneli (9 dilimli; leke ve balık çizimi köşelerde kalır, imza balığa binmez) |
+| `secret_map` | defterde Gölün Sırrı'nın dört parçalık haritası |
+| `keeper` | Bekçi'nin Masalsı kartı ve defterdeki resmi; `keeper_top` haritada X'in yanında; `keeper_leap` jenerikte |
+| `portraits_young` | mektupların başlığında genç Nine ve Dede; ikisi birlikte jenerikte |
+| `ending` | jeneriğin arkasında (yazılar koyu şeridin üstünde) |
+| `photo_frames` | fotoğraf modunun dört çerçevesi (9 dilimli; köşe süsleri gerilmez, logo süsün yanında) |
+| `aquarium_bg` | Akvaryum panelindeki tankın arka planı |
+| `angler_portraits` | dolabın Balıkçı sekmesinde seçili balıkçının yüzü (`tekir` şimdilik yedekte: tanıtım ve mağaza için) |
+| `store_art` | README'nin başında (`docs/img/tanitim.jpg`) |
 
 ## Teknik not (Claude için)
 

@@ -1,5 +1,5 @@
 {
-	"_note": "Kullanıcının ChatGPT görsel sayfaları (docs/gorsel-istekleri.md). Adlar soldan sağa, üst satırdan başlayarak. tools/process_images.gd okur. fit: square (ikon, kareye ortalanır), box (tek görsel), trim (9 dilimli çerçeve ve düğme; oran korunur, payları UiKit.FRAME_SLICES'ta), tile (zemin dokusu: kare doku örneğinin içinden kesilir, dikişsiz yapılır, saydamlıksız). despill: renk sızıntısı temizliği all (varsayılan; cam ve ağ deliklerindeki macenta da), edge (yalnızca kenar: Destansı moru solmasın), none.",
+	"_note": "Kullanıcının ChatGPT görsel sayfaları (docs/gorsel-istekleri.md). Adlar soldan sağa, üst satırdan başlayarak. tools/process_images.gd okur. fit: square (ikon, kareye ortalanır), box (tek görsel), trim (9 dilimli çerçeve ve düğme; oran korunur, payları UiKit.FRAME_SLICES'ta), tile (zemin dokusu: kare doku örneğinin içinden kesilir, dikişsiz yapılır, saydamlıksız). despill: renk sızıntısı temizliği all (varsayılan; cam ve ağ deliklerindeki macenta da), edge (yalnızca kenar: Destansı moru solmasın), glow (macentaya karışan ışıltı saydam ve kendi renginde: altın hamur, Bekçi'nin pulu), none.",
 	"sheets": [
 		{ "file": "style_sheet", "reference": true, "out": "res://docs/img/stil_sayfasi.jpg" },
 		{ "file": "concept_screen", "reference": true, "out": "res://docs/img/hedef_ekran.jpg" },
@@ -57,7 +57,7 @@
 			"names": ["phase_morning", "phase_noon", "phase_evening", "phase_night", "tea", "love"] },
 		{ "file": "weather_icons", "out": "res://assets/icons/ui", "size": 160, "grid": [3, 2],
 			"names": ["weather_clear", "weather_cloudy", "weather_rain", "weather_fog", "weather_storm", "requests"] },
-		{ "file": "story_items", "out": "res://assets/icons/items", "size": 256, "grid": [3, 2],
+		{ "file": "story_items", "out": "res://assets/icons/items", "size": 256, "grid": [3, 2], "despill": "glow",
 			"names": ["golden_dough", "map_piece", "ruler", "letter", "lantern_lit", "keeper_scale"] },
 		{ "file": "letter_paper", "out": "res://assets/ui/frames", "size": 1536, "fit": "trim", "grid": [1, 1],
 			"names": ["letter_paper"] },

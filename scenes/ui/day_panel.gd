@@ -356,8 +356,11 @@ static func text_of(db: ContentDB, request: Dictionary) -> String:
 static func icon_of(db: ContentDB, request: Dictionary) -> String:
 	var want: Dictionary = request["want"]
 	match str(request["kind"]):
-		"species", "size":
+		"species":
 			return "fish:" + str(want.get("fish", ""))
+		"size":
+			# Boy isteği: Ersin'in balık cetveli (Parti 5a; türün adı yazıda), yoksa türün resmi.
+			return "item:ruler" if ItemArt.item("ruler") != null else "fish:" + str(want.get("fish", ""))
 		"technique":
 			return "tech_" + str(want.get("technique", ""))
 		"zone":

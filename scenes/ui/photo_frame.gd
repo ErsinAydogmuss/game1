@@ -4,10 +4,20 @@ extends Control
 ## görüntüyle birlikte alınır). Çeşitler (KINDS): yok, ahşap (kalın kahverengi kenar, iç çizgi, köşe çivileri),
 ## polaroid (krem kenar, altta geniş şerit; şeritte oyunun adı), çiçek (pastel pembe kenar, renkli çiçekler),
 ## eski kâğıt (Gölün Sırrı'nın haritası gibi: sarımsı kâğıt, yırtık iç kenar, sol üst köşede pusula).
-## Parti 5b'nin çerçeve görselleri gelince onlarla çizilebilir (photo_wood, photo_polaroid, photo_lotus,
-## photo_paper). Seçim düğmelerinde küçük önizleme de aynı işlevle çizilir (draw_frame).
+## Ersin'in çerçeve görselleri (Parti 5b: photo_wood, photo_polaroid, photo_lotus, photo_paper) varsa onlarla:
+## 9 dilimli tek çizim, köşe süsleri gerilmez (ART, UiKit.FRAME_SLICES). Seçim düğmelerinde küçük önizleme de aynı
+## işlevle çizilir (draw_frame).
 
 const KINDS: Array[String] = ["none", "wood", "polaroid", "flower", "paper"]
+## Çerçevelerin görselleri: art (assets/ui/frames), fit (görselin kısa kenarının kutunun yüksekliğine oranı;
+## polaroid'de strip: alttaki şerit strip_height'a oturur, şeridin görselin kısa kenarına oranı), logo (logonun
+## sağ alt köşesinin kutunun sağ alt köşesinden uzaklığı, köşe süsünün dışında; görselin kısa kenarının payı).
+const ART := {
+	"wood": { "art": "photo_wood", "fit": 0.5, "logo": [0.34, 0.11] },
+	"polaroid": { "art": "photo_polaroid", "strip": 0.185 },
+	"flower": { "art": "photo_lotus", "fit": 0.55, "logo": [0.55, 0.07] },
+	"paper": { "art": "photo_paper", "fit": 0.5, "logo": [0.35, 0.11] },
+}
 const WOOD := Color("#8a5a36")
 const WOOD_DARK := Color("#5a3a24")
 const WOOD_LIGHT := Color("#b07a4a")
@@ -55,11 +65,74 @@ static func border(rect: Rect2, frame: String) -> float:
 	return 0.0
 
 
-## Çerçeveyi rect'e çizer (overlay ya da düğmedeki önizleme). title: polaroid şeridinde oyunun adı. Bütün şekiller
-## (şeritler, çizgiler, çiviler, çiçekler, dişler, pusula) tek üçgen dizisinde: tek çizim (her draw_circle ve
-## draw_colored_polygon ayrı bir çizim olurdu: çiçekli çerçeve yüzlerce). Polaroid'in yazısı ayrı bir çizim.
+## Logonun sağ alt köşesinin kutunun sağ alt köşesinden uzaklığı (polaroid'de logo şeritte: PhotoMode). Görselli
+## çerçevede köşe süsünün (sazlar, nilüfer, pusula) solunda, alt kenarın üstünde.
+static func logo_inset(rect: Rect2, frame: String) -> Vector2:
+	var scale := _art_scale(rect, frame)
+	if scale > 0.0 and (ART[frame] as Dictionary).has("logo"):
+		var logo: Array = (ART[frame] as Dictionary)["logo"]
+		return Vector2(float(logo[0]), float(logo[1])) * _art_short(frame) * scale + Vector2(8.0, 10.0)
+	var b := border(rect, frame)
+	return Vector2(b + 16.0, b + 12.0)
+
+
+## Çerçevenin görseli kutuya göre ölçeklenmiş 9 dilimli stil (görseli ya da payları yoksa null).
+static func art_box(rect: Rect2, frame: String) -> StyleBox:
+	var scale := _art_scale(rect, frame)
+	if scale <= 0.0:
+		return null
+	var art := str((ART[frame] as Dictionary)["art"])
+	var slices := UiKit.frame_slices(art)
+	var widest := maxf(maxf(float(slices[0]), float(slices[1])), maxf(float(slices[2]), float(slices[3])))
+	return UiKit.framed(art, StyleBoxEmpty.new(), widest * _art_short(frame) * scale)
+
+
+## Görselin kısa kenarı (piksel; görsel yoksa 0).
+static func _art_short(frame: String) -> float:
+	if not ART.has(frame):
+		return 0.0
+	var texture := ItemArt.frame(str((ART[frame] as Dictionary)["art"]))
+	return float(mini(texture.get_width(), texture.get_height())) if texture != null else 0.0
+
+
+## Görselin kutudaki ölçeği (görsel ya da payları yoksa 0). Küçük kutuda (seçim düğmesi) köşeler sığacak kadar.
+static func _art_scale(rect: Rect2, frame: String) -> float:
+	var short := _art_short(frame)
+	if short <= 0.0:
+		return 0.0
+	var def: Dictionary = ART[frame]
+	var slices := UiKit.frame_slices(str(def["art"]))
+	if slices.size() != 4:
+		return 0.0
+	var scale := strip_height(rect) / (float(def["strip"]) * short) if def.has("strip") \
+			else rect.size.y * float(def["fit"]) / short
+	scale = minf(scale, rect.size.x / ((float(slices[0]) + float(slices[2])) * short + 2.0))
+	return minf(scale, rect.size.y / ((float(slices[1]) + float(slices[3])) * short + 2.0))
+
+
+## Çerçeveyi rect'e çizer (overlay ya da düğmedeki önizleme). title: polaroid şeridinde oyunun adı. Görsel varsa
+## 9 dilimli tek çizim; yoksa bütün şekiller (şeritler, çizgiler, çiviler, çiçekler, dişler, pusula) tek üçgen
+## dizisinde: tek çizim (her draw_circle ve draw_colored_polygon ayrı bir çizim olurdu: çiçekli çerçeve yüzlerce).
+## Polaroid'in yazısı ayrı bir çizim.
 static func draw_frame(canvas: CanvasItem, rect: Rect2, frame: String, title: bool = false) -> void:
 	var b := border(rect, frame)
+	var art := art_box(rect, frame)
+	if art != null:
+		canvas.draw_style_box(art, rect)
+	else:
+		_draw_coded(canvas, rect, frame, b)
+	if frame == "polaroid" and title:
+		var strip := strip_height(rect)
+		var font := UiKit.display_font()
+		var size := int(strip * 0.42)
+		var text := str(TranslationServer.translate("UI_PHOTO_TITLE"))
+		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		canvas.draw_string(font, Vector2(rect.position.x + b * 1.6, rect.end.y - strip * 0.36),
+				text, HORIZONTAL_ALIGNMENT_LEFT, width + 4.0, size, INK)
+
+
+## Görseli olmayan çerçeve: kodla, tek üçgen dizisi.
+static func _draw_coded(canvas: CanvasItem, rect: Rect2, frame: String, b: float) -> void:
 	var t := Tris.new()
 	match frame:
 		"wood":
@@ -97,14 +170,6 @@ static func draw_frame(canvas: CanvasItem, rect: Rect2, frame: String, title: bo
 			t.outline(rect, maxf(1.0, b * 0.16), PARCHMENT_EDGE)
 			_compass(t, rect.position + Vector2(b * 1.15, b * 1.15), b * 0.85)
 	t.flush(canvas)
-	if frame == "polaroid" and title:
-		var strip := strip_height(rect)
-		var font := UiKit.display_font()
-		var size := int(strip * 0.42)
-		var text := str(TranslationServer.translate("UI_PHOTO_TITLE"))
-		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-		canvas.draw_string(font, Vector2(rect.position.x + b * 1.6, rect.end.y - strip * 0.36),
-				text, HORIZONTAL_ALIGNMENT_LEFT, width + 4.0, size, INK)
 
 
 ## Dört kenar şeridi (üst, sol, sağ: side; alt: bottom).

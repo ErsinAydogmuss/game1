@@ -1,9 +1,10 @@
 class_name CreditsPanel
 extends Control
 ## Jenerik (docs/gdd.md §10.5; bitiş filminden sonra): StoryPanel gibi "modal" örtü, Dialog değil: göl arkada
-## yaşar, oyun girdisi kapalı. Koyu yarı saydam zemin; ortada aşağıdan yukarı kendiliğinden kayan yazılar: logo,
-## emek verenler (ROLES: Ersin fikir ve görseller, Claude kod, KayKit, Kenney ve Quaternius 3B modeller, yazı
-## tipleri, kodla üretilen sesler), teşekkür ve son söz. Sağ üstte ATLA (güvenli alanda, 122 boy; açıldıktan SKIP_GUARD sn
+## yaşar, oyun girdisi kapalı. Koyu yarı saydam zemin (Ersin'in bitiş resmi varsa onun üstünde, yazıların arkası
+## koyu şerit); ortada aşağıdan yukarı kendiliğinden kayan yazılar: logo, emek verenler (ROLES: Ersin fikir ve
+## görseller, Claude kod, KayKit, Kenney ve Quaternius 3B modeller, yazı tipleri, kodla üretilen sesler), teşekkür,
+## genç Nine ve Dede ile zıplayan Bekçi'nin resimleri (varsa) ve son söz. Sağ üstte ATLA (güvenli alanda, 122 boy; açıldıktan SKIP_GUARD sn
 ## sonra çalışır); yazılar bitince ya da ATLA'da finished. Süreler _process(delta) toplamıyla.
 
 signal finished(skipped: bool)
@@ -14,6 +15,8 @@ const WIDTH := 1400.0
 const ROLE_SIZE := 34
 const NAME_SIZE := 52
 const END_SIZE := 46
+## Son sözden önceki resimlerin (genç Nine ve Dede, zıplayan Bekçi) boyu.
+const PICTURE := 300.0
 const SKIP_SIZE := Vector2(260, 122)
 ## ATLA ancak bu kadar sn sonra çalışır: filmin ATLA'sına çift dokunuş jeneriği de atlamasın (iki düğme aynı yerde).
 const SKIP_GUARD := 0.8
@@ -33,6 +36,10 @@ var skip_button: Button
 ## true iken kayma durur (odak kaybı: main verir).
 var held: bool = false
 
+## Ersin'in bitiş resmi (Parti 5a ending; varsa jeneriğin arkasında, göl gizlenir) ve yazıların arkasındaki koyu
+## şerit (resmin üstünde yazı okunsun).
+var _backdrop: TextureRect
+var _band: ColorRect
 var _dim: ColorRect
 var _column: VBoxContainer
 var _offset: float = 0.0
@@ -45,11 +52,27 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	add_to_group("modal")
+	var ending := ItemArt.art("ending.png")
+	if ending != null:
+		_backdrop = TextureRect.new()
+		_backdrop.name = "Backdrop"
+		_backdrop.texture = ending
+		_backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		_backdrop.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_backdrop)
 	_dim = ColorRect.new()
-	_dim.color = Color(0.02, 0.03, 0.06, 0.72)
+	_dim.color = Color(0.02, 0.03, 0.06, 0.25 if ending != null else 0.72)
 	_dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_dim)
+	if ending != null:
+		_band = ColorRect.new()
+		_band.color = Color(0.02, 0.03, 0.06, 0.55)
+		_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_band)
 	_column = VBoxContainer.new()
 	_column.alignment = BoxContainer.ALIGNMENT_CENTER
 	_column.add_theme_constant_override("separation", 10)
@@ -137,6 +160,25 @@ func _build() -> void:
 		for who: String in role[1]:
 			_column.add_child(_line(credit_name(who), NAME_SIZE, UiKit.TEXT))
 		_column.add_child(_gap(48.0))
+	# Son sözden önce genç Nine ve Dede ile zıplayan Gölün Bekçisi (Parti 5a; olanlar).
+	var pictures := HBoxContainer.new()
+	pictures.alignment = BoxContainer.ALIGNMENT_CENTER
+	pictures.add_theme_constant_override("separation", 60)
+	pictures.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for texture: Texture2D in [ItemArt.portrait("young_both"), ItemArt.item("keeper_leap")]:
+		if texture != null:
+			var rect := TextureRect.new()
+			rect.texture = texture
+			rect.custom_minimum_size = Vector2(PICTURE, PICTURE)
+			rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+			rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			pictures.add_child(rect)
+	if pictures.get_child_count() > 0:
+		_column.add_child(pictures)
+	else:
+		pictures.free()
 	_column.add_child(_gap(40.0))
 	_column.add_child(_line(tr("UI_CREDITS_END"), END_SIZE, UiKit.rarity_color(GameState.db,
 			GameState.db.rarity_index("mythic")).lightened(0.2)))
@@ -172,3 +214,6 @@ func _layout() -> void:
 	_column.reset_size()
 	_column.size = Vector2(WIDTH, content_height())
 	_column.position = Vector2((view.x - WIDTH) * 0.5, view.y - _offset)
+	if _band != null:
+		_band.position = Vector2((view.x - WIDTH) * 0.5 - 60.0, 0.0)
+		_band.size = Vector2(WIDTH + 120.0, view.y)

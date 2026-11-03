@@ -38,7 +38,8 @@ var background := Color.MAGENTA
 ## Görsel zaten saydamsa olduğu gibi döner. Arka plan düz değilse errors'a yazar.
 ## despill: renk sızıntısı temizliği nerede yapılsın: "all" (her opak piksel: cam ve ağ
 ## deliklerinden görünen macenta da temizlenir), "edge" (yalnızca arka plana değen yumuşak kenar
-## bandı: mor ve pembe nesnelerin içi solmaz) ya da "none".
+## bandı: mor ve pembe nesnelerin içi solmaz), "glow" (macenta zemine karışan yumuşak ışıltı saydam ve
+## kendi renginde kalır, sonra "all": _unglow) ya da "none".
 func remove_background(source: Image, despill: String = "all") -> Image:
 	var img: Image = source.duplicate()
 	img.convert(Image.FORMAT_RGBA8)
@@ -120,12 +121,16 @@ func remove_background(source: Image, despill: String = "all") -> Image:
 		fixed[o + 1] = clampi(roundi(fg.y), 0, 255)
 		fixed[o + 2] = clampi(roundi(fg.z), 0, 255)
 		fixed[o + 3] = roundi(t * data[o + 3])
+	var original := data
 	data = fixed
 	match despill:
 		"all":
 			_despill(data, n)
 		"edge":
 			_despill(data, n, near)
+		"glow":
+			_unglow(original, data, state, near, w, h)
+			_despill(data, n)
 	img.set_data(w, h, false, Image.FORMAT_RGBA8, data)
 	return img
 
@@ -328,6 +333,78 @@ func _despill(data: PackedByteArray, n: int, only: PackedByteArray = PackedByteA
 			var spill := g - maxi(r, b) - SPILL_FREE
 			if spill > 0 and absi(r - b) < SPILL_HUE:
 				data[o + 1] = g - roundi(spill * 0.9)
+
+
+## Yumuşak ışıltı (despill "glow"; Parti 5a: altın hamur, Bekçi'nin pulu): macenta zemine karışan
+## ışıltı arka plandan koyu dış çizgiye kadar uzanan "macenta + ışık" bölgesidir; nesnenin içi sayılır,
+## krem panelde pembe hale olur. Bölge, arka planın kenar bandından başlayıp ışıltılı piksellere
+## (_glowy: mavisi yeşilinden fazla ve 100'den çok; koyu dış çizgi ve kırmızı durdurur) yayılır. Her
+## pikselde ışıltının payı macentalıktan (R ile B'nin ortalaması eksi G; arka planda 255, nötr ışıkta
+## 0) bulunur, arka planın payı çıkarılır: ışıltı kendi renginde, yumuşak ve saydam kalır.
+func _unglow(original: PackedByteArray, data: PackedByteArray, state: PackedByteArray, near: PackedByteArray,
+		w: int, h: int) -> void:
+	if not (background.r > 0.7 and background.b > 0.7 and background.g < 0.3):
+		return
+	var n := w * h
+	var mark := PackedByteArray()
+	mark.resize(n)
+	mark.fill(0)
+	var queue := PackedInt32Array()
+	for i in n:
+		if state[i] != 1 and ((near[i] != 0 and _glowy(original, i)) or _dark_magenta(original, i)):
+			mark[i] = 1
+			queue.append(i)
+	var head := 0
+	while head < queue.size():
+		var i := queue[head]
+		head += 1
+		var x := i % w
+		var y := i / w
+		for k in 8:
+			var nx := x + NEIGHBORS_X[k]
+			var ny := y + NEIGHBORS_Y[k]
+			if nx < 0 or ny < 0 or nx >= w or ny >= h:
+				continue
+			var j := ny * w + nx
+			if mark[j] != 0 or state[j] == 1 or not (_glowy(original, j) or _dark_magenta(original, j)):
+				continue
+			mark[j] = 1
+			queue.append(j)
+	var bgv := Vector3(background.r8, background.g8, background.b8)
+	var key := (bgv.x + bgv.z) * 0.5 - bgv.y
+	for i in queue:
+		var o := i << 2
+		var c := Vector3(original[o], original[o + 1], original[o + 2])
+		var a := clampf(1.0 - ((c.x + c.z) * 0.5 - c.y) / key, 0.0, 1.0)
+		if a >= 0.98:
+			continue
+		if a < 0.06:
+			for ch in 4:
+				data[o + ch] = 0
+			continue
+		var fg := (c - bgv * (1.0 - a)) / a
+		data[o] = clampi(roundi(fg.x), 0, 255)
+		data[o + 1] = clampi(roundi(fg.y), 0, 255)
+		data[o + 2] = clampi(roundi(fg.z), 0, 255)
+		data[o + 3] = roundi(a * original[o + 3])
+
+
+## Macenta zemine karışmış ışıltı pikseli mi (_unglow): mavisi hem yeşilinden fazla hem 100'den çok.
+static func _glowy(data: PackedByteArray, i: int) -> bool:
+	var o := i << 2
+	var g := data[o + 1]
+	var b := data[o + 2]
+	return b > 100 and b > g and (data[o] + b) * 0.5 > g
+
+
+## Nesnenin kapattığı bir boşluktan (fenerin camıyla sapı arası) görünen gölgeli macenta mı (_unglow):
+## yeşili az, kırmızısı ve mavisi ondan belirgin fazla. Kırmızı (mühür, X) mavisi az olduğu için girmez.
+static func _dark_magenta(data: PackedByteArray, i: int) -> bool:
+	var o := i << 2
+	var r := data[o]
+	var g := data[o + 1]
+	var b := data[o + 2]
+	return g < 60 and b < 140 and b > g + 25 and r > g + 80
 
 
 ## Kenar pikseline en yakın iç (bant dışı, nesne) pikselin rengi; yoksa x = -1.

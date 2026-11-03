@@ -1,7 +1,7 @@
 class_name SpeechBubble
 extends Control
 ## Konuşma balonu (2B): ekranda Dede'nin başının üstünde; içinde üç nokta (konuşuyor) ya da ünlem; Tekir'in
-## balonunda balık (acıktı) ya da kalp (mırlıyor, yedi).
+## balonunda mama kabı (acıktı; görseli yoksa kodla balık) ya da kalp (mırlıyor, yedi).
 ## 3B sahnenin sisi ve ton eşlemesi onu grileştirmesin diye arayüz gibi çizilir; yakınlaşmada da
 ## aynı boyda kalır. pop() ile hafifçe taşarak büyür, HOLD_TIME sn durur, küçülerek kaybolur.
 ## Kuyruğun ucu anchor'a (viewport noktası) gelir. Kare başı hareket _process'te.
@@ -38,6 +38,8 @@ var _fill := StyleBoxFlat.new()
 var _edge := StyleBoxFlat.new()
 ## Arayüz kitinin balonu (yoksa kodla çizilir).
 var _art: Texture2D
+## Acıkan Tekir'in işareti: Ersin'in mama kabı (Parti 5b home_icons "cat_bowl"; yoksa kodla turuncu balık).
+var _bowl: Texture2D
 
 
 func _init() -> void:
@@ -46,6 +48,7 @@ func _init() -> void:
 	visibility_layer = PhotoMode.WORLD_LABELS
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_art = ItemArt.frame("bubble")
+	_bowl = ItemArt.ui("cat_bowl")
 	size = ART_SIZE if _art != null else BODY + Vector2(0.0, TAIL)
 	pivot_offset = _tip()
 	visible = false
@@ -127,9 +130,14 @@ func _draw_mark(c: Vector2, k: float = 1.0) -> void:
 		draw_circle(c + Vector2(0.0, 19.0) * k, 6.5 * k, INK)
 
 
-## Balık işareti (Tekir acıktı): turuncu gövde ve kuyruk tek çokgen, koyu göz; hafifçe yüzer.
+## Balık işareti (Tekir acıktı): Ersin'in mama kabı (hafifçe sallanır; tek çizim) ya da kodla turuncu gövde ve
+## kuyruk tek çokgen, koyu göz; hafifçe yüzer.
 func _draw_fish(c: Vector2, k: float) -> void:
 	var swim := Vector2(sin(_time * 4.0) * 3.0, 0.0) * k
+	if _bowl != null:
+		var side := 66.0 * k
+		draw_texture_rect(_bowl, Rect2(c + swim - Vector2(side, side) * 0.5, Vector2(side, side)), false)
+		return
 	var body := PackedVector2Array()
 	for i in 14:
 		var a := TAU * i / 14.0

@@ -5,7 +5,8 @@ extends SceneTree
 ## Hangi görselin nasıl kesileceği data/art_sheets.json'da, promptlar docs/gorsel-istekleri.md'de.
 ## fit: "square" (varsayılan; ikon kareye ortalanır), "box" (tek görsel, oran korunur),
 ## "trim" (ızgaradaki her parça kırpılır, oran korunur: 9 dilimli çerçeveler ve düğmeler).
-## despill: "all" (varsayılan), "edge" (mor nesneli sayfalar: içi solmasın), "none" (ArtSheet).
+## despill: "all" (varsayılan), "edge" (mor nesneli sayfalar: içi solmasın), "glow" (macentaya karışan ışıltı
+## saydam ve kendi renginde kalır), "none" (ArtSheet).
 ## key: false: arka plan silinmez, görsel saydamlık kanalsız kaydedilir (uygulama ikonu).
 ## --keep: işlenen orijinali silme (varsayılan: silinir, depo şişmesin).
 ## --preview=KLASÖR: kesilen ikonları dama desenli bir önizleme sayfasına da çizer.

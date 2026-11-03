@@ -1,5 +1,7 @@
 # Olta: Gölün Sırrı (EN: Lure Lake)
 
+![Olta: Gölün Sırrı: iskelede balıkçı, Tekir, Dede ve Nine'nin dükkânı, suyun altında altın bir gölge (Ersin'in tanıtım görseli)](docs/img/tanitim.jpg)
+
 **"Kıyını süsle, havayı bekle: bu gece oltana ne takılacak?"** Her yaşa hitap eden, rahat bir 3D mobil balıkçılık oyunu (iOS + Android, yatay ekran). Kendi balıkçınla yazı Dede'nin göl köyünde geçiriyorsun. Suda balık gölgeleri dolaşıyor; gölgenin önüne atıyorsun, gölge yaklaşıp dürtüyor, ısırınca VUR ve çek. Ersin'in Kazı'dan sonraki oyunu; kodu Claude yazıyor.
 
 > **Durum (Kasım 2026): v0.6 (H2 "Büyük Göl", Dalga 5 "Yuva ve kişilik").** Göl kenarında bir yuva:

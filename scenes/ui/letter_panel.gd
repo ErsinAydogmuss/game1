@@ -14,6 +14,8 @@ const TEXT_H := 620.0
 const TEXT_PAD := 70.0
 const LINE_GAP := 4
 const PORTRAIT := 96.0
+## Mektup kâğıdının (Parti 5a) en geniş köşesinin ekrandaki boyu (UiKit.framed).
+const PAPER_CORNER := 110.0
 const PAPER := Color("#f7ecd0")
 const PAPER_EDGE := Color("#c79f62")
 const LETTER_INK := Color("#3d2817")
@@ -29,7 +31,9 @@ var _from: Label
 
 func _build() -> void:
 	set_header(tr("UI_LETTER_N") % [1, Secret.LETTERS.size()], "item:letter", WIDTH)
-	_panel.add_theme_stylebox_override("panel", UiKit.framed("letter_paper", _paper_style(), 64.0))
+	# Kâğıdın köşeleri (sol üstte leke, sağ altta balık çizimi) gerilmesin diye 9 dilimin köşeleri geniş; köşe
+	# PAPER_CORNER boyunda çizilir (görselin yaklaşık 0,4'ü: yırtık kenar ve iç çizgi seçilir).
+	_panel.add_theme_stylebox_override("panel", UiKit.framed("letter_paper", _paper_style(), PAPER_CORNER))
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 18)
 	body.add_child(top)

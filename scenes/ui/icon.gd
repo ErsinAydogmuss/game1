@@ -105,6 +105,9 @@ static func texture_for(icon_kind: String) -> Texture2D:
 	if icon_kind == "bottle":
 		return ItemArt.item("message_bottle")
 	var art: Texture2D = ItemArt.ui(str(ART_NAMES[icon_kind])) if ART_NAMES.has(icon_kind) else null
+	# Eşya sayfasından kesilen ikon (Parti 5a: yanan fener story_items'ta, assets/icons/items).
+	if art == null and ART_NAMES.has(icon_kind):
+		art = ItemArt.item(str(ART_NAMES[icon_kind]))
 	if art == null and GEAR_ART.has(icon_kind):
 		art = ItemArt.gear(str(GEAR_ART[icon_kind]))
 	return art

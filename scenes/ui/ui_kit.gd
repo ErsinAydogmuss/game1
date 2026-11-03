@@ -56,14 +56,18 @@ const FRAME_SLICES := {
 	"button_round": [0.5, 0.5, 0.5, 0.5],
 	# Harita kâğıdı (Parti 3): kıvrık köşeler ve yırtık kenar payın içinde.
 	"map_paper": [0.13, 0.13, 0.13, 0.13],
-	# Mektup kâğıdı (Parti 5a): harita kâğıdı gibi; görsel gelince kesilen resimde ölçülür.
-	"letter_paper": [0.13, 0.13, 0.13, 0.13],
-	# Fotoğraf çerçeveleri (Parti 5b, fotoğraf modu): süs kenarlarda ve köşelerde; görsel gelince kesilen
-	# resimde ölçülür. Anlık fotoğrafın alt kenarı geniş.
-	"photo_wood": [0.14, 0.14, 0.14, 0.14],
-	"photo_polaroid": [0.1, 0.1, 0.1, 0.24],
-	"photo_lotus": [0.16, 0.16, 0.16, 0.16],
-	"photo_paper": [0.13, 0.13, 0.13, 0.13],
+	# Mektup kâğıdı (Parti 5a; kesilen resimde ölçüldü, 1457×956): köşeler sol üstteki lekeyi ve sağ alttaki
+	# balık çizimini içine alır (gerilmesinler); aradaki kenarlar düz yırtık kâğıt.
+	"letter_paper": [0.27, 0.24, 0.285, 0.195],
+	# Fotoğraf çerçeveleri (Parti 5b; kesilen resimlerde ölçüldü): her köşe kendi süsünü içine alır, gerilen
+	# kenarlar süssüz bölgeden geçer. Ahşap: köşede ip düğümleri, altta sazlar. Anlık fotoğraf: üstteki bant sol
+	# köşede kalır (gerilmesin; gerilen dar sütun bandın sağında), altta geniş şerit. Nilüfer: çiçekler ve
+	# yapraklar köşelerde, aradaki saplar gerilir (yan saplarda yalnızca 4 piksellik düz bant). Eski kâğıt: sağ altta
+	# pusula.
+	"photo_wood": [0.34, 0.21, 0.32, 0.51],
+	"photo_polaroid": [0.982, 0.142, 0.543, 0.192],
+	"photo_lotus": [0.6, 0.673, 0.527, 0.318],
+	"photo_paper": [0.121, 0.121, 0.333, 0.384],
 }
 ## İçerik çerçevenin süsüne binmesin: süslü kenarın kalınlığı (düz kremin başladığı yer),
 ## kısa kenara oranla. framed() içerik payını en az bu kadar (+ CONTENT_PAD) yapar.
@@ -77,8 +81,8 @@ const FRAME_CONTENT := {
 	# Harita kâğıdın yırtık kenarının hemen içinden başlar; haritanın kenarı kâğıda karışır
 	# (map.gdshader fade_m), kâğıdın iç çizgisi altından görünür.
 	"map_paper": [0.035, 0.035, 0.035, 0.035],
-	# Mektubun yazısı kâğıdın kenar çizgisinin içinde kalır.
-	"letter_paper": [0.1, 0.1, 0.1, 0.1],
+	# Mektubun yazısı kâğıdın iç çizgisinin içinde kalır; altta imza sağ alttaki balık çizimine binmez.
+	"letter_paper": [0.09, 0.1, 0.11, 0.2],
 }
 const CONTENT_PAD := 6.0
 ## "button_<renk>" düğmeleri (altta kalınlık payı) ve "frame_<nadirlik>" kart çerçeveleri.
