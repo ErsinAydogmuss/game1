@@ -562,7 +562,12 @@ Bu sayfalar onları süsler. Görseller gelene kadar oyun kodla çizilen yedekle
 Üst ortadaki saat çipinde ve "Bugün" panelinde görünürler.
 
 ```
-(ui_1 ile aynı stil cümleleri.) Icons, left to right, top row then bottom row: a sun rising over
+Sheet of 6 glossy cartoon mobile game UI icons in a 3x2 grid, exactly matching the attached
+style reference: chunky shapes, soft gradients, thick dark outline, warm top-left light,
+3/4 view. Each icon centered in its own cell with generous empty space around it, all at a
+similar size. No text, no labels, no shadows, no floor.
+Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
+Icons, left to right, top row then bottom row: a sun rising over
 a small calm lake with a soft pink-orange sky; a bright round midday sun in a small circle of
 blue sky; a big orange sun setting behind green reeds with two tiny birds; a yellow crescent moon
 with two small stars on a round patch of dark-blue night sky; a small tulip-shaped Turkish tea
@@ -582,7 +587,12 @@ with a small pink lotus flower on it.
 **2. `weather_icons.png`: hava ikonları ve istekler**
 
 ```
-(ui_1 ile aynı stil cümleleri.) Icons, left to right, top row then bottom row: a cheerful round
+Sheet of 6 glossy cartoon mobile game UI icons in a 3x2 grid, exactly matching the attached
+style reference: chunky shapes, soft gradients, thick dark outline, warm top-left light,
+3/4 view. Each icon centered in its own cell with generous empty space around it, all at a
+similar size. No text, no labels, no shadows, no floor.
+Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
+Icons, left to right, top row then bottom row: a cheerful round
 sun with tiny sparkles; two fluffy clouds, a white one in front of a light gray one (no sun or
 moon); a soft gray cloud with blue rain drops; four soft wavy bands of white mist (no sun or moon);
 a dark storm cloud with a yellow lightning bolt and rain drops; a rolled paper note tied with a red
@@ -730,10 +740,15 @@ Bu sayfalar onları süsler. Görseller gelene kadar oyun kodla çizilen yedekle
 **1. `home_icons.png`: yuvanın ikonları**
 
 ```
-(ui_1 ile aynı stil cümleleri.) Icons, left to right, top row then bottom row: a small wooden
+Sheet of 6 glossy cartoon mobile game UI icons in a 3x2 grid, exactly matching the attached
+style reference: chunky shapes, soft gradients, thick dark outline, warm top-left light,
+3/4 view. Each icon centered in its own cell with generous empty space around it, all at a
+similar size. No text, no labels, no shadows, no floor.
+Solid flat pure magenta background (#FF00FF) everywhere, no gradient, no checkerboard.
+Icons, left to right, top row then bottom row: a small wooden
 wardrobe with its doors open, a yellow raincoat and a blue bucket hat hanging inside; a cute
 retro photo camera in brown leather and silver with a big round lens and a small flash; the
-round face of a friendly gray-brown striped tabby cat with green eyes, smiling, whiskers out; a
+round face of a friendly gray tabby cat with dark gray stripes and green eyes, smiling, whiskers out; a
 small gift box with a red ribbon and a tiny paw-print tag; a small wooden donation box with a
 coin slot and a painted blue fish on the front, two gold coins leaning on it; a small round blue
 bowl with a little silver fish in it.
@@ -790,14 +805,15 @@ Balık çıkarsa: "Keep the picture exactly the same but remove all the fish".
 
 **4. İsteğe bağlı: `angler_portraits.png` (3×1): balıkçılar ve Tekir**
 
-Karakter seçme ekranında ve dolapta. Erkek balıkçının 3D görünüşünü 3. adımda gönderiyorum; bunu ondan sonra, iki görüntüyü referans ekleyerek üret.
+Karakter seçme ekranında ve dolapta. Stil sayfasının yanına oyundaki iki görüntüyü de referans olarak ekle: seçim ekranı (`docs/ekran/30_secim.jpg`: kız ve oğlan) ve Tekir (`docs/ekran/31_tekir.jpg`).
 
 ```
 Sheet of 3 portrait busts in a 3x1 grid, exactly matching the attached style reference,
 stylized low-poly 3D look, matching the attached in-game character pictures. Left to right: a
-cheerful young girl angler with a blue bucket hat and a yellow fishing vest, a brown braid;
-a cheerful young boy angler with a blue bucket hat and a yellow fishing vest, short brown hair
-and freckles; a friendly gray-brown striped tabby cat sitting and looking up, green eyes. Head
+cheerful young girl angler with a teal bucket hat with a yellow band, a yellow fishing vest and a
+teal neckerchief, brown hair; a cheerful young boy angler with a teal bucket hat with a yellow
+band and a yellow raincoat with a teal collar, short brown hair; a friendly gray tabby cat with
+dark gray stripes and a cream belly, sitting and looking up, green eyes. Head
 and shoulders, the cat fully visible. Same size and framing in each cell.
 Solid flat pure magenta background (#FF00FF). No text, no shadows.
 ```
@@ -811,7 +827,7 @@ Tam resim, arka planı silinmez. Mağaza sayfasının ve sosyal medyanın büyü
 ```
 A wide landscape key art illustration for a cozy family fishing game, exactly matching the
 attached style reference, stylized low-poly 3D look: a small U-shaped lake at golden hour, a
-young angler in a blue bucket hat casting from a small wooden dock, a gray-brown tabby cat
+young angler in a teal bucket hat casting from a small wooden dock, a gray striped tabby cat
 sitting next to them, a grandfather in a brown flat cap waving from a stool, a small market
 stall with a striped awning and a little aquarium on its counter, a grandmother in a white
 flowered headscarf behind the counter, a rowing boat tied to the dock, dark fish shadows and one
