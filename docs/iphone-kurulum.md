@@ -299,7 +299,7 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     - **Fotoğraf çerçeveleri (ahşap, polaroid, nilüferli, eski kâğıt):** köşe süsleri ekrana sığıyor mu? Logo süse binmiyor mu? Kaydedilen fotoğrafta da öyle mi?
     - **Tekir acıkınca:** balonda mama kabı görünüyor mu?
     - **Akvaryum paneli:** arka plan senin resmin mi? Balıklar önünde rahat seçiliyor mu?
-    - **Dolap:** Balıkçı sekmesinin ikonunda seçili balıkçının portresi var mı?
+    - **Balıkçı portreleri:** yeni oyunda (**Kaydı sıfırla**) "Balıkçını seç" ekranının kartlarında senin portrelerin var mı? Dolabın Balıkçı sekmesinin ikonunda da seçili balıkçının portresi çıkmalı.
     - **Gölün Bekçisi:** göle çıkınca bildirimde kuşbakışı resmi, kartta ve defterde Bekçi'nin resmi görünüyor mu?
     - **Jenerik:** arkada bitiş resmi var mı, yazılar okunuyor mu? Genç Nine ve Dede ile zıplayan Bekçi de görünüyor mu?
 
