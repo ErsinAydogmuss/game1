@@ -472,6 +472,52 @@ func test_v5_save_migrates_to_v6() -> void:
 	assert_eq(bare["flags"], { "chose_character": true }, "bozuk bayraklar yerine seçim bayrağı")
 
 
+## v0.6'nın gerçek kaydı (tests/fixtures/save_v6.json): denge botu (seed 6006) 200 dakika oynadı; final bitti
+## (Bekçi göle döndü, bitiş filmi görüldü), 19 tür, rütbe 16; akvaryumun kutusunda para, Tekir 47 kez beslendi
+## (beş hediyesi de geldi), balıkçı oğlan, Bekçi'nin şapkası ve lacivert yelek giyili; dolabın Olta sekmesine
+## bakılmadı (dört kaplama "yeni"). Botun saniyeleri gerçek saate taşındı. Örnek değiştirilmez.
+func test_v6_save_reads_back() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v6.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v6 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	assert_eq(int((raw as Dictionary)["version"]), 6, "örnek v6 kaydı")
+	var db := content()
+	var rules := db.rules
+	var s := SaveData.from_dict(raw)
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "güncel sürüm")
+	assert_eq(s.character, "boy", "balıkçı oğlan")
+	assert_true(bool(s.flags.get("chose_character", false)), "balıkçı seçildi: seçim ekranı çıkmaz")
+	assert_eq(s.keeper, 1, "Bekçi bir kez göle döndü")
+	assert_true(bool(s.flags.get(Story.ENDING_FLAG, false)), "bitiş filmi görüldü: açılışta oynamaz")
+	assert_true(not Secret.keeper_night(s), "final bitti: her gece sisli değil")
+	assert_eq(Records.species_count(s.records), 19, "19 tür defterde")
+	assert_eq(Rank.rank(db, s), 16, "rütbe 16")
+	# Akvaryum: satılan türlerin hepsi tankta, kutu kaydın saatinde; saat ilerleyince üst sınırda durur.
+	assert_eq(Aquarium.fish(db, s).size(), Aquarium.capacity(db), "tank dolu")
+	assert_eq(s.aquarium_box, 2422, "kutudaki birikim")
+	assert_eq(s.aquarium_unix, 1762011862, "kutunun saati gerçek saatte")
+	var later := s.aquarium_unix + 10 * 3600
+	assert_eq(Aquarium.pending(db, s, later), Aquarium.cap_coins(db, s), "on saat sonra kutu üst sınırda")
+	# Tekir: beş hediyesi de geldi; kayıtta kaç balık sonra acıkacağı.
+	assert_eq(s.cat_fed, 47, "Tekir 47 kez beslendi")
+	assert_true(CatRules.gifts(rules, s) >= db.outfits.cat_gift_count(), "Tekir'in bütün hediyeleri geldi")
+	assert_true(s.cat_meal_at <= s.catches, "son besleme kaydın balık sayısında ya da önce")
+	# Kıyafetler: giyilenler açık; olta varsayılan; görülmemiş dört kaplama "yeni".
+	assert_eq(Outfits.equipped(db, s, "hat"), "hat_keeper", "Bekçi'nin şapkası")
+	assert_eq(Outfits.equipped(db, s, "vest"), "vest_navy", "lacivert yelek")
+	assert_eq(Outfits.equipped(db, s, "rod"), db.outfits.default_of("rod"), "olta varsayılan")
+	assert_eq(Outfits.new_count(db, s, "rod"), 4, "dört yeni kamış kaplaması")
+	assert_eq(Outfits.new_count(db, s, "hat") + Outfits.new_count(db, s, "vest"), 0, "şapka ve yelek görüldü")
+	assert_true(Outfits.fresh(db, s).is_empty(), "açılan her kıyafet duyuruldu")
+	for e in db.outfits.items:
+		assert_true(Outfits.unlocked(db, s, str(e["id"])), "bütün kıyafetler açık: %s" % e["id"])
+	assert_eq(s.traps.size(), 3, "üç tuzak kurulu")
+	assert_true(DayClock.day(rules, s.clock_s) > int(s.flags["keeper_day"]), "Bekçi'nin gecesinden sonraki bir gün")
+	var fresh := SaveData.from_dict(raw)
+	assert_eq(SaveData.from_dict(fresh.to_dict()).to_dict(), fresh.to_dict(), "gidiş-dönüşte aynı")
+
+
 ## v6'nın alanları bozuksa ayıklanır: eksi kutu sıfır, saat en az -1, kedinin sayacı tutulan balıkta kalır,
 ## kıyafette yalnızca bilinen yuvalar ve yazı kimlikler, bilinmeyen balıkçı kız olur.
 func test_v6_bad_values_are_sanitized() -> void:
