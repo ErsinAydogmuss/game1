@@ -1192,6 +1192,25 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
     (`ersinaydogmuss.github.io/olta-gizlilik`), reklam seçimleri (Google'ın formu, gerektiğinde) ve Lisanslar
     (Godot, yazı tipleri, AdMob eklentisi, Google'ın SDK'ları).
   - Reklam açıkken oyun durur ve ses kısılır; reklam yüklenmediyse teklif görünmez. Kendi analitiğimiz yok.
+  - **Reklamların dengesi** (A3): denge botu reklam izleyen oyuncuyu taklit eder (`SessionSim.ads`: her teklifi
+    izler, günde bir saat oynar; ödüllü reklam 30 sn, geçiş 15 sn sürer, oyun saati durur).
+    `economy_report -- --hours=16 --seeds=6 --ads`, reklamsızla aynı seed'ler:
+
+    | | Reklamsız | Reklamlı |
+    |---|---|---|
+    | Saatte para | 7.764–8.480 | 9.731–10.693 (+%17–30, ortalama +%25) |
+    | Reklamla gelen para (kazançta payı) | – | %22–25 |
+    | Saatte ödüllü reklam | – | 6,5–7 (satış 1,6–1,7; istek 2,7–3; akvaryum 2,1–2,3) |
+    | Saatte geçiş reklamı | – | 2,9–3,4 |
+    | Tekne (dk) | 117–125 | 113–124 |
+    | Rütbe 13 (dk) | 136–152 | 137–151 |
+
+    Tekne, rütbeler ve final reklamsızla aynı dakikalarda: ilerleme rütbeye bağlı, reklamın süresi oyuncunun
+    zamanından gider. Botta kurtarma yok denecek kadar az (tepkili bot takımın taşıdığı balığı pek kaçırmaz).
+    İlk sınırlarla (satış günde 8 ve 10 dakikada bir, istek 6, akvaryum 4) reklamlı oyuncu +%56 kazanıyordu, saatte
+    ~9,5 ödüllü reklam izliyordu: satışın 2 katı kazancın %35'iydi. Satış 30 dakikada bir ve günde 4'e, istek ve
+    akvaryum günde 3'e indi. Korkuluk `test_session_sim`: reklamlı oyuncu +%5–40, saatte en çok 9 ödüllü reklam,
+    tekne ve rütbeler reklamsızın %80'inden erken değil.
 - **Parayla satılmayacaklar:** şans (nadir yem, ek atış, hava olayı).
 - **Oyun parası:** yalnızca oynayarak kazanılır, gerçek parayla asla satılmaz. Bu yüzden oranı değiştiren yem ve yapay yem oyun parasıyla satılabilir.
 - **Boşta gelir üst sınırlı:** tuzak en çok 4 şey toplar, akvaryum kutusu en çok 2 saatlik birikimde durur.

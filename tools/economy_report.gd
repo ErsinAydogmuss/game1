@@ -5,11 +5,18 @@ extends SceneTree
 ## istekler, harita parçaları, altın hamur, final hazır, Gölün Bekçisi), akvaryumun bağış kutusunu (Dalga 5: toplanan
 ## para, kazançtaki payı, sondaki saatlik bağış ve tür sayısı), Tekir'in yediği balıkları, kıyafetlerin açıldığı
 ## dakikaları (outfit:<kimlik>), bölgelerde, tekniklerde, vakitlerde ve havalarda geçen zamanı yazar.
-##   godot --headless --path . -s res://tools/economy_report.gd [-- --hours=8 --seeds=3]
-## Hedefler docs/gdd.md §8 ve §10.4'te; korkuluklar tests/test_session_sim.gd'de.
+##   godot --headless --path . -s res://tools/economy_report.gd [-- --hours=8 --seeds=3] [--ads]
+## --ads: her seed reklamsız ve reklam izleyen oyuncuyla (SessionSim.ads; A3) iki kez oynanır; rapor reklamlı
+## oyuncunun saatlik parasını, reklamla gelen payı, saatte izlenen reklamları ve önemli olayların dakikalarını
+## reklamsızla karşılaştırır.
+## Hedefler docs/gdd.md §8, §10.4 ve §11'de; korkuluklar tests/test_session_sim.gd'de.
 
 var _hours: float = 8.0
 var _seeds: int = 3
+var _ads: bool = false
+## Reklamlı karşılaştırmada dakikası yazılan olaylar (ilerlemenin hızı: reklam izleyen ne kadar erken varır).
+const AD_KEYS: Array[String] = ["buy:boat", "rank_5", "rank_9", "rank_13", "tech:bottom", "tech:fly", "final_ready",
+		"keeper"]
 
 
 func _initialize() -> void:
@@ -18,6 +25,8 @@ func _initialize() -> void:
 			_hours = float(arg.substr(8))
 		elif arg.begins_with("--seeds="):
 			_seeds = int(arg.substr(8))
+		elif arg == "--ads":
+			_ads = true
 	var db := ContentDB.load_default()
 	for e in db.errors:
 		printerr("İçerik hatası: " + e)
@@ -27,6 +36,10 @@ func _initialize() -> void:
 		var sim := SessionSim.new(db, db.main_spot, 1000 + s * 77)
 		sim.run(_hours * 60.0)
 		sims.append(sim)
+	if _ads:
+		_report_ads(db, sims)
+		quit()
+		return
 	print("Ekonomi raporu: %s, %d seed, %.0f saat oyun (hesap %.1f sn)" % [db.main_spot, _seeds, _hours,
 			(Time.get_ticks_msec() - started) / 1000.0])
 	for sim in sims:
@@ -133,3 +146,50 @@ func _initialize() -> void:
 				cells.append("%5.1f" % (100.0 * float(spent.get(name, 0.0)) / maxf(total, 1.0)))
 			print("  %-26s %s" % [name, "  ".join(cells)])
 	quit()
+
+
+## Reklam izleyen oyuncu (A3): aynı seed'ler reklamlı; saatlik para, reklamın payı, saatte reklamlar, kurtarılan
+## balıklar ve önemli olayların dakikaları reklamsızla yan yana.
+func _report_ads(db: ContentDB, plain: Array[SessionSim]) -> void:
+	var ad_sims: Array[SessionSim] = []
+	for s in _seeds:
+		var sim := SessionSim.new(db, db.main_spot, 1000 + s * 77)
+		sim.ads = true
+		sim.run(_hours * 60.0)
+		ad_sims.append(sim)
+	print("Reklam raporu: %s, %d seed, %.0f saat oyun (ödüllü reklam %.0f sn, geçiş %.0f sn, günlük sınır her %.0f dakikada)"
+			% [db.main_spot, _seeds, _hours, SessionSim.AD_REWARDED_S, SessionSim.AD_INTERSTITIAL_S,
+			SessionSim.AD_DAY_S / 60.0])
+	var gain_sum := 0.0
+	for i in ad_sims.size():
+		var a := ad_sims[i]
+		var p := plain[i]
+		var ah := a.elapsed / 3600.0
+		var ph := p.elapsed / 3600.0
+		var gain := (a.earned / ah) / maxf(1.0, p.earned / ph) - 1.0
+		gain_sum += gain
+		print("  seed %d: reklamsız saatte %.0f para, reklamlı %.0f (%+.1f%%); reklamla %d para (kazançta payı %%%.1f), saatte %.1f ödüllü reklam (%d), %.1f geçiş (%d), %d kurtarılan balık; rütbe %d / %d" % [
+				a.rng.seed, p.earned / ph, a.earned / ah, 100.0 * gain, a.ad_coins,
+				100.0 * a.ad_coins / maxf(1.0, a.earned), a.ad_rewarded / ah, a.ad_rewarded,
+				a.ad_interstitials / ah, a.ad_interstitials, a.ad_rescued, Rank.rank(db, p.save), Rank.rank(db, a.save)])
+	print("  ortalama: reklamlı oyuncu saatte %+.1f%% para" % (100.0 * gain_sum / maxf(1.0, ad_sims.size())))
+	print("")
+	print("%-28s %s" % ["olay (dakika: reklamsız/reklamlı)", "  ".join(range(_seeds).map(func(i: int) -> String:
+			return "     seed%d" % (i + 1)))])
+	for key in AD_KEYS:
+		var cells := PackedStringArray()
+		for i in ad_sims.size():
+			var p_at := "%5.0f" % float(plain[i].milestones[key]) if plain[i].milestones.has(key) else "    -"
+			var a_at := "%5.0f" % float(ad_sims[i].milestones[key]) if ad_sims[i].milestones.has(key) else "    -"
+			cells.append("%s/%s" % [p_at, a_at])
+		print("%-28s %s" % [key, "  ".join(cells)])
+	# Yer başına: ilk reklamın dakikası, saatte reklam ve reklamın parasının kazançtaki payı.
+	print("")
+	print("yer başına (ilk dakika · saatte reklam · kazançtaki payı %):")
+	for place: String in AdRules.PLACES:
+		var cells := PackedStringArray()
+		for a in ad_sims:
+			var first := "%5.1f" % float(a.milestones["ad:" + place]) if a.milestones.has("ad:" + place) else "    -"
+			cells.append("%s · %4.1f · %4.1f" % [first, int(a.ad_count.get(place, 0)) / (a.elapsed / 3600.0),
+					100.0 * int(a.ad_place_coins.get(place, 0)) / maxf(1.0, a.earned)])
+		print("  %-26s %s" % [place, "  ".join(cells)])

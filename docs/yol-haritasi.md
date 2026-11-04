@@ -234,7 +234,8 @@ Ersin'in yapacakları (AdMob, mağazalar): [`reklam-kurulum.md`](reklam-kurulum.
   aktarma ayarları (`com.juiloot.olta`, AAB, izinler, izleme izninin açıklaması).
 - [x] A2 Teklifler: satışta 2 katı, kaçan Nadir+ balığı kurtar, Dede'nin isteği 2 katı, akvaryum kutusu 2 katı; geçiş
   reklamı (harita, sandal, çay); "Reklamlar hakkında" kartı; Ayarlar'da Gizlilik ve Lisanslar; `ads` botu.
-- [ ] A3 Denge: reklam izleyen oyuncunun kazancı (denge botu), korkuluk.
+- [x] A3 Denge: reklam izleyen oyuncu saatte +%17–30 para (ilk sınırlarla +%56'ydı; satış 30 dakikada bir ve günde 4,
+  istek ve akvaryum günde 3); ilerleme aynı. Denge botu `SessionSim.ads`, `economy_report --ads`, korkuluk.
 - [ ] A4 Yayın: gizlilik politikası, mağaza metinleri ve görselleri, inceleme notu ve ekran kaydı, Mac'te derleme
   görevi, sürüm 1.0.0.
 - [ ] A5 Gerçek AdMob kimlikleri (Ersin gönderince) ve son denetim.

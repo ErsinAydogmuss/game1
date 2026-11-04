@@ -60,6 +60,14 @@ extends RefCounted
 ##    Bekçisi gelir (keeper_s), dalışlarıyla çekişir (ReelModel, ReelBot); tutulunca göle bırakılır (final biter),
 ##    bitiş filmi ve jenerik (ending_s; saat durur), şafakta sonraki sabah. Kaçarsa Secret.KEEPER_RETURN_S bekleyip
 ##    yeniden atar. İlk dakikası "keeper". Oyun sonrası Bekçi kovalanmaz.
+## 15. Reklamlar (A3; Ersin'in kararı 4 Kasım 2026): ads true iken bot reklam izleyen oyuncudur: ödüllü reklam teklif
+##    edilince (AdRules: ısınma, günlük sınır, bekleme, en küçük tutar) hep izler: satışta ve Dede'nin isteğinde
+##    para bir kez daha, akvaryumun kutusunu (yeterince doluysa) tanka dokunup 2 katıyla toplar, çekişmede kaçan
+##    Nadir+ balığı (takımın taşıyabildiği) kurtarır. Geçiş reklamı harita geçişinde (AdRules: ilk 20 dakika yok, en
+##    çok 8 dakikada bir). Reklamın süresi (AD_REWARDED_S, AD_INTERSTITIAL_S) oyuncunun zamanından geçer, oyun saati
+##    ve reklamların oyun süresi durur. Günlük sınırlar her AD_DAY_S oynanışta sıfırlanır (oyuncu günde bir saat
+##    oynar). Varsayılan kapalı: rapor ve korkuluklar reklamsız oyuncuya bakar; reklamlı oyuncuyu test_session_sim
+##    ve economy_report --ads ölçer. Reklam zar çekmez: aynı seed'in reklamsız koşusu bit bit aynı kalır.
 ## Aynı seed aynı sonucu verir.
 
 const SIM_PATH := "res://data/sim.json"
@@ -77,6 +85,10 @@ const GOLDEN_WORTH := 1.0e9
 ## Atıştan önce kova doluysa en çok bu kadar satış turu (satıştan sonra toplanan tuzaklar kovayı yine
 ## doldurabilir; her turda tuzaklar boşalır).
 const SELL_ROUNDS := 4
+## Reklam izleyen oyuncu (ads): ödüllü ve geçiş reklamının süresi (sn) ve günlük sınırların "günü" (oynanış sn).
+const AD_REWARDED_S := 30.0
+const AD_INTERSTITIAL_S := 15.0
+const AD_DAY_S := 3600.0
 
 var db: ContentDB
 var save: SaveData
@@ -114,6 +126,18 @@ var cat_meals: int = 0
 ## "piece_<parça>" (harita parçası), "dough" (altın hamur), "final_ready", "keeper" (Gölün Bekçisi göle döndü),
 ## "aquarium" (bağış kutusundan ilk para), "cat" (Tekir ilk kez beslendi).
 var milestones: Dictionary = {}
+## Reklam izleyen oyuncu (madde 15; varsayılan kapalı) ve sayaçları: reklamla gelen para (earned'e de girer),
+## izlenen ödüllü reklam, kurtarılan balık, geçiş reklamı.
+var ads: bool = false
+var ad_coins: int = 0
+var ad_rewarded: int = 0
+var ad_rescued: int = 0
+var ad_interstitials: int = 0
+## Yer başına izlenen ödüllü reklam ve getirdiği para (AdRules.PLACES).
+var ad_count: Dictionary = {}
+var ad_place_coins: Dictionary = {}
+var _ad_settings: Dictionary = {}
+var _ad_clock: float = 0.0
 ## Botun elindeki teknik ve her teknikte geçen süre (sn).
 var technique: String = "float"
 var technique_time: Dictionary = {}
@@ -217,10 +241,14 @@ func cast_once() -> void:
 	var fight := ReelBot.play(model, ReelBot.make(ReelBot.Style.REACT, _num("reaction_s", 0.45)))
 	elapsed += float(fight["seconds"])
 	if int(fight["outcome"]) != ReelModel.Outcome.CAUGHT:
-		lost += 1
 		elapsed += _num("lost_s", 2.5)
-		_count_zone(before, cond)
-		return
+		# Reklamla kurtarma (madde 15): kaçan Nadir+ balık tutulmuş sayılır.
+		if not _ad_rescue(def, model):
+			lost += 1
+			_count_zone(before, cond)
+			return
+		ad_rescued += 1
+		_mark("ad:" + AdRules.RESCUE)
 	_on_catch(def, percentile, cond)
 	_count_zone(before, cond)
 	if Bucket.is_full(db, save):
@@ -294,9 +322,12 @@ func _sell_and_shop() -> void:
 		cat_meals += 1
 		_mark("cat")
 	_release_cheap()
-	earned += Economy.sell_all(db, save)
+	var sale := Economy.sell_all(db, save)
+	earned += sale
 	sells += 1
 	_mark("sell")
+	if AdRules.sale_worth_offer(sale):
+		_ad_double(AdRules.SELL, sale)
 	# Dükkâna uğrayınca akvaryumun bağış kutusu kendiliğinden toplanır (oyundaki gibi; botun saniyeleri gerçek
 	# saat yerine: bot hep oynar, kutu oyuncu yokken dolmaz).
 	var box := Aquarium.collect(db, save, int(elapsed))
@@ -304,6 +335,9 @@ func _sell_and_shop() -> void:
 		earned += box
 		aquarium_coins += box
 		_mark("aquarium")
+		# Reklam izleyen oyuncu kutu doluyken önce tanka dokunur (Akvaryum panelinde 2 katı).
+		if AdRules.box_worth_offer(box):
+			_ad_double(AdRules.AQUARIUM, box)
 	shop()
 	# Göl sevgisi 6'da Nine altın hamuru verir (dükkân açılınca).
 	if Secret.give_dough(db, save):
@@ -464,6 +498,7 @@ func _note_request(event: Dictionary) -> Dictionary:
 		if paid.is_empty():
 			continue
 		earned += int(paid["coins"])
+		_ad_double(AdRules.REQUEST, int(paid["coins"]))
 		_note_love(paid["loved"])
 		# Altın istek: harita parçası (günlük isteklerin sayaçlarına ve request_1, requests_10'a girmez).
 		if int(paid["piece"]) > 0:
@@ -484,10 +519,77 @@ func _note_love(result: Dictionary) -> void:
 		_mark("love_%d" % level)
 
 
-## Haritadan geçiş (travel_s): harita açıkken ve ekran kararırken oyun saati durur.
+## Haritadan geçiş (travel_s): harita açıkken ve ekran kararırken oyun saati durur. Reklam izleyen oyuncuda sırası
+## gelmişse geçiş reklamı.
 func _travel() -> void:
 	elapsed += _num("travel_s", 6.0)
 	_paused_s += _num("travel_s", 6.0)
+	_ad_interstitial()
+
+
+# --- Reklamlar (madde 15) ----------------------------------------------------------
+
+## Reklamların durumu (AdRules.state, botun kendi ayar sözlüğünde): oyun süresi reklamsız geçen saniyeler.
+func _ad_state() -> Dictionary:
+	var st := AdRules.state(_ad_settings)
+	if elapsed > _ad_clock:
+		AdRules.add_play(st, elapsed - _ad_clock)
+		_ad_clock = elapsed
+	return st
+
+
+## Günlük sınırların günü: her AD_DAY_S oynanışta yeni gün.
+func _ad_day() -> int:
+	return int(elapsed / AD_DAY_S)
+
+
+## Ödüllü reklam bu yerde teklif edilirse izler (true): süresi geçer (oyun saati ve reklamların oyun süresi durur).
+func _watch_ad(place: String) -> bool:
+	if not ads:
+		return false
+	var st := _ad_state()
+	if not AdRules.can_offer(st, place, _ad_day(), save.catches):
+		return false
+	elapsed += AD_REWARDED_S
+	_paused_s += AD_REWARDED_S
+	_ad_clock = elapsed
+	AdRules.record_reward(st, place, _ad_day())
+	ad_rewarded += 1
+	ad_count[place] = int(ad_count.get(place, 0)) + 1
+	return true
+
+
+## Para bir kez daha (satış, akvaryumun kutusu, Dede'nin isteği): reklam izlendiyse.
+func _ad_double(place: String, coins: int) -> void:
+	if coins <= 0 or not _watch_ad(place):
+		return
+	save.coins += coins
+	earned += coins
+	ad_coins += coins
+	ad_place_coins[place] = int(ad_place_coins.get(place, 0)) + coins
+	_mark("ad:" + place)
+
+
+## Çekişmede kaçan balık reklamla kurtarılır mı (AdRules.rescue_worth_offer: Nadir+, takımın taşıyabildiği)?
+func _ad_rescue(def: Dictionary, model: ReelModel) -> bool:
+	if not ads or bool(def.get("story", false)):
+		return false
+	return AdRules.rescue_worth_offer(int(def["rarity"]), db.rarity_index("rare"), false, model.excess) \
+			and _watch_ad(AdRules.RESCUE)
+
+
+## Geçiş reklamı sırası geldiyse (harita geçişinde).
+func _ad_interstitial() -> void:
+	if not ads:
+		return
+	var st := _ad_state()
+	if not AdRules.interstitial_due(st, save.catches):
+		return
+	elapsed += AD_INTERSTITIAL_S
+	_paused_s += AD_INTERSTITIAL_S
+	_ad_clock = elapsed
+	AdRules.record_interstitial(st, _ad_day())
+	ad_interstitials += 1
 
 
 ## Bölgeye gider (başka bölgedeyse travel_s; balık tutmadığı için "zone:" sayılmaz).
