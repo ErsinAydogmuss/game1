@@ -201,7 +201,7 @@ Ersin'in seçimleri (hepsi önerilen): akvaryuma her türün en irisi kendiliği
   mektup kâğıdı ve genç Nine ile Dede, sırrın haritası, hikâye eşyaları (ışıltı saydam: `despill: glow`), Bekçi'nin
   kartı, bildirimi ve defteri, jenerikte bitiş resmi, fotoğraf çerçeveleri, akvaryumun arka planı, Tekir'in mama
   kabı, seçim ekranında ve dolapta balıkçı portreleri, README'de tanıtım görseli; etkilenen botlar TAMAM.
-- [ ] Ersin telefonda dener ([`iphone-kurulum.md`](iphone-kurulum.md) 37–45) ve hızı ölçer.
+- [ ] Ersin telefonda dener ([`iphone-kurulum.md`](iphone-kurulum.md) 37–49: v0.6, görseller, reklamlar) ve hızı ölçer.
 
 **5 kişilik test** (Kazı'nın 5 kişilik testiyle birlikte yapılabilir). Sorular:
 

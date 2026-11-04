@@ -15,12 +15,18 @@
 - **Proje:** Olta: Gölün Sırrı, Godot 4.7.2 ile yapılan 3D, yatay ekranlı, rahat bir mobil balıkçılık oyunu.
   Repo: `https://github.com/ErsinAydogmuss/game1`, dal: `claude/festive-shannon-yycmwu`.
 - **Kullanıcı:** Ersin. Kazı'dan sonraki oyununu yapıyor ve kodu Claude'a yazdırıyor. Türkçe ve sade konuş; teknik terimleri ilk geçtiğinde kısaca açıkla.
-- **Cihaz:** iPhone 14, Mac'e kabloyla bağlı. Ücretsiz Apple ID (Personal Team) varsayılıyor.
+- **Cihaz:** iPhone 14, Mac'e kabloyla bağlı. Ersin'in ücretli Apple Developer hesabı (Kazı'yı App Store'a gönderdiği
+  hesap, Team ID `3D9ZPVPY5L`): telefona kurulan sürüm bir yıl açılır (ücretsiz hesaptaki 7 gün sınırı yok).
 - **Hazır olanlar:** Repoda `iPhone` adlı bir dışa aktarma ayarı var (`export_presets.cfg`):
-  - Paket kimliği (bundle id) `com.ersinaydogmuss.olta`.
+  - Paket kimliği (bundle id) `com.juiloot.olta` (mağazadaki kimlik; reklamlarla geldi). Eskisi
+    `com.ersinaydogmuss.olta` idi: telefondaki eski Olta ayrı bir uygulama olarak kalır, kaydı yenisine taşınmaz.
+    Kullanıcıya söyle; isterse eskisini silsin.
   - Godot yalnızca Xcode projesi üretir: `export/olta.xcodeproj`.
   - `export/` klasörü git dışında ve `.gdignore`'lu, yani Godot onu taramaz.
-  - Team ID boş. Onu sen yazacaksın: Kazı'dan kopyalayarak (aşağıdaki kısa yol) ya da 6. adımda.
+  - Team ID ayarda yazılı (`3D9ZPVPY5L`, Kazı'nınkiyle aynı takım).
+  - Reklamlar (AdMob eklentisi, `addons/admob/`): debug derleme Google'ın **deneme reklamlarını** gösterir. Xcode,
+    eklentinin eklediği Swift paketlerini (GoogleMobileAds, GoogleUserMessagingPlatform) ilk derlemede kendisi
+    indirir (internet gerekir).
 - Repodaki `CLAUDE.md` proje kurallarını anlatır; repo klasörüne geçince oku. Bu görevde kod yazmıyorsun: kodu bulut oturumundaki Claude yazıyor. Senin işin kurulum ve oyunu telefona yüklemek.
 
 ## Görev
@@ -30,7 +36,7 @@ Oyunu kullanıcının iPhone'unda aç. Yapabildiğin her şeyi komut satırında
 ## Kurallar
 
 - Oyun kodunu değiştirme.
-- `git commit` ve `git push` yapma. `export_presets.cfg`'ye yazacağın Team ID yerel kalsın.
+- `git commit` ve `git push` yapma. Repodaki dosyaları değiştirme.
 - `sudo` gereken komutları kullanıcıya **ayrı bir Terminal penceresinde** çalıştırt; şifreyi sen giremezsin.
 - Büyük indirmelerden önce kullanıcıya haber ver: Xcode birkaç GB, Godot şablonları 1,3 GB.
 - Her adımdan sonra kullanıcıya bir iki cümleyle ne olduğunu söyle.
@@ -40,15 +46,10 @@ Oyunu kullanıcının iPhone'unda aç. Yapabildiğin her şeyi komut satırında
 Kullanıcı ilk oyunu Kazı'yı (`ErsinAydogmuss/game`) büyük olasılıkla bu Mac'ten telefonuna yükledi. O zaman o sırada kurulanlar duruyordur:
 
 - **1, 3, 4 ve 7. adımlar:** yalnızca baştaki denetim komutlarını çalıştır. Hazır çıkarsa adımı atla.
-- **Team ID:** Kazı'nın yerel ayarında yazılı. Kazı klasörüne yalnızca bak, hiçbir şeyi değiştirme:
-
-  ```bash
-  grep app_store_team_id ~/game/export_presets.cfg   # klasör orada değilse: mdfind -name project.godot
-  ```
-
-  Tırnakların içinde 10 karakterlik bir değer varsa onu Olta'nın `export_presets.cfg`'sindeki aynı satıra yaz ve 6. adımı atla. Boşsa 6. adımı yap.
+- **Team ID:** Olta'nın ayarında yazılı ve Kazı'nınkiyle aynı (`3D9ZPVPY5L`). Kazı bu Mac'ten imzalandıysa Xcode'daki
+  hesap ve sertifika hazırdır: 6. adımdaki denetim yeter.
 - **Betik:** `~/kazi-iphone.sh` varsa Olta için `~/olta-iphone.sh`'ı ona bakarak yaz (bkz. "Sonraki güncellemeler"). Repo yolu ve paket kimliği farklı.
-- **Kazı telefonda kalabilir:** ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı ile Olta 2 eder.
+- **Kazı telefonda kalabilir:** ücretli hesapta uygulama sınırı yok.
 
 ## Adımlar
 
@@ -130,20 +131,20 @@ Bunları repo klasöründe çalıştır:
 
 İstersen oyunu önce Mac'te aç; kullanıcı da görsün: `"$GODOT" --path .`. Bu bir pencere açar ve kapanana kadar bekler, o yüzden arka planda çalıştır.
 
-### 6. Team ID
+### 6. Team ID ve sertifika
 
-Kısa yoldan Team ID'yi Kazı'dan kopyaladıysan bu adımı atla.
+Team ID ayarda yazılı (`application/app_store_team_id="3D9ZPVPY5L"`). Bu Mac'te o takımın sertifikası var mı:
 
 ```bash
-security find-certificate -c "Apple Development" -p | openssl x509 -noout -subject
+grep app_store_team_id export_presets.cfg
+security find-certificate -a -c "Apple Development" -p | openssl x509 -noout -subject
 ```
 
-- Çıktıda `OU=`'dan sonraki 10 karakter **Team ID**'dir. Sertifika adındaki parantez içindeki kod Team ID **değildir**.
-- "could not be found" derse kullanıcı şunları yapsın:
-  1. Xcode → **Settings → Accounts → +** ile Apple ID'siyle giriş yapsın.
+- Çıktıda `OU=3D9ZPVPY5L` görünmeli (sertifika adındaki parantez içindeki kod Team ID **değildir**).
+- Görünmüyorsa ya da "could not be found" derse kullanıcı şunları yapsın:
+  1. Xcode → **Settings → Accounts → +** ile Kazı'yı gönderdiği Apple ID'siyle giriş yapsın (takım: `3D9ZPVPY5L`).
   2. Hesabı seçip **Manage Certificates… → + → Apple Development**'a tıklasın.
-  Sonra komutu tekrar çalıştır.
-- Team ID'yi `export_presets.cfg`'deki `application/app_store_team_id=""` satırına yaz. Yalnızca bu satır değişsin.
+  Sonra komutu tekrar çalıştır. `export_presets.cfg`'ye dokunma.
 
 ### 7. Telefonu hazırla (kullanıcı yapar)
 
@@ -187,14 +188,16 @@ xcodebuild -project export/olta.xcodeproj -scheme olta -configuration Debug \
 ```
 
 - Sonunda `** BUILD SUCCEEDED **` görünmeli.
-- **Her zaman `-configuration Debug` kullan.** Godot, Release yapılandırmasına "Apple Distribution" imzası yazar; ücretsiz hesapta bu imza yoktur. Debug yapılandırması "Apple Development" kullanır.
+- **Telefona kabloyla kurarken `-configuration Debug` kullan.** Godot, Release yapılandırmasına "Apple Distribution"
+  imzası yazar (App Store'a gönderim içindir: Archive, `docs/reklam-mac.md`). Debug yapılandırması "Apple Development"
+  kullanır.
 
 ### 10. Telefona yükle ve aç
 
 ```bash
 APP=export/DerivedData/Build/Products/Debug-iphoneos/olta.app   # yoksa: find export/DerivedData -name '*.app' -path '*iphoneos*'
 xcrun devicectl device install app -d "$UDID" "$APP"
-xcrun devicectl device process launch --terminate-existing -d "$UDID" com.ersinaydogmuss.olta
+xcrun devicectl device process launch --terminate-existing -d "$UDID" com.juiloot.olta
 ```
 
 İlk açılışta "güvenilmeyen geliştirici" ya da "not been explicitly trusted" hatası çıkabilir. Kullanıcı iPhone'da **Ayarlar → Genel → VPN ve Aygıt Yönetimi** → Apple ID'si → **Güven**'e dokunsun, sonra açma komutunu tekrar çalıştır.
@@ -303,7 +306,25 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     - **Gölün Bekçisi:** göle çıkınca bildirimde kuşbakışı resmi, kartta ve defterde Bekçi'nin resmi görünüyor mu?
     - **Jenerik:** arkada bitiş resmi var mı, yazılar okunuyor mu? Genç Nine ve Dede ile zıplayan Bekçi de görünüyor mu?
 
-Ücretsiz Apple hesabıyla en fazla 3 uygulama yüklenebilir; Kazı da biri. Yer yoksa birini silmek gerekir.
+46. **Reklamlar: "Reklamlar hakkında".** Yeni oyunda (**Kaydı sıfırla**) 3 balık tuttuktan sonra, olta boşken bir kez
+    "Reklamlar hakkında" kartı çıkar. **ANLADIM**'dan sonra iPhone'un izleme izni sorulur (AdMob'da IDFA açıklama mesajı
+    yayındaysa önce Google'ın açıklaması). Seçim fark etmez: reklamlar yine gelir, yalnızca kişiselleştirilmez. Kart bir
+    daha çıkmamalı.
+47. **Reklamlar: dört teklif.** Debug derlemede Google'ın **deneme reklamları** ("Test Ad") oynar; reklamı sonuna kadar
+    izleyip kapatınca ödül gelir. **Kendi reklamına dokunma** (deneme reklamı güvenli, gerçeği değil).
+    - Nine'de kovayı sat: boş kovanın altında **Reklam izle: 2 katı**. İzleyince satış kadar para daha; 30 dakika
+      dolmadan ikinci satışta teklif yok.
+    - Akvaryum panelinde (kutuda en az 40 para varken) alt satırda **Reklam izle: 2 katı**.
+    - Dede'nin bir isteği bitince olta boşa dönünce **İstek tamam** kartı (2 katı).
+    - Nadir ya da daha üstü bir balık çekişmede kaçınca (misina koptu ya da kaçtı) **Kaçan balık** kartı: reklamdan sonra
+      balık tutulmuş sayılıyor mu (kart, kova, defter)? Sıradan balıkta kart çıkmamalı.
+    - Reklam açıkken oyun duruyor mu, ses kısılıyor mu? Reklamı yarıda kapatınca "Ödül için reklamı sonuna kadar izle".
+48. **Reklamlar: geçiş reklamı.** 20 dakika oynadıktan sonra haritayla başka bölgeye geçerken, sandalla açılırken ya da
+    Dede'yle çay içerken ekran kararınca kısa bir reklam; 8 dakika dolmadan (ödüllü reklamdan sonra da) bir daha gelmemeli.
+    Sık mı geldi, rahatsız etti mi? Not et.
+49. **Ayarlar → Gizlilik.** Dil satırındaki **GİZLİLİK**: kart; **Gizlilik politikası** sayfayı açıyor mu (sayfa
+    yayınlanmadıysa açılmaz, sorun değil); **Lisanslar** listesi kayıyor mu, bir lisansın adına dokununca tam metni
+    açılıyor mu? AB'de değilsen **Reklam seçimleri** düğmesi görünmez (normal).
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 
@@ -362,13 +383,13 @@ kaydetmek için dosyaya basılı tut → **Paylaş** → **Görüntüyü Kaydet*
 Bulut oturumu yeni kod gönderdiğinde repo klasöründe:
 
 ```bash
-git pull --autostash                       # yerel Team ID değişikliği korunur
+git pull --autostash
 "$GODOT" --headless --path . --import
 "$GODOT" --headless --path . --export-debug "iPhone" "$PWD/export/olta.ipa"
 # sonra 9. adımdaki xcodebuild ve 10. adımdaki iki devicectl komutu (aynı UDID)
 ```
 
-Ücretsiz Apple ID ile yüklenen uygulama **7 gün** açılır. Sonra 8–10. adımları tekrarla.
+Ücretli hesapla kurulan uygulama bir yıl açılır; yeni kod gelince 8–10. adımları tekrarla.
 İstersen bu komutları repo dışında `~/olta-iphone.sh` betiğine yazmayı kullanıcıya öner; böylece tek komutla yeniden yükleyebilir.
 
 ## Sorun giderme
@@ -379,17 +400,17 @@ git pull --autostash                       # yerel Team ID değişikliği korunu
 | `No export template found ... ios.zip` | 4. adım |
 | `App Store Team ID not specified` | 6. adım |
 | `No Account for Team` / `No signing certificate` | Xcode → Settings → Accounts'ta Apple ID ekli mi? Team ID `OU=` değeri mi? |
-| `Failed to register bundle identifier` / `is not available` | Bu kimliği başkası almış. `export_presets.cfg`'de `application/bundle_identifier`'ı örneğin `com.ersinaydogmuss.olta2` yap (yerel), 8. adımdan tekrarla. 10. adımdaki kimliği de değiştir. |
+| `Failed to register bundle identifier` / `is not available` | `com.juiloot.olta` Ersin'in takımında kayıtlı olmalı: developer.apple.com → Certificates, Identifiers & Profiles → Identifiers (App Store Connect'te uygulama açılınca da kaydedilir). Xcode'da doğru takımın hesabı seçili mi? |
 | `Developer Mode disabled` / telefon "Ineligible" | 7. adım |
 | `iOS xx.x is not installed` | `xcodebuild -downloadPlatform iOS` |
 | `device is busy` / `Preparing` | Birkaç dakika bekle, tekrar dene |
-| `maximum App ID limit` | Ücretsiz hesap sınırı (7 günde 10 App ID). Var olan kimliği kullan ya da bekle. |
+| `No such module 'GoogleMobileAds'` / paket hatası | Xcode → File → Packages → Resolve Package Versions (internet); sonra 9. adım. |
 | `not been explicitly trusted` / "güvenilmeyen geliştirici" | 10. adımdaki Güven adımı |
 | `Unexpected files found in the export destination directory` | `export/olta.xcodeproj` ve `export/olta` klasörlerini sil, 8. adımı tekrarla |
 | `devicectl` UDID'yi tanımıyor | `xcrun devicectl list devices` çıktısındaki Identifier'ı `-d` ile kullan |
 | Oyunda hiç ses yok | Kullanıcı iPhone'un sol yanındaki sessiz anahtarını kapatsın (turuncu görünmesin) ve sesi açsın. Godot iOS'ta sesi "Ambient" kipinde açar: telefon sessizdeyken oyun da sessizdir (çoğu oyun gibi). Oyunda Ayarlar → Ses efektleri / Müzik açık olmalı. |
 
-**Komut satırı inatla olmuyorsa:** `open export/olta.xcodeproj` ile projeyi aç → **Signing & Capabilities → Team**'den kişisel takımı seç → üstten iPhone'u seç → **▶ Run**.
+**Komut satırı inatla olmuyorsa:** `open export/olta.xcodeproj` ile projeyi aç → **Signing & Capabilities → Team**'den Ersin'in takımını (`3D9ZPVPY5L`) seç → üstten iPhone'u seç → **▶ Run**.
 
 **Telefonda hiç olmuyorsa:** Oyunu Mac'te aç: `"$GODOT" --path .`
 

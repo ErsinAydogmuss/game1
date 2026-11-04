@@ -47,10 +47,11 @@ Kazı için yaptıklarının aynısı, Olta'nın iki uygulamasını da seçerek:
   Senden: GitHub'da `olta-gizlilik` adında herkese açık bir depo aç, **Settings → Pages**'te `main` dalını yayınla
   (Kazı'nın `kazi-gizlilik` deposu gibi). Sayfanın dosyasını oraya ben ya da sen yüklersin.
 
-## 4. Sonra: mağazalar (yayın belgeleri hazır olunca)
+## 4. Sonra: mağazalar
 
-Ayrıntılı adımları yayın adımında (A4) ayrı belgelere yazacağım: mağaza metinleri, ekran görüntüleri, Mac'te derleme.
-Şimdiden bilmen gerekenler:
+Ayrıntılar: [`magaza/yayin.md`](magaza/yayin.md) (Play ve App Store beyanları, inceleme notu, ekran kaydı),
+[`magaza/magaza-metinleri.md`](magaza/magaza-metinleri.md) (mağaza yazıları), [`reklam-mac.md`](reklam-mac.md) (Mac'te
+derleme: Android paketi ve iPhone arşivi). Kısaca:
 
 - **Paket adı** iki mağazada da `com.juiloot.olta`; Apple takımı Kazı'nınki (`3D9ZPVPY5L`).
 - **Google Play Console:** yeni uygulama **Olta: Gölün Sırrı**, varsayılan dil Türkçe, **Oyun**, **Ücretsiz**.

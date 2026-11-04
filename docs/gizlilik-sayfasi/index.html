@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Olta Gizlilik Politikası</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Luckiest+Guy&display=swap">
+<style>
+  /* Düzen: tek sütun, okunur genişlikte belge; üstte oyunun başlık yazı tipiyle ad, iki dil alt alta (Kazı'nın sayfası). */
+  :root {
+    --bg: #eef6f5;
+    --paper: #fffdf8;
+    --ink: #1f2a2e;
+    --soft: #5b6b70;
+    --line: #d3e3e1;
+    --accent: #137a8a;
+    --note: #e1f1ee;
+    --display: "Luckiest Guy", "Arial Black", Impact, sans-serif;
+    --body: "Baloo 2", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1a1d; --paper: #152328; --ink: #e6f1f0; --soft: #9fb4b6;
+      --line: #27383d; --accent: #5cc3cf; --note: #1b3036; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1a1d; --paper: #152328; --ink: #e6f1f0; --soft: #9fb4b6;
+    --line: #27383d; --accent: #5cc3cf; --note: #1b3036; color-scheme: dark;
+  }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--body);
+    font-size: 17px; line-height: 1.6;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 32px 56px;
+  }
+  main { max-width: 44rem; margin: 0 auto; display: grid; gap: 40px; }
+  header { display: grid; gap: 6px; }
+  .brand { font-family: var(--display); font-size: clamp(2.6rem, 9vw, 3.6rem); letter-spacing: 0.02em; color: var(--accent); line-height: 1; margin: 0; }
+  .sub { margin: 0; color: var(--soft); font-weight: 600; }
+  .langs { display: flex; gap: 14px; flex-wrap: wrap; font-weight: 600; }
+  .langs a { color: var(--accent); }
+  article { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 28px clamp(18px, 4vw, 36px); display: grid; gap: 4px; min-width: 0; }
+  h1 { font-size: 1.7rem; line-height: 1.25; margin: 0; text-wrap: balance; }
+  h2 { font-size: 1.15rem; margin: 22px 0 2px; text-wrap: balance; }
+  p, ul { margin: 6px 0; }
+  ul { padding-left: 1.2em; }
+  li { margin: 4px 0; }
+  .date { color: var(--soft); font-size: 0.95rem; margin-bottom: 10px; }
+  .summary { background: var(--note); border-radius: 10px; padding: 14px 18px; margin: 10px 0 6px; font-weight: 600; }
+  a { color: var(--accent); overflow-wrap: anywhere; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .mail { font-weight: 700; user-select: all; }
+</style>
+</head>
+<body>
+
+<main>
+  <header>
+    <p class="brand">OLTA</p>
+    <p class="sub">Gölün Sırrı · Secret of the Lake</p>
+    <nav class="langs"><a href="#tr">Türkçe</a><a href="#en">English</a></nav>
+  </header>
+
+  <article id="tr" lang="tr">
+    <h1>Gizlilik Politikası</h1>
+    <p class="date">Yürürlük tarihi: 4 Kasım 2026 (1.0 sürümü)</p>
+    <p class="summary">Kısaca: Olta'nın kendisi kişisel veri toplamaz; oyun ilerlemen ve çektiğin fotoğraflar yalnızca cihazında saklanır. Oyun ücretsiz kalsın diye Google AdMob reklamları gösterir. Reklamlar için cihazının reklam kimliği, yaklaşık konumun (IP adresinden) ve reklamlarla etkileşimin gibi bilgiler Google'a gider. Ödüllü reklamları izlemek senin seçimin.</p>
+
+    <h2>1. Biz kimiz</h2>
+    <p>Bu politika, Olta: Gölün Sırrı mobil oyunu (Google Play ve App Store'da com.juiloot.olta) için geçerlidir. Oyunu bağımsız geliştirici Ersin Aydoğmuş geliştirir ve yayımlar; 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) bakımından veri sorumlusudur. İletişim: <span class="mail">ersincodes@gmail.com</span></p>
+
+    <h2>2. Topladığımız veriler</h2>
+    <p>Biz senden hiçbir kişisel veri toplamıyoruz: oyunun sunucusu, hesabı ya da giriş ekranı yoktur ve bize hiçbir veri gelmez. Oyunda analiz ya da çökme raporlama aracı da yoktur. Tek istisna reklamlardır: reklamları Google AdMob gösterir ve bunun için aşağıda (4. madde) yazan bilgileri doğrudan Google işler.</p>
+
+    <h2>3. Cihazında tutulanlar</h2>
+    <p>Oyunun çalışması için aşağıdakiler yalnızca senin cihazında, oyunun kendi depolama alanında saklanır:</p>
+    <ul>
+      <li>Oyun ilerlemen: tuttuğun balıklar ve Balık Defteri, paran, takımın, kovan, kerevit tuzakların, Dede'nin istekleri, Gölün Sırrı, akvaryum, kıyafetler, seçtiğin balıkçı ve ayarların (dil, ses, titreşim).</li>
+      <li>Fotoğraf modunda çektiğin fotoğraflar: oyunun klasörüne kaydedilir; iPhone'da Dosyalar uygulamasında görünür. Hiçbir yere gönderilmez.</li>
+      <li>Reklam sayaçları: bugün hangi ödüllü reklamı kaç kez izlediğin, toplam oyun süresi ve "Reklamlar hakkında" notunu gördüğün. Yalnızca reklamların sıklığını sınırlamak için kullanılır.</li>
+      <li>Göl haritasının ve dokuların önbelleği.</li>
+    </ul>
+    <p>Bu veriler bize ya da başka birine gönderilmez. Oyunu sildiğinde hepsi silinir. Android'de oyunun verileri Google yedeğine alınmaz. iPhone'da iCloud yedeği açıksa bu dosyalar o yedeğe dahil olabilir; bu yedek senin Apple hesabında tutulur, bizim ona erişimimiz yoktur.</p>
+
+    <h2>4. Reklamlar (Google AdMob)</h2>
+    <p>Olta iki tür reklam gösterir: <strong>ödüllü reklamlar</strong> (yalnızca sen istersen; izleyince oyun içinde bir ödül: satışın iki katı para, kaçan nadir balığı geri getirme, Dede'nin isteğinin ödülünü ya da akvaryumun bağış kutusunu iki katına çıkarma) ve haritayla başka yere geçerken ya da Dede'yle çay içerken ara sıra kısa bir <strong>geçiş reklamı</strong> (oyunun ilk 20 dakikasında hiç yok, en fazla 8 dakikada bir). Reklamlar aile dostu içerikle sınırlıdır (en fazla "PG"). Reklamları gösteren Google LLC, reklamı seçmek, göstermek, ölçmek ve dolandırıcılığı önlemek için şu bilgileri işler:</p>
+    <ul>
+      <li>Cihazın reklam kimliği (Android reklam kimliği; iPhone'da yalnızca izin verirsen IDFA) ve uygulama grubu kimliği.</li>
+      <li>IP adresi (yaklaşık konumu tahmin etmek için kullanılabilir).</li>
+      <li>Cihaz ve uygulama bilgileri (model, işletim sistemi, dil) ve reklamlarla etkileşimin (reklamın gösterilmesi, izlenmesi, tıklanması).</li>
+      <li>Teşhis bilgileri (uygulamanın ve reklam yazılımının performansı).</li>
+    </ul>
+    <p>Bu veriler Google'a şifreli bağlantıyla gider ve Türkiye dışındaki sunucularda işlenebilir. Google'ın bu verileri nasıl kullandığı: <a href="https://policies.google.com/technologies/partner-sites">Google, iş ortaklarının sitelerini ve uygulamalarını kullandığınızda verileri nasıl kullanır</a> ve <a href="https://policies.google.com/privacy">Google Gizlilik Politikası</a>.</p>
+    <p><strong>Seçimlerin:</strong> Avrupa Birliği, Birleşik Krallık ya da İsviçre'deysen oyun reklamlardan önce Google'ın onay penceresini gösterir; seçimini oyunda <strong>Ayarlar → Gizlilik → Reklam seçimleri</strong>'nden değiştirebilirsin. iPhone'da Apple'ın izleme izni sorulur; izin vermezsen reklamlar yine çıkar ama kişiselleştirilmez (Ayarlar → Gizlilik ve Güvenlik → İzleme). Android'de reklam kimliğini telefonun ayarlarından (Gizlilik → Reklamlar) sıfırlayabilir ya da silebilirsin. Ödüllü reklamları izlememek oyunda hiçbir şey kaybettirmez; internet kapalıyken reklam yoktur ve oyun aynen çalışır.</p>
+
+    <h2>5. İzinler ve cihaz özellikleri</h2>
+    <ul>
+      <li><strong>İnternet ve ağ durumu:</strong> yalnızca reklamları yüklemek için.</li>
+      <li><strong>Reklam kimliği (Android'de AD_ID):</strong> reklamlar için Google'ın reklam yazılımı ister.</li>
+      <li><strong>Titreşim:</strong> balık vurduğunda, çekişmede ve bir şey bulduğunda kısa titreşimle geri bildirim vermek için.</li>
+      <li><strong>Cihazın saati ve tarihi:</strong> akvaryumun bağış kutusu ve kerevit tuzakları sen yokken de dolar; bunun için cihazının saati okunur, bize gönderilmez. Göldeki gün ve hava oyunun kendi saatiyle akar.</li>
+    </ul>
+
+    <h2>6. Uygulama mağazaları</h2>
+    <p>Oyunu Google Play ya da App Store'dan indirdiğinde bu mağazalar kendi gizlilik politikalarına göre veri işler (<a href="https://policies.google.com/privacy">Google</a>, <a href="https://www.apple.com/legal/privacy/">Apple</a>). Mağazalar ve AdMob bize yalnızca kimliğini göstermeyen toplu istatistikler sunar: indirme sayısı, ülke, cihaz modeli, çökme raporları ve reklam gelirleri gibi.</p>
+
+    <h2>7. Çocuklar</h2>
+    <p>Olta 13 yaş ve üstü oyuncular için yayımlanır. 13 yaşından küçük çocukların kişisel verisini bilerek işlemeyiz; reklamlar aile dostu içerikle sınırlıdır. Çocuğunun oyunu oynadığını düşünen bir ebeveynsen bize yazabilirsin.</p>
+
+    <h2>8. Hakların</h2>
+    <p>Bizde senin hakkında tutulan bir veri olmadığı için silinecek, düzeltilecek ya da sana verilecek bir veri yoktur. Cihazındaki oyun verilerini oyunu silerek tamamen silebilirsin. Google'ın işlediği reklam verileri için 4. maddedeki seçimleri ve Google'ın kendi araçlarını kullanabilirsin. KVKK'nın 11. maddesindeki (ve GDPR gibi başka yasalardaki) hakların için bize yazabilirsin.</p>
+
+    <h2>9. Değişiklikler</h2>
+    <p>Oyuna yeni bir veri işleme (örneğin uygulama içi satın alma ya da çevrimiçi özellik) eklersek bu politikayı o sürüm yayımlanmadan önce güncelleriz ve yürürlük tarihini değiştiririz.</p>
+
+    <h2>10. İletişim</h2>
+    <p>Ersin Aydoğmuş · <span class="mail">ersincodes@gmail.com</span></p>
+  </article>
+
+  <article id="en" lang="en">
+    <h1>Privacy Policy</h1>
+    <p class="date">Effective date: November 4, 2026 (version 1.0)</p>
+    <p class="summary">In short: Olta itself collects no personal data; your game progress and the photos you take are stored only on your own device. To stay free, the game shows Google AdMob ads. For the ads, information such as your device's advertising ID, your approximate location (from your IP address) and your interactions with ads goes to Google. Watching rewarded ads is your choice.</p>
+
+    <h2>1. Who we are</h2>
+    <p>This policy applies to the mobile game Olta: Secret of the Lake (com.juiloot.olta on Google Play and the App Store). The game is developed and published by independent developer Ersin Aydoğmuş, the data controller under Turkey's Personal Data Protection Law (KVKK). Contact: <span class="mail">ersincodes@gmail.com</span></p>
+
+    <h2>2. Data we collect</h2>
+    <p>We collect no personal data from you: the game has no servers, accounts or sign-in, and no data reaches us. The game contains no analytics or crash-reporting tools either. The one exception is advertising: ads are shown by Google AdMob, and Google processes the information listed in section 4 directly.</p>
+
+    <h2>3. What stays on your device</h2>
+    <p>To work, the game stores the following only on your device, in its own private storage:</p>
+    <ul>
+      <li>Your game progress: the fish you caught and your Fish Book, coins, gear, bucket, crayfish traps, Dede's requests, the Secret of the Lake, the aquarium, outfits, the angler you chose and your settings (language, sound, vibration).</li>
+      <li>Photos you take in photo mode: saved in the game's folder; on iPhone they appear in the Files app. They are never sent anywhere.</li>
+      <li>Ad counters: how many times you watched each rewarded ad today, total play time and whether you saw the "About ads" note. They are used only to limit how often ads appear.</li>
+      <li>A cache of the lake map and textures.</li>
+    </ul>
+    <p>This data is never sent to us or to anyone else. Uninstalling the game deletes all of it. On Android, the game's data is excluded from Google backup. On iPhone, if iCloud Backup is on, these files may be included in your device backup; that backup is kept in your own Apple account and we have no access to it.</p>
+
+    <h2>4. Advertising (Google AdMob)</h2>
+    <p>Olta shows two kinds of ads: <strong>rewarded ads</strong> (only if you choose to watch; you get an in-game reward: double coins for a sale, bringing back a rare fish that got away, or doubling a reward from Dede's request or the aquarium's donation box) and, now and then when you travel with the map or have tea with Dede, a short <strong>interstitial ad</strong> (never in the first 20 minutes of play, at most once every 8 minutes). Ads are limited to family-friendly content (rated "PG" at most). Google LLC, which serves the ads, processes the following to select, show and measure ads and to prevent fraud:</p>
+    <ul>
+      <li>Your device's advertising ID (the Android advertising ID; on iPhone the IDFA only if you allow tracking) and the app set ID.</li>
+      <li>Your IP address (which may be used to estimate your approximate location).</li>
+      <li>Device and app information (model, operating system, language) and your interactions with ads (impressions, views, clicks).</li>
+      <li>Diagnostic information (performance of the app and the ads software).</li>
+    </ul>
+    <p>This data is sent to Google over encrypted connections and may be processed on servers outside Turkey. How Google uses it: <a href="https://policies.google.com/technologies/partner-sites">How Google uses information from sites or apps that use our services</a> and the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.</p>
+    <p><strong>Your choices:</strong> in the European Union, the United Kingdom and Switzerland the game shows Google's consent form before any ads; you can change your choice in the game under <strong>Settings → Privacy → Ad choices</strong>. On iPhone, Apple asks for tracking permission; if you decline, ads still appear but are not personalized (Settings → Privacy &amp; Security → Tracking). On Android you can reset or delete your advertising ID in the phone's settings (Privacy → Ads). Skipping rewarded ads costs you nothing in the game; without an internet connection there are no ads and the game works as usual.</p>
+
+    <h2>5. Permissions and device features</h2>
+    <ul>
+      <li><strong>Internet and network state:</strong> only to load ads.</li>
+      <li><strong>Advertising ID (AD_ID on Android):</strong> requested by Google's ads software for advertising.</li>
+      <li><strong>Vibration:</strong> short haptic feedback when a fish bites, during the fight and when you find something.</li>
+      <li><strong>Device time and date:</strong> the aquarium's donation box and the crayfish traps fill while you are away; for this the device clock is read on your device and never sent to us. The lake's day and weather follow the game's own clock.</li>
+    </ul>
+
+    <h2>6. App stores</h2>
+    <p>When you download the game from Google Play or the App Store, those stores process data under their own privacy policies (<a href="https://policies.google.com/privacy">Google</a>, <a href="https://www.apple.com/legal/privacy/">Apple</a>). The stores and AdMob give us only aggregated statistics that do not identify you, such as download counts, countries, device models, crash reports and ad revenue.</p>
+
+    <h2>7. Children</h2>
+    <p>Olta is published for players aged 13 and over. We do not knowingly process personal data of children under 13, and ads are limited to family-friendly content. If you are a parent and think your child plays the game, contact us.</p>
+
+    <h2>8. Your rights</h2>
+    <p>Because we hold no data about you, there is nothing for us to delete, correct or export. You can delete all game data on your device by uninstalling the game. For the advertising data processed by Google, use the choices in section 4 and Google's own tools. For your rights under Article 11 of the KVKK (and other laws such as the GDPR), contact us.</p>
+
+    <h2>9. Changes</h2>
+    <p>If we add new data processing (for example in-app purchases or online features), we will update this policy before that version is released and change the effective date.</p>
+
+    <h2>10. Contact</h2>
+    <p>Ersin Aydoğmuş · <span class="mail">ersincodes@gmail.com</span></p>
+  </article>
+</main>
+</body>
+</html>
