@@ -61,8 +61,9 @@ Derleme: [`../reklam-mac.md`](../reklam-mac.md).
 ### Mağaza girişi
 
 - Metinler `magaza-metinleri.md`; İngilizcesi çeviri olarak.
-- Görseller (bulut oturumu hazırlar): 512×512 ikon, 1024×500 öne çıkan görsel, en az 2 (en çok 8) yatay ekran
-  görüntüsü.
+- Görseller (`docs/magaza/gorsel/`): 512×512 ikon `play_ikon_512.png` (uygulama ikonun), 1024×500 öne çıkan görsel
+  `play_one_cikan_1024x500.png` (tanıtım görselin ve logon). Ekran görüntüleri (en az 2, en çok 8, yatay) bulut
+  oturumunun botlarıyla hazırlanacak (App Store'unkilerle aynı, aşağıda).
 - **Kategori:** Oyun → Simülasyon; etiketler: Balıkçılık, Rahat, Tek oyunculu.
 
 ### Sürümler
