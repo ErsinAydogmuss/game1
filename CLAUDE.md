@@ -188,7 +188,7 @@ xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl
 # --safe-inset: çentiği taklit eder (sol, sağ ve alt pay); düğmelerin güvenli alanda olduğu denetlenir
 ```
 
-Mağaza ekran görüntüleri (`store` senaryosu → `docs/magaza/ekran/<tr|en>/<iphone|ipad|play>/`, JPEG): iPhone 6,9" `--resolution 2868x1320 --safe-inset=130`, iPad 13" `2752x2064`, Play `1920x1080` (Play'de uzun kenar kısanın en çok iki katı: iPhone'unki yüklenmez). xvfb ekranı pencereden büyük olmalı (`-screen 0 3000x2200x24`), Movie Maker gerekmez (`--fixed-fps 30` yeter). Bu ortamda iPhone boyutu ~15 dk, iPad ~20 dk.
+Mağaza ekran görüntüleri (`store` senaryosu → `docs/magaza/ekran/<tr|en>/<iphone|ipad|play>/`, JPEG): iPhone 6,9" `--resolution 2868x1320 --safe-inset=130`, iPad 13" `2752x2064`, Play `1920x1080` (Play'de uzun kenar kısanın en çok iki katı: iPhone'unki yüklenmez). xvfb ekranı pencereden büyük olmalı (`-screen 0 3000x2200x24`), Movie Maker gerekmez (`--fixed-fps 30` yeter). Bu ortamda bir set: iPhone ~19 dk, Play ~11 dk, iPad ~23 dk (botun komutunu bir `run_in_background` görevine sıraya koy: görev en çok 2 saat sürer).
 
 Görsel değişikliklerde ekran görüntüsüne bak (Linux'ta `xvfb-run`; yalnızca OpenGL var). Telefon boyutu için `--resolution 2532x1170` (iPhone 14). Movie Maker (`--write-movie`) pencere boyutunu `project.godot`'taki override'dan alır: telefon boyutunda kayıt için geçici bir `override.cfg` (`[display]` altında `window/size/window_width_override=2532`, `window_height_override=1170`) koy, sonra sil.
 
