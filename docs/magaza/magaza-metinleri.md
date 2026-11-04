@@ -16,7 +16,8 @@ mağazada da iletişim bilgilerinde web sitesi `https://ersinaydogmuss.github.io
 `https://ersinaydogmuss.github.io/olta-gizlilik/`.
 
 İngilizcesi: Play'de **Ana mağaza girişi → Çevirileri yönet → Kendi çevirilerini ekle → English (United States) –
-en-US**; App Store'da sağ üstteki dil menüsünden **English (U.S.)** eklenir. Ekran görüntüleri ortak kalabilir.
+en-US**; App Store'da sağ üstteki dil menüsünden **English (U.S.)** eklenir. Ekran görüntülerinin İngilizcesi de var:
+`ekran/en/` ([`yayin.md`](yayin.md), "Ekran görüntüleri").
 
 ## Türkçe
 

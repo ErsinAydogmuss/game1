@@ -4,7 +4,7 @@
 
 **"Kıyını süsle, havayı bekle: bu gece oltana ne takılacak?"** Her yaşa hitap eden, rahat bir 3D mobil balıkçılık oyunu (iOS + Android, yatay ekran). Kendi balıkçınla yazı Dede'nin göl köyünde geçiriyorsun. Suda balık gölgeleri dolaşıyor; gölgenin önüne atıyorsun, gölge yaklaşıp dürtüyor, ısırınca VUR ve çek. Ersin'in Kazı'dan sonraki oyunu; kodu Claude yazıyor.
 
-> **Durum (Kasım 2026): v0.6 (H2 "Büyük Göl", Dalga 5 "Yuva ve kişilik").** Göl kenarında bir yuva:
+> **Durum (Kasım 2026): 1.0.0, mağaza sürümü.** App Store ve Google Play'e gidiyor: v0.6'nın içeriği, isteğe bağlı ödüllü reklamlar ve seyrek geçiş reklamı (`docs/gdd.md` §11; mağaza metinleri, beyanlar ve ekran görüntüleri [`docs/magaza/`](docs/magaza/)). Son dalga (H2 "Büyük Göl", Dalga 5 "Yuva ve kişilik"), göl kenarında bir yuva:
 >
 > - **Balıkçını seç:** yeni oyunda kız ya da oğlan balıkçı (oğlan sarı yağmurluklu). Sonradan balıkçına dokununca açılan dolaptan değişir.
 > - **Kıyafetler:** dolapta 8 şapka, 7 yelek rengi ve 5 olta kaplaması. Rütbe, defterdeki türler, Dede'nin istekleri, göl sevgisi, Gölün Bekçisi ve Tekir'in hediyeleri açar.

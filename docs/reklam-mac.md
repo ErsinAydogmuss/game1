@@ -29,6 +29,9 @@
     O zamana kadar sürüm derlemesinde reklam çıkmaz (uygulama kimliği Google'ın örneği); **debug derleme her zaman
     Google'ın deneme reklamlarını** gösterir.
   - Denetim aracı: `tools/check_aab.py` (imza, sürüm kodu, izinler, AdMob kimliği, 16 KB hizası).
+  - **Sürüm:** 1.0.0 (`project.godot` → `config/version`; iki mağazada görünen sürüm). Android sürüm kodu
+    `version/code` 1, iPhone yapı numarası `application/version` 1 (`export_presets.cfg`). İki mağaza da aynı numarayı
+    ikinci kez kabul etmez: sonraki her yüklemede ikisini 1 artır (bunu bulut oturumu yapar; Ersin'e söyle).
 
 ## Kurallar
 

@@ -41,10 +41,25 @@ func test_iphone_preset() -> void:
 	assert_eq(str(cfg.get_value(options, "application/bundle_identifier", "")), BUNDLE, "paket kimliği")
 	assert_true(str(cfg.get_value(options, "application/app_store_team_id", "")).length() == 10, "Apple takım kimliği")
 	assert_true(float(str(cfg.get_value(options, "application/min_ios_version", "0"))) >= 15.0, "en az iOS 15 (reklam SDK'sı)")
+	# Görünen sürüm (CFBundleShortVersionString) project.godot'un config/version'ı; yapı numarası (CFBundleVersion)
+	# her App Store yüklemesinde artar.
+	var build := str(cfg.get_value(options, "application/version", ""))
+	assert_true(build.is_valid_int() and int(build) >= 1, "iPhone yapı numarası (%s)" % build)
+	assert_eq(str(cfg.get_value(options, "application/short_version", "")), "",
+			"görünen sürüm config/version'dan gelir (iki yerde yazılmaz)")
 	var plist := str(cfg.get_value(options, "application/additional_plist_content", ""))
 	assert_true(plist.contains("NSUserTrackingUsageDescription"), "izleme izninin açıklaması Info.plist'te")
 	assert_true(plist.contains("ITSAppUsesNonExemptEncryption"), "şifreleme beyanı Info.plist'te")
 	assert_true(bool(cfg.get_value(options, "user_data/accessible_from_files_app", false)), "fotoğraflar Dosyalar'da")
+
+
+## Mağazaların görünen sürümü (iPhone'da CFBundleShortVersionString, Android'de versionName): üç sayı, noktayla.
+func test_store_version() -> void:
+	var version := str(ProjectSettings.get_setting("application/config/version", ""))
+	var parts := version.split(".")
+	assert_eq(parts.size(), 3, "sürüm üç parça (%s)" % version)
+	for part in parts:
+		assert_true(part.is_valid_int() and int(part) >= 0, "sürümün parçası sayı (%s)" % version)
 
 
 func test_android_preset() -> void:

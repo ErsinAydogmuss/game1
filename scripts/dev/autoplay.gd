@@ -142,6 +142,12 @@ extends Node
 ##     yok, çayda da; Ayarlar'da Dil satırında GİZLİLİK (panel küçülmeden sığar) → kart bilgi olarak (politika, reklam
 ##     seçimleri, lisanslar), LİSANSLAR → Godot'nun lisansı, yazı tipleri, kitaplıklar, Google'ın şartları, tam metin;
 ##     telefon oranında, --safe-inset=130, TR ve EN.
+##   store: mağaza ekran görüntüleri (A4; docs/magaza/yayin.md). Orta oyundan bir kayıt (rütbe 10, on üç tür,
+##     tekniklerin takımı, sandal, göl sevgisi en üstte); oyunun kamerası ve arayüzüyle sekiz sahne: store_1 iskele
+##     (olta boşta, yayının iri gölgesi önde, Dede "büyük gölge"), store_2 yayınla çekişme, store_3 nilüferli koyda
+##     tutulan altın sazanın kartı, store_4 harita, store_5 fenerli gece, store_6 Gölün Bekçisi (final gecesi, sisli
+##     X, dip; adaylar a, b, c), store_7 akvaryum, store_8 Nine'nin dükkânı (Makara). Boyutu pencere verir: iPhone 6,9"
+##     2868×1320 (--safe-inset=130), iPad 13" 2752×2064, Play 1920×1080.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -203,6 +209,14 @@ const REELS_NIGHT_AT := 40
 ## Efsanevilerin boy yüzdeliği (4★; takım taşır), Ay Turnası'nın ve Bekçi'nin çekişmesinde bırakma gecikmesi (kare:
 ## sık çırpınan Ay Turnası 24 karede misinayı koparıyordu; Bekçi'de dalıştan önce kopmasın), dev gölgenin geçişi
 ## (kare) ve sandala uzaklığı (m).
+## Mağaza görüntülerinin defteri (rütbe 10): on üç tür; yayın ve altın sazan yok (tutulunca kartı "yeni tür").
+const STORE_RECORDS := [["rudd", 27, 3], ["carp", 66, 4], ["perch", 38, 3], ["silverside", 15, 3], ["bream", 48, 3],
+		["tench", 44, 3], ["chub", 41, 3], ["crayfish", 14, 3], ["pike", 98, 4], ["mirror_carp", 80, 4],
+		["trout", 50, 4], ["zander", 70, 3], ["brook_trout", 33, 3]]
+## Mağazanın iskele sahnesindeki yayının boyu (ppm): iri gölge.
+const STORE_WELS := 700000
+## Nilüferli koyda tutulan altın sazanın boyu (ppm): rütbe 9'un takımı taşır.
+const STORE_GOLD := 800000
 const REELS_LEGEND_PERCENTILE := 750000
 const REELS_MOON_REACTION := 12
 const REELS_KEEPER_REACTION := 10
@@ -329,6 +343,8 @@ func _ready() -> void:
 			_play_photo.call_deferred()
 		"ads":
 			_play_ads.call_deferred()
+		"store":
+			_play_store.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -6316,6 +6332,254 @@ func _lose_fish(cast_at: Vector2) -> String:
 	_touch(1, Vector2(260, 520), false)
 	await _wait_frames(2)
 	return _session().last_loss
+
+
+## Mağaza ekran görüntüleri (A4): bkz. dosyanın başı. Çekim sırası yolun kısası: iskele (1–3), akvaryum ve dükkân
+## (7–8), harita (4), gece (5), final (6).
+func _play_store() -> void:
+	_use_save(60)
+	_hide_fingers = true
+	_seen_jump = true
+	# Öteki gölgeler 9–14 m öteye (takımı fark etmez; yakında yenisi doğmaz).
+	_park_fn = _reels_park_point
+	var db := GameState.db
+	var rules := db.rules
+	var save := GameState.save
+	var hud := _hud()
+	var card: FishCard = main.get("card")
+	var clock: WorldClock = main.get("world_clock")
+	var scene: LakeScene = main.get("scene")
+	var fade: Fade = main.get("fade")
+	var t0 := GameState.clock.now_unix()
+	GameState.clock.fixed_unix = t0
+	save.settings.erase("ads")
+	save.coins = 2450
+	save.xp = db.rank_xp[9] + 400
+	save.love = rules.love_levels[rules.love_levels.size() - 1]
+	for f: Array in STORE_RECORDS:
+		Records.add(save.records, str(f[0]), int(f[1]), int(f[2]), t0)
+	for id: String in REELS_GEAR:
+		if not id in save.owned:
+			save.owned.append(id)
+		Economy.equip(db, save, id)
+	_store_told(save)
+	save.bucket = [{ "fish": "perch", "size_cm": 31, "stars": 2 }, { "fish": "rudd", "size_cm": 24, "stars": 2 },
+			{ "fish": "carp", "size_cm": 48, "stars": 2 }]
+	# Akvaryumun kutusu üç saattir doluyor: üst sınırda (dükkân açılınca Nine parayı verir).
+	save.aquarium_box = 0
+	save.aquarium_unix = t0 - 3 * 3600
+	GameState.changed.emit()
+	main.call("_on_gear_changed")
+	main.call("_start_session")
+	await _wait(2.0)
+	var view := get_viewport().get_visible_rect().size
+	print("MAĞAZA pencere %dx%d, tuval %.0fx%.0f" % [get_window().size.x, get_window().size.y, view.x, view.y])
+	# 1) İskele, sabah, göl sevgisi en üstte (çiçekler, kelebekler); olta boşta (kamera oyunun açısında: Nine'nin
+	# dükkânı, sandal, Dede, Tekir): yayının iri gölgesi iskelenin önünde, Dede "büyük gölge, büyük balık".
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	await _store_quiet()
+	_shadow_at(Vector2(1.6, -3.6), Vector2(-0.4, 1.0), "wels", STORE_WELS)
+	main.call("_say", "UI_DEDE_TIP_4")
+	await _wait(1.4)
+	await _shot("store_1_iskele")
+	# 2) Yayın şamandıraya gelir: çekişme (iskele, sandal, Dede; gerilim çubuğu). Kaçarsa yeniden (en çok üç kez).
+	var fought := false
+	for attempt in 3:
+		await _wait_state(FishingSession.State.IDLE, 6.0)
+		await _store_quiet()
+		if attempt > 0:
+			_shadow_at(Vector2(1.6, -3.6), Vector2(-0.4, 1.0), "wels", STORE_WELS)
+		await _tap_world(Vector2(1.0, -1.0))
+		if not await _wait_state(FishingSession.State.BITING, 25.0):
+			continue
+		await _store_fight("store_2_cekisme", 60.0)
+		fought = _state() == FishingSession.State.CAUGHT and str(_session().last_catch.get("fish", "")) == "wels"
+		if fought:
+			break
+	_check("mağaza: iskelede yayın tutulur, çekişmenin görüntüsü", fought
+			and FileAccess.file_exists(_shots_dir.path_join("store_2_cekisme.png")))
+	if fought:
+		await _close_card(card)
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	# 3) Nilüferli koy: Destansı altın sazanın mor ışıltılı gölgesi şamandıraya süzülür; yeni tür kartı (altın balık
+	# mor çerçevede). Kaçarsa yeniden (en çok üç kez).
+	await _reels_go("lily_cove")
+	var caught := false
+	for attempt in 3:
+		await _wait_state(FishingSession.State.IDLE, 6.0)
+		await _store_quiet()
+		var spot := _reels_spot(5.0, 0.0, 3.8)
+		if spot.is_empty():
+			break
+		var land: Vector2 = spot[0]
+		var from := _reels_open_path(land, 2.6)
+		_shadow_at(from, land - from, "golden_carp", STORE_GOLD)
+		await _tap_world(land)
+		if not await _wait_state(FishingSession.State.BITING, 25.0):
+			continue
+		await _reel_like_player(6, 60.0)
+		caught = _state() == FishingSession.State.CAUGHT \
+				and str(_session().last_catch.get("fish", "")) == "golden_carp"
+		if caught:
+			break
+	_check("mağaza: nilüferli koyda altın sazan tutulur", caught)
+	if caught and await _wait_until(func() -> bool: return card.visible, 6.0):
+		await _wait(1.8)
+		await _shot("store_3_kart")
+		await _close_card(card)
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	await _reels_go("dock_cove")
+	# 7) Akvaryum: her türün en irisi yüzer, kutu dolu.
+	var aquarium: AquariumPanel = main.get("aquarium_panel")
+	await _store_quiet()
+	main.call("_on_aquarium")
+	if await _wait_until(func() -> bool: return aquarium.visible, 2.0):
+		await _wait(3.0)
+		_check("mağaza: akvaryumda %d balık" % aquarium.swimmer_count(), aquarium.swimmer_count() >= 10)
+		await _shot("store_7_akvaryum")
+		aquarium.close_panel()
+		await _wait(0.6)
+	# 8) Nine'nin dükkânı, Makara sekmesi (altı kart; Nine kutunun parasını verir).
+	var shop: ShopPanel = main.get("shop_panel")
+	main.call("_on_shop")
+	if await _wait_until(func() -> bool: return shop.visible, 2.0):
+		shop.select_tab("reel")
+		await _wait(1.2)
+		await _shot("store_8_dukkan")
+		shop.close_panel()
+		await _wait(0.6)
+	# 4) Harita: altı bölge, sandal, "Buradasın" (Nine'nin vedası ipucu çubuğunda bitmiş olsun).
+	var map_panel: MapPanel = main.get("map_panel")
+	await _wait_until(func() -> bool: return float(main.get("_line_time")) <= 0.0, 8.0)
+	await _store_quiet()
+	await _tap_control(hud.map_button)
+	if await _wait_until(func() -> bool: return map_panel.visible, 2.0):
+		await _wait(1.0)
+		await _shot("store_4_harita")
+		map_panel.close_panel()
+		await _wait(0.6)
+	# 5) Gece iskelede (açık hava): Nine'nin feneri, lambalar, ateşböcekleri; turnanın gölgesi şamandıraya gelir,
+	# Dede fenerin sözünü söyler.
+	var day := 2
+	save.clock_s = day * DayClock.day_s(rules) + 3 * rules.phase_s + (rules.phase_s >> 1)
+	save.flags[Weather.DEBUG_DAY] = day
+	save.flags[Weather.DEBUG_KIND] = "clear"
+	clock.refresh(save)
+	main.call("_sync_world_chip")
+	scene.set_look(DayLook.at(rules, save), true)
+	await _wait(2.5)
+	await _store_quiet()
+	_shadow_at(Vector2(1.6, -3.6), Vector2(-0.4, 1.0), "pike", 800000)
+	main.call("_say", "UI_DEDE_LANTERN")
+	await _wait(1.4)
+	await _shot("store_5_gece")
+	_check("mağaza: gece, ateşböcekleri", DayClock.phase(rules, save.clock_s) == "night"
+			and (main.get("ambient") as AmbientParticles).kind == "fireflies")
+	_park_all()
+	# 6) Final gecesi: altı mektup, dört parça ve altın hamur (gece sisli); sandalla X'e, dipte at: Gölün Bekçisi
+	# belirir (turkuaz halkalar, Dede), takıma süzülür.
+	save.flags.erase(Weather.DEBUG_DAY)
+	save.flags.erase(Weather.DEBUG_KIND)
+	save.letters = Secret.LETTERS.size()
+	save.letter_at = save.catches
+	save.map_pieces = SaveData.MAX_MAP_PIECES
+	save.flags[Secret.DOUGH_FLAG] = true
+	save.flags[str(main.get("FINAL_TOLD_FLAG"))] = true
+	GameState.changed.emit()
+	clock.refresh(save)
+	main.call("_sync_world_chip")
+	scene.set_look(DayLook.at(rules, save), true)
+	_check("mağaza: final gecesi sisli (%s)" % Weather.at(rules, save), Secret.keeper_night(save)
+			and Weather.at(rules, save) == "fog")
+	main.call("_go_boat", Secret.KEEPER_BUOY)
+	await _wait_frames(2)
+	await _wait_until(func() -> bool: return not fade.busy(), 5.0)
+	main.call("_on_technique_selected", "bottom")
+	await _wait_frames(4)
+	await _wait_until(func() -> bool: return float(main.get("_line_time")) <= 0.0, 8.0)
+	await _store_quiet()
+	await _tap_world(_session().angler + Vector2(10.0, 0.0))
+	var rose := await _wait_state(FishingSession.State.WAITING, 4.0)
+	if rose:
+		rose = await _wait_until(func() -> bool: return _session().summoned() != null, KeeperPresenter.RISE_DELAY + 3.0)
+	_check("mağaza: X'te dipte Gölün Bekçisi belirir", rose)
+	if rose:
+		await _wait(1.2)
+		await _shot("store_6_bekci_a")
+		await _wait(1.6)
+		await _shot("store_6_bekci_b")
+		await _wait_state(FishingSession.State.NIBBLING, 20.0)
+		await _wait(0.6)
+		await _shot("store_6_bekci_c")
+	_finish_checks()
+
+
+## Mağaza görüntüleri: bir kez söylenen sözler ve duyurular söylenmiş sayılır (tekniklerin açılışı ve ipuçları,
+## bölgeler ve Dede'nin önerileri, vakit, hava, göl sevgisi, hikâyenin bölümleri, Nine'nin feneri ve akvaryumu):
+## görüntüde beklenmedik bir söz ya da bildirim olmasın.
+func _store_told(save: SaveData) -> void:
+	var db := GameState.db
+	for t: String in ContentDB.TECHNIQUES:
+		save.flags["told_open_" + t] = true
+		save.flags["told_tech_" + t] = true
+		save.flags["tech_casts_" + t] = 9
+	for key: String in ["told_open_trap", "told_trap_line", "told_trap_first", "told_snag", "told_fly_still",
+			"told_weather_storm"]:
+		save.flags[key] = true
+	for z in db.zones_of(str(main.get("spot_id"))):
+		save.flags["visited_" + str(z["id"])] = true
+		save.flags[Elder.SUGGEST_FLAG % str(z["id"])] = true
+	for phase: String in DayClock.PHASES:
+		save.flags["told_time_" + phase] = true
+	for kind: String in Weather.KINDS:
+		save.flags["told_weather_" + kind] = true
+	for level in range(2, LakeLove.max_level(db.rules) + 1):
+		save.flags["told_love_%d" % level] = true
+	for rank: int in Story.CHAPTERS:
+		save.flags[Story.TOLD_FLAG % rank] = true
+	for key: String in ["LANTERN_FLAG", "LANTERN_TOLD", "AQUARIUM_FLAG"]:
+		save.flags[str(main.get(key))] = true
+	# Altın hamur Nine'den alınmış (dükkânda hamurun sözü hikâyeyi önceden söylemesin; Nine kutunun parasını verir).
+	save.flags[Secret.DOUGH_FLAG] = true
+
+
+## Görüntüden önce bildirimler sönsün: yarım saniye boyunca bildirim görünmezse (sıradaki de çıkmadıysa) döner.
+func _store_quiet(timeout: float = 8.0) -> void:
+	var toast: Control = _hud().get("_toast")
+	var calm := 0.0
+	var elapsed := 0.0
+	while elapsed < timeout and calm < 0.5:
+		calm = 0.0 if toast.is_visible_in_tree() else calm + get_process_delta_time()
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+
+
+## Çekişmeyi _reel_like_player gibi oynar (VUR, basılı tut, çırpınınca 6 kare sonra bırak); 1,2 saniyeden sonra
+## (balık henüz uzakta) gerilim sakin bir aralıktayken (basılı, çırpınma yok, sınırın %40–80'i) bir kez görüntü alır.
+func _store_fight(shot_name: String, timeout: float) -> void:
+	var finger := _hud().action_button.get_global_rect().get_center()
+	_touch(1, finger, true)
+	await _wait_frames(2)
+	var hold := true
+	var lag := 0
+	var elapsed := 0.0
+	var shot := false
+	while _state() == FishingSession.State.FIGHTING and elapsed < timeout:
+		var reel := _session().reel
+		var want := reel != null and not reel.thrashing()
+		lag = lag + 1 if want != hold else 0
+		if lag >= 6:
+			hold = want
+			lag = 0
+			_touch(1, finger, hold)
+		if not shot and elapsed >= 1.2 and reel != null and hold and not reel.thrashing() \
+				and reel.tension >= reel.limit * 0.4 and reel.tension <= reel.limit * 0.8:
+			shot = true
+			await _shot(shot_name)
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+	if hold:
+		_touch(1, finger, false)
 
 
 ## Karakter seçimi ve dolap (Dalga 5): bkz. dosyanın başı.

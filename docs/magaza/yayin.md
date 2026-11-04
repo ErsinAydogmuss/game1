@@ -62,8 +62,8 @@ Derleme: [`../reklam-mac.md`](../reklam-mac.md).
 
 - Metinler `magaza-metinleri.md`; İngilizcesi çeviri olarak.
 - Görseller (`docs/magaza/gorsel/`): 512×512 ikon `play_ikon_512.png` (uygulama ikonun), 1024×500 öne çıkan görsel
-  `play_one_cikan_1024x500.png` (tanıtım görselin ve logon). Ekran görüntüleri (en az 2, en çok 8, yatay) bulut
-  oturumunun botlarıyla hazırlanacak (App Store'unkilerle aynı, aşağıda).
+  `play_one_cikan_1024x500.png` (tanıtım görselin ve logon). Ekran görüntüleri: `docs/magaza/ekran/tr/play/` (sekiz
+  tane, 1920×1080; aşağıda, "Ekran görüntüleri").
 - **Kategori:** Oyun → Simülasyon; etiketler: Balıkçılık, Rahat, Tek oyunculu.
 
 ### Sürümler
@@ -146,9 +146,30 @@ Kaydı App Review Information'daki **Attachment** alanına yükle (ya da inceley
 
 ### Ekran görüntüleri
 
-Apple 6,9 inç (2868×1320 yatay) ya da 6,5 inç (2688×1242) iPhone görüntüsü ister. Oyun Kazı gibi iPhone ve iPad'de
-çalışır (dışa aktarma ayarında cihaz ailesi varsayılan: ikisi): iPad için de 13 inç (2752×2064 yatay) görüntü gerekir.
-Bulut oturumu bot görüntülerini bu boyutlarda hazırlar (`docs/magaza/ekran/`). Play aynı yatay görüntüleri kabul eder.
+Hazır: [`ekran/`](ekran/). Görüntüleri bulut oturumunun `store` botu çekti: oyunun kendi ekranı ve arayüzü, üstüne yazı
+eklenmedi. Her klasörde sekiz görüntü var, mağazaya numara sırasıyla yükle:
+
+1. İskele: yayının iri gölgesi, Dede "Büyük gölge, büyük balık demek."
+2. Yayınla çekişme: gerilim çubuğu.
+3. Nilüferli koyda tutulan Destansı altın sazanın kartı.
+4. Harita: altı bölge.
+5. Fenerli gece: ateşböcekleri.
+6. Gölün Bekçisi: sisli gece, sandalla X'te.
+7. Akvaryum.
+8. Nine'nin dükkânı.
+
+| Klasör | Boyut (yatay) | Nereye |
+|---|---|---|
+| `ekran/tr/iphone/`, `ekran/en/iphone/` | 2868×1320 | App Store → iPhone 6,9 inç (Apple öteki iPhone boyutlarını bundan küçültür) |
+| `ekran/tr/ipad/`, `ekran/en/ipad/` | 2752×2064 | App Store → iPad 13 inç. Oyun iPad'de de çalıştığı için bu set gerekli |
+| `ekran/tr/play/`, `ekran/en/play/` | 1920×1080 | Google Play → Telefon. İstersen aynılarını 7 ve 10 inç tablete de yükle |
+
+- `tr/` Türkçe görüntüler, `en/` İngilizce görüntüler.
+  - App Store'da sağ üstteki dil menüsünden **English (U.S.)** seçince ona İngilizce seti yükle.
+  - Play'de **Çevirileri yönet → English (United States)** altına İngilizce görüntüleri koy.
+- iPhone setini Play'e yükleme. Play'de uzun kenar kısa kenarın en çok iki katı olabilir, 2868×1320 bunu aşıyor. Play'e
+  `play/` setini yükle.
+- Yeniden çekmek için: `CLAUDE.md` → `store` senaryosu.
 
 ## AdMob'u mağazaya bağla (yayından sonra)
 

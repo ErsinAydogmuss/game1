@@ -5,6 +5,16 @@ Olta'nın reklamları Kazı'daki gibi Google AdMob'dan gelir. Kod hazır: ödül
 göstermesi için senden şunlar lazım. Kazı'yı kurduğun AdMob hesabını kullanırsın (yayıncı `pub-8552904073566888`);
 yeni hesap açma.
 
+**Sıra:**
+
+1. AdMob'da iki uygulama ve dört reklam birimi (aşağıda §1). Altı kimliği bana gönder, ben oyuna koyarım.
+2. GitHub'da `olta-gizlilik` deposu ve sayfası (§3). Gizlilik adresi AdMob'da ve iki mağazada istenir.
+3. AdMob → Gizlilik ve mesajlaşma (§2).
+4. Mac'te derleme: Android paketi ve iPhone arşivi ([`reklam-mac.md`](reklam-mac.md)). Kimlikler oyuna girdikten sonra
+   yap, yoksa sürümde reklam çıkmaz.
+5. Play Console ve App Store Connect: beyanlar, metinler, ekran görüntüleri, inceleme notu ([`magaza/yayin.md`](magaza/yayin.md)).
+6. Apple için kısa ekran kaydı. Play'de kapalı test: 12 test kullanıcısı, 14 gün (§4).
+
 ## 1. Şimdi: AdMob'da iki uygulama ve dört reklam birimi
 
 1. [admob.google.com](https://admob.google.com) → **Uygulamalar → Uygulama ekle**.
@@ -43,9 +53,10 @@ Kazı için yaptıklarının aynısı, Olta'nın iki uygulamasını da seçerek:
 - **app-ads.txt:** `https://ersinaydogmuss.github.io/app-ads.txt` Kazı için zaten var ve aynı yayıncı satırı Olta'yı da
   kapsar. Tek şart: mağaza sayfalarında **geliştirici web sitesi** olarak `https://ersinaydogmuss.github.io` yazmak.
   AdMob onu birkaç gün içinde bulur ve "Doğrulandı" der.
-- **Gizlilik sayfası:** Olta'nın gizlilik politikasını (Türkçe ve İngilizce) ben hazırlayacağım (yayın adımı, A4).
-  Senden: GitHub'da `olta-gizlilik` adında herkese açık bir depo aç, **Settings → Pages**'te `main` dalını yayınla
-  (Kazı'nın `kazi-gizlilik` deposu gibi). Sayfanın dosyasını oraya ben ya da sen yüklersin.
+- **Gizlilik sayfası:** Olta'nın gizlilik politikası (Türkçe ve İngilizce) hazır: `docs/gizlilik-sayfasi/index.html`.
+  Senden: GitHub'da `olta-gizlilik` adında herkese açık bir depo aç, bu dosyayı oraya `index.html` olarak yükle,
+  **Settings → Pages**'te `main` dalını yayınla (Kazı'nın `kazi-gizlilik` deposu gibi). Adımlar:
+  [`magaza/yayin.md`](magaza/yayin.md), "Gizlilik sayfası".
 
 ## 4. Sonra: mağazalar
 
@@ -64,8 +75,9 @@ derleme: Android paketi ve iPhone arşivi). Kısaca:
 - **App Store Connect:** yeni uygulama **Olta: Gölün Sırrı**, paket kimliği `com.juiloot.olta`, SKU `olta`.
   - **App Privacy:** Kazı'nınkiyle aynı veri türleri, **izleme (tracking): Evet** (AdMob).
   - **Yaş derecelendirmesi** anketi; Kazı gibi 13+ hedef.
-  - **İnceleme notu** ve kısa ekran kaydını ben hazırlayacağım: Apple Kazı'nın ilk gönderiminde "Information Needed"
-    (2.1) demişti, not ve kayıtla geçmişti.
+  - **İnceleme notu** hazır (`magaza/yayin.md`); kısa ekran kaydını sen çekersin (2–3 dakika, adımları orada). Apple
+    Kazı'nın ilk gönderiminde "Information Needed" (2.1) demişti, not ve kayıtla geçmişti.
+  - **Ekran görüntüleri** hazır: `magaza/ekran/` (iPhone 6,9", iPad 13", Play; Türkçe ve İngilizce).
 
 ## Kurallar
 

@@ -236,8 +236,11 @@ Ersin'in yapacakları (AdMob, mağazalar): [`reklam-kurulum.md`](reklam-kurulum.
   reklamı (harita, sandal, çay); "Reklamlar hakkında" kartı; Ayarlar'da Gizlilik ve Lisanslar; `ads` botu.
 - [x] A3 Denge: reklam izleyen oyuncu saatte +%17–30 para (ilk sınırlarla +%56'ydı; satış 30 dakikada bir ve günde 4,
   istek ve akvaryum günde 3); ilerleme aynı. Denge botu `SessionSim.ads`, `economy_report --ads`, korkuluk.
-- [ ] A4 Yayın: gizlilik politikası, mağaza metinleri ve görselleri, inceleme notu ve ekran kaydı, Mac'te derleme
-  görevi, sürüm 1.0.0.
+- [x] A4 Yayın: gizlilik politikası (`gizlilik-sayfasi/`), mağaza metinleri, beyanlar ve inceleme notu
+  (`magaza/`), Play'in ikonu ve öne çıkan görseli (`magaza/gorsel/`), mağaza ekran görüntüleri (`store` botu,
+  `magaza/ekran/`: iPhone 6,9", iPad 13", Play; Türkçe ve İngilizce), Mac'te derleme görevi (`reklam-mac.md`,
+  `tools/check_aab.py`), sürüm 1.0.0 (Android sürüm kodu 1, iPhone yapı numarası 1). Ekran kaydını Ersin çeker
+  (`magaza/yayin.md`).
 - [ ] A5 Gerçek AdMob kimlikleri (Ersin gönderince) ve son denetim.
 
 ## Faz 3: Ücretsiz oyun katmanı
