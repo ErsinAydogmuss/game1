@@ -322,6 +322,67 @@ func test_lost_fight_flees_through_water() -> void:
 	assert_true(session.lake.is_water(s.pos), "kaçan balık suda: %s" % str(s.pos))
 
 
+## Reklamla kurtarma (AdRules.RESCUE): çekişmede kaçan balık son kaçan olarak kalır (tür, boy, yıldız, nadirlik);
+## rescue onu kaçtığı andaki künyesiyle tutulmuş sayar (catch olayı, çöp yok; gölge gölden çıkar). Bir kez kurtarılır;
+## çekişme sürerken kurtarılmaz; yeni atış son kaçanı siler; çekişmeden önce kaçan (VUR'u kaçırdı) kurtarılmaz.
+func test_rescue_brings_back_the_lost_fish() -> void:
+	var session := _session()
+	assert_true(not session.rescue(), "kaçan balık yokken kurtarma yok")
+	var s := _to_biting(session)
+	session.press()
+	assert_eq(session.state, FishingSession.State.FIGHTING, "çekişme")
+	assert_true(not session.rescue(), "çekişme sürerken kurtarma yok")
+	var id := s.id
+	var fish := s.fish_id
+	var size := s.size_cm
+	var stars := s.stars
+	session.reel.over = 1_000_000
+	session.step()
+	assert_eq(session.last_loss, "snapped", "misina koptu")
+	assert_eq(str(session.last_lost.get("fish", "")), fish, "son kaçan balık: tür")
+	assert_eq(int(session.last_lost.get("size_cm", 0)), size, "son kaçan balık: boy")
+	assert_eq(int(session.last_lost.get("rarity", -1)), s.rarity, "son kaçan balık: nadirlik")
+	session.poll_events()
+	assert_true(session.rescue(), "kurtarılır")
+	assert_eq(session.state, FishingSession.State.CAUGHT, "tutulmuş sayılır")
+	assert_true(session.sim.find(id) == null, "kaçan gölge gölden çıktı")
+	var caught := {}
+	for e in session.poll_events():
+		if str(e["type"]) == "catch":
+			caught = e
+	assert_eq(str(caught.get("fish", "")), fish, "catch olayı kaçan balığın")
+	assert_eq(int(caught.get("size_cm", 0)), size, "boyu aynı")
+	assert_eq(int(caught.get("stars", 0)), stars, "yıldızı aynı")
+	assert_true(bool(caught.get("rescued", false)), "kurtarıldı işareti")
+	assert_eq(str(caught.get("trash", "x")), "", "kurtarılan balıkla çöp gelmez")
+	assert_true(not caught.has("too_big"), "olayda takımın notu yok")
+	assert_true(session.last_lost.is_empty(), "bir kez kurtarılır")
+	assert_true(not session.rescue(), "ikinci kurtarma yok")
+	session.acknowledge()
+	assert_eq(session.state, FishingSession.State.IDLE, "kart kapanınca boşa döner")
+
+
+func test_rescue_is_forgotten_by_a_new_cast_and_never_for_a_missed_bite() -> void:
+	var session := _session()
+	_to_biting(session)
+	session.press()
+	session.reel.over = 1_000_000
+	session.step()
+	assert_true(not session.last_lost.is_empty(), "kaçan balık kurtarılabilir")
+	assert_true(_run_until(session, FishingSession.State.IDLE, 3.0), "kaçıştan sonra olta boşa döner")
+	assert_true(not session.last_lost.is_empty(), "olta boşken de kurtarılabilir")
+	assert_true(session.cast(BOBBER), "yeni atış")
+	assert_true(session.last_lost.is_empty(), "yeni atış son kaçanı siler")
+	assert_true(not session.rescue(), "atıştan sonra kurtarma yok")
+	# VUR'u kaçıran balık çekişmeye girmedi: kurtarılmaz.
+	var other := _session(false, false, 7)
+	_to_nibbling(other)
+	other.press()
+	assert_eq(other.state, FishingSession.State.LOST, "erken dokunuş kaçırır")
+	assert_true(other.last_lost.is_empty(), "çekişmesiz kaçış kurtarılmaz")
+	assert_true(not other.rescue(), "kurtarma yok")
+
+
 func test_first_catch_is_scripted() -> void:
 	var session := _session(false, true)
 	var first := session.sim.shadows[0]

@@ -13,7 +13,8 @@ extends Dialog
 ##   yıldızlı iri balığı taşıdığı, 5 yıldızdan dolu olanlar) ve tek düğme: fiyat (al ve tak), TAK,
 ##   TAKILI, SENDE ya da rütbe kilidi. Yem kartında hangi balığı çektiği ve elindeki sayı; takılı
 ##   yem yeniden alınabilir (düğme fiyat olur, kart yeşil kenarlı).
-## - Kova: tür başına bir satır (sayı, değer), altta toplam ve HEPSİNİ SAT.
+## - Kova: tür başına bir satır (sayı, değer), altta toplam ve HEPSİNİ SAT. Satıştan sonra (reklamlar, AdRules.SELL)
+##   boş kovanın altında "Reklam izle: 2 katı": izlenirse satışın parası bir kez daha (Ads.reward_coins).
 ## - Başlığın sonunda "?": rehber açık sekmenin sayfasında açılır (GuidePages.page_for_shop_tab).
 ## Para yalnızca oynayarak kazanılır; satın alma oyun parasıyla (gelir kuralları, CLAUDE.md).
 ## Düğmeler normal Button (TouchButton değil): paneller tek parmakla kullanılır.
@@ -90,6 +91,8 @@ const ACTION := Vector2(236, 122)
 const ODDS_TEXT := 204.0
 ## Satış satırları: iki sütun, en çok bu kadar tür (daha fazlası "+N tür").
 const SELL_ROWS := 8
+## Satıştan sonraki reklam teklifinin düğmesi (Kova sekmesinde, boş kovanın yazısının altında).
+const AD_OFFER := Vector2(660, 122)
 ## Kamış ve misina kartında "İri balık" yıldızlarının boyu (5 yıldız, kartı CARD'dan genişletmesin).
 const STAR_SIDE := 27.0
 const BETTER := Color("#2f9e52")
@@ -117,6 +120,10 @@ var zone_id: String = ""
 var technique: String = "float"
 ## Uzaktan açıldı (takım çantası): kova satılmaz.
 var _remote: bool = false
+## Son satışın tutarı (reklamlar: satıştan sonra Kova sekmesinde "Reklam izle: 2 katı"; dükkân yeniden açılınca ya
+## da ödül alınınca 0) ve teklif düğmesi (bot).
+var _ad_sale: int = 0
+var ad_sell_button: Button
 
 
 func _build() -> void:
@@ -197,6 +204,7 @@ func open_shop(tab: String = "", look: String = "", remote: bool = false, line: 
 		line_args: Array = []) -> void:
 	technique = look if not look.is_empty() else GameState.save.technique
 	_remote = remote
+	_ad_sale = 0
 	if not tab.is_empty():
 		_tab = tab
 	elif not GameState.save.bucket.is_empty():
@@ -564,10 +572,19 @@ func _build_sell() -> void:
 	_content.add_child(head)
 	head.add_child(GameIcon.make("bucket", 72))
 	head.add_child(UiKit.ink(tr("UI_SHOP_BUCKET") % [save.bucket.size(), Bucket.capacity(db, save)], UiKit.SIZE_BODY))
+	ad_sell_button = null
 	if save.bucket.is_empty():
 		var empty := UiKit.ink(tr("UI_SHOP_BUCKET_EMPTY"), UiKit.SIZE_BODY, UiKit.INK_SOFT, HORIZONTAL_ALIGNMENT_CENTER)
 		empty.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		_content.add_child(empty)
+		# Satıştan sonra (reklamlar, AdRules.SELL): reklam izlenirse satışın parası bir kez daha.
+		if _ad_sale > 0 and not _remote and AdRules.sale_worth_offer(_ad_sale) and Ads.offer_ok(AdRules.SELL):
+			var center := CenterContainer.new()
+			center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			_content.add_child(center)
+			ad_sell_button = AdOffer.button(tr("UI_AD_DOUBLE") % UiKit.format_int(_ad_sale), AD_OFFER, UiKit.SIZE_BODY)
+			ad_sell_button.pressed.connect(_watch_sell_ad)
+			center.add_child(ad_sell_button)
 		return
 	var grid := GridContainer.new()
 	grid.columns = 2
@@ -691,8 +708,27 @@ func _sell() -> void:
 	Sounds.play("coins")
 	Sounds.haptic(24)
 	_say("UI_NINE_SOLD", [UiKit.format_int(earned)])
+	_ad_sale = earned
 	sold.emit(earned)
 	refresh()
+
+
+## Satışın reklam teklifi (AdRules.SELL): reklam sonuna kadar izlenirse satışın parası bir kez daha (Ads.reward_coins);
+## yarıda kalırsa Nine söyler. Reklam açıkken oyun durur (Ads).
+func _watch_sell_ad() -> void:
+	if _ad_sale <= 0 or ad_sell_button == null or ad_sell_button.disabled:
+		return
+	ad_sell_button.disabled = true
+	Sounds.play("ui_tap")
+	var bonus := _ad_sale
+	if await Ads.show_rewarded(AdRules.SELL):
+		_ad_sale = 0
+		Ads.reward_coins(bonus)
+		_say("UI_NINE_AD_SOLD", [UiKit.format_int(bonus)])
+	else:
+		_say("UI_NINE_AD_MISSED")
+	if visible:
+		refresh()
 
 
 ## Olmayan bir şey istendi: hata sesi ve Nine'nin açıklaması (düğme kilitli görünmez; ne

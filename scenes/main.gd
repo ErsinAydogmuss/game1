@@ -96,6 +96,10 @@ const TEA_ZOOM := 0.62
 ## bütün süredir (Godot uzun boşluğu kırpmaz): oyun saati, Bekçi'nin beklemesi ve sunum sıçramasın (saat oyuncu
 ## yokken akmaz).
 const MAX_FRAME := 0.25
+## Reklamlar (A2): kaçan balığın teklif kartı kaçıştan bu kadar sn sonra açılır (kaçış görülsün; kaçışın beklemesi
+## 0,8 sn: kart açılınca oyun donar, olta boşa dönmeden kurtarılır). Reklamların durumuna bakma aralığı (sn).
+const RESCUE_DELAY := 0.5
+const ADS_EVERY := 0.25
 ## Dede'nin vakte ve havaya ilk sözünün bayrağı (vaktin ya da havanın kimliğiyle; kayıtta).
 const TIME_FLAG := "told_time_%s"
 const WEATHER_FLAG := "told_weather_%s"
@@ -190,6 +194,20 @@ var day_panel: DayPanel
 var bucket_panel: BucketPanel
 ## "Nasıl oynanır?" rehberi: ayarlardan, takım çantasından ve dükkândan açılır, onların üstünde durur.
 var guide_panel: GuidePanel
+## Reklamlar (A2; Ersin'in kararı 4 Kasım 2026): teklif kartı (kaçan balık, Dede'nin isteği), "Reklamlar hakkında"
+## (ilk kez ısınmadan sonra; Ayarlar'ın GİZLİLİK'inden bilgi olarak) ve lisanslar.
+var ad_offer: AdOfferPanel
+var ad_notice: AdNoticePanel
+var license_panel: LicensePanel
+## Bu oturumda "Reklamlar hakkında" kartı açıldı mı (bir kez).
+var _ad_notice_shown: bool = false
+## Teklif bekleyen Dede isteklerinin parası (ödendikçe toplanır; olta boşa dönünce teklif kartı) ve açık kartın
+## teklifi (reklam izlenince bir kez daha verilir).
+var _ad_request_coins: int = 0
+var _ad_offer_coins: int = 0
+## Kaçan balığın teklifine kalan süre (sn; -1 yok) ve reklamların durumuna bakma saati.
+var _ad_rescue_wait: float = -1.0
+var _ads_clock: float = 0.0
 ## Açılış filminin örtüsü (sözler, ATLA) ve çekimleri (kamera, dev gölge); film yokken _film boş.
 var story_panel: StoryPanel
 var _film: StoryFilm
@@ -698,8 +716,11 @@ func _process(delta: float) -> void:
 	# balık kaçmasın). Balık kartı panel değildir: kart açıkken balık gösterimi sürer. Sıradaki
 	# bildirimler (rütbe, açılan yer) de bekler: karartmanın altında kalmasın, panel kapanınca çıkar.
 	if _paused or _panel_open():
+		Ads.playing = false
 		hud.hold_toasts(TOAST_AFTER_PANEL)
 		return
+	# Reklamların oyun süresi (geçiş reklamının 20 dakikası, bekleme süreleri) yalnızca oyun ekranda akarken.
+	Ads.playing = _film == null and not fade.busy()
 	if session.state == FishingSession.State.IDLE:
 		session.angler = angler.pos2()
 	if _pending_sell and not fade.busy():
@@ -733,6 +754,7 @@ func _process(delta: float) -> void:
 		if _quick_catch >= QUICK_CATCH_TIME:
 			_quick_catch = -1.0
 			session.acknowledge()
+	_tend_ads(delta)
 	_present(delta)
 
 
@@ -1225,6 +1247,10 @@ func _on_lost(reason: String, too_big: int = 0) -> void:
 		bobber.hide_bobber()
 	else:
 		bobber.fly_back(angler.rod_tip(), float(session.rules.lost_steps) / FishingRules.HZ)
+	# Reklamlar (AdRules.RESCUE): kaçan Nadir+ balık (takımın taşıyabildiği; hikâyenin balığı değil) reklamla
+	# kurtarılabilir. Teklif kartı kaçış görülünce (RESCUE_DELAY).
+	if reason in ["snapped", "escaped"] and _rescue_worth():
+		_ad_rescue_wait = RESCUE_DELAY
 
 
 func _on_catch() -> void:
@@ -1475,6 +1501,8 @@ func _pay_requests(done: Array[Dictionary]) -> Dictionary:
 					else "UI_DEDE_GOLDEN_DONE"
 		else:
 			hud.toast_later(tr("UI_REQ_DONE") % UiKit.format_int(int(paid["coins"])), UiKit.ACCENT, "coins", "requests")
+		# Reklamlar (AdRules.REQUEST): olta boşa dönünce "ödülü 2 katına çıkar" teklifi (harita parçası değil, para).
+		_ad_request_coins += int(paid["coins"])
 		_after_love(paid["loved"])
 		ranked = _join_ranks(ranked, paid["ranked"])
 		_request_done = true
@@ -1801,7 +1829,8 @@ func _on_tea() -> void:
 		elder.approve()
 		_say("UI_DEDE_TEA")
 		Sounds.play("tea")
-		Sounds.haptic(20), TEA_HOLD)
+		Sounds.haptic(20)
+		_interstitial(), TEA_HOLD)
 
 
 ## Geliştirme sürümü (Ayarlar'da VAKİT +, HAVA, SEVGİ +): saat sonraki vakte, bugünün havası sıradakine,
@@ -2527,7 +2556,8 @@ func _travel(target: String) -> void:
 		session.set_pity_floor(_pity(target))
 		session.relocate(stand)
 		_follow_zone()
-		_snap_camera())
+		_snap_camera()
+		_interstitial())
 
 
 ## Geçişten önce: yürüme ve bekleyen atış biter, parmaklar bırakılır; geçiş sesi ve titreşim.
@@ -3235,7 +3265,8 @@ func _go_boat(buoy: int) -> void:
 		_moor(zone, index)
 		_snap_camera()
 		if first:
-			_say("UI_DEDE_BOAT_DEEP"))
+			_say("UI_DEDE_BOAT_DEEP")
+		_interstitial())
 
 
 ## Sandal şamandıranın yanına bağlanır, balıkçı içinde (kararmanın ya da filmin altında): gölgeler derin ortada
@@ -3407,6 +3438,130 @@ func _load_faces() -> void:
 			shop_panel.set_face(nine_face)
 
 
+# --- Reklamlar (A2) ---------------------------------------------------------------
+
+## Reklamlar (Ersin'in kararı 4 Kasım 2026; kurallar AdRules, yükleme ve gösterme Ads): uygun bir anda (ısınmadan
+## sonra, olta boşken, kart, film ve kararma yokken) bir kez "Reklamlar hakkında" kartı, sonra Ads.start (onay, SDK,
+## yükleme; kartı önceki oturumda görene hemen); kaçan balığın ve Dede'nin isteğinin teklif kartı. Satışın ve akvaryum
+## kutusunun teklifi kendi panellerinde.
+func _tend_ads(delta: float) -> void:
+	if _ad_rescue_wait >= 0.0:
+		_ad_rescue_wait -= delta
+		if _ad_rescue_wait < 0.0:
+			_offer_rescue()
+	_ads_clock += delta
+	if _ads_clock < ADS_EVERY:
+		return
+	_ads_clock = 0.0
+	# Reklamlar başlamadan biten isteğin teklifi birikmez (sonradan eski istekler için kart çıkmasın).
+	if not Ads.started:
+		_ad_request_coins = 0
+	if not _ads_calm():
+		return
+	if not Ads.started:
+		if not Ads.available():
+			return
+		if not AdRules.notice_seen(AdRules.state(GameState.save.settings)):
+			# İlk kez: ısınmadan sonra (AdRules.WARMUP_CATCHES balık) kart; kapanınca reklamlar başlar.
+			if Ads.needs_notice() and not _ad_notice_shown:
+				_ad_notice_shown = true
+				ad_notice.open_notice()
+			return
+		Ads.start()
+		return
+	if _ad_request_coins > 0:
+		var coins := _ad_request_coins
+		_ad_request_coins = 0
+		if Ads.offer_ok(AdRules.REQUEST):
+			_ad_offer_coins = coins
+			ad_offer.offer(AdRules.REQUEST, "UI_AD_REQUEST_TITLE",
+					func() -> String: return tr("UI_AD_REQUEST_TEXT") % UiKit.format_int(coins),
+					func() -> String: return tr("UI_AD_DOUBLE") % UiKit.format_int(coins), "requests")
+
+
+## Teklif ve bildirim kartı için sakin bir an mı: olta boş, kart, kısa yakalama, film, kararma ve yürüyüş yok (panel
+## açıkken _process buraya gelmez).
+func _ads_calm() -> bool:
+	return session.state == FishingSession.State.IDLE and not _card_up() and _quick_catch < 0.0 and _film == null \
+			and not fade.busy() and not _choosing and not angler.is_walking() and not keeper.present()
+
+
+## "Reklamlar hakkında" kartı kapandı: ilk kez açıldıysa (Ayarlar'dan bilgi olarak değil) reklamlar başlar (AB'de
+## Google'ın onay penceresi, iPhone'da izleme izni).
+func _on_ad_notice_closed() -> void:
+	if ad_notice.info:
+		return
+	Ads.accept_notice()
+	Ads.start()
+
+
+## Kaçan balık reklamla kurtarılmaya değer mi (AdRules.rescue_worth_offer: Nadir+, hikâyenin balığı değil, takımın
+## taşıyabildiği) ve teklif şimdi yapılabilir mi (reklam yüklü, günlük sınır).
+func _rescue_worth() -> bool:
+	var info := session.last_lost
+	if info.is_empty():
+		return false
+	return AdRules.rescue_worth_offer(int(info["rarity"]), GameState.db.rarity_index("rare"),
+			bool(info.get("story", false)), int(info.get("too_big", 0))) and Ads.offer_ok(AdRules.RESCUE)
+
+
+## Kaçan balığın teklif kartı (RESCUE_DELAY sonra): balığın resmi, nadirliği ve adı. Kart açıkken oyun donar (olta
+## kaçışın beklemesinde kalır); bekleyen atış unutulur.
+func _offer_rescue() -> void:
+	var info := session.last_lost
+	if info.is_empty() or not session.state in [FishingSession.State.LOST, FishingSession.State.IDLE] \
+			or _card_up() or _film != null or fade.busy() or _panel_open() or not _rescue_worth():
+		return
+	var fish_id := str(info["fish"])
+	_pending_cast = Dice.NO_POINT
+	_forget_pickups()
+	input.release_all()
+	angler.stop()
+	ad_offer.offer(AdRules.RESCUE, "UI_AD_RESCUE_TITLE",
+			func() -> String: return tr("UI_AD_RESCUE_TEXT") % tr("FISH_" + fish_id),
+			func() -> String: return tr("UI_AD_RESCUE"), "fish:" + fish_id, int(info["rarity"]))
+
+
+## Teklif kartının reklamı sonuna kadar izlendi: kaçan balık tutulmuş sayılır (FishingSession.rescue: olağan
+## yakalayış, catch olayı) ya da isteğin parası bir kez daha.
+func _on_ad_rewarded(place: String) -> void:
+	match place:
+		AdRules.RESCUE:
+			if session.rescue():
+				Sounds.haptic(40)
+		AdRules.REQUEST:
+			var coins := _ad_offer_coins
+			_ad_offer_coins = 0
+			Ads.reward_coins(coins)
+
+
+## Akvaryumun reklamı izlendi (AdRules.AQUARIUM): kutu toplanır, aynı para bir kez daha (Ads.reward_coins).
+func _on_aquarium_ad() -> void:
+	var coins := _collect_aquarium()
+	Ads.reward_coins(coins)
+	aquarium_panel.refresh()
+
+
+## Ödüllü reklamın parası verildi (Ads.reward_coins): bildirim (panel açıksa kapanınca) ve göstergeler.
+func _on_ad_coins(amount: int) -> void:
+	hud.toast_later(tr("UI_AD_REWARD") % UiKit.format_int(amount), UiKit.ACCENT, "coins", "coin")
+	_refresh_status()
+
+
+## Ödüllü reklam yarıda kaldı: ödül yok (dükkânda Nine söyler).
+func _on_ad_missed(place: String) -> void:
+	if place != AdRules.SELL:
+		hud.toast_later(tr("UI_AD_NO_REWARD"), UiKit.BAD, "error")
+
+
+## Geçiş reklamı (AdRules: ilk 20 dakikadan sonra, en çok 8 dakikada bir; yalnızca oyuncunun başlattığı geçişte):
+## harita geçişinde, sandalla ve çayda ekran karanlıkken. Reklam açıkken oyun durur (kararma da: reklamdan sonra
+## açılır).
+func _interstitial() -> void:
+	if Ads.interstitial_due():
+		Ads.show_interstitial()
+
+
 # --- Arayüz ----------------------------------------------------------------------
 
 func _build_ui() -> void:
@@ -3488,6 +3643,21 @@ func _build_ui() -> void:
 	letter_panel = LetterPanel.new()
 	layer.add_child(letter_panel)
 	letter_panel.closed.connect(_on_letter_closed)
+	# Reklamlar: teklif kartı, "Reklamlar hakkında" (Ayarlar'dan bilgi olarak da: ayarların üstünde) ve lisanslar
+	# (onun üstünde).
+	ad_offer = AdOfferPanel.new()
+	layer.add_child(ad_offer)
+	ad_offer.rewarded.connect(_on_ad_rewarded)
+	ad_notice = AdNoticePanel.new()
+	layer.add_child(ad_notice)
+	ad_notice.closed.connect(_on_ad_notice_closed)
+	license_panel = LicensePanel.new()
+	layer.add_child(license_panel)
+	ad_notice.licenses_requested.connect(license_panel.open)
+	settings_panel.privacy_requested.connect(ad_notice.open_info)
+	aquarium_panel.ad_rewarded.connect(_on_aquarium_ad)
+	Ads.coins_rewarded.connect(_on_ad_coins)
+	Ads.reward_missed.connect(_on_ad_missed)
 	# Rehber en son: açıldığı panelin (ayarlar, çanta, dükkân) üstünde çizilir; kapanınca o açık kalır.
 	guide_panel = GuidePanel.new()
 	layer.add_child(guide_panel)

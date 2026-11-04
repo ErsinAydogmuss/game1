@@ -769,3 +769,29 @@ UI_GUIDE_PHOTO_TEXT,"The camera in Settings or on a fish card: drag, pick a fram
 UI_AD_TEST,TEST AD,DENEME REKLAMI
 UI_AD_TEST_REWARDED,Rewarded ad (on the phone a real ad plays here),Ödüllü reklam (telefonda burada gerçek reklam oynar)
 UI_AD_TEST_INTERSTITIAL,Interstitial ad (on the phone a real ad plays here),Geçiş reklamı (telefonda burada gerçek reklam oynar)
+UI_AD_NO,No thanks,"Hayır, sağ ol"
+UI_AD_RESCUE,Watch an ad: bring it back,Reklam izle: geri getir
+UI_AD_RESCUE_TITLE,It got away,Kaçan balık
+UI_AD_RESCUE_TEXT,Your %s got away! Watch an ad and it comes back: it counts as caught.,%s kaçtı! Bir reklam izlersen geri gelir: tutmuş sayılırsın.
+UI_AD_REQUEST_TITLE,Request done,İstek tamam
+UI_AD_REQUEST_TEXT,Dede paid you %s coins. Watch an ad and he pays it once more!,Dede %s para verdi. Bir reklam izlersen bir kez daha verir!
+UI_AD_DOUBLE,Watch an ad: double it +%s,Reklam izle: 2 katı +%s
+UI_AD_REWARD,Ad reward: +%s coins,Reklam ödülü: +%s para
+UI_AD_NO_REWARD,Watch the ad to the end to get the reward.,Ödül için reklamı sonuna kadar izle.
+UI_ADS_NOTICE_TITLE,About ads,Reklamlar hakkında
+UI_ADS_NOTICE_BODY,"Olta shows ads so that it stays free. You choose whether to watch rewarded ads; now and then a short ad also plays when you travel with the map or have tea with Dede. The ads come from Google AdMob: to show them, information such as your phone's advertising ID, your approximate location (from your IP address) and how you interact with ads goes to Google. You can find the details in the privacy policy and change your choices in Settings → Privacy.","Olta ücretsiz kalsın diye reklam gösterir. Ödüllü reklamları izleyip izlememek senin seçimin; haritayla başka yere geçerken ya da Dede'yle çay içerken ara sıra kısa bir reklam da oynar. Reklamları Google AdMob sunar: bunun için telefonunun reklam kimliği, yaklaşık konumun (IP adresinden) ve reklamlarla etkileşimin gibi bilgiler Google'a gider. Ayrıntılar gizlilik politikasında; seçimlerini Ayarlar → Gizlilik'ten değiştirebilirsin."
+UI_ADS_NOTICE_OK,Got it,Anladım
+UI_PRIVACY_POLICY,Privacy policy,Gizlilik politikası
+UI_SET_PRIVACY,Privacy,Gizlilik
+UI_SET_PRIVACY_OPTIONS,Ad choices,Reklam seçimleri
+UI_LICENSES,Licenses,Lisanslar
+UI_LICENSES_INTRO,Olta uses free and open-source software and fonts. Their licenses ask for these notices to be shipped with the game.,"Olta, ücretsiz ve açık kaynaklı yazılımlar ve yazı tipleri kullanır. Lisansları, bu notların oyunla birlikte verilmesini ister."
+UI_LICENSES_FONTS,Fonts,Yazı tipleri
+UI_LICENSES_LIBS,Libraries,Kitaplıklar
+UI_LICENSES_GOOGLE,"Google Mobile Ads SDK and Google User Messaging Platform SDK © Google LLC, used under Google's terms (AdMob).",Google Mobile Ads SDK ve Google User Messaging Platform SDK © Google LLC; Google'ın şartlarıyla kullanılır (AdMob).
+UI_LICENSES_PARTS,Components inside Godot Engine,Godot Engine'in içindeki bileşenler
+UI_LICENSES_TEXTS,License texts,Lisans metinleri
+UI_LICENSES_TAP,Tap a license to read its full text.,Tam metni okumak için lisansa dokun.
+UI_LICENSES_LICENSE,License: %s,Lisans: %s
+UI_NINE_AD_SOLD,Double it is! Here's %s more coins.,"İki katı oldu! Al bakalım, %s para daha."
+UI_NINE_AD_MISSED,"The ad stopped early, so no reward this time.","Reklam yarıda kaldı, bu sefer ödül yok."

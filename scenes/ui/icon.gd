@@ -13,14 +13,16 @@ extends Control
 ## rozetini (görseli yoksa kodla: iskele, kamış, nilüfer, kaya, dere, şamandıra), "item:<eşya>" eşyanın
 ## görselini (çöp, kerevit, Gölün Sırrı'nın eşyaları; ItemArt.item) çizer. Görseli yoksa sırrın eşyaları
 ## (mektup, harita parçası, altın hamur) kodla, ötekiler soru işaretiyle. "bottle": Gölün Sırrı'nın şişesi (haritada,
-## bildirimde, rehberde; Ersin'in mesajlı şişe görseli, yoksa kodla).
+## bildirimde, rehberde; Ersin'in mesajlı şişe görseli, yoksa kodla). "ad": ödüllü reklamın teklifi (oynat üçgenli
+## ekran; AdOffer).
 
 ## Kodla çizilebilen ikonlar (görseli yoksa). Bilinmeyen ad soru işareti çizer (boş kalmasın);
 ## takımın "kind"ı bunlardan biri olmalı (test_content_db denetler).
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
 		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
-		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box", "wardrobe", "camera", "cat"]
+		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box", "wardrobe", "camera", "cat",
+		"ad"]
 
 ## Kod adı -> görsel adı (assets/icons/ui/<ad>.png).
 const ART_NAMES := {
@@ -214,6 +216,8 @@ func _draw() -> void:
 			_camera()
 		"cat":
 			_cat()
+		"ad":
+			_ad_screen()
 		_:
 			_question()
 	draw_set_transform(Vector2.ZERO)
@@ -586,6 +590,20 @@ func _cat() -> void:
 		for k in 2:
 			draw_line(Vector2(50 + side * 10, 70 + k * 5), Vector2(50 + side * 38, 66 + k * 9), Color("#3a3f47"), 1.6, true)
 	draw_colored_polygon(PackedVector2Array([Vector2(46, 64), Vector2(54, 64), Vector2(50, 69)]), Color("#e99aa0"))
+
+
+## Ödüllü reklamın teklifi (AdOffer, "Reklamlar hakkında"): ayaklı küçük mavi ekran, ortasında altın oynat üçgeni
+## (Kazı'nınki).
+func _ad_screen() -> void:
+	var body := Color("#3d8bff")
+	var dark := body.darkened(0.45)
+	draw_rect(Rect2(36, 72, 28, 12), dark)
+	draw_rect(Rect2(26, 80, 48, 8), dark)
+	draw_rect(Rect2(10, 22, 80, 58), dark)
+	draw_rect(Rect2(10, 16, 80, 58), body)
+	draw_rect(Rect2(17, 23, 66, 44), Color("#16233f"))
+	draw_colored_polygon(PackedVector2Array([Vector2(42, 31), Vector2(64, 45), Vector2(42, 59)]), GOLD)
+	draw_circle(Vector2(20, 20), 3.5, Color(1, 1, 1, 0.5))
 
 
 ## Fotoğraf makinesi (fotoğraf modu): koyu gövde, deklanşör, büyük mavi mercek, flaş.

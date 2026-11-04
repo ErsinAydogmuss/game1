@@ -1,6 +1,7 @@
 class_name SettingsPanel
 extends Dialog
-## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil; başlıkta HİKÂYE (açılış filmi yeniden:
+## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil ve yanında GİZLİLİK (reklamlar: privacy_requested);
+## başlıkta HİKÂYE (açılış filmi yeniden:
 ## story_requested; olta boşken, main açmadan önce story_ready verir), Gölün Bekçisi bırakıldıysa BİTİŞ (bitiş
 ## filmi ve jenerik: ending_requested) ve "Nasıl oynanır?" (rehber: help_requested). (Kazı'dan uyarlandı.)
 ## Sürüm yazısına arka arkaya 5 kez dokununca ölçüm açılır ya da kapanır (HUD'da FPS, çizim ve
@@ -26,6 +27,9 @@ signal love_requested
 signal finish_request_requested
 ## Geliştirme sürümü (Gölün Sırrı): altın istek biter ya da sıradaki şişe hemen çıkar (main: gerçek akışla).
 signal secret_requested
+## Reklamlar ve gizlilik (Dil satırındaki GİZLİLİK; main "Reklamlar hakkında" kartını bilgi olarak açar: gizlilik
+## politikası, reklam seçimleri, lisanslar).
+signal privacy_requested
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
@@ -137,6 +141,15 @@ func refresh() -> void:
 	var lang_button := UiKit.button(tr("UI_LANG_NAME"), UiKit.SECONDARY, UiKit.SIZE_BODY, ROW_BUTTON)
 	lang_button.pressed.connect(func() -> void: GameState.toggle_locale())
 	lang.add_child(lang_button)
+	# Gizlilik (reklamlar): Dil satırında (yeni satır panelin telefonda küçülmesine yol açardı).
+	var privacy := UiKit.button(tr("UI_SET_PRIVACY"), UiKit.NEUTRAL, UiKit.SIZE_BODY, ROW_BUTTON)
+	privacy.name = "Privacy"
+	privacy.icon = ItemArt.ui("lock")
+	privacy.add_theme_constant_override("icon_max_width", 56)
+	privacy.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		privacy_requested.emit())
+	lang.add_child(privacy)
 	# Oyunun adı ve sürüm (eskiden HUD'un sol üstündeydi; orada artık para, kova ve rütbe var).
 	# Arka arkaya 5 dokunuş ölçümü açar ya da kapatır.
 	var text := "%s · %s" % [tr("UI_GAME_TITLE"),

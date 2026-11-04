@@ -157,7 +157,8 @@ func _ready() -> void:
 	warm_styles()
 	# Paneldeki düğme renklerinin hâlleri (UiKit.button_state): sonraki karelerde birer birer.
 	# Düğme görseli varsa hepsi önbellekten gelir, çizim olmaz.
-	for color: Color in [UiKit.SECONDARY, UiKit.NEUTRAL]:
+	# Reklam teklifinin rengi (AdOffer; görseli yok, kodla çizilir) de: teklif sonradan çıkar, o an takılmasın.
+	for color: Color in [UiKit.SECONDARY, UiKit.NEUTRAL, AdOffer.COLOR]:
 		for state: String in UiKit.BUTTON_STATES:
 			_warm_later.append([color, state])
 	_build_top()

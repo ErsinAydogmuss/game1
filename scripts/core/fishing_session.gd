@@ -71,6 +71,9 @@ var fight_near: float = 0.0
 ## Son yakalanan balık (catch olayının içeriği) ve son kaçırma nedeni.
 var last_catch: Dictionary = {}
 var last_loss: String = ""
+## Çekişmede son kaçan balık (last_catch'in alanlarıyla; misina koptu ya da kaçtı): reklamla kurtarılabilir
+## (rescue). Yeni bir atışta, balık kurtarılınca ya da başka balık takılınca silinir. Olaylara girmez (altın test).
+var last_lost: Dictionary = {}
 ## Takılan balık fazla iriyse yıldızı (takımı taşımıyor: ReelModel.excess), değilse 0. hook ve
 ## çekişmede kaybedilince lost olayında too_big olarak gelir (Dede eksik takımı söyler).
 var too_big: int = 0
@@ -178,6 +181,7 @@ func cast(target: Vector2) -> bool:
 	var point := technique.landing_point(self, target)
 	if not Dice.is_point(point) or angler.distance_to(point) < technique.min_cast(self):
 		return false
+	last_lost = {}
 	cast_from = angler
 	bobber = point
 	var dist := angler.distance_to(point)
@@ -524,14 +528,9 @@ func _step_fight() -> void:
 ## zar gölgenin seed'inden: Trash.with_catch); hikâyenin balığında çöp yok, "story": true.
 func _caught() -> void:
 	var s := hooked
-	last_catch = {
-		"fish": s.fish_id, "fish_index": s.fish_index, "size_cm": s.size_cm, "stars": s.stars,
-		"rarity": s.rarity, "percentile": s.percentile, "shadow": s.id, "seed": s.seed,
-		"zone": lake.zone_ids[s.zone] if s.zone >= 0 and s.zone < lake.zone_ids.size() else "",
-		"trash": "" if s.summoned else Trash.with_catch(rules, s.seed, technique.id),
-	}
-	if s.summoned:
-		last_catch["story"] = true
+	last_catch = _catch_info(s)
+	last_catch["trash"] = "" if s.summoned else Trash.with_catch(rules, s.seed, technique.id)
+	last_lost = {}
 	sim.remove(s)
 	hooked = null
 	reel = null
@@ -542,7 +541,45 @@ func _caught() -> void:
 	push_event(e)
 
 
+## Tutulan ya da kaçan balığın künyesi (last_catch, last_lost): tür, boy, yıldız, nadirlik, gölge, bölge.
+func _catch_info(s: FishShadow) -> Dictionary:
+	var info := {
+		"fish": s.fish_id, "fish_index": s.fish_index, "size_cm": s.size_cm, "stars": s.stars,
+		"rarity": s.rarity, "percentile": s.percentile, "shadow": s.id, "seed": s.seed,
+		"zone": lake.zone_ids[s.zone] if s.zone >= 0 and s.zone < lake.zone_ids.size() else "",
+	}
+	if s.summoned:
+		info["story"] = true
+	return info
+
+
+## Reklamla kurtarılan balık (AdRules.RESCUE; Ads, main): son kaçan balık tutulmuş sayılır, kaçtığı andaki türü, boyu
+## ve yıldızıyla (zar çekilmez; çöp çıkmaz). Kaçan gölge hâlâ göldeyse çekilir. Yalnızca olta boşken ya da kaçışın
+## kısa beklemesinde; kurtarılacak balık yoksa false. Sonrası olağan yakalayış ("catch" olayı, acknowledge).
+func rescue() -> bool:
+	if last_lost.is_empty() or state not in [State.LOST, State.IDLE]:
+		return false
+	var info := last_lost
+	last_lost = {}
+	var s := sim.find(int(info["shadow"]))
+	if s != null:
+		sim.remove(s)
+	info.erase("too_big")
+	info["trash"] = ""
+	info["rescued"] = true
+	last_catch = info
+	reel = null
+	too_big = 0
+	state = State.CAUGHT
+	var e := last_catch.duplicate()
+	e["type"] = "catch"
+	push_event(e)
+	return true
+
+
 func _fight_lost(reason: String) -> void:
+	last_lost = _catch_info(hooked)
+	last_lost["too_big"] = too_big
 	hooked.pos = _water_near(fight_point())
 	sim.flee(hooked, angler)
 	hooked = null
