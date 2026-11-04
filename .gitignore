@@ -2,7 +2,8 @@
 .godot/
 /export/*
 !/export/.gdignore
-/android/build/
+# Godot'nun Android derleme şablonu (Mac'te --install-android-build-template kurar): git'e girmez
+/android/
 
 # CSV'den otomatik üretilen çeviri dosyaları (editör/import yeniden üretir)
 *.translation
@@ -13,3 +14,7 @@
 
 # Video kaydı için geçici ayar dosyası (CLAUDE.md)
 override.cfg
+
+# Android yükleme anahtarı (upload key): git'e asla girmez (docs/yayin/android.md)
+*.jks
+*.keystore

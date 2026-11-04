@@ -73,3 +73,11 @@ genel ikonların bir kısmı Kazı projesinden),
 
 `assets/audio/`: bütün efektler ve ortam sesi bu proje için kodla sentezlendi
 (`tools/make_sounds.py`, numpy); dışarıdan alınmış ses yok.
+
+## Yazılım: motor ve reklam eklentisi
+
+| Klasör | Yazılım | Lisans |
+|---|---|---|
+| (oyunun kendisi) | Godot Engine 4.7.2 (godotengine.org) ve içindeki bileşenler | MIT; oyunda Ayarlar → Lisanslar |
+| `addons/admob/` | Poing Studios AdMob Plugin v5.1.0 (Godot'nun AdMob eklentisi; Kazı'dakiyle aynı: yalnızca reklam çekirdeği `android/bin/ads`, `ios/bin/ads`) | MIT (`addons/admob/LICENSE`); oyunda Ayarlar → Lisanslar |
+| (paket derlenirken) | Google Mobile Ads SDK, Google User Messaging Platform SDK (Android'de Gradle, iOS'ta Swift Package Manager indirir) | Google'ın şartları (AdMob) |

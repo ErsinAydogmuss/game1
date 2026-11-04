@@ -1,0 +1,3 @@
+# Eklentinin indirdiği arşivler (Kazı: android/bin ve ios/bin depoda; bulutta indirme olmasın)
+/downloads/
+*.zip

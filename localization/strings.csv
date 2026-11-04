@@ -766,3 +766,6 @@ UI_GUIDE_CAT_TEXT,Tekir follows you. Tap when hungry: Tekir eats the cheapest fi
 UI_GUIDE_WARDROBE_TEXT,"Tap your angler: girl or boy, hats, vests and rod wraps. New ones unlock as you play.","Balıkçına dokun: kız ya da oğlan, şapka, yelek, olta kaplaması. Oynadıkça yenileri açılır."
 UI_GUIDE_PHOTO,Photo,Fotoğraf
 UI_GUIDE_PHOTO_TEXT,"The camera in Settings or on a fish card: drag, pick a frame, snap! Photos go to the Olta folder in Files.","Ayarlar'daki ya da balık kartındaki kamera: sürükle, çerçeve seç, çek! Fotoğraflar Dosyalar'da, Olta klasöründe."
+UI_AD_TEST,TEST AD,DENEME REKLAMI
+UI_AD_TEST_REWARDED,Rewarded ad (on the phone a real ad plays here),Ödüllü reklam (telefonda burada gerçek reklam oynar)
+UI_AD_TEST_INTERSTITIAL,Interstitial ad (on the phone a real ad plays here),Geçiş reklamı (telefonda burada gerçek reklam oynar)

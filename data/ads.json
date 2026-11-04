@@ -1,0 +1,8 @@
+{
+	"_note": "AdMob reklam birimlerinin kimlikleri (scripts/autoload/ads.gd). Uygulama kimlikleri project.godot'ta (admob/general/android/app_id, admob/general/ios/app_id): eklentinin dışa aktarması AndroidManifest'e ve Info.plist'e yazar. Ersin'in AdMob hesabındaki Olta uygulamaları açılana kadar birimler boş ve uygulama kimlikleri Google'ın örnekleri: sürüm derlemesinde reklam yok, debug derleme her zaman Google'ın deneme reklamlarını gösterir (test_ads açılırsa sürüm derlemesi de). Bir platformun kimliği boşsa ve test_ads kapalıysa orada reklam yok. test_devices: gerçek kimliklerle deneyen telefonların karma (hashed) kimlikleri (reklam isteğine eklenir; AdMob → Ayarlar → Test cihazları da olur). debug_geography: onay penceresini denemek için \"eea\" (AB'deymiş gibi), \"not_eea\" ya da boş (yalnızca test_ads açıkken). Biçimi tests/test_ad_ids.gd denetler.",
+	"test_ads": false,
+	"android": { "rewarded": "", "interstitial": "" },
+	"ios": { "rewarded": "", "interstitial": "" },
+	"test_devices": [],
+	"debug_geography": ""
+}
