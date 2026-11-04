@@ -3474,6 +3474,10 @@ func _tend_ads(delta: float) -> void:
 		_ad_request_coins = 0
 		if Ads.offer_ok(AdRules.REQUEST):
 			_ad_offer_coins = coins
+			# Kart kapanınca saklanan bir atış ya da yürüyüş kendiliğinden başlamasın.
+			_pending_cast = Dice.NO_POINT
+			_forget_pickups()
+			input.release_all()
 			ad_offer.offer(AdRules.REQUEST, "UI_AD_REQUEST_TITLE",
 					func() -> String: return tr("UI_AD_REQUEST_TEXT") % UiKit.format_int(coins),
 					func() -> String: return tr("UI_AD_DOUBLE") % UiKit.format_int(coins), "requests")

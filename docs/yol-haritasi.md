@@ -224,13 +224,29 @@ Tekne, Gölün Sırrı, kostümler ve akvaryum H2'ye taşındı.
 - [ ] Sonar (Kazı'daki dedektör gibi).
 - [ ] Kıyı süsleri ve tarifler: bulunan tarif türü garanti eder.
 
+## Reklamlar ve mağaza (sürüyor; 4 Kasım 2026)
+
+Ersin Olta'yı da Kazı gibi App Store ve Google Play'e çıkarıyor. Kararları: hedef kitle 13 yaş ve üstü (yaş sorusu
+yok), ödüllü reklam + seyrek geçiş reklamı, ödüllü reklamın dört yeri. Yerler ve kurallar: [`gdd.md`](gdd.md) §11.
+Ersin'in yapacakları (AdMob, mağazalar): [`reklam-kurulum.md`](reklam-kurulum.md).
+
+- [x] A1 Altyapı: Poing Studios'un AdMob eklentisi, `AdRules`, `Ads` (sahte sağlayıcıyla), iPhone ve Android dışa
+  aktarma ayarları (`com.juiloot.olta`, AAB, izinler, izleme izninin açıklaması).
+- [x] A2 Teklifler: satışta 2 katı, kaçan Nadir+ balığı kurtar, Dede'nin isteği 2 katı, akvaryum kutusu 2 katı; geçiş
+  reklamı (harita, sandal, çay); "Reklamlar hakkında" kartı; Ayarlar'da Gizlilik ve Lisanslar; `ads` botu.
+- [ ] A3 Denge: reklam izleyen oyuncunun kazancı (denge botu), korkuluk.
+- [ ] A4 Yayın: gizlilik politikası, mağaza metinleri ve görselleri, inceleme notu ve ekran kaydı, Mac'te derleme
+  görevi, sürüm 1.0.0.
+- [ ] A5 Gerçek AdMob kimlikleri (Ersin gönderince) ve son denetim.
+
 ## Faz 3: Ücretsiz oyun katmanı
 
 - [ ] Doğrudan satış: kostüm ve görünüş süsleri; gerçek para fiyatı her zaman görünür.
-- [ ] Ödüllü reklam (isteğe bağlı): çift ödül, kopan misinayı kurtarma. Sertifikalı SDK (AdMob).
+- [x] Ödüllü reklam (isteğe bağlı) ve seyrek geçiş reklamı: yukarıda (A1–A2).
 - [ ] Reklamsız / destekçi paketi; süresi dolmayan sezon kartı.
-- [ ] Karma kitle kurulumu: tarafsız yaş sorusu, 13 yaş altına kişiselleştirilmemiş reklam, ebeveyn kapısı.
-- [ ] Analitik (kendi analitiğimiz); Google kapalı testi (12 kişi × 14 gün) + TestFlight.
+- [ ] ~~Karma kitle kurulumu~~: Ersin 13 yaş ve üstünü seçti (Kazı gibi). Play bir gün "çocuklara hitap ediyor" derse
+  karma kitleye dönülür (`Ads.CHILD_DIRECTED`).
+- [ ] Google kapalı testi (12 kişi × 14 gün) + TestFlight. Kendi analitiğimiz yok (mağazaların istatistikleri yeter).
 
 ## Faz 4: Soft launch
 

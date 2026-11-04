@@ -132,6 +132,16 @@ extends Node
 ##     polaroid ve eski kâğıt çerçeve; deklanşör → user://photos'ta PNG, boyu görüntünün boyu, düğmeler fotoğrafa girmez; çıkışta
 ##     kamera eski açısında, arayüz geri; balık kartının kamera düğmesi → kart gizli, balık elde; çıkınca kart geri;
 ##     telefon oranında, --safe-inset=130, TR ve EN.
+##   ads: reklamlar (A2; sahte sağlayıcı "reward", sonra "fail"). Isınmadan önce kart yok; 3. balıktan sonra
+##     "Reklamlar hakkında" kartı (küçülmeden sığar, politika ve ANLADIM), ANLADIM → reklamlar başlar; satıştan sonra
+##     Kova sekmesinde "Reklam izle: 2 katı" (reklam açıkken oyun durur, ses kısılır; para bir kez daha, Nine söyler;
+##     bekleme süresinde yine teklif yok); akvaryumun kutusunda 2 katı (panel küçülmeden sığar); Dede'nin isteği
+##     bitince olta boşken teklif kartı (2 katı); kaçan Nadir turna: 0,5 sn sonra teklif kartı (resmi, nadirliği,
+##     adı), reklamla tutulur (kart, kova, defter); Sıradan balık kaçınca teklif yok; reklam yarıda kalınca ödül yok
+##     (bildirim); geçiş reklamı ilk 20 dakikada yok, sonra harita geçişinde ekran karanlıkken, 8 dakika dolmadan yine
+##     yok, çayda da; Ayarlar'da Dil satırında GİZLİLİK (panel küçülmeden sığar) → kart bilgi olarak (politika, reklam
+##     seçimleri, lisanslar), LİSANSLAR → Godot'nun lisansı, yazı tipleri, kitaplıklar, Google'ın şartları, tam metin;
+##     telefon oranında, --safe-inset=130, TR ve EN.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -317,6 +327,8 @@ func _ready() -> void:
 			_play_outfits.call_deferred()
 		"photo":
 			_play_photo.call_deferred()
+		"ads":
+			_play_ads.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -4641,6 +4653,8 @@ func _reels_setup() -> void:
 	save.xp = db.rank_xp[8] + 100
 	save.settings["easy"] = false
 	save.settings["perf"] = false
+	# Reklamların durumu (bildirim görüldü mü, sayaçlar, oyun süresi) makinenin eski koşularından gelmesin.
+	save.settings.erase("ads")
 	for f: Array in REELS_RECORDS:
 		Records.add(save.records, f[0], f[1], f[2], 0)
 	for id: String in REELS_GEAR:
@@ -6014,6 +6028,294 @@ func _play_aquarium() -> void:
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Reklamlar (A2): bkz. dosyanın başı. Sahte sağlayıcı (Ads.use_fake): ekranda kısa bir "deneme reklamı" kartı.
+func _play_ads() -> void:
+	_use_save(2)
+	_roomy_bucket()
+	var db := GameState.db
+	var save := GameState.save
+	var clock := GameState.clock
+	var start := clock.now_unix()
+	clock.fixed_unix = start
+	var notice: AdNoticePanel = main.get("ad_notice")
+	var offer: AdOfferPanel = main.get("ad_offer")
+	var shop: ShopPanel = main.get("shop_panel")
+	Ads.use_fake("reward")
+	await _wait(1.5)
+	# 1) Isınmadan önce (2 balık) kart yok, reklamlar başlamaz.
+	_check("ısınmadan önce (2 balık) bildirim yok, reklamlar başlamaz", not notice.visible and not Ads.started)
+	# 2) Üçüncü balık: olta boşken "Reklamlar hakkında" kartı; ANLADIM → reklamlar başlar.
+	save.catches = AdRules.WARMUP_CATCHES
+	var shown := await _wait_until(func() -> bool: return notice.visible, 3.0)
+	await _wait(0.4)
+	_check("ısınmadan sonra \"Reklamlar hakkında\" kartı (ilk kez)", shown and not notice.info
+			and tr("UI_ADS_NOTICE_BODY") in _texts_in(notice))
+	_check("bildirim kartı küçülmeden sığar (ölçek %.3f)" % notice.fit_scale(), notice.fit_scale() > 0.999
+			and _panel_inside(notice))
+	_check("kartta politika ve ANLADIM; reklam seçimleri ve lisanslar yok", notice.policy_button.visible
+			and notice.ok_button.visible and not notice.choices_button.visible and not notice.licenses_button.visible)
+	_check_panel_buttons(notice, "bildirim kartının düğmeleri")
+	await _shot("01_bildirim")
+	await _tap_control(notice.ok_button)
+	await _wait_frames(3)
+	_check("ANLADIM → kart kapanır, reklamlar başlar, kayıtta görüldü", not notice.visible and Ads.started
+			and AdRules.notice_seen(AdRules.state(save.settings)))
+	await _wait(1.0)
+	_check("bildirim bir kez (yeniden açılmaz)", not notice.visible)
+	# 3) Satış: kova Nine'de satılır → Kova sekmesinde "Reklam izle: 2 katı"; reklam açıkken oyun durur ve ses kısılır.
+	for c: Array in [["carp", 60], ["perch", 34], ["tench", 45], ["bream", 50]]:
+		Bucket.add(db, save, str(c[0]), int(c[1]), 2)
+	GameState.changed.emit()
+	await _tap(_screen(_nine().head_point()))
+	await _wait_frames(4)
+	var sell := shop.find_child("SellAll", true, false) as Button
+	_check("Nine'ye dokun → dükkân Kova sekmesinde, HEPSİNİ SAT", shop.visible and sell != null)
+	if sell != null:
+		await _tap_control(sell)
+	await _wait_frames(3)
+	var earned := int(shop.get("_ad_sale"))
+	var ad_sell := shop.ad_sell_button
+	_check("satıştan sonra \"Reklam izle: 2 katı +%d\" (büyük, güvenli alanda)" % earned, earned > 0
+			and ad_sell != null and ad_sell.is_visible_in_tree()
+			and ad_sell.text == UiKit.upper(tr("UI_AD_DOUBLE") % UiKit.format_int(earned)))
+	_check("dükkân teklifle küçülmeden sığar (ölçek %.3f)" % shop.fit_scale(), shop.fit_scale() > 0.999
+			and _panel_inside(shop))
+	_check_panel_buttons(shop, "dükkânın düğmeleri (teklifle)")
+	await _shot("02_satis_teklif")
+	var coins := save.coins
+	var steps := _session().steps
+	if ad_sell != null:
+		await _tap_control(ad_sell)
+	await _wait(0.5)
+	var paused := get_tree().paused and AudioServer.is_bus_mute(AudioServer.get_bus_index(&"Master")) and Ads.showing
+	await _shot("03_deneme_reklami")
+	await _wait_until(func() -> bool: return not Ads.showing, 4.0)
+	await _wait_frames(3)
+	_check("reklam açıkken oyun durur, ses kısılır (oturum %d adım ilerledi)" % (_session().steps - steps), paused)
+	_check("reklamdan sonra satışın parası bir kez daha: +%d, teklif gider, Nine söyler" % earned,
+			save.coins == coins + earned and shop.ad_sell_button == null and Ads.fake_rewarded_shown == 1
+			and str(shop.get("_line_key")) == "UI_NINE_AD_SOLD" and not get_tree().paused)
+	await _shot("04_satis_odul")
+	# Satış beklemesi (AdRules.SELL_COOLDOWN): hemen ikinci satışta teklif yok.
+	Bucket.add(db, save, "carp", 64, 2)
+	Bucket.add(db, save, "tench", 47, 2)
+	shop.refresh()
+	sell = shop.find_child("SellAll", true, false) as Button
+	if sell != null:
+		await _tap_control(sell)
+	await _wait_frames(3)
+	_check("satış beklemesinde ikinci teklif yok", int(shop.get("_ad_sale")) > 0 and shop.ad_sell_button == null)
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait(0.6)
+	# 4) Akvaryum: kutu dolu → tanka dokun → "Reklam izle: 2 katı" → kutu 2 katıyla.
+	var aquarium: AquariumPanel = main.get("aquarium_panel")
+	var stall: ShopStall = main.get("shop")
+	for c: Array in [["rudd", 27], ["carp", 71], ["perch", 38], ["pike", 104], ["tench", 49], ["bream", 52]]:
+		Records.add(save.records, str(c[0]), int(c[1]), 3, start)
+	save.aquarium_box = 0
+	save.aquarium_unix = start
+	clock.fixed_unix = start + 3 * 3600
+	var cap := Aquarium.cap_coins(db, save)
+	await _wait(1.3)
+	await _tap(stall.tank_screen_rect(main.get("camera")).get_center())
+	await _wait(1.0)
+	_check("tanka dokun → akvaryumda \"Reklam izle: 2 katı +%d\"" % cap, aquarium.visible and aquarium.ad_offered()
+			and aquarium.ad_button.text == UiKit.upper(tr("UI_AD_DOUBLE") % UiKit.format_int(cap)))
+	_check("akvaryum teklifle küçülmeden sığar (ölçek %.3f)" % aquarium.fit_scale(), aquarium.fit_scale() > 0.999
+			and _panel_inside(aquarium))
+	_check_panel_buttons(aquarium, "akvaryumun düğmeleri (teklifle)")
+	await _shot("05_akvaryum_teklif")
+	coins = save.coins
+	await _tap_control(aquarium.ad_button)
+	await _wait_until(func() -> bool: return Ads.showing, 1.0)
+	await _wait_until(func() -> bool: return not Ads.showing, 4.0)
+	await _wait_frames(3)
+	_check("akvaryumun reklamından sonra kutu 2 katıyla: +%d" % (2 * cap), save.coins == coins + 2 * cap
+			and Aquarium.pending(db, save, clock.fixed_unix) == 0 and not aquarium.ad_offered()
+			and Ads.fake_rewarded_shown == 2)
+	await _tap(aquarium.close_button.get_global_rect().get_center())
+	await _wait(0.6)
+	# 5) Dede'nin isteği biter (geliştirme düğmesinin yolu) → olta boşken teklif kartı → reklam → para bir kez daha.
+	save.xp = maxi(save.xp, db.rank_xp[1])
+	# Yuvalar yeni günde dolar (Requests.refill: request_day bugünden önce); saat donuk, bugün 0.
+	save.request_day = -1
+	main.call("_refill_requests")
+	main.call("_debug_finish_request")
+	var paid := int(main.get("_ad_request_coins"))
+	var asked := await _wait_until(func() -> bool: return offer.visible, 3.0)
+	_check("istek bitince teklif kartı: \"Reklam izle: 2 katı +%d\"" % paid, asked and paid > 0
+			and offer.place == AdRules.REQUEST
+			and offer.offer_button.text == UiKit.upper(tr("UI_AD_DOUBLE") % UiKit.format_int(paid)))
+	_check("istek kartı küçülmeden sığar (ölçek %.3f)" % offer.fit_scale(), offer.fit_scale() > 0.999 and _panel_inside(offer))
+	_check_panel_buttons(offer, "istek kartının düğmeleri")
+	await _wait(0.4)
+	await _shot("06_istek_teklif")
+	coins = save.coins
+	await _tap_control(offer.offer_button)
+	await _wait_until(func() -> bool: return Ads.showing, 1.0)
+	await _wait_until(func() -> bool: return not Ads.showing, 4.0)
+	await _wait_frames(3)
+	_check("isteğin reklamından sonra +%d, kart kapanır" % paid, save.coins == coins + paid and not offer.visible)
+	await _wait(2.5)
+	# 6) Kaçan Nadir turna: 0,5 sn sonra teklif kartı (resmi, nadirliği, adı) → reklam → tutulur. Balıkçı iskelenin
+	# ucunda, suya dönük (controls botunun atış yeri).
+	var angler := _angler()
+	angler.place(Vector2(0.0, 4.0))
+	angler.face_now(Vector2(0.0, -1.0))
+	(main.get("camera") as FollowCamera).snap(main.call("_focus"))
+	await _wait(0.5)
+	var pike := _shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "pike", 150000)
+	var lost := await _lose_fish(Vector2(1.0, -1.0))
+	var quick := await _wait_until(func() -> bool: return offer.visible, 1.5)
+	_check("Nadir turna kaçınca (%s) teklif kartı" % lost, lost == "snapped" and quick and offer.place == AdRules.RESCUE
+			and (tr("UI_AD_RESCUE_TEXT") % tr("FISH_pike")) in _texts_in(offer))
+	_check("kurtarma kartı küçülmeden sığar (ölçek %.3f)" % offer.fit_scale(), offer.fit_scale() > 0.999 and _panel_inside(offer))
+	_check_panel_buttons(offer, "kurtarma kartının düğmeleri")
+	var steps_open := _session().steps
+	await _wait(0.6)
+	_check("kart açıkken oyun donar (olta kaçışın beklemesinde)", _session().steps == steps_open
+			and _state() == FishingSession.State.LOST)
+	await _shot("07_kurtar_teklif")
+	var bucket_size := save.bucket.size()
+	await _tap_control(offer.offer_button)
+	await _wait_until(func() -> bool: return Ads.showing, 1.0)
+	await _wait_until(func() -> bool: return not Ads.showing, 4.0)
+	var caught := await _wait_until(func() -> bool: return _state() == FishingSession.State.CAUGHT, 2.0)
+	var card: FishCard = main.get("card")
+	await _wait_until(func() -> bool: return card.visible, 3.0)
+	_check("reklamla turna tutulur (kart, kova, defter; aynı gölge %d)" % pike.id, caught and card.visible
+			and str(_session().last_catch.get("fish", "")) == "pike" and bool(_session().last_catch.get("rescued", false))
+			and save.bucket.size() == bucket_size + 1 and int((save.records.get("pike", {}) as Dictionary).get("count", 0)) >= 2)
+	await _wait(0.6)
+	await _shot("08_kurtarildi")
+	await _wait(FishCard.MIN_OPEN)
+	if card.ok_button != null:
+		await _tap(card.ok_button.get_global_rect().get_center())
+	await _wait_state(FishingSession.State.IDLE, 3.0)
+	await _wait(2.0)
+	# 7) Sıradan balık kaçınca teklif yok.
+	_shadow_at(Vector2(-1.0, -3.2), Vector2(0, 1), "rudd", 300000)
+	lost = await _lose_fish(Vector2(-1.0, -1.0))
+	await _wait(1.0)
+	_check("Sıradan kızılkanat kaçınca (%s) teklif yok" % lost, lost == "snapped" and not offer.visible)
+	await _wait_state(FishingSession.State.IDLE, 3.0)
+	# 8) Reklam yarıda kalır: ödül yok, bildirim.
+	Ads.use_fake("fail")
+	_shadow_at(Vector2(0.0, -3.2), Vector2(0, 1), "pike", 150000)
+	lost = await _lose_fish(Vector2(0.0, -1.0))
+	await _wait_until(func() -> bool: return offer.visible, 1.5)
+	bucket_size = save.bucket.size()
+	if offer.visible:
+		await _tap_control(offer.offer_button)
+	await _wait_until(func() -> bool: return Ads.showing, 1.0)
+	await _wait_until(func() -> bool: return not Ads.showing, 4.0)
+	var toast: Label = _hud().get("_toast")
+	var told := await _wait_until(func() -> bool:
+		return toast.is_visible_in_tree() and toast.text == UiKit.upper(tr("UI_AD_NO_REWARD")), 3.0)
+	_check("reklam yarıda kalınca ödül yok, bildirim", told and not offer.visible and save.bucket.size() == bucket_size
+			and _state() != FishingSession.State.CAUGHT)
+	await _shot("09_yarida")
+	Ads.use_fake("reward")
+	await _wait_state(FishingSession.State.IDLE, 3.0)
+	await _wait(1.0)
+	# 9) Geçiş reklamı: ilk 20 dakikada yok; sonra harita geçişinde ekran karanlıkken; 8 dakika dolmadan yine yok; çayda.
+	var st := AdRules.state(save.settings)
+	var fade: Fade = main.get("fade")
+	main.call("_travel", "reeds")
+	await _wait_until(func() -> bool: return not fade.busy(), 3.0)
+	_check("ilk 20 dakikada geçiş reklamı yok (oyun %.0f sn)" % AdRules.play_time(st), Ads.fake_interstitials_shown == 0)
+	await _wait(0.8)
+	AdRules.add_play(st, AdRules.INTERSTITIAL_GRACE)
+	main.call("_travel", "dock_cove")
+	var dark_ad := await _wait_until(func() -> bool: return Ads.showing, 2.0)
+	var dark := fade.busy() and fade.color.a > 0.99
+	await _shot("10_gecis_reklami")
+	await _wait_until(func() -> bool: return not Ads.showing and not fade.busy(), 5.0)
+	_check("20 dakikadan sonra harita geçişinde, ekran karanlıkken geçiş reklamı", dark_ad and dark
+			and Ads.fake_interstitials_shown == 1)
+	await _wait(0.8)
+	main.call("_travel", "reeds")
+	await _wait_until(func() -> bool: return not fade.busy(), 3.0)
+	_check("8 dakika dolmadan yine yok", Ads.fake_interstitials_shown == 1)
+	await _wait(0.8)
+	AdRules.add_play(st, AdRules.INTERSTITIAL_GAP)
+	save.catches += 1
+	main.call("_on_tea")
+	await _wait_until(func() -> bool: return Ads.showing, 2.0)
+	await _wait_until(func() -> bool: return not Ads.showing and not fade.busy(), 5.0)
+	_check("çayda da (8 dakika sonra)", Ads.fake_interstitials_shown == 2)
+	main.call("_travel", "dock_cove")
+	await _wait_until(func() -> bool: return not fade.busy(), 3.0)
+	await _wait(1.0)
+	# 10) Ayarlar: Dil satırında GİZLİLİK → kart bilgi olarak; LİSANSLAR → lisanslar.
+	var settings: SettingsPanel = main.get("settings_panel")
+	var license: LicensePanel = main.get("license_panel")
+	Ads.fake_privacy = true
+	await _tap_control(_hud().settings_button)
+	await _wait_frames(3)
+	var privacy := settings.find_child("Privacy", true, false) as Button
+	_check("ayarlarda GİZLİLİK; panel küçülmeden sığar (ölçek %.3f)" % settings.fit_scale(), privacy != null
+			and privacy.is_visible_in_tree() and settings.fit_scale() > 0.999 and _panel_inside(settings))
+	_check_panel_buttons(settings, "ayarların düğmeleri")
+	await _shot("11_ayarlar")
+	if privacy != null:
+		await _tap_control(privacy)
+	await _wait_frames(3)
+	_check("GİZLİLİK → kart bilgi olarak: politika, reklam seçimleri, lisanslar (ANLADIM yok)", notice.visible
+			and notice.info and notice.policy_button.visible and notice.choices_button.visible
+			and notice.licenses_button.visible and not notice.ok_button.visible and settings.visible)
+	_check("bilgi kartı küçülmeden sığar (ölçek %.3f)" % notice.fit_scale(), notice.fit_scale() > 0.999 and _panel_inside(notice))
+	_check_panel_buttons(notice, "bilgi kartının düğmeleri")
+	await _wait(0.4)
+	await _shot("12_gizlilik")
+	await _tap_control(notice.licenses_button)
+	await _wait_frames(3)
+	var all := license.all_text()
+	_check("LİSANSLAR → Godot, yazı tipleri, kitaplıklar, Google, FreeType", license.visible
+			and all.contains("Godot Engine") and all.contains("Luckiest Guy") and all.contains("Baloo 2")
+			and all.contains("Poing Studios AdMob Plugin") and all.contains(tr("UI_LICENSES_GOOGLE"))
+			and all.contains("The FreeType Project"))
+	_check("lisanslar küçülmeden sığar (ölçek %.3f)" % license.fit_scale(), license.fit_scale() > 0.999 and _panel_inside(license))
+	var expat := license.license_button("Expat")
+	var before := license.all_text().length()
+	if expat != null:
+		# Liste uzun: düğme kaydırılıp görünür yapılır (ekranın dışındaki düğmeye dokunulmaz).
+		(license.get("_scroll") as ScrollContainer).ensure_control_visible(expat)
+		await _wait_frames(3)
+		await _tap_control(expat)
+	await _wait_frames(3)
+	_check("lisansın adına dokununca tam metni açılır", expat != null and license.all_text().length() > before + 500)
+	await _wait(0.4)
+	await _shot("13_lisanslar")
+	await _tap(license.close_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	_check("lisanslar kapanınca kart açık", not license.visible and notice.visible)
+	await _tap(notice.close_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	_check("kart kapanınca ayarlar açık, reklamlar yeniden başlamaz", not notice.visible and settings.visible)
+	await _tap(settings.close_button.get_global_rect().get_center())
+	await _wait(0.6)
+	_check_buttons()
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
+
+
+## Gölge atış noktasının önünde (bot koydu): atar, ısırınca basılı tutar, çekişmede misina kopar (bot makaranın
+## sınırını aşar). Döner: kaçışın nedeni (session.last_loss).
+func _lose_fish(cast_at: Vector2) -> String:
+	await _tap_world(cast_at)
+	await _wait_state(FishingSession.State.BITING, 20.0)
+	_touch(1, Vector2(260, 520), true)
+	await _wait_frames(2)
+	if _state() == FishingSession.State.FIGHTING and _session().reel != null:
+		_session().reel.over = 1_000_000
+	await _wait_until(func() -> bool: return _state() != FishingSession.State.FIGHTING, 3.0)
+	_touch(1, Vector2(260, 520), false)
+	await _wait_frames(2)
+	return _session().last_loss
 
 
 ## Karakter seçimi ve dolap (Dalga 5): bkz. dosyanın başı.

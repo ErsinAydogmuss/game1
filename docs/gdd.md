@@ -1156,7 +1156,8 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 ### 10.8 Sonraya kalanlar
 
 - **Kıyı süsleri ve tarifler:** kıyının 4–6 süs yuvası; süs + hava + saat bir türü çağırır, bulunan tarif o türü garanti eder.
-- **Gerçek parayla satış (Faz 3):** kostümler, reklam, sezon kartı.
+- **Gerçek parayla satış (Faz 3):** kostümler, sezon kartı, reklamsız / destekçi paketi (reklamlar §11'de, mağaza
+  sürümüyle birlikte).
 - **Yeni sular:** göl → nehir → deniz → buzlu göl → mağara gölü.
 - **Sonar.**
 - **Fotoğraflar uygulamasına doğrudan kayıt** (yerel eklenti).
@@ -1167,7 +1168,30 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`](../CLAUDE.md).
 
 - **Satılacaklar:** kostümler ve görünüş süsleri (doğrudan satış, gerçek fiyat görünür), reklamsız / destekçi paketi, süresi dolmayan sezon kartı.
-- **Ödüllü reklam** (isteğe bağlı): çift ödül, kopan misinayı kurtarma.
+- **Reklamlar** (Ersin'in kararları, 4 Kasım 2026; Kazı'nın yaklaşımı: Poing Studios'un AdMob eklentisi, kurallar `AdRules`,
+  katman `Ads`). Hedef kitle 13 yaş ve üstü; reklam istekleri çocuğa yönelik işaretlenmez, içerik en çok PG.
+  - **Ödüllü reklam** isteğe bağlı, ödülü sabit (zar yok), her teklif aynı renkte ve solunda oynat işaretli ekran ikonuyla
+    (`AdOffer`). Dört yer:
+
+    | Yer | Ne zaman | Ödül | Sınır |
+    |---|---|---|---|
+    | Satışta 2 katı | Nine'de kova satılınca, Kova sekmesinde (en az 30 para) | satışın parası bir kez daha | günde 4, 30 dakikada bir |
+    | Kaçan balığı kurtar | Nadir ve üstü balık çekişmede kaçınca (misina koptu ya da kaçtı), 0,5 sn sonra kart; takımın taşıyamadığı iri balık ve Gölün Bekçisi değil | balık kaçtığı andaki türü ve boyuyla tutulmuş sayılır | günde 6 |
+    | Dede'nin isteği 2 katı | istek bitince, olta boşa dönünce kart (altın istekte de; harita parçası değil, para) | isteğin parası bir kez daha | günde 3 |
+    | Akvaryum kutusu 2 katı | Akvaryum panelinde, kutuda en az 40 para varken | kutunun parası bir kez daha | günde 3, 15 dakikada bir |
+
+    Sınırlar reklam izleyen oyuncunun denge ölçümüyle seçildi (aşağıda "Reklamların dengesi").
+
+  - **Geçiş reklamı** seyrek: ilk 20 dakikada yok, en çok 8 dakikada bir (ödüllü reklamdan sonra da 8 dakika), yalnızca
+    oyuncunun başlattığı geçişte ekran karanlıkken: haritayla başka bölgeye, sandalla şamandıraya geçerken ve Dede'yle
+    çayda.
+  - **Isınma:** ilk 3 balıktan önce hiçbir reklam ve teklif yok. 3. balıktan sonra, olta boşken bir kez "Reklamlar
+    hakkında" kartı (KVKK aydınlatması: neden reklam, kim sunar, hangi bilgiler gider, seçimler nerede); kapanınca onay
+    (AB'de Google'ın formu, iPhone'da izleme izni) ve reklamlar başlar.
+  - **Ayarlar:** Dil satırında GİZLİLİK: aynı kart bilgi olarak, gizlilik politikası
+    (`ersinaydogmuss.github.io/olta-gizlilik`), reklam seçimleri (Google'ın formu, gerektiğinde) ve Lisanslar
+    (Godot, yazı tipleri, AdMob eklentisi, Google'ın SDK'ları).
+  - Reklam açıkken oyun durur ve ses kısılır; reklam yüklenmediyse teklif görünmez. Kendi analitiğimiz yok.
 - **Parayla satılmayacaklar:** şans (nadir yem, ek atış, hava olayı).
 - **Oyun parası:** yalnızca oynayarak kazanılır, gerçek parayla asla satılmaz. Bu yüzden oranı değiştiren yem ve yapay yem oyun parasıyla satılabilir.
 - **Boşta gelir üst sınırlı:** tuzak en çok 4 şey toplar, akvaryum kutusu en çok 2 saatlik birikimde durur.

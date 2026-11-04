@@ -22,10 +22,12 @@ const PLACES: Array[String] = [SELL, RESCUE, REQUEST, AQUARIUM]
 ## Günün sayacında geçiş reklamının anahtarı.
 const INTERSTITIAL := "interstitial"
 
-## Yer başına günlük sınır.
-const DAILY_CAP := { SELL: 8, RESCUE: 6, REQUEST: 6, AQUARIUM: 4 }
-## Bir öncekinden en az bu kadar oyun saniyesi sonra (ekonomi fazla hızlanmasın): satış ve akvaryum.
-const SELL_COOLDOWN := 600.0
+## Yer başına günlük sınır ve satışın, akvaryumun beklemesi (bir öncekinden en az bu kadar oyun saniyesi sonra):
+## reklam izleyen oyuncunun denge ölçümüyle seçildi (SessionSim.ads, economy_report --ads; docs/gdd.md §11). İlk
+## değerlerle (satış günde 8, 10 dakikada bir; istek 6; akvaryum 4) her teklifi izleyen oyuncu saatte +%56 para
+## kazanıyordu (satışın 2 katı kazancın %35'i); bunlarla +%17–30.
+const DAILY_CAP := { SELL: 4, RESCUE: 6, REQUEST: 3, AQUARIUM: 3 }
+const SELL_COOLDOWN := 1800.0
 const AQUARIUM_COOLDOWN := 900.0
 ## Bundan küçük satışa ve kutuya teklif yok (para).
 const SELL_MIN := 30
