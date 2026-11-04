@@ -197,7 +197,11 @@ Ersin'in seçimleri (hepsi önerilen): akvaryuma her türün en irisi kendiliği
   oranında ve çentik payıyla (yazısı çok olanlar İngilizce de; 30 koşu, hepsi TAMAM), dışa aktarma paketi, tanıtım videosu (seçim ekranı,
   oğlan balıkçı, karttan fotoğraf, Tekir'in hediyesi, dolap, akvaryum, akşam fotoğrafı), README görüntüleri,
   belgeler; sürüm 0.6.
-- [ ] Ersin telefonda dener ([`iphone-kurulum.md`](iphone-kurulum.md) 37–44) ve hızı ölçer.
+- [x] Parti 5a–5b görselleri oyunda (v0.6'dan sonra): saat çipi ve Bugün paneli ikonları (çipte tek atlas, tek çizim),
+  mektup kâğıdı ve genç Nine ile Dede, sırrın haritası, hikâye eşyaları (ışıltı saydam: `despill: glow`), Bekçi'nin
+  kartı, bildirimi ve defteri, jenerikte bitiş resmi, fotoğraf çerçeveleri, akvaryumun arka planı, Tekir'in mama
+  kabı, seçim ekranında ve dolapta balıkçı portreleri, README'de tanıtım görseli; etkilenen botlar TAMAM.
+- [ ] Ersin telefonda dener ([`iphone-kurulum.md`](iphone-kurulum.md) 37–45) ve hızı ölçer.
 
 **5 kişilik test** (Kazı'nın 5 kişilik testiyle birlikte yapılabilir). Sorular:
 

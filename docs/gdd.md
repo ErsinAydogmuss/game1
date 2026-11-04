@@ -1106,7 +1106,7 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - Sürükle: kamera döner (yatayda ±40°) ve eğilir (30–72°); yakınlaştırma düğmeleri.
   - Çerçeve: yok, ahşap, polaroid (altta şeritte oyunun adı), çiçekli, eski kâğıt (yırtık kenar, köşede pusula: Gölün
     Sırrı'nın haritası gibi); köşede oyunun logosu. İkisi de fotoğrafa girer;
-    düğmeler girmez. Parti 5b'nin çerçeve görselleri gelince onlarla çizilebilir.
+    düğmeler girmez. Çerçeveler Ersin'in görselleriyle (Parti 5b; köşe süsleri gerilmez), görsel yoksa kodla.
   - Deklanşör: flaş, ses, titreşim, "Fotoğraf kaydedildi!". PNG `user://photos/olta_<tarih>.png`'ye yazılır: iPhone'da
     Dosyalar → Bu iPhone'da → Olta → photos (dışa aktarma ayarı `user_data/accessible_from_files_app`). Bedeli:
     Dosyalar'da kayıt dosyası da görünür, oyuncu silebilir.
