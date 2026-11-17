@@ -264,13 +264,14 @@ func _sfx_paths(sound: String) -> PackedStringArray:
 func _preload_all() -> void:
 	if _silent:
 		return
+	# Önce müzik ve ortam sesi: açılışta hemen istenirler (efektlerin yüzü arkalarında sıra beklemesin).
 	var paths := PackedStringArray()
-	for sound: String in BANK:
-		paths.append_array(_sfx_paths(sound))
 	for track: String in MUSIC:
 		paths.append(MUSIC_DIR + track + ".ogg")
 	for track: String in AMBIENCE:
 		paths.append(AMBIENCE_DIR + track + ".ogg")
+	for sound: String in BANK:
+		paths.append_array(_sfx_paths(sound))
 	for path in paths:
 		if ResourceLoader.exists(path) and ResourceLoader.load_threaded_request(path) == OK:
 			_pending[path] = true

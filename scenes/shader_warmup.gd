@@ -34,14 +34,22 @@ func run(main: Node) -> void:
 	_build_shelf(main)
 	var built := Time.get_ticks_msec()
 	var last := built
+	# Derin ortaya bakış: kamera bir kare oraya, sonra eski yerine (film oynuyorsa kameraya dokunulmaz: film açılışın
+	# çekimini bir kez verir, logo boyunca kamerayı yeniden yazmaz).
 	var camera: FollowCamera = main.get("camera")
+	var free_camera: bool = main.get("_film") == null
+	var saved := camera.target
+	var saved_zoom := camera.zoom
+	var saved_pitch := camera.pitch
 	for i in FRAMES:
-		if i == DEEP_FRAME:
+		if free_camera and i == DEEP_FRAME:
 			var deep := _deep_point()
 			if deep.is_finite():
 				camera.snap(deep)
-		elif i == DEEP_FRAME + 1:
-			camera.snap(main.call("_focus"))
+		elif free_camera and i == DEEP_FRAME + 1:
+			camera.zoom = saved_zoom
+			camera.pitch = saved_pitch
+			camera.snap(saved)
 		await RenderingServer.frame_post_draw
 		frame_ms.append(str(Time.get_ticks_msec() - last))
 		last = Time.get_ticks_msec()
@@ -100,10 +108,13 @@ func _build_shelf(main: Node) -> void:
 	ghost.position = at + Vector3(0.0, ShadowLayer.Y, 0.0)
 	(ghost.material_override as ShaderMaterial).set_shader_parameter("fade", 1.0)
 	_temporary.append(ghost)
-	(main.get("ripples") as Ripples).spawn(water, 0.8, 0.5)
+	# Halka perde kalkmadan biter (önbellek ısınıkken perde birkaç karede kalkar).
+	(main.get("ripples") as Ripples).spawn(water, 0.8, 0.05)
 	# Suya atılan takımın dört görünüşü (şamandıra, yapay yem, kurşun, sinek) ve parıltısı.
 	var bobber := Bobber.new()
 	_shelf.add_child(bobber)
+	# Kendi _process'i parıltıyı ve kurşunu her kare gizler: durdurulur.
+	bobber.set_process(false)
 	bobber.position = at + Vector3(-0.4, 0.15, 0.0)
 	_show_all(bobber)
 	# Tutulan balık (dış çizgisiyle) ve Gölün Sırrı'nın şişesi.

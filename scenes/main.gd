@@ -769,7 +769,9 @@ func go_back() -> void:
 		if item == null or not item.is_visible_in_tree():
 			continue
 		var dialog := item as Dialog
-		if dialog != null and (dialog.close_button == null or not dialog.close_button.is_visible_in_tree()
+		# Kapatma düğmesinin görünürlüğü panelin isteği (seçim ekranı gizler); görseli yokken yerine kodla "X" çizilir,
+		# düğme ağaca girmez: bu yüzden ağaçta mı diye değil, görünür mü diye bakılır.
+		if dialog != null and (dialog.close_button == null or not dialog.close_button.visible
 				or dialog.close_button.disabled):
 			continue
 		if item == card and not card.can_close():

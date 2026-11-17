@@ -82,7 +82,8 @@ func _pump_save() -> void:
 		return
 	var data := _save_next
 	_save_next = {}
-	_save_task = WorkerThreadPool.add_task(SaveStore.write_data.bind(data, SAVE_PATH), false, "Kayıt")
+	# Yüksek öncelikli: açılıştaki ses yüklerinin arkasında beklemesin (arka plana geçerken flush_save onu bekler).
+	_save_task = WorkerThreadPool.add_task(SaveStore.write_data.bind(data, SAVE_PATH), true, "Kayıt")
 
 
 func _process(_delta: float) -> void:

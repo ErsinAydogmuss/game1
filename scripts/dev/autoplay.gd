@@ -7766,18 +7766,18 @@ func _perf_fight() -> void:
 		"golgeler_yok": [main.get("shadows")],
 		"samandira_yok": [main.get("bobber")],
 	}
-	for name: String in parts:
+	for part: String in parts:
 		if _state() != FishingSession.State.FIGHTING:
-			print("PERF fight: çekişme bitti (%s)" % name)
+			print("PERF fight: çekişme bitti (%s)" % part)
 			break
-		for node: Node in parts[name]:
+		for node: Node in parts[part]:
 			(node as Node).set_process(false)
 			if node is CanvasItem:
 				(node as CanvasItem).visible = false
 			elif node is Node3D:
 				(node as Node3D).visible = false
-		await _perf_sample(name, 20)
-		for node: Node in parts[name]:
+		await _perf_sample(part, 20)
+		for node: Node in parts[part]:
 			(node as Node).set_process(true)
 			if node is CanvasItem:
 				(node as CanvasItem).visible = true
