@@ -325,6 +325,16 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
 49. **Ayarlar → Gizlilik.** Dil satırındaki **GİZLİLİK**: kart; **Gizlilik politikası** sayfayı açıyor mu (sayfa
     yayınlanmadıysa açılmaz, sorun değil); **Lisanslar** listesi kayıyor mu, bir lisansın adına dokununca tam metni
     açılıyor mu? AB'de değilsen **Reklam seçimleri** düğmesi görünmez (normal).
+50. **Performans: Grafik ayarı.** Ayarlar'da yeni **Grafik** satırı: Düşük / Orta / Yüksek (iPhone'da Yüksek seçili
+    gelir). Ses ve Müzik artık tek satırda; panel kaydırmadan, küçülmeden sığıyor mu? **Düşük**'e al: gölgeler gider,
+    görüntü biraz yumuşar, oyun akıcı mı? **Orta**'yı dene, sonra **Yüksek**'e dön. Seçim uygulama kapanıp açılınca kalıyor mu?
+51. **Performans: ilk açılış ve ilk anlar.** Yeni yüklenmiş oyunda açılış logosu bir an daha uzun kalabilir (gölgelendiriciler
+    ısınıyor; sonraki açılışlarda kısa). Sonra ilk balıkta, ilk gecede, ilk yağmurda, dolabı ve haritayı ilk açışta bir an
+    takılma var mı? Eskiden bu anlarda olabiliyordu; şimdi olmamalı.
+52. **Performans: uzun oyun.** 20–30 dakika durmadan oyna (bölge değiştir, sat, çekiş). Telefon ısınıyor mu, oyun yavaşlıyor
+    ya da takılıyor mu, kapanıyor mu? 12. adımdaki ölçümle çekişmede FPS'e bak (60'a yakın olmalı).
+53. **Performans: sesler ve kayıt.** İlk çalan seslerde ve vakit değişince (müzik geçişi) takılma var mı? Bir balık tutup
+    uygulamayı hemen kapat (arka plana at, sonra kapat), yeniden aç: balık kayıtta mı?
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 
