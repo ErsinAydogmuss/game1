@@ -5422,6 +5422,10 @@ func _reels_setup_v10() -> void:
 	save.xp = db.rank_xp[8]
 	for f: Array in REELS_RECORDS:
 		Records.add(save.records, f[0], f[1], f[2], 0)
+	# Hikâyenin rütbesi gelmiş bölümleri anlatılmış (yoksa Dede'ye dokununca öğüt yerine hikâyeyi anlatır).
+	for r: int in Story.CHAPTERS:
+		if r <= Rank.rank(db, save):
+			save.flags[Story.TOLD_FLAG % r] = true
 	save.clock_s = SaveData.create_new(0).clock_s
 	save.aquarium_box = 0
 	save.aquarium_unix = GameState.clock.now_unix() - 3 * 3600

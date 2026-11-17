@@ -832,8 +832,8 @@
 				{
 					"id": "firtina",
 					"beats": 3,
-					"src": "storm.swim",
-					"offset": 0
+					"src": "storm.flash@2",
+					"offset": -6
 				},
 				{
 					"id": "tekir",
@@ -846,7 +846,7 @@
 					"beats": 4,
 					"src": "aquarium.open",
 					"offset": 0,
-					"crop": "panel:aquarium",
+					"crop": "panel:tank",
 					"pad": 12
 				},
 				{
@@ -862,7 +862,7 @@
 					"beats": 4,
 					"src": "photo.frame",
 					"offset": 0,
-					"aspect": 2.0
+					"aspect": 2.16
 				},
 				{
 					"id": "sise",
