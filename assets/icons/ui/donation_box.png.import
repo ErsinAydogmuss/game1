@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ducyyii2ejwe"
-path="res://.godot/imported/donation_box.png-a7e52623a8391d64ccd916d4afff4819.ctex"
+path.bptc="res://.godot/imported/donation_box.png-a7e52623a8391d64ccd916d4afff4819.bptc.ctex"
+path.astc="res://.godot/imported/donation_box.png-a7e52623a8391d64ccd916d4afff4819.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/ui/donation_box.png"
-dest_files=["res://.godot/imported/donation_box.png-a7e52623a8391d64ccd916d4afff4819.ctex"]
+dest_files=["res://.godot/imported/donation_box.png-a7e52623a8391d64ccd916d4afff4819.bptc.ctex", "res://.godot/imported/donation_box.png-a7e52623a8391d64ccd916d4afff4819.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

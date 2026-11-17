@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c8jbhdpjbtsdj"
-path="res://.godot/imported/keeper_scale.png-35466559e9bded7a9092602dac465d2d.ctex"
+path.bptc="res://.godot/imported/keeper_scale.png-35466559e9bded7a9092602dac465d2d.bptc.ctex"
+path.astc="res://.godot/imported/keeper_scale.png-35466559e9bded7a9092602dac465d2d.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/items/keeper_scale.png"
-dest_files=["res://.godot/imported/keeper_scale.png-35466559e9bded7a9092602dac465d2d.ctex"]
+dest_files=["res://.godot/imported/keeper_scale.png-35466559e9bded7a9092602dac465d2d.bptc.ctex", "res://.godot/imported/keeper_scale.png-35466559e9bded7a9092602dac465d2d.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

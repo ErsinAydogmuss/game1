@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b8il3fx0gp3lg"
-path="res://.godot/imported/rarity_legendary.png-b9d8f0b8312b47b5d0f687601de63eda.ctex"
+path.bptc="res://.godot/imported/rarity_legendary.png-b9d8f0b8312b47b5d0f687601de63eda.bptc.ctex"
+path.astc="res://.godot/imported/rarity_legendary.png-b9d8f0b8312b47b5d0f687601de63eda.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/ui/rarity_legendary.png"
-dest_files=["res://.godot/imported/rarity_legendary.png-b9d8f0b8312b47b5d0f687601de63eda.ctex"]
+dest_files=["res://.godot/imported/rarity_legendary.png-b9d8f0b8312b47b5d0f687601de63eda.bptc.ctex", "res://.godot/imported/rarity_legendary.png-b9d8f0b8312b47b5d0f687601de63eda.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

@@ -628,7 +628,7 @@ func _build_bottom() -> void:
 	row.add_child(_face_icon)
 	_show_face()
 	# Hap görseli krem: üstünde koyu mürekkep; görsel yoksa koyu hap üstünde açık yazı.
-	_hint_label = UiKit.ink("", UiKit.SIZE_BODY) if ItemArt.frame("pill") != null else UiKit.label("", UiKit.SIZE_BODY)
+	_hint_label = UiKit.ink("", UiKit.SIZE_BODY) if ItemArt.has_frame("pill") else UiKit.label("", UiKit.SIZE_BODY)
 	row.add_child(_hint_label)
 	action_button = TouchButton.make("", "rod", UiKit.PRIMARY, ACTION_SIZE, UiKit.SIZE_TITLE, 120.0)
 	action_button.click = false

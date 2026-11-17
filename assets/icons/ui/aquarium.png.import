@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c3ff1c46wrw02"
-path="res://.godot/imported/aquarium.png-535330e3d1516cd0079740b03fad17ab.ctex"
+path.bptc="res://.godot/imported/aquarium.png-535330e3d1516cd0079740b03fad17ab.bptc.ctex"
+path.astc="res://.godot/imported/aquarium.png-535330e3d1516cd0079740b03fad17ab.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/ui/aquarium.png"
-dest_files=["res://.godot/imported/aquarium.png-535330e3d1516cd0079740b03fad17ab.ctex"]
+dest_files=["res://.godot/imported/aquarium.png-535330e3d1516cd0079740b03fad17ab.bptc.ctex", "res://.godot/imported/aquarium.png-535330e3d1516cd0079740b03fad17ab.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

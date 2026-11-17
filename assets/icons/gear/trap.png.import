@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://du86o4d8fx8x3"
-path="res://.godot/imported/trap.png-0b36ce5551fe7bbf5e644747aa23c39a.ctex"
+path.bptc="res://.godot/imported/trap.png-0b36ce5551fe7bbf5e644747aa23c39a.bptc.ctex"
+path.astc="res://.godot/imported/trap.png-0b36ce5551fe7bbf5e644747aa23c39a.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/gear/trap.png"
-dest_files=["res://.godot/imported/trap.png-0b36ce5551fe7bbf5e644747aa23c39a.ctex"]
+dest_files=["res://.godot/imported/trap.png-0b36ce5551fe7bbf5e644747aa23c39a.bptc.ctex", "res://.godot/imported/trap.png-0b36ce5551fe7bbf5e644747aa23c39a.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

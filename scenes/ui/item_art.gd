@@ -27,7 +27,13 @@ const ITEMS := "res://assets/icons/items/%s.png"
 ## Yer tutucunun boyu (piksel).
 const PLACEHOLDER_SIZE := 128
 
+## Büyük çerçeveler (kısa kenarı BIG_FRAME pikselden uzun): özgün görsel bellekte tutulmaz. Çerçeveler ekran kartında
+## sıkıştırmasız (UiKit.framed piksellerini okuyup küçültür; çizilen o kopya): mektup ve harita kâğıdının özgünü
+## (~11 MB) boşuna duruyordu. Boyu _frame_sizes'ta kalır; yeni bir boyda küçültmek gerekirse yeniden yüklenir.
+const BIG_FRAME := 600
+
 static var _cache: Dictionary = {}
+static var _frame_sizes: Dictionary = {}
 ## Balık id -> renk (yer tutucu için) ve id -> portre dokusu (modelden çekilen).
 static var _fish_colors: Dictionary = {}
 static var _fish_portraits: Dictionary = {}
@@ -79,9 +85,33 @@ static func map_art(art_name: String) -> Texture2D:
 	return _load(MAP % art_name)
 
 
-## Arayüz kitinden 9 dilimli bir çerçeve ya da düğme görseli (yoksa null; UiKit.framed kullanır).
+## Arayüz kitinden 9 dilimli bir çerçeve ya da düğme görseli (yoksa null; UiKit.framed kullanır). Büyük çerçeve
+## (BIG_FRAME) önbelleğe girmez: çağıran tutmazsa bırakılır.
 static func frame(frame_name: String) -> Texture2D:
-	return _load(FRAMES % frame_name)
+	var path := FRAMES % frame_name
+	if _cache.has(path):
+		return _cache[path]
+	var texture: Texture2D = load(path) if ResourceLoader.exists(path) else null
+	_frame_sizes[path] = Vector2i(texture.get_size()) if texture != null else Vector2i.ZERO
+	if texture == null or mini(texture.get_width(), texture.get_height()) <= BIG_FRAME:
+		_cache[path] = texture
+	return texture
+
+
+## Çerçevenin özgün boyu (piksel; yoksa sıfır): büyük çerçeveyi yeniden yüklemeden.
+static func frame_size(frame_name: String) -> Vector2i:
+	var path := FRAMES % frame_name
+	if _cache.has(path):
+		var texture: Texture2D = _cache[path]
+		return Vector2i(texture.get_size()) if texture != null else Vector2i.ZERO
+	if not _frame_sizes.has(path):
+		frame(frame_name)
+	return _frame_sizes[path]
+
+
+## Arayüz kitinde bu çerçevenin görseli var mı?
+static func has_frame(frame_name: String) -> bool:
+	return frame_size(frame_name) != Vector2i.ZERO
 
 
 ## Çerçeve görselini dışarıdan verir (testler; dosya yokken UiKit.framed'i denemek için).
@@ -92,6 +122,7 @@ static func register_frame(frame_name: String, texture: Texture2D) -> void:
 ## register_frame'i geri alır: sonraki istekte dosyadan yüklenir (testler).
 static func forget_frame(frame_name: String) -> void:
 	_cache.erase(FRAMES % frame_name)
+	_frame_sizes.erase(FRAMES % frame_name)
 
 
 static func portrait(mood: String) -> Texture2D:

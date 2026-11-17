@@ -128,7 +128,7 @@ func show_lake(db: ContentDB, save: SaveData, spot_id: String, here: Vector2, cu
 	_anchors.clear()
 	_marks.clear()
 	_stickers.clear()
-	_material.set_shader_parameter("fade_m", PAPER_FADE if ItemArt.frame("map_paper") != null else 0.0)
+	_material.set_shader_parameter("fade_m", PAPER_FADE if ItemArt.has_frame("map_paper") else 0.0)
 	# Çıkartmalar önce eklenir: rozetlerin, işaretlerin ve iğnenin altında kalır.
 	_add_stickers(spot_id, zones, marks)
 	for k in zones.size():

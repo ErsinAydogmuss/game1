@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://njwgadxyuqvf"
-path="res://.godot/imported/line_braid.png-e16fc4e8f6e43112126e7aa226075a77.ctex"
+path.bptc="res://.godot/imported/line_braid.png-e16fc4e8f6e43112126e7aa226075a77.bptc.ctex"
+path.astc="res://.godot/imported/line_braid.png-e16fc4e8f6e43112126e7aa226075a77.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/gear/line_braid.png"
-dest_files=["res://.godot/imported/line_braid.png-e16fc4e8f6e43112126e7aa226075a77.ctex"]
+dest_files=["res://.godot/imported/line_braid.png-e16fc4e8f6e43112126e7aa226075a77.bptc.ctex", "res://.godot/imported/line_braid.png-e16fc4e8f6e43112126e7aa226075a77.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

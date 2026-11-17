@@ -91,8 +91,8 @@ static func art_box(rect: Rect2, frame: String) -> StyleBox:
 static func _art_short(frame: String) -> float:
 	if not ART.has(frame):
 		return 0.0
-	var texture := ItemArt.frame(str((ART[frame] as Dictionary)["art"]))
-	return float(mini(texture.get_width(), texture.get_height())) if texture != null else 0.0
+	var art_size := ItemArt.frame_size(str((ART[frame] as Dictionary)["art"]))
+	return float(mini(art_size.x, art_size.y))
 
 
 ## Görselin kutudaki ölçeği (görsel ya da payları yoksa 0). Küçük kutuda (seçim düğmesi) köşeler sığacak kadar.

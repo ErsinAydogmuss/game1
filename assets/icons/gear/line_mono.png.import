@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://can1olnwxunkc"
-path="res://.godot/imported/line_mono.png-3772b08988b3634f1a94183f5927bc1d.ctex"
+path.bptc="res://.godot/imported/line_mono.png-3772b08988b3634f1a94183f5927bc1d.bptc.ctex"
+path.astc="res://.godot/imported/line_mono.png-3772b08988b3634f1a94183f5927bc1d.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/gear/line_mono.png"
-dest_files=["res://.godot/imported/line_mono.png-3772b08988b3634f1a94183f5927bc1d.ctex"]
+dest_files=["res://.godot/imported/line_mono.png-3772b08988b3634f1a94183f5927bc1d.bptc.ctex", "res://.godot/imported/line_mono.png-3772b08988b3634f1a94183f5927bc1d.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

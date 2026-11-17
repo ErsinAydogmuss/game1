@@ -135,13 +135,19 @@ func _process_file(path: String, def: Dictionary, margin: float, outputs: Array[
 
 
 ## İlk içe aktarmada mipmap üretilsin diye .import dosyası yoksa ayarlarıyla yazar
-## (ikonlar küçük gösterilince pürüzsüz görünsün). Godot eksik alanları kendisi doldurur.
+## (ikonlar küçük gösterilince pürüzsüz görünsün). Godot eksik alanları kendisi doldurur. Ekran kartının
+## sıkıştırması (compress/mode=2, high_quality: telefonda ASTC) tests/test_texture_memory.gd'nin kuralıyla:
+## kodun piksellerini okuduğu görseller (çerçeveler, saat çipinin ikonları) sıkıştırılmaz.
 func _write_import_defaults(target: String) -> void:
 	var path := ProjectSettings.globalize_path(target + ".import")
 	if FileAccess.file_exists(path):
 		return
+	var rule: Script = load("res://tests/test_texture_memory.gd")
+	var params := "mipmaps/generate=true\n"
+	if bool(rule.call("compressed", target)):
+		params = "compress/mode=2\ncompress/high_quality=true\n" + params
 	var f := FileAccess.open(path, FileAccess.WRITE)
-	f.store_string("[remap]\n\nimporter=\"texture\"\ntype=\"CompressedTexture2D\"\n\n[params]\n\nmipmaps/generate=true\n")
+	f.store_string("[remap]\n\nimporter=\"texture\"\ntype=\"CompressedTexture2D\"\n\n[params]\n\n" + params)
 	f.close()
 
 

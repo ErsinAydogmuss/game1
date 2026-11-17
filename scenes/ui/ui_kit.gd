@@ -319,7 +319,7 @@ static func clear_style_cache() -> void:
 ## Bu renk arayüz kitindeki bir düğme görseliyle mi çiziliyor?
 static func has_button_art(color: Color) -> bool:
 	var entry: Array = BUTTON_ART.get(color.to_html(false), [])
-	return not entry.is_empty() and ItemArt.frame(str(entry[0])) != null
+	return not entry.is_empty() and ItemArt.has_frame(str(entry[0]))
 
 
 ## Düz renkli buton stili (eski, kodla çizilen yerler için).
@@ -392,7 +392,7 @@ static func glossy(color: Color, pressed: bool, radius: int = 30) -> StyleBoxTex
 ## koyu ve yazı aşağıda); yoksa null. Yazı alttaki kalınlığın (dudak) üstünde ortalanır.
 static func _button_art(color: Color, pressed: bool, radius: int) -> StyleBoxTexture:
 	var entry: Array = BUTTON_ART.get(color.to_html(false), [])
-	if entry.is_empty() or ItemArt.frame(str(entry[0])) == null:
+	if entry.is_empty() or not ItemArt.has_frame(str(entry[0])):
 		return null
 	var sb := framed(str(entry[0]), StyleBoxEmpty.new(), radius + 4) as StyleBoxTexture
 	if sb == null:
@@ -450,16 +450,16 @@ static func apply_preview_msaa(viewport: SubViewport) -> void:
 ## görselin süslü kenarı daha kalınsa içerik onun içinde başlar (FRAME_CONTENT + CONTENT_PAD).
 static func framed(frame_name: String, fallback: StyleBox, corner: float) -> StyleBox:
 	var slices := frame_slices(frame_name)
-	var texture := ItemArt.frame(frame_name)
-	if texture == null or slices.size() != 4:
+	var art_size := ItemArt.frame_size(frame_name)
+	if art_size == Vector2i.ZERO or slices.size() != 4:
 		return fallback
-	var short := float(mini(texture.get_width(), texture.get_height()))
+	var short := float(mini(art_size.x, art_size.y))
 	var widest := maxf(maxf(float(slices[0]), float(slices[1])), maxf(float(slices[2]), float(slices[3])))
 	var scale := corner / maxf(1.0, short * widest)
 	var key := "%s|%d" % [frame_name, roundi(corner)]
 	var scaled: Texture2D = _frame_cache.get(key)
 	if scaled == null:
-		var img := texture.get_image()
+		var img := ItemArt.frame(frame_name).get_image()
 		if img.is_compressed():
 			img.decompress()
 		img.resize(maxi(1, roundi(img.get_width() * scale)), maxi(1, roundi(img.get_height() * scale)),

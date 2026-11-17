@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://6pfxddshqmf4"
-path="res://.godot/imported/reel_smooth.png-0eeb3f488311331e62935520a0629563.ctex"
+path.bptc="res://.godot/imported/reel_smooth.png-0eeb3f488311331e62935520a0629563.bptc.ctex"
+path.astc="res://.godot/imported/reel_smooth.png-0eeb3f488311331e62935520a0629563.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/gear/reel_smooth.png"
-dest_files=["res://.godot/imported/reel_smooth.png-0eeb3f488311331e62935520a0629563.ctex"]
+dest_files=["res://.godot/imported/reel_smooth.png-0eeb3f488311331e62935520a0629563.bptc.ctex", "res://.godot/imported/reel_smooth.png-0eeb3f488311331e62935520a0629563.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

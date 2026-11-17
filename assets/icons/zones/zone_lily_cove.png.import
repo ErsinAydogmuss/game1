@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://1bpt0wr68ch1"
-path="res://.godot/imported/zone_lily_cove.png-93b4bb7a58ad80149d29cffe869977ea.ctex"
+path.bptc="res://.godot/imported/zone_lily_cove.png-93b4bb7a58ad80149d29cffe869977ea.bptc.ctex"
+path.astc="res://.godot/imported/zone_lily_cove.png-93b4bb7a58ad80149d29cffe869977ea.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/zones/zone_lily_cove.png"
-dest_files=["res://.godot/imported/zone_lily_cove.png-93b4bb7a58ad80149d29cffe869977ea.ctex"]
+dest_files=["res://.godot/imported/zone_lily_cove.png-93b4bb7a58ad80149d29cffe869977ea.bptc.ctex", "res://.godot/imported/zone_lily_cove.png-93b4bb7a58ad80149d29cffe869977ea.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

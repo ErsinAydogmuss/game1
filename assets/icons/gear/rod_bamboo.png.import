@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://blsjk03cto4wv"
-path="res://.godot/imported/rod_bamboo.png-2f150cda885439cf2d90127102cc4e7e.ctex"
+path.bptc="res://.godot/imported/rod_bamboo.png-2f150cda885439cf2d90127102cc4e7e.bptc.ctex"
+path.astc="res://.godot/imported/rod_bamboo.png-2f150cda885439cf2d90127102cc4e7e.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/gear/rod_bamboo.png"
-dest_files=["res://.godot/imported/rod_bamboo.png-2f150cda885439cf2d90127102cc4e7e.ctex"]
+dest_files=["res://.godot/imported/rod_bamboo.png-2f150cda885439cf2d90127102cc4e7e.bptc.ctex", "res://.godot/imported/rod_bamboo.png-2f150cda885439cf2d90127102cc4e7e.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

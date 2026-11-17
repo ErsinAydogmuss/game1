@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b7054rvajbajw"
-path="res://.godot/imported/tech_fly.png-4fdb6ed154673877866ebc83e9ee49d0.ctex"
+path.bptc="res://.godot/imported/tech_fly.png-4fdb6ed154673877866ebc83e9ee49d0.bptc.ctex"
+path.astc="res://.godot/imported/tech_fly.png-4fdb6ed154673877866ebc83e9ee49d0.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/ui/tech_fly.png"
-dest_files=["res://.godot/imported/tech_fly.png-4fdb6ed154673877866ebc83e9ee49d0.ctex"]
+dest_files=["res://.godot/imported/tech_fly.png-4fdb6ed154673877866ebc83e9ee49d0.bptc.ctex", "res://.godot/imported/tech_fly.png-4fdb6ed154673877866ebc83e9ee49d0.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

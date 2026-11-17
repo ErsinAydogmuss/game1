@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://blcywhcvas3rl"
-path="res://.godot/imported/cat_tekir.png-7a5e8de3bee96e4a364df55ad5de647c.ctex"
+path.bptc="res://.godot/imported/cat_tekir.png-7a5e8de3bee96e4a364df55ad5de647c.bptc.ctex"
+path.astc="res://.godot/imported/cat_tekir.png-7a5e8de3bee96e4a364df55ad5de647c.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/ui/cat_tekir.png"
-dest_files=["res://.godot/imported/cat_tekir.png-7a5e8de3bee96e4a364df55ad5de647c.ctex"]
+dest_files=["res://.godot/imported/cat_tekir.png-7a5e8de3bee96e4a364df55ad5de647c.bptc.ctex", "res://.godot/imported/cat_tekir.png-7a5e8de3bee96e4a364df55ad5de647c.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0

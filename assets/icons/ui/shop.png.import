@@ -3,20 +3,22 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnnnqlhtbe2x8"
-path="res://.godot/imported/shop.png-88732d92590451d5e9b8df1e427c60b0.ctex"
+path.bptc="res://.godot/imported/shop.png-88732d92590451d5e9b8df1e427c60b0.bptc.ctex"
+path.astc="res://.godot/imported/shop.png-88732d92590451d5e9b8df1e427c60b0.astc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/icons/ui/shop.png"
-dest_files=["res://.godot/imported/shop.png-88732d92590451d5e9b8df1e427c60b0.ctex"]
+dest_files=["res://.godot/imported/shop.png-88732d92590451d5e9b8df1e427c60b0.bptc.ctex", "res://.godot/imported/shop.png-88732d92590451d5e9b8df1e427c60b0.astc.ctex"]
 
 [params]
 
-compress/mode=0
-compress/high_quality=false
+compress/mode=2
+compress/high_quality=true
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
