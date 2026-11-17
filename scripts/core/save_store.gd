@@ -5,12 +5,18 @@ extends RefCounted
 
 
 static func write(save: SaveData, path: String) -> bool:
+	return write_data(save.to_dict(), path)
+
+
+## Kaydın sözlüğünü (SaveData.to_dict) yazar. Arka plandaki bir iş parçacığından da çağrılır (GameState): yalnızca
+## verilen sözlüğe dokunur; çağıran sözlüğü bir daha değiştirmemeli.
+static func write_data(data: Dictionary, path: String) -> bool:
 	var tmp := path + ".tmp"
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:
 		push_error("Kayıt yazılamadı: %s (%s)" % [tmp, error_string(FileAccess.get_open_error())])
 		return false
-	var ok := f.store_string(JSON.stringify(save.to_dict(), "\t"))
+	var ok := f.store_string(JSON.stringify(data, "\t"))
 	f.close()
 	if not ok:
 		push_error("Kayıt yazılamadı: " + tmp)

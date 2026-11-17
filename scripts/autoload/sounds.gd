@@ -7,6 +7,9 @@ extends Node
 ## Kanallar: "SFX" (efektler, döngüler, ortam) ve "Music". Ayarlar: "sfx", "music" (açık/kapalı).
 ## Efektlerin her biri birkaç çeşittir (ad_1, ad_2...): art arda aynısı çalmaz, perdesi de
 ## hafifçe oynar (kulağı yormasın). Aynı ses çok sık istenirse atlanır.
+## Efektler, müzik ve ortam sesleri açılışta arka planda yüklenir (ResourceLoader.load_threaded_request): ilk çalınan
+## ses ve her vakit değişiminde müzik o karede diskten okunuyordu, telefonda kısa bir takılma (Kazı,
+## docs/performans-notlari.md §2.2). Yükü bitmemiş bir ses istenirse beklenir (yalnızca açılışın ilk anında olur).
 
 const SFX_DIR := "res://assets/audio/sfx/"
 const LOOP_DIR := "res://assets/audio/loops/"
@@ -75,6 +78,10 @@ var _silent: bool = false
 var _halted: bool = false
 ## Müzik parçalarının kaldığı yer (sn): dükkândan çıkınca vaktin müziği baştan başlamasın.
 var _music_pos: Dictionary = {}
+## Arka planda yüklenen ses dosyaları (yol → true) ve yüklenmiş olanlar (yol → AudioStream; çıkışa kadar tutulur:
+## müzik bir daha diskten okunmasın).
+var _pending: Dictionary = {}
+var _loaded: Dictionary = {}
 
 
 func _ready() -> void:
@@ -108,14 +115,27 @@ func _ready() -> void:
 	GameState.changed.connect(apply_settings)
 	apply_settings()
 	get_tree().node_added.connect(_on_node_added)
+	_preload_all()
 
 
 func _process(delta: float) -> void:
 	_clock += delta
+	if not _pending.is_empty():
+		_collect_loads()
 
 
 func _exit_tree() -> void:
 	stop_all()
+	# Alınmayan arka plan yükleri çıkışta sızıntı uyarısı verir: bitmesi beklenir.
+	for path: String in _pending.keys():
+		ResourceLoader.load_threaded_get(path)
+	_pending.clear()
+	_loaded.clear()
+
+
+## Arka planda yüklenmeyi bekleyen ses dosyası sayısı (bot).
+func pending_loads() -> int:
+	return _pending.size()
 
 
 ## Bütün sesleri durdurur ve akışları bırakır. Çıkmadan bir iki kare önce çağrılırsa ses
@@ -221,13 +241,65 @@ func _variants(sound: String) -> Array:
 	if _streams.has(sound):
 		return _streams[sound]
 	var out: Array = []
+	for path in _sfx_paths(sound):
+		var stream := _stream(path)
+		if stream != null:
+			out.append(stream)
+	_streams[sound] = out
+	return out
+
+
+## Efektin çeşitlerinin yolları (ad_1.wav, ad_2.wav...; ilk eksikte biter).
+func _sfx_paths(sound: String) -> PackedStringArray:
+	var out := PackedStringArray()
 	for i in range(1, 9):
 		var path := "%s%s_%d.wav" % [SFX_DIR, sound, i]
 		if not ResourceLoader.exists(path):
 			break
-		out.append(load(path))
-	_streams[sound] = out
+		out.append(path)
 	return out
+
+
+## Bütün efektleri, müziği ve ortam seslerini arka planda yüklemeye başlar (ekransızda ses yok: yüklenmez).
+func _preload_all() -> void:
+	if _silent:
+		return
+	var paths := PackedStringArray()
+	for sound: String in BANK:
+		paths.append_array(_sfx_paths(sound))
+	for track: String in MUSIC:
+		paths.append(MUSIC_DIR + track + ".ogg")
+	for track: String in AMBIENCE:
+		paths.append(AMBIENCE_DIR + track + ".ogg")
+	for path in paths:
+		if ResourceLoader.exists(path) and ResourceLoader.load_threaded_request(path) == OK:
+			_pending[path] = true
+
+
+## Biten arka plan yüklerini alır (her kare, bekleyen varken).
+func _collect_loads() -> void:
+	for path: String in _pending.keys():
+		var status := ResourceLoader.load_threaded_get_status(path)
+		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			continue
+		_pending.erase(path)
+		if status == ResourceLoader.THREAD_LOAD_LOADED:
+			_loaded[path] = ResourceLoader.load_threaded_get(path)
+
+
+## Bir ses dosyası: yüklendiyse hemen; arka planda yükleniyorsa biter bitmez (bekler); hiç istenmediyse şimdi.
+func _stream(path: String) -> AudioStream:
+	if _loaded.has(path):
+		return _loaded[path]
+	var stream: AudioStream = null
+	if _pending.has(path):
+		_pending.erase(path)
+		stream = ResourceLoader.load_threaded_get(path) as AudioStream
+	elif ResourceLoader.exists(path):
+		stream = load(path) as AudioStream
+	if stream != null:
+		_loaded[path] = stream
+	return stream
 
 
 func _count_playing(sound: String) -> int:
@@ -290,7 +362,7 @@ func _switch(pair: Array[AudioStreamPlayer], track: String, dir: String, volume_
 func _load_loop(path: String) -> AudioStream:
 	if not ResourceLoader.exists(path):
 		return null
-	var stream: AudioStream = load(path)
+	var stream := _stream(path)
 	if stream is AudioStreamOggVorbis:
 		(stream as AudioStreamOggVorbis).loop = true
 	elif stream is AudioStreamWAV:

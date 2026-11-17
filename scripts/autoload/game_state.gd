@@ -16,6 +16,11 @@ var save: SaveData
 var clock := TimeProvider.new()
 ## false iken kayıt diske yazılmaz (--autoplay gibi geliştirici modları için).
 var persist: bool = true
+## Kaydı yazan arka plan işi (WorkerThreadPool; -1: yok) ve o yazarken gelen, sırada bekleyen en yeni kayıt.
+## Kayıt her balıkta yazılır: JSON'a çevirme ve dosyaya yazma oyunun karesinde yapılmasın (telefonda disk ara sıra
+## takılır; Kazı, docs/performans-notlari.md §2.2). Sözlük o karede kurulur (derin kopya), işi iş parçacığı yapar.
+var _save_task: int = -1
+var _save_next: Dictionary = {}
 
 
 func _ready() -> void:
@@ -52,7 +57,41 @@ func save_game() -> void:
 	if not persist or save == null:
 		return
 	save.last_seen_unix = clock.now_unix()
-	SaveStore.write(save, SAVE_PATH)
+	_save_next = save.to_dict().duplicate(true)
+	_pump_save()
+
+
+## Bekleyen yazmayı hemen bitirir: arka plana geçerken (işletim sistemi uygulamayı durdurabilir) ve çıkışta.
+func flush_save() -> void:
+	if _save_task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_save_task)
+		_save_task = -1
+	if not _save_next.is_empty():
+		SaveStore.write_data(_save_next, SAVE_PATH)
+		_save_next = {}
+
+
+## Önceki yazma bittiyse sıradaki kaydı arka planda yazmaya başlar.
+func _pump_save() -> void:
+	if _save_task >= 0:
+		if not WorkerThreadPool.is_task_completed(_save_task):
+			return
+		WorkerThreadPool.wait_for_task_completion(_save_task)
+		_save_task = -1
+	if _save_next.is_empty():
+		return
+	var data := _save_next
+	_save_next = {}
+	_save_task = WorkerThreadPool.add_task(SaveStore.write_data.bind(data, SAVE_PATH), false, "Kayıt")
+
+
+func _process(_delta: float) -> void:
+	if _save_task >= 0 or not _save_next.is_empty():
+		_pump_save()
+
+
+func _exit_tree() -> void:
+	flush_save()
 
 
 func reset_save() -> void:
@@ -117,9 +156,11 @@ func _notification(what: int) -> void:
 		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_CLOSE_REQUEST:
 			focus_lost.emit()
 			save_game()
+			flush_save()
 		NOTIFICATION_APPLICATION_FOCUS_OUT:
 			focus_lost.emit()
 			save_game()
+			flush_save()
 		NOTIFICATION_APPLICATION_RESUMED, NOTIFICATION_APPLICATION_FOCUS_IN:
 			focus_gained.emit()
 
