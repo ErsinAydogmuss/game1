@@ -223,6 +223,8 @@ python3 -I tools/reels_ad.py --avi /mutlak/yol/reels.avi --log /mutlak/yol/reels
 #   storm, bottle, pieces, xmap, fog, keeper).
 # Süreler (bu ortamda): asıl kayıt ~20 dk (3750 kare, ~2 GB AVI), kuru çekim ~7 dk, son kalite kurgu ~11 dk (45 + 15 sn);
 #   v05: asıl kayıt ~20 dk (3084 kare, ~1,3 GB AVI), kuru çekim ~12 dk, kurgu ~7 dk (iki 25 sn'lik kesim; tek kesim ~3 dk).
+#   v10: asıl kayıt ~36 dk (7015 kare, ~3,6 GB AVI), kuru çekim ~40 dk (yalnızca yuvanın çekimleri: --reels-only=dock,cat,
+#   aquarium,photo,wardrobe ~8 dk), kurgu: ön izleme ~5 dk, son kalite ~10 dk.
 ```
 
 Sesler kodla üretilir: `python3 -I tools/make_sounds.py` (numpy; .ogg için ffmpeg; `python3 -I tools/make_sounds.py music night rain` yalnızca adı ya da klasörü bunlarla başlayanlar). Ses adları `Sounds.BANK`, `LOOPS`, `MUSIC` ve `AMBIENCE` ile aynı olmalı (`test_sounds.gd`). Çalgılar değişirse Reels müziğini önce ve sonra üretip karşılaştır (`cmp`): reklamın müziği değişmemeli.

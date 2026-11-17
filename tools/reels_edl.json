@@ -820,8 +820,8 @@
 				{
 					"id": "aksam",
 					"beats": 4,
-					"src": "dusk.fall",
-					"offset": 0
+					"src": "dusk.evening",
+					"offset": 6
 				},
 				{
 					"id": "ay",
@@ -851,18 +851,23 @@
 				},
 				{
 					"id": "dolap",
-					"beats": 4,
-					"src": "wardrobe.boy",
+					"beats": 2,
+					"src": "wardrobe.hat",
 					"offset": -6,
 					"crop": "panel:wardrobe",
 					"pad": 12
 				},
 				{
+					"id": "giyindi",
+					"beats": 2,
+					"src": "wardrobe.worn",
+					"offset": 2
+				},
+				{
 					"id": "foto",
 					"beats": 4,
 					"src": "photo.frame",
-					"offset": 0,
-					"aspect": 2.16
+					"offset": -10
 				},
 				{
 					"id": "sise",
