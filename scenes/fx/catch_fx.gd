@@ -115,6 +115,18 @@ func _place_tag() -> void:
 	_tag.anchor = view.unproject_position(_tag_point)
 
 
+## Işık sütununun malzemesi (ışıksız, saydam, toplanan; ShaderWarmup da ısındırır).
+static func beam_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.no_depth_test = false
+	material.albedo_color = Color(color, 0.0)
+	return material
+
+
 func _make_beam(color: Color) -> void:
 	var mesh := CylinderMesh.new()
 	mesh.top_radius = 0.42
@@ -124,13 +136,7 @@ func _make_beam(color: Color) -> void:
 	mesh.rings = 1
 	mesh.cap_top = false
 	mesh.cap_bottom = false
-	_beam_material = StandardMaterial3D.new()
-	_beam_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_beam_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_beam_material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	_beam_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_beam_material.no_depth_test = false
-	_beam_material.albedo_color = Color(color, 0.0)
+	_beam_material = beam_material(color)
 	_beam = MeshInstance3D.new()
 	_beam.mesh = mesh
 	_beam.material_override = _beam_material
