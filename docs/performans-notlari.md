@@ -365,3 +365,87 @@ her adımın sayısını bana yaz.
 Play Console'da çökme varsa yığını Godot'nun native debug sembolleriyle çöz (llvm-symbolizer), hangi işlevde
 koptuğunu yaz.
 ```
+
+---
+
+## 8. Olta'da yapılanlar (Kasım 2026)
+
+Yukarıdaki notlar Kazı'nın. Olta'da aynı istek uygulandı: önce ölçüldü, sonra düzeltildi, sonra aynı ölçüm
+tekrarlandı. Ölçümler bu bulut ortamında (xvfb, Mesa llvmpipe, yazılımla çizim, 1280x720): kare süreleri telefonun
+2-10 katı. Önemli olan sayılar oran ve sayımdır: kare başına kurulan ekran kartı nesnesi, derleme sayısı, bellek
+eğrisi. Araçlar: `perf` botu (`scripts/dev/autoplay.gd`), `tools/gl_count.c` + `tools/gl_windows.py`,
+`tools/shader_compiles.py` (komutlar CLAUDE.md'de).
+
+### 8.1 Olta'da zaten iyi olanlar
+
+- Gök yok (`BG_COLOR`), sis tek tür (derinlik sisi), lambalar gölgelendiricide (ışık havuzu): Kazı'daki derlemelerin
+  büyük kaynakları (gece göğü, spot ve omni ışıkları, yer altı sisi) Olta'da yok.
+- Label3D yalnızca dükkânın tabelasında, bir kez yazılır.
+- Reklam açıkken ağaç durur, `Ads` `PROCESS_MODE_ALWAYS`, gösterme süre aşımlı (A1-A2'de Kazı'dan).
+- Işığın gölgesi ve parlama her karede verilmiyordu (görünüş geçişinde yalnızca renk ve güç).
+
+### 8.2 Bulunanlar ve düzeltmeler
+
+| Bulgu | Önce | Düzeltme | Sonra |
+|---|---|---|---|
+| Android Geri tuşu oyunu kapatıyordu (`quit_on_go_back` varsayılanı) | son kayıttan sonrası kaybolurdu | `quit_on_go_back=false`, main `go_back`: en öndeki kapatılabilir panel, kart, fotoğraf modu | controls botu: defter kapanır, panel yokken bir şey olmaz |
+| Misina `ImmediateMesh`'le her kare yeniden kuruluyordu | olta sudayken kare başına 1 tampon + 1 VAO (küçük denemede 660 karede 660) | sabit köşeli `ArrayMesh`, köşeler `mesh_surface_update_vertex_region` | 660 karede 1 |
+| Gerilim çubuğunun yuvarlak `StyleBoxFlat`'leri her kare çiziliyordu (2B çokgen her çizimde tampon kurar) | çekişmede kare başına **22** tampon, 5 VAO | `UiKit.soft_box` (dokulu 9 dilim) | çekişmede **0** |
+| Konuşma balonu her kare yeniden çiziliyordu (noktalar `draw_circle`, kalp çokgen) | Dede konuşurken 2,6 tampon/kare | işaret parçaları bir kez çizilir, zıplama ve atma konum ve ölçekle | 0,1 |
+| Akvaryumun kabarcıkları her kare üçgen dizisi | panel açıkken 2,2 tampon/kare | `UiKit.disc` (doku) | 0 |
+| Yürüme halkası her dokunuş olayında 3 çokgen | yürürken saniyede ~180 tampon | topuz ayrı düğüm, yalnızca yeri değişir | durum değişince |
+| Su halkası ve balık gölgesi her seferinde yeni düğüm + malzeme; gölgenin solması her kare | Efsanevi gölgenin izi saniyede 3 halka | havuz; solma yalnızca değişince | - |
+| Kartın konfetisi her kartta yeni `CPUParticles2D` | - | tane sayısı başına havuz | - |
+| Efektler ilk çalındığında, müzik her vakit değişiminde o karede diskten | - | açılışta `load_threaded_request` (önce müzik ve ortam) | - |
+| Kayıt her balıkta oyunun karesinde (JSON + dosya) | - | `WorkerThreadPool`; arka plana geçerken ve çıkışta beklenir | - |
+| Grafik ayarı yoktu; proje 60 FPS sınırı her cihazda | 60 Hz ekranda V-Sync'le kare kaçırtır | `GraphicsRules` (Kazı'dan): Düşük / Orta / Yüksek, Android'de Orta; sınır yalnızca telefonda >60 Hz ekranda | Ayarlar'da Grafik satırı |
+| Oyun sırasında gölgelendirici derlemesi | ilk balıkta 800 ms, dolabı ilk açışta 890 ms, ilk gece, yağmur, kelebek ~500 ms'lik kareler; 24 derleme | `ShaderWarmup`: açılış perdesinin arkasında 4 kare | bkz. 8.3 |
+| 193 görselin hepsi sıkıştırmasız | doku belleği 173 MB | 146 arayüz görseli ASTC; büyük çerçevenin özgünü tutulmaz | 142 MB (aynı gezi) |
+
+Tampon/kare: `tools/gl_windows.py`, `perf` botunun her ölçüm anında (90 kare). Düzeltmeden sonra gezinti,
+bölgeler, paneller ve gece-yağmur 0-0,1; boşta iskele 0,3. Çekişmenin ilk 30 karesinde 18 kalıyor: balık
+takılınca bildirimler, Dede'nin sözü ve gerilim çubuğunun ilk kurulumu (bir kezlik). Çekişmenin içi 0
+(`perf --part=fight`: parçalar tek tek gizlenerek ölçüldü).
+
+### 8.3 Gölgelendirici ısındırma
+
+`tools/shader_compiles.py run` (perf --part=cold, önbellek boş, Mesa önbelleği kapalı):
+
+| | Oyun sırasında derleme | En uzun karesi |
+|---|---|---|
+| Önce | 24 (ilk balık 6, dolap 3, harita, derin orta, gece, yağmur, kelebek) | ilk balık 797 ms, dolap 894 ms, gece 513, bulutlu → yağmur 533, sevgi 518 |
+| Isındırmayla (raf) | 7 (ışık sütunu, derin ortada bir model malzemesi, harita, kartın bir 2B düzeni) | ilk balık 500 ms, dolap 191 ms |
+| Raf + sahnedeki bütün malzemeler (son hâl) | 1 (kartın bir 2B düzeni) | ilk balık, dolap, derin orta, gece: derleme yok; kalan uzun kareler (akvaryum 412 ms, göl sevgisinin bitkileri 386, ilk gece 365, ilk yağmur 363) panelin ve sahnenin ilk kurulumu |
+
+Isındırma 90 derleme (37 malzeme, 5 MultiMesh malzemesi, harita). Bu ortamda Mesa'nın önbelleği kapalıyken 15,7 sn,
+açıkken ~2 sn; telefonda ilk açılışta birkaç saniye (açılış perdesi biraz uzun kalır), sonraki açılışlarda Godot'nun
+önbelleğinden (`user://shader_cache`) kısa.
+
+### 8.4 Uzun oyun ve pencere boyu (sızıntı yok)
+
+- `perf --part=soak --seconds=900`: 30 tur, 62/62 balık; bölge değiştir, sat, vakit ve hava döner, paneller.
+  İlk turlardan sonra bellek sabit: statik 138,9 MB, ~1165 düğüm, sahipsiz düğüm 0, doku 146,3 MB, tampon 19,6 MB.
+  Süreç belleği (dışarıdan, 15 sn'de bir): ilk 3 dakikada paneller ilk kez açılırken 740 → 823 MB, sonra 15.
+  dakikaya kadar 823-828 MB.
+- `perf --part=resize`: pencere boyu 120 kez değişti; bellek ve nesne sayıları sabit.
+
+### 8.5 Olta'ya özgü tuzaklar
+
+- Compatibility'de 2B çokgen (yuvarlak köşeli `StyleBoxFlat`, `draw_circle`, `draw_colored_polygon`,
+  `canvas_item_add_triangle_array`) her çizimde yeni tampon ve VAO kurar; dikdörtgen, çizgi, doku ve yazı kurmaz.
+  Kazı'daki Label3D'nin 2B karşılığı: her kare yeniden çizilen arayüz öğesi (gerilim çubuğu) Olta'da en büyük kaynaktı.
+- Bilgisayarda (botlar, Mac'te editör) sıkıştırılmış görsel BPTC; llvmpipe'te BPTC örneklemek çok yavaş. Zemin karosu
+  sıkıştırılınca bütün botlar ~5 kat yavaşladı: ekranın çoğunu kaplayan 3B doku sıkıştırılmaz (telefonda ASTC'nin
+  bir bedeli yok; zemin 4 MB).
+- Kodun piksellerini okuduğu görseller (çerçeveler, saat çipinin ikonları) sıkıştırılmaz (`tests/test_texture_memory.gd`).
+
+### 8.6 Açık kalanlar
+
+- Telefonda ölçüm: iPhone 14'te deneme listesi 50-53 (`docs/iphone-kurulum.md`). Android cihaz yok: Orta ayarın ve
+  60 FPS sınırının etkisi ancak Play'deki kullanıcılarda görülür (Play Console'da "ANR ve çökme").
+- Play Console'da çökme gelirse §4.1'deki gibi sembollerle çöz (Gradle'lı dışa aktarmada da şablonun
+  `libgodot_android.so`'su).
+- Modellerin dokuları (KayKit karakterleri ve paletler, Kenney; mipmap'le ~42 MB) bilerek sıkıştırılmadı: renk kutularının sınırında renk
+  karışmasın. İleride ölçülüp ekran görüntüsüyle denenebilir.
+- Her kartta ve her panel açılışında arayüz baştan kurulur (o an birkaç yüz tampon; kare başına değil). Kart
+  sık; gerekirse kart yeniden kullanılabilir.
