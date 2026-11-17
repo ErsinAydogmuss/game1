@@ -5,6 +5,9 @@ extends Control
 ## 3B sahnenin sisi ve ton eşlemesi onu grileştirmesin diye arayüz gibi çizilir; yakınlaşmada da
 ## aynı boyda kalır. pop() ile hafifçe taşarak büyür, HOLD_TIME sn durur, küçülerek kaybolur.
 ## Kuyruğun ucu anchor'a (viewport noktası) gelir. Kare başı hareket _process'te.
+## Balon ve işaretin parçaları bir kez çizilir; büyüme, noktaların zıplaması, kalbin atması ve balığın yüzmesi
+## yalnızca konum ve ölçekle. Balon her kare yeniden çizilseydi her daire ve çokgen ekran kartında yeni tampon ve
+## VAO kurardı (Compatibility; docs/performans-notlari.md §3.3: Kazı'da Android'de çökmenin şüphelisi).
 
 enum Kind { DOTS, EXCLAIM, FISH, HEART }
 
@@ -40,6 +43,9 @@ var _edge := StyleBoxFlat.new()
 var _art: Texture2D
 ## Acıkan Tekir'in işareti: Ersin'in mama kabı (Parti 5b home_icons "cat_bowl"; yoksa kodla turuncu balık).
 var _bowl: Texture2D
+## İşaretin parçaları (Mark; kind değişince yeniden kurulur) ve kurulduğu tür (-1: yok).
+var _marks: Array[Mark] = []
+var _marks_kind: int = -1
 
 
 func _init() -> void:
@@ -66,6 +72,9 @@ func pop(new_kind: Kind, hold: float = HOLD_TIME) -> void:
 	_time = 0.0
 	scale = Vector2.ZERO
 	visible = true
+	if _marks_kind != int(kind):
+		_build_marks()
+	_place_marks()
 
 
 func is_showing() -> bool:
@@ -88,14 +97,12 @@ func _process(delta: float) -> void:
 		grow = 1.0 - t * t
 	scale = Vector2.ONE * grow
 	position = anchor - pivot_offset
-	queue_redraw()
+	_place_marks()
 
 
 func _draw() -> void:
 	if _art != null:
 		draw_texture_rect(_art, Rect2(Vector2.ZERO, ART_SIZE), false)
-		# Görselin ahşap kenarı kalın: işaret biraz küçük ve aşağıda (ünlem üst kenara değmesin).
-		_draw_mark(Vector2(ART_SIZE.x * 0.5, ART_SIZE.y * ART_BODY_Y + 3.0), ART_MARK)
 		return
 	var body := Rect2(Vector2.ZERO, BODY)
 	var tail := PackedVector2Array([Vector2(BODY.x * 0.2, BODY.y - 10.0), Vector2(BODY.x * 0.48, BODY.y - 10.0), _tip()])
@@ -105,48 +112,102 @@ func _draw() -> void:
 		draw_colored_polygon(outer, INK)
 	draw_style_box(_fill, body)
 	draw_colored_polygon(tail, FILL)
-	_draw_mark(body.get_center())
 
 
-## Balonun içi: üç zıplayan nokta ya da ünlem (c: gövdenin ortası).
-## Balonun işareti: üç nokta ya da ünlem; k: boy çarpanı.
-func _draw_mark(c: Vector2, k: float = 1.0) -> void:
-	if kind == Kind.FISH:
-		_draw_fish(c, k)
-		return
-	if kind == Kind.HEART:
-		var beat := 1.0 + 0.08 * sin(_time * 9.0)
-		draw_colored_polygon(heart(c, 26.0 * k * beat), HEART_COLOR)
-		return
-	if kind == Kind.DOTS:
-		for i in 3:
-			var hop := 6.0 * maxf(0.0, sin(_time * 7.0 - float(i) * 1.1))
-			draw_circle(c + Vector2((float(i) - 1.0) * 25.0, -hop) * k, 7.5 * k, INK)
-	else:
-		var bar := Rect2(c + Vector2(-5.5, -24.0) * k, Vector2(11.0, 30.0) * k)
-		draw_rect(bar, INK)
-		draw_circle(bar.position + Vector2(5.5, 0.0) * k, 5.5 * k, INK)
-		draw_circle(bar.end - Vector2(5.5, 0.0) * k, 5.5 * k, INK)
-		draw_circle(c + Vector2(0.0, 19.0) * k, 6.5 * k, INK)
+## İşaretin yeri (balonun kendi uzayında) ve boy çarpanı: görselin ahşap kenarı kalın, işaret biraz küçük ve aşağıda
+## (ünlem üst kenara değmesin).
+func _mark_center() -> Vector2:
+	if _art != null:
+		return Vector2(ART_SIZE.x * 0.5, ART_SIZE.y * ART_BODY_Y + 3.0)
+	return Rect2(Vector2.ZERO, BODY).get_center()
 
 
-## Balık işareti (Tekir acıktı): Ersin'in mama kabı (hafifçe sallanır; tek çizim) ya da kodla turuncu gövde ve
-## kuyruk tek çokgen, koyu göz; hafifçe yüzer.
-func _draw_fish(c: Vector2, k: float) -> void:
-	var swim := Vector2(sin(_time * 4.0) * 3.0, 0.0) * k
-	if _bowl != null:
-		var side := 66.0 * k
-		draw_texture_rect(_bowl, Rect2(c + swim - Vector2(side, side) * 0.5, Vector2(side, side)), false)
-		return
-	var body := PackedVector2Array()
-	for i in 14:
-		var a := TAU * i / 14.0
-		body.append(c + swim + Vector2(cos(a) * 24.0 - 4.0, sin(a) * 13.0) * k)
-	var tail := PackedVector2Array([c + swim + Vector2(16.0, 0.0) * k, c + swim + Vector2(32.0, -13.0) * k,
-			c + swim + Vector2(32.0, 13.0) * k])
-	var merged := Geometry2D.merge_polygons(body, tail)
-	draw_colored_polygon(merged[0] if not merged.is_empty() else body, FISH_COLOR)
-	draw_circle(c + swim + Vector2(-16.0, -3.0) * k, 3.5 * k, INK)
+func _mark_scale() -> float:
+	return ART_MARK if _art != null else 1.0
+
+
+## Balonun işareti: üç nokta, ünlem, kalp ya da mama kabı (balık); parçalar bir kez çizilir.
+func _build_marks() -> void:
+	for m in _marks:
+		m.queue_free()
+	_marks.clear()
+	_marks_kind = int(kind)
+	var k := _mark_scale()
+	match kind:
+		Kind.DOTS:
+			for i in 3:
+				_marks.append(Mark.new("dot", k, INK, null))
+		Kind.EXCLAIM:
+			_marks.append(Mark.new("exclaim", k, INK, null))
+		Kind.HEART:
+			_marks.append(Mark.new("heart", k, HEART_COLOR, null))
+		Kind.FISH:
+			_marks.append(Mark.new("bowl" if _bowl != null else "fish", k, FISH_COLOR, _bowl))
+	for m in _marks:
+		add_child(m)
+
+
+## İşaretin kare başı hareketi: noktalar zıplar, kalp atar, balık (mama kabı) yüzer.
+func _place_marks() -> void:
+	var c := _mark_center()
+	var k := _mark_scale()
+	match kind:
+		Kind.DOTS:
+			for i in mini(3, _marks.size()):
+				var hop := 6.0 * maxf(0.0, sin(_time * 7.0 - float(i) * 1.1))
+				_marks[i].position = c + Vector2((float(i) - 1.0) * 25.0, -hop) * k
+		Kind.HEART:
+			if not _marks.is_empty():
+				_marks[0].position = c
+				_marks[0].scale = Vector2.ONE * (1.0 + 0.08 * sin(_time * 9.0))
+		Kind.FISH:
+			if not _marks.is_empty():
+				_marks[0].position = c + Vector2(sin(_time * 4.0) * 3.0, 0.0) * k
+		_:
+			if not _marks.is_empty():
+				_marks[0].position = c
+
+
+## İşaretin bir parçası: kendi başlangıcının çevresinde bir kez çizilir (nokta, ünlem, kalp, mama kabı ya da balık).
+class Mark extends Control:
+	var shape: String
+	var k: float
+	var color: Color
+	var art: Texture2D
+
+	func _init(mark_shape: String, scale_k: float, mark_color: Color, texture: Texture2D) -> void:
+		shape = mark_shape
+		k = scale_k
+		color = mark_color
+		art = texture
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		visibility_layer = PhotoMode.WORLD_LABELS
+
+	func _draw() -> void:
+		match shape:
+			"dot":
+				draw_circle(Vector2.ZERO, 7.5 * k, color)
+			"exclaim":
+				var bar := Rect2(Vector2(-5.5, -24.0) * k, Vector2(11.0, 30.0) * k)
+				draw_rect(bar, color)
+				draw_circle(bar.position + Vector2(5.5, 0.0) * k, 5.5 * k, color)
+				draw_circle(bar.end - Vector2(5.5, 0.0) * k, 5.5 * k, color)
+				draw_circle(Vector2(0.0, 19.0) * k, 6.5 * k, color)
+			"heart":
+				draw_colored_polygon(SpeechBubble.heart(Vector2.ZERO, 26.0 * k), color)
+			"bowl":
+				var side := 66.0 * k
+				draw_texture_rect(art, Rect2(-Vector2(side, side) * 0.5, Vector2(side, side)), false)
+			"fish":
+				# Kodla turuncu gövde ve kuyruk tek çokgen, koyu göz.
+				var body := PackedVector2Array()
+				for i in 14:
+					var a := TAU * i / 14.0
+					body.append(Vector2(cos(a) * 24.0 - 4.0, sin(a) * 13.0) * k)
+				var tail := PackedVector2Array([Vector2(16.0, 0.0) * k, Vector2(32.0, -13.0) * k, Vector2(32.0, 13.0) * k])
+				var merged := Geometry2D.merge_polygons(body, tail)
+				draw_colored_polygon(merged[0] if not merged.is_empty() else body, color)
+				draw_circle(Vector2(-16.0, -3.0) * k, 3.5 * k, SpeechBubble.INK)
 
 
 ## Kalp çokgeni (merkez, yarı genişlik).

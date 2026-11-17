@@ -43,6 +43,8 @@ var dede_face: Texture2D
 ## Kartın en dıştaki düğümü (resimli kartta nadirlik renginde halka, yoksa kartın kendisi).
 var _card: PanelContainer
 var _age: float = 0.0
+## Konfeti düğümleri (tane sayısı → CPUParticles2D; _confetti).
+var _confetti_pool: Dictionary = {}
 ## Açılışta büyüme (0,4 → 1; tween): kartın ölçeği fit_scale ile bunun çarpımı.
 var _grow: float = 1.0
 ## Kart açıkken (MIN_OPEN'dan sonra) bir basış oldu: parmak kalkınca kapanır.
@@ -311,11 +313,26 @@ func _pill(text: String, color: Color) -> PanelContainer:
 	return pill
 
 
+## Konfeti: tane sayısı başına bir parçacık düğümü, havuzda kalır ve yeniden kullanılır (her kartta yeni düğüm
+## ekran kartında yeni tampon demekti: docs/performans-notlari.md §3.3).
 func _confetti(at: Vector2, amount: int) -> void:
-	var particles := CPUParticles2D.new()
+	var particles: CPUParticles2D = _confetti_pool.get(amount)
+	if particles == null or not is_instance_valid(particles):
+		particles = _make_confetti(amount)
+		_confetti_pool[amount] = particles
+		add_child(particles)
+	# Kartın önünde (kart her açılışta yeniden kurulur, düğümün sonuna eklenir).
+	move_child(particles, -1)
 	particles.position = at
+	particles.restart()
+	particles.emitting = true
+
+
+func _make_confetti(amount: int) -> CPUParticles2D:
+	var particles := CPUParticles2D.new()
 	particles.amount = amount
 	particles.one_shot = true
+	particles.emitting = false
 	particles.explosiveness = 0.92
 	particles.lifetime = 2.2
 	particles.direction = Vector2(0, -1)
@@ -337,6 +354,4 @@ func _confetti(at: Vector2, amount: int) -> void:
 	ramp.colors = colors
 	ramp.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
 	particles.color_initial_ramp = ramp
-	add_child(particles)
-	particles.emitting = true
-	get_tree().create_timer(2.6).timeout.connect(particles.queue_free)
+	return particles

@@ -247,6 +247,7 @@ class _Layer:
 		var h := size.y
 		if _front:
 			_front_layer(points, colors, w, h)
+			_bubbles(w, h)
 		else:
 			_back_layer(points, colors, w, h)
 		if points.is_empty():
@@ -296,14 +297,20 @@ class _Layer:
 			for spec: Vector4 in [Vector4(0.03, 0.42, 0.03, 0.05), Vector4(0.06, 0.3, 0.025, -0.04),
 					Vector4(0.95, 0.38, 0.03, -0.05), Vector4(0.92, 0.26, 0.022, 0.04)]:
 				_blade(points, colors, Vector2(spec.x * w, h), spec.y * h, spec.z * w, spec.w * w, AquariumTank.PLANT_LIGHT)
-		# Kabarcıklar: sağ köşedeki taştan yükselir, yüzeyde söner.
+
+	## Kabarcıklar: sağ köşedeki taştan yükselir, yüzeyde söner. Her kare çizilir: dokulu dikdörtgen (UiKit.disc;
+	## üçgen dizisi her çizimde ekran kartında yeni tampon kurardı). Kodla çizilen tankın bitkileri tek üçgen dizisi:
+	## yalnızca Ersin'in resmi yokken.
+	func _bubbles(w: float, h: float) -> void:
+		var disc := UiKit.disc()
 		var t := _tank._time
 		for i in AquariumTank.BUBBLES:
 			var life := fposmod(t * 0.22 + i / float(AquariumTank.BUBBLES), 1.0)
 			var x := w * (0.84 + 0.02 * sin(t * 2.0 + i)) + (i % 3) * 6.0
 			var y := h * (0.9 - 0.85 * life)
 			var r := 4.0 + (i % 3) * 2.0
-			_ellipse(points, colors, Vector2(x, y), Vector2(r, r), Color(1, 1, 1, 0.55 * (1.0 - life * 0.6)))
+			draw_texture_rect(disc, Rect2(x - r, y - r, r * 2.0, r * 2.0), false,
+					Color(1, 1, 1, 0.55 * (1.0 - life * 0.6)))
 
 	## Dörtgen (iki üçgen; köşe renkleriyle).
 	static func _quad(points: PackedVector2Array, colors: PackedColorArray, p: Array, c: Array) -> void:

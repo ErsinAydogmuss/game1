@@ -6,6 +6,8 @@ extends Node3D
 ## verilirse (set_lake) gölge kıyıda söner: kıyıya çekilen iri balığın kuyruğu kuma çizilmez.
 ## Nadirlik tutmadan önce belli olur (rarities.json "shadow_fx"): Nadir arada pırıldar, Destansı
 ## kenarından mor ışıldar ve kabarcık çıkarır, Efsanevi altın parlar ve arkasında dalga izi bırakır.
+## Giden gölgenin düğümü ve malzemesi havuza girer, yeni gölgede yeniden kullanılır; solma değeri yalnızca değişince
+## verilir (her verilen değer malzemenin tamponunu yeniden yükletir: docs/performans-notlari.md §3.3).
 
 const Y := 0.02
 ## Gölgenin eni / boyu.
@@ -19,6 +21,8 @@ const FX := { "none": 0, "glint": 1, "shimmer": 2, "trail": 3, "guardian": 4 }
 ## Destansının kabarcık aralığı ve Efsanevinin dalga izi aralığı (sn).
 const BUBBLE_EVERY := Vector2(0.9, 1.7)
 const WAKE_EVERY := 0.32
+## Havuzda bekleyen en çok gölge (fazlası silinir).
+const POOL_MAX := 12
 
 ## Nadirliklerin tanımı (main verir); yoksa ipucu çizilmez.
 var db: ContentDB
@@ -27,6 +31,10 @@ var ripples: Ripples
 
 var _nodes: Dictionary = {}
 var _fade: Dictionary = {}
+## Gölge kimliği → malzemeye son verilen solma.
+var _shown: Dictionary = {}
+## Gizli, yeniden kullanılacak gölgeler.
+var _pool: Array[MeshInstance3D] = []
 ## Gölge kimliği → sıradaki kabarcık ya da iz halkasına kalan süre (sn).
 var _fx_clock: Dictionary = {}
 ## Gölge kimliği → ipucunun kurulduğu nadirlik (bot gölgenin türünü sonradan değiştirebilir).
@@ -51,6 +59,8 @@ func set_lake(lake: LakeShape, texture: Texture2D) -> void:
 	_lake_texture = texture
 	for node: MeshInstance3D in _nodes.values():
 		LakeTexture.apply_shore(node.material_override as ShaderMaterial, lake, texture)
+	for node: MeshInstance3D in _pool:
+		LakeTexture.apply_shore(node.material_override as ShaderMaterial, lake, texture)
 
 
 ## Gölgeleri oturumla eşler. angler: balıkçının yeri (oltadaki balık ona ters bakar);
@@ -62,9 +72,11 @@ func sync(sim: ShadowSim, angler: Vector2, thrash: bool, delta: float) -> void:
 		alive[s.id] = true
 		var node: MeshInstance3D = _nodes.get(s.id)
 		if node == null:
-			node = _make()
+			node = _pool.pop_back() if not _pool.is_empty() else _make()
+			node.visible = true
 			_nodes[s.id] = node
 			_fade[s.id] = 0.0
+			_shown[s.id] = -1.0
 		if int(_fx_rarity.get(s.id, -1)) != s.rarity:
 			_fx_rarity[s.id] = s.rarity
 			_set_fx(node, s)
@@ -82,13 +94,21 @@ func sync(sim: ShadowSim, angler: Vector2, thrash: bool, delta: float) -> void:
 		node.position = Vector3(s.pos.x, Y, s.pos.y)
 		node.rotation = Vector3(0.0, atan2(-heading.x, -heading.y) + wiggle, 0.0)
 		node.scale = Vector3(s.length * WIDTH_RATIO, 1.0, s.length) * Vector3(DRAW_SCALE, 1.0, DRAW_SCALE)
-		(node.material_override as ShaderMaterial).set_shader_parameter("fade", float(_fade[s.id]))
+		if float(_shown[s.id]) != float(_fade[s.id]):
+			_shown[s.id] = _fade[s.id]
+			(node.material_override as ShaderMaterial).set_shader_parameter("fade", float(_fade[s.id]))
 		_step_fx(s, heading, float(_fade[s.id]), delta)
 	for id: int in _nodes.keys():
 		if not alive.has(id):
-			(_nodes[id] as Node).queue_free()
+			var gone: MeshInstance3D = _nodes[id]
+			if _pool.size() < POOL_MAX:
+				gone.visible = false
+				_pool.append(gone)
+			else:
+				gone.queue_free()
 			_nodes.erase(id)
 			_fade.erase(id)
+			_shown.erase(id)
 			_fx_clock.erase(id)
 			_fx_rarity.erase(id)
 

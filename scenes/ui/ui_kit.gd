@@ -104,6 +104,8 @@ static var _theme: Theme
 static var _body: Font
 static var _display: Font
 static var _glossy_cache: Dictionary = {}
+## Her kare yeniden çizilen yuvarlak şekillerin dokuları (disc, soft_box).
+static var _soft_cache: Dictionary = {}
 static var _frame_cache: Dictionary = {}
 
 
@@ -267,6 +269,45 @@ static func ring_style(color: Color, width: int = 6) -> StyleBoxFlat:
 	sb.set_content_margin_all(0)
 	sb.anti_aliasing = true
 	return sb
+
+
+## Beyaz, kenarı yumuşak daire dokusu (rengi draw_texture_rect'in modulate'iyle): her kare yeniden çizilen yuvarlaklar
+## (konuşma balonunun noktaları, akvaryumun kabarcıkları) bununla çizilir. draw_circle, draw_colored_polygon ve
+## yuvarlak köşeli StyleBoxFlat her çizimde ekran kartında yeni tampon ve VAO kurar (Compatibility'de çokgen;
+## ölçüldü: kare başına 2 tampon, 1 VAO); doku dikdörtgeni kurmaz (docs/performans-notlari.md §3.3).
+static func disc() -> Texture2D:
+	var key := "disc"
+	if not _soft_cache.has(key):
+		_soft_cache[key] = ImageTexture.create_from_image(_rounded_image(Color.WHITE, 32, 64))
+	return _soft_cache[key]
+
+
+## Köşeleri yuvarlak, kenarı yumuşak düz renkli kutu: dokulu (9 dilimli) StyleBox. Her kare yeniden çizilen ya da boyu
+## değişen yuvarlak kutular (gerilim çubuğu) StyleBoxFlat yerine bununla (bkz. disc).
+static func soft_box(color: Color, radius: int) -> StyleBoxTexture:
+	var key := "box|%s|%d" % [color.to_html(), radius]
+	if not _soft_cache.has(key):
+		var sb := StyleBoxTexture.new()
+		sb.texture = ImageTexture.create_from_image(_rounded_image(color, radius, radius * 2 + 2))
+		sb.texture_margin_left = radius
+		sb.texture_margin_top = radius
+		sb.texture_margin_right = radius
+		sb.texture_margin_bottom = radius
+		_soft_cache[key] = sb
+	return _soft_cache[key]
+
+
+## side × side'lık görüntüde radius yarıçaplı köşeleri olan, kenarı bir piksel yumuşak kutu (radius = side / 2: daire).
+static func _rounded_image(color: Color, radius: int, side: int) -> Image:
+	var img := Image.create_empty(side, side, false, Image.FORMAT_RGBA8)
+	var r := float(radius)
+	var far := float(side) - r
+	for y in side:
+		for x in side:
+			var p := Vector2(float(x) + 0.5, float(y) + 0.5)
+			var d := p.distance_to(Vector2(clampf(p.x, r, far), clampf(p.y, r, far)))
+			img.set_pixel(x, y, Color(color.r, color.g, color.b, color.a * clampf(r - d + 0.5, 0.0, 1.0)))
+	return img
 
 
 ## Önbellekteki düğme ve çerçeve stillerini atar (testler sahte görsel verdikten sonra).

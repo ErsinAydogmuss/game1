@@ -9,6 +9,9 @@ extends Control
 ## (dimmed: kart açılırken, yakalama, geri sarma) görünür (düğmeler zıplamasın); halkada başlayan
 ## dokunuşu yine alır ama yürütmez (output 0): oyuna geçip bekleyen atış olmasın. Halka açılınca aynı
 ## parmakla yürünür.
+## Halka ve topuz yalnızca durum değişince (basıldı, bırakıldı, soluk) yeniden çizilir; sürüklerken topuz yalnızca yer
+## değiştirir (Knob, ayrı bir çocuk): yuvarlak StyleBoxFlat her çizimde ekran kartında yeni tampon kurar
+## (docs/performans-notlari.md §3.3), yürürken her dokunuş olayında üç tane kuruluyordu.
 
 ## Kutunun boyu; halkanın ve topuzun yarıçapı (birim); ölü bölge (halkanın oranı).
 const SIZE := Vector2(252, 252)
@@ -25,7 +28,7 @@ var dimmed: bool = false:
 			return
 		dimmed = value
 		output = shape(_knob, RING) if _touch != -1 and not dimmed else Vector2.ZERO
-		queue_redraw()
+		_redraw()
 
 var _touch: int = -1
 ## Topuzun halkanın ortasına göre yeri (birim).
@@ -34,6 +37,9 @@ var _knob := Vector2.ZERO
 ## kenar yumuşatmalı draw_arc ile halka karede 13 çizim tutuyordu; iskele 150 sınırını aştı).
 var _ring := StyleBoxFlat.new()
 var _knob_box := StyleBoxFlat.new()
+## Topuzu çizen çocuk (yalnızca yeri değişir) ve son çizimdeki basılı durum.
+var _knob_node: Control
+var _drawn_pressed: bool = false
 
 
 func _init() -> void:
@@ -48,6 +54,12 @@ func _init() -> void:
 	_knob_box.set_border_width_all(4)
 	_knob_box.shadow_size = 2
 	_knob_box.shadow_offset = Vector2(0, 5)
+	_knob_node = Control.new()
+	_knob_node.name = "Knob"
+	_knob_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_knob_node.draw.connect(_draw_knob)
+	add_child(_knob_node)
+	_place_knob()
 
 
 ## Halka basılı mı?
@@ -60,7 +72,8 @@ func release() -> void:
 	_touch = -1
 	_knob = Vector2.ZERO
 	output = Vector2.ZERO
-	queue_redraw()
+	_place_knob()
+	_redraw()
 
 
 ## Ekrandaki bir nokta halkanın içinde mi?
@@ -122,7 +135,9 @@ func _move(screen: Vector2) -> void:
 	var offset := (screen - rect.get_center()) * scale_to_local
 	_knob = offset.limit_length(RING)
 	output = Vector2.ZERO if dimmed else shape(offset, RING)
-	queue_redraw()
+	_place_knob()
+	if _drawn_pressed != (_touch != -1):
+		_redraw()
 
 
 ## Bu halka açık bir panelin (Dialog, kart) altında mı: o zaman dokunuş panele aittir.
@@ -155,9 +170,30 @@ func _draw() -> void:
 		for i in 3:
 			colors.append(Color(1, 1, 1, 0.55 * alpha))
 	RenderingServer.canvas_item_add_triangle_array(get_canvas_item(), indices, points, colors)
-	# Topuz (gölgesiyle).
-	var knob := c + _knob
+
+
+## Halka ve topuz yeniden çizilir (durum değişti).
+func _redraw() -> void:
+	_drawn_pressed = _touch != -1
+	queue_redraw()
+	_knob_node.queue_redraw()
+
+
+## Topuzun yeri (halkanın ortasına göre; çizim değişmez).
+func _place_knob() -> void:
+	_knob_node.position = (size if size != Vector2.ZERO else SIZE) * 0.5 + _knob
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and _knob_node != null:
+		_place_knob()
+
+
+## Topuz (gölgesiyle), çocuğun başlangıcının çevresinde.
+func _draw_knob() -> void:
+	var alpha := 0.45 if dimmed else 1.0
+	var pressed := _touch != -1
 	_knob_box.bg_color = Color(1, 1, 1, (0.92 if pressed else 0.75) * alpha)
 	_knob_box.border_color = Color(0.16, 0.32, 0.4, 0.8 * alpha)
 	_knob_box.shadow_color = Color(0, 0, 0, 0.25 * alpha)
-	draw_style_box(_knob_box, Rect2(knob - Vector2.ONE * KNOB, Vector2.ONE * KNOB * 2.0))
+	_knob_node.draw_style_box(_knob_box, Rect2(-Vector2.ONE * KNOB, Vector2.ONE * KNOB * 2.0))

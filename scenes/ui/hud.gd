@@ -776,7 +776,9 @@ class TensionBar extends Control:
 	var _label: Label
 	var _alert: Label
 	var _shown_red: int = -1
-	var _back := UiKit.flat(Color(0.05, 0.06, 0.1, 0.72), 27)
+	# Her kare yeniden çizilir: yuvarlak kutular dokulu (UiKit.soft_box; StyleBoxFlat her çizimde ekran kartında yeni
+	# tampon kurardı).
+	var _back := UiKit.soft_box(Color(0.05, 0.06, 0.1, 0.72), 27)
 	var _fills := {}
 
 	func _init() -> void:
@@ -802,9 +804,9 @@ class TensionBar extends Control:
 			_label.add_theme_color_override("font_color", UiKit.BAD if red else UiKit.TEXT)
 		_label.text = UiKit.upper(tr("UI_LET_GO")) if red else tr("UI_DISTANCE") % UiKit.format_float(distance)
 
-	func _fill(color: Color) -> StyleBoxFlat:
+	func _fill(color: Color) -> StyleBox:
 		if not _fills.has(color):
-			_fills[color] = UiKit.flat(color, 22)
+			_fills[color] = UiKit.soft_box(color, 22)
 		return _fills[color]
 
 	func _draw() -> void:

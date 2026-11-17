@@ -5,10 +5,18 @@ extends MeshInstance3D
 ## çekişmede gerilir ve gerilimle titrer. Kare çizilmeden hemen önce (frame_pre_draw) yeniden
 ## kurulur ve uçlar o anda okunur (from_point / to_point): kamera, olta ve şamandıra o karenin
 ## son yerindedir (main'in _process'i çocuklardan önce çalışır; orada kopyalamak bir kare geç kalır).
+## Ağ bir kez kurulur (sabit köşe sayısı, güncellenebilir tampon); her kare yalnızca köşeleri yeniden yüklenir
+## (mesh_surface_update_vertex_region). Eskiden ImmediateMesh her kare silinip yeniden kuruluyordu: olta sudayken
+## ekran kartında her kare yeni bir tampon ve VAO (docs/performans-notlari.md §3.3: Kazı'da Android'de çökmenin
+## şüphelisi). Köşeler dünya uzayında (düğüm başlangıçta durur); ağın kutusu sabit olmadığı için düğümün kutusu
+## büyük verilir (custom_aabb: kesilip görünmez olmasın).
 
 const SEGMENTS := 20
 ## Ekranda kalınlık (viewport birimi; 1080 yükseklik ≈ 1,3 pt telefonda).
 const WIDTH_UNITS := 3.6
+const VERTS := (SEGMENTS + 1) * 2
+## Düğümün kutusu (dünya uzayında köşeler: gölün her yerini kapsar).
+const BOUNDS := AABB(Vector3(-500.0, -50.0, -500.0), Vector3(1000.0, 100.0, 1000.0))
 
 var camera: Camera3D
 ## Uçları veren fonksiyonlar (Vector3 döner); verilmezse from / to kullanılır.
@@ -21,12 +29,22 @@ var sag: float = 0.35
 ## Titreme (0..1): gerilim ve patlama.
 var shake: float = 0.0
 
-var _mesh := ImmediateMesh.new()
+var _mesh := ArrayMesh.new()
+var _verts := PackedVector3Array()
+## Köşeler gizlendi mi (hepsi bir noktada: hiçbir şey çizilmez); gizliyken yeniden yüklenmez.
+var _collapsed: bool = false
 var _clock: float = 0.0
 
 
 func _ready() -> void:
+	_verts.resize(VERTS)
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = _verts
+	_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLE_STRIP, arrays, [], {}, Mesh.ARRAY_FLAG_USE_DYNAMIC_UPDATE)
+	_collapsed = true
 	mesh = _mesh
+	custom_aabb = BOUNDS
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -45,9 +63,14 @@ func _process(delta: float) -> void:
 	_clock += delta
 
 
+## Köşe sayısı ve köşeler (test).
+func vertices() -> PackedVector3Array:
+	return _verts
+
+
 func _rebuild() -> void:
-	_mesh.clear_surfaces()
 	if not is_visible_in_tree() or camera == null:
+		_collapse()
 		return
 	if from_point.is_valid():
 		from = from_point.call()
@@ -55,6 +78,7 @@ func _rebuild() -> void:
 		to = to_point.call()
 	var length := from.distance_to(to)
 	if length < 0.05:
+		_collapse()
 		return
 	var points := PackedVector3Array()
 	var side_dir := (to - from).cross(Vector3.UP).normalized()
@@ -70,7 +94,6 @@ func _rebuild() -> void:
 	var viewport_h := camera.get_viewport().get_visible_rect().size.y
 	var px_world := 2.0 * tan(deg_to_rad(camera.fov) * 0.5) / maxf(viewport_h, 1.0)
 	var eye := camera.global_position
-	_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
 	for i in points.size():
 		var p := points[i]
 		var a := points[maxi(i - 1, 0)]
@@ -78,6 +101,20 @@ func _rebuild() -> void:
 		var tangent := (b - a).normalized()
 		var view := (eye - p).normalized()
 		var side := tangent.cross(view).normalized() * (WIDTH_UNITS * 0.5 * px_world * eye.distance_to(p))
-		_mesh.surface_add_vertex(p - side)
-		_mesh.surface_add_vertex(p + side)
-	_mesh.surface_end()
+		_verts[i * 2] = p - side
+		_verts[i * 2 + 1] = p + side
+	_collapsed = false
+	_upload()
+
+
+## Bütün köşeler tek noktada: şerit çizilmez (bir kez yüklenir).
+func _collapse() -> void:
+	if _collapsed:
+		return
+	_collapsed = true
+	_verts.fill(Vector3.ZERO)
+	_upload()
+
+
+func _upload() -> void:
+	RenderingServer.mesh_surface_update_vertex_region(_mesh.get_rid(), 0, 0, _verts.to_byte_array())
