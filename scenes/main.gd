@@ -483,6 +483,9 @@ func _start_session() -> void:
 	camera.pitch = FollowCamera.PITCH
 	camera.zoom = 1.0
 	camera.snap(_focus())
+	# Kayıt değişti (bot, sıfırlama): eski kaydın seçim ekranı açık kalmasın (yeni kayıt isterse yeniden açılır).
+	if _choosing and wardrobe_panel.is_first() and wardrobe_panel.visible:
+		wardrobe_panel.close_panel()
 	_choosing = false
 	if Story.wants_intro(save):
 		if save.flags.has(CHOSE_FLAG):

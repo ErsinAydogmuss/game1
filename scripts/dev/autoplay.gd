@@ -148,6 +148,22 @@ extends Node
 ##     tutulan altın sazanın kartı, store_4 harita, store_5 fenerli gece, store_6 Gölün Bekçisi (final gecesi, sisli
 ##     X, dip; adaylar a, b, c), store_7 akvaryum, store_8 Nine'nin dükkânı (Makara). Boyutu pencere verir: iPhone 6,9"
 ##     2868×1320 (--safe-inset=130), iPad 13" 2752×2064, Play 1920×1080.
+##   perf: telefonda kasma, takılma ve bellek ölçümü (docs/performans-notlari.md; Kazı'nın perf senaryosu). --fixed-fps
+##     olmadan çalıştır (kare süresi gerçek saatle ölçülür: Godot'nun delta'sı tek karelik takılmaları gizler). Rütbe en
+##     yüksek, bütün bölgeler, sandal, tekniklerin kamışları. Sonuçlar "PERF" satırları; 16,7 ms'yi ve son 30 karenin
+##     2,5 katını aşan kareler "PERF_KARE" (o anki olayla). Bölümler (--part=):
+##       (yok) yerler: iskele, çekişme (misina suda), her bölgenin atış noktası, sandal, gece, yağmur, dükkân, defter,
+##         akvaryum, dolap, harita: her biri 90 kare (kare süreleri, çizim sahne + gölge + arayüz, üçgen).
+##       cold: ilk kez olanlar (ilk balık ve kartı, kedi, paneller, fotoğraf modu, her bölge, sandal, teknikler, vakitler,
+##         havalar, göl sevgisi): her olayın "PERF_SAAT" satırı (tools/shader_compiles.py derlemeleri onunla eşler) ve
+##         en uzun karesi "PERF_OLAY".
+##       soak: --seconds= (varsayılan 900) gerçek saniye durmadan oyna: bölgeden bölgeye, her bölgede balık, satış, vakit
+##         akar ve atlanır, hava döner, paneller; her PERF_LOG sn "PERF_BELLEK" (statik bellek, nesne, düğüm, sahipsiz
+##         düğüm, kaynak, doku, tampon): sızıntı varsa tur tur artar.
+##       idle: 100 sn iskelede boşta (saat akar): arada gelen işler kare kaçırtıyor mu.
+##       resize: pencere boyu 120 kez değişir (reklamdan, başka uygulamadan dönüş gibi); bellek artmamalı.
+##     --graphics=low|medium|high: grafik kalitesi (GraphicsRules; ölçek ancak büyük pencerede: --resolution 2400x1080).
+##     Ekran kartı nesneleri: tools/gl_count.c (LD_PRELOAD); gölgelendirici derlemeleri: tools/shader_compiles.py.
 ## Bot dünyayı hazırlar (gölgeleri yerleştirir, türünü seçer); oyun kuralları aynen işler.
 
 const WORLD_SEED := 4242
@@ -259,6 +275,14 @@ var _no_bites: bool = false
 var _intro: bool = false
 ## world senaryosunda yalnızca bu bölüm (--world-part=looks: vakit × hava görünüşleri; boşsa hepsi).
 var _world_part: String = ""
+## perf senaryosu: bölüm (--part=), soak'un süresi (--seconds=, gerçek saniye), ölçülen karelerin süresi (ms; _perf_on
+## iken, gerçek saatle), sıradaki olayın adı (PERF_KARE satırında).
+var _perf_part: String = ""
+var _perf_seconds: float = PERF_SOAK_SECONDS
+var _perf_frames := PackedFloat32Array()
+var _perf_on: bool = false
+var _perf_tick: int = 0
+var _perf_label: String = ""
 
 
 func _ready() -> void:
@@ -279,8 +303,16 @@ func _ready() -> void:
 			_reels_set = arg.get_slice("=", 1)
 		elif arg.begins_with("--world-part="):
 			_world_part = arg.get_slice("=", 1)
-	# Kamera yönetmeni ve olay günlüğü yalnızca reels'te (_process).
-	set_process(_scenario == "reels")
+		elif arg.begins_with("--part="):
+			_perf_part = arg.get_slice("=", 1)
+		elif arg.begins_with("--seconds="):
+			_perf_seconds = arg.get_slice("=", 1).to_float()
+		elif arg.begins_with("--graphics="):
+			# Grafik kalitesi (GraphicsRules): low, medium ya da high; ölçek ancak büyük pencerede görünür
+			# (ör. --resolution 2400x1080). Senaryoların kaydı ayarları kopyalar (_use_save).
+			GameState.save.settings["graphics"] = arg.get_slice("=", 1)
+	# Kamera yönetmeni ve olay günlüğü yalnızca reels'te, kare süreleri perf'te (_process).
+	set_process(_scenario == "reels" or _scenario == "perf")
 	if not _shots_dir.is_empty():
 		DirAccess.make_dir_recursive_absolute(_shots_dir)
 	GameState.persist = false
@@ -352,6 +384,8 @@ func _ready() -> void:
 			_play_ads.call_deferred()
 		"store":
 			_play_store.call_deferred()
+		"perf":
+			_play_perf.call_deferred()
 		_:
 			_play_controls.call_deferred()
 
@@ -5844,6 +5878,9 @@ func _park_all() -> void:
 
 ## Bot kendi _process'inde: kamera yönetmeni ve reels günlüğü (yalnızca reels'te açık).
 func _process(delta: float) -> void:
+	if _scenario == "perf":
+		_perf_frame()
+		return
 	_shot_t += delta
 	_state_t += delta
 	_reels_watch()
@@ -7333,6 +7370,442 @@ func _check_buttons() -> void:
 			ok = false
 			notes.append("güvenli alan dışında %s" % str(r))
 	_check("düğmeler büyük ve güvenli alanda (pay %.0f)%s" % [inset.x, "" if ok else ": " + ", ".join(notes)], ok)
+
+
+# --- perf: kasma, takılma ve bellek (docs/performans-notlari.md) --------------------------------------
+
+## Yerinde ölçülen kare sayısı, soak'un varsayılan süresi (gerçek sn), bellek satırının aralığı (gerçek sn),
+## pencere boyu denemesinin tur sayısı ve boyları, boşta bekleme (sn).
+const PERF_SAMPLE := 90
+const PERF_SOAK_SECONDS := 900.0
+const PERF_LOG := 30.0
+const PERF_RESIZE_ROUNDS := 120
+const PERF_SIZES: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1560, 720), Vector2i(1170, 540), Vector2i(1920, 1080)]
+const PERF_IDLE := 100.0
+## Soak'ta sırayla tutulan türler (şamandırayla; bot türü kendisi seçer, kurallar aynen işler).
+const PERF_FISH: Array[String] = ["rudd", "perch", "bream", "carp", "chub", "tench", "silverside", "pike", "zander",
+		"mirror_carp", "golden_carp"]
+
+
+func _play_perf() -> void:
+	_use_save(200)
+	var db := GameState.db
+	var save := GameState.save
+	# Rütbe en yüksek bölgeninki, sandal, tekniklerin ilk kamışları (Ayarlar'daki "Hepsini aç" gibi), iyi takım ve
+	# büyük file (kova dolmasın diye değil: satış da ölçülür, ama arada atış SAT'a takılmasın).
+	var top := 1
+	for z in db.zones_of(db.main_spot):
+		top = maxi(top, int(z["rank"]))
+	save.xp = db.rank_xp[top - 1]
+	for id: String in REELS_GEAR:
+		if not id in save.owned:
+			save.owned.append(id)
+		Economy.equip(db, save, id)
+	_roomy_bucket()
+	save.technique = "float"
+	GameState.changed.emit()
+	await _wait_frames(2)
+	print("PERF başla: %s, pencere %s, grafik %s (3D ölçeği %.2f), %s" % [
+			_perf_part if not _perf_part.is_empty() else "yerler", str(DisplayServer.window_get_size()),
+			GameState.graphics_level(), get_viewport().scaling_3d_scale, RenderingServer.get_video_adapter_name()])
+	await _wait(2.0)
+	_perf_tick = 0
+	match _perf_part:
+		"cold":
+			await _perf_cold()
+		"soak":
+			await _perf_soak()
+		"idle":
+			await _perf_idle()
+		"resize":
+			await _perf_resize()
+		"fight":
+			await _perf_fight()
+		_:
+			await _perf_places()
+	_perf_memory("son")
+	_quit()
+
+
+## Her kare (bot'un _process'i): gerçek saatle kare süresi. Son 30 karenin ortalamasının 2,5 katından ve 16,7 ms'den
+## uzun kare "PERF_KARE" satırı olur (o anki olayla: takılmayı olaya bağlamak için).
+func _perf_frame() -> void:
+	var tick := Time.get_ticks_usec()
+	if _perf_on and _perf_tick > 0:
+		var ms := (tick - _perf_tick) / 1000.0
+		var recent := _perf_frames.slice(maxi(0, _perf_frames.size() - 30))
+		var mean := 0.0
+		for v in recent:
+			mean += v
+		mean /= maxf(1.0, float(recent.size()))
+		if recent.size() >= 10 and ms > 2.5 * mean and ms > 1000.0 / 60.0:
+			print("PERF_KARE %d %s: %.1f ms (ortalama %.1f)" % [_perf_frames.size(), _perf_label, ms, mean])
+		_perf_frames.append(ms)
+	_perf_tick = tick
+
+
+## Yerinde PERF_SAMPLE kare: kare süreleri, çizim (sahne, gölge, arayüz), nesne, üçgen.
+func _perf_sample(place: String, count: int = PERF_SAMPLE) -> void:
+	_perf_label = place
+	_perf_frames.clear()
+	_perf_on = true
+	var started := Time.get_unix_time_from_system()
+	var view := get_viewport()
+	var draws := Vector3i.ZERO
+	var objects := 0
+	var primitives := 0
+	for i in count:
+		await get_tree().process_frame
+		draws += Vector3i(view.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME),
+				view.get_render_info(Viewport.RENDER_INFO_TYPE_SHADOW, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME),
+				view.get_render_info(Viewport.RENDER_INFO_TYPE_CANVAS, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME))
+		objects += view.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_OBJECTS_IN_FRAME)
+		primitives += view.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_PRIMITIVES_IN_FRAME)
+	_perf_on = false
+	# Ekran kartı nesnelerinin sayacıyla (tools/gl_count.c, GLSAY_EVERY=1) eşlemek için: tools/gl_windows.py.
+	print("PERF_ARALIK %s %.3f %.3f %d" % [place, started, Time.get_unix_time_from_system(), count])
+	print("PERF %s: %s; çizim sahne %d + gölge %d + arayüz %d, nesne %d, üçgen %d" % [place, _perf_stats(_perf_frames),
+			roundi(float(draws.x) / count), roundi(float(draws.y) / count), roundi(float(draws.z) / count),
+			roundi(float(objects) / count), roundi(float(primitives) / count)])
+	if not _shots_dir.is_empty():
+		await _shot("perf_" + place)
+
+
+## Kare süreleri: sayı, ortalama, ortanca, %95'lik, en uzun; 16,7 ms'yi (60 fps) aşan kare sayısı.
+static func _perf_stats(values: PackedFloat32Array) -> String:
+	if values.is_empty():
+		return "kare yok"
+	var sorted := values.duplicate()
+	sorted.sort()
+	var total := 0.0
+	var over := 0
+	for v in values:
+		total += v
+		if v > 1000.0 / 60.0:
+			over += 1
+	var longest := PackedStringArray()
+	for i in range(sorted.size() - 1, maxi(-1, sorted.size() - 6), -1):
+		longest.append("%.1f" % sorted[i])
+	return "%d kare, ort %.2f ms, ortanca %.2f, %%95 %.2f, en uzun %.1f ms, 16,7 ms'yi aşan %d; en uzun 5: %s" % [
+			values.size(), total / values.size(), sorted[sorted.size() >> 1], sorted[floori(sorted.size() * 0.95)],
+			sorted[-1], over, " ".join(longest)]
+
+
+## Bellek ve nesne sayıları (PERF_BELLEK satırı): statik bellek, nesne, düğüm, sahipsiz düğüm, kaynak, doku ve tampon
+## belleği. Sızıntı varsa sayılar tur tur artar.
+func _perf_memory(label: String) -> void:
+	print("PERF_BELLEK %s: statik %.1f MB, nesne %d, düğüm %d, sahipsiz düğüm %d, kaynak %d, doku %.1f MB, tampon %.1f MB" % [
+			label, Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0,
+			int(Performance.get_monitor(Performance.OBJECT_COUNT)), int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
+			int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)),
+			int(Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT)),
+			Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0,
+			Performance.get_monitor(Performance.RENDER_BUFFER_MEM_USED) / 1048576.0])
+
+
+## Bir olayın ölçümü (cold): "PERF_SAAT <olay> <kare> <saat>" (shader_compiles.py eşler), olay ve settle sn sonrası
+## boyunca en uzun kare "PERF_OLAY".
+func _perf_event(label: String, action: Callable, settle: float = 1.5) -> void:
+	_perf_label = label
+	var at := _perf_frames.size()
+	print("PERF_SAAT %s %d %.3f" % [label, at, Time.get_unix_time_from_system()])
+	await action.call()
+	await _wait(settle)
+	var worst := 0.0
+	for i in range(at, _perf_frames.size()):
+		worst = maxf(worst, _perf_frames[i])
+	print("PERF_OLAY %-18s %4d kare, en uzun kare %.1f ms" % [label, _perf_frames.size() - at, worst])
+
+
+## Açık panelleri (Dialog, fotoğraf modu, kart) kapatır; olta boşa dönene kadar bekler.
+func _perf_close() -> void:
+	var card: FishCard = main.get("card")
+	if card.visible or float(main.get("_card_wait")) >= 0.0:
+		await _close_card(card)
+	var photo: PhotoMode = main.get("photo")
+	if photo.visible:
+		photo.close_photo()
+	for node in get_tree().get_nodes_in_group("modal"):
+		if node is Dialog and (node as Dialog).visible:
+			(node as Dialog).close_panel()
+	await _wait(0.4)
+
+
+## Bir panel açılır (open), açık bekler, kapanır.
+func _perf_panel(open: Callable, hold: float = 1.2) -> void:
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	open.call()
+	await _wait(hold)
+	await _perf_close()
+
+
+## Balıkçının önüne bir balık koyup tutar (_catch_here); tutulamazsa olta boşa döner.
+func _perf_catch(fish_id: String) -> bool:
+	await _perf_close()
+	var caught := await _catch_here(fish_id)
+	if _state() != FishingSession.State.IDLE:
+		await _perf_close()
+		if _state() != FishingSession.State.IDLE:
+			await _tap(_hud().action_button.get_global_rect().get_center())
+			await _wait_state(FishingSession.State.IDLE, 8.0)
+	return caught
+
+
+## Oltayı suya atar (hiçbir balık takılmasın: gölgeler uzağa), misina suda iken ölçer, geri sarar.
+func _perf_line_sample() -> void:
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	var a := _angler().pos2()
+	var f := _angler().facing.normalized()
+	await _tap_world(a + f * 2.6)
+	var cast := await _wait_until(func() -> bool: return _state() == FishingSession.State.WAITING, 6.0)
+	print("PERF misina: olta suda %s (durum %d, misina %s)" % [cast, _state(), (main.get("line") as FishingLine).visible])
+	for s in _session().sim.shadows:
+		s.pos = a + f * 30.0
+		s.mode = FishShadow.Mode.PAUSE
+		s.timer = 1_000_000
+	await _perf_sample("misina")
+	await _tap(_hud().action_button.get_global_rect().get_center())
+	await _wait_state(FishingSession.State.IDLE, 8.0)
+
+
+func _perf_skip_phase() -> void:
+	main.call("_debug_time")
+	await _wait_frames(2)
+	(main.get("scene") as LakeScene).set_look(main.call("_current_look"), true)
+
+
+func _perf_weather() -> void:
+	main.call("_debug_weather")
+	await _wait_frames(2)
+	(main.get("scene") as LakeScene).set_look(main.call("_current_look"), true)
+
+
+## Yerler: her biri PERF_SAMPLE kare.
+func _perf_places() -> void:
+	var db := GameState.db
+	var hud := _hud()
+	await _perf_sample("iskele")
+	# Dede konuşurken (konuşma balonu ekranda).
+	await _tap(_screen(_elder().head_point()))
+	await _wait(0.3)
+	await _perf_sample("dede", 30)
+	await _wait(4.0)
+	await _perf_line_sample()
+	# Çekişme: yakalayış kendi başına sürer (beklemeden başlar), ölçüm çekişmenin içinde (gerilim çubuğu).
+	_perf_catch("carp")
+	await _wait_until(func() -> bool: return _state() == FishingSession.State.FIGHTING, 30.0)
+	await _perf_sample("cekisme", 30)
+	await _wait_until(func() -> bool: return _state() == FishingSession.State.IDLE and not (main.get("card") as FishCard).visible, 60.0)
+	await _wait(1.0)
+	main.call("_on_shop")
+	await _wait(0.8)
+	await _perf_sample("dukkan")
+	await _perf_close()
+	await _tap_control(hud.book_button)
+	await _wait(0.8)
+	await _perf_sample("defter")
+	await _perf_close()
+	main.call("_on_aquarium")
+	await _wait(0.8)
+	await _perf_sample("akvaryum")
+	await _perf_close()
+	main.call("_on_angler")
+	await _wait(0.8)
+	await _perf_sample("dolap")
+	await _perf_close()
+	await _tap_control(hud.map_button)
+	await _wait(0.8)
+	await _perf_sample("harita")
+	await _perf_close()
+	for z in db.zones_of(db.main_spot):
+		await _travel_to(str(z["id"]))
+		await _wait(1.0)
+		await _perf_sample(str(z["id"]))
+	await _travel_to("dock_cove")
+	await _wait(1.0)
+	for i in 3:
+		await _perf_skip_phase()
+	await _wait(1.0)
+	await _perf_sample("gece")
+	await _perf_skip_phase()
+	while str(Weather.at(db.rules, GameState.save)) != "rain":
+		await _perf_weather()
+	await _wait(1.0)
+	await _perf_sample("yagmur")
+
+
+## İlk kez olanlar: her olayın en uzun karesi (PERF_OLAY) ve zamanı (PERF_SAAT; derlemeler için).
+func _perf_cold() -> void:
+	var db := GameState.db
+	var hud := _hud()
+	_perf_frames.clear()
+	_perf_on = true
+	print("PERF_SAAT basla %.3f" % Time.get_unix_time_from_system())
+	await _perf_event("ilk_balik", func() -> void: await _perf_catch("rudd"))
+	await _perf_event("ikinci_balik", func() -> void: await _perf_catch("perch"))
+	await _perf_event("iri_balik", func() -> void: await _perf_catch("carp"))
+	await _perf_event("kedi", func() -> void: main.call("_on_cat"))
+	await _perf_event("dukkan", func() -> void: await _perf_panel(func() -> void: main.call("_on_shop")))
+	await _perf_event("akvaryum", func() -> void: await _perf_panel(func() -> void: main.call("_on_aquarium")))
+	await _perf_event("dolap", func() -> void: await _perf_panel(func() -> void: main.call("_on_angler")))
+	await _perf_event("defter", func() -> void: await _perf_panel(func() -> void: _tap_control(hud.book_button)))
+	await _perf_event("harita", func() -> void: await _perf_panel(func() -> void: _tap_control(hud.map_button)))
+	await _perf_event("bugun", func() -> void: await _perf_panel(func() -> void: hud.world_pressed.emit()))
+	await _perf_event("ayarlar", func() -> void: await _perf_panel(func() -> void: _tap_control(hud.settings_button)))
+	await _perf_event("foto", func() -> void: await _perf_panel(func() -> void: main.call("_open_photo", false)))
+	await _perf_event("spin", func() -> void: await _reels_technique("spin"))
+	await _perf_event("dip", func() -> void: await _reels_technique("bottom"))
+	await _perf_event("samandira", func() -> void: await _reels_technique("float"))
+	var fish := 0
+	for z in db.zones_of(db.main_spot):
+		var id := str(z["id"])
+		if id == "dock_cove":
+			continue
+		await _perf_event("git_" + id, func() -> void: await _travel_to(id))
+		await _perf_event("balik_" + id, func() -> void: await _perf_catch(PERF_FISH[(fish + 3) % PERF_FISH.size()]))
+		fish += 1
+		if id == "stream_mouth":
+			await _perf_event("sinek", func() -> void: await _reels_technique("fly"))
+			await _perf_event("samandira_" + id, func() -> void: await _reels_technique("float"))
+	await _perf_event("git_iskele", func() -> void: await _travel_to("dock_cove"))
+	for phase in ["ogle", "aksam", "gece", "sabah"]:
+		await _perf_event(phase, func() -> void: await _perf_skip_phase(), 3.0)
+	for i in 4:
+		await _perf_event("hava_" + str(Weather.at(db.rules, GameState.save)), func() -> void: await _perf_weather(), 3.0)
+	await _perf_event("sevgi", func() -> void: main.call("_debug_love"), 2.0)
+	await _perf_event("son_balik", func() -> void: await _perf_catch("bream"))
+	_perf_on = false
+	print("PERF soguk: %s" % _perf_stats(_perf_frames))
+
+
+## Durmadan oyna (_perf_seconds gerçek sn): bölgeden bölgeye; her bölgede iki balık; her turda vakit atlar, iki turda
+## bir satış, üç turda bir hava döner, dört turda bir paneller; saat akar. Her PERF_LOG sn PERF_BELLEK.
+func _perf_soak() -> void:
+	var db := GameState.db
+	var hud := _hud()
+	(main.get("world_clock") as WorldClock).frozen = false
+	var zones: Array[String] = []
+	for z in db.zones_of(db.main_spot):
+		zones.append(str(z["id"]))
+	var start := Time.get_ticks_msec()
+	var next_log := 0.0
+	var rounds := 0
+	var caught := 0
+	var tries := 0
+	_perf_frames.clear()
+	_perf_on = true
+	while (Time.get_ticks_msec() - start) / 1000.0 < _perf_seconds:
+		var zone := zones[rounds % zones.size()]
+		_perf_label = zone
+		await _travel_to(zone)
+		for i in 2:
+			tries += 1
+			if await _perf_catch(PERF_FISH[(caught + i + rounds) % PERF_FISH.size()]):
+				caught += 1
+			var elapsed := (Time.get_ticks_msec() - start) / 1000.0
+			if elapsed >= next_log:
+				_perf_memory("%.0f sn, %d tur, %d/%d balık" % [elapsed, rounds, caught, tries])
+				next_log += PERF_LOG
+		await _perf_skip_phase()
+		if rounds % 3 == 2:
+			await _perf_weather()
+		if rounds % 2 == 1:
+			_perf_label = "satis"
+			main.call("_go_sell")
+			var shop: ShopPanel = main.get("shop_panel")
+			await _wait_until(func() -> bool: return shop.visible, 5.0)
+			await _wait(0.5)
+			var sell := shop.find_child("SellAll", true, false) as Button
+			if sell != null and sell.is_visible_in_tree():
+				await _tap_control(sell)
+				await _wait(0.6)
+			await _perf_close()
+		if rounds % 4 == 3:
+			_perf_label = "paneller"
+			await _perf_panel(func() -> void: _tap_control(hud.book_button))
+			await _perf_panel(func() -> void: _tap_control(hud.map_button))
+			await _perf_panel(func() -> void: hud.world_pressed.emit())
+			await _travel_to("dock_cove")
+			await _perf_panel(func() -> void: main.call("_on_aquarium"))
+			await _perf_panel(func() -> void: main.call("_on_angler"))
+			main.call("_on_cat")
+			await _wait(1.0)
+		rounds += 1
+	_perf_on = false
+	_perf_memory("%.0f sn, %d tur, %d/%d balık" % [(Time.get_ticks_msec() - start) / 1000.0, rounds, caught, tries])
+	print("PERF soak: %s" % _perf_stats(_perf_frames))
+
+
+## Çekişmede ekran kartında kurulan nesnelerin kaynağı (tools/gl_windows.py ile): uzun bir çekişmede (Kolay çekme,
+## iri yayın) her ölçüm aralığında bir parça gizlenir: arayüz, gerilim çubuğu, misina, balıkçı, gölgeler.
+func _perf_fight() -> void:
+	GameState.save.settings["easy"] = true
+	GameState.changed.emit()
+	await _wait(0.5)
+	_perf_on = true
+	# Balık takılır, sonra çekilmez (parmak yok): Kolay'da misina kopmaz, çekişme uzun sürer.
+	await _wait_state(FishingSession.State.IDLE, 4.0)
+	var a := _angler().pos2()
+	var f := _angler().facing.normalized()
+	_shadow_at(a + f * 4.4, -f, "wels", 900_000)
+	await _tap_world(a + f * 2.4)
+	await _wait_state(FishingSession.State.BITING, 25.0)
+	await _tap(_hud().action_button.get_global_rect().get_center())
+	await _wait_until(func() -> bool: return _state() == FishingSession.State.FIGHTING, 10.0)
+	await _wait(2.0)
+	var hud := _hud()
+	var parts := {
+		"tam": [],
+		"arayuz_yok": [hud],
+		"cubuk_yok": [hud.tension_bar],
+		"misina_yok": [main.get("line")],
+		"balikci_yok": [_angler()],
+		"golgeler_yok": [main.get("shadows")],
+		"samandira_yok": [main.get("bobber")],
+	}
+	for name: String in parts:
+		if _state() != FishingSession.State.FIGHTING:
+			print("PERF fight: çekişme bitti (%s)" % name)
+			break
+		for node: Node in parts[name]:
+			(node as Node).set_process(false)
+			if node is CanvasItem:
+				(node as CanvasItem).visible = false
+			elif node is Node3D:
+				(node as Node3D).visible = false
+		await _perf_sample(name, 20)
+		for node: Node in parts[name]:
+			(node as Node).set_process(true)
+			if node is CanvasItem:
+				(node as CanvasItem).visible = true
+			elif node is Node3D:
+				(node as Node3D).visible = true
+	if _state() == FishingSession.State.FIGHTING:
+		await _reel_like_player(6, 60.0)
+	await _perf_close()
+
+
+## Boşta PERF_IDLE sn iskelede (saat akar).
+func _perf_idle() -> void:
+	(main.get("world_clock") as WorldClock).frozen = false
+	_perf_label = "bos"
+	_perf_frames.clear()
+	_perf_on = true
+	await _wait(PERF_IDLE)
+	_perf_on = false
+	print("PERF bos: %s" % _perf_stats(_perf_frames))
+
+
+## Pencere boyu PERF_RESIZE_ROUNDS kez değişir; her 20 turda PERF_BELLEK (tur tur artmamalı).
+func _perf_resize() -> void:
+	_perf_memory("0 boy değişimi")
+	for i in PERF_RESIZE_ROUNDS:
+		DisplayServer.window_set_size(PERF_SIZES[i % PERF_SIZES.size()])
+		await _wait_frames(4)
+		if (i + 1) % 20 == 0:
+			_perf_memory("%d boy değişimi" % (i + 1))
+	DisplayServer.window_set_size(PERF_SIZES[0])
+	await _wait_frames(4)
 
 
 # --- Hazırlık ----------------------------------------------------------------------
