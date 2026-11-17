@@ -5549,6 +5549,9 @@ func _reels_photo() -> void:
 		await _drag(0, from + Vector2(-14.0 * (i + 1), 3.0 * (i + 1)))
 		await _wait_frames(2)
 	_touch(0, from + Vector2(-224.0, 48.0), false)
+	await _wait(0.4)
+	# Kupa yakından: bir kez yakınlaştır.
+	await _tap_control(photo.find_child("ZoomIn", true, false) as Control)
 	await _wait(0.6)
 	_mark("frame")
 	await _tap_control(photo.find_child("Frame_polaroid", true, false) as Control)
