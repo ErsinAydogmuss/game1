@@ -32,7 +32,7 @@ DEVICE_SPEC = {"supportedAbis": ["arm64-v8a"], "supportedLocales": ["tr-TR"], "s
 		"sdkVersion": 35}
 ## Yükleme anahtarının (olta-upload.jks) sertifikasının SHA-256 parmak izi. Anahtar Mac'te ilk pakette üretilir
 ## (docs/reklam-mac.md); parmak izi o zaman buraya yazılır. Boşken denetim parmak izini yalnızca gösterir.
-UPLOAD_SHA256 = ""
+UPLOAD_SHA256 = "F8:87:CD:EB:B0:5D:54:D0:3B:36:91:05:4B:1C:12:38:87:3F:0C:0F:E0:8B:1A:FF:1F:AE:C4:08:F7:9E:51:FA"
 ## Google'ın örnek AdMob uygulama kimliği (Android): yalnızca deneme reklamlarında.
 SAMPLE_APP_ID = "ca-app-pub-3940256099942544~3347511713"
 
