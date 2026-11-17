@@ -256,6 +256,11 @@ func _dede_row(key: String) -> Control:
 	return pill
 
 
+## Kart kapanabilir mi (dokunuşla kapanmanın kuralı: en az MIN_OPEN açık kaldı; Android'in Geri tuşu da).
+func can_close() -> bool:
+	return visible and _age >= MIN_OPEN
+
+
 func close_card() -> void:
 	if not visible:
 		return

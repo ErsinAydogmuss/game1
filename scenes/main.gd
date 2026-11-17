@@ -710,6 +710,41 @@ func _stop_loops() -> void:
 	Sounds.set_loop("bell_run", false)
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		go_back()
+
+
+## Android'in Geri tuşu (ya da kenardan kaydırma): en öndeki kapatılabilir şeyi kapatır: kapatma düğmesi görünen ve
+## çalışan panel (seçim ekranı ve reklam açıkken teklif kartı kapanmaz), balık kartı (dokunuşla kapanır olduysa),
+## fotoğraf modu. Hiçbiri yoksa bir şey olmaz. Oyun kapanmaz (project.godot quit_on_go_back = false): Godot'nun
+## varsayılanı oyunu hemen kapatıyordu, son kayıttan sonrası kaybolurdu (Kazı, docs/performans-notlari.md §6).
+func go_back() -> void:
+	var top: Control = null
+	for node in get_tree().get_nodes_in_group("modal"):
+		var item := node as Control
+		if item == null or not item.is_visible_in_tree():
+			continue
+		var dialog := item as Dialog
+		if dialog != null and (dialog.close_button == null or not dialog.close_button.is_visible_in_tree()
+				or dialog.close_button.disabled):
+			continue
+		if item == card and not card.can_close():
+			continue
+		if dialog == null and item != card and item != photo:
+			continue
+		if top == null or item.is_greater_than(top):
+			top = item
+	if top == null:
+		return
+	if top == photo:
+		photo.close_photo()
+	elif top == card:
+		card.close_card()
+	else:
+		(top as Dialog).close_panel()
+
+
 func _process(delta: float) -> void:
 	delta = minf(delta, MAX_FRAME)
 	# Odak kaybında ve bir panel (ayarlar, dükkân, defter...) açıkken oyun donar (çekişmedeki

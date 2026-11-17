@@ -389,6 +389,19 @@ func _play_controls() -> void:
 	await _tap(book.close_button.get_global_rect().get_center())
 	await _wait_frames(3)
 	_check("defter düğmesi → defter açılır", book_open and not book.visible and not angler.is_walking())
+	# 0c') Android'in Geri tuşu (bildirim bütün ağaca yayılır, SceneTree'nin yaptığı gibi): defteri kapatır; panel
+	# yokken bir şey olmaz (oyun kapanmaz: project.godot quit_on_go_back = false).
+	await _tap(_hud().book_button.get_global_rect().get_center())
+	await _wait_frames(3)
+	book_open = book.visible
+	get_tree().root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	await _wait_frames(3)
+	var book_closed := not book.visible
+	get_tree().root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	await _wait_frames(3)
+	_check("Geri tuşu → defter kapanır; panel yokken bir şey olmaz", book_open and book_closed
+			and not ProjectSettings.get_setting("application/config/quit_on_go_back", true)
+			and _session().state == FishingSession.State.IDLE)
 	# 0d) Sandala dokun: Dede sandaldan söz eder; olta atılmaz, balıkçı yürümez.
 	var scene: LakeScene = main.get("scene")
 	await _tap(_screen(scene.boat_point()))

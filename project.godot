@@ -19,6 +19,7 @@ config/name="Olta"
 config/description="Olta: Gölün Sırrı — her yaşa hitap eden rahat bir 3D mobil balıkçılık oyunu."
 config/version="1.0.0"
 run/main_scene="res://scenes/main.tscn"
+config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
 run/max_fps=60
 boot_splash/bg_color=Color(0.16, 0.45, 0.52, 1)
