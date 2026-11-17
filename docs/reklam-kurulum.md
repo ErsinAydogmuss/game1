@@ -5,6 +5,9 @@ Olta'nın reklamları Kazı'daki gibi Google AdMob'dan gelir. Kod hazır: ödül
 göstermesi için senden şunlar lazım. Kazı'yı kurduğun AdMob hesabını kullanırsın (yayıncı `pub-8552904073566888`);
 yeni hesap açma.
 
+**Hepsini Mac'teki Claude'a yaptırmak için** (Chrome'la AdMob, gizlilik sayfası, derleme, iki mağazaya gönderme):
+[`magaza/mac-yayin-gorevi.md`](magaza/mac-yayin-gorevi.md). Aşağıdaki adımlar elle yapmak istersen.
+
 **Sıra:**
 
 1. AdMob'da iki uygulama ve dört reklam birimi (aşağıda §1). Altı kimliği bana gönder, ben oyuna koyarım.

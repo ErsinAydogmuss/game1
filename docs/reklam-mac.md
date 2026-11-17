@@ -4,6 +4,9 @@
 > "github.com/ErsinAydogmuss/game1 reposunun `claude/festive-shannon-yycmwu` dalındaki `docs/reklam-mac.md` dosyasını oku
 > ve uygula. Önce Android paketini (ya da iPhone'u) derleyeceğiz."
 > Ya da bu dosyanın tamamını kopyalayıp Claude'a yapıştır.
+>
+> **İki mağazaya baştan sona gönderme** (AdMob, gizlilik sayfası, derleme, Play Console, App Store Connect; Chrome'la):
+> [`magaza/mac-yayin-gorevi.md`](magaza/mac-yayin-gorevi.md). Bu dosya onun derleme ayrıntıları ve sorun gidermesi.
 
 ---
 
@@ -36,8 +39,8 @@
 ## Kurallar
 
 - Oyun kodunu değiştirme; `git commit` / `git push` yapma. Bir şey değişmeliyse Ersin'e söyle, o bulut oturumuna iletir.
-- **Yükleme anahtarı** (`olta-upload.jks`) ve parolası git'e girmez, komut satırına açıkça yazılmaz: parola ortam
-  değişkeninden (`read -s`). `export_presets.cfg`'ye anahtar yolu ya da parola yazma. Anahtarı iki ayrı yerde yedekle.
+- **Yükleme anahtarı** (`olta-upload.jks`) ve parolası git'e girmez, komut satırına açıkça yazılmaz: parola Anahtar
+  Zinciri'nden ortam değişkenine (`security find-generic-password … -w`). `export_presets.cfg`'ye anahtar yolu ya da parola yazma. Anahtarı iki ayrı yerde yedekle.
 - Oyunun kökünde oluşan `android/` klasörü (Godot'nun derleme şablonu) ve `export/` git'e girmez (`.gitignore`'da).
 - **Kendi reklamına tıklama, kimseye tıklatma**: AdMob hesabı kalıcı kapanır. Deneme reklamları ("Test Ad") güvenli.
 - Büyük indirmelerden önce Ersin'e haber ver (Android SDK ve NDK birkaç GB, Godot şablonları 1,3 GB).
@@ -80,15 +83,21 @@ $godot --headless --path . -s res://tests/run_tests.gd      # çıkış kodu 0 o
 
 ### 4. Yükleme anahtarı (yalnızca ilk sefer)
 
-Olta'nın kendi yükleme anahtarı olur (Kazı'nınkinden ayrı). Ersin'le birlikte üret; parolayı Ersin seçsin ve bir şifre
-yöneticisine yazsın:
+Olta'nın kendi yükleme anahtarı olur (Kazı'nınkinden ayrı). Parola rastgele üretilir ve macOS Anahtar Zinciri'nde
+saklanır (Claude'un kabuğu etkileşimli değil: `read -s` ile parola soramaz; parola sohbete ve dosyaya yazılmaz):
 
 ```bash
 mkdir -p ~/olta-keys && cd ~/olta-keys
-keytool -genkeypair -v -keystore olta-upload.jks -storetype PKCS12 -alias upload -keyalg RSA -keysize 2048 \
-  -validity 10000 -dname "CN=Ersin Aydogmus, O=Juiloot, C=TR"
-keytool -list -v -keystore olta-upload.jks -alias upload | grep SHA256   # parmak izi: Ersin'e söyle
+security find-generic-password -a upload -s olta-upload-keystore >/dev/null 2>&1 || \
+  security add-generic-password -a upload -s olta-upload-keystore -w "$(openssl rand -base64 24 | tr -d '/+=')"
+export KS_PW="$(security find-generic-password -a upload -s olta-upload-keystore -w)"
+[ -f olta-upload.jks ] || keytool -genkeypair -v -keystore olta-upload.jks -storetype PKCS12 -alias upload \
+  -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Ersin Aydogmus, O=Juiloot, C=TR" \
+  -storepass:env KS_PW -keypass:env KS_PW
+keytool -list -v -keystore olta-upload.jks -alias upload -storepass:env KS_PW | grep "SHA256:"   # parmak izi
 ```
+
+Ersin parolayı Anahtar Zinciri Erişimi'nden (`olta-upload-keystore` → Parolayı göster) şifre yöneticisine yazar.
 
 Parmak izini Ersin bulut oturumuna iletir: `tools/check_aab.py`'deki `UPLOAD_SHA256`'ya yazılır (sonraki paketlerin
 doğru anahtarla imzalandığı denetlensin). Anahtarı iki ayrı yerde yedekle (ör. bu Mac ve şifre yöneticisi ya da
@@ -99,7 +108,7 @@ Google Drive). Kaybolursa uygulama kaybolmaz (Play App Signing), ama sıfırlama
 ```bash
 export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$HOME/olta-keys/olta-upload.jks"
 export GODOT_ANDROID_KEYSTORE_RELEASE_USER="upload"
-read -s GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD && export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD
+export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$(security find-generic-password -a upload -s olta-upload-keystore -w)"
 v=$(grep '^config/version=' project.godot | cut -d'"' -f2)
 c=$(awk '/name="Android"/{a=1} a&&/^version\/code=/{split($0,x,"=");print x[2];exit}' export_presets.cfg)
 mkdir -p export
