@@ -430,6 +430,20 @@ static func frame_content(frame_name: String) -> Array:
 	return []
 
 
+## Paneldeki 3D önizlemenin (akvaryum, dolap) kenar yumuşatmasını oyunun grafik ayarına uydurur
+## (GraphicsRules.preview_msaa; görünür olunca; değişmediyse dokunmaz). Ayar autoload'dan okunur (yoksa: testler,
+## önizleme olduğu gibi kalır; UiKit testlerde de derlenir, GameState'e adıyla dokunmaz).
+static func apply_preview_msaa(viewport: SubViewport) -> void:
+	if viewport == null or not viewport.is_inside_tree():
+		return
+	var state := viewport.get_node_or_null("/root/GameState")
+	if state == null:
+		return
+	var msaa := GraphicsRules.preview_msaa(str(state.call("graphics_level")))
+	if viewport.msaa_3d != msaa:
+		viewport.msaa_3d = msaa as Viewport.MSAA
+
+
 ## Arayüz kitinde görseli varsa 9 dilimli StyleBoxTexture, yoksa fallback döner.
 ## corner: en kalın kenar payının ekrandaki boyu (tasarım birimi). Doku buna göre ölçeklenir:
 ## aynı görsel büyük panelde ve küçük hapta orantılı durur. İçerik payları fallback'ten alınır;

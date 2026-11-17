@@ -75,6 +75,8 @@ func _sync_processing() -> void:
 	var shown := is_inside_tree() and is_visible_in_tree()
 	_viewport.process_mode = Node.PROCESS_MODE_INHERIT if shown else Node.PROCESS_MODE_DISABLED
 	set_process(shown)
+	if shown:
+		UiKit.apply_preview_msaa(_viewport)
 
 
 ## Görünüşü kurar ya da değiştirir (girl, boy).

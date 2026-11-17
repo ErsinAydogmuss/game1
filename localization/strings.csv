@@ -9,6 +9,10 @@ UI_SET_SFX,Sound effects,Ses efektleri
 UI_SET_MUSIC,Music,Müzik
 UI_SET_VIBRATION,Vibration,Titreşim
 UI_SET_EASY,Easy reeling,Kolay çekme
+UI_SET_GRAPHICS,Graphics,Grafik
+UI_GRAPHICS_LOW,Low,Düşük
+UI_GRAPHICS_MEDIUM,Medium,Orta
+UI_GRAPHICS_HIGH,High,Yüksek
 UI_SET_LANGUAGE,Language,Dil
 UI_LANG_NAME,English,Türkçe
 UI_ON,On,Açık

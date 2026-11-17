@@ -215,6 +215,8 @@ var _film: StoryFilm
 var fade: Fade
 ## Oyun saati (Dalga 4): vakit, gün ve hava; saat oyun akarken ilerler (botlarda donuk: frozen).
 var world_clock: WorldClock
+## Verilen gölge haritası boyu (GraphicsRules; başta projenin ayarı).
+var _shadow_size: int = int(ProjectSettings.get_setting("rendering/lights_and_shadows/directional_shadow/size", 2048))
 ## Yağmur ya da ateşböcekleri (tek çizim) ve fırtınada sıradaki şimşeğe kalan süre (sn).
 var ambient: AmbientParticles
 var _storm_wait: float = STORM_GAP.x
@@ -406,6 +408,8 @@ func _ready() -> void:
 	GameState.changed.connect(_on_state_changed)
 	GameState.focus_lost.connect(_on_focus_lost)
 	GameState.focus_gained.connect(_on_focus_gained)
+	get_viewport().size_changed.connect(_apply_graphics)
+	_apply_graphics()
 	ItemArt.register_fish_colors(GameState.db.fish_colors())
 	FishPortrait.render_all(self, GameState.db)
 	_load_faces()
@@ -655,6 +659,7 @@ func _stop_intro() -> void:
 
 
 func _on_state_changed() -> void:
+	_apply_graphics()
 	hud.refresh()
 	shop.refresh()
 	# Kayıt dışarıdan değiştiyse (ayarlar, bot) para, kova ve rütbe de güncel olsun.
@@ -683,6 +688,35 @@ func _on_state_changed() -> void:
 	# Ayar çekişmenin ortasında değişirse (Ayarlar açıkken oyun donuk) süren çekişmeye de geçer.
 	if session.reel != null and session.hooked != null:
 		session.reel.easy = session.easy or session.hooked.scripted
+
+
+## Grafik kalitesi (GraphicsRules; Ayarlar: Düşük / Orta / Yüksek): 3D'nin çözünürlüğü, güneşin gölgesi ve
+## haritası, kenar yumuşatma, parlama; telefonda 90/120 Hz ekranda kare sınırı 60. Ayar ve pencere boyu değişince.
+## Her ayar yalnızca değeri değişince verilir (kayıt her değiştiğinde çağrılır; Light3D'nin gölgesini aynı değerle
+## vermek bile ışığın bağlı olduğu her şeyi yeniden eşletir, kenar yumuşatma 3D tamponlarını yeniden kurdurur).
+func _apply_graphics() -> void:
+	var level := GameState.graphics_level()
+	var view := get_viewport()
+	var render_scale := GraphicsRules.render_scale(DisplayServer.window_get_size(), level)
+	if not is_equal_approx(render_scale, view.scaling_3d_scale):
+		view.scaling_3d_scale = render_scale
+	var msaa := GraphicsRules.msaa(level)
+	if msaa != view.msaa_3d:
+		view.msaa_3d = msaa as Viewport.MSAA
+	var shadow := GraphicsRules.shadow_size(level)
+	if shadow != _shadow_size:
+		_shadow_size = shadow
+		RenderingServer.directional_shadow_atlas_set_size(shadow,
+				bool(ProjectSettings.get_setting("rendering/lights_and_shadows/directional_shadow/16_bits", true)))
+	var shadows := GraphicsRules.shadows(level)
+	if scene.sun.shadow_enabled != shadows:
+		scene.sun.shadow_enabled = shadows
+	var glow := GraphicsRules.glow(level)
+	if scene.environment.glow_enabled != glow:
+		scene.environment.glow_enabled = glow
+	var max_fps := GraphicsRules.max_fps(OS.get_name(), DisplayServer.screen_get_refresh_rate())
+	if Engine.max_fps != max_fps:
+		Engine.max_fps = max_fps
 
 
 ## Uygulama öne geldi: oyun sürer, tuzakların dolması (oyun kapalıyken de) yenilenir.

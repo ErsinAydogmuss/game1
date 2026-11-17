@@ -1,6 +1,7 @@
 class_name SettingsPanel
 extends Dialog
-## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, dil ve yanında GİZLİLİK (reklamlar: privacy_requested);
+## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, grafik (Düşük / Orta / Yüksek: GraphicsRules), dil ve yanında
+## GİZLİLİK (reklamlar: privacy_requested);
 ## başlıkta HİKÂYE (açılış filmi yeniden:
 ## story_requested; olta boşken, main açmadan önce story_ready verir), Gölün Bekçisi bırakıldıysa BİTİŞ (bitiş
 ## filmi ve jenerik: ending_requested) ve "Nasıl oynanır?" (rehber: help_requested). (Kazı'dan uyarlandı.)
@@ -33,6 +34,12 @@ signal privacy_requested
 
 ## Satır düğmelerinin yüksekliği: en az 122 birim (iPhone'da ~44 pt, Apple'ın önerdiği dokunma boyu).
 const ROW_BUTTON := Vector2(300, 122)
+## Yarım satırdaki açma / kapama düğmesi (ses ve müzik tek satırda).
+const HALF_BUTTON := Vector2(220, 122)
+## Grafik satırının üç düğmesi (seviye başına bir düğme; satır panelin genişliğine sığsın).
+const GRAPHICS_BUTTON := Vector2(240, 122)
+const GRAPHICS_KEYS := { GraphicsRules.LOW: "UI_GRAPHICS_LOW", GraphicsRules.MEDIUM: "UI_GRAPHICS_MEDIUM",
+		GraphicsRules.HIGH: "UI_GRAPHICS_HIGH" }
 ## Geliştirme satırındaki para düğmeleri (dükkânda takım denemek için).
 const DEBUG_COINS: Array[int] = [1000, 10000]
 ## Geliştirme satırının SEVGİ + düğmesi bu kadar göl sevgisi ekler (seviye eşiklerini denemek için).
@@ -129,14 +136,19 @@ func refresh() -> void:
 	_guide.text = UiKit.upper(tr("UI_GUIDE_OPEN"))
 	clear(_rows)
 	var settings := GameState.save.settings
-	_toggle(tr("UI_SET_SFX"), "sound", bool(settings.get("sfx", true)),
+	# Ses ve müzik tek satırda (grafik satırına yer: panel telefonda küçülmeden sığsın).
+	var sound := HBoxContainer.new()
+	sound.add_theme_constant_override("separation", 18)
+	_rows.add_child(sound)
+	_half_toggle(sound, tr("UI_SET_SFX"), "sound", bool(settings.get("sfx", true)),
 			func(on: bool) -> void: GameState.set_setting("sfx", on))
-	_toggle(tr("UI_SET_MUSIC"), "music", bool(settings.get("music", true)),
+	_half_toggle(sound, tr("UI_SET_MUSIC"), "music", bool(settings.get("music", true)),
 			func(on: bool) -> void: GameState.set_setting("music", on))
 	_toggle(tr("UI_SET_VIBRATION"), "vibration", bool(settings.get("vibration", true)),
 			func(on: bool) -> void: GameState.set_setting("vibration", on))
 	_toggle(tr("UI_SET_EASY"), "easy", bool(settings.get("easy", false)),
 			func(on: bool) -> void: GameState.set_setting("easy", on))
+	_graphics_row()
 	var lang := _row(tr("UI_SET_LANGUAGE"), "globe")
 	var lang_button := UiKit.button(tr("UI_LANG_NAME"), UiKit.SECONDARY, UiKit.SIZE_BODY, ROW_BUTTON)
 	lang_button.pressed.connect(func() -> void: GameState.toggle_locale())
@@ -184,6 +196,20 @@ func refresh() -> void:
 
 func _process(delta: float) -> void:
 	_since_tap += delta
+
+
+## Grafik kalitesi: üç düğme (seçili yeşil; pasif gri görünürdü; bot adıyla bulur: Graphics_<seviye>). Seçilince
+## main uygular (GameState.changed → _apply_graphics).
+func _graphics_row() -> void:
+	var row := _row(tr("UI_SET_GRAPHICS"), "gem")
+	var current := GameState.graphics_level()
+	for level: String in GraphicsRules.LEVELS:
+		var chosen := level == current
+		var b := UiKit.button(tr(str(GRAPHICS_KEYS[level])), UiKit.SUCCESS if chosen else UiKit.NEUTRAL,
+				UiKit.SIZE_BODY, GRAPHICS_BUTTON)
+		b.name = "Graphics_" + level
+		b.pressed.connect(func() -> void: GameState.set_setting("graphics", level))
+		row.add_child(b)
 
 
 ## Sürüm yazısına dokunuş (parmak kalkınca): arka arkaya PERF_TAPS dokunuşta ölçüm açılır ya da kapanır.
@@ -300,6 +326,22 @@ func _row(text: String, icon_kind: String) -> HBoxContainer:
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
 	return row
+
+
+## Satırın yarısında açma / kapama (ikon, yazı, düğme).
+func _half_toggle(row: HBoxContainer, text: String, icon_kind: String, on: bool, apply: Callable) -> void:
+	var half := HBoxContainer.new()
+	half.add_theme_constant_override("separation", 18)
+	half.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(half)
+	half.add_child(GameIcon.make(icon_kind, 72))
+	var label := UiKit.ink(text, UiKit.SIZE_BODY)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	half.add_child(label)
+	var b := UiKit.button(tr("UI_ON") if on else tr("UI_OFF"), UiKit.SUCCESS if on else UiKit.NEUTRAL,
+			UiKit.SIZE_BODY, HALF_BUTTON)
+	b.pressed.connect(func() -> void: apply.call(not on))
+	half.add_child(b)
 
 
 func _toggle(text: String, icon_kind: String, on: bool, apply: Callable) -> void:

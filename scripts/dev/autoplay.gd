@@ -2301,6 +2301,8 @@ func _play_tour() -> void:
 	await _wait_until(func() -> bool: return settings.visible, 2.0)
 	await _wait(0.4)
 	_check("ayarlar paneli küçülmeden sığar (%.2f)" % settings.fit_scale(), settings.fit_scale() > 0.999)
+	print("AYARLAR ölçek %.3f" % settings.fit_scale())
+	await _shot("00a_ayarlar")
 	# Sürüm yazısına arka arkaya 5 dokunuş: ölçüm açılır; geliştirme satırları görünür.
 	var version: Label = null
 	for node in settings.find_children("*", "Label", true, false):

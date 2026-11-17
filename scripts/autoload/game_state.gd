@@ -115,6 +115,11 @@ func setting(key: String, default: Variant) -> Variant:
 	return save.settings.get(key, default)
 
 
+## Grafik kalitesi (GraphicsRules.LEVELS; ayar "graphics", yoksa Android'de Orta, öbürlerinde Yüksek).
+func graphics_level() -> String:
+	return GraphicsRules.level_of(save.settings.get("graphics"), OS.get_name())
+
+
 func set_hint_step(step: int) -> void:
 	save.hint_step = step
 	save_game()

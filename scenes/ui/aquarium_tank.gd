@@ -177,6 +177,11 @@ func _half_height(z: float) -> float:
 	return (CAMERA_Z - z) * tan(deg_to_rad(FOV * 0.5))
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_VISIBILITY_CHANGED and is_visible_in_tree():
+		UiKit.apply_preview_msaa(_viewport)
+
+
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
