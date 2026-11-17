@@ -8,6 +8,11 @@
 
 config_version=5
 
+[admob]
+
+general/android/app_id="ca-app-pub-8552904073566888~4483303271"
+general/ios/app_id="ca-app-pub-8552904073566888~2038645322"
+
 [application]
 
 config/name="Olta"
