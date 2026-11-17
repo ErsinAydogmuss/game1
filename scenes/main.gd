@@ -413,6 +413,12 @@ func _ready() -> void:
 	ItemArt.register_fish_colors(GameState.db.fish_colors())
 	FishPortrait.render_all(self, GameState.db)
 	_load_faces()
+	# Gölgelendirici ısındırma: açılış perdesinin arkasında, oyunda sonradan görünen malzemeler birkaç kare çizilir
+	# (ilk balıkta, ilk gecede, dolapta takılma olmasın; docs/performans-notlari.md §2.1). Ekransızda çizim yok.
+	if DisplayServer.get_name() != "headless":
+		var warmup := ShaderWarmup.new()
+		add_child(warmup)
+		warmup.run(self)
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has("--autoplay"):
 		var bot: Node = load("res://scripts/dev/autoplay.gd").new()
 		bot.set("main", self)

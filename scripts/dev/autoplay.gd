@@ -325,6 +325,9 @@ func _ready() -> void:
 		# Yatay iPhone: çentik solda ya da sağda, ev çubuğu altta.
 		UiKit.debug_insets = Vector4(_inset, 0.0, _inset, _inset * 0.45)
 		_hud().call("_apply_safe_area")
+	# Gölgelendirici ısındırması (ShaderWarmup) bitsin: senaryolar perdenin altında başlamasın (bu ortamda birkaç sn).
+	while main.get_node_or_null("ShaderWarmup") != null:
+		await get_tree().process_frame
 	match _scenario:
 		"first":
 			_play_first.call_deferred()
