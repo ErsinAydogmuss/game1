@@ -200,6 +200,13 @@ const REELS_GEAR := ["rod_float_carbon", "line_braid", "reel_pro", "hook_large",
 ## defterde haritanın parçaları ve X, haritada X, X'te sandalın yanından geçen dev gölge, Gölün Bekçisi (tutulmaz).
 const REELS_V05_TAKES: Array[String] = ["dusk", "lantern", "moon", "storm", "bottle", "pieces", "xmap", "fog",
 		"keeper"]
+## Reels v1.0 (mağaza öncesi tanıtım filmi, --reels-set=v10; kurgu listesinde "tanitim" kesimi): v0.4'ün ve v0.5'in
+## seçilmiş çekimleri (iskelede Nine ve Dede, altın sazan, spin, sinek, harita ve mersin; gün batımı, Ay Turnası,
+## fırtına, şişe, haritanın parçaları, X, dev gölge, Gölün Bekçisi) ve Dalga 5'in yuvası: Tekir (mırlar, acıkır, yer),
+## akvaryum, balık kartından fotoğraf (polaroid), dolap (oğlan balıkçı, şapka, yelek). Gündüz çekimleri sabah;
+## gün batımı öğleden geceye.
+const REELS_V10_TAKES: Array[String] = ["dock", "gold", "spin", "fly", "legend", "cat", "aquarium", "photo", "wardrobe",
+		"dusk", "moon", "storm", "bottle", "pieces", "xmap", "fog", "keeper"]
 ## Gün batımı: öğlenin saniyesinden (ışık sabit) başlar, saat karede REELS_DUSK_STEP oyun saniyesi ilerler (vaktin son
 ## dakikası DayLook'un karışımı: 30 fps'te ~1,3 sn; LakeScene LOOK_RATE ile kayar): öğleden akşama, akşamın sabit
 ## kısmı atlanır, akşamdan geceye. Gecenin saniyesi: v0.5'in gece çekimleri (vaktin son dakikasından uzak).
@@ -225,7 +232,7 @@ const REELS_STAND_AIM_DELAY := 3
 const REELS_GHOST_FRAMES := 150
 const REELS_GHOST_SIDE := 1.9
 var _reels_only: PackedStringArray = PackedStringArray()
-## Çekim takımı: "v04" (45 ve 15 sn'lik kesimler) ya da "v05" (REELS_V05_TAKES).
+## Çekim takımı: "v04" (45 ve 15 sn'lik kesimler), "v05" (REELS_V05_TAKES) ya da "v10" (REELS_V10_TAKES).
 var _reels_set: String = "v04"
 ## Reels'te parmağın yeri: kırpmanın içinde, sağ altta (aksiyonu örtmez).
 var _finger := Vector2(260, 520)
@@ -4587,15 +4594,19 @@ func _press_shutter(photo: PhotoMode) -> void:
 ## Günlük: REELS SYNC (kayıtta beyaz parlama; satır beyazın çizildiği karede), TAKE, MARK, CUT (kamera sıçraması, kararma),
 ## PANEL (panelin ekrandaki yeri), TOAST, AIM, END; kare numarası Engine.get_frames_drawn().
 func _play_reels() -> void:
-	if not _reels_set in ["v04", "v05"]:
-		_check("reels: bilinmeyen çekim takımı %s (v04, v05)" % _reels_set, false)
+	if not _reels_set in ["v04", "v05", "v10"]:
+		_check("reels: bilinmeyen çekim takımı %s (v04, v05, v10)" % _reels_set, false)
 		for line in _results:
 			print("KONTROL ", line)
 		_quit()
 		return
-	var takes := REELS_V05_TAKES if _reels_set == "v05" else REELS_TAKES
+	var takes := REELS_TAKES
 	if _reels_set == "v05":
+		takes = REELS_V05_TAKES
 		await _reels_setup_v05()
+	elif _reels_set == "v10":
+		takes = REELS_V10_TAKES
+		await _reels_setup_v10()
 	else:
 		_reels_setup()
 	await _wait(1.2)
@@ -4647,6 +4658,14 @@ func _play_reels() -> void:
 				await _reels_fog()
 			"keeper":
 				await _reels_keeper()
+			"cat":
+				await _reels_cat()
+			"aquarium":
+				await _reels_aquarium()
+			"photo":
+				await _reels_photo()
+			"wardrobe":
+				await _reels_wardrobe()
 	_set_shot(Callable())
 	_check("reels: rütbe değişmedi (%d), kova dolmadı (%d/%d)" % [Rank.rank(db, save), save.bucket.size(),
 			Bucket.capacity(db, save)], Rank.rank(db, save) == start_rank and not Bucket.is_full(db, save))
@@ -5055,6 +5074,12 @@ func _reels_dusk() -> void:
 	await _reels_go("dock_cove")
 	await _reels_technique("float")
 	_park_all()
+	# v1.0: gündüz çekimleri sabahtaydı; gün batımı öğleden başlar (çekimden önce, ışık hemen).
+	if save.clock_s < rules.phase_s + REELS_DUSK_FROM:
+		save.clock_s = rules.phase_s + REELS_DUSK_FROM
+		clock.refresh(save)
+		scene.set_look(main.call("_current_look"), true)
+		await _wait(0.6)
 	_take("dusk")
 	_mark("start")
 	await _wait(1.4)
@@ -5384,6 +5409,203 @@ func _reels_keeper() -> void:
 			hooked and snapped and _marks.has("keeper.dive_warn") and _marks.has("keeper.dive"))
 	await _wait_state(FishingSession.State.IDLE, 6.0)
 	await _wait(1.0)
+
+
+## Reels v1.0 oyuncusu: v0.5'inki (rütbe 9, takım, sevgi altın hamurun seviyesinde, sözler söylenmiş, bildirimler
+## gizli) ve v0.4'ün defteri (12 tür: altın sazan, mersin, Ay Turnası ve Kocabaş yeni tür, kartları "Yeni tür").
+## Rütbe puanı rütbe 9'un başında: çekimdeki efsaneviler rütbe 10'a çıkarmasın. Saat sabahta (gündüz çekimleri
+## v0.4'ün ışığında; gün batımı öğleden başlar). Akvaryumun kutusu üç saattir dolar (panelde "Kutu doldu!").
+func _reels_setup_v10() -> void:
+	await _reels_setup_v05()
+	var db := GameState.db
+	var save := GameState.save
+	save.xp = db.rank_xp[8]
+	for f: Array in REELS_RECORDS:
+		Records.add(save.records, f[0], f[1], f[2], 0)
+	save.clock_s = SaveData.create_new(0).clock_s
+	save.aquarium_box = 0
+	save.aquarium_unix = GameState.clock.now_unix() - 3 * 3600
+	GameState.changed.emit()
+	(main.get("world_clock") as WorldClock).refresh(save)
+	(main.get("scene") as LakeScene).set_look(main.call("_current_look"), true)
+	main.call("_sync_aquarium")
+	await _wait_frames(2)
+
+
+## İskele koyu, Tekir yakından: dokununca mırlar (kalpli balon, sıçrayış); acıkır (balıklı balon), dokununca kovadaki
+## en ucuz balığı yer (kalp). Dede'nin sözleri gizli çubukta.
+func _reels_cat() -> void:
+	var rules := GameState.db.rules
+	var save := GameState.save
+	var cat: Cat = main.get("cat")
+	await _reels_go("dock_cove")
+	await _reels_technique("float")
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	await _wait_until(func() -> bool:
+		return cat.pos2().distance_to(_angler().pos2()) < 1.6 and not cat.is_walking(), 20.0)
+	_set_shot(func() -> Dictionary:
+		var at := cat.global_position.lerp(_angler().global_position, 0.3) + Vector3(0.0, 0.3, 0.0)
+		return _frame(at, _ease(0.42, 0.34, 6.0, _shot_t), REELS_CLOSE_PITCH))
+	_snap_shot()
+	_take("cat")
+	_mark("start")
+	await _wait(1.2)
+	_mark("tap")
+	await _tap(_screen(cat.global_position + Vector3(0.0, 0.2, 0.0)))
+	await _wait_frames(3)
+	var purred := cat.bubble.is_showing() and cat.bubble.kind == SpeechBubble.Kind.HEART
+	_mark("purr")
+	await _wait(2.4)
+	# Acıkma balık sayısından: son beslenme şimdi cat_meal_every balık önce.
+	if save.bucket.is_empty():
+		save.bucket.append({ "fish": "rudd", "size_cm": 25, "stars": 2 })
+	save.cat_meal_at = save.catches - rules.cat_meal_every
+	var hungry := await _wait_until(func() -> bool:
+		return cat.bubble.is_showing() and cat.bubble.kind == SpeechBubble.Kind.FISH, 6.0)
+	_mark("hungry")
+	await _wait(1.6)
+	_mark("feed")
+	await _tap(_screen(cat.global_position + Vector3(0.0, 0.2, 0.0)))
+	await _wait_frames(3)
+	var fed := save.cat_fed == 1 and not CatRules.is_hungry(rules, save)
+	_mark("ate")
+	await _wait(2.4)
+	_check("reels: Tekir mırlar (%s), acıkır (%s), balığı yer (%s)" % [purred, hungry, fed], purred and hungry and fed)
+
+
+## Tezgâhın akvaryumu: kamera tanka yaklaşır (en değerli beş balık), dokununca panel: her türün en irisi yüzer, kutu
+## dolu; TOPLA.
+func _reels_aquarium() -> void:
+	var shop: ShopStall = main.get("shop")
+	var panel: AquariumPanel = main.get("aquarium_panel")
+	var camera: Camera3D = main.get("camera")
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	var tank := shop.tank_point()
+	_set_shot(func() -> Dictionary: return _frame(tank, _ease(0.5, 0.4, 4.0, _shot_t), REELS_CLOSE_PITCH))
+	_snap_shot()
+	_take("aquarium")
+	_mark("start")
+	await _wait(1.6)
+	_aim(_mark_tag + ".tank", tank)
+	_mark("tap")
+	await _tap(shop.tank_screen_rect(camera).get_center())
+	if not await _wait_until(func() -> bool: return panel.visible, 2.0):
+		_check("reels: akvaryum: panel açılmadı", false)
+		return
+	await _wait(0.4)
+	_panel_log("aquarium", panel.get("_panel"))
+	_panel_log("tank", panel.find_child("Tank", true, false) as Control)
+	_mark("open")
+	await _wait(3.2)
+	var collect := panel.find_child("Button_collect", true, false) as Button
+	var coins := GameState.save.coins
+	_mark("collect")
+	await _tap_control(collect)
+	await _wait(1.2)
+	_check("reels: akvaryum: %d balık yüzer, kutu toplanır (+%d)" % [panel.swimmer_count(), GameState.save.coins - coins],
+			panel.swimmer_count() >= 5 and GameState.save.coins > coins)
+	await _tap(panel.close_button.get_global_rect().get_center())
+	await _wait(0.6)
+
+
+## Balık kartından fotoğraf: altın sazanın kartı, kamera düğmesi; balıkçı balığı kameraya tutar, kamera yaklaşır ve
+## biraz döner, polaroid çerçeve, deklanşör (flaş); çıkınca kart geri, kapanır.
+func _reels_photo() -> void:
+	var db := GameState.db
+	var card: FishCard = main.get("card")
+	var photo: PhotoMode = main.get("photo")
+	var view := get_viewport().get_visible_rect().size
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	# Fotoğraf modu kamerayı kendisi sürer: yönetmen kapalı.
+	_set_shot(Callable())
+	await _wait(0.6)
+	_take("photo")
+	var info := { "fish": "golden_carp", "rarity": db.rarity_index("epic"), "size_cm": 78, "stars": 4 }
+	main.set("_card_info", info)
+	card.show_catch(db, info, { "new_species": false, "new_record": false, "kept": true })
+	await _wait(1.4)
+	_mark("tap")
+	await _tap_control(card.find_child("Photo", true, false) as Control)
+	if not await _wait_until(func() -> bool: return photo.visible, 2.0):
+		_check("reels: fotoğraf modu açılmadı", false)
+		return
+	_mark("open")
+	await _wait(1.0)
+	# Sürükle: kamera yavaşça döner.
+	var from := view * Vector2(0.6, 0.5)
+	_touch(0, from, true)
+	await _wait_frames(2)
+	for i in 16:
+		await _drag(0, from + Vector2(-14.0 * (i + 1), 3.0 * (i + 1)))
+		await _wait_frames(2)
+	_touch(0, from + Vector2(-224.0, 48.0), false)
+	await _wait(0.6)
+	_mark("frame")
+	await _tap_control(photo.find_child("Frame_polaroid", true, false) as Control)
+	await _wait(1.4)
+	_mark("shutter")
+	await _tap_control(photo.find_child("Shutter", true, false) as Control)
+	var saved := await _wait_until(func() -> bool: return not photo.last_path.is_empty(), 5.0)
+	_mark("saved")
+	await _wait(1.8)
+	_check("reels: karttan fotoğraf: polaroid, kaydedildi (%s)" % photo.last_path, saved
+			and photo.frame_kind() == "polaroid")
+	await _tap_control(photo.find_child("Close", true, false) as Control)
+	await _wait(0.8)
+	if card.visible and card.ok_button != null:
+		await _tap(card.ok_button.get_global_rect().get_center())
+	await _wait(0.6)
+
+
+## Dolap: balıkçıya dokun; Balıkçı sekmesinde oğlan, Şapka'da kırmızı şapka, Yelek'te mavi yelek (önizleme hemen);
+## kapanınca iskelede oğlan balıkçı yeni kıyafetiyle. Sonra (çekimin dışında) kız ve varsayılan kıyafet geri.
+func _reels_wardrobe() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var panel: WardrobePanel = main.get("wardrobe_panel")
+	var angler := _angler()
+	await _wait_state(FishingSession.State.IDLE, 5.0)
+	_set_shot(func() -> Dictionary:
+		return _frame(angler.global_position + Vector3(0.0, 0.6, 0.0), _ease(0.5, 0.4, 8.0, _shot_t), REELS_CLOSE_PITCH))
+	_snap_shot()
+	_take("wardrobe")
+	_mark("start")
+	await _wait(1.0)
+	_mark("tap")
+	await _tap(_screen(angler.global_position + Vector3(0.0, 0.8, 0.0)))
+	if not await _wait_until(func() -> bool: return panel.visible, 2.0):
+		_check("reels: dolap açılmadı", false)
+		return
+	await _wait(0.3)
+	_panel_log("wardrobe", panel.get("_panel"))
+	_mark("open")
+	await _tap_control(panel.find_child("Tab_angler", true, false) as Control)
+	await _wait(0.6)
+	_mark("boy")
+	await _tap_control(panel.find_child("Button_boy", true, false) as Control)
+	await _wait(1.4)
+	await _tap_control(panel.find_child("Tab_hat", true, false) as Control)
+	await _wait(0.5)
+	_mark("hat")
+	await _tap_control(panel.find_child("Item_hat_red", true, false) as Control)
+	await _wait(1.2)
+	await _tap_control(panel.find_child("Tab_vest", true, false) as Control)
+	await _wait(0.5)
+	_mark("vest")
+	await _tap_control(panel.find_child("Item_vest_blue", true, false) as Control)
+	await _wait(1.4)
+	_mark("close")
+	await _tap(panel.close_button.get_global_rect().get_center())
+	await _wait(0.4)
+	_mark("worn")
+	await _wait(2.6)
+	_check("reels: dolap: oğlan balıkçı, kırmızı şapka, mavi yelek", save.character == "boy"
+			and Outfits.equipped(db, save, "hat") == "hat_red" and Outfits.equipped(db, save, "vest") == "vest_blue")
+	_mark("end")
+	main.call("_on_character_chosen", "girl")
+	main.call("_on_outfit_chosen", "hat_bucket")
+	main.call("_on_outfit_chosen", "vest_yellow")
+	await _wait(0.4)
 
 
 ## Gölün Bekçisi'nin dev gölgesi sandalın yanından geçer (yalnızca görünüş, StoryFilm'in bitiş çekimi gibi: oturuma ve gölgelerin

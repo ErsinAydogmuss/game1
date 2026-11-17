@@ -738,6 +738,398 @@
 				"offset": 24,
 				"title": "GÖLÜN SIRRI"
 			}
+		},
+		"tanitim": {
+			"set": "v10",
+			"frames": 1476,
+			"end": 74,
+			"shots": [
+				{
+					"id": "golge",
+					"beats": 5,
+					"src": "fog.ghost",
+					"offset": 24
+				},
+				{
+					"id": "nine",
+					"beats": 2,
+					"src": "dock.nine",
+					"offset": -20
+				},
+				{
+					"id": "dede",
+					"beats": 3,
+					"src": "dock.dede",
+					"offset": -14
+				},
+				{
+					"id": "hook",
+					"beats": 4,
+					"src": "gold.nibbling",
+					"offset": -70
+				},
+				{
+					"id": "vur",
+					"beats": 2,
+					"src": "gold.biting",
+					"offset": 0
+				},
+				{
+					"id": "altin",
+					"beats": 4,
+					"src": "gold.show",
+					"offset": -4
+				},
+				{
+					"id": "spin",
+					"beats": 3,
+					"src": "spin.fighting",
+					"offset": -40
+				},
+				{
+					"id": "sinek",
+					"beats": 3,
+					"src": "fly.biting",
+					"offset": -20
+				},
+				{
+					"id": "harita",
+					"beats": 2,
+					"src": "map.open",
+					"offset": 0,
+					"crop": "panel:map"
+				},
+				{
+					"id": "sandal",
+					"beats": 2,
+					"src": "legend.casting",
+					"offset": -36
+				},
+				{
+					"id": "mersin",
+					"beats": 2,
+					"src": "legend.legend",
+					"offset": -10
+				},
+				{
+					"id": "mersin_kart",
+					"beats": 3,
+					"src": "legend.card",
+					"offset": -3
+				},
+				{
+					"id": "aksam",
+					"beats": 4,
+					"src": "dusk.fall",
+					"offset": 0
+				},
+				{
+					"id": "ay",
+					"beats": 3,
+					"src": "moon.show",
+					"offset": -10
+				},
+				{
+					"id": "firtina",
+					"beats": 3,
+					"src": "storm.swim",
+					"offset": 0
+				},
+				{
+					"id": "tekir",
+					"beats": 4,
+					"src": "cat.tap",
+					"offset": -10
+				},
+				{
+					"id": "akvaryum",
+					"beats": 4,
+					"src": "aquarium.open",
+					"offset": 0,
+					"crop": "panel:aquarium",
+					"pad": 12
+				},
+				{
+					"id": "dolap",
+					"beats": 4,
+					"src": "wardrobe.boy",
+					"offset": -6,
+					"crop": "panel:wardrobe",
+					"pad": 12
+				},
+				{
+					"id": "foto",
+					"beats": 4,
+					"src": "photo.frame",
+					"offset": 0,
+					"aspect": 2.0
+				},
+				{
+					"id": "sise",
+					"beats": 2,
+					"src": "bottle.tap",
+					"offset": -30
+				},
+				{
+					"id": "mektup",
+					"beats": 3,
+					"src": "bottle.letter",
+					"offset": -2,
+					"crop": "panel:letter",
+					"pad": 16
+				},
+				{
+					"id": "bekci",
+					"beats": 4,
+					"src": "keeper.rise",
+					"offset": -16
+				},
+				{
+					"id": "dalis",
+					"beats": 4,
+					"src": "keeper.dive_warn",
+					"offset": -10
+				}
+			],
+			"captions": [
+				{
+					"from": 0,
+					"to": 5,
+					"title": "BU GÖLDE|BİR SIR VAR…"
+				},
+				{
+					"from": 5,
+					"to": 10,
+					"title": "KÖYE HOŞ GELDİN!",
+					"sub": "Dede ve Nine seni bekliyor"
+				},
+				{
+					"from": 10,
+					"to": 16,
+					"title": "GÖLGEYİ GÖR,|DALINCA VUR!"
+				},
+				{
+					"from": 16,
+					"to": 20,
+					"title": "DESTANSI AV!",
+					"sub": "Altın sazan"
+				},
+				{
+					"from": 20,
+					"to": 26,
+					"title": "4 TEKNİK",
+					"sub": "Şamandıra, spin, dip ve sinek"
+				},
+				{
+					"from": 26,
+					"to": 30,
+					"title": "6 BÖLGE",
+					"sub": "Sandalla derin sulara"
+				},
+				{
+					"from": 30,
+					"to": 35,
+					"title": "EFSANEVİ MERSİN!",
+					"sub": "19 tür balık"
+				},
+				{
+					"from": 35,
+					"to": 39,
+					"title": "GECE BAŞKA|BİR GÖL"
+				},
+				{
+					"from": 39,
+					"to": 45,
+					"title": "AY TURNASI, KOCABAŞ…",
+					"sub": "Gecenin ve fırtınanın efsaneleri"
+				},
+				{
+					"from": 45,
+					"to": 49,
+					"title": "TEKİR'İ BESLE",
+					"sub": "Mırlar, acıkır, hediye getirir"
+				},
+				{
+					"from": 49,
+					"to": 53,
+					"title": "AKVARYUMUNU KUR",
+					"sub": "Ziyaretçiler bağış bırakır"
+				},
+				{
+					"from": 53,
+					"to": 57,
+					"title": "BALIKÇINI GİYDİR",
+					"sub": "Kız ya da oğlan; şapka, yelek"
+				},
+				{
+					"from": 57,
+					"to": 61,
+					"title": "FOTOĞRAF ÇEK!",
+					"sub": "En güzel avın albümde"
+				},
+				{
+					"from": 61,
+					"to": 66,
+					"title": "ŞİŞEDEKİ MEKTUPLAR",
+					"sub": "Yıllar önce yazılmış"
+				},
+				{
+					"from": 66,
+					"to": 70,
+					"title": "GÖLÜN BEKÇİSİ!"
+				},
+				{
+					"from": 70,
+					"to": 74,
+					"title": "ONU TUTABİLECEK|MİSİN?"
+				}
+			],
+			"music": [
+				{
+					"at": 0,
+					"beats": 5,
+					"chord": "Em9",
+					"style": "mist"
+				},
+				{
+					"at": 5,
+					"beats": 5,
+					"chord": "Cmaj7",
+					"style": "intro"
+				},
+				{
+					"at": 10,
+					"beats": 6,
+					"chord": "Am7",
+					"style": "build"
+				},
+				{
+					"at": 16,
+					"beats": 4,
+					"chord": "C",
+					"style": "hit"
+				},
+				{
+					"at": 20,
+					"beats": 6,
+					"chord": "Em",
+					"style": "groove"
+				},
+				{
+					"at": 26,
+					"beats": 4,
+					"chord": "D",
+					"style": "rise"
+				},
+				{
+					"at": 30,
+					"beats": 5,
+					"chord": "G",
+					"style": "hit"
+				},
+				{
+					"at": 35,
+					"beats": 4,
+					"chord": "Cmaj7",
+					"style": "night"
+				},
+				{
+					"at": 39,
+					"beats": 6,
+					"chord": "Em",
+					"style": "storm"
+				},
+				{
+					"at": 45,
+					"beats": 4,
+					"chord": "G",
+					"style": "groove"
+				},
+				{
+					"at": 49,
+					"beats": 4,
+					"chord": "D",
+					"style": "groove"
+				},
+				{
+					"at": 53,
+					"beats": 4,
+					"chord": "Em",
+					"style": "groove"
+				},
+				{
+					"at": 57,
+					"beats": 4,
+					"chord": "C",
+					"style": "montage"
+				},
+				{
+					"at": 61,
+					"beats": 5,
+					"chord": "Am7",
+					"style": "drift"
+				},
+				{
+					"at": 66,
+					"beats": 4,
+					"chord": "Em",
+					"style": "awe"
+				},
+				{
+					"at": 70,
+					"beats": 4,
+					"chord": "B7",
+					"style": "tension"
+				},
+				{
+					"at": 74,
+					"beats": 8,
+					"chord": "Em9",
+					"style": "outro"
+				}
+			],
+			"ambience": [
+				{
+					"at": 0,
+					"name": "night"
+				},
+				{
+					"at": 5,
+					"name": "lake"
+				},
+				{
+					"at": 37,
+					"name": "night"
+				},
+				{
+					"at": 42,
+					"name": "rain"
+				},
+				{
+					"at": 45,
+					"name": "lake"
+				},
+				{
+					"at": 61,
+					"name": "night"
+				}
+			],
+			"note": "Oyun içi görüntüler",
+			"end_card": {
+				"top": "GOOGLE PLAY VE APP STORE'DA",
+				"title": "ÇOK YAKINDA!",
+				"button": "TAKİPTE KAL!"
+			},
+			"end_background": {
+				"src": "dock.outro",
+				"offset": 20
+			},
+			"cover": {
+				"src": "keeper.rise",
+				"offset": 24,
+				"title": "ÇOK YAKINDA!",
+				"sub": "Google Play ve App Store'da"
+			}
 		}
 	},
 	"end_background": {

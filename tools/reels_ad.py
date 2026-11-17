@@ -11,8 +11,9 @@ Kurgu listesi tools/reels_edl.json: parçalar işaretlere göre (vuruşla), yaz�
 Düzen (Reels güvenli alanı: üst %14, alt %35, yanlar %6 boş): arka planda aynı görüntünün bulanık,
 kararmış kopyası; ortada 1000×1000 oyun kartı (kaydın ortasındaki kare; köşeleri yuvarlak, krem
 çerçeve, gölge); kartın üstünde Luckiest Guy başlık (en çok 2 satır) ve Baloo 2 satır; kartın üst
-kenarında "Oyun içi görüntüler · geliştirme sürümü". Son kart: logo, "YAKINDA APP STORE'DA", nabız
-gibi atan "TAKİP ET" (mağaza bağlantısı, rozet ya da indirme sözü yok).
+kenarında "Oyun içi görüntüler · geliştirme sürümü" (kesimin kendi notu: note). Son kart: logo, "YAKINDA APP
+STORE'DA", nabız gibi atan "TAKİP ET" (mağaza bağlantısı, rozet ya da indirme sözü yok); kesimin kendi son kartı
+end_card: {top, title, button} (v1.0 tanıtımı: "GOOGLE PLAY VE APP STORE'DA", "ÇOK YAKINDA!", "TAKİPTE KAL!").
 
 Ses: oyunun sesleri (parçaların kendi sesi) + kesintisiz göl ortam sesi + müzik (oyun sesi
 geldikçe kısılır); müziksiz kopyada müzik yok. Hepsi -14 LUFS; tepe kodlamadan önce -1,5 dBTP, AAC'den
@@ -59,6 +60,7 @@ BODY_FONT = os.path.join(ROOT, "assets", "fonts", "Baloo2-Variable.ttf")
 LOGO = os.path.join(ROOT, "assets", "ui", "art", "logo.png")
 AMBIENCE_DIR = os.path.join(ROOT, "assets", "audio", "ambience")
 DEFAULT_COVER = {"src": "legend.show", "offset": 12, "title": "EFSANEVİ MERSİN!"}
+DEFAULT_END_CARD = {"title": "YAKINDA APP STORE'DA", "button": "TAKİP ET"}
 
 FPS = EDL["fps"]
 BEAT = EDL["beat_frames"]
@@ -463,28 +465,59 @@ def paste_scaled(canvas, img, cx, cy, scale, alpha=1.0):
     canvas.alpha_composite(piece, (int(cx - sw / 2), int(cy - sh / 2)))
 
 
-def note_image(fonts, size=28):
+def cut_note(cut):
+    """Kartın üst kenarındaki not: kesimin kendi notu (note) ya da listenin genel notu."""
+    return EDL["cuts"][cut].get("note", EDL.get("note", NOTE))
+
+
+def end_card_spec(cut):
+    """Son kartın yazıları: kesimin end_card'ı ({top, title, button}; top varsa iki satır: üstte beyaz küçük satır,
+    altında altın büyük başlık) ya da eski tek satır ("YAKINDA APP STORE'DA", "TAKİP ET")."""
+    return EDL["cuts"][cut].get("end_card", DEFAULT_END_CARD)
+
+
+def note_image(fonts, size=28, text=NOTE):
     font = fonts.body(size, "SemiBold")
-    box = font.getbbox(NOTE)
+    box = font.getbbox(text)
     img = Image.new("RGBA", (box[2] + 36, size + 22), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rounded_rectangle([0, 0, img.width - 1, img.height - 1], img.height // 2, fill=(10, 8, 6, 120))
-    d.text((18, img.height // 2), NOTE, font=font, fill=(255, 255, 255, 215), anchor="lm")
+    d.text((18, img.height // 2), text, font=font, fill=(255, 255, 255, 215), anchor="lm")
     return img
 
 
-def end_card_images(fonts):
+def end_card_images(fonts, card=None):
+    """Logo, mağaza yazısı ve nabız gibi atan düğme; resimlerin yerleşimi info["layout"]'ta (logonun, yazının ve
+    düğmenin ortası)."""
+    card = card or DEFAULT_END_CARD
+    two = bool(card.get("top"))
     logo = Image.open(LOGO).convert("RGBA")
-    logo = logo.resize((880, int(880 * logo.height / logo.width)), Image.LANCZOS)
-    soon_text = "YAKINDA APP STORE'DA"
-    soon_font = fit_font(fonts, "display", soon_text, 80, TEXT_W)
-    top = max(12, 4 - soon_font.getbbox(soon_text, anchor="ma", stroke_width=7)[1])
-    soon = Image.new("RGBA", (W, top + soon_font.size + 28), (0, 0, 0, 0))
-    ImageDraw.Draw(soon).text((W // 2, top), soon_text, font=soon_font, fill=(255, 255, 255, 255),
-                              anchor="ma", stroke_width=7, stroke_fill=INK + (255,))
+    logo_w = 760 if two else 880
+    logo = logo.resize((logo_w, int(logo_w * logo.height / logo.width)), Image.LANCZOS)
+    lines = ([(card["top"], 60, (255, 255, 255))] if two else []) + \
+        [(card["title"], 118 if two else 80, ACCENT if two else (255, 255, 255))]
+    fitted = [(text, fit_font(fonts, "display", text, size, TEXT_W), color) for text, size, color in lines]
+    stroke = 7
+    top = max(12, 4 - fitted[0][1].getbbox(fitted[0][0], anchor="ma", stroke_width=stroke)[1])
+    ys = [top]
+    for k in range(1, len(fitted)):
+        text, font, _ = fitted[k]
+        # Satırın kendi üst payı (Luckiest Guy'da İ'nin noktası, Ü'nün çizgileri üst çizginin üstüne çıkar).
+        rise = max(0, 4 - font.getbbox(text, anchor="ma", stroke_width=stroke)[1])
+        ys.append(ys[-1] + fitted[k - 1][1].size + 10 + rise)
+    soon = Image.new("RGBA", (W, ys[-1] + fitted[-1][1].size + 28), (0, 0, 0, 0))
+    d = ImageDraw.Draw(soon)
+    for (text, font, color), y in zip(fitted, ys):
+        if two:
+            d.text((W // 2 + 5, y + 7), text, font=font, fill=(0, 0, 0, 110), anchor="ma", stroke_width=stroke,
+                   stroke_fill=(0, 0, 0, 110))
+        d.text((W // 2, y), text, font=font, fill=color + (255,), anchor="ma", stroke_width=stroke,
+               stroke_fill=INK + (255,))
     soon.info["lift"] = top - 12
-    follow_font = fonts.display(86)
-    tw = follow_font.getbbox("TAKİP ET")[2]
+    soon.info["layout"] = (512, 910, 1102) if two else (560, 925, 1095)
+    button_text = card.get("button", "TAKİP ET")
+    follow_font = fit_font(fonts, "display", button_text, 86, TEXT_W - 150)
+    tw = follow_font.getbbox(button_text)[2]
     bw, bh = tw + 150, 150
     button = Image.new("RGBA", (bw + 20, bh + 26), (0, 0, 0, 0))
     d = ImageDraw.Draw(button)
@@ -495,7 +528,7 @@ def end_card_images(fonts):
     ImageDraw.Draw(shine).rounded_rectangle([34, 16, bw - 14, bh // 2], bh // 3, fill=(255, 214, 150, 110))
     button.alpha_composite(shine)
     d = ImageDraw.Draw(button)
-    d.text((bw // 2 + 10, bh // 2 + 8), "TAKİP ET", font=follow_font, fill=(255, 255, 255, 255), anchor="mm",
+    d.text((bw // 2 + 10, bh // 2 + 8), button_text, font=follow_font, fill=(255, 255, 255, 255), anchor="mm",
            stroke_width=6, stroke_fill=INK + (255,))
     return logo, soon, button
 
@@ -510,8 +543,9 @@ def overlay_frames(cut, fonts, folder):
     for cap in spec["captions"]:
         img = text_block(fonts, cap["title"], cap.get("sub", ""))
         blocks.append((int(round(cap["from"] * BEAT)), int(round(cap["to"] * BEAT)), img))
-    note = note_image(fonts)
-    logo, soon, button = end_card_images(fonts)
+    note = note_image(fonts, text=cut_note(cut))
+    logo, soon, button = end_card_images(fonts, end_card_spec(cut))
+    logo_y, soon_y, button_y = soon.info["layout"]
     os.makedirs(folder, exist_ok=True)
     empty = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     for n in range(total):
@@ -527,14 +561,14 @@ def overlay_frames(cut, fonts, folder):
                     paste_scaled(canvas, img, W // 2, cy, scale, alpha)
         else:
             age = n - end_at
-            paste_scaled(canvas, logo, W // 2, 560, 0.5 + 0.5 * ease_back(age / 9.0), min(1.0, age / 4.0))
+            paste_scaled(canvas, logo, W // 2, logo_y, 0.5 + 0.5 * ease_back(age / 9.0), min(1.0, age / 4.0))
             if age >= 7:
-                paste_scaled(canvas, soon, W // 2, 925 - soon.info["lift"] / 2.0 + max(0, 12 - age) * 3, 1.0,
+                paste_scaled(canvas, soon, W // 2, soon_y - soon.info["lift"] / 2.0 + max(0, 12 - age) * 3, 1.0,
                              min(1.0, (age - 7) / 5.0))
             if age >= 13:
                 pulse = 1.0 + 0.06 * (0.5 + 0.5 * math.cos(2 * math.pi * (age - 13) / BEAT))
                 pop = 0.6 + 0.4 * ease_back((age - 13) / 7.0)
-                paste_scaled(canvas, button, W // 2, 1095, pop * pulse, min(1.0, (age - 13) / 3.0))
+                paste_scaled(canvas, button, W // 2, button_y, pop * pulse, min(1.0, (age - 13) / 3.0))
             paste_scaled(canvas, note, W // 2, SAFE_BOTTOM - 30, 1.0)
         canvas.save(os.path.join(folder, "o_%04d.png" % n), compress_level=1)
 
@@ -749,7 +783,7 @@ def cover(info, offset, avi, video, fonts, out_dir, tmp, cut):
     base.alpha_composite(logo, ((W - logo.width) // 2, 300))
     title = text_block(fonts, spec["title"], spec.get("sub", ""))
     base.alpha_composite(title, (0, CARD_Y + CARD - title.height - 20))
-    note = note_image(fonts)
+    note = note_image(fonts, text=cut_note(cut))
     # Not, başlığın resminin hemen üstünde (resmin üst payı İ'nin noktasını da kapsar: üst üste binmez).
     base.alpha_composite(note, ((W - note.width) // 2, CARD_Y + CARD - title.height - 24 - note.height))
     base.convert("RGB").save(os.path.join(out_dir, name), quality=93)
