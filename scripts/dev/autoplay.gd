@@ -5441,8 +5441,14 @@ func _reels_cat() -> void:
 	await _reels_go("dock_cove")
 	await _reels_technique("float")
 	await _wait_state(FishingSession.State.IDLE, 5.0)
+	# İskelenin ucunda Dede önde oturur, kediyi örter: balıkçı karaya, kedinin evinin önündeki çimene yürür (cat
+	# senaryosunun yeri), kedi peşinden gelir.
+	_set_shot(Callable())
+	var home: Vector2 = main.call("_cat_home")
+	await _tap_world(home + Vector2(-0.8, 1.6))
 	await _wait_until(func() -> bool:
-		return cat.pos2().distance_to(_angler().pos2()) < 1.6 and not cat.is_walking(), 20.0)
+		return not _angler().is_walking() and cat.pos2().distance_to(_angler().pos2()) < 1.6 and not cat.is_walking(), 25.0)
+	await _wait(0.4)
 	_set_shot(func() -> Dictionary:
 		var at := cat.global_position.lerp(_angler().global_position, 0.3) + Vector3(0.0, 0.3, 0.0)
 		return _frame(at, _ease(0.42, 0.34, 6.0, _shot_t), REELS_CLOSE_PITCH))
@@ -5481,7 +5487,7 @@ func _reels_aquarium() -> void:
 	var camera: Camera3D = main.get("camera")
 	await _wait_state(FishingSession.State.IDLE, 5.0)
 	var tank := shop.tank_point()
-	_set_shot(func() -> Dictionary: return _frame(tank, _ease(0.5, 0.4, 4.0, _shot_t), REELS_CLOSE_PITCH))
+	_set_shot(func() -> Dictionary: return _frame(tank, _ease(0.42, 0.32, 4.0, _shot_t), REELS_CLOSE_PITCH))
 	_snap_shot()
 	_take("aquarium")
 	_mark("start")
@@ -5596,12 +5602,18 @@ func _reels_wardrobe() -> void:
 	await _wait(1.4)
 	_mark("close")
 	await _tap(panel.close_button.get_global_rect().get_center())
-	await _wait(0.4)
+	await _wait(0.2)
+	# Yeni kıyafetini göstersin: kameraya döner ve sevinir (fotoğraf modunun kupa duruşu gibi).
+	var facing := angler.facing
+	angler.face_now(Vector2(sin(FollowCamera.YAW), cos(FollowCamera.YAW)))
+	angler.cheer()
+	await _wait(0.2)
 	_mark("worn")
 	await _wait(2.6)
 	_check("reels: dolap: oğlan balıkçı, kırmızı şapka, mavi yelek", save.character == "boy"
 			and Outfits.equipped(db, save, "hat") == "hat_red" and Outfits.equipped(db, save, "vest") == "vest_blue")
 	_mark("end")
+	angler.face_now(facing)
 	main.call("_on_character_chosen", "girl")
 	main.call("_on_outfit_chosen", "hat_bucket")
 	main.call("_on_outfit_chosen", "vest_yellow")
