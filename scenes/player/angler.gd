@@ -15,6 +15,8 @@ const SPEED := 2.4
 const TURN := 10.0
 ## Kıyıda bu kadar geride durur (gövde suya taşmasın).
 const BODY := 0.22
+## Kapalı çitin önünde durulan pay (m): gövde çitin tahtasına girmesin.
+const GATE_CLEAR := 0.4
 ## Serbestken olta gövdeye göre dik taşınır (elin sarkan açısı oltayı suya batırmasın):
 ## oltanın ucu gövdenin önüne ve yukarısına.
 const CARRY_DIR := Vector3(0.12, 0.9, -0.42)
@@ -358,11 +360,27 @@ func _move(dir: Vector2, length: float) -> bool:
 	var ahead := next + step.normalized() * BODY
 	if not lake.is_walkable(next) or not lake.is_walkable(ahead):
 		return false
-	if can_step.is_valid() and not bool(can_step.call(pos2(), ahead)):
-		return false
+	if not _gate_free(step):
+		# Kapalı çite çapraz yürüyen çit boyunca kayar (dik gelen durur): halkayla yürürken takılmasın.
+		var slide := Vector2.ZERO
+		for along: Vector2 in [Vector2(step.x, 0.0), Vector2(0.0, step.y)]:
+			if along.length() > maxf(slide.length(), step.length() * 0.3) and _gate_free(along) \
+					and lake.is_walkable(pos2() + along) and lake.is_walkable(pos2() + along + along.normalized() * BODY):
+				slide = along
+		if slide == Vector2.ZERO:
+			return false
+		face(slide)
+		next = pos2() + slide
 	position.x = next.x
 	position.z = next.y
 	return true
+
+
+## Bu adım (çitin önündeki payıyla) kapalı bir çiti kesmiyor mu (can_step; main verir)?
+func _gate_free(step: Vector2) -> bool:
+	if not can_step.is_valid() or step == Vector2.ZERO:
+		return true
+	return bool(can_step.call(pos2(), pos2() + step + step.normalized() * GATE_CLEAR))
 
 
 ## Engelden kaçınma: from'dan step kadarlık adım bir engelin içine (gövde payıyla) giriyorsa

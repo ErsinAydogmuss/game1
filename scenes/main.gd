@@ -980,7 +980,7 @@ func _straight_reach(target: Vector2) -> float:
 	var d := 0.2
 	while d <= length:
 		var p := from + dir * d
-		if not lake.is_walkable(p) or path.crosses_closed_gate(from, p + dir * Angler.BODY):
+		if not lake.is_walkable(p) or path.crosses_closed_gate(from, p + dir * Angler.GATE_CLEAR):
 			break
 		stop = p
 		d += 0.2

@@ -690,10 +690,14 @@ func _build_backdrop() -> void:
 
 
 ## Kilitli bölgelerin çitleri: çizginin karada kalan yeri boyunca çit parçaları, kıyı ucunda tabela.
-## Bölge açılınca main gizler (set_gate_open).
+## Bölge açılınca main gizler (set_gate_open). Kenney'nin çit modelinin tahtaları başlangıç noktasından 0,5 m
+## yanda: her parça kendi ekseninde kaydırılır, tahta oyunun çizgisinin (ShorePath'in kapalı çiti) tam üstünde
+## durur (testçi: "sazlığın solundaki çitin içinden geçiliyor, takılıyor": tahta çizginin yarım metre önündeydi).
 func _build_gates() -> void:
 	if not ModelLibrary.has("fence"):
 		return
+	var box := ModelLibrary.bounds("fence")
+	var center := Vector3(box.get_center().x, 0.0, box.get_center().z)
 	for z in zones:
 		var parts: Array[Array] = []
 		for g: PackedVector2Array in z["gates"]:
@@ -707,7 +711,8 @@ func _build_gates() -> void:
 				var p := g[0] + dir * (i + 0.5) * FENCE_PIECE
 				if lake.shore_distance(p) > -0.2 or not lake.in_world(p + dir * 0.5):
 					continue
-				parts.append(["fence", Transform3D(Basis(Vector3.UP, yaw), Vector3(p.x, ground_height(p), p.y))])
+				var basis := Basis(Vector3.UP, yaw)
+				parts.append(["fence", Transform3D(basis, Vector3(p.x, ground_height(p), p.y) - basis * center)])
 				if not signed and ModelLibrary.has("gate_sign"):
 					# Tabela kıyıya yakın uçta, çitin kameraya bakan yanında.
 					var side := Vector2(-dir.y, dir.x)

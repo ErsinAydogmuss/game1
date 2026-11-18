@@ -1268,6 +1268,7 @@ func _play_map() -> void:
 	panel.close_panel()
 	await _wait(0.3)
 	await _check_debug_buttons()
+	await _check_gate_walk()
 	# Rütbe 7: kayalık burun ve dere ağzı da açık (oturumun erişimi ve çitler).
 	save.xp = db.rank_xp[6]
 	_session().set_access(Zones.open_ids(db, save, spot))
@@ -1334,6 +1335,47 @@ func _play_map() -> void:
 ## Ayarların geliştirme düğmeleri (geliştirme sürümü, ölçüm açıkken): +1.000 ve +10.000 para; RÜTBE +1
 ## iki kez rütbe 3'ten 5'e. Panel açıkken bildirim çıkmaz (karartmanın altında kalmasın); kapanınca
 ## rütbe ve kayalık burun bildirimi, Dede söyler, harita düğmesi atar.
+## Rütbe 3'te dere ağzının kapalı çiti (sazlığın solu; testçi: "çitin içinden geçiliyor, takılıyor"): çitin güneyinden
+## halkayla kuzeye yürüyen balıkçı tahtanın önünde durur (çizgiyi geçmez, gövdesi tahtaya girmez); çapraz yürüyünce
+## çit boyunca kayar. Çitin tahtası oyunun çizgisinin üstünde (modelin kayıklığı düzeltildi).
+func _check_gate_walk() -> void:
+	var db := GameState.db
+	var spot := str(main.get("spot_id"))
+	var gate: PackedVector2Array = (db.zone(spot, "stream_mouth")["gates"] as Array)[0]
+	var line_z := gate[0].y
+	var angler := _angler()
+	var lake := _session().lake
+	var start := Vector2.INF
+	for x in [-27.5, -27.0, -28.0, -26.5, -28.5, -26.0, -29.0, -25.5]:
+		var p := Vector2(x, line_z + 1.6)
+		if lake.is_walkable(p) and lake.is_walkable(Vector2(x - 1.5, line_z + 1.0)):
+			start = p
+			break
+	if not start.is_finite():
+		_check("çitin önünde yürünecek yer bulundu", false)
+		return
+	angler.place(start)
+	(main.get("camera") as FollowCamera).snap(main.call("_focus"))
+	await _wait_frames(3)
+	for i in 60:
+		angler.step_dir(Vector2(0, -1), 1.0 / 30.0)
+		await get_tree().process_frame
+	var stopped := angler.pos2()
+	var x_before := stopped.x
+	await _wait(0.4)
+	await _shot("02b_cit")
+	for i in 30:
+		angler.step_dir(Vector2(-0.7, -0.7), 1.0 / 30.0)
+		await get_tree().process_frame
+	# Çapraz gelişte pay yürünen yönde ölçülür: çite dik uzaklık ~0,28 m (gövde 0,22).
+	var slid := angler.pos2()
+	var box := ModelLibrary.bounds("fence")
+	_check("kapalı çite yürüyen durur: çizgiyi geçmez, tahtanın %.2f m önünde (durdu z %.2f, çizgi %.2f); çapraz yürüyünce çit boyunca kayar (%.2f m, z %.2f; çitin modeli %.2f m)" % [
+			stopped.y - line_z, stopped.y, line_z, x_before - slid.x, slid.y, box.size.x],
+			stopped.y > line_z + 0.3 and stopped.y < line_z + 0.6 and slid.y > line_z + 0.25 and x_before - slid.x > 0.4
+			and box.size.x > 0.0)
+
+
 func _check_debug_buttons() -> void:
 	var db := GameState.db
 	var save := GameState.save

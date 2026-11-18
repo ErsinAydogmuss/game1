@@ -81,14 +81,14 @@ Bot senaryoları (`scripts/dev/autoplay.gd`; gerçek dokunma olayları gönderir
 
 ```bash
 xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl3 --audio-driver Dummy \
-  --resolution 1280x720 --fixed-fps 30 -- --autoplay --scenario=controls --locale=tr --safe-inset=130 --shots=/mutlak/yol
+  --resolution 1560x720 --fixed-fps 30 -- --autoplay --scenario=controls --locale=tr --safe-inset=130 --shots=/mutlak/yol
 # senaryolar: controls (KONTROL satırlarının hepsi TAMAM olmalı; yürüme halkası: sürükle → yürür, az itince yavaş, bırakınca durur, dokunmak yürütmez, dışı oyuna geçer, panel açıkken çalışmaz), first (ilk açılış: film oynar, ATLA ile geçilir; senaryolu ilk balık),
 #   hero (balıkçı, Dede ve Nine yakın çekim), fish (19 balık elde ve kartlarıyla, Gölün Bekçisi yalnızca kartıyla: oyunda elde gösterilmez; `--fish=<kimlik>` yalnızca o tür), video (tanıtım; aşağıda),
 #   reels (Instagram Reels reklamının çekimi; aşağıda),
 #   shop (Nine'nin dükkânı; telefon oranında çalıştır: --resolution 1560x720),
 #   rarity (nadirlik ipuçları ve rozetleri; gri tonlamalı kopyasıyla renk körü denetimi; defter: 19 tür iki
 #     sayfada, kerevitin tuzak ve alabalığın sinek ipucu),
-#   map (harita ve hızlı geçiş: yeni bölge açılır, ayarların geliştirme düğmeleri (para, RÜTBE +1: bildirimler panel kapanınca), her açık bölgeye geçilir, kilitliye geçilmez; telefon oranında ve --safe-inset=130 ile),
+#   map (harita ve hızlı geçiş: yeni bölge açılır, ayarların geliştirme düğmeleri (para, RÜTBE +1: bildirimler panel kapanınca), her açık bölgeye geçilir, kilitliye geçilmez; kapalı çite yürüyen tahtanın önünde durur, çapraz yürüyünce çit boyunca kayar; telefon oranında ve --safe-inset=130 ile),
 #   boat (sandal: Nine'den al, bin, at, yayını tut, sıradaki şamandıra, kıyıya dön; aynı ayarlarla),
 #   tour (gezi: her bölgenin atış noktası ve sandal; ÇİZİM satırları ve ekran görüntüsü; KONTROL: her yerde ≤150 çizim),
 #   technique (teknikler: rütbe 2'de spin açılır, takım çantası, ilk spin kamışı, dur-kalk saldırısı (kendiliğinden
