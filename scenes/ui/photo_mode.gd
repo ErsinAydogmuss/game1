@@ -19,7 +19,9 @@ const PHOTO_DIR := "user://photos"
 ## verir): fotoğraf modunda viewport bu katmanı çizmez.
 const WORLD_LABELS := 1 << 1
 const YAW_RANGE := deg_to_rad(40.0)
-const PITCH_MIN := deg_to_rad(30.0)
+## En alçak eğim: balıkçının omzu hizasından göle ve ufka bakılır (testçi: "biraz daha aşağı inebilsin"; 30° idi).
+## Arazi düz (en çok 0,22 m): en yakın ve en alçak kamera bile odağın 0,7 m üstünde, yerin altına girmez.
+const PITCH_MIN := deg_to_rad(10.0)
 const PITCH_MAX := deg_to_rad(72.0)
 const ZOOM_MIN := 0.35
 const ZOOM_MAX := 1.6

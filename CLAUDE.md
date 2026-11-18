@@ -159,7 +159,7 @@ xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl
 #     ≤150 çizim; Tekir'in beşinci beslemesi hasır şapka getirir (bildirim); oğlana geçince kıyafet aynen; kayıt gidiş-dönüş;
 #     telefon oranında, --safe-inset=130, TR ve EN),
 #   photo (fotoğraf modu: Ayarlar'ın kamera düğmesi → fotoğraf modu (ayarlar kapalı, arayüz gizli, oyun donuk, dünyadaki
-#     yazılar gizli: canvas_cull_mask, düğmeler ≥122 ve güvenli alanda); sürükle → kamera döner ve eğilir; yakınlaştır;
+#     yazılar gizli: canvas_cull_mask, düğmeler ≥122 ve güvenli alanda); sürükle → kamera döner ve eğilir (aşağı sürükleyince 10°ye iner: göl ve ufuk); yakınlaştır;
 #     polaroid ve eski kâğıt çerçeve; deklanşör → user://photos'ta PNG, boyu pencerenin (düğmeler fotoğrafa girmez; fotoğraf
 #     03_fotograf.png olarak görüntülerin yanına); çıkış: kamera eski açısında, arayüz geri; balık kartının kamera
 #     düğmesi → kart gizli, balık elde, kamera yakın; çıkınca kart geri, balık gider; telefon oranında, --safe-inset=130,

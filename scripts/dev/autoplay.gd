@@ -7062,6 +7062,18 @@ func _play_photo() -> void:
 	_check("sürükle → kamera döner (%.0f°) ve eğilir (%.0f°)" % [rad_to_deg(camera.yaw_offset), rad_to_deg(camera.pitch)],
 			absf(target.x) > deg_to_rad(10.0) and absf(camera.yaw_offset - target.x) < deg_to_rad(2.0)
 			and absf(target.y - pitch0) > deg_to_rad(5.0))
+	# 2b) Aşağı sürükle (testçi: "biraz daha aşağı inebilsin"): kamera alçalır, eğim PITCH_MIN'de durur, yerin üstünde.
+	_touch(0, from, true)
+	await _wait_frames(2)
+	for i in 16:
+		await _drag(0, from + Vector2(0.0, 20.0 * (i + 1)))
+		await _wait_frames(1)
+	_touch(0, from + Vector2(0.0, 320.0), false)
+	await _wait(1.0)
+	var low := camera.global_position
+	_check("aşağı sürükle → kamera alçalır (%.0f°; kamera yerden %.1f m)" % [rad_to_deg(camera.pitch), low.y],
+			absf(photo.view_target().y - PhotoMode.PITCH_MIN) < 0.001 and camera.pitch < deg_to_rad(12.0) and low.y > 0.5)
+	await _shot("01b_alcak")
 	# 3) Yakınlaştır, polaroid çerçeve; sonra eski kâğıt.
 	await _tap_control(photo.find_child("ZoomIn", true, false) as Control)
 	await _wait(0.6)
