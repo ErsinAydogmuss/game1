@@ -41,6 +41,31 @@ func test_owned_items_only() -> void:
 				assert_eq(Economy.equipped(db, s, slot, t), id, "kuşanıldı: " + id)
 
 
+## Bir yuvadaki bütün takımlar görünür (kaydırma yok): en kalabalık yuvada da karolar en az 122 ve SLOT_W'ye sığar.
+func test_every_owned_item_fits() -> void:
+	var db := content()
+	var most := 0
+	for slot: String in ContentDB.GEAR_SLOTS:
+		for t: String in ContentDB.TECHNIQUES:
+			var n := 0
+			for g in db.gear_in(slot):
+				if slot != "rod" or str(g["technique"]) == t:
+					n += 1
+			most = maxi(most, n)
+	assert_true(most >= 6, "en kalabalık yuva 6 takım (makara, misina, yem, yapay yem)")
+	for n in range(1, most + 1):
+		var w := LoadoutPanel.item_width(n)
+		assert_true(w >= LoadoutPanel.MIN_ITEM_W, "%d takımda karo en az 122 (%.0f)" % [n, w])
+		assert_true(w * n + LoadoutPanel.gap_for(n) * (n - 1) <= LoadoutPanel.SLOT_W, "%d takım yuvaya sığar" % n)
+
+
+## Fotoğraf modu: alçak açıda kamera uzaklaşmaz (ağaçlara girmesin); yüksekte eski sınır.
+func test_photo_zoom_is_capped_low() -> void:
+	assert_true(is_equal_approx(PhotoMode.zoom_max_at(PhotoMode.PITCH_MIN), PhotoMode.LOW_ZOOM_MAX), "en alçakta")
+	assert_true(is_equal_approx(PhotoMode.zoom_max_at(PhotoMode.LOW_PITCH), PhotoMode.ZOOM_MAX), "30°de eski sınır")
+	assert_true(is_equal_approx(PhotoMode.zoom_max_at(PhotoMode.PITCH_MAX), PhotoMode.ZOOM_MAX), "yukarıda eski sınır")
+
+
 func test_slot_names_exist() -> void:
 	var table := TestDayPanelRows.read()
 	for slot: String in ContentDB.GEAR_SLOTS:

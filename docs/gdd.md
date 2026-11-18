@@ -1132,14 +1132,15 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
   - **Göl sevgisi** ✅ (çayın yanında; §10.5);
   - başlıkta günün sırası ("3. gün");
   - ✅ en altta Dede'nin istekleri (rütbe 2'den sonra; §10.5): yuva başına kart (ikon, ne istendiği, ilerleme "1/3",
-    ödül, değiştir düğmesi; boş yuvada "Yarın yeni istek"). Yeni istek varsa çipte kırmızı rozet; panel açılınca söner.
+    ödül, değiştir düğmesi; boş yuvada "Yarın yeni istek"). Yeni istek varsa Görevler'de kırmızı rozet (önceden çipteydi); bu panel ya da Görevler açılınca söner.
   Panel açıkken saat durur; telefonda küçülmeden sığar.
 - **Sağ üst:** ✅ Görevler (testçi: "oyuna görevler eklenebilir"; Ersin'in istek parşömeni, arka plansız, tek çizim),
   harita, defter, ayarlar (her biri ≥122). Görevler paneli: **İlk adımlar** (ilk balık, ilk satış, Nine'den ilk takım,
   haritadan yeni bir yer, rütbe 2; kayıttan türer, ödülsüz: ekonomi aynı; biten adımda "Görev tamam" bildirimi ve
   rozet; rütbe 1'de beşi, sonra yalnızca bitmemişler; hepsi bitince kalkar) ve **Dede'nin istekleri** (Bugün
-  panelindeki kartların aynısı, değiştir de; rütbe 2'ye kadar kilitli kart). Yeni istekte rozet hem çipte hem
-  Görevler'de; Dede'nin ilk istek sözü "Görevlerine bak".
+  panelindeki kartların aynısı, değiştir de; rütbe 2'ye kadar kilitli kart). Yeni istekte rozet yalnızca
+  Görevler'de (iki rozet iskelede çizim sınırını aşardı); Dede'nin ilk istek sözü "Görevlerine bak". GÖLE BIRAK
+  göründükten 0,4 sn sonra basılır (çekişmedeki dokunuş balığı yanlışlıkla bırakmasın).
 - ✅ **Sol alt:** yürüme halkası (252; sağ kenarı ipucu çubuğunun payının solunda; olta sudayken yok, sandalda yerinde "Kıyıya dön") ve üstünde teknik düğmesi (132).
 - **Sağ alt:** eylem düğmesi (300).
 - **Alt orta:** Dede'nin ipucu çubuğu.

@@ -17,9 +17,13 @@ const WIDTH := 1640.0
 const COLUMNS := 2
 ## Bir yuvanın genişliği (sütun) ve bir takımın karosu (en az 122: dokunma).
 const SLOT_W := 760.0
+## Bir yuvada en çok 6 takım (gear.json: makara, misina, yem, yapay yem 6'şar): hepsi sığsın diye karo daralır
+## (kaydırma yok: gizli kalan takım olmasın, sürüklerken yanlışlıkla takılmasın), en az MIN_ITEM_W (dokunma).
 const ITEM := Vector2(176, 164)
+const MIN_ITEM_W := 122.0
 const ITEM_ICON := 96.0
 const ITEM_GAP := 12
+const TIGHT_GAP := 5
 const SHOP_BUTTON := Vector2(340, 122)
 
 ## Bakılan teknik (open_loadout verir).
@@ -95,7 +99,7 @@ static func owned_for(db: ContentDB, save: SaveData, id: String, slot: String) -
 	return out
 
 
-## Bir yuva: adı (ortaksa "her teknikte") ve sahip olunan takımların karoları (çoksa yana kayar).
+## Bir yuva: adı (ortaksa "her teknikte") ve sahip olunan takımların karoları (çoksa daralır: hepsi görünür).
 func _slot(db: ContentDB, save: SaveData, slot: String) -> Control:
 	var column := VBoxContainer.new()
 	column.name = "Slot_" + slot
@@ -111,26 +115,37 @@ func _slot(db: ContentDB, save: SaveData, slot: String) -> Control:
 		var shared := UiKit.ink(tr("UI_LOADOUT_SHARED"), 24, UiKit.INK_SOFT)
 		shared.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		head.add_child(shared)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(SLOT_W, ITEM.y)
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	column.add_child(scroll)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", ITEM_GAP)
-	scroll.add_child(row)
+	row.custom_minimum_size = Vector2(0.0, ITEM.y)
+	column.add_child(row)
 	var on := Economy.equipped(db, save, slot, technique)
-	for gear_id in owned_for(db, save, technique, slot):
-		row.add_child(_item(db, save, gear_id, gear_id == on))
+	var owned := owned_for(db, save, technique, slot)
+	var gap := gap_for(owned.size())
+	row.add_theme_constant_override("separation", gap)
+	var width := item_width(owned.size())
+	for gear_id in owned:
+		row.add_child(_item(db, save, gear_id, gear_id == on, width))
 	return column
 
 
+## Yuvadaki karo sayısına göre aralık ve karonun genişliği: dört karo tam boyda, fazlası SLOT_W'ye sığacak kadar dar.
+static func gap_for(count: int) -> int:
+	return ITEM_GAP if count <= 4 else TIGHT_GAP
+
+
+static func item_width(count: int) -> float:
+	if count <= 4:
+		return ITEM.x
+	var gap := gap_for(count)
+	return clampf(floorf((SLOT_W - gap * (count - 1)) / count), MIN_ITEM_W, ITEM.x)
+
+
 ## Bir takımın karosu: resmi ve adı (yemde kalan sayısı); takılıysa yeşil kenarlı, değilse dokununca takılır.
-func _item(db: ContentDB, save: SaveData, gear_id: String, equipped: bool) -> Control:
+func _item(db: ContentDB, save: SaveData, gear_id: String, equipped: bool, width: float) -> Control:
 	var item := db.gear_item(gear_id)
 	var b := Button.new()
 	b.name = "Item_" + gear_id
-	b.custom_minimum_size = ITEM
+	b.custom_minimum_size = Vector2(width, ITEM.y)
 	b.focus_mode = Control.FOCUS_NONE
 	var edge := ShopPanel.BETTER if equipped else UiKit.CREAM_EDGE
 	var style := UiKit.card_style(edge, 22, UiKit.CREAM_CARD, 6 if equipped else 3)
@@ -160,8 +175,8 @@ func _item(db: ContentDB, save: SaveData, gear_id: String, equipped: bool) -> Co
 	var text := tr("GEAR_" + gear_id)
 	if str(item["category"]) == "bait" and int(item["pack"]) > 0:
 		text = "%s ×%d" % [text, int(save.baits.get(gear_id, 0))]
-	var name_label := UiKit.ink(text, 21, UiKit.INK, HORIZONTAL_ALIGNMENT_CENTER)
-	name_label.custom_minimum_size = Vector2(ITEM.x - 16.0, 0)
+	var name_label := UiKit.ink(text, 21 if width >= ITEM.x else 19, UiKit.INK, HORIZONTAL_ALIGNMENT_CENTER)
+	name_label.custom_minimum_size = Vector2(width - 16.0, 0)
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(name_label)

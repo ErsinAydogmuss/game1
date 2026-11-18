@@ -498,6 +498,7 @@ func _start_session() -> void:
 	_sync_bottle()
 	fish_jump.clear()
 	_quick_catch = -1.0
+	_quick_choice = false
 	_announced.clear()
 	_legend_look = 0.0
 	camera.pitch = FollowCamera.PITCH
@@ -1561,15 +1562,14 @@ func _offer_golden() -> void:
 	_sync_request_badge()
 
 
-## Çipin rozeti: Bugün panelinin son açılışından sonra gelen (görülmemiş) bir istek var (altın istek de).
+## Görevler'in rozeti: Bugün ya da Görevler panelinin son açılışından sonra gelen (görülmemiş) bir istek (altın istek
+## de) ya da Görevler'in son açılışından beri biten ilk adım. Saat çipinde rozet yok (tek rozet: çizim sınırı).
 func _sync_request_badge() -> void:
 	var save := GameState.save
 	var seen := int(save.flags.get(REQ_SEEN_FLAG, 0))
 	var unseen := false
 	for r in save.requests:
 		unseen = unseen or int(r["serial"]) >= seen
-	hud.world_badge = unseen
-	# Görevler: görülmemiş istek ya da panel son açılıştan beri biten ilk adım.
 	hud.tasks_badge = unseen or _steps_unviewed()
 
 
@@ -1600,7 +1600,7 @@ func _check_steps() -> void:
 		return
 	for id in fresh:
 		FirstSteps.mark_seen(save, id)
-		hud.toast_later(tr("UI_STEP_DONE") % tr(str(FirstSteps.STEP_KEYS[id])), UiKit.ACCENT, "equip", "star", "step")
+		hud.toast_later(tr("UI_STEP_DONE") % tr(str(FirstSteps.STEP_KEYS[id])), UiKit.ACCENT, "equip", "star", "step_" + id)
 	hud.pulse_tasks()
 	GameState.save_game()
 	_sync_request_badge()
@@ -1792,7 +1792,7 @@ func _sync_music() -> void:
 
 
 ## Dede'nin bekleyen sözlerinden sıradaki (her biri bir kez; bayrak söylenince kayda): önce Dede'nin
-## istekleri (ilk istekler: saate dokun, çip nabız gibi atar; biten istek: aferin), sonra ilk altın istek,
+## istekleri (ilk istekler: Görevlerine bak, Görevler nabız gibi atar; biten istek: aferin), sonra ilk altın istek,
 ## suda yeni bir şişe, final hazır ("bu gece sis basacak"), Nine'nin feneri (ilk gece), ilk kez çıkan çöp
 ## eşyası, göl sevgisinin seviyesi (LOVE_LINES), hava (bulut, yağmur, sis; yağmurlu gece fırtına: Kocabaş'ın
 ## gecesi), en son vakit (öğle, akşam, yeni günün sabahı). Söylediyse true (sırada başkası olabilir).
@@ -1802,19 +1802,18 @@ func _world_line() -> bool:
 	if not save.flags.has(REQ_TOLD_FLAG) and not Requests.daily(db, save).is_empty():
 		save.flags[REQ_TOLD_FLAG] = true
 		_say("UI_DEDE_REQ_FIRST")
-		hud.pulse_world()
 		hud.pulse_tasks()
 		return true
 	if _request_done:
 		_request_done = false
 		_say_request_done()
 		return true
-	# Gölün Sırrı: ilk altın istek (Dede eski haritasını anlatır; çip nabız gibi atar), suda yeni bir şişe.
+	# Gölün Sırrı: ilk altın istek (Dede eski haritasını anlatır; Görevler nabız gibi atar), suda yeni bir şişe.
 	if not save.flags.has(GOLDEN_TOLD_FLAG) and not Requests.golden(db, save).is_empty():
 		save.flags[GOLDEN_TOLD_FLAG] = true
 		_say("UI_DEDE_GOLDEN_FIRST")
 		_line_time = ADVICE_TIME
-		hud.pulse_world()
+		hud.pulse_tasks()
 		return true
 	var letter := save.letters + 1
 	if bottle.visible and not save.flags.has(BOTTLE_FLAG % letter):
@@ -3889,12 +3888,15 @@ func _build_ui() -> void:
 	fade = Fade.new()
 	top.add_child(fade)
 	hud.book_pressed.connect(func() -> void:
+		# Balık eldeyken (kısa yakalama): önce biter, balık kovada (panel açıkken seçim donup boş ele kalmasın).
+		_end_quick_catch()
 		input.release_all()
 		book_panel.open_book())
 	hud.shore_pressed.connect(func() -> void:
 		if session.state == FishingSession.State.IDLE and not _card_up():
 			_return_to_shore())
 	hud.map_pressed.connect(func() -> void:
+		_end_quick_catch()
 		if session.state != FishingSession.State.IDLE or _card_up():
 			return
 		input.release_all()
@@ -3942,6 +3944,7 @@ func _build_ui() -> void:
 		_forget_pickups()
 		technique_panel.open())
 	hud.settings_pressed.connect(func() -> void:
+		_end_quick_catch()
 		input.release_all()
 		session.release()
 		_stop_loops()

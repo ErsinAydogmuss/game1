@@ -25,6 +25,10 @@ const PITCH_MIN := deg_to_rad(10.0)
 const PITCH_MAX := deg_to_rad(72.0)
 const ZOOM_MIN := 0.35
 const ZOOM_MAX := 1.6
+## Alçak açıda uzak kamera ağaçların ve dükkânın içine girerdi (ağaçlar balıkçının durabileceği yerden kamera
+## tarafında ~9 m'ye kadar tutulur): eğim LOW_PITCH'in altına indikçe en uzak zoom LOW_ZOOM_MAX'a iner.
+const LOW_PITCH := deg_to_rad(30.0)
+const LOW_ZOOM_MAX := 0.7
 const ZOOM_STEP := 0.8
 ## Sürüklemenin açıya oranı (radyan / birim; ekranın 1080'lik yüksekliğinde).
 const DRAG_RATE := 0.0028
@@ -226,7 +230,13 @@ func view_target() -> Vector3:
 
 func _set_zoom(value: float) -> void:
 	Sounds.play("ui_tap")
-	_zoom = clampf(value, ZOOM_MIN, ZOOM_MAX)
+	_zoom = clampf(value, ZOOM_MIN, zoom_max_at(_pitch))
+
+
+## Bu eğimde en uzak zoom (alçakta kamera ağaçlara girmesin).
+static func zoom_max_at(pitch: float) -> float:
+	var t := clampf(inverse_lerp(PITCH_MIN, LOW_PITCH, pitch), 0.0, 1.0)
+	return lerpf(LOW_ZOOM_MAX, ZOOM_MAX, t)
 
 
 ## Sürükleme: yatayda döndürür, dikeyde eğer (ekranın yüksekliğine göre aynı hız).
@@ -234,6 +244,7 @@ func rotate_by(relative: Vector2) -> void:
 	var rate := DRAG_RATE * 1080.0 / maxf(1.0, get_viewport_rect().size.y)
 	_yaw = clampf(_yaw - relative.x * rate, -YAW_RANGE, YAW_RANGE)
 	_pitch = clampf(_pitch - relative.y * rate, PITCH_MIN, PITCH_MAX)
+	_zoom = minf(_zoom, zoom_max_at(_pitch))
 
 
 func _gui_input(event: InputEvent) -> void:

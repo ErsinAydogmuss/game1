@@ -1138,6 +1138,24 @@ func _check_loadout() -> void:
 			and not is_equal_approx(_session().gear.reel_speed, reel_before))
 	await _tap_control(loadout.find_child("Item_" + before, true, false) as Control)
 	await _wait_frames(3)
+	# Bütün makaralar sende (6): hepsi görünür, panelin içinde, en az 122 (kaydırma yok).
+	for g in db.gear_in("reel"):
+		if not str(g["id"]) in save.owned and int(g["price"]) > 0:
+			save.owned.append(str(g["id"]))
+	loadout.refresh()
+	await _wait_frames(3)
+	var box := loadout.panel_rect()
+	var shown := 0
+	var small := false
+	for g in db.gear_in("reel"):
+		var tile := loadout.find_child("Item_" + str(g["id"]), true, false) as Control
+		if tile != null and tile.is_visible_in_tree() and box.encloses(tile.get_global_rect()):
+			shown += 1
+			small = small or minf(tile.get_global_rect().size.x, tile.get_global_rect().size.y) < 121.5
+	_check("bütün makaralar sende: %d/%d karo görünür ve panelin içinde, en az 122; panel küçülmeden sığar (%.2f)" % [
+			shown, db.gear_in("reel").size(), loadout.fit_scale()], shown == db.gear_in("reel").size() and not small
+			and loadout.fit_scale() >= 0.999)
+	await _shot("10b_takim_makaralar")
 	loadout.close_panel()
 	await _wait(0.3)
 	# Öteki tekniğin karosuna dokun (kamışı varsa): onun Takım paneli.
@@ -1426,6 +1444,13 @@ func _check_quick_choice() -> void:
 		match choice:
 			"release":
 				var r := button.get_global_rect()
+				# Çıkar çıkmaz (çekişmedeki dokunuşun devamı gibi) basmak bırakmaz: kısa koruma (Hud.RELEASE_GUARD).
+				await _tap_control(button)
+				await _wait_frames(2)
+				_check("GÖLE BIRAK çıkar çıkmaz basılınca bırakmaz (balık kovada, seçim sürüyor)",
+						save.bucket.size() == count + 1 and button.is_visible_in_tree()
+						and _state() == FishingSession.State.CAUGHT)
+				await _wait(Hud.RELEASE_GUARD)
 				await _shot("06b_elde_secim")
 				_check_buttons()
 				await _tap_control(button)
@@ -2991,7 +3016,7 @@ func _play_tasks() -> void:
 	await _wait(0.5)
 	var draws := int((await _measure_draws())["draws"])
 	print("ÇİZİM Görevler rozeti: %d" % draws)
-	_check("Görevler ve çip rozetiyle iskelede en çok %d çizim (%d)" % [TOUR_DRAWS, draws], hud.tasks_badge
+	_check("Görevler'in rozetiyle iskelede en çok %d çizim (%d)" % [TOUR_DRAWS, draws], hud.tasks_badge
 			and draws > 0 and draws <= TOUR_DRAWS)
 	# 3) Panel: rütbe adımı yıldızlı, istek kartları; açılınca rozet söner.
 	await _tap_control(button)
@@ -3009,7 +3034,7 @@ func _play_tasks() -> void:
 			panel.find_child("Step_rank", true, false) == null and count_now != null
 			and count_now.text == "2/%d" % FirstSteps.STEPS.size() and open_steps == FirstSteps.STEPS.size() - 2
 			and cards == db.requests.slots and panel.fit_scale() >= 0.999 and _panel_inside(panel)
-			and not hud.tasks_badge and not hud.world_badge)
+			and not hud.tasks_badge)
 	_check_panel_buttons(panel, "Görevler panelinin düğmeleri (isteklerle)")
 	await _shot("03_gorevler_istekler")
 	# 4) Değiştir panelden de: yeni istek, not "Yarın yine".
@@ -3045,7 +3070,7 @@ func _play_requests() -> void:
 	var hud := _hud()
 	var day_panel: DayPanel = main.get("day_panel")
 	var toast: Label = hud.get("_toast")
-	var badge: Control = hud.get("_world_badge")
+	var badge: Control = hud.get("_tasks_badge")
 	var spot := str(main.get("spot_id"))
 	# Kartsız yakalamalar: bütün türler bilinir, rekor kırılmaz.
 	for f in db.fish:
@@ -3058,21 +3083,22 @@ func _play_requests() -> void:
 	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
 	await _wait(0.4)
 	var box := day_panel.find_child("Requests", true, false) as Control
-	_check("rütbe 1'de istek yok: çipte rozet yok, Bugün panelinde istek bölümü gizli", day_panel.visible
-			and save.requests.is_empty() and not hud.world_badge and box != null and not box.is_visible_in_tree())
+	_check("rütbe 1'de istek yok: Görevler'de rozet yok, Bugün panelinde istek bölümü gizli", day_panel.visible
+			and save.requests.is_empty() and not hud.tasks_badge and box != null and not box.is_visible_in_tree())
 	day_panel.close_panel()
 	await _wait(0.4)
-	# 2) Rütbe 2'yi getiren balık: yuvalar dolar, çipte rozet; Dede saate dokunmayı söyler, çip nabız gibi atar.
+	# 2) Rütbe 2'yi getiren balık: yuvalar dolar, Görevler'de rozet (tek rozet: saat çipinde yok); Dede Görevler'i
+	# söyler, Görevler nabız gibi atar.
 	var caught := await _catch_at_dock("rudd", 300_000)
 	await _wait_frames(2)
-	_check("rütbe 2'yi getiren balıkla %d istek, çipte rozet" % save.requests.size(), caught
+	_check("rütbe 2'yi getiren balıkla %d istek, Görevler'de rozet" % save.requests.size(), caught
 			and Rank.rank(db, save) == db.requests.unlock_rank and save.requests.size() == db.requests.slots
-			and hud.world_badge)
+			and hud.tasks_badge)
 	var told := await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_REQ_FIRST", 20.0)
 	var view := get_viewport().get_visible_rect()
-	_check("Dede saate dokunmayı söyler, çip nabız gibi atar, rozet çipin köşesinde ve ekranda (%s, %s)" % [
-			main.get("_hint_shown"), badge.get_global_rect()], told and float(hud.get("_world_pulse")) > 0.0
-			and badge.is_visible_in_tree() and badge.get_global_rect().intersects(hud.world_button.hit_rect())
+	_check("Dede Görevler'i söyler, Görevler nabız gibi atar, rozet onun köşesinde ve ekranda (%s, %s)" % [
+			main.get("_hint_shown"), badge.get_global_rect()], told and float(hud.get("_tasks_pulse")) > 0.0
+			and badge.is_visible_in_tree() and badge.get_global_rect().intersects(hud.tasks_button.get_global_rect())
 			and view.encloses(badge.get_global_rect()))
 	await _shot("01_ilk_istekler")
 	var hint: Control = hud.get("_hint")
@@ -3080,7 +3106,7 @@ func _play_requests() -> void:
 	await _wait(0.5)
 	var draws := int((await _measure_draws())["draws"])
 	print("ÇİZİM istek rozeti: %d" % draws)
-	_check("çipte rozetle iskelede en çok %d çizim (%d)" % [TOUR_DRAWS, draws], badge.is_visible_in_tree()
+	_check("Görevler'in rozetiyle iskelede en çok %d çizim (%d)" % [TOUR_DRAWS, draws], badge.is_visible_in_tree()
 			and draws > 0 and draws <= TOUR_DRAWS)
 	# 3) Bugün paneli: küçülmeden sığar; istek kartları (yazı en çok iki satır, ilerleme 0/N, değiştir düğmesi);
 	# açılınca rozet söner.
@@ -3109,7 +3135,7 @@ func _play_requests() -> void:
 	_check("Bugün paneli telefonda küçülmeden sığar (%.3f, %s)" % [day_panel.fit_scale(), day_panel.panel_rect()],
 			day_panel.fit_scale() >= 0.999 and _panel_inside(day_panel))
 	_check_panel_buttons(day_panel, "Bugün panelinin düğmeleri")
-	_check("panel açılınca rozet söner", not hud.world_badge and not badge.visible)
+	_check("Bugün paneli açılınca da rozet söner", not hud.tasks_badge and not badge.visible)
 	await _shot("02_bugun_istekler")
 	day_panel.close_panel()
 	await _wait(0.4)
@@ -3211,7 +3237,7 @@ func _play_requests() -> void:
 			Requests.key_of(old) if not old.is_empty() else "-", Requests.key_of(fresh) if not fresh.is_empty() else "-",
 			tr("UI_REQ_REROLL_USED")], can and not old.is_empty() and not fresh.is_empty()
 			and int(fresh["serial"]) != int(old["serial"]) and Requests.key_of(fresh) != Requests.key_of(old)
-			and note != null and note.text == tr("UI_REQ_REROLL_USED") and all_off and not hud.world_badge)
+			and note != null and note.text == tr("UI_REQ_REROLL_USED") and all_off and not hud.tasks_badge)
 	await _shot("04_degistir")
 	day_panel.close_panel()
 	await _wait(0.4)
@@ -3236,7 +3262,7 @@ func _play_requests() -> void:
 	_check("yeni gün: %d. yuva doldu, \"%s\" \"%s\"dan sonra, rozet (%s)" % [done_slot, new_day, morning, ", ".join(seen)],
 			done_slot >= 0 and not Requests.find_slot(save, done_slot).is_empty()
 			and save.request_day == today + 1 and seen.has(morning) and seen.find(morning) < seen.find(new_day)
-			and hud.world_badge)
+			and hud.tasks_badge)
 	await _shot("05_yeni_gun")
 	# 7) İSTEK BİTİR (geliştirme sürümü, ölçüm açıkken): ilk bitmemiş istek biter, gerçek akışla öder; bildirim
 	# panel kapanınca.

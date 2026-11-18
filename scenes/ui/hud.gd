@@ -47,6 +47,9 @@ const ACTIONS := {
 ## Kartsız kısa yakalamada eylem düğmesinin üstündeki GÖLE BIRAK (eylem düğmesinin genişliğinde).
 const RELEASE_SIZE := Vector2(300, 150)
 const RELEASE_GAP := 16.0
+## GÖLE BIRAK göründükten bu kadar sn sonra basılır: çekişmede ekranın her yerine dokunan oyuncunun balık sudan
+## çıkarkenki dokunuşu balığı yanlışlıkla bırakmasın.
+const RELEASE_GUARD := 0.4
 const TOAST_TIME := 1.7
 ## Bildirimin yanındaki ikonun boyu.
 const TOAST_ICON := 104.0
@@ -68,10 +71,9 @@ const TECH_SIZE := Vector2(132, 132)
 const TECH_PULSE := 4.0
 ## Saat çipinin dokunma kutusunun yüksekliği (en az 122): hap ince, kutu onun altına uzanır.
 const CHIP_TOUCH := 122.0
-## Dede'nin yeni istekleri: saat çipinin sağ üst köşesindeki rozet (yuvarlak; tek çizim) ve istekler açılınca
-## çipin nabzı (sn).
+## Görevler'in rozeti (yuvarlak; tek çizim) ve nabızların süresi (sn).
 const BADGE_SIZE := 30.0
-const WORLD_PULSE := 4.0
+const TASKS_PULSE := 4.0
 
 var settings_button: TouchButton
 ## Görevler: Ersin'in istek parşömeni, arka plansız (tek çizim: iskelede 150 çizim sınırı); rozeti tasks_badge.
@@ -126,8 +128,6 @@ var _time_label: Label
 ## Saat çipinin vakit ve hava ikonları (tek çizim).
 var _sky: ChipSky
 var _world_key: String = ""
-## Çipin rozeti (yeni istek; konumu her kare çipin köşesinden: kapsayıcı dizmesin diye top_level).
-var _world_badge: Panel
 var _fps: Label
 var _hint: PanelContainer
 var _hint_label: Label
@@ -157,8 +157,9 @@ var _line_out: bool = false
 var _in_boat: bool = false
 var _map_pulse: float = 0.0
 var _tech_pulse: float = 0.0
-var _world_pulse: float = 0.0
 var _tasks_pulse: float = 0.0
+## GÖLE BIRAK'ın görünür olduğu süre (RELEASE_GUARD).
+var _release_age: float = 0.0
 var _tasks_icon: GameIcon
 var _tasks_badge: Panel
 var _clock: float = 0.0
@@ -228,12 +229,9 @@ func _process(delta: float) -> void:
 			_tech_pulse = maxf(0.0, _tech_pulse - delta)
 		technique_button.pivot_offset = technique_button.size * 0.5
 		technique_button.scale = Vector2.ONE * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _tech_pulse))
-	if _world_pulse > 0.0:
-		if _toast_hold <= 0.0:
-			_world_pulse = maxf(0.0, _world_pulse - delta)
-		_world_chip.pivot_offset = _world_chip.size * 0.5
-		_world_chip.scale = Vector2.ONE * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _world_pulse))
 	# Görevler: basılıyken biraz küçülür (arka planı yok), nabız gibi atar (ilk istekler, biten ilk adım).
+	if release_button.visible:
+		_release_age += delta
 	if _tasks_pulse > 0.0 and _toast_hold <= 0.0:
 		_tasks_pulse = maxf(0.0, _tasks_pulse - delta)
 	var tasks_scale := (0.9 if tasks_button.held else 1.0) * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _tasks_pulse))
@@ -243,10 +241,6 @@ func _process(delta: float) -> void:
 	if _tasks_badge.is_visible_in_tree():
 		var box := tasks_button.get_global_rect()
 		_tasks_badge.global_position = Vector2(box.end.x - BADGE_SIZE * 0.9, box.position.y)
-	# Rozet çipin sağ üst köşesinde (çip gizliyse o da gizli: görünürlüğü üstten gelir).
-	if _world_badge.is_visible_in_tree():
-		var corner := _world_chip.get_global_rect()
-		_world_badge.global_position = Vector2(corner.end.x - BADGE_SIZE * 0.8, corner.position.y - BADGE_SIZE * 0.25)
 	# VUR! anında eylem düğmesi nabız gibi atar.
 	if _action_kind == "hook":
 		action_button.pivot_offset = action_button.size * 0.5
@@ -359,7 +353,7 @@ func set_line_out(on: bool) -> void:
 ## görünür kalırlar (saat ve kova okunur), dokunuş oyuna geçer: olta sudayken eylem, geri sararken saklanan
 ## atış.
 func set_idle_touch(on: bool) -> void:
-	for b: TouchButton in [world_button, bucket_button]:
+	for b: TouchButton in [world_button, bucket_button, tasks_button]:
 		if b != null:
 			b.takes_touch = on
 
@@ -383,28 +377,17 @@ func pulse_technique() -> void:
 
 ## Dede'nin istekleri açıldı: saat çipi bir süre nabız gibi atar.
 func pulse_tasks() -> void:
-	_tasks_pulse = WORLD_PULSE
+	_tasks_pulse = TASKS_PULSE
 
 
-## Görevler düğmesinin rozeti (görülmemiş istek ya da haberi verilmiş ama bakılmamış ilk adım; main verir).
+## Görevler düğmesinin rozeti (görülmemiş istek ya da haberi verilmiş ama bakılmamış ilk adım; main verir). Tek
+## rozet: saat çipinde rozet yok (iki rozet iskelede 150 çizim sınırını aşardı).
 var tasks_badge: bool = false:
 	set(value):
 		tasks_badge = value
 		if _tasks_badge != null:
 			_tasks_badge.visible = value
 
-
-func pulse_world() -> void:
-	_world_pulse = WORLD_PULSE
-
-
-## Saat çipinin rozeti: Dede'nin görülmemiş yeni isteği var (Bugün paneli açılınca söner; çekişmede çip
-## gizli, rozet de).
-var world_badge: bool = false:
-	set(value):
-		world_badge = value
-		if _world_badge != null:
-			_world_badge.visible = value
 
 
 ## Elindeki teknik: düğmenin ikonu.
@@ -481,6 +464,7 @@ func set_catch_choice(on: bool) -> void:
 		return
 	if on:
 		release_button.set_text(tr("UI_CARD_RELEASE"))
+		_release_age = 0.0
 	release_button.visible = on
 
 
@@ -625,8 +609,6 @@ func _build_world_chip() -> void:
 	_time_label.custom_minimum_size.x = ceilf(widest * 4.0
 			+ font.get_string_size(":", HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.SIZE_BODY + 4).x) + 4.0
 	row.add_child(_time_label)
-	_world_badge = _badge("WorldBadge")
-	_world_chip.add_child(_world_badge)
 
 
 ## Kırmızı yuvarlak rozet (tek çizim; top_level: kapsayıcı yerleştirmez, yeri _process'te).
@@ -720,7 +702,9 @@ func _build_bottom() -> void:
 	release_button = TouchButton.make("", "release", UiKit.SECONDARY, RELEASE_SIZE, UiKit.SIZE_BODY, 64.0)
 	release_button.name = "QuickRelease"
 	release_button.size_flags_horizontal = Control.SIZE_SHRINK_END
-	release_button.pressed.connect(func() -> void: release_pressed.emit())
+	release_button.pressed.connect(func() -> void:
+		if _release_age >= RELEASE_GUARD:
+			release_pressed.emit())
 	release_button.visible = false
 	right.add_child(release_button)
 	var under := Control.new()
