@@ -2,8 +2,9 @@ class_name TechniquePanel
 extends Dialog
 ## Takım çantası (docs/gdd.md §10.3, §10.7): sol alttaki teknik düğmesiyle açılır (olta boştayken).
 ## Her teknik bir karo: ikonu, adı, nasıl oynandığı ve o tekniğin kuşanılmış kamışı ile küçük
-## takımı (makara ve misina her teknikte ortak). Karonun tek düğmesi:
-## - ELİNDE: elindeki teknik;
+## takımı (makara ve misina her teknikte ortak). Kamışı olan tekniğin karosuna dokununca Takım paneli
+## (LoadoutPanel: sahip olunan takımı takar; loadout_requested). Karonun tek düğmesi:
+## - TAKIM: elindeki teknik (yeşil halkalı karo); Takım panelini açar;
 ## - SEÇ: hazır (kamışı alınmış): teknik ele geçer (technique_selected);
 ## - NİNE'DE: rütbesi yetiyor ama kamışı yok: dükkân o tekniğin Kamış sekmesinde açılır
 ##   (shop_requested);
@@ -17,6 +18,8 @@ extends Dialog
 ## Başlıkta "?": rehber Teknikler sayfasında açılır (help_requested).
 
 signal technique_selected(id: String)
+## Karoya (ya da elindeki tekniğin TAKIM düğmesine) dokunuldu: o tekniğin Takım paneli.
+signal loadout_requested(id: String)
 signal shop_requested(id: String)
 signal trap_requested
 
@@ -120,6 +123,14 @@ func _tile(id: String) -> Control:
 	var button := _button(id, state)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(button)
+	# Kamışı olan tekniğin karosu dokunulur (düğmenin dışı): Takım paneli.
+	if state in ["active", "ready", "zone"]:
+		panel.mouse_filter = Control.MOUSE_FILTER_STOP
+		_pass_through(column, button)
+		panel.gui_input.connect(func(event: InputEvent) -> void:
+			var click := event as InputEventMouseButton
+			if click != null and click.button_index == MOUSE_BUTTON_LEFT and not click.pressed:
+				_open_loadout(id))
 	if style is StyleBoxTexture and state == "active":
 		var ring := PanelContainer.new()
 		ring.add_theme_stylebox_override("panel", UiKit.ring_style(ShopPanel.BETTER))
@@ -242,12 +253,29 @@ func _trap_button(state: String) -> Button:
 	return b
 
 
+## Karonun içindekiler (düğme dışında) dokunuşu karoya bırakır.
+static func _pass_through(node: Node, keep: Control) -> void:
+	for child in node.get_children():
+		if child == keep:
+			continue
+		if child is Control:
+			(child as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_pass_through(child, keep)
+
+
+func _open_loadout(id: String) -> void:
+	Sounds.play("ui_tap")
+	loadout_requested.emit(id)
+
+
 func _button(id: String, state: String) -> Button:
 	var b: Button
 	match state:
 		"active":
-			b = UiKit.button(tr("UI_BAG_ACTIVE"), UiKit.SUCCESS, UiKit.SIZE_SMALL + 4, BUTTON)
-			b.pressed.connect(func() -> void: Sounds.play("ui_tap"))
+			# Elindeki teknik (yeşil halkalı karo): düğmesi Takım paneli.
+			b = UiKit.button(tr("UI_BAG_GEAR"), UiKit.SUCCESS, UiKit.SIZE_SMALL + 4, BUTTON)
+			b.icon = GameIcon.texture_for("tackle_bag")
+			b.pressed.connect(func() -> void: _open_loadout(id))
 		"ready":
 			b = UiKit.button(tr("UI_BAG_SELECT"), UiKit.SECONDARY, UiKit.SIZE_SMALL + 4, BUTTON)
 			b.pressed.connect(func() -> void:

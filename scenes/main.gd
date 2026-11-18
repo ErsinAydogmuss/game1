@@ -179,6 +179,7 @@ var book_panel: BookPanel
 var map_panel: MapPanel
 ## Takım çantası (sol alttaki teknik düğmesi): teknik seçilir, tuzak bırakılır.
 var technique_panel: TechniquePanel
+var loadout_panel: LoadoutPanel
 ## Boş tuzağın paneli (bekle ya da kaldır).
 var trap_panel: TrapPanel
 var aquarium_panel: AquariumPanel
@@ -3748,6 +3749,18 @@ func _build_ui() -> void:
 		else:
 			shop_panel.open_shop("rod", technique, far))
 	technique_panel.trap_requested.connect(_place_trap)
+	# Takım paneli çantanın üstünde; kapanınca çanta yeni takımı gösterir.
+	loadout_panel = LoadoutPanel.new()
+	layer.add_child(loadout_panel)
+	technique_panel.loadout_requested.connect(loadout_panel.open_loadout)
+	loadout_panel.gear_changed.connect(_on_gear_changed)
+	loadout_panel.closed.connect(func() -> void:
+		if technique_panel.visible:
+			technique_panel.refresh())
+	loadout_panel.shop_requested.connect(func(technique: String) -> void:
+		technique_panel.close_panel()
+		var far := in_boat or angler.global_position.distance_to(nine.global_position) > SHOP_NEAR
+		shop_panel.open_shop("rod", technique, far))
 	trap_panel = TrapPanel.new()
 	layer.add_child(trap_panel)
 	trap_panel.remove_requested.connect(_on_trap_remove)

@@ -1090,9 +1090,68 @@ func _play_shop() -> void:
 	await _wait(0.3)
 	await _shot("09_yem_bitti")
 	_check_buttons()
+	await _check_loadout()
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Takım Çantası'nda takım (testçi: "misina, kamış, yem çantada değişmiyor; Nine'ye gitmek gerekiyor"): elindeki
+## tekniğin TAKIM düğmesi Takım panelini açar (küçülmeden sığar, düğmeler büyük ve güvenli alanda; yuvalar: kamış,
+## iğne, şamandıra, yem, makara, misina); sahip olunan başka makaraya dokun → takılır, oturumun takımı değişir;
+## öteki tekniğin karosuna dokunmak da açar; NİNE'DE dükkânı o tekniğin Kamış sekmesinde açar.
+func _check_loadout() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var bag: TechniquePanel = main.get("technique_panel")
+	var loadout: LoadoutPanel = main.get("loadout_panel")
+	var shop: ShopPanel = main.get("shop_panel")
+	# Çanta (teknik düğmesi rütbe 2'de görünür: bot doğrudan açar).
+	bag.open()
+	await _wait(0.4)
+	await _tap_control(bag.find_child("Button_float", true, false) as Control)
+	await _wait(0.4)
+	var slots := PackedStringArray()
+	for slot in LoadoutPanel.slots_of(db, "float"):
+		if loadout.find_child("Slot_" + slot, true, false) != null:
+			slots.append(slot)
+	_check("çantada elindeki tekniğin TAKIM düğmesi → Takım paneli küçülmeden sığar (%.2f; %s)" % [loadout.fit_scale(),
+			",".join(slots)], loadout.visible and loadout.technique == "float" and loadout.fit_scale() >= 0.999
+			and _panel_inside(loadout) and slots.size() == 6)
+	_check_panel_buttons(loadout, "Takım panelinin düğmeleri")
+	await _shot("10_takim")
+	var before := Economy.equipped(db, save, "reel")
+	var other := ""
+	for id in LoadoutPanel.owned_for(db, save, "float", "reel"):
+		if id != before:
+			other = id
+	var reel_before := _session().gear.reel_speed
+	await _tap_control(loadout.find_child("Item_" + other, true, false) as Control)
+	await _wait_frames(3)
+	_check("Takım panelinde sahip olunan öteki makaraya dokun → takılır, oturumun takımı değişir (%s → %s)" % [before, other],
+			not other.is_empty() and Economy.equipped(db, save, "reel") == other
+			and not is_equal_approx(_session().gear.reel_speed, reel_before))
+	await _tap_control(loadout.find_child("Item_" + before, true, false) as Control)
+	await _wait_frames(3)
+	loadout.close_panel()
+	await _wait(0.3)
+	# Öteki tekniğin karosuna dokun (kamışı varsa): onun Takım paneli.
+	save.owned.append("rod_spin_light")
+	bag.refresh()
+	await _wait_frames(2)
+	var tile := bag.find_child("Tile_spin", true, false) as Control
+	if tile != null:
+		var r := tile.get_global_rect()
+		await _tap(Vector2(r.get_center().x, r.position.y + 90.0))
+		await _wait(0.4)
+	_check("öteki tekniğin karosuna dokun → onun Takım paneli", loadout.visible and loadout.technique == "spin"
+			and loadout.find_child("Slot_lure", true, false) != null and bag.visible)
+	await _tap_control(loadout.find_child("Shop", true, false) as Control)
+	await _wait(0.4)
+	_check("Takım panelinde NİNE'DE → dükkân o tekniğin Kamış sekmesinde", shop.visible and shop.current_tab() == "rod"
+			and shop.technique == "spin" and not loadout.visible and not bag.visible)
+	shop.close_panel()
+	await _wait(0.3)
 
 
 ## Bir paneldeki bütün düğmeler en az 122 birim ve güvenli alanın içinde mi? (Telefon oranında

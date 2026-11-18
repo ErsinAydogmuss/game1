@@ -318,6 +318,18 @@ UI_BAG_TITLE,Tackle Bag,Takım Çantası
 UI_BAG_ACTIVE,In hand,Elinde
 UI_BAG_SELECT,Pick,Seç
 UI_BAG_SHOP,At Nana's,Nine'de
+UI_BAG_GEAR,Gear,Takım
+UI_LOADOUT_TITLE,Gear: %s,Takım: %s
+UI_LOADOUT_SHARED,(every technique),(her teknikte)
+UI_SLOT_rod,Rod,Kamış
+UI_SLOT_reel,Reel,Makara
+UI_SLOT_line,Line,Misina
+UI_SLOT_hook,Hook,İğne
+UI_SLOT_bobber,Float,Şamandıra
+UI_SLOT_bait,Bait,Yem
+UI_SLOT_lure,Lure,Yapay yem
+UI_SLOT_rig,Sinker,Kurşun
+UI_SLOT_fly,Fly,Sinek
 UI_TECH_float,Float,Şamandıra
 UI_TECH_spin,Spinning,Spin
 UI_TECH_float_HOW,"Wait for the bobber to dive, then strike.","Şamandıra dalınca VUR. Sabır ister."
