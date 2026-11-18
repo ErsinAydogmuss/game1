@@ -3068,14 +3068,14 @@ func _cat_target() -> Vector2:
 func _place_cat() -> void:
 	var target := _cat_target()
 	cat.place(target, angler.pos2() - target)
-	_cat_was_hungry = CatRules.is_hungry(GameState.db.rules, GameState.save)
+	_cat_was_hungry = CatRules.wants_food(GameState.db, GameState.save)
 
 
 ## Her kare: kedinin hedefi ve açlığı. İlk açlıkta Dede söyler (olta boşa dönünce: _world_line).
 func _update_cat() -> void:
 	var look := angler.pos2() if not in_boat and zone_id == _cat_zone else _cat_home() + Vector2(0.0, 1.0)
 	cat.go_to(_cat_target(), look)
-	var hungry := CatRules.is_hungry(GameState.db.rules, GameState.save)
+	var hungry := CatRules.wants_food(GameState.db, GameState.save)
 	# Filmde (açılış, bitiş, HİKÂYE) balıklı balon çıkmaz: arayüz ve sözler de gizli.
 	cat.hungry = hungry and _film == null
 	if hungry and not _cat_was_hungry and not GameState.save.flags.has(CAT_HUNGRY_FLAG):
@@ -3090,13 +3090,19 @@ func _on_cat() -> void:
 		return
 	var db := GameState.db
 	var save := GameState.save
-	if CatRules.is_hungry(db.rules, save):
+	if CatRules.wants_food(db, save):
 		var fed := CatRules.feed(db, save)
 		if not fed.is_empty():
 			cat.eat()
 			Sounds.play("cat_eat")
 			Sounds.haptic(25)
-			hud.toast(tr("UI_CAT_ATE") % tr("FISH_" + str(fed["fish"])), UiKit.ACCENT, "fish:" + str(fed["fish"]))
+			# Testçi: "beslemenin bir dönüşü olmalı": dönüşü hediye, kaç besleme kaldığı her seferinde yazar (hediye bu
+			# beslemeyle geldiyse onun bildirimi; hediyeler bittiyse yalnızca yediği).
+			var left := CatRules.feeds_to_gift(db, save)
+			if str(fed["gift_id"]).is_empty() and left > 0:
+				hud.toast(tr("UI_CAT_ATE_NEXT") % left, UiKit.ACCENT, "gift")
+			else:
+				hud.toast(tr("UI_CAT_ATE") % tr("FISH_" + str(fed["fish"])), UiKit.ACCENT, "fish:" + str(fed["fish"]))
 			_cat_was_hungry = false
 			if not save.flags.has(CAT_FED_FLAG):
 				save.flags[CAT_FED_FLAG] = true

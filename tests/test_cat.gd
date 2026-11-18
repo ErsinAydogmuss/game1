@@ -80,3 +80,33 @@ func test_every_fifth_meal_brings_a_gift() -> void:
 		expected.append(floori(float(n) / rules.cat_gift_every) if n % rules.cat_gift_every == 0 else 0)
 	assert_eq(gifts, expected, "her %d beslemede sıradaki hediye (zar yok)" % rules.cat_gift_every)
 	assert_eq(CatRules.gifts(rules, save), 2, "iki hediye kazanıldı")
+
+
+## Testçi: "kediyi beslemenin bir dönüşü olmalı": dönüşü hediyeler; sıradakine kalan besleme her seferinde bilinir,
+## bütün hediyeler gelince Tekir acıkmaz (yemek istemez, beslenmez), dolapta Tekir'in kıyafeti beslemeyle ilerler.
+func test_gifts_are_the_reward() -> void:
+	var db := content()
+	var rules := db.rules
+	var save := _save(0)
+	assert_eq(CatRules.feeds_to_gift(db, save), rules.cat_gift_every, "ilk hediyeye 5 besleme")
+	var gift_id := db.outfits.cat_gift(1)
+	assert_eq(Outfits.progress(db, save, gift_id), Vector2i(0, rules.cat_gift_every), "dolapta 0/5")
+	assert_eq(Outfits.reason(db, gift_id), ["UI_OUTFIT_CAT", [rules.cat_gift_every]], "Tekir'i 5 kez besle")
+	var total := db.outfits.cat_gift_count() * rules.cat_gift_every
+	for meal in total:
+		save.catches += rules.cat_meal_every
+		save.bucket = [{ "fish": "rudd", "size_cm": 20, "stars": 1 }]
+		assert_true(CatRules.wants_food(db, save), "%d. beslemeden önce yemek ister" % (meal + 1))
+		var fed := CatRules.feed(db, save)
+		assert_true(not fed.is_empty(), "%d. besleme" % (meal + 1))
+		if meal == 2:
+			assert_eq(CatRules.feeds_to_gift(db, save), rules.cat_gift_every - 3, "üç beslemeden sonra kalan")
+	assert_true(CatRules.gifts_done(db, save), "bütün hediyeler geldi")
+	assert_eq(CatRules.feeds_to_gift(db, save), 0, "kalan hediye yok")
+	save.catches += rules.cat_meal_every * 3
+	save.bucket = [{ "fish": "rudd", "size_cm": 20, "stars": 1 }]
+	assert_true(CatRules.is_hungry(rules, save) and not CatRules.wants_food(db, save), "hediyeler bitince acıkmaz")
+	assert_true(CatRules.feed(db, save).is_empty() and save.bucket.size() == 1, "balık yemez, kova aynı")
+	for n in range(1, db.outfits.cat_gift_count() + 1):
+		assert_true(Outfits.unlocked(db, save, db.outfits.cat_gift(n)), "%d. hediye açık" % n)
+

@@ -8,12 +8,32 @@ extends RefCounted
 ##   bekler (ceza yok).
 ## - Her rules.cat_gift_every beslemede sıradaki hediyeyi getirir (sabit sıra, zar yok). Hediyeler kıyafettir
 ##   (4. adım: data/outfits.json'da şartı "cat" olanlar, değerleri sırası: OutfitRules.cat_gift); sayıları besleme
-##   sayısından türer: önceden kazanılan hediye kaybolmaz. Hediyeler bitince Tekir yine yer, hediye getirmez.
+##   sayısından türer: önceden kazanılan hediye kaybolmaz. Hediyeler bitince Tekir artık acıkmaz
+##   (wants_food): yanında durur, dokununca mırlar (testçi: "beslemenin bir dönüşü olmalı"; dönüşü hediyeler, sırası
+##   görünür: feeds_to_gift).
 
 
 ## Acıktı mı?
 static func is_hungry(rules: FishingRules, save: SaveData) -> bool:
 	return save.catches - save.cat_meal_at >= rules.cat_meal_every
+
+
+## Bütün hediyeler geldi mi (sonra Tekir acıkmaz)?
+static func gifts_done(db: ContentDB, save: SaveData) -> bool:
+	return gifts(db.rules, save) >= db.outfits.cat_gift_count()
+
+
+## Yemek istiyor mu: acıktı ve daha getirecek hediyesi var.
+static func wants_food(db: ContentDB, save: SaveData) -> bool:
+	return is_hungry(db.rules, save) and not gifts_done(db, save)
+
+
+## Sıradaki hediyeye kalan besleme (bu beslemeyle gelecekse 1; hediyeler bittiyse 0).
+static func feeds_to_gift(db: ContentDB, save: SaveData) -> int:
+	if gifts_done(db, save):
+		return 0
+	var every := db.rules.cat_gift_every
+	return every - save.cat_fed % every
 
 
 ## Acıkmasına kalan balık (acıktıysa 0).
@@ -35,11 +55,12 @@ static func pick(db: ContentDB, save: SaveData) -> int:
 	return best
 
 
-## Besler: kovadaki en ucuz balık gider, sayaçlar ilerler. Acıkmamışsa ya da kova boşsa {} (kedi bekler).
+## Besler: kovadaki en ucuz balık gider, sayaçlar ilerler. Acıkmamışsa, hediyeleri bittiyse ya da kova boşsa {}
+## (kedi bekler).
 ## Döner: { fish, size_cm, stars, value, fed: toplam besleme, gift: bu beslemeyle gelen hediyenin sırası (1'den;
 ## yoksa 0), gift_id: o hediyenin kıyafeti (hediyeler bittiyse boş) }.
 static func feed(db: ContentDB, save: SaveData) -> Dictionary:
-	if not is_hungry(db.rules, save):
+	if not wants_food(db, save):
 		return {}
 	var index := pick(db, save)
 	if index < 0:

@@ -728,8 +728,9 @@ UI_AQUARIUM_GOT,Aquarium visitors left %s coins,Akvaryuma gelenler %s para bıra
 UI_NINE_AQUARIUM,Tap the tank on my counter! Your fish swim there.,Tezgâhtaki tanka dokun! Balıkların orada yüzüyor.
 UI_NINE_AQUARIUM_COINS,Visitors left %s coins at the tank. Here!,Tanka gelenler %s para bıraktı. Al bakalım!
 UI_CAT_ATE,Yum! Tekir ate: %s,Tekir afiyetle yedi: %s
-UI_DEDE_CAT_HELLO,"That's Tekir, the dock cat. Tekir loves a small fish.","Bu Tekir, iskelenin kedisi. Arada bir balık ister."
-UI_DEDE_CAT_HUNGRY,Tekir is hungry! Tap Tekir to share a small fish.,"Tekir acıktı! Dokun, kovandan küçük bir balık yesin."
+UI_CAT_ATE_NEXT,"Yum! %d more meals, a gift from Tekir!","Afiyet olsun! %d besleme sonra Tekir'den hediye!"
+UI_DEDE_CAT_HELLO,"That's Tekir, the dock cat. Feed Tekir, you'll get gifts!","Bu Tekir, iskelenin kedisi. Beslersen hediye getirir!"
+UI_DEDE_CAT_HUNGRY,"Tekir is hungry! Share a small fish, Tekir brings gifts.","Tekir acıktı! Dokun, balık ver: hediye getirir."
 UI_DEDE_CAT_FED,Good kitty! Tekir really likes you now.,Afiyet olsun! Tekir seni çok sevdi.
 UI_DEDE_CAT_EMPTY,"Tekir is hungry, but your bucket is empty. Catch a fish first.",Tekir aç ama kovan boş. Önce bir balık tut.
 UI_WARDROBE,Wardrobe,Dolap
@@ -765,7 +766,7 @@ UI_OUTFIT_SPECIES,%d species in the book,Defterde %d tür
 UI_OUTFIT_REQUESTS,Finish %d requests,%d istek bitir
 UI_OUTFIT_LOVE,Lake love %d,Göl sevgisi %d
 UI_OUTFIT_KEEPER,Let the Lake Keeper go,Gölün Bekçisi'ni göle bırak
-UI_OUTFIT_CAT,Tekir's gift %d,Tekir'in %d. hediyesi
+UI_OUTFIT_CAT,Feed Tekir %d times,Tekir'i %d kez besle
 UI_OUTFIT_NEW,New outfit: %s! Tap your angler.,Yeni kıyafet: %s! Balıkçına dokun.
 UI_OUTFIT_GIFT,Tekir brought you a gift: %s!,Tekir sana hediye getirdi: %s!
 UI_OUTFIT_NEW_MANY,%d new outfits in the wardrobe! Tap your angler.,Dolapta %d yeni kıyafet! Balıkçına dokun.

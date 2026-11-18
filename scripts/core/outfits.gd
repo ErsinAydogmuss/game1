@@ -42,7 +42,8 @@ static func progress(db: ContentDB, save: SaveData, id: String) -> Vector2i:
 		"keeper":
 			return Vector2i(1 if save.keeper > 0 else 0, 1)
 		"cat":
-			return Vector2i(CatRules.gifts(db.rules, save), value)
+			# Beslemeyle sayılır (dolapta "7/10": kaç besleme kaldığı görünsün); açılma hediyeyle aynı an.
+			return Vector2i(save.cat_fed, value * db.rules.cat_gift_every)
 	return Vector2i(0, 1)
 
 
@@ -54,6 +55,8 @@ static func reason(db: ContentDB, id: String) -> Array:
 	var kind := str(e["unlock"])
 	if kind == "keeper":
 		return ["UI_OUTFIT_KEEPER", []]
+	if kind == "cat":
+		return ["UI_OUTFIT_CAT", [int(e["value"]) * db.rules.cat_gift_every]]
 	return ["UI_OUTFIT_" + kind.to_upper(), [int(e["value"])]]
 
 

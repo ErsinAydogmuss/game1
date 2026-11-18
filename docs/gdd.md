@@ -422,13 +422,18 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
     çizgi yerine kenar koyulaşması, gölgesiz: tek çizim. Gerçeğinden iri (oyun kamerasından seçilsin).
   - İskele koyunda balıkçının ekranda yanında yürür (kıyı yolundan; uzaksa koşar): arkasında kalsa balıkçının
     gövdesi örterdi. Balıkçı başka bölgeye ya da sandala geçince evine döner (iskelenin başı, çimende).
-  - Dokununca mırlar: kalpli balon, küçük bir sıçrayış, ses ve titreşim; ilk seferde Dede tanıştırır.
+  - Dokununca mırlar: kalpli balon, küçük bir sıçrayış, ses ve titreşim; ilk seferde Dede tanıştırır ("Bu Tekir,
+    iskelenin kedisi. Beslersen hediye getirir!").
   - Son beslenmeden beri 8 balık tutulunca acıkır (`rules.json` `cat`; gerçek saat değil: oyuncu yokken aç kalmaz,
     ceza yok). Açken arada bir balıklı balon çıkar; ilk seferde Dede nasıl besleneceğini söyler. Dokununca
     kovadaki en ucuz balığı yer (bildirim, kalp); kova boşsa bekler.
   - ✅ Her 5 beslemede sıradaki hediyeyi getirir (sabit sırayla, zar yok): hasır şapka, yeşil yelek, çiçekli kaplama,
     pembe yelek, çiçek tacı ("Tekir sana hediye getirdi: Hasır şapka!"). Hediyeler besleme sayısından türer:
-    önceden beslenen kedinin hediyeleri geriye dönük açılır. Beş hediyeden sonra Tekir yine yer, hediye getirmez.
+    önceden beslenen kedinin hediyeleri geriye dönük açılır.
+  - ✅ **Hediye görünür** (testçi: "kediyi beslemenin bize bir dönüşü yok"; dönüşü vardı ama söylenmiyordu): her
+    beslemede "Afiyet olsun! 3 besleme sonra Tekir'den hediye!", Dede'nin açlık sözü "Dokun, balık ver: hediye
+    getirir", dolapta Tekir'in kıyafetinde "Tekir'i 10 kez besle (7/10)". Beş hediye gelince Tekir artık acıkmaz:
+    yanında durur, dokununca mırlar (denge botunda 25 balık yer; 7 saatte saatte para %−0,6 ile %+2 arası).
 
 ## 8. Görünüm
 

@@ -7562,10 +7562,11 @@ func _play_cat() -> void:
 	var left := PackedStringArray()
 	for e: Dictionary in save.bucket:
 		left.append(str(e["fish"]))
-	_check("dokun → kovadaki en ucuz balığı yer (kalan %s), tok, Dede ve bildirim" % ", ".join(left),
+	# Bildirim hediyeye kalan beslemeyi söyler (testçi: "beslemenin bir dönüşü olmalı").
+	var next_gift := UiKit.upper(tr("UI_CAT_ATE_NEXT") % (rules.cat_gift_every - 1))
+	_check("dokun → kovadaki en ucuz balığı yer (kalan %s), tok, Dede ve bildirim \"%s\"" % [", ".join(left), next_gift],
 			save.bucket.size() == 2 and not "bream" in left and save.cat_fed == 1 and not CatRules.is_hungry(rules, save)
-			and str(main.get("_line")) == "UI_DEDE_CAT_FED"
-			and toast.text == UiKit.upper(tr("UI_CAT_ATE") % tr("FISH_bream")))
+			and str(main.get("_line")) == "UI_DEDE_CAT_FED" and toast.text == next_gift)
 	await _wait(0.3)
 	await _shot("04_yedi")
 	# 7) Balıkçı başka bölgede: kedi evine döner; iskeleye dönünce yine gelir.

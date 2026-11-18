@@ -13,7 +13,7 @@ const SEEDS := [1000, 1077, 1154]
 ## Korkulukların ölçüldüğü oyun süresi (dk).
 const MINUTES := 310.0
 ## Şansa çok bağlı geç olaylar için bot sonra bu süreye kadar sürer (saatlik para ve av MINUTES'ta ölçülür).
-const LATE_MINUTES := 370.0
+const LATE_MINUTES := 420.0
 ## [olay, en erken dk, en geç dk]: her seed'de olay bu aralıkta ilk kez olmalı.
 const PACING := [
 	["sell", 0.0, 5.0],            # ilk satış (kova dolar, Nine'ye gidilir)
@@ -84,7 +84,9 @@ const PACING := [
 ## oraya gider ama gelmesi şansa bağlı. Dalga 5'te akvaryumun parası alışverişleri öne alınca seed 1000'de 185.
 ## dakikadan 343. dakikaya kaydı (bot o güne kadar nilüferli koyda 116 gece atışı yaptı; öteki seed'ler 27–154 dk).
 const LATE := [
-	["fish:moon_pike", 20.0, 360.0],
+	# Gece nilüferli koyda Efsanevi: tamamen şansa bağlı (Tekir hediyeleri bitince beslenmeyince seed 1000'de 206 →
+	# 402 dk; ötekiler 65 ve 211).
+	["fish:moon_pike", 20.0, 420.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.
