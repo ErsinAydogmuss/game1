@@ -675,9 +675,14 @@ func _buy(id: String) -> void:
 			GameState.save_game()
 			Sounds.play("buy")
 			Sounds.haptic(18)
-			# Tuzak: Nine nasıl bırakılacağını söyler (takım çantasından, sığ suya).
+			# Tuzak: Nine nasıl bırakılacağını söyler (takım çantasından, sığ suya). İkinci ve üçüncü tuzakta kaç tuzak
+			# kurulabildiğini (testçi: "ikinci tuzağın işlevini anlamadım": aynı anda bir tuzak daha).
 			if str(item["category"]) == "trap":
-				_say("UI_NINE_TRAP")
+				var count := TrapSim.owned(db, save)
+				if count > 1:
+					_say("UI_NINE_TRAP_MORE", [count])
+				else:
+					_say("UI_NINE_TRAP")
 			else:
 				_say("UI_NINE_BOUGHT" if not first_rod or here else "UI_NINE_FLY_ZONE")
 			gear_changed.emit()

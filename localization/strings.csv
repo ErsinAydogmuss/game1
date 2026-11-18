@@ -420,9 +420,9 @@ UI_PHASE_NOW_night,Night has fallen,Gece oldu
 GEAR_trap_1,Crayfish trap,Kerevit tuzağı
 GEAR_trap_1_DESC,"Leave it in the shallows; it fills by itself, even while you are away.","Sığ suya bırak; sen yokken de kendi dolar."
 GEAR_trap_2,Second trap,İkinci tuzak
-GEAR_trap_2_DESC,Two traps fill twice as fast.,İki tuzak iki kat kerevit toplar.
+GEAR_trap_2_DESC,Set two traps at once: twice the crayfish.,Aynı anda iki tuzak kurarsın: iki kat kerevit.
 GEAR_trap_3,Third trap,Üçüncü tuzak
-GEAR_trap_3_DESC,"Three traps: the reeds and the rocks are yours.","Üç tuzak: sazlık da kayalık da senin."
+GEAR_trap_3_DESC,"Set three traps at once: the reeds and the rocks are yours.","Aynı anda üç tuzak: sazlık da kayalık da senin."
 UI_TRAP_NONE,"No trap yet: Nana sells them.","Tuzağın yok: Nine satıyor."
 UI_TRAP_ALL_SET,All your traps are set,Bütün tuzakların kurulu
 UI_TRAP_ZONE,Traps go in the reeds or at the rocks,Tuzak sazlıkta ya da kayalıkta kurulur
@@ -446,6 +446,7 @@ UI_TRAP_WAIT,Wait,Bekle
 UI_TRAP_REMOVE,Take it,Kaldır
 UI_TRAP_REMOVED,Trap back in your bag,Tuzak çantana döndü
 UI_NINE_TRAP,"Set it from your tackle bag, in the shallows, dear.",Takım çantandan sığ suya bırak evladım.
+UI_NINE_TRAP_MORE,"%d traps now! Set the new one from your bag, dear.",Artık %d tuzağın var! Yenisini de çantandan bırak.
 UI_TRAP_ENTERED,A crayfish just walked in!,Tuzağa bir kerevit girdi!
 UI_TRAP_COLLECT,Collect,Topla
 UI_GUIDE_OPEN,How to play?,Nasıl oynanır?
