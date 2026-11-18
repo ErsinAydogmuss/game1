@@ -8,7 +8,7 @@
 	"scare": { "extra_m": 0.3 },
 	"notice": { "cone_deg": 70.0, "front_m": 3.0, "side_m": 1.8 },
 	"bite": { "nibbles": [15, 30, 35, 20], "gap": [0.8, 1.4], "window": 1.0, "window_easy": 1.6 },
-	"reel": { "limit": 0.85, "warn": 0.5, "snap_after": 0.8, "snap_recover": 0.35, "rise": 2.4, "fall": 2.0,
+	"reel": { "limit": 0.85, "warn": 0.5, "snap_after": 0.55, "snap_recover": 0.35, "rise": 2.4, "fall": 2.0,
 		"drift": 0.25, "catch_m": 0.6, "escape_extra_m": 2.0, "easy_slip": 2.0, "first_burst": [1.6, 2.4],
 		"carry": 3, "size_pull": 0.08, "over_pull": 0.12, "over_burst": 0.1, "over_drift": 3.0, "over_easy_reel": 0.9 },
 	"trap": { "fill_s": 1200, "max": 4, "depth_max_m": 1.2, "near_m": [1.2, 3.5], "spacing_m": 2.0 },

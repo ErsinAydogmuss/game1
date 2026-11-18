@@ -27,12 +27,12 @@
 		{ "id": "reel_pro", "category": "reel", "price": 4500, "rank": 8, "reel_speed": 1.9, "drag": 0.07 },
 		{ "id": "reel_master", "category": "reel", "price": 10000, "rank": 14, "reel_speed": 1.95, "drag": 0.1 },
 
-		{ "id": "line_mono_thin", "category": "line", "price": 0, "rank": 1, "snap_after": 0.8, "stealth": 0.0, "carry": 3 },
-		{ "id": "line_mono", "category": "line", "price": 120, "rank": 1, "snap_after": 0.85, "stealth": 0.0, "carry": 4 },
-		{ "id": "line_fluoro", "category": "line", "price": 500, "rank": 3, "snap_after": 0.8, "stealth": 0.3, "carry": 4 },
-		{ "id": "line_braid", "category": "line", "price": 1800, "rank": 6, "snap_after": 0.9, "stealth": 0.0, "carry": 5 },
-		{ "id": "line_fluoro_pro", "category": "line", "price": 2500, "rank": 7, "snap_after": 0.85, "stealth": 0.45, "carry": 5 },
-		{ "id": "line_braid_pro", "category": "line", "price": 9000, "rank": 12, "snap_after": 0.95, "stealth": 0.15, "carry": 5 },
+		{ "id": "line_mono_thin", "category": "line", "price": 0, "rank": 1, "snap_after": 0.55, "stealth": 0.0, "carry": 3 },
+		{ "id": "line_mono", "category": "line", "price": 120, "rank": 1, "snap_after": 0.6, "stealth": 0.0, "carry": 4 },
+		{ "id": "line_fluoro", "category": "line", "price": 500, "rank": 3, "snap_after": 0.55, "stealth": 0.3, "carry": 4 },
+		{ "id": "line_braid", "category": "line", "price": 1800, "rank": 6, "snap_after": 0.65, "stealth": 0.0, "carry": 5 },
+		{ "id": "line_fluoro_pro", "category": "line", "price": 2500, "rank": 7, "snap_after": 0.6, "stealth": 0.45, "carry": 5 },
+		{ "id": "line_braid_pro", "category": "line", "price": 9000, "rank": 12, "snap_after": 0.7, "stealth": 0.15, "carry": 5 },
 
 		{ "id": "hook_small", "category": "hook", "price": 0, "rank": 1, "escape_extra": 0.0 },
 		{ "id": "hook_medium", "category": "hook", "price": 150, "rank": 1, "escape_extra": 0.5 },

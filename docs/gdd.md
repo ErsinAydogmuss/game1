@@ -100,7 +100,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - Balık zaman zaman çırpınır. İlk patlama çekişmenin 1,6–2,4. saniyesinde gelir (oyuncu hemen öğrensin; sudakta 1,2–1,6, alabalıklarda 0,8–1,1: `fight.first_burst`).
   - Her patlamadan **0,5 sn önce** uyarı gelir: balık çırpınır, misina titrer, gıcırtı duyulur, telefon titrer, "!" çıkar.
   - Patlamada basılı tutarsan gerilim kırmızıya çıkar.
-- **Kopma:** gerilim sınırın üstünde toplam 0,8 sn kalırsa misina kopar ("Misina koptu!"). Sayaç sınırın altında yavaşça geri iner.
+- **Kopma:** gerilim sınırın üstünde toplam 0,55 sn kalırsa misina kopar ("Misina koptu!"; misinaya göre 0,55–0,7 sn, önce 0,8–0,95: testçi "elimi çeksem de çekmesem de balık geliyor" dedi). Sayaç sınırın altında yavaşça geri iner.
 - **Kaçma:** balık menzil + 2 m'den uzağa kaçarsa gider. Kıyıya doğru kaçarsa kıyıda gider (karaya çıkmaz); ama kaçış payı hep şamandıranın en az 2 m ötesidir, kıyıya yakın atışta da bırakan oyuncu hemen kaybetmez (balık kıyıda çırpınır).
 - **Yakalama:** balık 0,6 m'ye gelince tutulur.
 - **Kolay çekme (Ayarlar):** gerilim tavanlıdır, misina kopmak yerine kayar, balık kaçmaz; beceri yalnızca hızı belirler.
@@ -134,14 +134,14 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 | Balık | Çekiş | İyi oyuncu (0,4 sn tepki) | Yavaş oyuncu (0,7 sn) | Hep basılı (Normal) |
 |---|---|---|---|---|
-| Kızılkanat | sakin | 5,8 sn | 6,0 sn | tutar |
+| Kızılkanat | sakin | 5,8 sn | 6,0 sn | %34 tutar |
 | Sazan | ağır | 10,7 sn | 11,4 sn | koparır |
-| Levrek | ani | 9,5 sn | 10,5 sn | %55 tutar |
+| Levrek | ani | 9,5 sn | 10,5 sn | %2 tutar |
 | Turna | ani, güçlü | 13,7 sn | 15,2 sn | koparır |
 | Yayın | düzensiz, güçlü | 16,1 sn | 17,7 sn | koparır |
 | Gümüş balığı | hafif, çevik | 4,6 sn | 4,8 sn | tutar |
-| Çapak | ağır ama tembel | 7,1 sn | 7,4 sn | %72 tutar |
-| Tatlısu kefali | sert kaçışlı | 7,4 sn | 7,7 sn | %94 tutar |
+| Çapak | ağır ama tembel | 7,1 sn | 7,4 sn | koparır |
+| Tatlısu kefali | sert kaçışlı | 7,4 sn | 7,7 sn | %14 tutar |
 | Kadife | inatçı, ağır | 10,4 sn | 11,4 sn | koparır |
 | Sudak | başını sallar (sık patlama, erken çırpınır) | 15,3 sn | 17,6 sn | koparır |
 | Altın sazan | ağır, güçlü | 14,0 sn | 15,3 sn | koparır |
@@ -150,7 +150,9 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Alabalık | çevik, sıçrar; takılır takılmaz çırpınır | 11,3 sn | 12,4 sn | koparır |
 | Dere alabalığı | güçlü, sıçrar; takılır takılmaz çırpınır | 15,2 sn | 16,7 sn | koparır |
 
-  İyi ve yavaş oyuncu her balığı tutar. Kolay modda hep basılı tutan da tutar.
+  İyi ve yavaş oyuncu her balığı tutar (her patlamadan 0,5 sn önce uyarı gelir; süreler değişmedi). Hep basılı tutan
+  artık küçük balıkları da çoğunlukla koparır (önce kızılkanat %100, levrek %55, çapak %72, tatlısu kefali %94);
+  yalnızca gümüş balığı ve kerevit affeder. Kolay modda hep basılı tutan da tutar.
 - **Sinek takımıyla** (balık 3–5,5 m'de takılır; `test_reel_model` sinek korkuluğu): iyi oyuncu alabalığı ilk sinek kamışıyla ~6 sn'de, dere alabalığını ~8 sn'de tutar. Balık yakında takıldığı için hep basılı tutmak kolay olurdu; bu yüzden alabalıklar takılır takılmaz çırpınır (`fight.first_burst` 0,8–1,1 sn; sudakta 1,2–1,6, öteki balıklarda 1,6–2,4). Hep basılı tutan en iyi sinek takımıyla alabalığı en çok ~%19 tutar, dere alabalığını tutamaz (ilk ayarda %62 ve %52'ydi).
 - **Tekniklere göre** (v0.4; `tools/reel_report.gd -- --technique=spin|bottom|fly`): öteki tekniklerde balık oyunda ölçülen uzaklıkta takılır (`sim.json` `start_m`; `session_timing.gd` ölçer): spinde 3,3–8 m, dipte 9,6–14 m (balık menzilin ötesinde takılmaz: ilk dip kamışı 14 m; sazlıkta ve derin ortada daha yakın), sinekte 3,2–5,6 m. Şamandıra sütunu yukarıdaki tablonun (raporun Dalga 1'den beri sabit 4–9 m'si; oyunda ölçülen 2,7–7,5 m). Tekniğin ilk kamışı, başlangıç makarası ve misinası; iyi oyuncu (0,4 sn tepki), 1–3★, ortalama süre:
 
@@ -174,29 +176,29 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 | Mersin | 17,4 sn | — | 22,3 sn | — |
 
   - İyi ve yavaş oyuncu takımın taşıdığı her balığı her teknikte tutar. En iyi takımla iyi oyuncunun süreleri %25–44 kısalır (dipte en az, spinde en çok; spinde turna 6,4, yayın 8,0 sn; dipte sazan 10,9, yayın 14,8, mersin 15,7 sn; sinekte alabalık 4,4, dere alabalığı 5,8 sn).
-  - Hep basılı tutan ilk kamışla iri türleri tutamaz; spinde levrek %66, tatlısu kefali %94; dipte uzak takılma yüzünden levrek %32, çapak %55, tatlısu kefali %86.
+  - Hep basılı tutan ilk kamışla iri türleri tutamaz; spinde levrek %10, tatlısu kefali %24; dipte kızılkanat %14, tatlısu kefali %4, levrek ve çapak hiç; sinekte kızılkanat %61, tatlısu kefali %36 (kopma 0,55 sn; önce spinde levrek %66, kefal %94).
   - **Değerlendirme:** spin ve sinek şamandıra sütunundan biraz kısa; bunun bir kısmı uzaklık farkından (şamandıra sütunu 4–9 m'den, oyunda şamandırada balık 2,7–7,5 m'de takılır). Dipte balık uzakta takılır, çekişme şamandıradakinin ~1,3–1,5 katı: yayın 21 sn, mersin 22 sn (kapanışta takılma uzaklığı menzilde kesildi: 9,6–15,7 m → 9,6–14 m). 8. adımda dip kamışlarının gücü arttı (0,15 / 0,2 / 0,25 → 0,25 / 0,3 / 0,3; ilk ölçümde yayın 26, mersin 28 sn); derin ortada ve sazlıkta su yakın, balık daha yakında takılır (ortalama çekişme 10,6 ve 9,1 sn; §10.4).
 - **Takımla** (H2, `GearStats`): başlangıç takımı yukarıdaki bambu oltayla aynıdır. En iyi şamandıra takımıyla (`tools/reel_report.gd -- --gear=top`):
 
 | Balık | İyi oyuncu (0,4 sn): başlangıç → en iyi takım | Hep basılı, en iyi takım (Normal) |
 |---|---|---|
-| Kızılkanat | 5,8 → 3,9 sn | tutar |
-| Sazan | 10,7 → 6,9 sn | %32 tutar |
-| Levrek | 9,5 → 5,7 sn | tutar |
-| Turna | 13,7 → 8,0 sn | %36 tutar |
+| Kızılkanat | 5,8 → 3,9 sn | %95 tutar |
+| Sazan | 10,7 → 6,9 sn | %4 tutar |
+| Levrek | 9,5 → 5,7 sn | %67 tutar |
+| Turna | 13,7 → 8,0 sn | %4 tutar |
 | Yayın | 16,1 → 9,7 sn | koparır |
 | Gümüş balığı | 4,6 → 3,2 sn | tutar |
-| Çapak | 7,1 → 4,9 sn | tutar |
-| Tatlısu kefali | 7,4 → 4,8 sn | tutar |
-| Kadife | 10,4 → 6,7 sn | %14 tutar |
-| Sudak | 15,3 → 8,8 sn | %24 tutar |
+| Çapak | 7,1 → 4,9 sn | %62 tutar |
+| Tatlısu kefali | 7,4 → 4,8 sn | %82 tutar |
+| Kadife | 10,4 → 6,7 sn | %8 tutar |
+| Sudak | 15,3 → 8,8 sn | koparır |
 | Altın sazan | 14,0 → 8,5 sn | %2 tutar |
 | Mersin | 17,4 → 10,4 sn | koparır |
-| Aynalı sazan | 13,4 → 8,3 sn | %6 tutar |
-| Alabalık | 11,3 → 7,2 sn | %12 tutar |
+| Aynalı sazan | 13,4 → 8,3 sn | %2 tutar |
+| Alabalık | 11,3 → 7,2 sn | koparır |
 | Dere alabalığı | 15,2 → 9,5 sn | koparır |
 
-  Korkuluklar (`test_reel_model`; her teknik kendi uzaklığında): en iyi takımla yavaş oyuncu her balığı tutar; hep basılı tutan Nadir balığı en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar; kusursuz oyuncunun çekişmesi en çok %40 kısalır. Misinanın kopma süresi bu yüzden en çok 0,95 sn. Spinde balık yakında takılır: en iyi spin takımıyla hep basılı tutan sudağı %60 tutuyordu (kapanış incelemesi); sudak takılınca erken çırpınır (`first_burst` 1,2–1,6 sn): spinde %33, şamandırada %24 (önce %37).
+  Korkuluklar (`test_reel_model`; her teknik kendi uzaklığında): en iyi takımla yavaş oyuncu her balığı tutar; hep basılı tutan Nadir balığı en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar; kusursuz oyuncunun çekişmesi en çok %40 kısalır. Misinanın kopma süresi bu yüzden en çok 0,95 sn; testçinin geri bildiriminden sonra 0,55–0,7 sn (en iyi altın örgü 0,7): en iyi takımla hep basılı tutan Nadir ve üstünü en çok %4 tutar, kızılkanatı %95, levreği %67. Spinde balık yakında takılır: en iyi spin takımıyla hep basılı tutan sudağı %60 tutuyordu (kapanış incelemesi); sudak takılınca erken çırpınır (`first_burst` 1,2–1,6 sn): spinde %33, şamandırada %24 (önce %37).
 - **İri balık raporu** (`tools/reel_report.gd`, `-- --gear=mid` cam elyafı kamış + naylon misina, `-- --gear=top`; iyi oyuncu 0,4 sn tepki; pompa: gerilimi sınırın hemen altında tutan kusursuz bot):
 
 | İri tür | Bambu olta, 4–5★ (fazla iri): iyi oyuncu / pompa | Cam elyafı + naylon: 4★ / 5★ | En iyi takım, 5★ | Kolay, hep basılı: 3★ → 5★ (bambu) |

@@ -46,7 +46,7 @@ func test_items_set_the_stats() -> void:
 	assert_eq(g.power, 0.08, "karbon kamışın gücü")
 	assert_eq(g.reel_speed, 1.95, "altın makara hızı")
 	assert_eq(g.drag, 0.1, "altın makaranın freni")
-	assert_eq(g.snap_steps, FishingRules.to_steps(0.9), "örgü misina 0,9 sn dayanır")
+	assert_eq(g.snap_steps, FishingRules.to_steps(0.65), "örgü misina 0,65 sn dayanır")
 	assert_eq(g.escape_extra, 1.0, "büyük iğne +1 m")
 	assert_eq(g.window_add_steps, FishingRules.to_steps(0.3), "parlak şamandıra +0,3 sn")
 	assert_eq(g.catch_m, 0.85, "kepçe 0,85 m'den tutar")

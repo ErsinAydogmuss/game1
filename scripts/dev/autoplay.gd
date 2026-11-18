@@ -551,8 +551,7 @@ func _play_controls() -> void:
 	_check("ısırmada ekranın her yeri → çekişme", _state() == FishingSession.State.FIGHTING)
 	await _wait(1.5)
 	await _shot("06_cekisme")
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
+	await _finish_fight(Vector2(260, 520), 25.0)
 	_check("basılı tut → yakalanır", _state() == FishingSession.State.CAUGHT and str(_session().last_catch.get("fish", "")) == rudd.fish_id)
 	await _wait(0.9)
 	await _shot("07_kart")
@@ -652,8 +651,7 @@ func _play_first() -> void:
 	_touch(1, Vector2(260, 520), true)
 	await _wait(1.0)
 	await _shot("04_ilk_cekisme")
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
+	await _finish_fight(Vector2(260, 520), 25.0)
 	var seconds := float(session.steps - start) / HZ + 1.5
 	_check("ilk balık 45 sn içinde (%.1f sn)" % seconds, _state() == FishingSession.State.CAUGHT and seconds <= 45.0)
 	await _wait(0.9)
@@ -898,8 +896,7 @@ func _play_hero() -> void:
 	_touch(1, Vector2(260, 520), true)
 	await _wait(1.4)
 	await _shot("05_cekme")
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
+	await _finish_fight(Vector2(260, 520), 25.0)
 	# Kart açılmadan (CARD_DELAY) önce: elde balık, sonra sevinen Dede.
 	await _wait(0.4)
 	_frame_on(main.call("_show_point"), 0.34)
@@ -1022,8 +1019,7 @@ func _play_shop() -> void:
 	await _tap_world(Vector2(1.0, -1.0))
 	await _wait_state(FishingSession.State.BITING, 20.0)
 	_touch(1, Vector2(260, 520), true)
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
+	await _finish_fight(Vector2(260, 520), 25.0)
 	await _wait_frames(3)
 	_check("kova dolunca Dede uyarır", Bucket.is_full(db, save) and str(main.get("_hint_shown")) == "UI_DEDE_BUCKET")
 	await _wait(0.3)
@@ -1087,8 +1083,7 @@ func _play_shop() -> void:
 	await _wait_frames(2)
 	var reverted := Economy.equipped(db, save, "bait") == "bait_worm" \
 			and is_equal_approx(_session().gear.attraction("perch"), 1.0)
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
+	await _finish_fight(Vector2(260, 520), 25.0)
 	await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_BAIT_OUT", 10.0)
 	_check("son yem biter → solucana döner, Dede söyler", reverted
 			and str(main.get("_hint_shown")) == "UI_DEDE_BAIT_OUT")
@@ -1323,8 +1318,7 @@ func _play_map() -> void:
 	await _tap_world(Vector2(1.0, -1.0))
 	await _wait_state(FishingSession.State.BITING, 20.0)
 	_touch(1, Vector2(260, 520), true)
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
+	await _finish_fight(Vector2(260, 520), 25.0)
 	await _wait_frames(2)
 	var pulsing := float(hud.get("_map_pulse")) > 0.0
 	await _wait_until(func() -> bool: return str(main.get("_hint_shown")) == "UI_DEDE_ZONE_OPEN", 6.0)
@@ -1435,8 +1429,7 @@ func _check_quick_choice() -> void:
 		await _tap_world(Vector2(1.0, -1.0))
 		await _wait_state(FishingSession.State.BITING, 20.0)
 		_touch(1, Vector2(260, 520), true)
-		await _wait_state(FishingSession.State.CAUGHT, 25.0)
-		_touch(1, Vector2(260, 520), false)
+		await _finish_fight(Vector2(260, 520), 25.0)
 		await _wait_frames(3)
 		var button := hud.release_button
 		var shown := button.is_visible_in_tree() and str(hud.get("_action_kind")) == "keep" \
@@ -1696,8 +1689,7 @@ func _play_technique() -> void:
 	await _tap_world(Vector2(1.0, -1.0))
 	await _wait_state(FishingSession.State.BITING, 20.0)
 	_touch(1, Vector2(260, 520), true)
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
+	await _finish_fight(Vector2(260, 520), 25.0)
 	await _wait_frames(3)
 	var told := str(main.get("_hint_shown")) == "UI_DEDE_TECH_OPEN_spin"
 	var toasted := await _wait_toast(UiKit.upper(tr("UI_TECH_OPEN") % tr("UI_TECH_spin")), 8.0)
@@ -4088,8 +4080,7 @@ func _play_release() -> void:
 	await _tap_world(Vector2(1.0, -1.0))
 	await _wait_state(FishingSession.State.BITING, 20.0)
 	_touch(1, Vector2(260, 520), true)
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
+	await _finish_fight(Vector2(260, 520), 25.0)
 	await _wait_until(func() -> bool: return card.visible, 3.0)
 	await _wait(FishCard.MIN_OPEN)
 	var side := 0.0
@@ -4115,8 +4106,7 @@ func _play_release() -> void:
 	await _tap_world(Vector2(1.0, -1.0))
 	await _wait_state(FishingSession.State.BITING, 20.0)
 	_touch(1, Vector2(260, 520), true)
-	await _wait_state(FishingSession.State.CAUGHT, 25.0)
-	_touch(1, Vector2(260, 520), false)
+	await _finish_fight(Vector2(260, 520), 25.0)
 	await _wait_frames(3)
 	var quick := float(main.get("_quick_catch")) >= 0.0 and not card.visible and _state() == FishingSession.State.CAUGHT
 	await _tap_control(hud.bucket_button)
@@ -6377,6 +6367,13 @@ func _close_card(card: FishCard) -> void:
 ## her yeri eylem) basar (VUR), sakinken basılı tutar, balık çırpınınca (uyarı) reaction kare sonra
 ## bırakır, sakinleşince yeniden basar. Sonuç gelene kadar. Balık sudan sıçrarsa (alabalıklar)
 ## _seen_jump olur, ilk sıçrayış görüntülenir.
+## Basılı parmakla süren çekişmeyi oyuncu gibi bitirir: çırpınmanın uyarısında bırakır, sonra yine basar (misina
+## kırmızıda 0,55 sn'de kopar: sürekli basılı tutan bot çapağı, levreği kaçırırdı). Tutulunca parmak kalkar.
+func _finish_fight(at: Vector2, timeout: float) -> void:
+	await _reel_like_player(6, timeout, at)
+	await _wait_state(FishingSession.State.CAUGHT, 2.0)
+
+
 func _reel_like_player(reaction: int, timeout: float, at: Vector2 = Vector2.INF) -> void:
 	var finger := at if at.is_finite() else _hud().action_button.get_global_rect().get_center()
 	_touch(1, finger, true)

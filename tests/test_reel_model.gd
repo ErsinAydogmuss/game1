@@ -278,8 +278,16 @@ func test_slow_players_mostly_catch() -> void:
 		assert_true(easy["caught"] >= 0.95, "%s: Kolay'da 0,7 sn tepkiyle tutulur (%.2f)" % [f["id"], easy["caught"]])
 
 
+## Testçi: "elimi çeksem de çekmesem de balığı alıp geliyor": kırmızıda misina kısa sürede kopar (başlangıç misinası
+## 0,55 sn). Hep basılı tutan çırpınan balığı çoğunlukla kaçırır; yalnızca en küçükler (gümüş balığı, kerevit)
+## affeder. Çırpınmanın uyarısına tepki veren yavaş oyuncu (0,7 sn) yine hepsini tutar.
 func test_holding_only_works_on_small_fish() -> void:
-	assert_true(_rates("rudd", ReelBot.Style.ALWAYS, 0.0, false)["caught"] >= 0.9, "Kızılkanat hep basılı tutularak da çıkar")
+	var rudd: float = _rates("rudd", ReelBot.Style.ALWAYS, 0.0, false)["caught"]
+	assert_true(rudd <= 0.5, "Kızılkanat hep basılı tutulunca çoğunlukla kopar (%.2f)" % rudd)
+	assert_true(_rates("silverside", ReelBot.Style.ALWAYS, 0.0, false)["caught"] >= 0.9, "gümüş balığı hep basılı da çıkar")
+	for fish_id: String in ["rudd", "perch", "bream", "carp", "pike"]:
+		var slow: float = _rates(fish_id, ReelBot.Style.REACT, 0.7, false)["caught"]
+		assert_true(slow >= 0.95, "%s: uyarıya 0,7 sn'de tepki veren tutar (%.2f)" % [fish_id, slow])
 	for fish_id: String in ["carp", "pike", "wels"]:
 		var r := _rates(fish_id, ReelBot.Style.ALWAYS, 0.0, false)
 		assert_true(r["caught"] <= 0.1, "%s: hep basılı tutunca Normal'de kopar (%.2f)" % [fish_id, r["caught"]])
