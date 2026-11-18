@@ -2698,7 +2698,7 @@ func _travel(target: String) -> void:
 	if stands.is_empty() or fade.busy():
 		return
 	var stand := stands[0]
-	if not in_boat and angler.pos2().distance_to(stand) < 0.5:
+	if not in_boat and angler.pos2().distance_to(stand) < ZonePanel.AT_STAND:
 		return
 	_stop_for_travel()
 	fade.play(func() -> void:
@@ -3799,7 +3799,7 @@ func _build_ui() -> void:
 	zone_panel = ZonePanel.new()
 	zone_panel.spot_id = spot_id
 	layer.add_child(zone_panel)
-	map_panel.zone_requested.connect(func(id: String) -> void: zone_panel.open_zone(id, id == zone_id, in_boat))
+	map_panel.zone_requested.connect(func(id: String) -> void: zone_panel.open_zone(id, id == zone_id, in_boat, angler.pos2()))
 	zone_panel.travel_requested.connect(func(id: String) -> void:
 		map_panel.close_panel()
 		_travel(id))

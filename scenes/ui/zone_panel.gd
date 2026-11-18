@@ -9,7 +9,8 @@ extends Dialog
 ## başka vakitte (Ay Turnası gece, Kocabaş fırtınada) ya da başka teknikle (alabalık sinekle, kerevit dipte) gelen
 ## tür sonda, oran yerine ne zaman ya da hangi teknikle. Altta kerevit tuzağı kurulur mu; sağda GİT
 ## (travel_requested: main haritayı kapatıp oraya geçirir), kilitliyse nedeni; balıkçının bölgesindeyse
-## "Buradasın" (sandalda derin ortada: sıradaki şamandıra).
+## "Buradasın" (GİT yalnızca atış noktasında değilse: haritanın eski davranışı; sandalda derin ortada: sıradaki
+## şamandıra).
 
 signal travel_requested(zone_id: String)
 
@@ -19,14 +20,17 @@ const COLUMNS := 5
 const CARD := Vector2(246, 210)
 const ART := 96.0
 const GO_BUTTON := Vector2(340, 122)
+## Balıkçı atış noktasında sayılır (main._travel'ın eşiği).
+const AT_STAND := 0.5
 ## Kilidin yazısı (haritadaki eski notun rengi).
 const LOCK_COLOR := Color("#a2471d")
 
-## Haritanın gölü (main verir), gösterilen bölge, balıkçı o bölgede mi, sandalda mı.
+## Haritanın gölü (main verir), gösterilen bölge, balıkçı o bölgede mi, sandalda mı, nerede.
 var spot_id: String = ""
 var zone: String = ""
 var current: bool = false
 var in_boat: bool = false
+var angler_pos := Vector2.ZERO
 
 var _info: HBoxContainer
 var _grid: GridContainer
@@ -52,11 +56,13 @@ func _build() -> void:
 	body.add_child(_foot)
 
 
-## Açar: bölge, balıkçı o bölgede mi, sandalda mı (sandal bölgesinde GİT sıradaki şamandıraya götürür).
-func open_zone(id: String, here: bool, boat: bool) -> void:
+## Açar: bölge, balıkçı o bölgede mi, sandalda mı (sandal bölgesinde GİT sıradaki şamandıraya götürür), nerede
+## (kendi bölgesinde atış noktasındaysa GİT yok).
+func open_zone(id: String, here: bool, boat: bool, pos: Vector2) -> void:
 	zone = id
 	current = here
 	in_boat = boat
+	angler_pos = pos
 	open()
 
 
@@ -102,12 +108,15 @@ func refresh() -> void:
 				LOCK_COLOR))
 		_foot.add_child(lock)
 		return
-	# Gidilecek yer: bölgenin atış noktası ya da (sandal bölgesinde) şamandırası. Balıkçının bölgesinde düğme yok;
-	# sandalla derin ortadaysa sıradaki şamandıraya (haritanın eski davranışı).
-	if (z["stands"] as Array).is_empty() and (z["buoys"] as Array).is_empty():
+	# Gidilecek yer: bölgenin atış noktası ya da (sandal bölgesinde) şamandırası. Balıkçı kendi bölgesinin atış
+	# noktasındaysa düğme yok (main._travel orada bir şey yapmaz); sandalla derin ortadaysa sıradaki şamandıraya
+	# (haritanın eski davranışı).
+	var stands: Array = z["stands"]
+	if stands.is_empty() and (z["buoys"] as Array).is_empty():
 		return
 	var boat_here := current and bool(z["boat"]) and in_boat
-	if current and not boat_here:
+	if current and not boat_here and not in_boat and not stands.is_empty() \
+			and angler_pos.distance_to(stands[0]) < AT_STAND:
 		return
 	var go := UiKit.button(tr("UI_ZONE_NEXT_BUOY") if boat_here else tr("UI_ZONE_GO"), UiKit.SUCCESS,
 			UiKit.SIZE_BODY, GO_BUTTON)

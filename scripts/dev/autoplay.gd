@@ -6419,7 +6419,7 @@ func _check_zone_card(panel: MapPanel, zone: String) -> void:
 
 
 ## Açık haritada bölgenin rozetine dokunur; bölge kartı açılınca (pause sn bekleyip) GİT'e dokunur. Döner: GİT var
-## mıydı (kilitli bölgede ve balıkçının kıyıdaki bölgesinde yok: kart açık kalır).
+## mıydı (kilitli bölgede ve balıkçı kendi bölgesinin atış noktasındayken yok: kart açık kalır).
 func _tap_zone(panel: MapPanel, zone: String, pause: float = 0.4) -> bool:
 	var card: ZonePanel = main.get("zone_panel")
 	await _tap_control(panel.view.badge(zone))
