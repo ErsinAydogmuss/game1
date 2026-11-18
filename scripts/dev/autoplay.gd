@@ -91,6 +91,9 @@ extends Node
 ##     yeni oyunda film (arayüz gizli, ATLA güvenli alanda, sözler, Bekçi'nin dev gölgesi, hediye), Ayarlar'da HİKÂYE,
 ##     rütbe 3'te Dede'nin hikâyesi (ayrıntı: CLAUDE.md).
 ##   film: açılış filminin videosu (dokunuşsuz, kendi hızında; Movie Maker ile).
+##   tasks: Görevler (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN): sağ üstte Görevler düğmesi
+##     (rütbe 1'de de), panel küçülmeden sığar (ilk adımlar, istekler kilitli); rütbe 2'yi getiren balıkla "Görev tamam",
+##     rozet; panelde istekler ve değiştir; iskelede rozetle çizim sınırı.
 ##   requests: Dede'nin istekleri (KONTROL satırları; telefon oranında ve --safe-inset=130 ile; TR ve EN): rütbe 2'de
 ##     istekler, rozet, Dede; Bugün paneli; biten istek; bırakma isteği (zar getirmediyse bot bir yuvayı çevirir);
 ##     değiştir; yeni gün; yağmur isteği; rehberin "Göl yaşıyor" sayfası.
@@ -369,6 +372,8 @@ func _ready() -> void:
 			_play_release.call_deferred()
 		"requests":
 			_play_requests.call_deferred()
+		"tasks":
+			_play_tasks.call_deferred()
 		"secret":
 			_play_secret.call_deferred()
 		"keeper":
@@ -2935,6 +2940,92 @@ static func _patch_lum(image: Image, at: Vector2) -> float:
 			sum += 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
 			n += 1
 	return sum / n
+
+
+## Görevler (testçi: "oyuna görevler eklenebilir"; KONTROL satırları; telefon oranında, --safe-inset=130, TR ve EN):
+## sağ üstte Görevler düğmesi (rütbe 1'de de; büyük ve güvenli alanda); panel küçülmeden sığar: ilk adımlar (5 kart,
+## "1/5"), Dede'nin istekleri kilitli ("Rütbe 2'de"). Rütbe 2'yi getiren balıkla "Görev tamam: Rütbe 2'ye çık",
+## Görevler'de rozet; iskelede rozetle en çok TOUR_DRAWS çizim; panel açılınca ilk adımların yalnızca bitmemişleri
+## ("2/5"), istek kartları, rozet söner; değiştir düğmesi panelden de çalışır.
+func _play_tasks() -> void:
+	_use_save(1)
+	_roomy_bucket()
+	var db := GameState.db
+	var save := GameState.save
+	var hud := _hud()
+	var panel: TasksPanel = main.get("tasks_panel")
+	var toast: Label = hud.get("_toast")
+	# Kartsız yakalamalar: bütün türler bilinir, rekor kırılmaz.
+	for f in db.fish:
+		Records.add(save.records, str(f["id"]), 999, 3, 0)
+	save.xp = db.rank_xp[db.requests.unlock_rank - 1] - 1
+	GameState.changed.emit()
+	await _wait(1.0)
+	# 1) Rütbe 1: Görevler düğmesi; panelde ilk adımlar ve kilitli istekler.
+	var button := hud.tasks_button
+	_check("rütbe 1'de sağ üstte Görevler düğmesi, rozet yok", button.is_visible_in_tree() and not hud.tasks_badge)
+	_check_buttons()
+	await _tap_control(button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	await _wait(0.5)
+	var steps := panel.find_children("Step_*", "", true, false)
+	var count := panel.find_child("StepsCount", true, false) as Label
+	var locked := panel.find_child("RequestsLocked", true, false) as Control
+	_check("Görevler paneli küçülmeden sığar (%.2f): ilk adımlar (%d, %s), istekler kilitli" % [panel.fit_scale(),
+			steps.size(), count.text if count != null else "-"], panel.visible and panel.fit_scale() >= 0.999
+			and _panel_inside(panel) and steps.size() == FirstSteps.STEPS.size() and count != null
+			and count.text == "1/%d" % FirstSteps.STEPS.size() and locked != null and locked.is_visible_in_tree())
+	_check_panel_buttons(panel, "Görevler panelinin düğmeleri")
+	await _shot("01_gorevler_rutbe1")
+	panel.close_panel()
+	await _wait(0.4)
+	# 2) Rütbe 2'yi getiren balık: "Görev tamam", rozet; iskelede çizim sınırı.
+	var caught := await _catch_at_dock("rudd", 300_000)
+	var done_text := UiKit.upper(tr("UI_STEP_DONE") % tr("UI_STEP_RANK"))
+	var said := await _wait_until(func() -> bool: return toast.is_visible_in_tree() and toast.text == done_text, 25.0)
+	_check("rütbe 2'yi getiren balıkla \"%s\", Görevler'de rozet" % done_text, caught and said and hud.tasks_badge
+			and save.requests.size() == db.requests.slots)
+	await _shot("02_gorev_tamam")
+	var hint: Control = hud.get("_hint")
+	await _wait_until(func() -> bool: return not toast.is_visible_in_tree() and not hint.visible, 25.0)
+	await _wait(0.5)
+	var draws := int((await _measure_draws())["draws"])
+	print("ÇİZİM Görevler rozeti: %d" % draws)
+	_check("Görevler ve çip rozetiyle iskelede en çok %d çizim (%d)" % [TOUR_DRAWS, draws], hud.tasks_badge
+			and draws > 0 and draws <= TOUR_DRAWS)
+	# 3) Panel: rütbe adımı yıldızlı, istek kartları; açılınca rozet söner.
+	await _tap_control(button)
+	await _wait_until(func() -> bool: return panel.visible, 2.0)
+	await _wait(0.5)
+	var count_now := panel.find_child("StepsCount", true, false) as Label
+	var open_steps := panel.find_children("Step_*", "", true, false).size()
+	var cards := 0
+	for slot in db.requests.slots:
+		var card := panel.find_child("Request%d" % slot, true, false) as Control
+		if card != null and card.is_visible_in_tree():
+			cards += 1
+	_check("panelde ilk adımların yalnızca bitmemişleri (%d, %s), %d istek kartı, küçülmeden sığar (%.2f), rozet söner" % [
+			open_steps, count_now.text if count_now != null else "-", cards, panel.fit_scale()],
+			panel.find_child("Step_rank", true, false) == null and count_now != null
+			and count_now.text == "2/%d" % FirstSteps.STEPS.size() and open_steps == FirstSteps.STEPS.size() - 2
+			and cards == db.requests.slots and panel.fit_scale() >= 0.999 and _panel_inside(panel)
+			and not hud.tasks_badge and not hud.world_badge)
+	_check_panel_buttons(panel, "Görevler panelinin düğmeleri (isteklerle)")
+	await _shot("03_gorevler_istekler")
+	# 4) Değiştir panelden de: yeni istek, not "Yarın yine".
+	var first := Requests.find_slot(save, 0)
+	var before := Requests.key_of(first) if not first.is_empty() else ""
+	await _tap_control(panel.find_child("Reroll0", true, false) as Control)
+	await _wait_frames(3)
+	var after := Requests.find_slot(save, 0)
+	var note := panel.find_child("RerollNote", true, false) as Label
+	_check("Görevler panelinde değiştir → yeni istek, \"%s\"" % tr("UI_REQ_REROLL_USED"), not after.is_empty()
+			and Requests.key_of(after) != before and note != null and note.text == tr("UI_REQ_REROLL_USED"))
+	panel.close_panel()
+	await _wait(0.4)
+	for line in _results:
+		print("KONTROL ", line)
+	_quit()
 
 
 ## Dede'nin istekleri (Dalga 4, 4. adım; KONTROL satırları; telefon oranında, --safe-inset=130, TR ve EN):
@@ -8012,9 +8103,16 @@ func _use_save(catches: int) -> void:
 	# Dede'nin istekleri yalnızca requests senaryosunda: ötekilerde yuvalar hiç dolmaz, Dede'nin istek sözü yok
 	# (rütbe 2'den sonra gelen istekler sözlerin sırasını, sevgiyi ve parayı değiştirip eski denetimleri
 	# şaşırtmasın).
-	if _scenario != "requests":
+	if not _scenario in ["requests", "tasks"]:
 		save.request_day = 1 << 30
 		save.flags["told_requests"] = true
+	# İlk adımların (Görevler) bildirimi yalnızca tasks senaryosunda: ötekilerde her adım görülmüş, rozet yok
+	# ("Görev tamam" bildirimi eski denetimlerin bildirimlerini şaşırtmasın).
+	if _scenario != "tasks":
+		for id in FirstSteps.STEPS:
+			FirstSteps.mark_seen(save, id)
+		save.flags["steps_init"] = true
+		save.flags["steps_viewed"] = FirstSteps.STEPS.size()
 	# Gölün Sırrı yalnızca secret senaryosunda: ötekilerde şişe hiç çıkmaz (sıradaki şişe çok uzak balıkta;
 	# bildirim, Dede'nin sözü ve çizim eski denetimleri şaşırtmasın).
 	if _scenario != "secret":

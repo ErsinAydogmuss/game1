@@ -26,6 +26,8 @@ signal technique_pressed
 ## Saat çipine dokunuldu ("Bugün" paneli) ya da kovaya (kova paneli: göle bırak, sat).
 signal world_pressed
 signal bucket_pressed
+## Sağ üstteki Görevler (ilk adımlar ve Dede'nin istekleri).
+signal tasks_pressed
 ## Kartsız kısa yakalamada GÖLE BIRAK (eylem düğmesi o an KOVAYA).
 signal release_pressed
 signal action_down
@@ -72,6 +74,8 @@ const BADGE_SIZE := 30.0
 const WORLD_PULSE := 4.0
 
 var settings_button: TouchButton
+## Görevler: Ersin'in istek parşömeni, arka plansız (tek çizim: iskelede 150 çizim sınırı); rozeti tasks_badge.
+var tasks_button: TouchButton
 var book_button: TouchButton
 var map_button: TouchButton
 var shore_button: TouchButton
@@ -154,6 +158,9 @@ var _in_boat: bool = false
 var _map_pulse: float = 0.0
 var _tech_pulse: float = 0.0
 var _world_pulse: float = 0.0
+var _tasks_pulse: float = 0.0
+var _tasks_icon: GameIcon
+var _tasks_badge: Panel
 var _clock: float = 0.0
 var _fps_clock: float = 0.0
 
@@ -226,6 +233,16 @@ func _process(delta: float) -> void:
 			_world_pulse = maxf(0.0, _world_pulse - delta)
 		_world_chip.pivot_offset = _world_chip.size * 0.5
 		_world_chip.scale = Vector2.ONE * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _world_pulse))
+	# Görevler: basılıyken biraz küçülür (arka planı yok), nabız gibi atar (ilk istekler, biten ilk adım).
+	if _tasks_pulse > 0.0 and _toast_hold <= 0.0:
+		_tasks_pulse = maxf(0.0, _tasks_pulse - delta)
+	var tasks_scale := (0.9 if tasks_button.held else 1.0) * (1.0 + 0.12 * absf(sin(_clock * 6.0)) * minf(1.0, _tasks_pulse))
+	if not is_equal_approx(_tasks_icon.scale.x, tasks_scale):
+		_tasks_icon.pivot_offset = _tasks_icon.size * 0.5
+		_tasks_icon.scale = Vector2.ONE * tasks_scale
+	if _tasks_badge.is_visible_in_tree():
+		var box := tasks_button.get_global_rect()
+		_tasks_badge.global_position = Vector2(box.end.x - BADGE_SIZE * 0.9, box.position.y)
 	# Rozet çipin sağ üst köşesinde (çip gizliyse o da gizli: görünürlüğü üstten gelir).
 	if _world_badge.is_visible_in_tree():
 		var corner := _world_chip.get_global_rect()
@@ -365,6 +382,18 @@ func pulse_technique() -> void:
 
 
 ## Dede'nin istekleri açıldı: saat çipi bir süre nabız gibi atar.
+func pulse_tasks() -> void:
+	_tasks_pulse = WORLD_PULSE
+
+
+## Görevler düğmesinin rozeti (görülmemiş istek ya da haberi verilmiş ama bakılmamış ilk adım; main verir).
+var tasks_badge: bool = false:
+	set(value):
+		tasks_badge = value
+		if _tasks_badge != null:
+			_tasks_badge.visible = value
+
+
 func pulse_world() -> void:
 	_world_pulse = WORLD_PULSE
 
@@ -488,7 +517,7 @@ func _set_button(text: String, icon_kind: String, color: Color) -> void:
 ## Ekrandaki düğmeler (bot denetimi: boyut ve güvenli alan).
 func buttons() -> Array[TouchButton]:
 	return [map_button, book_button, settings_button, action_button, shore_button, technique_button, world_button,
-			bucket_button, release_button]
+			bucket_button, release_button, tasks_button]
 
 
 # --- Kurulum ---------------------------------------------------------------------
@@ -529,6 +558,18 @@ func _build_top() -> void:
 	top_right.size_flags_horizontal = Control.SIZE_SHRINK_END
 	top_right.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_frame().add_child(top_right)
+	tasks_button = TouchButton.make_plain(StyleBoxEmpty.new(), StyleBoxEmpty.new())
+	tasks_button.name = "TasksButton"
+	tasks_button.custom_minimum_size = Vector2(132, 132)
+	tasks_button.pressed.connect(func() -> void: tasks_pressed.emit())
+	top_right.add_child(tasks_button)
+	line_out_hidden.append(tasks_button)
+	_tasks_icon = GameIcon.make("requests", 132)
+	_tasks_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tasks_button.add_child(_tasks_icon)
+	# Rozet düğmenin sağ üst köşesinde (düğmenin çocuğu: düğmeyle gizlenir).
+	_tasks_badge = _badge("TasksBadge")
+	tasks_button.add_child(_tasks_badge)
 	map_button = TouchButton.make("", "map", MAP_COLOR, Vector2(132, 132), UiKit.SIZE_BODY, 84.0)
 	map_button.pressed.connect(func() -> void: map_pressed.emit())
 	map_button.visible = map_allowed
@@ -584,20 +625,26 @@ func _build_world_chip() -> void:
 	_time_label.custom_minimum_size.x = ceilf(widest * 4.0
 			+ font.get_string_size(":", HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.SIZE_BODY + 4).x) + 4.0
 	row.add_child(_time_label)
-	_world_badge = Panel.new()
-	_world_badge.name = "WorldBadge"
-	_world_badge.top_level = true
-	_world_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_world_badge.size = Vector2(BADGE_SIZE, BADGE_SIZE)
+	_world_badge = _badge("WorldBadge")
+	_world_chip.add_child(_world_badge)
+
+
+## Kırmızı yuvarlak rozet (tek çizim; top_level: kapsayıcı yerleştirmez, yeri _process'te).
+static func _badge(badge_name: String) -> Panel:
+	var badge := Panel.new()
+	badge.name = badge_name
+	badge.top_level = true
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.size = Vector2(BADGE_SIZE, BADGE_SIZE)
 	var dot := StyleBoxFlat.new()
 	dot.bg_color = UiKit.DANGER
 	dot.set_corner_radius_all(int(BADGE_SIZE * 0.5))
 	dot.set_border_width_all(4)
 	dot.border_color = Color.WHITE
 	dot.anti_aliasing = true
-	_world_badge.add_theme_stylebox_override("panel", dot)
-	_world_badge.visible = false
-	_world_chip.add_child(_world_badge)
+	badge.add_theme_stylebox_override("panel", dot)
+	badge.visible = false
+	return badge
 
 
 ## Durum hapı: ikon + sayı (Luckiest Guy); parent verilmezse durum satırına. Etiketi döndürür. Hap üst kenarda

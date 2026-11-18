@@ -600,12 +600,21 @@ UI_REQ_secret_2,Catch %d fish at night,Gece vakti %d balık tut
 UI_REQ_secret_3,Release %d fish into the lake,Göle %d balık bırak
 UI_REQ_secret_4,Catch %d Wels bottom fishing in Deep Water at night,Gece Derin Orta'da diple %d Yayın tut
 UI_REQ_TITLE,Dede's requests,Dede'nin istekleri
+UI_TASKS_TITLE,Tasks,Görevler
+UI_TASKS_LOCKED,"Dede's requests start at rank %d: small daily jobs for coins, points and love.","Dede'nin istekleri Rütbe %d'de başlar: her gün küçük işler; para, puan ve sevgi verir."
+UI_STEPS_TITLE,First steps,İlk adımlar
+UI_STEP_CATCH,Catch your first fish,İlk balığını tut
+UI_STEP_SELL,Sell your bucket to Nana,Kovanı Nine'ye sat
+UI_STEP_BUY,Buy some gear from Nana,Nine'den bir takım al
+UI_STEP_ZONE,Go somewhere new on the map,Haritadan yeni bir yere git
+UI_STEP_RANK,Reach rank 2,Rütbe 2'ye çık
+UI_STEP_DONE,Task done: %s,Görev tamam: %s
 UI_REQ_EMPTY,New request tomorrow,Yarın yeni istek
 UI_REQ_REROLL_HINT,You can swap one request a day,Günde bir isteği değiştirebilirsin
 UI_REQ_REROLL_USED,You can swap again tomorrow,Yarın yine değiştirebilirsin
 UI_REQ_NEW_DAY,New day! Dede has new requests,Yeni gün! Dede'nin yeni istekleri var
 UI_REQ_DONE,Request done! +%s coins,İstek tamam! +%s para
-UI_DEDE_REQ_FIRST,"I'll have small jobs for you daily, kid! Tap the clock.",Her gün sana küçük işlerim olacak evlat! Saate dokun.
+UI_DEDE_REQ_FIRST,"I'll have small jobs for you daily, kid! Check your tasks.",Her gün sana küçük işlerim olacak evlat! Görevlerine bak.
 UI_DEDE_REQ_DONE,"Well done, kid! Just what I wanted.",Aferin evlat! Tam istediğim gibi.
 UI_LOVE_LEVEL,Lake love %d,Göl sevgisi %d
 UI_LOVE_UP,Lake love %d!,Göl sevgisi %d!

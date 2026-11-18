@@ -335,6 +335,20 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     ya da takılıyor mu, kapanıyor mu? 12. adımdaki ölçümle çekişmede FPS'e bak (60'a yakın olmalı).
 53. **Performans: sesler ve kayıt.** İlk çalan seslerde ve vakit değişince (müzik geçişi) takılma var mı? Bir balık tutup
     uygulamayı hemen kapat (arka plana at, sonra kapat), yeniden aç: balık kayıtta mı?
+54. **Testçi düzeltmeleri: çitler.** Sazlığın solundaki (dere ağzının) ve kayalık burnun kapalı çitine yürü: balıkçı
+    çitin tahtasının önünde durmalı, içinden geçmemeli. Yürüme halkasıyla çite çapraz yürü: takılmadan çit boyunca kaymalı.
+55. **Testçi düzeltmeleri: fotoğraf modu.** Aşağı sürükle: kamera balıkçının omzu hizasına kadar iner, göl ve ufuk görünür.
+56. **Testçi düzeltmeleri: vakit ve çay.** Saate dokun: Şimdi kartında "Vakit kendiliğinden akar: bir gün 24 dk", çay
+    kartında "Beklemek istemezsen: …". Rehberin "Göl yaşıyor" sayfası da aynısını söylüyor mu?
+57. **Testçi düzeltmeleri: elde "Göle bırak".** Bilinen bir balık tut (kart açılmayan, ör. levrek): balık elde dururken
+    sağda yeşil **KOVAYA** ve üstünde mavi **GÖLE BIRAK**. GÖLE BIRAK: balık elden suya atlar, "… göle döndü".
+    KOVAYA ya da suya dokunmak: balık kovada, olta hemen boşta. Hiç dokunmazsan ~2 sn sonra kovada kalır.
+58. **Testçi düzeltmeleri: Takım paneli.** Takım Çantası'nda elindeki tekniğin **TAKIM** düğmesi (ya da başka tekniğin
+    karosuna dokun): kamış, iğne, şamandıra, yem, makara, misina; sahip olduğun takımlar. Başkasına dokun: takılır
+    (yeşil kenar), olta görünüşü değişiyor mu? **NİNE'DE**: dükkân açılır. Panel küçülmeden sığıyor mu?
+59. **Testçi düzeltmeleri: Görevler.** Sağ üstte, haritanın solunda parşömen: **Görevler**. Yeni oyunda (**Kaydı
+    sıfırla**) "İlk adımlar" (ilk balık, satış, takım, yeni yer, rütbe 2); her biri bitince "Görev tamam" ve
+    parşömende kırmızı rozet. Rütbe 2'de Dede'nin istekleri de burada (değiştir düğmesiyle). Sığıyor mu, anlaşılır mı?
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 

@@ -662,7 +662,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 
   İskele koyunun önerisi yok (her şeyden biraz). Öneri, yakalayıştan sonraki sözlerin sırasında kova ve yeni bölge haberinden sonra gelir.
 - ✅ **Dede'nin teknik öğütleri** (v0.4): Dede'ye dokununca söylediği 6 öğüdün arasına, rütbesi gelmiş tekniklerin öğütleri açıldıkları sırayla girer (`Elder.tips`): spin "Dur-kalk yap evlat: yırtıcı en çok duran yeme saldırır.", tuzak "Tuzak sen yokken de dolar, ama 4 kereviti geçmez." (sayı kurallardan), dip "Yem sepeti balığı yemin çevresine daha çabuk toplar.", sinek "Alabalık çırpınınca sudan sıçrar. O an bırak, misina kopmasın." Rütbe 1'de öğütler eskisi gibi.
-- ✅ **Takım Çantası** (teknik düğmesi): her teknik bir karo: ikonu, adı, nasıl oynandığı, kuşanılmış kamışı ve küçük takımı (makara ve misina her teknikte ortak). Karonun düğmesi: ELİNDE, SEÇ, NİNE'DE (dükkân o tekniğin Kamış sekmesinde açılır), rütbe kilidi ya da (kamışı var ama bu bölgede avlanılmıyorsa) "Dere ağzında". Teknik seçilince bildirim çıkar; gölgeler panel açıkken yeniden doğar.
+- ✅ **Takım Çantası** (teknik düğmesi): her teknik bir karo: ikonu, adı, nasıl oynandığı, kuşanılmış kamışı ve küçük takımı (makara ve misina her teknikte ortak). Karonun düğmesi: TAKIM (elindeki teknik), SEÇ, NİNE'DE (dükkân o tekniğin Kamış sekmesinde açılır), rütbe kilidi ya da (kamışı var ama bu bölgede avlanılmıyorsa) "Dere ağzında". Teknik seçilince bildirim çıkar; gölgeler panel açıkken yeniden doğar. ✅ **Takım paneli** (testçi: "misina, kamış, yem çantada değişmiyor"): kamışı olan tekniğin karosuna (ya da TAKIM'a) dokununca o tekniğin yuvaları ve sahip olunan takımlar (resim, ad; yemde kalan sayı); dokununca takılır. Satın alma Nine'de (başlıkta NİNE'DE).
 
 ### 10.4 Dükkân, takım ve para
 
@@ -703,6 +703,9 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - **Kartta "Göle bırak":** yeni tür, rekor ya da nadir balık kartında ikinci düğme (≥122): az önce kovaya giren
     balık göle döner, "Çapak göle döndü". Koruma altındaki türlerde tek düğme zaten "Göle bırak"; dolu kovaya gelen
     balık da göle döner (sevgi verir).
+  - ✅ **Elde "Göle bırak" ya da "Kovaya"** (testçi: "her balıkta sorsun; levrekte sormuyor"): kart açılmayan
+    yakalamada balık elde göründükçe (~2 sn) eylem düğmesi KOVAYA, üstünde GÖLE BIRAK. Bırakınca balık elden suya
+    atlar, kartınki gibi göle döner. KOVAYA ya da suya dokunmak (yeni atış) beklemeden biter; dokunulmazsa kovada.
 - **Para:** yalnızca oynayarak kazanılır, gerçek parayla asla satılmaz. Bu yüzden oranı değiştiren yem ve yapay yem satılabilir (§11).
 - **Rütbe 1–20:** rütbe puanı av ve isteklerden gelir; bölge ve takım kilitlerini açar.
 - **Denge hedefleri** (denge botunun korkulukları):
@@ -1122,7 +1125,8 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 - ✅ **Üst orta:** saat çipi (Dalga 4): vaktin ikonu, saat ("18:24") ve açık değilse havanın ikonu (yağmurlu gece
   fırtına). Çekişmede yerini gerilim çubuğu alır. Dokununca "Bugün" paneli (dokunma kutusu 122; olta sudayken
   görünür ama dokunuş almaz, ekranın her yeri eylem):
-  - **Şimdi:** vaktin ikonu ve adı, saat, sonraki vakte kalan ("Geceye 3 dk");
+  - **Şimdi:** vaktin ikonu ve adı, saat, sonraki vakte kalan ("Geceye 3 dk") ve "Vakit kendiliğinden akar: bir gün
+    24 dk" (testçi sordu: çay içilmese de gün döner; çay yalnızca beklemeyi atlatır);
   - **Hava:** bugün ve yarın;
   - **Dede'yle çay** (ÇAY İÇ);
   - **Göl sevgisi** ✅ (çayın yanında; §10.5);
@@ -1130,7 +1134,12 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
   - ✅ en altta Dede'nin istekleri (rütbe 2'den sonra; §10.5): yuva başına kart (ikon, ne istendiği, ilerleme "1/3",
     ödül, değiştir düğmesi; boş yuvada "Yarın yeni istek"). Yeni istek varsa çipte kırmızı rozet; panel açılınca söner.
   Panel açıkken saat durur; telefonda küçülmeden sığar.
-- **Sağ üst:** harita, defter, ayarlar (her biri ≥122).
+- **Sağ üst:** ✅ Görevler (testçi: "oyuna görevler eklenebilir"; Ersin'in istek parşömeni, arka plansız, tek çizim),
+  harita, defter, ayarlar (her biri ≥122). Görevler paneli: **İlk adımlar** (ilk balık, ilk satış, Nine'den ilk takım,
+  haritadan yeni bir yer, rütbe 2; kayıttan türer, ödülsüz: ekonomi aynı; biten adımda "Görev tamam" bildirimi ve
+  rozet; rütbe 1'de beşi, sonra yalnızca bitmemişler; hepsi bitince kalkar) ve **Dede'nin istekleri** (Bugün
+  panelindeki kartların aynısı, değiştir de; rütbe 2'ye kadar kilitli kart). Yeni istekte rozet hem çipte hem
+  Görevler'de; Dede'nin ilk istek sözü "Görevlerine bak".
 - ✅ **Sol alt:** yürüme halkası (252; sağ kenarı ipucu çubuğunun payının solunda; olta sudayken yok, sandalda yerinde "Kıyıya dön") ve üstünde teknik düğmesi (132).
 - **Sağ alt:** eylem düğmesi (300).
 - **Alt orta:** Dede'nin ipucu çubuğu.

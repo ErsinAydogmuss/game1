@@ -118,6 +118,10 @@ const BUTTERFLY_LOVE := 3
 ## panelinin son açılışındaki istek sayacı (request_serial: ondan sonra gelen istek yenidir).
 const REQ_TOLD_FLAG := "told_requests"
 const REQ_SEEN_FLAG := "requests_seen"
+## İlk adımlar (Görevler): eski kayıtta önceden biten adımlar ilk açılışta sessizce görülmüş sayılır (bayrak); Görevler
+## paneli en son kaç bitmiş adımla açıldı (rozet).
+const STEPS_INIT_FLAG := "steps_init"
+const STEPS_VIEWED_FLAG := "steps_viewed"
 ## Final (Gölün Bekçisi): Dede'nin "bu gece sis basacak" sözünün bayrağı; Bekçi'nin sudan çıktığı yerin halkaları.
 const FINAL_TOLD_FLAG := "told_final"
 ## Nine'nin akvaryumu tanıttığı söz bir kez (tankta ilk balık varken dükkân açılınca).
@@ -194,6 +198,7 @@ var _photo_facing := Vector2.ZERO
 var _choosing: bool = false
 ## "Bugün" paneli (saat çipine dokununca): vakit, bugünün ve yarının havası, Dede'yle çay, göl sevgisi.
 var day_panel: DayPanel
+var tasks_panel: TasksPanel
 ## Kova paneli (kovaya dokununca): tür başına göle bırak, hepsini bırak, sat.
 var bucket_panel: BucketPanel
 ## "Nasıl oynanır?" rehberi: ayarlardan, takım çantasından ve dükkândan açılır, onların üstünde durur.
@@ -485,6 +490,7 @@ func _start_session() -> void:
 	_refresh_traps()
 	# Dede'nin istekleri: açıksa ve bugün dolmadıysa boş yuvalar dolar (eski kayıt; kayıt değişince de). Oturum
 	# kurulduktan sonra: ödenmemiş istek ödenirse (sevgi, rütbe) koşul ve erişim yeni oturuma geçer.
+	_init_steps()
 	_refill_requests()
 	_letter_read = 0
 	_golden_line = ""
@@ -827,6 +833,7 @@ func _process(delta: float) -> void:
 		_trap_clock = 0.0
 		_refresh_traps()
 		_check_outfits()
+		_check_steps()
 	session.advance(delta)
 	for e in session.poll_events():
 		_on_event(e)
@@ -1562,6 +1569,52 @@ func _sync_request_badge() -> void:
 	for r in save.requests:
 		unseen = unseen or int(r["serial"]) >= seen
 	hud.world_badge = unseen
+	# Görevler: görülmemiş istek ya da panel son açılıştan beri biten ilk adım.
+	hud.tasks_badge = unseen or _steps_unviewed()
+
+
+## Görevler paneli son açıldığından beri biten ilk adım var mı (bütün adımlar bitmediyse)?
+func _steps_unviewed() -> bool:
+	var db := GameState.db
+	var save := GameState.save
+	if FirstSteps.all_done(db, save, spot_id):
+		return false
+	return FirstSteps.done_count(db, save, spot_id) > int(save.flags.get(STEPS_VIEWED_FLAG, 0))
+
+
+## Görevler paneli açıldı: ilk adımlar görüldü (rozet).
+func _mark_steps_viewed() -> void:
+	GameState.save.flags[STEPS_VIEWED_FLAG] = FirstSteps.done_count(GameState.db, GameState.save, spot_id)
+	GameState.save_game()
+	_sync_request_badge()
+
+
+## Yeni biten ilk adımlar (her saniye, olta boşken): "Görev tamam: …" (yıldız), Görevler nabız gibi atar, rozet.
+## Eski kayıtta önceden bitenler oturumun başında sessizce görülmüş sayılır (_init_steps).
+func _check_steps() -> void:
+	if session.state != FishingSession.State.IDLE or _card_up() or _film != null:
+		return
+	var save := GameState.save
+	var fresh := FirstSteps.fresh(GameState.db, save, spot_id)
+	if fresh.is_empty():
+		return
+	for id in fresh:
+		FirstSteps.mark_seen(save, id)
+		hud.toast_later(tr("UI_STEP_DONE") % tr(str(FirstSteps.STEP_KEYS[id])), UiKit.ACCENT, "equip", "star", "step")
+	hud.pulse_tasks()
+	GameState.save_game()
+	_sync_request_badge()
+
+
+## Oturumun başı: ilk adımlar bu sürümde yeni; eski kayıtta önceden biten adımlar bildirim çıkarmaz.
+func _init_steps() -> void:
+	var db := GameState.db
+	var save := GameState.save
+	if save.flags.has(STEPS_INIT_FLAG):
+		return
+	save.flags[STEPS_INIT_FLAG] = true
+	FirstSteps.mark_all_seen(db, save, spot_id)
+	save.flags[STEPS_VIEWED_FLAG] = FirstSteps.done_count(db, save, spot_id)
 
 
 ## Bugün paneli açıldı: istekler görüldü (rozet söner). İstekler (altın istek de) varken açıldıysa Dede'nin
@@ -1636,6 +1689,8 @@ func _on_reroll(slot: int) -> void:
 	GameState.save_game()
 	Sounds.haptic(15)
 	day_panel.refresh()
+	if tasks_panel.visible:
+		tasks_panel.refresh()
 	_mark_requests_seen()
 
 
@@ -1748,6 +1803,7 @@ func _world_line() -> bool:
 		save.flags[REQ_TOLD_FLAG] = true
 		_say("UI_DEDE_REQ_FIRST")
 		hud.pulse_world()
+		hud.pulse_tasks()
 		return true
 	if _request_done:
 		_request_done = false
@@ -3777,6 +3833,10 @@ func _build_ui() -> void:
 	layer.add_child(day_panel)
 	day_panel.tea_requested.connect(_on_tea)
 	day_panel.reroll_requested.connect(_on_reroll)
+	tasks_panel = TasksPanel.new()
+	tasks_panel.spot_id = spot_id
+	layer.add_child(tasks_panel)
+	tasks_panel.reroll_requested.connect(_on_reroll)
 	bucket_panel = BucketPanel.new()
 	layer.add_child(bucket_panel)
 	bucket_panel.release_requested.connect(_on_bucket_release)
@@ -3862,6 +3922,17 @@ func _build_ui() -> void:
 		_forget_pickups()
 		day_panel.open()
 		_mark_requests_seen())
+	hud.tasks_pressed.connect(func() -> void:
+		_end_quick_catch()
+		if session.state != FishingSession.State.IDLE or _card_up() or _film != null:
+			return
+		input.release_all()
+		angler.stop()
+		_pending_cast = Dice.NO_POINT
+		_forget_pickups()
+		tasks_panel.open()
+		_mark_requests_seen()
+		_mark_steps_viewed())
 	hud.technique_pressed.connect(func() -> void:
 		if session.state != FishingSession.State.IDLE or _card_up():
 			return
