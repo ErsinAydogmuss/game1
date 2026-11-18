@@ -170,7 +170,7 @@ var fish_jump: FishJump
 ## Bölgede avlanılmadığı için şamandıraya dönülen teknik (sinek dere ağzı dışında; _fit_technique;
 ## kayıtta da: uygulama yeniden açılınca avlanıldığı bölgeye dönen yine ele alır, _hold) ve oturumun
 ## bölgesinin bir kez belli olup olmadığı (ilk geçiş sessiz).
-const HELD_FLAG := "held_technique"
+const HELD_FLAG := Economy.HELD_FLAG
 var _held_technique: String = ""
 var _zone_known: bool = false
 var camera: FollowCamera
@@ -181,6 +181,8 @@ var settings_panel: SettingsPanel
 var shop_panel: ShopPanel
 var book_panel: BookPanel
 var map_panel: MapPanel
+## Haritada bir bölgeye dokununca: o bölgenin balıkları ve oranları, GİT (testçi: "hangi bölgede hangi balık").
+var zone_panel: ZonePanel
 ## Takım çantası (sol alttaki teknik düğmesi): teknik seçilir, tuzak bırakılır.
 var technique_panel: TechniquePanel
 var loadout_panel: LoadoutPanel
@@ -3793,7 +3795,14 @@ func _build_ui() -> void:
 	map_panel = MapPanel.new()
 	map_panel.spot_id = spot_id
 	layer.add_child(map_panel)
-	map_panel.travel_requested.connect(_travel)
+	# Bölge kartı haritanın üstünde (ondan sonra eklenir); GİT haritayı da kapatır.
+	zone_panel = ZonePanel.new()
+	zone_panel.spot_id = spot_id
+	layer.add_child(zone_panel)
+	map_panel.zone_requested.connect(func(id: String) -> void: zone_panel.open_zone(id, id == zone_id, in_boat))
+	zone_panel.travel_requested.connect(func(id: String) -> void:
+		map_panel.close_panel()
+		_travel(id))
 	technique_panel = TechniquePanel.new()
 	technique_panel.spot_id = spot_id
 	layer.add_child(technique_panel)

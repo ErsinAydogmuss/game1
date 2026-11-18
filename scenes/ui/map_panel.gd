@@ -3,11 +3,11 @@ extends Dialog
 ## Göl haritası (docs/gdd.md §10.1): HUD'daki harita düğmesiyle açılır (ilk balıktan sonra; olta
 ## sudayken gizli). Göl gerçek verisinden çizilir (MapView): bölgelerin rozeti ve adı, kilitli
 ## bölgede kilit ve neden, "Buradasın", Nine'nin dükkânı, kapalı çitler ve şamandıralar, Ersin'in
-## çıkartmaları; çerçevesi Ersin'in harita kâğıdı (yoksa kodla çizilen çerçeve). Açık bir
-## bölgenin rozetine dokununca oraya hızlı geçilir: panel kapanır, travel_requested (main ekranı
-## karartıp balıkçıyı bölgenin atış noktasına geçirir). Kilitli bölgede neden yazılır, rozet sallanır.
+## çıkartmaları; çerçevesi Ersin'in harita kâğıdı (yoksa kodla çizilen çerçeve). Bir bölgenin rozetine
+## dokununca bölge kartı açılır (zone_requested → main ZonePanel'i açar: o bölgenin balıkları ve oranları, GİT ya
+## da kilidin nedeni; GİT haritayı kapatıp oraya geçirir).
 
-signal travel_requested(zone_id: String)
+signal zone_requested(zone_id: String)
 
 ## Haritanın en büyük boyu (gölün oranıyla küçülür) ve panelin en dar genişliği. Yükseklik telefonda
 ## (iPhone 14, alt güvenli payla) panel küçülmeden sığacak kadar: kapatma düğmesi 122 birim kalır.
@@ -58,7 +58,6 @@ func open_map(position: Vector2, current: String, map_marks: Array[Dictionary]) 
 
 func refresh() -> void:
 	_note.text = tr("UI_MAP_HINT")
-	_note.add_theme_color_override("font_color", UiKit.INK_SOFT)
 	view.show_lake(GameState.db, GameState.save, spot_id, here, zone_id, marks)
 	# Harita gölün oranında: boş kâğıt payı kalmasın.
 	var extra := _frame_extra()
@@ -73,24 +72,13 @@ func _frame_extra() -> Vector2:
 	return (pad - Vector2.ONE * FRAME_MARGIN * 2.0).max(Vector2.ZERO)
 
 
+## Bölgenin kartı (kilitli bölgede de: balıkları ve nedeni); kilitliyse rozet de sallanır.
 func _on_zone(id: String) -> void:
 	var db := GameState.db
 	var z := db.zone(spot_id, id)
 	if z.is_empty():
 		return
-	var reason := Zones.lock_reason(db, GameState.save, z)
-	if not reason.is_empty():
-		Sounds.play("error")
-		Sounds.haptic(20)
-		var key := str(reason["key"])
-		var why := tr(key) % int(reason["rank"]) if key == "UI_ZONE_LOCKED_RANK" else tr(key)
-		_note.text = "%s: %s" % [tr("ZONE_" + id), why]
-		_note.add_theme_color_override("font_color", Color("#a2471d"))
-		view.shake(id)
-		return
-	# Gidilecek yer: bölgenin atış noktası ya da (sandal bölgesinde) şamandırası.
-	if (z["stands"] as Array).is_empty() and (z["buoys"] as Array).is_empty():
-		return
 	Sounds.play("ui_tap")
-	close_panel()
-	travel_requested.emit(id)
+	if not Zones.lock_reason(db, GameState.save, z).is_empty():
+		view.shake(id)
+	zone_requested.emit(id)

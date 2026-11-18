@@ -359,6 +359,10 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
 64. **Tek mod (Kolay çekme kalktı).** Ayarlar'da Kolay çekme satırı yok; panel küçülmeden sığıyor mu? Eski kayıtta
     Kolay açıktıysa da çekişme artık Normal: çırpınırken basılı tutunca misina kopar. Yeni oyunda (Kaydı sıfırla)
     ilk balık yine kopmaz, kaçmaz (öğretici). Rehberin ilk sayfası: "Yeşilde sar, kırmızıda bırak."
+65. **Bölge kartı.** Haritada bir bölgeye dokun: haritanın üstünde o bölgenin balıkları açılır (en sık gelen
+    önce; oranı, nadirliği; tutmadığın balık siluet ve "???"). Üstte elindeki teknik ve şimdiki vakit. GİT'e bas:
+    oraya geçersin. Nilüferli koyda gündüz Ay Turnası soluk ve "Gece gelir"; dere ağzında şamandırayla alabalık
+    "Sinek ile". Kilitli bölgede GİT yerine nedeni yazar. Kart küçülmeden sığıyor mu, yazılar okunuyor mu?
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 

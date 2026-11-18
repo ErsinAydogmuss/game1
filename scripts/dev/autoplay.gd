@@ -1361,7 +1361,9 @@ func _play_map() -> void:
 		if badge == null:
 			_results.append("rozet yok: " + zone_id)
 			continue
-		await _tap_control(badge)
+		if index == 3:
+			await _check_zone_card(panel, zone_id)
+		await _tap_zone(panel, zone_id)
 		var dark := await _wait_until(func() -> bool: return fade.busy(), 1.0)
 		var arrived := await _wait_until(func() -> bool: return str(main.get("zone_id")) == zone_id and not fade.busy(), 4.0)
 		var stand: Vector2 = (db.zone(spot, zone_id)["stands"] as Array)[0]
@@ -1369,23 +1371,27 @@ func _play_map() -> void:
 		for sh in _session().sim.shadows:
 			if sh.mode != FishShadow.Mode.FLEE and sh.pos.distance_to(stand) <= reach + 0.5:
 				near += 1
-		_check("%s rozetine dokun → ekran kararır, oraya geçilir (%d gölge yakında)" % [zone_id, near],
+		_check("%s rozeti → bölge kartı → GİT: ekran kararır, oraya geçilir (%d gölge yakında)" % [zone_id, near],
 				dark and arrived and _angler().pos2().distance_to(stand) < 0.3 and near >= 2)
 		await _wait(0.6)
 		await _shot("%02d_%s" % [index, zone_id])
 		index += 1
-	# Kilitli: derin orta sandal ister; geçilmez, nedeni yazılır.
+	# Kilitli: derin orta sandal ister; kartında balıkları ve nedeni, GİT yok; geçilmez.
 	await _tap_control(hud.map_button)
 	await _wait_until(func() -> bool: return panel.visible, 2.0)
 	await _wait(0.3)
 	var before := _angler().pos2()
-	await _tap_control(panel.view.badge("deep_water"))
-	await _wait(0.6)
-	var note: Label = panel.get("_note")
-	_check("kilitli bölgeye geçilmez, nedeni yazılır", panel.visible and not fade.busy()
+	var went := await _tap_zone(panel, "deep_water", 0.6)
+	var zone_card: ZonePanel = main.get("zone_panel")
+	var locked := zone_card.find_child("Locked", true, false)
+	_check("kilitli bölgenin kartında balıkları ve nedeni, GİT yok; geçilmez", not went and zone_card.visible
+			and locked != null and _texts_in(locked).contains(tr("UI_ZONE_LOCKED_BOAT")) and not fade.busy()
 			and _angler().pos2() == before and str(main.get("zone_id")) == "dock_cove"
-			and note.text.begins_with(tr("ZONE_deep_water")))
+			and zone_card.find_child("Fish_sturgeon", true, false) != null)
 	await _shot("%02d_kilitli" % index)
+	zone_card.close_panel()
+	await _wait(0.3)
+	_check("bölge kartı kapanınca harita açık kalır", panel.visible)
 	panel.close_panel()
 	await _wait(0.3)
 	# En yüksek rütbede RÜTBE +1 pasif.
@@ -1625,10 +1631,11 @@ func _play_boat() -> void:
 	await _wait_until(func() -> bool: return panel.visible, 2.0)
 	await _wait(0.4)
 	await _shot("05_harita")
-	await _tap_control(panel.view.badge("deep_water"))
+	var next := await _tap_zone(panel, "deep_water")
+	_check("sandalda derin ortanın kartında SIRADAKİ ŞAMANDIRA", next)
 	await _wait_until(func() -> bool: return fade.busy(), 1.0)
 	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
-	_check("haritadan derin ortaya dokun → sıradaki şamandıra", bool(main.get("in_boat"))
+	_check("haritadan derin orta → kart → sıradaki şamandıra", bool(main.get("in_boat"))
 			and _angler().pos2().distance_to(buoys[1]) < 3.5)
 	await _wait(0.5)
 	await _shot("06_ikinci_samandira")
@@ -5269,7 +5276,7 @@ func _reels_legend() -> void:
 	_mark("open")
 	await _wait(1.2)
 	_mark("tap")
-	await _tap_control(panel.view.badge("deep_water"))
+	await _tap_zone(panel, "deep_water")
 	await _wait_until(func() -> bool: return fade.busy(), 1.0)
 	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
 	_take("legend")
@@ -5642,7 +5649,7 @@ func _reels_xmap() -> void:
 	_mark("open")
 	await _wait(1.6)
 	_mark("tap")
-	await _tap_control(panel.view.badge("deep_water"))
+	await _tap_zone(panel, "deep_water")
 	await _wait_until(func() -> bool: return fade.busy(), 1.0)
 	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
 	_check("reels: haritadan sandalla X'e", bool(main.get("in_boat")) and int(main.get("_buoy")) == Secret.KEEPER_BUOY)
@@ -6362,15 +6369,69 @@ func _aim(label: String, world: Vector3, margin: float = 70.0) -> void:
 			and p.y >= margin and p.y <= view.y - margin)
 
 
-## Harita düğmesine dokunur, bölgenin rozetine dokunur ve kararmanın bitmesini bekler (videoda
-## haritanın kendisi görünsün diye _travel_to yerine).
+## Harita düğmesine dokunur, bölgenin rozetine dokunur, bölge kartında GİT'e dokunur ve kararmanın bitmesini
+## bekler (videoda haritanın kendisi görünsün diye _travel_to yerine).
 func _map_to(panel: MapPanel, fade: Fade, zone: String) -> void:
 	await _tap_control(_hud().map_button)
 	await _wait_until(func() -> bool: return panel.visible, 2.0)
 	await _wait(1.2)
-	await _tap_control(panel.view.badge(zone))
+	await _tap_zone(panel, zone)
 	await _wait_until(func() -> bool: return fade.busy(), 1.0)
 	await _wait_until(func() -> bool: return not fade.busy(), 4.0)
+
+
+## Bölge kartı (testçi: "hangi bölgede hangi balık hangi oranda"): rozete dokununca haritanın üstünde açılır,
+## küçülmeden ve güvenli alanda sığar, düğmeleri büyük; bölgenin şimdi gelen her türü bir kartta oranıyla (oranlar
+## ZonePanel.rows: oyunun oranı), tutulmamış tür "???"; GİT var. Kart açık kalır (çağıran GİT'e dokunur).
+func _check_zone_card(panel: MapPanel, zone: String) -> void:
+	var card: ZonePanel = main.get("zone_panel")
+	await _tap_control(panel.view.badge(zone))
+	if not await _wait_until(func() -> bool: return card.visible, 2.0):
+		_check("bölge kartı açılır: " + zone, false)
+		return
+	await _wait(0.5)
+	_check("%s rozeti → bölge kartı haritanın üstünde, küçülmeden sığar (%.2f), güvenli alanda" % [zone,
+			card.fit_scale()], panel.visible and card.is_greater_than(panel) and card.fit_scale() > 0.999
+			and _panel_inside(card))
+	_check_panel_buttons(card, "bölge kartının düğmeleri")
+	var rows := ZonePanel.rows(GameState.db, GameState.save, str(main.get("spot_id")), zone)
+	var shown := 0
+	var unknown := 0
+	var odds_ok := true
+	for row in rows:
+		var fish := card.find_child("Fish_" + str(row["id"]), true, false)
+		if fish == null:
+			continue
+		shown += 1
+		var texts := _texts_in(fish)
+		if texts.contains("???"):
+			unknown += 1
+		var odds := fish.find_child("Odds", true, false) as Label
+		var want := UiKit.format_percent(int(row["ppm"])) if str(row["when"]).is_empty() else ""
+		if odds == null or odds.text.is_empty() or (not want.is_empty() and odds.text != want):
+			odds_ok = false
+	_check("bölge kartında %d türün hepsi, oranlarıyla (%d tutulmamış: ???)" % [rows.size(), unknown],
+			shown == rows.size() and shown > 0 and odds_ok)
+	_check("bölge kartında GİT", card.find_child("Go", true, false) != null)
+	await _shot("02b_bolge_karti")
+	card.close_panel()
+	await _wait(0.3)
+
+
+## Açık haritada bölgenin rozetine dokunur; bölge kartı açılınca (pause sn bekleyip) GİT'e dokunur. Döner: GİT var
+## mıydı (kilitli bölgede ve balıkçının kıyıdaki bölgesinde yok: kart açık kalır).
+func _tap_zone(panel: MapPanel, zone: String, pause: float = 0.4) -> bool:
+	var card: ZonePanel = main.get("zone_panel")
+	await _tap_control(panel.view.badge(zone))
+	if not await _wait_until(func() -> bool: return card.visible, 2.0):
+		_results.append("bölge kartı açılmadı: " + zone)
+		return false
+	await _wait(pause)
+	var go := card.find_child("Go", true, false) as Button
+	if go == null or not go.is_visible_in_tree():
+		return false
+	await _tap_control(go)
+	return true
 
 
 ## Açılan balık kartını düğmesiyle kapatır (kart açılana kadar bekler; en kısa açık kalma süresi).

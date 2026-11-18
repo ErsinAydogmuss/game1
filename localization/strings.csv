@@ -111,7 +111,14 @@ UI_ZONE_LOCKED_RANK,Opens at rank %d,Rütbe %d olunca açılır
 UI_ZONE_LOCKED_BOAT,You need the boat to get there,Oraya sandalla gidilir
 UI_ZONE_OPENED,%s is open!,%s açıldı!
 UI_MAP,Map,Harita
-UI_MAP_HINT,Tap a place to go there.,"Bir yere dokun, oraya geçelim."
+UI_MAP_HINT,Tap a place: see its fish and go there.,"Bir yere dokun: balıklarını gör, oraya geç."
+UI_ZONE_GO,Go,Git
+UI_ZONE_NEXT_BUOY,Next buoy,Sıradaki şamandıra
+UI_ZONE_NOTE,"Odds with your gear, at this time and weather.","Oranlar takımınla, şimdiki vakitte ve havada."
+UI_ZONE_TRAP,You can set a crayfish trap here.,Burada kerevit tuzağı kurulur.
+UI_ZONE_NIGHT,At night,Gece gelir
+UI_ZONE_STORM,In a storm,Fırtınada
+UI_ZONE_WITH,With: %s,%s ile
 UI_MAP_HERE,You are here,Buradasın
 UI_MAP_NEW,New!,Yeni!
 UI_MAP_RANK,Rank %d,Rütbe %d
@@ -463,7 +470,7 @@ UI_GUIDE_LOOP_BUCKET,"Your catch goes in the bucket. When it's full, tap SELL to
 UI_GUIDE_LOOP_SHOP,"Sell your fish, earn coins, buy new tackle.","Balıklarını sat, para kazan, yeni takım al."
 UI_GUIDE_RANK,Rank,Rütbe
 UI_GUIDE_LOOP_RANK,Every fish gives points. Rank up to open new things.,Her balık puan verir. Rütbe atlayınca yeni şeyler açılır.
-UI_GUIDE_LOOP_MAP,Comes after your first fish. Tap an open spot to go there.,"İlk balıktan sonra gelir. Açık bir bölgeye dokun, oraya geçersin."
+UI_GUIDE_LOOP_MAP,Comes after your first fish. Tap a spot: its fish and odds; GO takes you there.,"İlk balıktan sonra gelir. Bölgeye dokun: balıkları ve oranları; GİT ile oraya geç."
 UI_GUIDE_LOOP_BAG,"The button at bottom left: pick a technique, set a trap.","Sol alttaki düğme: tekniğini seç, tuzak bırak."
 UI_GUIDE_RARITY,Rarity,Nadirlik
 UI_GUIDE_RARITY_LEAD,Rare fish have telltale shadows. The guarantee brings one within that many catches.,Nadir balığın gölgesi belli olur. Garanti: gelmezse en geç o kadar avda gelir.

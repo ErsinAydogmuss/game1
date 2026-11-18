@@ -10,6 +10,9 @@ extends RefCounted
 ## Boy çarpanı binde bir: en küçük boy 600 (0,6), en büyük boy 1600 (1,6).
 const SIZE_MIN := 600
 const SIZE_SPAN := 1000
+## Bölgede avlanılmadığı için şamandıraya dönülen tekniğin kayıttaki bayrağı (main._hold; bölge kartı da okur:
+## ZonePanel.technique_for).
+const HELD_FLAG := "held_technique"
 
 
 ## Balığın satış değeri: türün değeri × boy çarpanı (boyun türün aralığındaki yerine göre

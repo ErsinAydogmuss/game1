@@ -137,7 +137,7 @@ func refresh() -> void:
 		if save.records.has(str(f["id"])):
 			found += 1
 	count.add_child(UiKit.title("%d / %d" % [found, fish.size()], 46, UiKit.ACCENT, HORIZONTAL_ALIGNMENT_CENTER, 10))
-	header_extra.add_child(_conditions_pill(db, save))
+	header_extra.add_child(conditions_pill(db, save))
 	header_extra.add_child(count)
 	_build_grid(db, save, fish)
 	_build_detail(db, save)
@@ -145,7 +145,7 @@ func refresh() -> void:
 
 ## Başlıkta gölün şimdiki koşulu (oranlar ona göre): vaktin ve havanın ikonu, "Gece · Fırtınalı" (yağmurlu
 ## gece fırtına) ve sevgi seviyesi 2 ve üstündeyse sevginin en çok Nadir+ payı.
-func _conditions_pill(db: ContentDB, save: SaveData) -> PanelContainer:
+static func conditions_pill(db: ContentDB, save: SaveData) -> PanelContainer:
 	var cond := WorldState.conditions(db, save)
 	var phase := str(cond["phase"])
 	var weather := "storm" if Weather.stormy(str(cond["weather"]), phase) else str(cond["weather"])
@@ -157,10 +157,10 @@ func _conditions_pill(db: ContentDB, save: SaveData) -> PanelContainer:
 	row.add_child(GameIcon.make("phase_" + phase, 48))
 	if weather != "clear":
 		row.add_child(GameIcon.make("weather_" + weather, 48))
-	var text := tr("UI_BOOK_NOW") % [tr("PHASE_" + phase), tr("WEATHER_" + weather)]
+	var text := UiKit.translate("UI_BOOK_NOW") % [UiKit.translate("PHASE_" + phase), UiKit.translate("WEATHER_" + weather)]
 	var love := int(cond["love"])
 	if love > 1:
-		text += " · " + tr("UI_BOOK_LOVE") % [love, UiKit.format_percent((LakeLove.rare_bonus_pm(db.rules, love) - 1000) * 1000)]
+		text += " · " + UiKit.translate("UI_BOOK_LOVE") % [love, UiKit.format_percent((LakeLove.rare_bonus_pm(db.rules, love) - 1000) * 1000)]
 	var label := UiKit.label(text, 26, UiKit.TEXT)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(label)
@@ -258,7 +258,7 @@ func _fish_card(db: ContentDB, save: SaveData, f: Dictionary) -> Button:
 	column.offset_top = 8
 	column.offset_bottom = -8
 	b.add_child(column)
-	var art := _art(id, 118, found)
+	var art := fish_art(id, 118, found)
 	art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(art)
 	var name_text := tr("FISH_" + id) if found else "???"
@@ -292,17 +292,17 @@ func _fish_card(db: ContentDB, save: SaveData, f: Dictionary) -> Button:
 func _framed_art(db: ContentDB, id: String, rarity: int, found: bool) -> Control:
 	var frame := UiKit.framed("frame_" + db.rarity_id(rarity), StyleBoxEmpty.new(), DETAIL_FRAME_CORNER)
 	if not found or not frame is StyleBoxTexture:
-		return _art(id, 140, found)
+		return fish_art(id, 140, found)
 	var box := PanelContainer.new()
 	box.add_theme_stylebox_override("panel", frame)
 	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(_art(id, DETAIL_ART, true))
+	box.add_child(fish_art(id, DETAIL_ART, true))
 	return box
 
 
-## Balığın resmi; tutulmadıysa koyu siluet.
-static func _art(id: String, side: float, found: bool) -> TextureRect:
+## Balığın resmi; tutulmadıysa koyu siluet (bölge kartı da kullanır).
+static func fish_art(id: String, side: float, found: bool) -> TextureRect:
 	var art := TextureRect.new()
 	art.texture = ItemArt.fish(id)
 	art.custom_minimum_size = Vector2(side, side)
