@@ -1222,7 +1222,8 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
     | | Reklamsız | Reklamlı |
     |---|---|---|
     | Saatte para | 7.764–8.480 | 9.731–10.693 (+%17–30, ortalama +%25) |
-    | Reklamla gelen para (kazançta payı) | – | %22–25 |
+    | 5 istek yuvasıyla (testçi düzeltmeleri) | 8.131–8.574 | 10.012–10.734 (+%21–25, ortalama +%24) |
+    | Reklamla gelen para (kazançta payı) | – | %22–25 (5 yuvayla %23–25) |
     | Saatte ödüllü reklam | – | 6,5–7 (satış 1,6–1,7; istek 2,7–3; akvaryum 2,1–2,3) |
     | Saatte geçiş reklamı | – | 2,9–3,4 |
     | Tekne (dk) | 117–125 | 113–124 |

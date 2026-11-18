@@ -34,8 +34,7 @@ static func daily(db: ContentDB, save: SaveData) -> Array[Dictionary]:
 	return out
 
 
-## Altın isteğin yuvası (günlük yuvalardan sonra; SaveData.MAX_REQUESTS'in içinde). Günlük yuva sayısı değişince
-## (3 → 5) eski kayıttaki altın istek settle ile buraya taşınır.
+## Altın isteğin yuvası (günlük yuvalardan sonra: SaveData.GOLDEN_SLOT; v7'de 3'ten 5'e taşındı, SaveData.migrate).
 static func golden_slot(db: ContentDB) -> int:
 	return db.requests.slots
 
@@ -71,19 +70,6 @@ static func offer_golden(db: ContentDB, save: SaveData) -> Dictionary:
 	save.request_serial += 1
 	save.requests.append(r)
 	return r
-
-
-## Kayıttaki altın istek (türü "secret") altın yuvada değilse oraya taşınır (günlük yuva sayısı 3'ten 5'e çıkınca eski
-## kayıtta 3. yuvadaydı: günlük kart gibi görünür, aynı parça için ikinci altın istek doğardı). Oturumun başında,
-## doldurmadan önce. Taşıdıysa true.
-static func settle(db: ContentDB, save: SaveData) -> bool:
-	var slot := golden_slot(db)
-	var moved := false
-	for r in save.requests:
-		if str(r["kind"]) == "secret" and int(r["slot"]) != slot and find_slot(save, slot).is_empty():
-			r["slot"] = slot
-			moved = true
-	return moved
 
 
 ## Yuvadaki istek (yoksa boş).

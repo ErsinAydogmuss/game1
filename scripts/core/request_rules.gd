@@ -119,6 +119,10 @@ func special_for(piece: int) -> Dictionary:
 func validate(db: ContentDB, errors: PackedStringArray) -> void:
 	if slots < 1 or slots >= SaveData.MAX_REQUESTS:
 		errors.append("requests.json: slots 1..%d olmalı" % (SaveData.MAX_REQUESTS - 1))
+	# Altın istek günlüklerden sonraki yuvada: kayıt onu SaveData.GOLDEN_SLOT'ta tutar (v7). slots değişirse kayıt sürümü
+	# ve göç gerekir (eski kayıtta altın yuva günlük kart olurdu).
+	if slots != SaveData.GOLDEN_SLOT:
+		errors.append("requests.json: slots %d, kaydın altın yuvası %d: değişirse SaveData sürümü ve göç" % [slots, SaveData.GOLDEN_SLOT])
 	if unlock_rank < 1 or unlock_rank > db.max_rank():
 		errors.append("requests.json: unlock_rank 1..%d olmalı" % db.max_rank())
 	if spread_min_pm <= 0 or spread_max_pm < spread_min_pm or coins_base < 0 or coins_per_rank < 0 \

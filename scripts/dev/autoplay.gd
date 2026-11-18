@@ -3075,9 +3075,10 @@ func _play_requests() -> void:
 	await _tap_control(hud.world_button)
 	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
 	await _wait(0.4)
-	var box := day_panel.find_child("Requests", true, false) as Control
-	_check("rütbe 1'de istek yok: Görevler'de rozet yok, Bugün panelinde istek bölümü gizli", day_panel.visible
-			and save.requests.is_empty() and not hud.tasks_badge and box != null and not box.is_visible_in_tree())
+	# Rütbe 1'de Bugün panelinde isteklerin özet satırı yok (kartlar zaten Görevler panelinde).
+	var box := day_panel.find_child("RequestSummary", true, false) as Control
+	_check("rütbe 1'de istek yok: Görevler'de rozet yok, Bugün panelinde isteklerin özeti yok", day_panel.visible
+			and save.requests.is_empty() and not hud.tasks_badge and (box == null or not box.is_visible_in_tree()))
 	day_panel.close_panel()
 	await _wait(0.4)
 	# 2) Rütbe 2'yi getiren balık: yuvalar dolar, Görevler'de rozet (tek rozet: saat çipinde yok); Dede Görevler'i

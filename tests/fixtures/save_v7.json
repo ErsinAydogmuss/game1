@@ -1,0 +1,329 @@
+{
+	"aquarium_box": 962,
+	"aquarium_unix": 4249,
+	"baits": {},
+	"bucket": [
+		{
+			"fish": "crayfish",
+			"size_cm": 6,
+			"stars": 1
+		}
+	],
+	"casts": 0,
+	"cat_fed": 15,
+	"cat_meal_at": 161,
+	"catches": 161,
+	"character": "girl",
+	"clock_s": 3096,
+	"coins": 1361,
+	"created_unix": 0,
+	"flags": {},
+	"hint_step": 0,
+	"keeper": 0,
+	"last_seen_unix": 0,
+	"letter_at": 153,
+	"letters": 4,
+	"loadouts": {
+		"bottom": {
+			"rod": "rod_carp_1"
+		},
+		"float": {
+			"bobber": "bobber_sensitive",
+			"hook": "hook_medium",
+			"rod": "rod_float_glass"
+		},
+		"shared": {
+			"line": "line_mono",
+			"reel": "reel_smooth"
+		},
+		"spin": {
+			"lure": "lure_spinner",
+			"rod": "rod_spin_light"
+		}
+	},
+	"love": 42,
+	"map_pieces": 1,
+	"outfit": {},
+	"owned": [
+		"rod_spin_light",
+		"line_mono",
+		"trap_1",
+		"lure_spinner",
+		"rod_carp_1",
+		"bucket_big",
+		"reel_smooth",
+		"hook_medium",
+		"bobber_sensitive",
+		"rod_float_glass"
+	],
+	"pity": {
+		"epic": 22,
+		"legendary": 12,
+		"rare": 1
+	},
+	"player_id": "c499d4791f9e1679788cbc8af42017c9",
+	"records": {
+		"bream": {
+			"best_cm": 55,
+			"best_stars": 4,
+			"count": 1,
+			"first_unix": 108,
+			"released": 0
+		},
+		"brook_trout": {
+			"best_cm": 59,
+			"best_stars": 3,
+			"count": 1,
+			"first_unix": 3705,
+			"released": 0
+		},
+		"carp": {
+			"best_cm": 64,
+			"best_stars": 3,
+			"count": 13,
+			"first_unix": 18,
+			"released": 0
+		},
+		"chub": {
+			"best_cm": 48,
+			"best_stars": 5,
+			"count": 24,
+			"first_unix": 1632,
+			"released": 0
+		},
+		"crayfish": {
+			"best_cm": 12,
+			"best_stars": 4,
+			"count": 5,
+			"first_unix": 1895,
+			"released": 0
+		},
+		"golden_carp": {
+			"best_cm": 50,
+			"best_stars": 2,
+			"count": 1,
+			"first_unix": 468,
+			"released": 0
+		},
+		"mirror_carp": {
+			"best_cm": 87,
+			"best_stars": 4,
+			"count": 2,
+			"first_unix": 2498,
+			"released": 0
+		},
+		"perch": {
+			"best_cm": 44,
+			"best_stars": 5,
+			"count": 50,
+			"first_unix": 46,
+			"released": 0
+		},
+		"pike": {
+			"best_cm": 107,
+			"best_stars": 4,
+			"count": 31,
+			"first_unix": 223,
+			"released": 0
+		},
+		"rudd": {
+			"best_cm": 30,
+			"best_stars": 5,
+			"count": 16,
+			"first_unix": 371,
+			"released": 0
+		},
+		"silverside": {
+			"best_cm": 13,
+			"best_stars": 3,
+			"count": 4,
+			"first_unix": 83,
+			"released": 0
+		},
+		"tench": {
+			"best_cm": 47,
+			"best_stars": 4,
+			"count": 5,
+			"first_unix": 900,
+			"released": 0
+		},
+		"trout": {
+			"best_cm": 56,
+			"best_stars": 4,
+			"count": 4,
+			"first_unix": 3231,
+			"released": 0
+		},
+		"wels": {
+			"best_cm": 217,
+			"best_stars": 4,
+			"count": 3,
+			"first_unix": 137,
+			"released": 0
+		},
+		"zander": {
+			"best_cm": 77,
+			"best_stars": 4,
+			"count": 3,
+			"first_unix": 1791,
+			"released": 0
+		}
+	},
+	"request_day": 2,
+	"request_serial": 16,
+	"requests": [
+		{
+			"day": 2,
+			"goal": 4,
+			"kind": "technique",
+			"progress": 0,
+			"reward": {
+				"coins": 65,
+				"love": 3,
+				"xp": 38
+			},
+			"serial": 10,
+			"slot": 0,
+			"want": {
+				"technique": "spin"
+			}
+		},
+		{
+			"day": 2,
+			"goal": 5,
+			"kind": "zone",
+			"progress": 0,
+			"reward": {
+				"coins": 60,
+				"love": 3,
+				"xp": 38
+			},
+			"serial": 11,
+			"slot": 1,
+			"want": {
+				"zone": "rocky_point"
+			}
+		},
+		{
+			"day": 2,
+			"goal": 4,
+			"kind": "technique",
+			"progress": 0,
+			"reward": {
+				"coins": 70,
+				"love": 3,
+				"xp": 38
+			},
+			"serial": 12,
+			"slot": 2,
+			"want": {
+				"technique": "bottom"
+			}
+		},
+		{
+			"day": 2,
+			"goal": 4,
+			"kind": "trap",
+			"progress": 1,
+			"reward": {
+				"coins": 65,
+				"love": 3,
+				"xp": 34
+			},
+			"serial": 13,
+			"slot": 4,
+			"want": {}
+		},
+		{
+			"day": 2,
+			"goal": 1,
+			"kind": "size",
+			"progress": 0,
+			"reward": {
+				"coins": 80,
+				"love": 4,
+				"xp": 45
+			},
+			"serial": 14,
+			"slot": 3,
+			"want": {
+				"fish": "crayfish",
+				"min_cm": 10
+			}
+		},
+		{
+			"day": 2,
+			"goal": 3,
+			"kind": "secret",
+			"progress": 0,
+			"reward": {
+				"coins": 230,
+				"love": 8,
+				"piece": 2,
+				"xp": 100
+			},
+			"serial": 15,
+			"slot": 5,
+			"want": {
+				"event": "catch",
+				"phase": "night"
+			}
+		}
+	],
+	"reroll_day": 2,
+	"seed": 7007,
+	"session": 0,
+	"settings": {},
+	"stats": {
+		"aquarium_coins": 303,
+		"cat_fed": 15,
+		"earned": 2743,
+		"request_coins": 505,
+		"requests": 8,
+		"sold": 147,
+		"spent": 2190,
+		"trapped": 3,
+		"trash": 3,
+		"trash_boot": 1,
+		"trash_tin_can": 2
+	},
+	"tea_at": -1,
+	"technique": "float",
+	"trap_serial": 4,
+	"traps": [
+		{
+			"id": 0,
+			"items": [
+				{
+					"fish": "crayfish",
+					"size_cm": 14,
+					"stars": 5
+				},
+				{
+					"fish": "crayfish",
+					"size_cm": 10,
+					"stars": 3
+				},
+				{
+					"fish": "crayfish",
+					"size_cm": 9,
+					"stars": 2
+				},
+				{
+					"fish": "crayfish",
+					"size_cm": 11,
+					"stars": 3
+				}
+			],
+			"last_unix": 4259,
+			"placed_unix": 579,
+			"progress_s": 80,
+			"trash": "",
+			"x": -17.5,
+			"z": -0.349999904632568,
+			"zone": "reeds"
+		}
+	],
+	"version": 7,
+	"xp": 3055
+}

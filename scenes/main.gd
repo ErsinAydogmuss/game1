@@ -491,8 +491,6 @@ func _start_session() -> void:
 	# Dede'nin istekleri: açıksa ve bugün dolmadıysa boş yuvalar dolar (eski kayıt; kayıt değişince de). Oturum
 	# kurulduktan sonra: ödenmemiş istek ödenirse (sevgi, rütbe) koşul ve erişim yeni oturuma geçer.
 	_init_steps()
-	# Yuva sayısı değişti (3 → 5): eski kayıttaki altın istek kendi yuvasına.
-	Requests.settle(GameState.db, GameState.save)
 	_refill_requests()
 	_letter_read = 0
 	_golden_line = ""
@@ -3127,7 +3125,8 @@ func _on_cat() -> void:
 	if not save.flags.has(CAT_HELLO_FLAG):
 		save.flags[CAT_HELLO_FLAG] = true
 		GameState.save_game()
-		_say("UI_DEDE_CAT_HELLO")
+		# Hediyeleri bitmiş (eski kayıt, hep beslenmiş) Tekir'de hediye vaat edilmez.
+		_say("UI_DEDE_CAT_HELLO_DONE" if CatRules.gifts_done(db, save) else "UI_DEDE_CAT_HELLO")
 
 
 ## Tezgâhtaki akvaryuma dokunuldu (olta boşta): Akvaryum paneli (her türün en irisi, bağış kutusu, TOPLA).

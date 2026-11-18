@@ -535,34 +535,15 @@ static func _translations() -> Dictionary:
 	return table
 
 
-## Testçi "görevler daha fazla gelsin" deyince günlük yuva 3'ten 5'e: altın istek yeni yuvasında (günlüklerden sonra);
-## eski kayıtta 3. yuvadaki altın istek settle ile taşınır (günlük kart gibi görünmez, ikinci altın istek doğmaz), yeni
-## günde boş günlük yuvaların hepsi dolar.
-func test_five_slots_and_golden_moves() -> void:
+## Testçi "görevler daha fazla gelsin" deyince günlük yuva 3'ten 5'e: altın istek günlüklerden sonraki yuvada
+## (SaveData.GOLDEN_SLOT; eski kayıttaki 3. yuvadan göçle taşınır: test_save_data), ilk günde beş istek.
+func test_five_slots() -> void:
 	var db := content()
 	assert_eq(db.requests.slots, 5, "beş günlük yuva")
-	assert_eq(Requests.golden_slot(db), 5, "altın yuva günlüklerden sonra")
+	assert_eq(Requests.golden_slot(db), SaveData.GOLDEN_SLOT, "altın yuva günlüklerden sonra, kayıttakiyle aynı")
 	assert_true(Requests.golden_slot(db) < SaveData.MAX_REQUESTS, "kayıt altın yuvayı tutar")
 	var save := SaveData.create_new(1)
 	save.xp = db.rank_xp[db.requests.unlock_rank - 1]
-	var spot := db.main_spot
-	assert_eq(Requests.refill(db, save, spot).size(), 5, "ilk günde beş istek")
-	# Eski kayıt: altın istek 3. yuvada (o zamanki altın yuva), günlükler 0–2'de.
-	var old := SaveData.create_new(1)
-	old.xp = save.xp
-	old.request_day = 0
-	for r in Requests.daily(db, save):
-		if int(r["slot"]) <= 2:
-			old.requests.append(r.duplicate(true))
-	old.requests.append({ "slot": 3, "kind": "secret", "want": { "event": "catch" }, "goal": 1, "progress": 0, "day": 0,
-			"serial": 99, "reward": { "coins": 150, "xp": 100, "love": 8, "piece": 1 } })
-	assert_true(Requests.golden(db, old).is_empty(), "taşınmadan altın yuva boş görünür")
-	assert_true(Requests.settle(db, old), "taşındı")
-	assert_eq(int(Requests.golden(db, old).get("serial", -1)), 99, "altın istek yeni yuvasında")
-	assert_eq(Requests.daily(db, old).size(), 3, "günlükler yerinde, 3. yuva boş")
-	assert_true(not Requests.settle(db, old), "ikinci kez taşınacak bir şey yok")
-	old.clock_s = DayClock.day_s(db.rules)
-	assert_eq(Requests.refill(db, old, spot).size(), 2, "yeni günde boş iki günlük yuva dolar")
-	assert_eq(Requests.daily(db, old).size(), 5, "beş günlük istek")
-	var copy := SaveData.from_dict(old.to_dict())
-	assert_eq(copy.requests.size(), 6, "kayıt beş günlük ve bir altın isteği tutar")
+	assert_eq(Requests.refill(db, save, db.main_spot).size(), 5, "ilk günde beş istek")
+	var copy := SaveData.from_dict(save.to_dict())
+	assert_eq(copy.requests.size(), 5, "kayıt beş günlük isteği tutar")

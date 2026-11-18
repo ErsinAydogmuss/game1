@@ -4,14 +4,15 @@ extends RefCounted
 ## taşınabilir. Alan eklerken VERSION'ı artır, migrate()'e adım ekle ve test_save_data.gd'ye
 ## göç testi yaz.
 
-const VERSION := 6
+const VERSION := 7
 ## Kayıtta en çok bu kadar tuzak ve tuzak başına içerik tutulur (bozuk kayıt büyümesin).
 const MAX_TRAPS := 8
 const MAX_TRAP_ITEMS := 8
-## Dede'nin istekleri (v5): günlük yuvalar (requests.json slots: 5; önce 3) ve hikâyenin altın yuvası. Kayıt biçimi
-## değişmedi: yalnızca izin verilen yuva sayısı arttı (eski kayıtlar geçerli; altın istek yeni yuvasına
-## Requests.settle ile taşınır).
+## Dede'nin istekleri (v5): günlük yuvalar ve hikâyenin altın yuvası. v7: günlük yuva 3'ten 5'e (testçi "görevler
+## daha fazla gelsin"), altın istek 3. yuvadan GOLDEN_SLOT'a taşındı (migrate). requests.json slots değişirse altın
+## yuvanın anlamı da değişir: yeni sürüm ve göç gerekir (RequestRules.validate GOLDEN_SLOT'u denetler).
 const MAX_REQUESTS := 6
+const GOLDEN_SLOT := 5
 ## Gölün Sırrı (v5): her bölgeden bir mektup, dört harita parçası.
 const MAX_LETTERS := 6
 const MAX_MAP_PIECES := 4
@@ -311,6 +312,16 @@ static func migrate(raw: Dictionary) -> Dictionary:
 		d["outfit"] = {}
 		d["character"] = CHARACTERS[0]
 		v = 6
+	if v < 7:
+		# v7 (testçi düzeltmeleri): Dede'nin günlük yuvası 3'ten 5'e; altın istek (türü "secret") 3. yuvadan GOLDEN_SLOT'a
+		# (yerinde kalsa günlük kart gibi görünür, aynı harita parçası için ikinci altın istek doğardı). Yeni iki günlük
+		# yuva sonraki oyun gününde dolar.
+		var requests: Variant = d.get("requests", [])
+		if typeof(requests) == TYPE_ARRAY:
+			for entry: Variant in requests:
+				if typeof(entry) == TYPE_DICTIONARY and str((entry as Dictionary).get("kind", "")) == "secret":
+					(entry as Dictionary)["slot"] = GOLDEN_SLOT
+		v = 7
 	d["version"] = v
 	return d
 

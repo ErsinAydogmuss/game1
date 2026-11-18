@@ -526,6 +526,48 @@ func test_v6_save_reads_back() -> void:
 	assert_eq(SaveData.from_dict(fresh.to_dict()).to_dict(), fresh.to_dict(), "gidiş-dönüşte aynı")
 
 
+## v7 (testçi düzeltmeleri): günlük yuva 3'ten 5'e; v6 kaydında 3. yuvadaki altın istek (türü "secret") göçle
+## SaveData.GOLDEN_SLOT'a taşınır (yerinde kalsa günlük kart gibi görünür, aynı parça için ikinci altın istek doğardı);
+## günlükler yerinde, yeni iki yuva ertesi gün dolar. Daha yeni sürümün kaydını eski yapı açmaz (is_newer).
+func test_v6_golden_request_moves_to_v7() -> void:
+	var db := content()
+	var raw := {
+		"version": 6, "seed": 1, "catches": 40, "xp": db.rank_xp[4], "clock_s": 0, "request_day": 0,
+		"requests": [
+			{ "slot": 0, "kind": "zone", "want": { "zone": "reeds" }, "goal": 3, "progress": 1, "day": 0, "serial": 0,
+				"reward": { "coins": 40, "xp": 20, "love": 0 } },
+			{ "slot": 3, "kind": "secret", "want": { "event": "catch", "fish": "pike" }, "goal": 1, "progress": 0, "day": 0,
+				"serial": 5, "reward": { "coins": 200, "xp": 100, "love": 8, "piece": 1 } },
+		],
+	}
+	var s := SaveData.from_dict(raw)
+	assert_eq(int(s.to_dict()["version"]), 7, "v7'ye göçtü")
+	var golden := Requests.golden(db, s)
+	assert_eq(int(golden.get("serial", -1)), 5, "altın istek yeni yuvasında")
+	assert_eq(int(golden.get("slot", -1)), SaveData.GOLDEN_SLOT, "altın yuva")
+	assert_eq(Requests.daily(db, s).size(), 1, "günlük istek yerinde, 3. yuva artık günlük ve boş")
+	assert_true(Requests.offer_golden(db, s).is_empty(), "aynı parça için ikinci altın istek yok")
+	s.clock_s = DayClock.day_s(db.rules)
+	assert_eq(Requests.refill(db, s, db.main_spot).size(), 4, "yeni günde boş dört günlük yuva dolar")
+	assert_true(SaveData.is_newer({ "version": SaveData.VERSION + 1 }), "daha yeni kaydı eski yapı açmaz")
+
+
+## v7'nin gerçek kaydı (tests/fixtures/save_v7.json): denge botu (seed 7007) 71 dakika oynadı; rütbe 8, beş günlük
+## istek ve 5. yuvada altın istek (harita parçası 2), dört mektup. Örnek değiştirilmez.
+func test_v7_save_reads_back() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v7.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v7 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	assert_eq(int((raw as Dictionary)["version"]), 7, "örnek v7 kaydı")
+	var db := content()
+	var s := SaveData.from_dict(raw)
+	assert_eq(Requests.daily(db, s).size(), 5, "beş günlük istek")
+	assert_eq(int(Requests.golden(db, s).get("slot", -1)), SaveData.GOLDEN_SLOT, "altın istek 5. yuvada")
+	assert_eq(s.letters, 4, "dört mektup")
+	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
+
+
 ## v6'nın alanları bozuksa ayıklanır: eksi kutu sıfır, saat en az -1, kedinin sayacı tutulan balıkta kalır,
 ## kıyafette yalnızca bilinen yuvalar ve yazı kimlikler, bilinmeyen balıkçı kız olur.
 func test_v6_bad_values_are_sanitized() -> void:
