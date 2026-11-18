@@ -193,3 +193,17 @@ Olta: Gölün Sırrı yayında! Gölgeleri izle, oltanı at, 19 türü tut, Göl
 Olta: Secret of the Lake is here! Watch the shadows, cast your line, catch 19 species and uncover the Secret of the Lake.
 </en-US>
 ```
+
+## Sürüm notları (1.0.0, yapı 3)
+
+Test kanalındaki (Play kapalı test, TestFlight "Test edilecekler") ve 1.0.0 yayındaysa 1.0.1'in notu. En çok 500
+karakter (TR 333, EN 284).
+
+```
+<tr-TR>
+Test kullanıcılarının önerileriyle: Görevler (ilk adımlar ve Dede'nin 5 isteği), haritada her bölgenin balıkları ve oranları, yakaladığın balığı göle bırak ya da kovaya koy, Takım Çantası'nda takımını değiştir, Tekir'in hediyeleri, çekişmede kırmızıda bırakmazsan misina kopar (Kolay çekme kalktı), çit ve fotoğraf modu düzeltmeleri.
+</tr-TR>
+<en-US>
+From our testers' feedback: Tasks (first steps and 5 requests from Dede), each area's fish and odds on the map, release a fish or keep it, swap your gear in the tackle bag, gifts from Tekir, the line snaps if you keep reeling on red (Easy reeling removed), fence and photo mode fixes.
+</en-US>
+```
