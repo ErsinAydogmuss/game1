@@ -26,6 +26,8 @@ signal technique_pressed
 ## Saat çipine dokunuldu ("Bugün" paneli) ya da kovaya (kova paneli: göle bırak, sat).
 signal world_pressed
 signal bucket_pressed
+## Kartsız kısa yakalamada GÖLE BIRAK (eylem düğmesi o an KOVAYA).
+signal release_pressed
 signal action_down
 signal action_up
 
@@ -38,7 +40,11 @@ const ACTION_SIZE := Vector2(300, 300)
 const ACTIONS := {
 	"cast": ["UI_ACT_CAST", "rod"], "retrieve": ["UI_ACT_RETRIEVE", "reel"], "wait": ["UI_ACT_WAIT", "hand"],
 	"hook": ["UI_ACT_HOOK", "hook"], "reel": ["UI_ACT_REEL", "reel"], "sell": ["UI_ACT_SELL", "sell"],
+	"keep": ["UI_ACT_KEEP", "bucket"],
 }
+## Kartsız kısa yakalamada eylem düğmesinin üstündeki GÖLE BIRAK (eylem düğmesinin genişliğinde).
+const RELEASE_SIZE := Vector2(300, 150)
+const RELEASE_GAP := 16.0
 const TOAST_TIME := 1.7
 ## Bildirimin yanındaki ikonun boyu.
 const TOAST_ICON := 104.0
@@ -96,6 +102,8 @@ var perf: bool = false:
 		perf = value
 		_show_fps()
 var action_button: TouchButton
+## Kartsız kısa yakalamada (balık elde) GÖLE BIRAK: set_catch_choice.
+var release_button: TouchButton
 var tension_bar: TensionBar
 ## Olta sudayken gizlenen düğmeler (eylem ve ayarlar dışındakiler): VUR dokunuşu onlara gitmesin.
 var line_out_hidden: Array[Control] = []
@@ -236,6 +244,8 @@ func refresh() -> void:
 		_set_hint_text(tr(_hint_key) % _hint_args if not _hint_args.is_empty() else tr(_hint_key))
 	if shore_button != null:
 		shore_button.set_text(tr("UI_BOAT_RETURN"))
+	if release_button != null:
+		release_button.set_text(tr("UI_CARD_RELEASE"))
 	var kind := _action_kind
 	_action_kind = "-"
 	set_action(kind)
@@ -390,6 +400,11 @@ func hold_toasts(seconds: float) -> void:
 	_toast_hold = maxf(_toast_hold, seconds)
 
 
+## Bekletmeyi kısaltır (en çok seconds kalır): beklenen şey erken bitti (elde gösterilen balık göle döndü).
+func shorten_hold(seconds: float) -> void:
+	_toast_hold = minf(_toast_hold, seconds)
+
+
 ## Çekişmede durum ve saat çipi gizlenir (gerilim çubuğuna yer, dikkat balıkta).
 func set_fighting(on: bool) -> void:
 	_status.visible = not on
@@ -431,6 +446,15 @@ func set_action(kind: String) -> void:
 		_set_button(tr(str(action[0])), str(action[1]), action_color(kind))
 
 
+## Kartsız kısa yakalamada GÖLE BIRAK görünür (eylem düğmesi o an KOVAYA: set_action("keep")).
+func set_catch_choice(on: bool) -> void:
+	if release_button == null or release_button.visible == on:
+		return
+	if on:
+		release_button.set_text(tr("UI_CARD_RELEASE"))
+	release_button.visible = on
+
+
 ## Eylem düğmesinin rengi (SAT dükkânın HEPSİNİ SAT'ı gibi yeşil).
 static func action_color(kind: String) -> Color:
 	match kind:
@@ -440,7 +464,7 @@ static func action_color(kind: String) -> Color:
 			return UiKit.WAIT
 		"hook":
 			return UiKit.DANGER
-		"reel", "sell":
+		"reel", "sell", "keep":
 			return UiKit.SUCCESS
 	return UiKit.PRIMARY
 
@@ -464,7 +488,7 @@ func _set_button(text: String, icon_kind: String, color: Color) -> void:
 ## Ekrandaki düğmeler (bot denetimi: boyut ve güvenli alan).
 func buttons() -> Array[TouchButton]:
 	return [map_button, book_button, settings_button, action_button, shore_button, technique_button, world_button,
-			bucket_button]
+			bucket_button, release_button]
 
 
 # --- Kurulum ---------------------------------------------------------------------
@@ -638,6 +662,24 @@ func _build_bottom() -> void:
 	action_button.released.connect(func() -> void: action_up.emit())
 	_frame().add_child(action_button)
 	set_action("cast")
+	# Kartsız kısa yakalamada (testçi: "her balıkta göle bırak ya da kovaya sorsun") eylem düğmesi KOVAYA,
+	# üstünde GÖLE BIRAK.
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 0)
+	right.size_flags_horizontal = Control.SIZE_SHRINK_END
+	right.size_flags_vertical = Control.SIZE_SHRINK_END
+	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_frame().add_child(right)
+	release_button = TouchButton.make("", "release", UiKit.SECONDARY, RELEASE_SIZE, UiKit.SIZE_BODY, 64.0)
+	release_button.name = "QuickRelease"
+	release_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	release_button.pressed.connect(func() -> void: release_pressed.emit())
+	release_button.visible = false
+	right.add_child(release_button)
+	var under := Control.new()
+	under.custom_minimum_size = Vector2(0.0, ACTION_SIZE.y + RELEASE_GAP)
+	under.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	right.add_child(under)
 	# "Kıyıya dön": Ersin'in çapası (Parti 3), yoksa sandal.
 	var shore_icon := "anchor" if GameIcon.texture_for("anchor") != null else "boat"
 	shore_button = TouchButton.make(tr("UI_BOAT_RETURN"), shore_icon, UiKit.SECONDARY, SHORE_SIZE, UiKit.SIZE_BODY, 64.0)

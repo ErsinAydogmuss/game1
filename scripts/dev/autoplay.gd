@@ -1338,6 +1338,55 @@ func _play_map() -> void:
 ## Rütbe 3'te dere ağzının kapalı çiti (sazlığın solu; testçi: "çitin içinden geçiliyor, takılıyor"): çitin güneyinden
 ## halkayla kuzeye yürüyen balıkçı tahtanın önünde durur (çizgiyi geçmez, gövdesi tahtaya girmez); çapraz yürüyünce
 ## çit boyunca kayar. Çitin tahtası oyunun çizgisinin üstünde (modelin kayıklığı düzeltildi).
+## Kartsız kısa yakalamada (testçi: "her balıkta göle bırak ya da kovaya sorsun") eylem düğmesi KOVAYA, üstünde
+## GÖLE BIRAK (büyük, güvenli alanda): GÖLE BIRAK → balık elden suya atlar, kovadan çıkar, sevgi, bildirim; KOVAYA →
+## kovada kalır; dokunulmazsa balık elde göründükçe bekler, sonra kovada kalır.
+func _check_quick_choice() -> void:
+	var save := GameState.save
+	var hud := _hud()
+	var toast: Label = hud.get("_toast")
+	for choice: String in ["release", "keep", "none"]:
+		await _wait_state(FishingSession.State.IDLE, 3.0)
+		var count := save.bucket.size()
+		var love := save.love
+		_shadow_at(Vector2(1.0, -3.2), Vector2(0, 1), "rudd", 5)
+		await _tap_world(Vector2(1.0, -1.0))
+		await _wait_state(FishingSession.State.BITING, 20.0)
+		_touch(1, Vector2(260, 520), true)
+		await _wait_state(FishingSession.State.CAUGHT, 25.0)
+		_touch(1, Vector2(260, 520), false)
+		await _wait_frames(3)
+		var button := hud.release_button
+		var shown := button.is_visible_in_tree() and str(hud.get("_action_kind")) == "keep" \
+				and save.bucket.size() == count + 1
+		match choice:
+			"release":
+				var r := button.get_global_rect()
+				await _shot("06b_elde_secim")
+				_check_buttons()
+				await _tap_control(button)
+				await _wait_frames(2)
+				var tossed := (main.get("fish_jump") as FishJump).is_jumping()
+				var freed := UiKit.upper(tr("UI_RELEASED") % tr("FISH_rudd"))
+				var said := await _wait_until(func() -> bool: return toast.is_visible_in_tree() and toast.text == freed, 3.0)
+				_check("kartsız yakalamada KOVAYA ve GÖLE BIRAK (%.0f birim) → balık suya atlar, kovadan çıkar, sevgi +1, \"%s\"" % [
+						minf(r.size.x, r.size.y), freed], shown and minf(r.size.x, r.size.y) >= 121.5 and tossed and said
+						and save.bucket.size() == count and save.love > love and _state() == FishingSession.State.IDLE
+						and not button.is_visible_in_tree())
+			"keep":
+				await _tap_control(hud.action_button)
+				await _wait_frames(2)
+				_check("kartsız yakalamada KOVAYA → balık kovada, olta hemen boşta", shown
+						and save.bucket.size() == count + 1 and save.love == love and _state() == FishingSession.State.IDLE
+						and not button.is_visible_in_tree())
+			"none":
+				await _wait(1.6)
+				var waiting := button.is_visible_in_tree() and _state() == FishingSession.State.CAUGHT
+				await _wait_state(FishingSession.State.IDLE, 2.0)
+				_check("kartsız yakalamada dokunulmazsa seçim balık elde göründükçe bekler, sonra kovada kalır", shown
+						and waiting and save.bucket.size() == count + 1 and save.love == love and not button.is_visible_in_tree())
+
+
 func _check_gate_walk() -> void:
 	var db := GameState.db
 	var spot := str(main.get("spot_id"))
@@ -3900,6 +3949,7 @@ func _play_release() -> void:
 			quick and opened and _state() == FishingSession.State.IDLE and not Dice.is_point(main.get("_pending_cast")))
 	if panel.visible:
 		await _tap_control(panel.close_button)
+	await _check_quick_choice()
 	# 6) Saat çipinin hemen altındaki suya dokunmak oyuna geçer (atış ya da suya yürüyüş): "Bugün" paneli
 	# açılmaz (dokunma kutusu aşağıya taşmaz; sinekte dere ağzının yukarısı oradaydı). Olta sudayken kovaya
 	# dokunmak da oyuna geçer: panel açılmaz, olta geri sarılır.

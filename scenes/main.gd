@@ -14,6 +14,9 @@ const SHOW_ZOOM := 0.62
 const SHOW_REACH := 0.95
 ## Kartsız yakalayışta (tekrar eden balık) bildirimden sonra bu kadar sn içinde yeni atış serbest.
 const QUICK_CATCH_TIME := 1.3
+## Kovaya giren balıkta seçim (GÖLE BIRAK ya da KOVAYA) balık elde göründükçe: dokunulmazsa kovada kalır.
+## Suya dokunmak (yeni atış) seçimi beklemeden bitirir.
+const QUICK_CHOICE_TIME := CatchFx.HOLD_TIME
 ## Space ya da AT düğmesiyle balıkçının önüne atış uzaklığı (m).
 const FORWARD_CAST := 6.0
 ## Kart, balık elde gösterildikten bu kadar sn sonra açılır.
@@ -235,6 +238,10 @@ var _save_ref: SaveData
 var _paused: bool = false
 var _pending_cast := Dice.NO_POINT
 var _quick_catch: float = -1.0
+## Kartsız kısa yakalamada GÖLE BIRAK / KOVAYA seçimi var mı (balık kovaya girdi) ve balığın sudan çıktığı yer
+## (bırakınca oraya atlar).
+var _quick_choice: bool = false
+var _quick_out := Vector2.ZERO
 var _step_clock: float = 0.0
 var _cue_clock: float = 0.0
 ## Açılacak kart (balık elde gösterilirken bekler) ve kalan süre.
@@ -831,8 +838,9 @@ func _process(delta: float) -> void:
 		hud.hold_toasts(TOAST_AFTER_CARD)
 	if _quick_catch >= 0.0:
 		_quick_catch += delta
-		if _quick_catch >= QUICK_CATCH_TIME:
+		if _quick_catch >= (QUICK_CHOICE_TIME if _quick_choice else QUICK_CATCH_TIME):
 			_quick_catch = -1.0
+			_quick_choice = false
 			session.acknowledge()
 	_tend_ads(delta)
 	_present(delta)
@@ -912,6 +920,9 @@ func _on_cast_requested(target: Vector2) -> void:
 			or _quick_catch_up()
 	if returning:
 		_pending_cast = target
+		# Seçim sürerken suya dokunmak "kovaya, yeniden at" demek: beklemeden.
+		if _quick_catch_up() and _quick_choice:
+			_end_quick_catch()
 		return
 	# Tuzaktan ilk kerevitin kartı açılmak üzere (oturum boşta): dokunuş atış değil.
 	if session.state != FishingSession.State.IDLE or _card_up():
@@ -1036,6 +1047,10 @@ func _try_cast(target: Vector2) -> void:
 func _on_action_down() -> void:
 	if _card_up():
 		return
+	if _quick_catch_up():
+		# KOVAYA: balık kovada kalır, olta boşa döner.
+		_end_quick_catch()
+		return
 	if session.state == FishingSession.State.IDLE and _bucket_full():
 		# SAT (kova dolu): Nine'ye.
 		_go_sell()
@@ -1098,6 +1113,8 @@ func _action_kind() -> String:
 		return ""
 	if session.state == FishingSession.State.IDLE and _bucket_full():
 		return "sell"
+	if _quick_catch_up() and _quick_choice:
+		return "keep"
 	return session.action_kind()
 
 
@@ -1452,8 +1469,11 @@ func _on_catch() -> void:
 		_card_outcome = outcome
 		_card_wait = CARD_DELAY
 	else:
-		# Kartsız yakalama: adı ve boyu balığın üstündeki etikette (CatchTag); bildirim yok.
+		# Kartsız yakalama: adı ve boyu balığın üstündeki etikette (CatchTag); bildirim yok. Kovaya girdiyse
+		# balık elde dururken GÖLE BIRAK ya da KOVAYA (dokunulmazsa kovada kalır).
 		_quick_catch = 0.0
+		_quick_choice = kept
+		_quick_out = out_at
 
 
 ## Rütbe atladıysa (av ya da tuzak): oturumun erişimi ve çitler yenilenir; rütbe bildirimi, açılan
@@ -2104,6 +2124,7 @@ func _present(delta: float) -> void:
 	# Saat çipi ve kova yalnızca olta boşken ve kartsız kısa yakalamada dokunuş alır (geri sararken oraya
 	# dokunuş atış olarak saklansın; balık eldeyken kovaya dokunan atış değil kova ister).
 	hud.set_idle_touch((session.state == FishingSession.State.IDLE or _quick_catch_up()) and not _card_up())
+	hud.set_catch_choice(_quick_catch_up() and _quick_choice)
 	if fighting:
 		hud.tension_bar.tension = reel.tension
 		hud.tension_bar.limit = session.rules.limit
@@ -2697,7 +2718,32 @@ func _quick_catch_up() -> bool:
 func _end_quick_catch() -> void:
 	if _quick_catch_up():
 		_quick_catch = -1.0
+		_quick_choice = false
 		session.acknowledge()
+
+
+## Kartsız kısa yakalamada GÖLE BIRAK: az önce kovaya giren balık elden suya atlar (sudan çıktığı yere), göle
+## döner (bildirim, göl sevgisi; kartın "Göle bırak"ı gibi), olta boşa döner.
+func _on_quick_release() -> void:
+	if not (_quick_catch_up() and _quick_choice):
+		return
+	var info := session.last_catch
+	var fish_id := str(info["fish"])
+	var size_cm := int(info["size_cm"])
+	if Bucket.take_last(GameState.save, fish_id, size_cm).is_empty():
+		_end_quick_catch()
+		return
+	catch_fx.clear()
+	fish_jump.toss(GameState.db.fish_by_id(fish_id), size_cm, _show_point(), _quick_out)
+	Sounds.play("ui_tap")
+	Sounds.haptic(20)
+	# Etiket gitti: bildirim sırası beklemesin (önce bırakmanın haberi, sonra sevginin).
+	hud.shorten_hold(0.4)
+	hud.toast_later(tr("UI_RELEASED") % tr("FISH_" + fish_id), UiKit.ACCENT, "", "release")
+	_release_fish(fish_id)
+	GameState.save_game()
+	_refresh_status()
+	_end_quick_catch()
 
 
 ## Açık bir panel (Dialog) ya da fotoğraf modu var mı? Varken oyun donar.
@@ -3783,6 +3829,7 @@ func _build_ui() -> void:
 		_pending_cast = Dice.NO_POINT
 		_forget_pickups()
 		map_panel.open_map(angler.pos2(), zone_id, _map_marks()))
+	hud.release_pressed.connect(_on_quick_release)
 	hud.bucket_pressed.connect(func() -> void:
 		_end_quick_catch()
 		if session.state != FishingSession.State.IDLE or _card_up() or _film != null:

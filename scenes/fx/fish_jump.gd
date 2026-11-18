@@ -51,6 +51,28 @@ func jump(def: Dictionary, size_cm: int, at: Vector2, heading: Vector2) -> bool:
 	return true
 
 
+## Kartsız kısa yakalamada "Göle bırak": balık elden (from, 3B; gösterideki boyunda) suya (to, xz) yay
+## çizerek atlar; çıkışta halka yok (elde), dalışta halka ve şapırtı (landed). Başladıysa true.
+func toss(def: Dictionary, size_cm: int, from: Vector3, to: Vector2) -> bool:
+	if _age >= 0.0:
+		return false
+	clear()
+	var length := FishMesh.display_length(size_cm) * FishMesh.show_scale(def)
+	_fish = FishMesh.make(def, length)
+	_fish.set_wiggle(0.3, 16.0)
+	_fish.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_fish)
+	var flat := to - Vector2(from.x, from.z)
+	var dir := flat.normalized() if flat.length_squared() > 0.0001 else Vector2(0, -1)
+	_from = from
+	_to = Vector3(to.x, -0.1, to.y)
+	_height = 0.45
+	_fish.rotation = Vector3(0.0, atan2(-dir.y, dir.x), 0.0)
+	_age = 0.0
+	_place()
+	return true
+
+
 func is_jumping() -> bool:
 	return _age >= 0.0
 

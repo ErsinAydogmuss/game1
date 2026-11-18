@@ -93,6 +93,7 @@ UI_ACT_WAIT,Wait,Bekle
 UI_ACT_HOOK,Strike!,Vur!
 UI_ACT_REEL,Reel,Sar
 UI_ACT_SELL,Sell,Sat
+UI_ACT_KEEP,Keep,Kovaya
 UI_NEW_SPECIES,New species!,Yeni tür!
 UI_NEW_RECORD,New record!,Yeni rekor!
 UI_SIZE_CM,%d cm,%d cm
