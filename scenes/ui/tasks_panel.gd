@@ -6,7 +6,8 @@ extends DayPanel
 ##   yıldız (bitti) ya da boş yıldız; başlıkta "3/5". Rütbe 1'de beşi de (ilerleme görünsün); istekler açılınca
 ##   yalnızca bitmemişler (en çok iki sıra: altın istek şeridiyle de panel telefonda küçülmeden sığsın).
 ## - Dede'nin istekleri: Bugün panelindeki kartların aynısı (DayPanel'den: altın istek şeridi, yuva başına kart,
-##   değiştir düğmesi: reroll_requested); rütbe 2'den önce kilitli kart ("Rütbe 2'de başlar", rütbe ilerlemesi).
+##   değiştir düğmesi: reroll_requested; beş yuva üç sütunda); rütbe 2'den önce kilitli kart ("Rütbe 2'de başlar",
+##   rütbe ilerlemesi).
 ## Yazılar refresh'te (her açılışta, o anki dilde).
 
 ## Panelin genişliği (Bugün paneliyle aynı) ve ilk adımların kartı.
@@ -21,6 +22,9 @@ var spot_id: String = ""
 var _steps_head: HBoxContainer
 var _steps: GridContainer
 var _locked_box: VBoxContainer
+## İstek kartları: üç sütun (beş yuva: 3 + 2).
+var _request_grid: GridContainer
+const REQUEST_COLUMNS := 3
 
 
 func _build() -> void:
@@ -39,10 +43,12 @@ func _build() -> void:
 	body.add_child(_requests_head)
 	_golden_box = VBoxContainer.new()
 	body.add_child(_golden_box)
-	_requests_box = HBoxContainer.new()
-	_requests_box.name = "Requests"
-	_requests_box.add_theme_constant_override("separation", 20)
-	body.add_child(_requests_box)
+	_request_grid = GridContainer.new()
+	_request_grid.name = "Requests"
+	_request_grid.columns = REQUEST_COLUMNS
+	_request_grid.add_theme_constant_override("h_separation", 20)
+	_request_grid.add_theme_constant_override("v_separation", 14)
+	body.add_child(_request_grid)
 	_locked_box = VBoxContainer.new()
 	_locked_box.name = "Locked"
 	body.add_child(_locked_box)
@@ -77,14 +83,14 @@ func refresh() -> void:
 	# Dede'nin istekleri: Bugün panelindeki kartlar; rütbe 2'den önce kilitli kart.
 	Dialog.clear(_requests_head)
 	Dialog.clear(_golden_box)
-	Dialog.clear(_requests_box)
+	Dialog.clear(_request_grid)
 	Dialog.clear(_locked_box)
 	_requests_head.add_child(GameIcon.make("requests", 52))
 	var head := _display(tr("UI_REQ_TITLE"), UiKit.SIZE_SMALL + 4, UiKit.INK)
 	head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_requests_head.add_child(head)
 	_requests_head.add_child(UiKit.spacer())
-	_requests_box.visible = open
+	_request_grid.visible = open
 	_locked_box.visible = not open
 	var golden := Requests.golden(db, save)
 	_golden_box.visible = open and not golden.is_empty()
@@ -99,7 +105,7 @@ func refresh() -> void:
 	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_requests_head.add_child(note)
 	for slot in db.requests.slots:
-		_requests_box.add_child(_request_card(db, save, slot))
+		_request_grid.add_child(_request_card(db, save, slot))
 
 
 ## İlk adımın kartı: ikon, ne yapılacağı (tek satır), yıldız (bitti) ya da boş yıldız.

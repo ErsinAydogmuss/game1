@@ -491,6 +491,8 @@ func _start_session() -> void:
 	# Dede'nin istekleri: açıksa ve bugün dolmadıysa boş yuvalar dolar (eski kayıt; kayıt değişince de). Oturum
 	# kurulduktan sonra: ödenmemiş istek ödenirse (sevgi, rütbe) koşul ve erişim yeni oturuma geçer.
 	_init_steps()
+	# Yuva sayısı değişti (3 → 5): eski kayıttaki altın istek kendi yuvasına.
+	Requests.settle(GameState.db, GameState.save)
 	_refill_requests()
 	_letter_read = 0
 	_golden_line = ""
@@ -1617,7 +1619,7 @@ func _init_steps() -> void:
 	save.flags[STEPS_VIEWED_FLAG] = FirstSteps.done_count(db, save, spot_id)
 
 
-## Bugün paneli açıldı: istekler görüldü (rozet söner). İstekler (altın istek de) varken açıldıysa Dede'nin
+## Görevler paneli açıldı: istekler görüldü (rozet söner). İstekler (altın istek de) varken açıldıysa Dede'nin
 ## "saate dokun"u gereksiz: söylenmiş sayılır.
 func _mark_requests_seen() -> void:
 	var save := GameState.save
@@ -3842,6 +3844,12 @@ func _build_ui() -> void:
 	tasks_panel.spot_id = spot_id
 	layer.add_child(tasks_panel)
 	tasks_panel.reroll_requested.connect(_on_reroll)
+	# Bugün panelinin özet satırındaki GÖREVLER.
+	day_panel.tasks_requested.connect(func() -> void:
+		day_panel.close_panel()
+		tasks_panel.open()
+		_mark_requests_seen()
+		_mark_steps_viewed())
 	bucket_panel = BucketPanel.new()
 	layer.add_child(bucket_panel)
 	bucket_panel.release_requested.connect(_on_bucket_release)
@@ -3928,8 +3936,8 @@ func _build_ui() -> void:
 		angler.stop()
 		_pending_cast = Dice.NO_POINT
 		_forget_pickups()
-		day_panel.open()
-		_mark_requests_seen())
+		# İstek kartları Görevler panelinde: Bugün paneli rozeti söndürmez (yalnızca özet satırı).
+		day_panel.open())
 	hud.tasks_pressed.connect(func() -> void:
 		_end_quick_catch()
 		if session.state != FishingSession.State.IDLE or _card_up() or _film != null:

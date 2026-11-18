@@ -9,14 +9,15 @@ extends Dialog
 ## - Dede'yle çay: beklemeden sonraki vakte geçilir (ücretsiz; tea_requested, main kararmayla geçer). İki çay arasında
 ##   en az bir balık tutulmalı (WorldState.can_tea): yoksa düğme pasif, Dede'nin sözü "Önce bir balık tut".
 ## - Göl sevgisi (çayın yanında): seviye, çubuk, Nadir+ payı, nasıl artar.
-## - Dede'nin istekleri (rütbe 2'den sonra; Requests): yuva başına bir kart: ikon, ne istendiği, ilerleme
-##   ("1/3"), ödül (para ve göl sevgisi), değiştir düğmesi (günde bir: reroll_requested); boş yuvada "Yarın yeni
-##   istek". Biten istek kendiliğinden öder (main).
-## - Dede'nin altın isteği (Gölün Sırrı; varsa): günlük kartların üstünde tek satırlık altın şerit (harita parçası,
-##   ne istendiği, ilerleme, ödül); değiştirilmez.
+## - Dede'nin istekleri (rütbe 2'den sonra): yalnızca özet satırı ("Sürüyor: 3/5", altın istek varsa onu da söyler) ve
+##   GÖREVLER (tasks_requested): kartlar Görevler panelinde (TasksPanel; testçi "görevler daha fazla gelsin" deyince
+##   yuva 3'ten 5'e çıktı, beş kart bu panele sığmaz). Kartların kurucuları (_request_card, _golden_card) burada:
+##   TasksPanel onları miras alır.
 ## Yazılar refresh'te (her açılışta, o anki dilde); panel dil uygulanmadan önce kurulur.
 
 signal tea_requested
+## Özet satırındaki GÖREVLER: Görevler paneli (main bu paneli kapatıp onu açar).
+signal tasks_requested
 signal reroll_requested(slot: int)
 
 ## Panelin genişliği (iki kart yan yana, altında çay ve sevgi, en altta üç istek; telefonda küçülmeden sığar).
@@ -37,6 +38,8 @@ const REQUEST_ICON := 64.0
 const REQUEST_TEXT_W := 200.0
 const REQUEST_TEXT_SIZE := 26
 const REROLL_BUTTON := Vector2(122, 122)
+## Özet satırındaki GÖREVLER düğmesi.
+const TASKS_BUTTON := Vector2(320, 122)
 const REROLL_ICON := 76.0
 ## Dede'nin altın isteği (Gölün Sırrı): günlük kartların üstünde tek satırlık altın şerit; yazının en geniş
 ## hâli (test_requests iki dilde ölçer) ve boyu.
@@ -96,27 +99,40 @@ func refresh() -> void:
 	Dialog.clear(_requests_head)
 	Dialog.clear(_golden_box)
 	Dialog.clear(_requests_box)
+	_golden_box.visible = false
+	_requests_box.visible = false
 	var open := Requests.unlocked(db, save)
 	_requests_head.visible = open
-	_requests_box.visible = open
-	var golden := Requests.golden(db, save)
-	_golden_box.visible = open and not golden.is_empty()
 	if not open:
 		return
-	if not golden.is_empty():
-		_golden_box.add_child(_golden_card(db, golden))
+	# Özet: kaç istek sürüyor (bitmemiş günlük istek), altın istek; kartlar Görevler panelinde.
 	_requests_head.add_child(GameIcon.make("requests", 52))
 	var title := _display(tr("UI_REQ_TITLE"), UiKit.SIZE_SMALL + 4, UiKit.INK)
 	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_requests_head.add_child(title)
+	var summary := UiKit.ink(summary_text(db, save), 26, UiKit.INK_SOFT)
+	summary.name = "RequestSummary"
+	summary.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_requests_head.add_child(summary)
 	_requests_head.add_child(UiKit.spacer())
-	var note := UiKit.ink(tr("UI_REQ_REROLL_USED") if Requests.rerolled_today(db, save) else tr("UI_REQ_REROLL_HINT"),
-			24, UiKit.INK_SOFT)
-	note.name = "RerollNote"
-	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_requests_head.add_child(note)
-	for slot in db.requests.slots:
-		_requests_box.add_child(_request_card(db, save, slot))
+	var go := UiKit.button(tr("UI_TASKS_TITLE"), UiKit.SECONDARY, UiKit.SIZE_SMALL + 4, TASKS_BUTTON)
+	go.name = "TasksButton"
+	go.icon = GameIcon.texture_for("requests")
+	go.expand_icon = true
+	go.add_theme_constant_override("icon_max_width", 64)
+	go.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		tasks_requested.emit())
+	_requests_head.add_child(go)
+
+
+## İsteklerin özeti: sürüyor (bitmemiş günlük istek) / yuva sayısı; altın istek varsa eklenir.
+static func summary_text(db: ContentDB, save: SaveData) -> String:
+	var running := Requests.daily(db, save).size()
+	var text := UiKit.translate("UI_DAY_REQ_SUMMARY") % [running, db.requests.slots]
+	if not Requests.golden(db, save).is_empty():
+		text += " · " + UiKit.translate("UI_DAY_REQ_GOLDEN")
+	return text
 
 
 ## Şimdi: vaktin ikonu ve adı, saat ("18:24"), sonraki vakte kalan süre ("Geceye 3 dk") ve vaktin kendiliğinden

@@ -936,8 +936,14 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
     kelebekler (yatay uçar, uçtuğu yöne bakar, kanat çırpar). Kuşlar sonraya.
   - Hiç azalmaz.
 - **Dede'nin istekleri** ✅ (4. adım; `Requests`, `data/requests.json`):
-  - Rütbe 2'de açılır: o rütbeyi getiren balıktan sonra 3 yuva dolar; saat çipinin köşesinde kırmızı rozet, çip nabız
-    gibi atar, Dede: "Her gün sana küçük işlerim olacak evlat! Saate dokun."
+  - Rütbe 2'de açılır: o rütbeyi getiren balıktan sonra 5 yuva dolar (testçi "görevler daha fazla gelse" deyince 3'ten 5'e,
+    Ersin'in seçimi); Görevler düğmesinde kırmızı rozet, düğme nabız gibi atar, Dede: "Her gün sana küçük işlerim olacak
+    evlat! Görevlerine bak." Kartlar Görevler panelinde (3 + 2); Bugün panelinde yalnızca özet ("Sürüyor: 3/5") ve
+    GÖREVLER. Eski kayıtta 3. yuvadaki altın istek yeni yuvasına taşınır; yeni iki yuva ertesi gün dolar.
+  - ✅ **5 yuvanın dengesi** (`economy_report.gd -- --hours=16 --seeds=6`): saatte istek 4,0–4,7 → 6,6–7,6; isteklerin
+    kazançtaki payı %6,4–7,5 → %10,0–11,6; saatte para 7.777–8.397 → 8.131–8.574 (+%2–5); 10. istek 98–220 → 70–152.
+    dakikada, rütbe 20 biraz erken. Ay Turnası (şansa bağlı gece efsanesi) iki seed'de 649. ve 428. dakikaya kaydı
+    (bot gece nilüferli koya nadiren gider): korkuluğun geç olayı 720 dakika.
   - Her yeni oyun gününde yalnızca boş yuvalar dolar ("Yeni gün! Dede'nin yeni istekleri var", "Sabah oldu"dan sonra;
     rozet). Süre sınırı yok (gelir kuralı 7): biten isteğin yuvası ertesi güne kadar boş ("Yarın yeni istek"), bitmeyen
     istek kalır. Günde bir isteği ücretsiz değiştirebilirsin (eskisi ve ekrandakiler gelmez).

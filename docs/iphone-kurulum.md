@@ -349,6 +349,14 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
 59. **Testçi düzeltmeleri: Görevler.** Sağ üstte, haritanın solunda parşömen: **Görevler**. Yeni oyunda (**Kaydı
     sıfırla**) "İlk adımlar" (ilk balık, satış, takım, yeni yer, rütbe 2); her biri bitince "Görev tamam" ve
     parşömende kırmızı rozet. Rütbe 2'de Dede'nin istekleri de burada (değiştir düğmesiyle). Sığıyor mu, anlaşılır mı?
+60. **Testçi düzeltmeleri 2: ikinci tuzak.** Nine'den ikinci tuzağı al: kartta "Aynı anda iki tuzak kurarsın", Nine
+    "Artık 2 tuzağın var! Yenisini de çantandan bırak." Takım Çantası'nda tuzak satırı "1/2 kurulu", TUZAK BIRAK.
+61. **Testçi düzeltmeleri 2: Tekir.** Dokun (ilk kez): Dede "Beslersen hediye getirir!". Acıkınca besle: "Afiyet olsun!
+    4 besleme sonra Tekir'den hediye!". Dolapta Tekir'in kıyafetlerinde "Tekir'i 5 kez besle (1/5)".
+62. **Testçi düzeltmeleri 2: çekişme.** Balık çırpınırken ("!" ve titreşim) basılı tutmaya devam et: misina eskisinden
+    çabuk kopmalı (küçük balıkta da). Uyarıda bırakıp sonra yine basınca her balık gelmeli. Kolay modda değişiklik yok.
+63. **Testçi düzeltmeleri 2: 5 istek.** Rütbe 2'den sonra Görevler'de beş istek (3 + 2), panel sığıyor mu? Saate dokun:
+    Bugün panelinde yalnızca "Sürüyor: 5/5" ve GÖREVLER düğmesi. Eski kayıtta yeni iki istek ertesi oyun günü gelir.
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 

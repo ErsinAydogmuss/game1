@@ -8,8 +8,10 @@ const VERSION := 6
 ## Kayıtta en çok bu kadar tuzak ve tuzak başına içerik tutulur (bozuk kayıt büyümesin).
 const MAX_TRAPS := 8
 const MAX_TRAP_ITEMS := 8
-## Dede'nin istekleri (v5): 3 günlük yuva ve hikâyenin altın yuvası.
-const MAX_REQUESTS := 4
+## Dede'nin istekleri (v5): günlük yuvalar (requests.json slots: 5; önce 3) ve hikâyenin altın yuvası. Kayıt biçimi
+## değişmedi: yalnızca izin verilen yuva sayısı arttı (eski kayıtlar geçerli; altın istek yeni yuvasına
+## Requests.settle ile taşınır).
+const MAX_REQUESTS := 6
 ## Gölün Sırrı (v5): her bölgeden bir mektup, dört harita parçası.
 const MAX_LETTERS := 6
 const MAX_MAP_PIECES := 4

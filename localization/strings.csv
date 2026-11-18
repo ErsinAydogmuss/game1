@@ -513,7 +513,7 @@ UI_GUIDE_ZONE_ROCKY_POINT,Rocky and deep: lures can snag on rocks.,Kayalık ve d
 UI_GUIDE_ZONE_STREAM_MOUTH,Flowing water: the only place for flies.,Akıntılı su: sinek yalnızca burada.
 UI_GUIDE_ZONE_DEEP_WATER,The deepest water and the biggest fish.,Gölün en derin yeri; en iri balıklar.
 UI_GUIDE_LIVING,A living lake,Göl yaşıyor
-UI_GUIDE_LIVING_LEAD,"Time flows and the weather turns. Tap the clock: today, tea and Dede's requests.","Saat akar, hava değişir. Saate dokun: bugün, çay ve Dede'nin istekleri."
+UI_GUIDE_LIVING_LEAD,"Time flows and the weather turns. Tap the clock for today and tea; requests are in Tasks.","Saat akar, hava değişir. Saate dokun: bugün ve çay. İstekler Görevler'de."
 UI_GUIDE_TIME,Time of day,Vakit
 UI_GUIDE_TIME_TEXT,Time passes by itself: a day lasts %d minutes. Some fish come only at night.,Vakit kendiliğinden akar: bir gün %d dakika. Bazı balıklar yalnızca gece gelir.
 UI_GUIDE_WEATHER,Weather,Hava
@@ -601,6 +601,8 @@ UI_REQ_secret_2,Catch %d fish at night,Gece vakti %d balık tut
 UI_REQ_secret_3,Release %d fish into the lake,Göle %d balık bırak
 UI_REQ_secret_4,Catch %d Wels bottom fishing in Deep Water at night,Gece Derin Orta'da diple %d Yayın tut
 UI_REQ_TITLE,Dede's requests,Dede'nin istekleri
+UI_DAY_REQ_SUMMARY,Open: %d/%d,Sürüyor: %d/%d
+UI_DAY_REQ_GOLDEN,golden request!,altın istek var!
 UI_TASKS_TITLE,Tasks,Görevler
 UI_TASKS_LOCKED,"Dede's requests start at rank %d: small daily jobs for coins, points and love.","Dede'nin istekleri Rütbe %d'de başlar: her gün küçük işler; para, puan ve sevgi verir."
 UI_STEPS_TITLE,First steps,İlk adımlar

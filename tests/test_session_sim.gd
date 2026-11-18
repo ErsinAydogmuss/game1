@@ -13,7 +13,7 @@ const SEEDS := [1000, 1077, 1154]
 ## Korkulukların ölçüldüğü oyun süresi (dk).
 const MINUTES := 310.0
 ## Şansa çok bağlı geç olaylar için bot sonra bu süreye kadar sürer (saatlik para ve av MINUTES'ta ölçülür).
-const LATE_MINUTES := 420.0
+const LATE_MINUTES := 720.0
 ## [olay, en erken dk, en geç dk]: her seed'de olay bu aralıkta ilk kez olmalı.
 const PACING := [
 	["sell", 0.0, 5.0],            # ilk satış (kova dolar, Nine'ye gidilir)
@@ -66,7 +66,7 @@ const PACING := [
 	# (ortalama aynı, ~180 dk; saatte 3,7–4,4 istek). Altın istekler bu sayaca girmez.
 	["requests", 0.0, 5.0],
 	["request_1", 2.0, 30.0],
-	["requests_10", 80.0, 300.0],
+	["requests_10", 50.0, 300.0],  # 5 yuvayla (testçi "görev daha fazla gelsin") 70–152 dk; 3 yuvayla 98–220
 	# Gölün Sırrı (5. adım; economy_report 16 sa × 6 seed): ilk mektup rütbe 3'te sazlıkta (9,0–12,2. dk), altıncısı
 	# sandalla derin ortada (126–135). İlk altın istek üçüncü mektupla gelir, parçası akşam nilüferli koyda turnayla
 	# (48,5–51,6: bot vakti gelince kovalar); dördüncü parça gece derin ortada diple yayın (127–151). Altın hamur göl
@@ -84,9 +84,10 @@ const PACING := [
 ## oraya gider ama gelmesi şansa bağlı. Dalga 5'te akvaryumun parası alışverişleri öne alınca seed 1000'de 185.
 ## dakikadan 343. dakikaya kaydı (bot o güne kadar nilüferli koyda 116 gece atışı yaptı; öteki seed'ler 27–154 dk).
 const LATE := [
-	# Gece nilüferli koyda Efsanevi: tamamen şansa bağlı (Tekir hediyeleri bitince beslenmeyince seed 1000'de 206 →
-	# 402 dk; ötekiler 65 ve 211).
-	["fish:moon_pike", 20.0, 420.0],
+	# Gece nilüferli koyda Efsanevi: tamamen şansa bağlı. Bot gece o koya nadiren gider (16 saatin %1–6'sı orada);
+	# Tekir'in hediyeleri bitince seed 1000'de 206 → 402 dk, istek yuvaları 5 olunca 649 ve 1077'de 428 dk (ötekiler
+	# 27–230; bot nilüferli koyda önceden daha çok vakit geçirse de zar).
+	["fish:moon_pike", 20.0, 720.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.

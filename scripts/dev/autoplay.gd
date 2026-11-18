@@ -3061,6 +3061,7 @@ func _play_requests() -> void:
 	var save := GameState.save
 	var hud := _hud()
 	var day_panel: DayPanel = main.get("day_panel")
+	var tasks: TasksPanel = main.get("tasks_panel")
 	var toast: Label = hud.get("_toast")
 	var badge: Control = hud.get("_tasks_badge")
 	var spot := str(main.get("spot_id"))
@@ -3100,18 +3101,18 @@ func _play_requests() -> void:
 	print("ÇİZİM istek rozeti: %d" % draws)
 	_check("Görevler'in rozetiyle iskelede en çok %d çizim (%d)" % [TOUR_DRAWS, draws], badge.is_visible_in_tree()
 			and draws > 0 and draws <= TOUR_DRAWS)
-	# 3) Bugün paneli: küçülmeden sığar; istek kartları (yazı en çok iki satır, ilerleme 0/N, değiştir düğmesi);
+	# 3) Görevler paneli (beş yuva, 3 + 2): küçülmeden sığar; istek kartları (yazı en çok iki satır, ilerleme 0/N, değiştir düğmesi);
 	# açılınca rozet söner.
-	await _tap_control(hud.world_button)
-	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
+	await _tap_control(hud.tasks_button)
+	await _wait_until(func() -> bool: return tasks.visible, 2.0)
 	await _wait(0.5)
 	var notes := PackedStringArray()
 	for slot in db.requests.slots:
 		var r := Requests.find_slot(save, slot)
-		var holder := day_panel.find_child("Request%d" % slot, true, false) as Control
+		var holder := tasks.find_child("Request%d" % slot, true, false) as Control
 		var label := holder.find_child("Text", true, false) as Label if holder != null else null
 		var progress := holder.find_child("Progress", true, false) as Label if holder != null else null
-		var reroll := day_panel.find_child("Reroll%d" % slot, true, false) as Button
+		var reroll := tasks.find_child("Reroll%d" % slot, true, false) as Button
 		if r.is_empty() or label == null or progress == null or reroll == null:
 			notes.append("yuva %d eksik" % slot)
 			continue
@@ -3122,14 +3123,30 @@ func _play_requests() -> void:
 			notes.append("yuva %d: %s, %s" % [slot, label.text, progress.text])
 		if reroll.disabled:
 			notes.append("yuva %d: değiştir pasif" % slot)
-	_check("Bugün panelinde %d istek: yazı en çok iki satır, ilerleme, değiştir%s" % [db.requests.slots,
+	_check("Görevler panelinde %d istek: yazı en çok iki satır, ilerleme, değiştir%s" % [db.requests.slots,
 			"" if notes.is_empty() else ": " + ", ".join(notes)], notes.is_empty())
-	_check("Bugün paneli telefonda küçülmeden sığar (%.3f, %s)" % [day_panel.fit_scale(), day_panel.panel_rect()],
-			day_panel.fit_scale() >= 0.999 and _panel_inside(day_panel))
-	_check_panel_buttons(day_panel, "Bugün panelinin düğmeleri")
-	_check("Bugün paneli açılınca da rozet söner", not hud.tasks_badge and not badge.visible)
-	await _shot("02_bugun_istekler")
-	day_panel.close_panel()
+	_check("Görevler paneli (5 istek) telefonda küçülmeden sığar (%.3f, %s)" % [tasks.fit_scale(), tasks.panel_rect()],
+			tasks.fit_scale() >= 0.999 and _panel_inside(tasks))
+	_check_panel_buttons(tasks, "Görevler panelinin düğmeleri (5 istek)")
+	_check("Görevler paneli açılınca rozet söner", not hud.tasks_badge and not badge.visible)
+	await _shot("02_gorevler_istekler")
+	tasks.close_panel()
+	await _wait(0.4)
+	# 3b) Bugün paneli: istekler yalnızca özet ("Sürüyor: 5/5") ve GÖREVLER; düğme Görevler panelini açar.
+	await _tap_control(hud.world_button)
+	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
+	await _wait(0.4)
+	var summary := day_panel.find_child("RequestSummary", true, false) as Label
+	var go := day_panel.find_child("TasksButton", true, false) as Control
+	var expected := DayPanel.summary_text(db, save)
+	_check("Bugün panelinde isteklerin özeti \"%s\" ve GÖREVLER; küçülmeden sığar (%.3f)" % [expected, day_panel.fit_scale()],
+			summary != null and summary.text == expected and go != null and day_panel.fit_scale() >= 0.999
+			and _panel_inside(day_panel) and day_panel.find_child("Request0", true, false) == null)
+	await _shot("02b_bugun_ozet")
+	await _tap_control(go)
+	await _wait_until(func() -> bool: return tasks.visible, 2.0)
+	_check("Bugün panelindeki GÖREVLER → Görevler paneli", tasks.visible and not day_panel.visible)
+	tasks.close_panel()
 	await _wait(0.4)
 	# 4) Bir yakalayışla biten istek: ilerleme bir eksikken istenen balık tutulur → bildirim, para, rütbe puanı ve
 	# sevgi gelir, yuva boşalır, Dede "aferin" der.
@@ -3202,10 +3219,10 @@ func _play_requests() -> void:
 	# 5) Değiştir: günde bir; yuvada yeni istek (eskisi ve ekrandakiler gelmez), not "Yarın yine", düğmeler pasif;
 	# biten isteğin yuvasında "Yarın yeni istek".
 	await _wait_state(FishingSession.State.IDLE, 4.0)
-	await _tap_control(hud.world_button)
-	await _wait_until(func() -> bool: return day_panel.visible, 2.0)
+	await _tap_control(hud.tasks_button)
+	await _wait_until(func() -> bool: return tasks.visible, 2.0)
 	await _wait(0.4)
-	var empty_label := day_panel.find_child("Request%d" % done_slot, true, false)
+	var empty_label := tasks.find_child("Request%d" % done_slot, true, false)
 	empty_label = empty_label.find_child("Empty", true, false) if empty_label != null else null
 	_check("biten isteğin yuvasında \"%s\"" % tr("UI_REQ_EMPTY"), empty_label is Label
 			and (empty_label as Label).text == tr("UI_REQ_EMPTY"))
@@ -3214,16 +3231,16 @@ func _play_requests() -> void:
 		if slot_r < 0 and Requests.can_reroll(db, save, slot):
 			slot_r = slot
 	var old := Requests.find_slot(save, slot_r).duplicate(true)
-	var reroll_button := day_panel.find_child("Reroll%d" % slot_r, true, false) as Button
+	var reroll_button := tasks.find_child("Reroll%d" % slot_r, true, false) as Button
 	var can := reroll_button != null and not reroll_button.disabled
 	if can:
 		await _tap_control(reroll_button)
 	await _wait_frames(3)
 	var fresh := Requests.find_slot(save, slot_r)
-	var note := day_panel.find_child("RerollNote", true, false) as Label
+	var note := tasks.find_child("RerollNote", true, false) as Label
 	var all_off := true
 	for slot in db.requests.slots:
-		var b := day_panel.find_child("Reroll%d" % slot, true, false) as Button
+		var b := tasks.find_child("Reroll%d" % slot, true, false) as Button
 		all_off = all_off and (b == null or b.disabled)
 	_check("değiştir: yuva %d'de yeni istek (%s → %s), \"%s\", değiştir düğmeleri pasif" % [slot_r,
 			Requests.key_of(old) if not old.is_empty() else "-", Requests.key_of(fresh) if not fresh.is_empty() else "-",
@@ -3231,7 +3248,7 @@ func _play_requests() -> void:
 			and int(fresh["serial"]) != int(old["serial"]) and Requests.key_of(fresh) != Requests.key_of(old)
 			and note != null and note.text == tr("UI_REQ_REROLL_USED") and all_off and not hud.tasks_badge)
 	await _shot("04_degistir")
-	day_panel.close_panel()
+	tasks.close_panel()
 	await _wait(0.4)
 	# 6) Yeni gün (VAKİT + sabaha kadar): boş yuva dolar; "Sabah oldu"dan sonra "Yeni gün!" bildirimi, rozet.
 	var today := DayClock.day(rules, save.clock_s)
@@ -3332,7 +3349,7 @@ func _request_by_catch(db: ContentDB, save: SaveData) -> Array:
 ## şişe yok; rütbe 3'te sazlıkta şişe (bildirim, haritada işaret, Dede'nin sözü, iskelede ve sazlıkta ≤150 çizim);
 ## yakından dokununca şişe kalkar, mektup 1 açılır (kâğıda kaydırmadan sığar, panel küçülmeden ve güvenli alanda),
 ## kapanınca Dede yazanı tanır; uzaktaki şişeye dokununca balıkçı yürür ve alır (mektup 2, iskele koyu); mektup
-## 3'ten sonra Dede'nin altın isteği (bildirim, Dede'nin haritası, Bugün panelinde altın şerit; panel küçülmeden
+## 3'ten sonra Dede'nin altın isteği (bildirim, Dede'nin haritası, Görevler panelinde altın şerit; panel küçülmeden
 ## sığar); akşam nilüferli koyda gerçek bir turnayla biter (harita parçası 1/4, para, Dede); derin ortanın şişesi:
 ## sandal başka şamandıradayken şişeye dokununca sandal ilk şamandıraya gider ve alır (mektup 6).
 func _play_secret() -> void:
@@ -3465,12 +3482,13 @@ func _play_secret() -> void:
 	_check("bildirim: altın istek", await _wait_toast(UiKit.upper(tr("UI_GOLDEN_NEW")), 6.0))
 	_check("Dede eski haritasını anlatır", await _wait_until(func() -> bool:
 			return str(main.get("_line")) == "UI_DEDE_GOLDEN_FIRST", 12.0))
-	var day: DayPanel = main.get("day_panel")
-	await _tap_control(_hud().world_button)
+	# Altın istek Görevler panelinde (beş günlük istekle; Bugün panelinde yalnızca özet).
+	var day: TasksPanel = main.get("tasks_panel")
+	await _tap_control(_hud().tasks_button)
 	await _wait_until(func() -> bool: return day.visible, 2.0)
 	await _wait(0.6)
-	_check("Bugün panelinde altın şerit", day.find_child("Golden", true, false) != null)
-	_check("Bugün paneli altın şeritle küçülmeden sığar (%.2f)" % day.fit_scale(), day.fit_scale() > 0.999
+	_check("Görevler panelinde altın şerit", day.find_child("Golden", true, false) != null)
+	_check("Görevler paneli altın şeritle küçülmeden sığar (%.2f)" % day.fit_scale(), day.fit_scale() > 0.999
 			and _panel_inside(day))
 	await _shot("03_altin_istek")
 	day.close_panel()
