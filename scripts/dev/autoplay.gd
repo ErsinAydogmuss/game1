@@ -1376,7 +1376,7 @@ func _play_map() -> void:
 		await _wait(0.6)
 		await _shot("%02d_%s" % [index, zone_id])
 		index += 1
-	# Kilitli: derin orta sandal ister; kartında balıkları ve nedeni, GİT yok; geçilmez.
+	# Kilitli: derin orta (rütbe 9 ve sandal); kartında balıkları ve nedeni (Zones.lock_reason), GİT yok; geçilmez.
 	await _tap_control(hud.map_button)
 	await _wait_until(func() -> bool: return panel.visible, 2.0)
 	await _wait(0.3)
@@ -1384,8 +1384,11 @@ func _play_map() -> void:
 	var went := await _tap_zone(panel, "deep_water", 0.6)
 	var zone_card: ZonePanel = main.get("zone_panel")
 	var locked := zone_card.find_child("Locked", true, false)
+	var reason := Zones.lock_reason(db, save, db.zone(spot, "deep_water"))
+	var why_key := str(reason.get("key", "?"))
+	var why := tr(why_key) % int(reason["rank"]) if why_key == "UI_ZONE_LOCKED_RANK" else tr(why_key)
 	_check("kilitli bölgenin kartında balıkları ve nedeni, GİT yok; geçilmez", not went and zone_card.visible
-			and locked != null and _texts_in(locked).contains(tr("UI_ZONE_LOCKED_BOAT")) and not fade.busy()
+			and locked != null and _texts_in(locked).contains(why) and not fade.busy()
 			and _angler().pos2() == before and str(main.get("zone_id")) == "dock_cove"
 			and zone_card.find_child("Fish_sturgeon", true, false) != null)
 	await _shot("%02d_kilitli" % index)
