@@ -460,9 +460,8 @@ func _start_session() -> void:
 	_sync_love_scene()
 	_tea_shot = 0.0
 	session = FishingSession.new(GameState.db, spot_id, gear, Dice.derive(save.seed, save.session),
-			bool(GameState.setting("easy", false)), save.catches == 0,
-			CatchOdds.pity_floor(GameState.db, save, start, gear.technique, cond), Zones.open_ids(GameState.db, save, spot_id),
-			cond)
+			save.catches == 0, CatchOdds.pity_floor(GameState.db, save, start, gear.technique, cond),
+			Zones.open_ids(GameState.db, save, spot_id), cond)
 	zone_id = ""
 	_zone_known = false
 	_held_technique = str(save.flags.get(HELD_FLAG, ""))
@@ -708,10 +707,6 @@ func _on_state_changed() -> void:
 		_update_gates()
 		_announce_techniques()
 		_refill_requests()
-	session.easy = bool(GameState.setting("easy", false))
-	# Ayar çekişmenin ortasında değişirse (Ayarlar açıkken oyun donuk) süren çekişmeye de geçer.
-	if session.reel != null and session.hooked != null:
-		session.reel.easy = session.easy or session.hooked.scripted
 
 
 ## Grafik kalitesi (GraphicsRules; Ayarlar: Düşük / Orta / Yüksek): 3D'nin çözünürlüğü, güneşin gölgesi ve
@@ -1285,7 +1280,7 @@ func _on_event(e: Dictionary) -> void:
 			ripples.spawn(session.bobber, 1.2, 0.7, Color(1, 1, 1, 0.9), 0.18)
 			Sounds.play("hook")
 			if int(e.get("too_big", 0)) > 0:
-				# Takım bu iriliği taşımıyor: sakinken de kırmızıya çeker (Kolay'da yalnızca yavaş gelir).
+				# Takım bu iriliği taşımıyor: sakinken de kırmızıya çeker.
 				hud.toast(tr("UI_TOO_BIG"), UiKit.BAD, "burst")
 				Sounds.haptic(80)
 				camera.shake(0.16)
@@ -2459,8 +2454,8 @@ func _hint_key() -> String:
 		if not TechniqueHints.active(GameState.save, technique):
 			return ""
 		var key := TechniqueHints.key(technique, session.state)
-		# Fazla iri balıkta "basılı tut" misinayı koparır (Kolay modda yalnızca yavaş gelir).
-		if key == "UI_HINT_REEL" and session.too_big > 0 and not session.easy:
+		# Fazla iri balıkta "basılı tut" misinayı koparır.
+		if key == "UI_HINT_REEL" and session.too_big > 0:
 			key = "UI_HINT_TOO_BIG"
 		if not key.is_empty():
 			return key
@@ -2477,8 +2472,8 @@ func _hint_key() -> String:
 		FishingSession.State.BITING:
 			return "UI_HINT_BITE"
 		FishingSession.State.FIGHTING:
-			# Fazla iri balıkta "basılı tut" misinayı koparır (Kolay modda yalnızca yavaş gelir).
-			return "UI_HINT_TOO_BIG" if session.too_big > 0 and not session.easy else "UI_HINT_REEL"
+			# Fazla iri balıkta "basılı tut" misinayı koparır.
+			return "UI_HINT_TOO_BIG" if session.too_big > 0 else "UI_HINT_REEL"
 	# Kayıp, yakalama, geri sarma: önceki ipucu kalır (süresi biten öğüt söner).
 	return "" if _hint_shown == _line else _hint_shown
 

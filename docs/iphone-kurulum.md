@@ -221,7 +221,6 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     - İskele koyunda bambu oltayla 4–5 yıldızlı iri sazan, turna ya da yayın takılınca "Çok iri!" çıkıyor mu?
     - O balıkta gerilim sakinken bile kırmızıya çıkıp misina kopuyor mu? Ardından Dede neyi alman gerektiğini söylüyor mu?
     - Nine'nin kamış ve misina kartlarında "İri balık" yıldızları var mı? Cam elyafı kamış ve naylon misinayı alınca 4 yıldızlılar tutuluyor mu?
-    - Kolay çekme açıkken iri balık kopmadan, yalnızca yavaş geliyor mu?
 13. **v0.4: Takım Çantası.** Rütbe 2'de sol altta teknik düğmesi çıkar ("Yeni teknik: Spin!", Dede, düğme nabız gibi atar). Dokun: şamandıra, spin, dip, sinek karoları ve altta kerevit tuzağı. Kilitli teknikte rütbesi, kamışı yoksa NİNE'DE (dükkân o tekniğin kamışlarında açılır). Panel ve düğmeler çentiğe takılmadan sığıyor mu? Hızlı denemek için "12. Telefonda hız ölçümü"ndeki **HEPSİNİ AÇ** her tekniğin ilk kamışını ve bir tuzak verir.
 14. **v0.4: Spin.** Bir gölgenin ötesine at, **basılı tut:** yem gelir; **bırak:** durur ve batar. Yırtıcı peşine düşünce (halka, "Peşinde biri var!") dur-kalk yap: o an basılıysan balık kendiliğinden takılır, bırakmışsan "VUR!" çıkar. Dur-kalk ritmi parmakta rahat mı? Sazlıkta yemi bekletince takılıyor mu (geri sarma)?
 15. **v0.4: Dip** (rütbe 4). Suya dokun: kurşun uzağa uçar, olta yanındaki sehpaya konur. Zil tek tük çalarken dokunma (balık kokluyor); durmadan çalınca ve misina akınca ekranın her yerine dokun. Kamera kurşunu da gösteriyor mu, balıkçı ipucu çubuğunun arkasında kalıyor mu? Sazlıkta aynalı sazan geliyor mu?
@@ -354,9 +353,12 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
 61. **Testçi düzeltmeleri 2: Tekir.** Dokun (ilk kez): Dede "Beslersen hediye getirir!". Acıkınca besle: "Afiyet olsun!
     4 besleme sonra Tekir'den hediye!". Dolapta Tekir'in kıyafetlerinde "Tekir'i 5 kez besle (1/5)".
 62. **Testçi düzeltmeleri 2: çekişme.** Balık çırpınırken ("!" ve titreşim) basılı tutmaya devam et: misina eskisinden
-    çabuk kopmalı (küçük balıkta da). Uyarıda bırakıp sonra yine basınca her balık gelmeli. Kolay modda değişiklik yok.
+    çabuk kopmalı (küçük balıkta da). Uyarıda bırakıp sonra yine basınca her balık gelmeli.
 63. **Testçi düzeltmeleri 2: 5 istek.** Rütbe 2'den sonra Görevler'de beş istek (3 + 2), panel sığıyor mu? Saate dokun:
     Bugün panelinde yalnızca "Sürüyor: 5/5" ve GÖREVLER düğmesi. Eski kayıtta yeni iki istek ertesi oyun günü gelir.
+64. **Tek mod (Kolay çekme kalktı).** Ayarlar'da Kolay çekme satırı yok; panel küçülmeden sığıyor mu? Eski kayıtta
+    Kolay açıktıysa da çekişme artık Normal: çırpınırken basılı tutunca misina kopar. Yeni oyunda (Kaydı sıfırla)
+    ilk balık yine kopmaz, kaçmaz (öğretici). Rehberin ilk sayfası: "Yeşilde sar, kırmızıda bırak."
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 

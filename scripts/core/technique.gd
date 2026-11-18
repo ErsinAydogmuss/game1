@@ -74,9 +74,9 @@ func roll_gap(rng: RandomNumberGenerator) -> int:
 	return Dice.between(rng, rig.gap_steps)
 
 
-## Vuruş penceresi (adım).
-func window(s: FishingSession, fish: FishShadow) -> int:
-	return rig.window_easy_steps if s.easy or fish.scripted else rig.window_steps
+## Vuruş penceresi (adım); senaryolu ilk avda uzun (tekniğin kendi penceresinden kısa değil).
+func window(_s: FishingSession, fish: FishShadow) -> int:
+	return maxi(rig.window_first_steps, rig.window_steps) if fish.scripted else rig.window_steps
 
 
 ## Gölgelerin okuduğu profil bu takımla (dipte yem sepeti toplanmayı hızlandırır); çoğu teknikte

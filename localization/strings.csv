@@ -8,7 +8,6 @@ UI_SETTINGS,Settings,Ayarlar
 UI_SET_SFX,Sound effects,Ses efektleri
 UI_SET_MUSIC,Music,Müzik
 UI_SET_VIBRATION,Vibration,Titreşim
-UI_SET_EASY,Easy reeling,Kolay çekme
 UI_SET_GRAPHICS,Graphics,Grafik
 UI_GRAPHICS_LOW,Low,Düşük
 UI_GRAPHICS_MEDIUM,Medium,Orta
@@ -452,7 +451,7 @@ UI_TRAP_COLLECT,Collect,Topla
 UI_GUIDE_OPEN,How to play?,Nasıl oynanır?
 UI_GUIDE_NEXT,Next,İleri
 UI_GUIDE_BASICS,Fishing,Balık tutmak
-UI_GUIDE_BASICS_LEAD,"Find a shadow, cast, wait, strike, reel. Too hard? Turn on Easy reeling in Settings.","Gölgeyi bul, at, bekle, VUR, sar. Zor gelirse Ayarlar'da Kolay çekmeyi aç."
+UI_GUIDE_BASICS_LEAD,"Find a shadow, cast, wait, strike, reel. Reel on green, ease off on red.","Gölgeyi bul, at, bekle, VUR, sar. Yeşilde sar, kırmızıda bırak."
 UI_GUIDE_DO_CAST,Shadows are fish. Tap just ahead of one to cast.,Sudaki gölge balıktır. Gölgenin biraz önüne dokun.
 UI_GUIDE_DO_WAIT,"A trembling bobber means a nibble. Don't tap, wait!","Şamandıra titrerse balık kokluyor. Dokunma, bekle!"
 UI_GUIDE_DO_STRIKE,"The moment the bobber dives, tap!",Şamandıra suya dalınca hemen dokun!

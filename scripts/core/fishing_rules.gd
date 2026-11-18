@@ -59,7 +59,8 @@ var notice_side: float = 1.8
 var nibble_weights := PackedInt32Array([15, 30, 35, 20])
 var gap_steps := Vector2i(48, 84)
 var window_steps: int = 60
-var window_easy_steps: int = 96
+## Senaryolu ilk avın vuruş penceresi (uzun: ilk balık kaçmasın).
+var window_first_steps: int = 96
 
 # --- Çekişme ---------------------------------------------------------------------------
 ## Gerilim sınırı (kırmızı bölge bunun üstü).
@@ -76,8 +77,8 @@ var fall: float = 2.0
 var drift: float = 0.25
 var catch_m: float = 0.6
 var escape_extra: float = 2.0
-## Kolay modda patlamada basılı tutunca misina kaçış hızının bu katı kayar.
-var easy_slip: float = 2.0
+## Yumuşak çekişmede (senaryolu ilk av) patlamada basılı tutunca misina kaçış hızının bu katı kayar.
+var gentle_slip: float = 2.0
 var first_burst_steps := Vector2i(96, 144)
 # İri balık (docs/gdd.md §5): iri türün (fight.heavy) boyu çekişini artırır; yıldızı takımın
 # taşımasını aşan fazla iridir.
@@ -89,10 +90,8 @@ var size_pull: float = 0.08
 var over_pull: float = 0.12
 ## Fazla iride patlamanın çekişine eklenen (fazla yıldız başına).
 var over_burst: float = 0.1
-## Fazla iride bırakınca uzaklaşma × (1 + over_drift × fazla yıldız); Kolay modda artmaz.
+## Fazla iride bırakınca uzaklaşma × (1 + over_drift × fazla yıldız).
 var over_drift: float = 3.0
-## Kolay modda fazla iri balığın sarma hızı çarpanı (kopmaz, yalnızca yavaş gelir).
-var over_easy_reel: float = 0.9
 
 # --- Kerevit tuzağı (Dalga 3) ------------------------------------------------------------
 ## Gerçek saatle bu kadar sn'de bir kerevit girer; en çok trap_max birikir (boşta biriken üst
@@ -210,7 +209,7 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 		r.nibble_weights.append(int(w))
 	r.gap_steps = _steps2(bite.get("gap"), r.gap_steps)
 	r.window_steps = to_steps(float(bite.get("window", 1.0)))
-	r.window_easy_steps = to_steps(float(bite.get("window_easy", 1.6)))
+	r.window_first_steps = to_steps(float(bite.get("window_first", 1.6)))
 	var reel: Dictionary = d.get("reel", {})
 	r.limit = float(reel.get("limit", r.limit))
 	r.warn_steps = to_steps(float(reel.get("warn", 0.5)))
@@ -221,14 +220,13 @@ static func from_dict(d: Dictionary, errors: PackedStringArray) -> FishingRules:
 	r.drift = float(reel.get("drift", r.drift))
 	r.catch_m = float(reel.get("catch_m", r.catch_m))
 	r.escape_extra = float(reel.get("escape_extra_m", r.escape_extra))
-	r.easy_slip = float(reel.get("easy_slip", r.easy_slip))
+	r.gentle_slip = float(reel.get("gentle_slip", r.gentle_slip))
 	r.first_burst_steps = _steps2(reel.get("first_burst"), r.first_burst_steps)
 	r.carry = int(reel.get("carry", r.carry))
 	r.size_pull = float(reel.get("size_pull", r.size_pull))
 	r.over_pull = float(reel.get("over_pull", r.over_pull))
 	r.over_burst = float(reel.get("over_burst", r.over_burst))
 	r.over_drift = float(reel.get("over_drift", r.over_drift))
-	r.over_easy_reel = float(reel.get("over_easy_reel", r.over_easy_reel))
 	var trap: Dictionary = d.get("trap", {})
 	r.trap_fill_s = int(trap.get("fill_s", r.trap_fill_s))
 	r.trap_max = int(trap.get("max", r.trap_max))
@@ -311,15 +309,14 @@ func _validate(errors: PackedStringArray) -> void:
 				and reach_extra >= 0.0 and leash_extra > 0.0,
 		"dürtme ağırlıkları (4 değer, toplam > 0)": nibble_weights.size() == 4 and _sum(nibble_weights) > 0,
 		"dürtme arası": gap_steps.x > 0 and gap_steps.y >= gap_steps.x,
-		"vuruş penceresi (Kolay >= normal)": window_steps > 0 and window_easy_steps >= window_steps,
+		"vuruş penceresi (ilk av >= normal)": window_steps > 0 and window_first_steps >= window_steps,
 		"gerilim sınırı 0..1": limit > 0.0 and limit < 1.0,
 		"uyarı ve kopma süresi": warn_steps > 0 and snap_steps > 0,
 		"gerilim hızları": rise > 0.0 and fall > 0.0,
 		"fark etme uzaklıkları": notice_front >= notice_side and notice_side > 0.0,
 		"ilk patlama uyarıdan sonra": first_burst_steps.x > warn_steps and first_burst_steps.y >= first_burst_steps.x,
-		"iri balık (taşıma 1–5, fazla iri sınırın üstünde, Kolay'da yavaş ama gelir)": carry >= 1 and carry <= 5 \
-				and size_pull >= 0.0 and over_pull > 0.0 and over_burst >= 0.0 and over_drift >= 0.0 \
-				and over_easy_reel > 0.0 and over_easy_reel <= 1.0,
+		"iri balık (taşıma 1–5, fazla iri sınırın üstünde)": carry >= 1 and carry <= 5 \
+				and size_pull >= 0.0 and over_pull > 0.0 and over_burst >= 0.0 and over_drift >= 0.0 and gentle_slip > 0.0,
 		"tuzak (dolma süresi, en çok kayıt sınırı kadar, sığ su, yakın aralık)": trap_fill_s > 0 and trap_max >= 1 \
 				and trap_max <= SaveData.MAX_TRAP_ITEMS and trap_depth > 0.0 and trap_near.x > 0.0 \
 				and trap_near.y > trap_near.x and trap_spacing >= 0.0,

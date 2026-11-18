@@ -45,7 +45,7 @@ var catches: int = 0
 var hint_step: int = 0
 ## Bir kez gösterilen bildirimler ve benzeri bayraklar.
 var flags: Dictionary = {}
-## sfx, music, vibration (bool), locale ("tr"/"en"), easy (Kolay çekme, bool).
+## sfx, music, vibration (bool), locale ("tr"/"en"). Eski kayıttaki "easy" (kaldırılan Kolay çekme) okunmaz.
 var settings: Dictionary = {}
 ## Seçilen balıkçı (v6): CHARACTERS'tan biri. Yeni oyunda açılış filminden önce seçilir (bayrak
 ## chose_character), sonra dolaptan değişir.

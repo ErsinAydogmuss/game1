@@ -43,8 +43,7 @@ Ortalama boy çarpanı 0,99: ortalama bir balık türünün değerinin yaklaşı
 İri türlerin (sazan, turna, yayın, kadife, sudak, altın sazan, mersin balığı, aynalı sazan, dere alabalığı, ay turnası, kocabaş) boyu çekişini artırır. Bir iri balığı ancak yıldızını taşıyan kamış ve
 misina rahat tutar; ikisinin küçüğü işler. Takım taşımıyorsa balık fazla iridir: takılınca "Çok iri!"
 çıkar, sakinken de gerilim kırmızıya çeker, bırakınca balık hızla uzaklaşır. Misina koparsa ya da balık
-kaçarsa Dede eksik takımı söyler. Kolay modda kopma yok; fazla iri balık yalnızca yavaş gelir. Öteki
-türler her boyda bambu oltayla tutulur.
+kaçarsa Dede eksik takımı söyler. Öteki türler her boyda bambu oltayla tutulur.
 
 | Takım | Fiyat | Rütbe | Taşır |
 |---|---|---|---|

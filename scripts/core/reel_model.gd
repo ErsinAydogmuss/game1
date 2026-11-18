@@ -10,19 +10,18 @@ extends RefCounted
 ##   snap_recover hızıyla geri iner.
 ## - Basılı tutunca (patlama dışında) balık yaklaşır; bırakınca uzaklaşır, patlamada hızla.
 ##   catch_m'ye gelince tutulur; max_distance'ı geçerse kaçar.
-## - Kolay mod: gerilim sınırda durur (kopma yok); patlamada basılı tutunca misina kayar
-##   (balık uzaklaşır); balık kaçmaz. Beceri yalnızca hızı belirler.
+## - Yumuşak çekişme (gentle; yalnızca senaryolu ilk av: oyunun tek modu Normal): gerilim sınırda
+##   durur (kopma yok); patlamada basılı tutunca misina kayar (balık uzaklaşır); balık kaçmaz.
 ## - Takım (GearStats, isteğe bağlı): kamışın gücü sarmayı hızlandırır ve patlamadaki kaçışı
 ##   yavaşlatır; makaranın freni patlamadaki gerilimi kırpar; misina kopma süresini, kepçe
 ##   tutma uzaklığını belirler. Takım verilmezse kurallardaki (bambu olta) sayılar.
 ## - İri tür (fight.heavy): boy yüzdeliği sakin çekişi size_pull kadar artırır (yine sınırın
 ##   altında). Yıldızı takımın taşımasını (carry) aşan balık fazla iridir (excess = fazla yıldız):
 ##   sakinken de basılı tutmak kırmızıya çıkar, patlama sertleşir, bırakınca daha hızlı uzaklaşır.
-##   Kolay modda kopmaz, kaçmaz; yalnızca yavaş gelir.
 ## - Dalışlar (fight.stages; Gölün Bekçisi): balık takıldığı uzaklığın bu paylarına yaklaşınca, sakin
 ##   evredeyse, "dive_warn" (dive_warn_steps uyarı) ve "dive" gelir: dalış boyunca bırakınca balık dive_run
 ##   hızla uzaklaşır (en çok kaçma sınırının DIVE_MARGIN içine), basılı tutunca gerilim dive_pull'a (sınırın
-##   üstüne) çıkar: koparır. Dalış bitince "dive_end". Kolay modda dalış EASY_DIVE kadar hızlı, kopma yok.
+##   üstüne) çıkar: koparır. Dalış bitince "dive_end".
 ##   Dalışın zarı yalnızca dalışlı balıkta çekilir (öteki balıkların zar sırası aynı kalır).
 
 ## Evreler sona eklenir (DIVE_WARN, DIVE: Gölün Bekçisi'nin dalışları).
@@ -31,16 +30,16 @@ enum Outcome { NONE, CAUGHT, SNAPPED, ESCAPED }
 
 ## Kopma sayacının birimi: sınır üstündeki her adım UNIT ekler.
 const UNIT := 1000
-## Dalış balığı kaçma sınırına en çok bu kadar (m) yaklaştırır; Kolay modda dalışın hız çarpanı.
+## Dalış balığı kaçma sınırına en çok bu kadar (m) yaklaştırır.
 const DIVE_MARGIN := 0.5
-const EASY_DIVE := 0.6
 const STEP := 1.0 / FishingRules.HZ
 
 var distance: float = 0.0
 var max_distance: float = 11.0
 var tension: float = 0.0
 var holding: bool = false
-var easy: bool = false
+## Yumuşak çekişme (senaryolu ilk av): kopmaz, kaçmaz.
+var gentle: bool = false
 var phase: Phase = Phase.CALM
 ## Evredeki kalan adım.
 var phase_steps: int = 0
@@ -66,12 +65,10 @@ var _recover: int = 350
 var _snap_units: int = 48000
 var _catch_m: float = 0.6
 var _drift: float = 0.25
-## Fazla iride Normal modun değerleri ve Kolay modun sarma hızı (fazla iri değilse temel değerler).
-## Mod ayarlardan çekişme sürerken de değişebilir: hangisinin geçerli olduğuna her adımda bakılır.
+## Fazla iride çekiş, patlama ve uzaklaşma (fazla iri değilse temel değerler; yumuşak çekişmede kullanılmaz).
 var _strained_pull: float = 0.5
 var _strained_burst: float = 1.1
 var _strained_drift: float = 0.25
-var _easy_reel: float = 1.0
 ## Dalışlar: kalan paylar (uzaklık takıldığı uzaklığın bu payına inince), takıldığı uzaklık, uyarı ve
 ## dalış süresi (adım), dalışta kaçış hızı ve basılı tutunca gerilim.
 var _stages := PackedFloat32Array()
@@ -90,7 +87,7 @@ var _rng := RandomNumberGenerator.new()
 ## (m/sn); seed: patlama zamanlarının zarı; gear: kuşanılmış takım (yoksa kurallardaki sayılar);
 ## percentile: balığın boy yüzdeliği (ppm; iri türde çekişi ve fazla iriliği belirler).
 func _init(rules: FishingRules, fight: Dictionary, reel_speed: float, start_distance: float,
-		max_dist: float, easy_mode: bool, seed: int, gear: GearStats = null, percentile: int = 0) -> void:
+		max_dist: float, gentle_mode: bool, seed: int, gear: GearStats = null, percentile: int = 0) -> void:
 	_rules = rules
 	_reel_speed = reel_speed * float(fight["reel"])
 	_pull = fight["pull"]
@@ -118,14 +115,11 @@ func _init(rules: FishingRules, fight: Dictionary, reel_speed: float, start_dist
 	_strained_pull = _pull
 	_strained_burst = _burst_pull
 	_strained_drift = _drift
-	_easy_reel = _reel_speed
 	if excess > 0:
-		# Normal modda takım taşımaz: sakinken de kırmızı, sert patlama, bırakınca hızla uzaklaşır.
-		# Kolay modda yalnızca yavaş gelir.
+		# Takım taşımaz: sakinken de kırmızı, sert patlama, bırakınca hızla uzaklaşır.
 		_strained_pull = rules.limit + rules.over_pull * excess
 		_strained_burst = _burst_pull + rules.over_burst * excess
 		_strained_drift = _drift * (1.0 + rules.over_drift * excess)
-		_easy_reel = _reel_speed * rules.over_easy_reel
 	var stages: PackedFloat32Array = fight.get("stages", PackedFloat32Array())
 	if not stages.is_empty():
 		_has_dives = true
@@ -138,7 +132,7 @@ func _init(rules: FishingRules, fight: Dictionary, reel_speed: float, start_dist
 	_rng.seed = seed
 	distance = start_distance
 	max_distance = max_dist
-	easy = easy_mode
+	gentle = gentle_mode
 	phase = Phase.CALM
 	# first_burst uyarıyı da içerir: ilk patlama tam o anda başlar. Türün kendi ilk çırpınması varsa
 	# o (alabalık takılır takılmaz sıçrar).
@@ -189,38 +183,37 @@ func step() -> PackedStringArray:
 		_dive_step()
 		return _finish(out)
 	var bursting := phase == Phase.BURST
-	var strained := excess > 0 and not easy
+	var strained := excess > 0 and not gentle
 	if holding:
 		var target := (_strained_burst if strained else _burst_pull) if bursting else (_strained_pull if strained else _pull)
 		tension = move_toward(tension, target, _rules.rise * STEP)
 	else:
 		tension = move_toward(tension, 0.0, _rules.fall * STEP)
-	if easy:
+	if gentle:
 		tension = minf(tension, _rules.limit)
 	if bursting:
 		if not holding:
 			distance += _run * STEP
-		elif easy and tension >= _rules.limit:
-			distance += _run * _rules.easy_slip * STEP
+		elif gentle and tension >= _rules.limit:
+			distance += _run * _rules.gentle_slip * STEP
 	elif holding:
-		distance -= (_easy_reel if easy else _reel_speed) * STEP
+		distance -= _reel_speed * STEP
 	else:
 		distance += (_strained_drift if strained else _drift) * STEP
 	return _finish(out)
 
 
-## Dalışta bir adım: basılı tutunca gerilim dive_pull'a çıkar (Kolay'da sınırda durur), bırakınca düşer;
-## balık dalış hızıyla uzaklaşır (Kolay'da yavaş), kaçma sınırının DIVE_MARGIN içinde durur.
+## Dalışta bir adım: basılı tutunca gerilim dive_pull'a çıkar (yumuşak çekişmede sınırda durur), bırakınca
+## düşer; balık dalış hızıyla uzaklaşır, kaçma sınırının DIVE_MARGIN içinde durur.
 func _dive_step() -> void:
 	if holding:
 		tension = move_toward(tension, _dive_pull, _rules.rise * STEP)
 	else:
 		tension = move_toward(tension, 0.0, _rules.fall * STEP)
-	if easy:
+	if gentle:
 		tension = minf(tension, _rules.limit)
-	var speed := _dive_run * (EASY_DIVE if easy else 1.0)
-	if not holding or easy:
-		distance = maxf(distance, minf(distance + speed * STEP, max_distance - DIVE_MARGIN))
+	if not holding or gentle:
+		distance = maxf(distance, minf(distance + _dive_run * STEP, max_distance - DIVE_MARGIN))
 
 
 ## Adımın sonu: kırmızı, kopma sayacı, tutma ve kaçma (her evrede aynı).
@@ -233,7 +226,7 @@ func _finish(out: PackedStringArray) -> PackedStringArray:
 		over += UNIT
 	else:
 		over = maxi(0, over - _recover)
-	if not easy and over >= _snap_units:
+	if not gentle and over >= _snap_units:
 		outcome = Outcome.SNAPPED
 		out.append("snap")
 		return out
@@ -242,7 +235,7 @@ func _finish(out: PackedStringArray) -> PackedStringArray:
 		outcome = Outcome.CAUGHT
 		out.append("caught")
 	elif distance >= max_distance:
-		if easy:
+		if gentle:
 			distance = max_distance
 		else:
 			outcome = Outcome.ESCAPED

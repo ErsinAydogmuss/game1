@@ -15,6 +15,23 @@ static func content() -> ContentDB:
 	return _db
 
 
+## Çekişmeyi iyi oyuncu gibi oynar (ReelBot kusursuz: yeşilde sarar, uyarıda ve çırpınmada bırakır). Oyunun tek
+## modu Normal: hep basılı tutmak misinayı koparabilir. Döner: balık tutuldu mu.
+static func reel_in(session: FishingSession, log: Array[Dictionary] = []) -> bool:
+	var bot := ReelBot.make(ReelBot.Style.PERFECT)
+	for i in ReelBot.LIMIT_STEPS:
+		if session.state != FishingSession.State.FIGHTING:
+			break
+		var hold := bot.decide(session.reel, PackedStringArray())
+		if hold and not session.holding:
+			session.press()
+		elif not hold and session.holding:
+			session.release()
+		session.step()
+		log.append_array(session.poll_events())
+	return session.state == FishingSession.State.CAUGHT
+
+
 func assert_true(condition: bool, message: String = "") -> void:
 	if not condition:
 		failures.append(message if not message.is_empty() else "koşul sağlanmadı")

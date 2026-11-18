@@ -31,7 +31,7 @@ func test_home_lake_is_unchanged() -> void:
 static func snapshot(db: ContentDB) -> Dictionary:
 	var out := {}
 	for seed_value: int in [99, 1, 7]:
-		var session := FishingSession.new(db, "home_lake", GearStats.starter(db), seed_value, false, false)
+		var session := FishingSession.new(db, "home_lake", GearStats.starter(db), seed_value, false)
 		out["start_%d" % seed_value] = _shadows(session.sim)
 	var spot := db.spot("home_lake")
 	var sim := ShadowSim.new(db, spot, db.lake("home_lake"), 555, false, Vector2(0, 4))
@@ -57,7 +57,7 @@ static func _shadows(sim: ShadowSim) -> PackedStringArray:
 
 ## test_fishing_session'daki senaryonun aynısı (60 fps).
 static func _scripted_run(db: ContentDB) -> PackedStringArray:
-	var session := FishingSession.new(db, "home_lake", GearStats.starter(db), 4321, false, false)
+	var session := FishingSession.new(db, "home_lake", GearStats.starter(db), 4321, false)
 	var log := PackedStringArray()
 	var targets := [Vector2(0, 0), Vector2(-3, -2), Vector2(3, -1), Vector2(-8, -3), Vector2(1, -4)]
 	var next_target := 0

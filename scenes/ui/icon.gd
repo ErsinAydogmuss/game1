@@ -3,7 +3,7 @@ extends Control
 ## Oyun ikonu. Görseli varsa (assets/icons/ui, kullanıcının ChatGPT çizimleri) onu çizer;
 ## yoksa 100×100'lük bir tasarım alanında kodla çizer ve boyuta ölçekler. (Kazı'dan uyarlandı.)
 ## kind: coin, star, star_empty, close, book, settings, lock, question, hand, burst, trophy,
-## sound, music, vibration, easy, globe, up, down, rod, reel, line, bait, net, bucket, aquarium,
+## sound, music, vibration, globe, up, down, rod, reel, line, bait, net, bucket, aquarium,
 ## bobber, hook, fish, shop, gem, map, sell (para kesesi), release (göle dönen balık), pin (haritada
 ## "buradasın"). Yalnızca görselle çizilenler (görseli yoksa çağıran başka ikon seçer): anchor
 ## ("Kıyıya dön"), compass, buoy, signpost (harita). Vakit, hava, çay, sevgi ve istek ikonları (phase_*,
@@ -19,7 +19,7 @@ extends Control
 ## Kodla çizilebilen ikonlar (görseli yoksa). Bilinmeyen ad soru işareti çizer (boş kalmasın);
 ## takımın "kind"ı bunlardan biri olmalı (test_content_db denetler).
 const DRAWN: Array[String] = ["coin", "star", "star_empty", "close", "down", "up", "sound", "music",
-		"vibration", "easy", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
+		"vibration", "globe", "book", "settings", "question", "hand", "rod", "reel", "line", "bait",
 		"net", "bobber", "hook", "fish", "bucket", "shop", "gem", "burst", "trophy", "lock", "map", "sell",
 		"release", "pin", "boat", "trap", "reroll", "bottle", "x_mark", "donation_box", "wardrobe", "camera", "cat",
 		"ad"]
@@ -159,8 +159,6 @@ func _draw() -> void:
 			_music()
 		"vibration":
 			_vibration()
-		"easy":
-			_easy()
 		"globe", "book", "map":
 			_globe()
 		"settings":
@@ -318,16 +316,6 @@ func _vibration() -> void:
 		draw_line(Vector2(x, 34), Vector2(x + side * 6.0, 42), GOLD_DARK, 5.0, true)
 		draw_line(Vector2(x + side * 6.0, 42), Vector2(x, 50), GOLD_DARK, 5.0, true)
 		draw_line(Vector2(x, 50), Vector2(x + side * 6.0, 58), GOLD_DARK, 5.0, true)
-
-
-## Kolay çekme: tüy.
-func _easy() -> void:
-	var feather := Color("#7fd18b")
-	draw_colored_polygon(PackedVector2Array([Vector2(72, 12), Vector2(86, 30), Vector2(56, 70), Vector2(38, 76),
-			Vector2(44, 58)]), feather)
-	draw_colored_polygon(PackedVector2Array([Vector2(72, 12), Vector2(44, 58), Vector2(38, 76), Vector2(30, 52)]),
-			feather.darkened(0.2))
-	draw_line(Vector2(76, 20), Vector2(20, 88), WOOD_DARK, 5.0, true)
 
 
 ## Dünya (dil seçimi).

@@ -9,8 +9,8 @@ const BOBBER := Vector2(0, 0)
 const PARK := [Vector2(-10, -4), Vector2(-7, -5), Vector2(5.5, -2.5), Vector2(-4, -3)]
 
 
-func _session(easy: bool = false, first: bool = false, seed: int = 99) -> FishingSession:
-	return FishingSession.new(content(), "home_lake", GearStats.starter(content()), seed, easy, first)
+func _session(first: bool = false, seed: int = 99) -> FishingSession:
+	return FishingSession.new(content(), "home_lake", GearStats.starter(content()), seed, first)
 
 
 ## Bir gölge dışındakileri uzağa koyar ve uyutur (testi bozmasınlar).
@@ -163,32 +163,20 @@ func test_early_tap_loses_the_fish() -> void:
 	assert_true(_run_until(session, FishingSession.State.IDLE, 1.5), "kısa süre sonra yeniden atılabilir")
 
 
-func test_easy_first_early_tap_only_startles() -> void:
-	var session := _session(true)
-	_to_nibbling(session)
-	session.press()
-	session.release()
-	assert_eq(session.state, FishingSession.State.NIBBLING, "Kolay: ilk erken dokunuşta balık kalır")
-	session.press()
-	assert_eq(session.state, FishingSession.State.LOST, "Kolay: ikincisinde kaçar")
-
-
 func test_hook_window_edges() -> void:
-	for easy: bool in [false, true]:
-		var window := 1.6 if easy else 1.0
-		var label := "Kolay" if easy else "Normal"
-		var inside := _session(easy)
-		_to_biting(inside)
-		assert_eq(inside.action_kind(), "hook", "ısırmada eylem: VUR")
-		_advance_seconds(inside, window - 0.01)
-		inside.press()
-		assert_eq(inside.state, FishingSession.State.FIGHTING, "%s: %.2f sn'de VUR tutar" % [label, window - 0.01])
-		var late := _session(easy)
-		_to_biting(late)
-		_advance_seconds(late, window + 0.01)
-		late.press()
-		assert_eq(late.state, FishingSession.State.LOST, "%s: %.2f sn'de geç kalınmıştır" % [label, window + 0.01])
-		assert_eq(late.last_loss, "missed", "%s: neden: kaçırdı" % label)
+	var window := 1.0
+	var inside := _session()
+	_to_biting(inside)
+	assert_eq(inside.action_kind(), "hook", "ısırmada eylem: VUR")
+	_advance_seconds(inside, window - 0.01)
+	inside.press()
+	assert_eq(inside.state, FishingSession.State.FIGHTING, "%.2f sn'de VUR tutar" % (window - 0.01))
+	var late := _session()
+	_to_biting(late)
+	_advance_seconds(late, window + 0.01)
+	late.press()
+	assert_eq(late.state, FishingSession.State.LOST, "%.2f sn'de geç kalınmıştır" % (window + 0.01))
+	assert_eq(late.last_loss, "missed", "neden: kaçırdı")
 
 
 func test_missed_fish_is_replaced_within_8_seconds() -> void:
@@ -216,26 +204,27 @@ func test_no_trash_with_the_float() -> void:
 	var trash_seed := 0
 	while Trash.with_catch(rules, trash_seed, "bottom").is_empty():
 		trash_seed += 1
-	var session := _session(true)
+	var session := _session()
 	var s := _to_biting(session)
 	s.seed = trash_seed
 	session.press()
-	assert_true(_run_until(session, FishingSession.State.CAUGHT, 90.0), "Kolay'da basılı tutunca tutulur")
+	assert_true(reel_in(session), "iyi oyuncu tutar")
 	assert_eq(int(session.last_catch["seed"]), trash_seed, "gölgenin seed'i yakalayışta")
 	assert_eq(str(session.last_catch["trash"]), "", "şamandırada çöp yok")
 
 
 func test_catch_waits_for_the_card() -> void:
-	var session := _session(true)
+	var session := _session()
 	var s := _to_biting(session)
 	session.press()
 	assert_eq(session.state, FishingSession.State.FIGHTING, "VUR: çekişme başlar")
 	assert_eq(session.action_kind(), "reel", "çekişmede eylem: sar")
-	assert_true(_run_until(session, FishingSession.State.CAUGHT, 90.0), "Kolay'da basılı tutunca tutulur")
+	var log: Array[Dictionary] = []
+	assert_true(reel_in(session, log), "iyi oyuncu tutar")
 	assert_eq(str(session.last_catch["fish"]), s.fish_id, "gölgenin balığı çıkar")
 	assert_eq(int(session.last_catch["size_cm"]), s.size_cm, "boyu doğduğu andaki gibi")
 	var caught_event := false
-	for e in session.poll_events():
+	for e in log:
 		if str(e["type"]) == "catch":
 			caught_event = true
 	assert_true(caught_event, "yakalama olayı")
@@ -259,7 +248,7 @@ func test_too_big_fish_is_flagged() -> void:
 	mid_items["line"] = "line_mono"
 	var none: Array[String] = []
 	for setup: Array in [[GearStats.starter(db), 4], [GearStats.from_items(db, mid_items, none), 0]]:
-		var session := FishingSession.new(db, "home_lake", setup[0], 99, false, false)
+		var session := FishingSession.new(db, "home_lake", setup[0], 99, false)
 		var s := _to_biting(session)
 		s.fish_id = "wels"
 		s.fish_index = db.fish_index("wels")
@@ -292,7 +281,7 @@ func test_too_big_fish_is_flagged() -> void:
 ## Senaryolu ilk balık (öğretici) iri bir türün en irisi olsa da fazla iri sayılmaz.
 func test_scripted_first_fish_is_never_too_big() -> void:
 	var db := content()
-	var session := _session(false, true)
+	var session := _session(true)
 	var first := session.sim.shadows[0]
 	first.fish_id = "wels"
 	first.fish_index = db.fish_index("wels")
@@ -375,7 +364,7 @@ func test_rescue_is_forgotten_by_a_new_cast_and_never_for_a_missed_bite() -> voi
 	assert_true(session.last_lost.is_empty(), "yeni atış son kaçanı siler")
 	assert_true(not session.rescue(), "atıştan sonra kurtarma yok")
 	# VUR'u kaçıran balık çekişmeye girmedi: kurtarılmaz.
-	var other := _session(false, false, 7)
+	var other := _session(false, 7)
 	_to_nibbling(other)
 	other.press()
 	assert_eq(other.state, FishingSession.State.LOST, "erken dokunuş kaçırır")
@@ -384,7 +373,7 @@ func test_rescue_is_forgotten_by_a_new_cast_and_never_for_a_missed_bite() -> voi
 
 
 func test_first_catch_is_scripted() -> void:
-	var session := _session(false, true)
+	var session := _session(true)
 	var first := session.sim.shadows[0]
 	assert_true(first.scripted and first.fish_id == "rudd", "ilk gölge senaryolu Kızılkanat")
 	# Oyuncu biraz düşünür, sonra gölgeden uzağa atar; ilk balık yine gelir.
@@ -423,7 +412,7 @@ func test_random_input_never_gets_stuck() -> void:
 	var lake := content().lake("home_lake")
 	var stands := [Vector2(0, 4), Vector2(0, 8), Vector2(9.6, 0), Vector2(-3, -7.2)]
 	for run in 6:
-		var session := _session(run % 2 == 1, run % 3 == 0, 1000 + run)
+		var session := _session(run % 3 == 0, 1000 + run)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 555 + run
 		var since_change := 0
@@ -453,14 +442,11 @@ func test_random_input_never_gets_stuck() -> void:
 				since_change = 0
 			else:
 				since_change += 1
-			# Kolay modda balık kaçmaz: oyuncu sarmazsa çekişme sürer (tasarım gereği), sınır yok.
 			var limits := {
 				FishingSession.State.CASTING: 1.0, FishingSession.State.NIBBLING: 12.0,
 				FishingSession.State.BITING: 1.7, FishingSession.State.RETRIEVING: 0.5,
-				FishingSession.State.LOST: 1.0,
+				FishingSession.State.LOST: 1.0, FishingSession.State.FIGHTING: 50.0,
 			}
-			if not session.easy:
-				limits[FishingSession.State.FIGHTING] = 50.0
 			if limits.has(session.state) and since_change > float(limits[session.state]) * HZ:
 				problem = "%s durumunda takıldı" % session.state_name()
 			if session.state in [FishingSession.State.WAITING, FishingSession.State.NIBBLING, FishingSession.State.BITING]:
@@ -506,33 +492,28 @@ func test_stranded_fish_swims_back_to_deep_water() -> void:
 
 
 ## Çekişmede balık (yerinde çizilen şamandıra ve gölge) karaya çıkmaz: kıyı yakınsa kıyıda durur.
-## Kaçış payı yine şamandıranın en az escape_extra ötesidir (Normal'de bırakan oyuncu hemen
-## kaybetmez).
+## Kaçış payı yine şamandıranın en az escape_extra ötesidir (bırakan oyuncu hemen kaybetmez).
 func test_fight_stays_in_water() -> void:
-	for easy: bool in [true, false]:
-		var session := _session(easy)
-		# Balıkçı iskelenin ucunda (0, 4); +x yönünde kıyı ~7 m'de.
-		_to_biting(session, Vector2(5.0, 4.0))
-		session.press()
+	var session := _session()
+	# Balıkçı iskelenin ucunda (0, 4); +x yönünde kıyı ~7 m'de.
+	_to_biting(session, Vector2(5.0, 4.0))
+	session.press()
+	session.step()
+	assert_eq(session.state, FishingSession.State.FIGHTING, "çekişme başlar")
+	session.release()
+	var bobber_distance := session.reel.distance
+	assert_true(session.reel.max_distance >= bobber_distance + session.rules.escape_extra - 0.01,
+			"kaçış payı şamandıranın en az escape_extra ötesi")
+	var on_land := false
+	for i in 40 * HZ:
+		if session.state != FishingSession.State.FIGHTING:
+			break
 		session.step()
-		assert_eq(session.state, FishingSession.State.FIGHTING, "çekişme başlar")
-		session.release()
-		var bobber_distance := session.reel.distance
-		assert_true(session.reel.max_distance >= bobber_distance + session.rules.escape_extra - 0.01,
-				"kaçış payı şamandıranın en az escape_extra ötesi")
-		var on_land := false
-		for i in 40 * HZ:
-			if session.state != FishingSession.State.FIGHTING:
-				break
-			session.step()
-			if session.state == FishingSession.State.FIGHTING and not session.lake.is_water(session.fight_point()):
-				on_land = true
-				break
-		assert_true(not on_land, "%s: balık karaya çıkmaz" % ("Kolay" if easy else "Normal"))
-		if easy:
-			assert_eq(session.state, FishingSession.State.FIGHTING, "Kolay: bırakan oyuncunun balığı kaçmaz")
-		else:
-			assert_eq(session.last_loss, "escaped", "Normal: bırakan oyuncunun balığı sonunda kaçar")
+		if session.state == FishingSession.State.FIGHTING and not session.lake.is_water(session.fight_point()):
+			on_land = true
+			break
+	assert_true(not on_land, "balık karaya çıkmaz")
+	assert_eq(session.last_loss, "escaped", "bırakan oyuncunun balığı sonunda kaçar")
 
 
 ## Sazlıkta balıkçı kumda durur (önünde ~1 m kum): çekişmenin her adımında balık suda, kıyıdan en
@@ -544,53 +525,51 @@ func test_fight_stops_at_the_water_edge_in_the_reeds() -> void:
 	var lake := db.lake(spot)
 	var stand: Vector2 = (db.zone(spot, "reeds")["stands"] as Array)[0]
 	assert_true(not lake.is_water(stand), "sazlıkta balıkçı kumda durur")
-	for easy: bool in [true, false]:
-		var session := FishingSession.new(db, spot, GearStats.starter(db), 21, easy, false, -1,
-				PackedStringArray(["reeds"]))
-		session.relocate(stand)
-		session.poll_events()
-		var target := stand + Vector2(0.0, -4.5)
-		var s := session.sim.shadows[0]
-		for o in session.sim.shadows:
-			if o != s:
-				o.mode = FishShadow.Mode.PAUSE
-				o.timer = 1_000_000
-				o.pos = target + Vector2(-5.0, -2.5)
-		s.pos = target + Vector2(0.0, -2.0)
-		s.heading = Vector2(0, 1)
-		s.mode = FishShadow.Mode.PAUSE
-		s.timer = 1_000_000
-		assert_true(session.cast(target), "atılır")
-		assert_true(_run_until(session, FishingSession.State.BITING, 40.0), "balık ısırır")
-		s.fish_id = "rudd"
-		s.fish_index = db.fish_index("rudd")
-		session.press()
+	var session := FishingSession.new(db, spot, GearStats.starter(db), 21, false, -1,
+			PackedStringArray(["reeds"]))
+	session.relocate(stand)
+	session.poll_events()
+	var target := stand + Vector2(0.0, -4.5)
+	var s := session.sim.shadows[0]
+	for o in session.sim.shadows:
+		if o != s:
+			o.mode = FishShadow.Mode.PAUSE
+			o.timer = 1_000_000
+			o.pos = target + Vector2(-5.0, -2.5)
+	s.pos = target + Vector2(0.0, -2.0)
+	s.heading = Vector2(0, 1)
+	s.mode = FishShadow.Mode.PAUSE
+	s.timer = 1_000_000
+	assert_true(session.cast(target), "atılır")
+	assert_true(_run_until(session, FishingSession.State.BITING, 40.0), "balık ısırır")
+	s.fish_id = "rudd"
+	s.fish_index = db.fish_index("rudd")
+	session.press()
+	session.step()
+	assert_eq(session.state, FishingSession.State.FIGHTING, "takılır")
+	assert_true(session.fight_near > 0.5, "su balıkçının önünde başlar (%.1f m)" % session.fight_near)
+	var nearest := INF
+	var problem := ""
+	for i in 90 * HZ:
+		if session.state != FishingSession.State.FIGHTING:
+			break
+		# İyi oyuncu gibi: uyarıda bırakır, patlama bitince yeniden basar.
+		if session.reel.thrashing() or session.reel.in_red:
+			session.release()
+		else:
+			session.press()
 		session.step()
-		assert_eq(session.state, FishingSession.State.FIGHTING, "takılır")
-		assert_true(session.fight_near > 0.5, "su balıkçının önünde başlar (%.1f m)" % session.fight_near)
-		var nearest := INF
-		var problem := ""
-		for i in 90 * HZ:
-			if session.state != FishingSession.State.FIGHTING:
-				break
-			# İyi oyuncu gibi: uyarıda bırakır, patlama bitince yeniden basar.
-			if session.reel.thrashing() or session.reel.in_red:
-				session.release()
-			else:
-				session.press()
-			session.step()
-			if session.state != FishingSession.State.FIGHTING:
-				break
-			var p := session.fight_point()
-			nearest = minf(nearest, p.distance_to(stand))
-			if not lake.is_water(p) or lake.on_dock(p) or lake.shore_distance(p) < FishingSession.FIGHT_SHORE - 0.001:
-				problem = "balık suyun kenarının berisinde: %s (kıyı %.2f m)" % [p, lake.shore_distance(p)]
-				break
-		var mode := "Kolay" if easy else "Normal"
-		assert_eq(problem, "", mode)
-		assert_eq(session.state, FishingSession.State.CAUGHT, "%s: balık tutulur (%s)" % [mode, session.state_name()])
-		assert_between(nearest, session.fight_near - 0.01, session.fight_near + 0.2,
-				"%s: son metrelerde balık suyun kenarında durur (%.2f m)" % [mode, nearest])
+		if session.state != FishingSession.State.FIGHTING:
+			break
+		var p := session.fight_point()
+		nearest = minf(nearest, p.distance_to(stand))
+		if not lake.is_water(p) or lake.on_dock(p) or lake.shore_distance(p) < FishingSession.FIGHT_SHORE - 0.001:
+			problem = "balık suyun kenarının berisinde: %s (kıyı %.2f m)" % [p, lake.shore_distance(p)]
+			break
+	assert_eq(problem, "", "balık suda")
+	assert_eq(session.state, FishingSession.State.CAUGHT, "balık tutulur (%s)" % session.state_name())
+	assert_between(nearest, session.fight_near - 0.01, session.fight_near + 0.2,
+			"son metrelerde balık suyun kenarında durur (%.2f m)" % nearest)
 
 
 ## Aynı girdiler 30, 60 ve 120 fps'te birebir aynı olayları üretir. Bot yalnızca çift adımlarda
@@ -605,7 +584,7 @@ func test_same_result_at_any_fps() -> void:
 
 
 func _scripted_run(fps: int) -> PackedStringArray:
-	var session := _session(false, false, 4321)
+	var session := _session(false, 4321)
 	var log := PackedStringArray()
 	var targets := [Vector2(0, 0), Vector2(-3, -2), Vector2(3, -1), Vector2(-8, -3), Vector2(1, -4)]
 	var next_target := 0
@@ -644,9 +623,9 @@ func _scripted_run(fps: int) -> PackedStringArray:
 
 
 func test_seed_decides_the_shadows() -> void:
-	var a := _session(false, false, 1)
-	var b := _session(false, false, 1)
-	var c := _session(false, false, 2)
+	var a := _session(false, 1)
+	var b := _session(false, 1)
+	var c := _session(false, 2)
 	var same := true
 	var differ := false
 	for i in a.sim.shadows.size():

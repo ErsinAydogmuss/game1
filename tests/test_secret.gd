@@ -275,7 +275,7 @@ func test_keeper_rises_in_deep_water_near_the_boat() -> void:
 	var boat := x + LakeScene.BUOY_MOOR
 	var depth := float(db.zone(SPOT, "deep_water")["min_depth"])
 	var technique := BottomTechnique.new(db.rules)
-	var session := FishingSession.new(db, SPOT, GearStats.best(db, "bottom"), 3, false, false, -1,
+	var session := FishingSession.new(db, SPOT, GearStats.best(db, "bottom"), 3, false, -1,
 			PackedStringArray(["deep_water"]))
 	session.relocate(boat)
 	var cast := 0

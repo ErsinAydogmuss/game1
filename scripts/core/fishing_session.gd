@@ -33,7 +33,7 @@ extends RefCounted
 ## Gölün koşulları (Dalga 4: vakit, hava, göl sevgisi; WorldState.conditions) set_conditions ile
 ## verilir: oranlar ve yağmurda takım profili ona göre. Verilmezse koşulsuz (testler, altın test).
 ## Hikâyenin balığı (Gölün Bekçisi) summon ile çağrılır (ShadowSim.summon): takımı yalnızca o fark eder,
-## erken dokunuşu ve kaçan vuruşu bağışlar (ilk av gibi), ama dürter ve Kolay'da değilse gerçekten çekişir
+## erken dokunuşu ve kaçan vuruşu bağışlar (ilk av gibi), ama dürter ve gerçekten çekişir
 ## (dalışlarıyla: ReelModel). Yakalanınca catch olayında "story": true; çöp çıkmaz.
 
 ## Durumlar sona eklenir (kayıt ve testler sıra numarasını tutar). FOLLOWING: spinde balık yemin
@@ -53,7 +53,6 @@ var angler := Vector2.ZERO
 ## Takımın (şamandıra, yem, kurşun, sinek) suyundaki yeri.
 var bobber := Vector2.ZERO
 var cast_from := Vector2.ZERO
-var easy: bool = false
 ## Parmak (ya da eylem tuşu) basılı mı?
 var holding: bool = false
 var sim: ShadowSim
@@ -110,9 +109,8 @@ var _events: Array[Dictionary] = []
 ## (Dice.derive(kayıt seed'i, oturum sayısı)). first_catch: ilk av senaryolu olsun (oyuncu
 ## henüz balık tutmadı). pity_floor: şans garantisi (CatchOdds.pity_floor; -1 = yok). conditions:
 ## gölün koşulları (ilk gölgeler de onlarla doğar; boşsa koşulsuz).
-func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, easy_mode: bool,
-		first_catch: bool, pity_floor: int = -1, access: PackedStringArray = PackedStringArray(),
-		conditions: Dictionary = {}) -> void:
+func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, first_catch: bool,
+		pity_floor: int = -1, access: PackedStringArray = PackedStringArray(), conditions: Dictionary = {}) -> void:
 	_db = db
 	rules = db.rules
 	gear = gear_stats if gear_stats != null else GearStats.starter(db)
@@ -120,7 +118,6 @@ func _init(db: ContentDB, spot_id: String, gear_stats: GearStats, seed: int, eas
 	spot_def = spot
 	lake = db.lake(spot_id)
 	angler = spot.get("start", Vector2.ZERO)
-	easy = easy_mode
 	_cond = conditions.duplicate()
 	technique = Techniques.make(gear.technique, rules)
 	var odds := _odds(pity_floor)
@@ -417,7 +414,7 @@ func open_window(type: String, extra: Dictionary = {}) -> void:
 ## Dürtmede (ısırmadan önce) dokunuş: balık irkilir ya da kaçar (ilk av ve hikâye balığı hep irkilir).
 func early() -> void:
 	var s := sim.approacher
-	if BiteRules.early_outcome(easy, s.scripted or s.summoned, s.startles) == "startle":
+	if BiteRules.early_outcome(s.scripted or s.summoned) == "startle":
 		s.startles += 1
 		# İlk av sözünü tutar: sık sık dokunan çocuk da ısırmayı görsün (sayaç baştan başlamaz).
 		if not s.scripted:
@@ -462,7 +459,7 @@ func hook_fish() -> void:
 	fight_near = _water_start(dist)
 	# Senaryolu ilk balık hiçbir zaman fazla iri sayılmaz (boyu çekişmeye girmez).
 	reel = ReelModel.new(rules, fight, gear.reel_speed, dist,
-			clampf(fight_reach, minf(dist + extra, cap), cap), easy or s.scripted, Dice.derive(s.seed, 1), gear,
+			clampf(fight_reach, minf(dist + extra, cap), cap), s.scripted, Dice.derive(s.seed, 1), gear,
 			0 if s.scripted else s.percentile)
 	reel.holding = holding
 	too_big = s.stars if reel.excess > 0 else 0

@@ -39,13 +39,14 @@ static func roll_gap(rng: RandomNumberGenerator, rules: FishingRules) -> int:
 
 
 ## Vuruş penceresi (adım). Isırmadan bu kadar adım sonra dokunuş artık geç kalmıştır.
-static func window_steps(rules: FishingRules, easy: bool) -> int:
-	return rules.window_easy_steps if easy else rules.window_steps
+## Senaryolu ilk avda uzun (ilk balık kaçmasın).
+static func window_steps(rules: FishingRules, first: bool) -> int:
+	return rules.window_first_steps if first else rules.window_steps
 
 
 ## Dürtme sırasında erken dokunuş: "startle" (balık yalnızca irkilir, sıra sürer) ya da
-## "flee" (balık kaçar). Kolay modda ilk erken dokunuş irkiltir; ilk av hep irkilir.
-static func early_outcome(easy: bool, scripted: bool, startles_used: int) -> String:
-	if scripted or (easy and startles_used == 0):
+## "flee" (balık kaçar). İlk av ve hikâye balığı (forgiving) hep irkilir.
+static func early_outcome(forgiving: bool) -> String:
+	if forgiving:
 		return "startle"
 	return "flee"

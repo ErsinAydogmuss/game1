@@ -73,4 +73,4 @@ func roll_gap(rng: RandomNumberGenerator) -> int:
 
 ## Şamandıra hassasiyeti (gear.window_add_steps) pencereyi uzatır.
 func window(s: FishingSession, fish: FishShadow) -> int:
-	return BiteRules.window_steps(rules, s.easy or fish.scripted) + s.gear.window_add_steps
+	return BiteRules.window_steps(rules, fish.scripted) + s.gear.window_add_steps

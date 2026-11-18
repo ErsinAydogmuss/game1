@@ -204,7 +204,7 @@ func _gear(db: ContentDB) -> GearStats:
 
 
 func _play(db: ContentDB, gear: GearStats, seed_value: int) -> void:
-	var session := FishingSession.new(db, db.main_spot, gear, seed_value, false, false, -1, PackedStringArray(),
+	var session := FishingSession.new(db, db.main_spot, gear, seed_value, false, -1, PackedStringArray(),
 			_conditions)
 	if not _zone.is_empty():
 		var z := db.zone(db.main_spot, _zone)

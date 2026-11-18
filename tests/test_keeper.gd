@@ -27,8 +27,8 @@ func _boat() -> Vector2:
 
 
 ## Sandalda, X'te, dip takımıyla, sisli gecede bir oturum.
-func _x_session(seed_value: int = 5, easy: bool = false) -> FishingSession:
-	var session := FishingSession.new(content(), SPOT, _bottom_gear(), seed_value, easy, false, -1,
+func _x_session(seed_value: int = 5) -> FishingSession:
+	var session := FishingSession.new(content(), SPOT, _bottom_gear(), seed_value, false, -1,
 			PackedStringArray(["deep_water"]), NIGHT_FOG)
 	session.relocate(_boat())
 	session.poll_events()
@@ -184,7 +184,7 @@ func test_keeper_is_not_scared_and_takes_over() -> void:
 		assert_true(int(e["shadow"]) != keeper.id, "Bekçi kurşundan korkmaz")
 	assert_true(keeper.mode != FishShadow.Mode.FLEE, "kaçmaz")
 	# Öteki balık yaklaşırken Bekçi yeniden çağrılır: yol onun.
-	var other := FishingSession.new(content(), SPOT, _bottom_gear(), 13, false, false, -1,
+	var other := FishingSession.new(content(), SPOT, _bottom_gear(), 13, false, -1,
 			PackedStringArray(["deep_water"]), NIGHT_FOG)
 	other.relocate(boat)
 	other.poll_events()
@@ -211,7 +211,7 @@ func test_keeper_is_not_scared_and_takes_over() -> void:
 
 
 ## Koklarken dokunmak Bekçi'yi kaçırmaz (irkilir); kaçan koşudan sonra yeniden koklar; vurunca gerçek çekişme
-## (dalışlı, Kolay değil).
+## (dalışlı, yumuşak değil).
 func test_keeper_forgives_early_touches_and_a_missed_run() -> void:
 	var session := _x_session(17)
 	var log: Array[Dictionary] = []
@@ -235,7 +235,7 @@ func test_keeper_forgives_early_touches_and_a_missed_run() -> void:
 	assert_eq(session.state, FishingSession.State.FIGHTING, "vurunca çekişme")
 	if session.reel != null:
 		assert_true(session.reel.has_dives(), "Bekçi dalar")
-		assert_true(not session.reel.easy, "Normal'de gerçek çekişme")
+		assert_true(not session.reel.gentle, "gerçek çekişme (ilk avınki gibi yumuşak değil)")
 	assert_eq(session.too_big, 0, "Bekçi fazla iri sayılmaz")
 
 

@@ -5015,7 +5015,6 @@ func _reels_setup() -> void:
 	var spot := str(main.get("spot_id"))
 	save.coins = 2450
 	save.xp = db.rank_xp[8] + 100
-	save.settings["easy"] = false
 	save.settings["perf"] = false
 	# Reklamların durumu (bildirim görüldü mü, sayaçlar, oyun süresi) makinenin eski koşularından gelmesin.
 	save.settings.erase("ads")
@@ -8036,14 +8035,13 @@ func _perf_soak() -> void:
 	print("PERF soak: %s" % _perf_stats(_perf_frames))
 
 
-## Çekişmede ekran kartında kurulan nesnelerin kaynağı (tools/gl_windows.py ile): uzun bir çekişmede (Kolay çekme,
-## iri yayın) her ölçüm aralığında bir parça gizlenir: arayüz, gerilim çubuğu, misina, balıkçı, gölgeler.
+## Çekişmede ekran kartında kurulan nesnelerin kaynağı (tools/gl_windows.py ile): uzun bir çekişmede (iri yayın,
+## bot çekişmeyi yumuşatır: ReelModel.gentle) her ölçüm aralığında bir parça gizlenir: arayüz, gerilim çubuğu,
+## misina, balıkçı, gölgeler.
 func _perf_fight() -> void:
-	GameState.save.settings["easy"] = true
-	GameState.changed.emit()
-	await _wait(0.5)
 	_perf_on = true
-	# Balık takılır, sonra çekilmez (parmak yok): Kolay'da misina kopmaz, çekişme uzun sürer.
+	# Balık takılır, sonra çekilmez (parmak yok): bot çekişmeyi yumuşatır (senaryolu ilk avınki gibi: misina
+	# kopmaz, balık kaçmaz), çekişme uzun sürer.
 	await _wait_state(FishingSession.State.IDLE, 4.0)
 	var a := _angler().pos2()
 	var f := _angler().facing.normalized()
@@ -8052,6 +8050,9 @@ func _perf_fight() -> void:
 	await _wait_state(FishingSession.State.BITING, 25.0)
 	await _tap(_hud().action_button.get_global_rect().get_center())
 	await _wait_until(func() -> bool: return _state() == FishingSession.State.FIGHTING, 10.0)
+	var session: FishingSession = main.get("session")
+	if session.reel != null:
+		session.reel.gentle = true
 	await _wait(2.0)
 	var hud := _hud()
 	var parts := {
@@ -8125,9 +8126,8 @@ func _use_save(catches: int) -> void:
 	save.session = 1
 	save.catches = catches
 	save.settings = GameState.save.settings.duplicate()
-	# Makinenin ayarları botu şaşırtmasın: Kolay çekme ve ölçüm kapalı (isteyen senaryo kendisi açar; Kolay'da misina
-	# kopmaz, ölçüm açıkken gezinin beş dokunuşu ölçümü kapatırdı).
-	save.settings["easy"] = false
+	# Makinenin ayarları botu şaşırtmasın: ölçüm kapalı (isteyen senaryo kendisi açar; ölçüm açıkken gezinin beş
+	# dokunuşu ölçümü kapatırdı).
 	save.settings["perf"] = false
 	if not _locale.is_empty():
 		save.settings["locale"] = _locale

@@ -147,7 +147,7 @@ func test_zone_beyond_the_grid() -> void:
 	var behind := Vector2(0.0, 11.5)
 	assert_eq(db.lake(SPOT).zone_at(behind), -1, "ızgaranın dışı")
 	assert_eq(str(Zones.at(db, SPOT, behind).get("id", "")), "dock_cove", "en yakın hücrenin bölgesi")
-	var session := FishingSession.new(db, SPOT, GearStats.starter(db), 3, false, false, -1, PackedStringArray(OPEN_START))
+	var session := FishingSession.new(db, SPOT, GearStats.starter(db), 3, false, -1, PackedStringArray(OPEN_START))
 	session.relocate(behind)
 	assert_eq(session.zone_id(), "dock_cove", "dükkânın arkasında da iskele koyunda avlanılır")
 	assert_eq(Zones.lock_reason(db, SaveData.new(), {}), {}, "bölge yoksa neden de yok")
@@ -219,7 +219,7 @@ func _run_path(seed_value: int) -> PackedStringArray:
 ## Oturum: balıkçının bölgesi, erişim ve yakalanan balığın bölgesi.
 func test_session_tracks_the_zone() -> void:
 	var db := content()
-	var session := FishingSession.new(db, SPOT, GearStats.starter(db), 3, false, false, -1, PackedStringArray(OPEN_START))
+	var session := FishingSession.new(db, SPOT, GearStats.starter(db), 3, false, -1, PackedStringArray(OPEN_START))
 	assert_eq(session.zone_id(), "dock_cove", "iskelede başlar")
 	session.relocate(REEDS)
 	assert_eq(session.zone_id(), "reeds", "sazlığa geçti")

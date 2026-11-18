@@ -18,8 +18,8 @@ func _spin_gear() -> GearStats:
 	return GearStats.from_items(content(), items, none)
 
 
-func _session(easy: bool = false, seed: int = 99) -> FishingSession:
-	return FishingSession.new(content(), "home_lake", _spin_gear(), seed, easy, false)
+func _session(seed: int = 99) -> FishingSession:
+	return FishingSession.new(content(), "home_lake", _spin_gear(), seed, false)
 
 
 func _spin(session: FishingSession) -> SpinTechnique:
@@ -90,7 +90,7 @@ func test_spin_session_and_only_predators() -> void:
 	assert_true(session.technique is SpinTechnique, "spin kamışıyla teknik spin")
 	assert_eq(session.action_kind(), "cast", "boşta atış")
 	for seed_value: int in [1, 7, 99, 1234]:
-		var s := FishingSession.new(content(), "big_lake", _spin_gear(), seed_value, false, false)
+		var s := FishingSession.new(content(), "big_lake", _spin_gear(), seed_value, false)
 		for fish in s.sim.shadows:
 			assert_true(fish.fish_id in PREDATORS, "spinle yalnızca yırtıcı doğar: " + fish.fish_id)
 
@@ -140,7 +140,7 @@ func test_resting_lure_is_not_noticed() -> void:
 
 func test_stop_go_rhythm_strikes() -> void:
 	for seed_value: int in [99, 5, 77, 2024]:
-		var session := _session(false, seed_value)
+		var session := _session(seed_value)
 		_to_following(session)
 		var spin := _spin(session)
 		# Kesintisiz çekişin zarı olmasın: yalnızca ritim değişimleri sayılsın.
@@ -203,7 +203,7 @@ func test_only_real_stops_and_goes_count() -> void:
 	assert_eq(session.state, FishingSession.State.FOLLOWING, "saldırı yok")
 	session.release()
 	assert_eq(session.state, FishingSession.State.BITING, "gerçek duruş saldırı getirir (zar kesin)")
-	var again := _session(false, 5)
+	var again := _session(5)
 	_to_following(again)
 	var spin2 := _spin(again)
 	spin2.stop_ppm = Dice.PPM
@@ -220,7 +220,7 @@ func test_only_real_stops_and_goes_count() -> void:
 
 ## İlk av senaryolu: spinde VUR anı kaçsa da balık gitmez, biraz sonra yine izler (oturum kilitlenmez).
 func test_missed_first_fish_follows_again() -> void:
-	var session := FishingSession.new(content(), "home_lake", _spin_gear(), 77, false, true)
+	var session := FishingSession.new(content(), "home_lake", _spin_gear(), 77, true)
 	var scripted: FishShadow = null
 	for fish in session.sim.shadows:
 		if fish.scripted:
@@ -270,18 +270,6 @@ func test_strike_while_holding_hooks_by_itself() -> void:
 	assert_true(session.reel.holding, "parmak basılı: sarar")
 
 
-func test_easy_mode_window_is_longer() -> void:
-	var session := _session(true)
-	_to_following(session)
-	var spin := _spin(session)
-	spin.stop_ppm = Dice.PPM
-	spin.steady_ppm = 0
-	_steps(session, int(0.7 * HZ))
-	session.release()
-	assert_eq(session.state, FishingSession.State.BITING, "VUR anı")
-	assert_eq(session.window, spin.rig.window_easy_steps, "Kolay modda pencere 1 sn")
-
-
 func test_resting_too_long_loses_the_fish() -> void:
 	var session := _session()
 	var fish := _to_following(session)
@@ -299,7 +287,7 @@ func test_resting_too_long_loses_the_fish() -> void:
 
 func test_lure_snags_in_the_weeds() -> void:
 	var db := content()
-	var session := FishingSession.new(db, "big_lake", _spin_gear(), 31, false, false)
+	var session := FishingSession.new(db, "big_lake", _spin_gear(), 31, false)
 	var stand: Vector2 = (db.zone("big_lake", "reeds")["stands"] as Array)[0]
 	session.relocate(stand)
 	session.poll_events()
@@ -324,7 +312,7 @@ func test_lure_snags_in_the_weeds() -> void:
 
 func test_switching_to_spin_respawns_predators() -> void:
 	var db := content()
-	var session := FishingSession.new(db, "big_lake", GearStats.starter(db), 1, false, false)
+	var session := FishingSession.new(db, "big_lake", GearStats.starter(db), 1, false)
 	session.set_gear(_spin_gear())
 	assert_true(session.technique is SpinTechnique, "boştayken teknik değişir")
 	for fish in session.sim.shadows:
@@ -336,7 +324,7 @@ func test_switching_to_spin_respawns_predators() -> void:
 func test_same_result_at_any_fps() -> void:
 	var logs: Array[PackedStringArray] = []
 	for fps: int in [30, 60, 120]:
-		var session := _session(false, 4321)
+		var session := _session(4321)
 		var log := PackedStringArray()
 		var targets := [Vector2(0, -4), Vector2(-3, -3), Vector2(3, -2), Vector2(1, -5)]
 		var next_target := 0
@@ -377,7 +365,7 @@ func test_same_result_at_any_fps() -> void:
 func test_random_input_never_gets_stuck() -> void:
 	var lake := content().lake("home_lake")
 	for run in 6:
-		var session := _session(run % 2 == 1, 2000 + run)
+		var session := _session(2000 + run)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 777 + run
 		var since_change := 0

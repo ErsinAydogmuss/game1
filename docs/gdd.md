@@ -47,9 +47,9 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 - ✅ **Sandal:** sandalı aldıysan iskeledeki sandala (ya da haritada Derin Orta'ya) dokun → ilk şamandıranın yanında sandaldasın; haritada Derin Orta'ya yeniden dokununca sıradaki şamandıraya geçilir. Sandalda suya dokunmak atıştır; sol alttaki "Kıyıya dön" iskeleye getirir.
 
 - ✅ **Teknik düğmesi** (sol alt; spin rütbe 2'de açılınca görünür, sandalda "Kıyıya dön"ün üstünde, olta sudayken gizli): elindeki tekniğin ikonu; dokununca Takım Çantası açılır (§10.3).
-- ✅ **Spin:** atınca yapay yem düşer. Basılı tut = yem sana gelir (makara tıkırdar, arkasında iz), bırak = durur ve batar. Yırtıcı peşine düşünce dur-kalk yap. Saldırı anında basılıysa balık kendiliğinden takılır, değilse VUR! (0,6 sn; Kolay modda 1 sn). Eylem düğmesi beklerken SAR yazar.
-- ✅ **Dip:** dokunduğun yöne uzağa at, olta sehpaya konur. Zil tek tük çalarsa balık kokluyor: dokunma (kaçar; düğme BEKLE). Zil durmadan çalıp misina akınca ekranın her yerine dokun: VUR! (2,5 sn; Kolay modda 3,5 sn). Beklerken dokunmak oltayı geri sarar (düğme GERİ SAR).
-- ✅ **Sinek** (yalnızca dere ağzında): akıntıya at, sinek akıntıyla sürüklenir (düğme GERİ SAR). Alabalık sineğin altına gelince bekle (dokunursan kaçar; düğme BEKLE). Halka çıkınca hemen dokun: VUR! (0,5 sn; Kolay modda 0,9 sn). Durgun suya düşen sinek kımıldamaz, kendiliğinden döner.
+- ✅ **Spin:** atınca yapay yem düşer. Basılı tut = yem sana gelir (makara tıkırdar, arkasında iz), bırak = durur ve batar. Yırtıcı peşine düşünce dur-kalk yap. Saldırı anında basılıysa balık kendiliğinden takılır, değilse VUR! (0,6 sn). Eylem düğmesi beklerken SAR yazar.
+- ✅ **Dip:** dokunduğun yöne uzağa at, olta sehpaya konur. Zil tek tük çalarsa balık kokluyor: dokunma (kaçar; düğme BEKLE). Zil durmadan çalıp misina akınca ekranın her yerine dokun: VUR! (2,5 sn). Beklerken dokunmak oltayı geri sarar (düğme GERİ SAR).
+- ✅ **Sinek** (yalnızca dere ağzında): akıntıya at, sinek akıntıyla sürüklenir (düğme GERİ SAR). Alabalık sineğin altına gelince bekle (dokunursan kaçar; düğme BEKLE). Halka çıkınca hemen dokun: VUR! (0,5 sn). Durgun suya düşen sinek kımıldamaz, kendiliğinden döner.
 - ✅ **Kerevit tuzağı** (sazlıkta ve kayalık burunda): Takım Çantası'nın altındaki satırda TUZAK BIRAK → tuzak yakındaki sığ suya atılır. Turuncu şamandırasına dokun → içindekiler toplanır (uzaktaysan balıkçı önce yürür); boşsa küçük bir panel: BEKLE ya da KALDIR.
 
 **Mac:** tıkla (yürü, at), WASD (yürü), Space (VUR; basılı tutunca sar).
@@ -86,8 +86,8 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
 - Yaklaşan balık 0/1/2/3 kez dürter (olasılıklar %15/30/35/20). Dürtmeler arası 0,8–1,4 sn.
 - Sonra ısırır: şamandıra suya dalar, ses ve titreşim gelir.
-- **Vuruş penceresi:** 1,0 sn (Kolay modda 1,6 sn).
-- **Erken dokunuş:** balık kaçar ("Erken davrandın!"). Kolay modda ilk erken dokunuşta yalnızca irkilir.
+- **Vuruş penceresi:** 1,0 sn (senaryolu ilk avda 1,6 sn).
+- **Erken dokunuş:** balık kaçar ("Erken davrandın!"). İlk av ve Gölün Bekçisi yalnızca irkilir.
 - **Pencere kaçarsa:** balık gider ("Kaçtı!"). Eksilen gölgenin yerine 8 sn içinde yenisi gelir.
 
 **Çekişme**
@@ -103,9 +103,10 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - **Kopma:** gerilim sınırın üstünde toplam 0,55 sn kalırsa misina kopar ("Misina koptu!"; misinaya göre 0,55–0,7 sn, önce 0,8–0,95: testçi "elimi çeksem de çekmesem de balık geliyor" dedi). Sayaç sınırın altında yavaşça geri iner.
 - **Kaçma:** balık menzil + 2 m'den uzağa kaçarsa gider. Kıyıya doğru kaçarsa kıyıda gider (karaya çıkmaz); ama kaçış payı hep şamandıranın en az 2 m ötesidir, kıyıya yakın atışta da bırakan oyuncu hemen kaybetmez (balık kıyıda çırpınır).
 - **Yakalama:** balık 0,6 m'ye gelince tutulur.
-- **Kolay çekme (Ayarlar):** gerilim tavanlıdır, misina kopmak yerine kayar, balık kaçmaz; beceri yalnızca hızı belirler.
+- **Tek mod** (18 Kasım 2026, Ersin: "kolay modu kaldır, tek mod olacak"): Ayarlar'daki Kolay çekme kalktı. Yalnızca
+  senaryolu ilk av (öğretici) yumuşak çekişir: gerilim tavanlı, misina kopmak yerine kayar (patlamada basılı tutunca
+  balık kaçış hızının 2 katıyla uzaklaşır), balık kaçmaz (`ReelModel.gentle`).
 - **Süre:** iyi bir oyuncuyla çekişme Kızılkanat'ta 4–7 sn, Yayın'da 14–20 sn sürer.
-- **Kolay modda** patlamada basılı tutunca misina kayar: balık, kaçış hızının 2 katıyla uzaklaşır. Hep basılı tutan yine tutar; bırakmayı bilen daha hızlı tutar.
 - **İri balık takım ister** (v0.3.1; Ersin: "iskelede takım almadan bütün balıkları tutabiliyorum"):
   - **İri türler:** sazan, turna, yayın, kadife, sudak, altın sazan, mersin, aynalı sazan, dere alabalığı (`fish.json` `fight.heavy`). Ötekiler (kızılkanat, gümüş balığı, levrek, çapak, tatlısu kefali, alabalık, kerevit) her boyda bambu oltayla tutulur.
   - **Boy çekişi artırır:** iri türde sakin çekiş en irisinde 0,08 artar (`size_pull`). Yine sınırın altında kalır.
@@ -127,12 +128,11 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
     - Öğüt 6 sn kalır; hemen yeniden atınca silinmez. Takım adları dil değişince de doğru dilde.
   - **İlk 3 balıkta** (Dede'nin ipuçları) fazla iri balığın çekişmesinde "Basılı tut, sar" yerine "Çok iri! Bu takım onu taşımaz." yazar.
   - **Dükkân:** kamış ve misina kartında "İri balık" satırı, 5 yıldızdan taşıdığı kadarı dolu.
-  - **Kolay modda** kopma ve kaçma yine yok; fazla iri balık yalnızca yavaş gelir (sarma ×0,9; çekişi ve bırakınca uzaklaşması artmaz). Kolay çekme çekişme sürerken ayarlardan açılırsa balık o andan Kolay kurallarıyla gelir.
   - **Senaryolu ilk balık** hiç fazla iri sayılmaz.
   - **Kaç balık:** boyların %20'si 4★ ve üstü, %6'sı 5★. İskele koyunda ısırmaların ~%6'sı bambu oltayla fazla iri (sazan, turna, yayın). Cam elyafı kamış ve naylon misinadan sonra ~%2'si (yalnızca 5★).
 - **Denge raporu** (`tools/reel_report.gd`; 4–9 m'den 200 deneme, ortalama süre; boy 1–3★ aralığında, takımın taşıdığı balık):
 
-| Balık | Çekiş | İyi oyuncu (0,4 sn tepki) | Yavaş oyuncu (0,7 sn) | Hep basılı (Normal) |
+| Balık | Çekiş | İyi oyuncu (0,4 sn tepki) | Yavaş oyuncu (0,7 sn) | Hep basılı |
 |---|---|---|---|---|
 | Kızılkanat | sakin | 5,8 sn | 6,0 sn | %34 tutar |
 | Sazan | ağır | 10,7 sn | 11,4 sn | koparır |
@@ -152,7 +152,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 
   İyi ve yavaş oyuncu her balığı tutar (her patlamadan 0,5 sn önce uyarı gelir; süreler değişmedi). Hep basılı tutan
   artık küçük balıkları da çoğunlukla koparır (önce kızılkanat %100, levrek %55, çapak %72, tatlısu kefali %94);
-  yalnızca gümüş balığı ve kerevit affeder. Kolay modda hep basılı tutan da tutar.
+  yalnızca gümüş balığı ve kerevit affeder.
 - **Sinek takımıyla** (balık 3–5,5 m'de takılır; `test_reel_model` sinek korkuluğu): iyi oyuncu alabalığı ilk sinek kamışıyla ~6 sn'de, dere alabalığını ~8 sn'de tutar. Balık yakında takıldığı için hep basılı tutmak kolay olurdu; bu yüzden alabalıklar takılır takılmaz çırpınır (`fight.first_burst` 0,8–1,1 sn; sudakta 1,2–1,6, öteki balıklarda 1,6–2,4). Hep basılı tutan en iyi sinek takımıyla alabalığı en çok ~%19 tutar, dere alabalığını tutamaz (ilk ayarda %62 ve %52'ydi).
 - **Tekniklere göre** (v0.4; `tools/reel_report.gd -- --technique=spin|bottom|fly`): öteki tekniklerde balık oyunda ölçülen uzaklıkta takılır (`sim.json` `start_m`; `session_timing.gd` ölçer): spinde 3,3–8 m, dipte 9,6–14 m (balık menzilin ötesinde takılmaz: ilk dip kamışı 14 m; sazlıkta ve derin ortada daha yakın), sinekte 3,2–5,6 m. Şamandıra sütunu yukarıdaki tablonun (raporun Dalga 1'den beri sabit 4–9 m'si; oyunda ölçülen 2,7–7,5 m). Tekniğin ilk kamışı, başlangıç makarası ve misinası; iyi oyuncu (0,4 sn tepki), 1–3★, ortalama süre:
 
@@ -180,7 +180,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - **Değerlendirme:** spin ve sinek şamandıra sütunundan biraz kısa; bunun bir kısmı uzaklık farkından (şamandıra sütunu 4–9 m'den, oyunda şamandırada balık 2,7–7,5 m'de takılır). Dipte balık uzakta takılır, çekişme şamandıradakinin ~1,3–1,5 katı: yayın 21 sn, mersin 22 sn (kapanışta takılma uzaklığı menzilde kesildi: 9,6–15,7 m → 9,6–14 m). 8. adımda dip kamışlarının gücü arttı (0,15 / 0,2 / 0,25 → 0,25 / 0,3 / 0,3; ilk ölçümde yayın 26, mersin 28 sn); derin ortada ve sazlıkta su yakın, balık daha yakında takılır (ortalama çekişme 10,6 ve 9,1 sn; §10.4).
 - **Takımla** (H2, `GearStats`): başlangıç takımı yukarıdaki bambu oltayla aynıdır. En iyi şamandıra takımıyla (`tools/reel_report.gd -- --gear=top`):
 
-| Balık | İyi oyuncu (0,4 sn): başlangıç → en iyi takım | Hep basılı, en iyi takım (Normal) |
+| Balık | İyi oyuncu (0,4 sn): başlangıç → en iyi takım | Hep basılı, en iyi takım |
 |---|---|---|
 | Kızılkanat | 5,8 → 3,9 sn | %95 tutar |
 | Sazan | 10,7 → 6,9 sn | %4 tutar |
@@ -201,40 +201,38 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   Korkuluklar (`test_reel_model`; her teknik kendi uzaklığında): en iyi takımla yavaş oyuncu her balığı tutar; hep basılı tutan Nadir balığı en çok yarı yarıya, Destansı ve üstünü en çok %30 tutar; kusursuz oyuncunun çekişmesi en çok %40 kısalır. Misinanın kopma süresi bu yüzden en çok 0,95 sn; testçinin geri bildiriminden sonra 0,55–0,7 sn (en iyi altın örgü 0,7): en iyi takımla hep basılı tutan Nadir ve üstünü en çok %4 tutar, kızılkanatı %95, levreği %67. Spinde balık yakında takılır: en iyi spin takımıyla hep basılı tutan sudağı %60 tutuyordu (kapanış incelemesi); sudak takılınca erken çırpınır (`first_burst` 1,2–1,6 sn): spinde %33, şamandırada %24 (önce %37).
 - **İri balık raporu** (`tools/reel_report.gd`, `-- --gear=mid` cam elyafı kamış + naylon misina, `-- --gear=top`; iyi oyuncu 0,4 sn tepki; pompa: gerilimi sınırın hemen altında tutan kusursuz bot):
 
-| İri tür | Bambu olta, 4–5★ (fazla iri): iyi oyuncu / pompa | Cam elyafı + naylon: 4★ / 5★ | En iyi takım, 5★ | Kolay, hep basılı: 3★ → 5★ (bambu) |
-|---|---|---|---|---|
-| Sazan | %0 / %0 | 9,8 sn / %0 | 6,9 sn | 9,8 → 11,7 sn |
-| Turna | %0 / %0 | 12,3 sn / %0 | 8,0 sn | 12,3 → 15,6 sn |
-| Yayın | %0 / %0 | 14,6 sn / %0 | 9,7 sn | 16,1 → 20,7 sn |
-| Kadife | %0 / %0 | 9,6 sn / %0 | 6,7 sn | 9,5 → 11,4 sn |
-| Sudak | %0 / %0 | 13,7 sn / %0 | 8,8 sn | 13,0 → 16,8 sn |
-| Altın sazan | %0 / %0 | 12,7 sn / %0 | 8,5 sn | 13,3 → 16,7 sn |
-| Mersin | %0 / %0 | 15,7 sn / %0 | 10,4 sn | 19,7 → 27,1 sn |
-| Aynalı sazan | %0 / %0 | 12,2 sn / %0 | 8,3 sn | 12,7 → 16,0 sn |
-| Dere alabalığı | %0 / %0 | 13,9 sn / %0 | 9,5 sn | 14,9 → 18,8 sn |
+| İri tür | Bambu olta, 4–5★ (fazla iri): iyi oyuncu / pompa | Cam elyafı + naylon: 4★ / 5★ | En iyi takım, 5★ |
+|---|---|---|---|
+| Sazan | %0 / %0 | 9,8 sn / %0 | 6,9 sn |
+| Turna | %0 / %0 | 12,3 sn / %0 | 8,0 sn |
+| Yayın | %0 / %0 | 14,6 sn / %0 | 9,7 sn |
+| Kadife | %0 / %0 | 9,6 sn / %0 | 6,7 sn |
+| Sudak | %0 / %0 | 13,7 sn / %0 | 8,8 sn |
+| Altın sazan | %0 / %0 | 12,7 sn / %0 | 8,5 sn |
+| Mersin | %0 / %0 | 15,7 sn / %0 | 10,4 sn |
+| Aynalı sazan | %0 / %0 | 12,2 sn / %0 | 8,3 sn |
+| Dere alabalığı | %0 / %0 | 13,9 sn / %0 | 9,5 sn |
 
-  Takımın taşıdığı balığı iyi oyuncu %100 tutar (süreler bu oranla). Kusursuz pompalayan fazla iri balığı bazen 2 dakika yerinde tutar ama getiremez (raporda "bitmedi"; cam elyafı + naylonla 5★ kadife %99, sazan %48); bırakınca kaçar. Kolay modda yavaş oyuncu (0,7 sn) için de fark en çok ~1,4 kat (sudak 21,7 → 30,5 sn). Korkuluklar (`test_reel_model`):
+  Takımın taşıdığı balığı iyi oyuncu %100 tutar (süreler bu oranla). Kusursuz pompalayan fazla iri balığı bazen 2 dakika yerinde tutar ama getiremez (raporda "bitmedi"; cam elyafı + naylonla 5★ kadife %99, sazan %48); bırakınca kaçar. Korkuluklar (`test_reel_model`):
   - bambu olta 3★ iri balığı rahat tutar;
   - fazla iriyi iyi oyuncu en çok %5, kusursuz pompalayan en çok %25 tutar (ölçüm: %0);
   - o yıldızı taşıyan takımla iyi oyuncu en az %90 tutar;
-  - Kolay modda fazla iri balık hep tutulur (hep basılı tutan da 0,7 sn tepkili oyuncu da), en çok 75 sn ve 3★'ın en çok 1,75 katı sürer; Kolay çekişme sırasında açılsa da.
 - **Gölün Bekçisi** (Dalga 4, final; `fight.stages`, §10.5): iri tür değil (takımın taşıması aranmaz), iki dalışı var.
   - Balık takıldığı uzaklığın %60'ına ve %30'una gelince, sakinse, 1,2 sn uyarır: turkuaz halka, gıcırtı, titreşim,
     ipucu "BIRAK! Bekçi dalıyor!".
   - Sonra 2–2,6 sn dalar: bırakınca 1,8 m/sn uzaklaşır (en çok kaçış sınırının 0,5 m içine, kaçmaz); basılı tutunca
-    gerilim sınırın üstüne çıkar, misina kopar. Kolay modda dalış 0,6 kat hızlı, kopma yok.
+    gerilim sınırın üstüne çıkar, misina kopar.
   - Dalışın zarı yalnızca dalışlı balıkta çekilir: öteki balıkların çekişmesi ve altın test aynı kalır.
   - Dipte menzilin son 2 metresinde takılır (ilk dip kamışıyla 12–14 m, ikinciyle 14–16, en iyisiyle 16–18; `tools/reel_report.gd -- --fish=keeper`, `--gear=mid`, `--gear=top`; her çekişmede iki dalış):
 
-| Dip takımı | Kusursuz | İyi oyuncu (0,4 sn) | Yavaş (0,7 sn) | Hep basılı | Kolay: iyi oyuncu / hep basılı |
-|---|---|---|---|---|---|
-| İlk dip kamışı | 35,2 sn | 47,2 sn | 50,6 sn | koparır | 40,4 / 32,5 sn |
-| İkinci dip kamışı + naylon | 36,4 sn | 48,9 sn | 52,0 sn | koparır | 42,2 / 33,9 sn |
-| En iyi dip takımı | 30,5 sn | 40,3 sn | 42,5 sn | koparır | 35,4 / 28,1 sn |
+| Dip takımı | Kusursuz | İyi oyuncu (0,4 sn) | Yavaş (0,7 sn) | Hep basılı |
+|---|---|---|---|---|
+| İlk dip kamışı | 35,2 sn | 47,2 sn | 50,6 sn | koparır |
+| İkinci dip kamışı + naylon | 36,4 sn | 48,9 sn | 52,0 sn | koparır |
+| En iyi dip takımı | 30,5 sn | 40,3 sn | 42,5 sn | koparır |
 
-  Hedef Normal'de ~35–55 sn, Kolay'da ~25–45 sn'ydi; ilk ayarla tuttu. Korkuluklar (`test_reel_model`): her dalıştan
-  önce uyarı gelir, dalış kaçış sınırını aşmaz; kusursuz usta ve tepkili oyuncu Normal'de ve Kolay'da tutar; dalışta
-  basılı tutan Normal'de koparır.
+  Hedef ~35–55 sn'ydi; ilk ayarla tuttu. Korkuluklar (`test_reel_model`): her dalıştan önce uyarı gelir, dalış kaçış
+  sınırını aşmaz; kusursuz usta ve tepkili oyuncu tutar; dalışta basılı tutan koparır.
 
 **Sonuç**
 
@@ -253,7 +251,7 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
 - Oyun doğrudan iskelede başlar; Dede iskelenin kenarında oturur ve ipucu çubuğundan konuşur.
 - İlk gölge iskelenin önüne gelir ve ilk av senaryoludur: hep Kızılkanat, dürtmesiz. İlk balık 45 sn içinde gelir.
   - İlk av göldeyken şamandıraya yalnızca o gelir. Nereye atılırsa atılsın fark eder ve korkmaz.
-  - Erken dokunuş onu kaçırmaz, yalnızca irkiltir. Pencere kaçarsa biraz sonra yeniden ısırır. Çekişmesi Kolay kurallarıyla.
+  - Erken dokunuş onu kaçırmaz, yalnızca irkiltir. Pencere kaçarsa biraz sonra yeniden ısırır. Çekişmesi yumuşak (kopmaz, kaçmaz).
   - İlk atışa kadar ilk av gölgesinin çevresinde arada bir halka çıkar ("bu gölge!").
 - Dede'nin ipuçları ilk 3 balığa kadar ipucu çubuğunda görünür; oyunun durumuna göre değişir.
 - Dede'ye dokununca (olta suda değilken) sıradaki öğüdünü söyler; 3 balıktan sonra da. Öğütlerden biri gölün sırrına göz kırpar ("Bu gölün bir sırrı var... Bir gün anlatırım.").
@@ -621,7 +619,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 - ✅ **Spin (v0.4):**
   - **Fark etme:** yırtıcı yalnızca oynayan yemi (bırakınca 0,5 sn daha) fark eder: önde 4 m, yanda 2,2 m, 60°'lik koni. 2 m/sn kovalar (yem uzaklaşırken de yetişsin), 1,5 m/sn izler. Yem basılıyken 0,8 m/sn gelir (makaradan bağımsız: balık yetişebilsin).
   - **Saldırı:** balık 0,6 sn izledikten sonra her ritim değişiminde zar: duruşta %40, kalkışta %30; bir evre en az 0,25 sn. 4. değişimde kesin. Hep basılı tutana saniyede %12.
-  - **VUR:** saldırı anında basılıysa balık kendiliğinden takılır; değilse 0,6 sn (Kolay 1 sn) VUR anı.
+  - **VUR:** saldırı anında basılıysa balık kendiliğinden takılır; değilse 0,6 sn VUR anı.
   - **Vazgeçme ve takılma:** 3 sn bekletilen yemden ya da 10 sn izledikten sonra balık vazgeçer ("Vazgeçti..."). Otlu ve kayalık yerde bekleyen yem takılır: sazlık 4 sn, nilüferli koy 5 sn, kayalık burun 3,5 sn; geri sarma 2,5 sn sürer, kayıp yok. İlk takılmada Dede nedenini söyler.
   - Yem balıkçıya 1,2 m kalınca atış biter.
   - **Görünüm:** su opak; yem yüzeyde parlayan gümüş bir kıymık. Çekilirken titrer, parlar ve arkasında halkalar (V biçimli iz) bırakır; durunca batar. Saldırıda su sıçrar, telefon titrer. Elde kısa, koyu spin kamışı (`RodModel.STYLES`).
@@ -630,7 +628,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 - ✅ **Dip (v0.4):**
   - **Atış:** dokunulan yöne, menzilin sonuna (14 / 16 / 18 m; kamışa göre) ama avlanılan bölgenin suyunda: gölgeler yalnızca orada dolaşır. En kısa atış 4 m. Kurşun suya düşünce yakındaki gölgeler ürker.
   - **Bekleyiş:** olta balıkçının yanındaki sehpaya konur, ucunda zil var. Balık yemi her yönden 4,5 m'den sezer. 1 sn sonra yemin kokusu yayılır: dolaşan gölgeler hemen yeni hedef seçer, %85 olasılıkla takımın 2 m çevresine yönelir ve oraya 3,5 kat hızlı yüzer. Yaklaşma 0,8 m/sn (8. adımda hızlandı: önce 2 sn, 2,5 kat, 0,5 m/sn).
-  - **Zil:** varan balık 1–3 kez koklar (zil tek tük çalar; ağırlıklar 50/35/15; aralık 0,6–1,3 sn). Bu sırada dokunmak balığı kaçırır. Sonra zil durmadan çalar ve misina akar (koşu): 2,5 sn içinde (Kolay modda 3,5 sn) ekranın her yerine dokun.
+  - **Zil:** varan balık 1–3 kez koklar (zil tek tük çalar; ağırlıklar 50/35/15; aralık 0,6–1,3 sn). Bu sırada dokunmak balığı kaçırır. Sonra zil durmadan çalar ve misina akar (koşu): 2,5 sn içinde ekranın her yerine dokun.
   - Beklerken dokunmak oltayı geri sarar (uzun misina: 1 sn).
   - **Takım:** 3 dip kamışı (dip kamışı 500 para / rütbe 4 / 14 m / 4★; uzun 1.800 / 6 / 16 m / 5★; usta 4.500 / 10 / 18 m / 5★). Kamışların gücü yüksek (0,25 / 0,3 / 0,3): balık uzaktan gelir. Kurşun bedava; yem sepeti (400, r4): yemin kokusu 1 sn yerine 0,5 sn sonra yayılır ve dolaşan gölgelerin hepsi takıma yönelir (%85 yerine %100), menzil −1 m. Yem şamandırayla ortak stok.
   - **Yatkınlık:** dip sazangillerini ve iri dip balıklarını çağırır: sazan, kadife 1, yayın 1,5, altın sazan 0,8, çapak ve tatlısu kefali 0,5, mersin 1,5; az da kızılkanat 0,3, sudak 0,3, levrek ve turna 0,2. Aynalı sazan yalnızca dipte.
@@ -640,7 +638,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 - ✅ **Sinek (v0.4):**
   - **Yer:** yalnızca akıntılı suda (dere ağzı; bölgenin `techniques`'i). Başka bölgede Takım Çantası'nda sineğin düğmesi "Dere ağzında" yazar, seçilmez. İlk sinek kamışı dere ağzı dışında alınırsa ele geçmez; Nine "Dere ağzında kullan evladım, alabalık orada." der. Dere ağzından çıkınca el oltası kendiliğinden şamandıraya döner (bölgenin adından sonra "Sinek yalnızca dere ağzında" bildirimi); dere ağzına dönünce sinek yine ele geçer (bildirim "Sinek"; arada başka teknik seçilmediyse). Dere ağzının kıyı şeridi dar: sınırda gidip gelen balıkçı sineği yitirmez. Bölge denetimi her karede ve atıştan hemen önce yapılır (sinek dere ağzı dışına atılmaz).
   - **Sürüklenme:** sinek düştüğü yerden akıntıyla sürüklenir (akıntının %85'i; dar derede ~0,85 m/sn). Kıyıya ya da iskeleye varınca, menzilin sonuna ya da balıkçıya 1,2 m'den yakına gelince (balık hep menzilin içinde, çekişme payıyla takılır; dibinde çıkan balık çekişmesiz tutulmaz), durgun suda 1,5 sn kalınca ya da 15 sn sonra kendiliğinden döner (0,8 sn). Hiç akmayan suya düşen sinek kımıldamaz ve döner: "Durgun su" bildirimi, ilk kez Dede "Durgun suda sinek kımıldamaz evlat. Akıntıya at!" der. Beklerken dokunmak geri sarar.
-  - **Halka:** alabalık sineği önde 3 m, yanda 2 m'den (önünden iki yana 110°'ye kadar) fark eder, 1,2 m/sn yaklaşır, altına gelir ve sinekle birlikte sürüklenir. 0,3–1 sn sonra halka çıkar: 0,5 sn içinde dokun (Kolay modda 0,9 sn). Halkadan önce dokunmak balığı kaçırır.
+  - **Halka:** alabalık sineği önde 3 m, yanda 2 m'den (önünden iki yana 110°'ye kadar) fark eder, 1,2 m/sn yaklaşır, altına gelir ve sinekle birlikte sürüklenir. 0,3–1 sn sonra halka çıkar: 0,5 sn içinde dokun. Halkadan önce dokunmak balığı kaçırır.
   - **Çekişme:** ortak çekişme; alabalıklar takılır takılmaz çırpınır (§5). Çırpınınca sudan sıçrarlar: balığın kendisi (elde gösterilen boyunun 1,5 katı) yay çizerek 0,8 m'den yükseğe sıçrar, havada kıvrılır, halka ve şapırtıyla geri dalar (`FishJump`). Dar derede yay suyun olduğu yöne çizilir, yer yoksa balık yerinde sıçrar. Dere ağzında fark etme ve yaklaşma hızlı olduğu için balık çabuk gelir.
   - **Görünüm:** koyu gövdeli, beyaz dik tüylü (paraşüt sineği: yukarıdan suyun üstünde beyaz bir nokta), kırmızı kuyruklu kuru sinek; telefonda seçilsin diye 0,22 m (şamandıra 0,3, yem 0,24). Suyun yüzünde akıntıya dönük sallanır, sürüklenirken arkasında seyrek küçük halkalar. Halkada sinek suya çekilir; halka, ses, titreşim ve hafif sarsıntı. Elde uzun, ince, kızıl kahve sinek kamışı; misina az sarkar.
   - **Kamera:** dipteki gibi çerçeveler: balıkçı ipucu çubuğunun üstünde kalır, sinek uzaktaysa kamera en çok 1,15 kat uzaklaşır (sinek küçük; eğim şamandıradaki gibi 60°).
@@ -1062,8 +1060,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
      - Takıma yalnızca o gelir: o gece X'te öteki balıklar dibe atılan yemi kapmaz (Bekçi belirmeden, kaçıp dönmeden
        de; ilk denemede belirmeden önceki 1,6 sn'de yakındaki bir balık yemi kapıyordu); korkmaz, vazgeçmez, boyu hep
        aynı (~5,2 m, 5★). Koklarken
-       dokunmak ve kaçan koşu onu kaçırmaz (ilk av gibi irkilir, yeniden koklar); koşuda VUR. Çekişme gerçek (Kolay
-       modda Kolay): iki dalış (§5); dalışın uyarısında ipucu "BIRAK! Bekçi dalıyor!", turkuaz halka, ses, sarsıntı,
+       dokunmak ve kaçan koşu onu kaçırmaz (ilk av gibi irkilir, yeniden koklar); koşuda VUR. Çekişme gerçek: iki
+       dalış (§5); dalışın uyarısında ipucu "BIRAK! Bekçi dalıyor!", turkuaz halka, ses, sarsıntı,
        titreşim.
      - Kaçarsa (misina koptu): Dede "Kaçırdık! Bekle, geri gelecek."; 25 sn sonra yeniden atınca gelir ("Geri geldi!
        Bu sefer dalınca bırak evlat."; oyun sonrasında da). Sabah olunca derinlere döner ("Sabah oldu, Bekçi derinlere
@@ -1256,7 +1254,7 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
 ## 13. Açık sorular
 
 - Gölgeler ve şamandıranın dürtmesi telefonda okunuyor mu?
-- VUR penceresi ve çekişme her yaşa adil mi? Kolay çekme varsayılan mı olmalı?
+- VUR penceresi ve çekişme her yaşa adil mi? (Kolay çekme kaldırıldı: tek mod.)
 - Büyük göl iPhone 14'te 60 fps'te akıyor mu? Yürüme ve harita yeterince hızlı mı?
 - Spin ve sinek dokunmatik ekranda anlaşılıyor mu?
 - Dükkânda seçenek kalabalığı var mı?

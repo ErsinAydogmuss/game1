@@ -5,7 +5,7 @@ extends BaseTest
 
 
 func _session(seed: int = 99) -> FishingSession:
-	return FishingSession.new(content(), "home_lake", GearStats.starter(content()), seed, false, false)
+	return FishingSession.new(content(), "home_lake", GearStats.starter(content()), seed, false)
 
 
 func test_float_profile_copies_the_rules() -> void:
@@ -23,7 +23,7 @@ func test_float_profile_copies_the_rules() -> void:
 	assert_eq(rig.nibble_weights, rules.nibble_weights, "dürtme ağırlıkları")
 	assert_eq(rig.gap_steps, rules.gap_steps, "dürtme arası")
 	assert_eq(rig.window_steps, rules.window_steps, "vuruş penceresi")
-	assert_eq(rig.window_easy_steps, rules.window_easy_steps, "Kolay vuruş penceresi")
+	assert_eq(rig.window_first_steps, rules.window_first_steps, "ilk avın vuruş penceresi")
 	assert_true(rules.technique("yok") == rig, "bilinmeyen teknik şamandıranın profilini alır")
 
 

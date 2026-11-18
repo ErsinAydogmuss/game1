@@ -35,7 +35,7 @@ var scripted: bool = false
 var summoned: bool = false
 ## Senaryolu ve çağrılan gölgenin dolaştığı yer.
 var home := Vector2.ZERO
-## Kolay modda erken dokunuşla kaç kez irkildi.
+## Erken dokunuşla kaç kez irkildi (ilk av ve hikâye balığı irkilir, kaçmaz).
 var startles: int = 0
 ## Yolu kapalı olduğu için vazgeçti: şamandıra yeniden düşene kadar onu fark etmez.
 var bored: bool = false

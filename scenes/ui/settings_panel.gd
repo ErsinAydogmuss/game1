@@ -1,6 +1,6 @@
 class_name SettingsPanel
 extends Dialog
-## Ayarlar: ses efektleri, müzik, titreşim, Kolay çekme, grafik (Düşük / Orta / Yüksek: GraphicsRules), dil ve yanında
+## Ayarlar: ses efektleri, müzik, titreşim, grafik (Düşük / Orta / Yüksek: GraphicsRules), dil ve yanında
 ## GİZLİLİK (reklamlar: privacy_requested);
 ## başlıkta HİKÂYE (açılış filmi yeniden:
 ## story_requested; olta boşken, main açmadan önce story_ready verir), Gölün Bekçisi bırakıldıysa BİTİŞ (bitiş
@@ -146,8 +146,6 @@ func refresh() -> void:
 			func(on: bool) -> void: GameState.set_setting("music", on))
 	_toggle(tr("UI_SET_VIBRATION"), "vibration", bool(settings.get("vibration", true)),
 			func(on: bool) -> void: GameState.set_setting("vibration", on))
-	_toggle(tr("UI_SET_EASY"), "easy", bool(settings.get("easy", false)),
-			func(on: bool) -> void: GameState.set_setting("easy", on))
 	_graphics_row()
 	var lang := _row(tr("UI_SET_LANGUAGE"), "globe")
 	var lang_button := UiKit.button(tr("UI_LANG_NAME"), UiKit.SECONDARY, UiKit.SIZE_BODY, ROW_BUTTON)

@@ -14,7 +14,7 @@ func _moor(buoy: Vector2) -> Vector2:
 
 func _boat_session(at: Vector2, seed_value: int = 5) -> FishingSession:
 	var db := content()
-	var session := FishingSession.new(db, SPOT, GearStats.starter(db), seed_value, false, false, -1,
+	var session := FishingSession.new(db, SPOT, GearStats.starter(db), seed_value, false, -1,
 			PackedStringArray(["deep_water"]))
 	session.relocate(at)
 	session.poll_events()

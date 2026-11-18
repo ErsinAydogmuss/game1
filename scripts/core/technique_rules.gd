@@ -34,7 +34,7 @@ var follow_speed: float = 0.0
 var nibble_weights := PackedInt32Array([15, 30, 35, 20])
 var gap_steps := Vector2i(48, 84)
 var window_steps: int = 60
-var window_easy_steps: int = 96
+var window_first_steps: int = 96
 
 ## Tekniğe özgü sayılar (rules.json'daki bölüm olduğu gibi; num, steps ile okunur).
 var params: Dictionary = {}
@@ -56,7 +56,7 @@ static func from_float(r: FishingRules) -> TechniqueRules:
 	t.nibble_weights = r.nibble_weights.duplicate()
 	t.gap_steps = r.gap_steps
 	t.window_steps = r.window_steps
-	t.window_easy_steps = r.window_easy_steps
+	t.window_first_steps = r.window_first_steps
 	return t
 
 
@@ -82,7 +82,7 @@ static func from_dict(technique_id: String, d: Dictionary, base: TechniqueRules)
 			t.nibble_weights.append(int(w))
 	t.gap_steps = FishingRules._steps2(d.get("gap"), base.gap_steps)
 	t.window_steps = FishingRules.to_steps(float(d["window"])) if d.has("window") else base.window_steps
-	t.window_easy_steps = FishingRules.to_steps(float(d["window_easy"])) if d.has("window_easy") else base.window_easy_steps
+	t.window_first_steps = base.window_first_steps
 	t.params = d.duplicate(true)
 	return t
 
@@ -104,7 +104,7 @@ func copy() -> TechniqueRules:
 	t.nibble_weights = nibble_weights.duplicate()
 	t.gap_steps = gap_steps
 	t.window_steps = window_steps
-	t.window_easy_steps = window_easy_steps
+	t.window_first_steps = window_first_steps
 	t.params = params
 	return t
 
@@ -163,7 +163,7 @@ func validate(errors: PackedStringArray) -> void:
 		"izleme hızı": follow_speed >= 0.0,
 		"dürtme ağırlıkları (4 değer, toplam > 0)": nibble_weights.size() == 4 and FishingRules._sum(nibble_weights) > 0,
 		"dürtme arası": gap_steps.x > 0 and gap_steps.y >= gap_steps.x,
-		"vuruş penceresi (Kolay >= normal)": window_steps > 0 and window_easy_steps >= window_steps,
+		"vuruş penceresi": window_steps > 0,
 	}
 	for label: String in checks:
 		if not bool(checks[label]):

@@ -81,7 +81,7 @@ func test_gear_changes_the_fight() -> void:
 				peak = maxf(peak, model.tension)
 		peaks.append(peak)
 		finish.append(model.distance)
-	# Kolay modda gerilim sınırda durur; frenin etkisini Normal'de, patlamanın tepesinde ölç.
+	# Yumuşak çekişmede (ilk av) gerilim sınırda durur; frenin etkisini gerçek çekişmede, patlamanın tepesinde ölç.
 	var raw: Array[float] = []
 	for g: GearStats in [starter, top]:
 		var model := ReelModel.new(db.rules, fight, g.reel_speed, 30.0, 1000.0, false, 7, g)
@@ -115,7 +115,7 @@ func test_longer_rod_casts_farther() -> void:
 	var reaches: Array[float] = []
 	for rod: String in ["rod_bamboo", "rod_float_carbon"]:
 		var gear := GearStats.from_items(db, { "rod": rod }, none)
-		var session := FishingSession.new(db, "home_lake", gear, 5, false, false)
+		var session := FishingSession.new(db, "home_lake", gear, 5, false)
 		session.angler = Vector2(0.0, 4.0)
 		assert_true(session.cast(Vector2(0.0, -30.0)), rod + ": atış yapılır")
 		reaches.append(session.angler.distance_to(session.bobber))

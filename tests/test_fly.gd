@@ -19,8 +19,8 @@ static func _stand() -> Vector2:
 
 
 ## Dere ağzının atış noktasında bir sinek oturumu (bütün bölgeler açık).
-func _session(seed: int = 7, easy: bool = false) -> FishingSession:
-	var session := FishingSession.new(content(), SPOT, _fly_gear(), seed, easy, false)
+func _session(seed: int = 7) -> FishingSession:
+	var session := FishingSession.new(content(), SPOT, _fly_gear(), seed, false)
 	session.relocate(_stand())
 	session.poll_events()
 	return session
@@ -71,7 +71,6 @@ func test_fly_profile_and_species() -> void:
 	assert_true(session.technique is FlyTechnique, "sinek kamışıyla teknik sinek")
 	var rig := session.technique.rig
 	assert_eq(rig.window_steps, int(0.5 * HZ), "halka penceresi 0,5 sn")
-	assert_eq(rig.window_easy_steps, int(0.9 * HZ), "Kolay modda 0,9 sn")
 	var stream := Zones.place(db, SPOT, "stream_mouth")
 	var fly := CatchOdds.species_ppm(db, stream, { "technique": "fly" })
 	assert_true(int(fly.get("trout", 0)) > int(fly.get("chub", 0)), "dere ağzında sinekle en çok alabalık: %s" % str(fly))

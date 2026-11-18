@@ -50,7 +50,7 @@ Dede'nin gölüne hoş geldin. Dede iskelede oturur, sana balık tutmayı öğre
 • Suda dolaşan balık gölgelerini izle; doğru gölgenin önüne at.
 • Şamandıra dürtülünce sabret, batınca VUR!
 • Çekişmede misinayı gerdirip gevşet; iri balık takım ister.
-• Kolay çekme ayarıyla herkes için rahat.
+• İlk balığı Dede öğretir: kaçmaz, kopmaz; sonra yeşilde sar, kırmızıda bırak.
 
 🐟 19 TÜR, ALTI NADİRLİK
 • Kızılkanattan turnaya, aynalı sazandan dev yayına kadar 19 tür.
@@ -132,7 +132,7 @@ Welcome to Dede's lake. Dede sits on the dock and teaches you to fish. At Nana's
 • Watch the fish shadows swim; cast in front of the right one.
 • Be patient while the float bobs, strike when it sinks!
 • Keep the line tight but not too tight; big fish need good gear.
-• Easy reeling mode makes it relaxing for everyone.
+• Dede teaches you on your first fish: it can't get away; then reel on green, ease off on red.
 
 🐟 19 SPECIES, SIX RARITIES
 • From rudd to pike, from mirror carp to a giant catfish: 19 species.

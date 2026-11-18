@@ -16,7 +16,7 @@ extends SceneTree
 ## böyle bakılır: tekniği dip, takıldığı uzaklık takımın menzili (kurşun menzilin sonuna düşer), dalışları
 ## (fight.stages) ayrı sütunda.
 ## Hedefler (docs/gdd.md §5): iyi oyuncu (kusursuz, 0,4 sn) takımın taşıdığı her balığı tutar;
-## Kızılkanat 4–7 sn, Yayın 14–20 sn; hep basılı tutan Normal'de koparır, Kolay'da tutar. İri türün
+## Kızılkanat 4–7 sn, Yayın 14–20 sn; hep basılı tutan koparır. İri türün
 ## taşımayı aşan (fazla iri) 4–5★'ını iyi oyuncu tutamaz, kusursuz pompalayan da çoğunlukla kaçırır.
 
 const RUNS := 200
@@ -77,57 +77,52 @@ func _initialize() -> void:
 	print("Çekişme raporu: %s (%d deneme, başlangıç %.1f–%.1f m, boy kümenin içinde eşit aralıklı; takım: %s, %s, taşıma %d★, kaçma %.1f m)" % [
 			technique, RUNS, distances[0], distances[-1], {"start": "başlangıç", "mid": "ikinci kamış + naylon misina",
 			"top": "en iyi"}.get(mode, mode), rod_name, gear.carry, max_distance])
-	for easy: bool in [false, true]:
-		print("")
-		print("== %s ==" % ("KOLAY" if easy else "NORMAL"))
-		print("%-12s %-5s %-11s %7s %7s %7s %7s %8s %8s %8s %6s" % ["balık", "boy", "bot", "tutar", "koparır", "kaçar",
-				"bitmedi", "ort sn", "en çok", "kırmızı", "dalış"])
-		for f in db.fish:
-			if not _wanted(db, str(f["id"]), technique, only):
+	print("")
+	print("%-12s %-5s %-11s %7s %7s %7s %7s %8s %8s %8s %6s" % ["balık", "boy", "bot", "tutar", "koparır", "kaçar",
+			"bitmedi", "ort sn", "en çok", "kırmızı", "dalış"])
+	for f in db.fish:
+		if not _wanted(db, str(f["id"]), technique, only):
+			continue
+		var fight: Dictionary = f["fight"]
+		for g: Array in GROUPS:
+			if int(g[1]) > 0 and not bool(fight["heavy"]):
 				continue
-			var fight: Dictionary = f["fight"]
-			for g: Array in GROUPS:
-				if int(g[1]) > 0 and not bool(fight["heavy"]):
-					continue
-				var heavy_mark := "*" if ReelModel.excess_for(fight, int(g[1]), gear.carry) > 0 else ""
-				for b: Array in bots:
-					# Pompalamak Kolay'da anlamsız: gerilim sınırda durur, misina kopmaz.
-					if easy and int(b[1]) == ReelBot.Style.PUMP:
-						continue
-					var caught := 0
-					var snapped := 0
-					var escaped := 0
-					var total_s := 0.0
-					var max_s := 0.0
-					var red := 0.0
-					var dives := 0
-					for i in RUNS:
-						var start: float = distances[i % distances.size()]
-						var model := ReelModel.new(db.rules, fight, gear.reel_speed, start, max_distance, easy,
-								Dice.derive(4242, i), gear, percentile_in(g, i, RUNS))
-						var result := ReelBot.play(model, ReelBot.make(b[1], b[2]))
-						dives += int(result.get("dives", 0))
-						match int(result["outcome"]):
-							ReelModel.Outcome.CAUGHT:
-								caught += 1
-								total_s += float(result["seconds"])
-								max_s = maxf(max_s, float(result["seconds"]))
-							ReelModel.Outcome.SNAPPED:
-								snapped += 1
-							ReelModel.Outcome.ESCAPED:
-								escaped += 1
-						red += float(result["red"])
-					var unfinished := RUNS - caught - snapped - escaped
-					print("%-12s %-5s %-11s %6.0f%% %6.0f%% %6.0f%% %6.0f%% %8.1f %8.1f %8.2f %6.2f" % [f["id"],
-							str(g[0]) + heavy_mark, b[0], 100.0 * caught / RUNS, 100.0 * snapped / RUNS, 100.0 * escaped / RUNS,
-							100.0 * unfinished / RUNS, total_s / maxi(1, caught), max_s, red / RUNS, float(dives) / RUNS])
+			var heavy_mark := "*" if ReelModel.excess_for(fight, int(g[1]), gear.carry) > 0 else ""
+			for b: Array in bots:
+				var caught := 0
+				var snapped := 0
+				var escaped := 0
+				var total_s := 0.0
+				var max_s := 0.0
+				var red := 0.0
+				var dives := 0
+				for i in RUNS:
+					var start: float = distances[i % distances.size()]
+					var model := ReelModel.new(db.rules, fight, gear.reel_speed, start, max_distance, false,
+							Dice.derive(4242, i), gear, percentile_in(g, i, RUNS))
+					var result := ReelBot.play(model, ReelBot.make(b[1], b[2]))
+					dives += int(result.get("dives", 0))
+					match int(result["outcome"]):
+						ReelModel.Outcome.CAUGHT:
+							caught += 1
+							total_s += float(result["seconds"])
+							max_s = maxf(max_s, float(result["seconds"]))
+						ReelModel.Outcome.SNAPPED:
+							snapped += 1
+						ReelModel.Outcome.ESCAPED:
+							escaped += 1
+					red += float(result["red"])
+				var unfinished := RUNS - caught - snapped - escaped
+				print("%-12s %-5s %-11s %6.0f%% %6.0f%% %6.0f%% %6.0f%% %8.1f %8.1f %8.2f %6.2f" % [f["id"],
+						str(g[0]) + heavy_mark, b[0], 100.0 * caught / RUNS, 100.0 * snapped / RUNS, 100.0 * escaped / RUNS,
+						100.0 * unfinished / RUNS, total_s / maxi(1, caught), max_s, red / RUNS, float(dives) / RUNS])
 	print("")
 	print("* fazla iri: iri türün yıldızı takımın taşımasını aşıyor. bitmedi: %d sn'de sonuçlanmadı (pompalayan" % roundi(float(ReelBot.LIMIT_STEPS) / FishingRules.HZ))
 	print("  fazla iri balığı yerinde tutabilir ama getiremez; bırakınca kaçar). dalış: çekişme başına (Bekçi).")
 	print("")
 	# Süreler orta uzaklıkta (şamandırada eskisi gibi 6 m).
 	var middle: float = 6.0 if technique == "float" else (distances[0] + distances[-1]) * 0.5
-	print("Süreler (%.1f m, kusursuz, Normal, 1–3★): " % middle)
+	print("Süreler (%.1f m, kusursuz, 1–3★): " % middle)
 	for f in db.fish:
 		if not _wanted(db, str(f["id"]), technique, only):
 			continue

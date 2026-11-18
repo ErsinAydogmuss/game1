@@ -103,7 +103,7 @@ Ersin Parti 1–2 görsellerini (19 sayfa) ve Mac'te indirdiği CC0 3D paketleri
   - Kamış ve misinanın taşıması var: bambu 3★, cam elyafı ve naylon 4★, karbon ve örgü 5★.
   - Taşımayı aşan balıkta "Çok iri!" bildirimi çıkar; sakinken de kırmızıya çeker, koparır. Ardından Dede eksik takımı adıyla söyler.
   - Dükkân kartında "İri balık" yıldızları var.
-  - Kolay modda iri balık yalnızca yavaş gelir.
+  - Kolay modda iri balık yalnızca yavaş gelir (Kolay çekme 18 Kasım 2026'da kaldırıldı: tek mod).
   - Bkz. `docs/gdd.md` §5.
 - [ ] Telefonda deneme ve hız ölçümü: Ersin'in sorun listesi.
 
@@ -208,7 +208,7 @@ Ersin'in seçimleri (hepsi önerilen): akvaryuma her türün en irisi kendiliği
 - İlk 30 saniyede ne yapacaklarını anladılar mı?
 - Gölgeleri gördüler mi? Gölgenin önüne atmayı kendiliğinden buldular mı?
 - VUR anı adil mi? Erken dokunup kaçırdılar mı?
-- Çekişme zevkli mi, zor mu? Kolay çekmeye ihtiyaç duydular mı?
+- Çekişme zevkli mi, zor mu? (Kolay çekme yok: tek mod; zorlanan olursa VUR penceresi ve kopma süresi ayarlanır.)
 - Dükkânda ne alacaklarını anladılar mı? Yeni teknikleri denediler mi?
 - "Bir atış daha" dediler mi? Ertesi gün oyunu kendiliğinden açtılar mı?
 - Kazı'ya benziyor mu, farklı mı geldi?

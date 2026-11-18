@@ -53,13 +53,11 @@ func test_nibble_distribution() -> void:
 
 
 func test_early_tap_outcome() -> void:
-	assert_eq(BiteRules.early_outcome(false, false, 0), "flee", "Normal: erken dokunuş balığı kaçırır")
-	assert_eq(BiteRules.early_outcome(true, false, 0), "startle", "Kolay: ilk erken dokunuş irkiltir")
-	assert_eq(BiteRules.early_outcome(true, false, 1), "flee", "Kolay: ikincisi kaçırır")
-	assert_eq(BiteRules.early_outcome(false, true, 5), "startle", "ilk av hiç kaçmaz")
+	assert_eq(BiteRules.early_outcome(false), "flee", "erken dokunuş balığı kaçırır")
+	assert_eq(BiteRules.early_outcome(true), "startle", "ilk av (ve hikâye balığı) hiç kaçmaz")
 
 
 func test_window_lengths() -> void:
 	var rules := content().rules
-	assert_eq(BiteRules.window_steps(rules, false), 60, "Normal pencere 1,0 sn")
-	assert_eq(BiteRules.window_steps(rules, true), 96, "Kolay pencere 1,6 sn")
+	assert_eq(BiteRules.window_steps(rules, false), 60, "pencere 1,0 sn")
+	assert_eq(BiteRules.window_steps(rules, true), 96, "ilk avda pencere 1,6 sn")

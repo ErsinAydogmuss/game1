@@ -16,8 +16,8 @@ func _bottom_gear(rig: String = "sinker") -> GearStats:
 	return GearStats.from_items(content(), items, owned)
 
 
-func _session(easy: bool = false, seed: int = 99, rig: String = "sinker") -> FishingSession:
-	return FishingSession.new(content(), "home_lake", _bottom_gear(rig), seed, easy, false)
+func _session(seed: int = 99, rig: String = "sinker") -> FishingSession:
+	return FishingSession.new(content(), "home_lake", _bottom_gear(rig), seed, false)
 
 
 func _park_all(session: FishingSession, keep: FishShadow = null) -> void:
@@ -77,11 +77,10 @@ func test_bottom_profile_and_species() -> void:
 	assert_eq(rig.notice_front, 4.5, "önde 4,5 m")
 	assert_eq(rig.notice_side, 4.5, "her yönden 4,5 m")
 	assert_eq(rig.window_steps, int(2.5 * HZ), "koşu penceresi 2,5 sn")
-	assert_eq(rig.window_easy_steps, int(3.5 * HZ), "Kolay modda 3,5 sn")
 	assert_eq(rig.nibble_weights[0], 0, "en az bir koklama")
 	assert_true(session.technique.uses_bait(), "dip yem kullanır")
 	for seed_value: int in [1, 7, 99, 1234]:
-		var s := FishingSession.new(content(), "big_lake", _bottom_gear(), seed_value, false, false)
+		var s := FishingSession.new(content(), "big_lake", _bottom_gear(), seed_value, false)
 		for fish in s.sim.shadows:
 			assert_true(content().affinity(fish.fish_id, "bottom") > 0.0, "dipte gelmeyen tür doğmaz: " + fish.fish_id)
 
@@ -105,7 +104,7 @@ func test_cast_goes_far_and_stays_in_the_zone() -> void:
 	assert_true(reach > TARGET.distance_to(session.angler) + 1.0, "dokunulan yerden öteye, menzilin sonuna (%.1f m)" % reach)
 	assert_true(reach <= session.range_m() + 0.01, "menzili aşmaz")
 	# Büyük göl: iskele koyundan kuzeye en uzağa atış derin ortaya (başka bölgeye) düşmez.
-	var big := FishingSession.new(content(), "big_lake", _bottom_gear(), 5, false, false)
+	var big := FishingSession.new(content(), "big_lake", _bottom_gear(), 5, false)
 	assert_true(big.cast(big.angler + Vector2(0, -30)), "büyük gölde atış")
 	assert_eq(big.lake.zone_at(big.bobber), big.zone(), "takım avlanılan bölgenin suyunda")
 	assert_true(big.angler.distance_to(big.bobber) > 6.0, "yine de uzağa (%.1f m)" % big.angler.distance_to(big.bobber))
@@ -113,7 +112,7 @@ func test_cast_goes_far_and_stays_in_the_zone() -> void:
 
 func test_sniffs_then_run_and_strike() -> void:
 	for seed_value: int in [99, 5, 77, 2024]:
-		var session := _session(false, seed_value)
+		var session := _session(seed_value)
 		var log: Array[Dictionary] = []
 		_to_sniffing(session, log)
 		assert_eq(session.action_kind(), "wait", "koklarken eylem: bekle")
@@ -135,23 +134,23 @@ func test_trash_comes_with_a_bottom_catch() -> void:
 	var trash_seed := 0
 	while Trash.with_catch(rules, trash_seed, "bottom").is_empty():
 		trash_seed += 1
-	var session := _session(true)
+	var session := _session()
 	var log: Array[Dictionary] = []
 	var fish := _to_sniffing(session, log)
 	fish.seed = trash_seed
 	assert_true(_run_until(session, FishingSession.State.BITING, 12.0, log), "koşu gelir")
 	session.press()
-	assert_true(_run_until(session, FishingSession.State.CAUGHT, 90.0, log), "Kolay'da basılı tutunca tutulur")
+	assert_true(reel_in(session, log), "iyi oyuncu tutar")
 	assert_eq(str(session.last_catch["trash"]), Trash.with_catch(rules, trash_seed, "bottom"), "balığın yanında çöp")
 	var other := trash_seed + 1
 	while not Trash.with_catch(rules, other, "bottom").is_empty():
 		other += 1
-	var plain := _session(true)
+	var plain := _session()
 	var quiet := _to_sniffing(plain, log)
 	quiet.seed = other
 	assert_true(_run_until(plain, FishingSession.State.BITING, 12.0, log), "koşu gelir")
 	plain.press()
-	assert_true(_run_until(plain, FishingSession.State.CAUGHT, 90.0, log), "tutulur")
+	assert_true(reel_in(plain, log), "tutulur")
 	assert_eq(str(plain.last_catch["trash"]), "", "zarı tutmayan balıkta çöp yok")
 
 
@@ -162,18 +161,6 @@ func test_touch_while_sniffing_scares_the_fish() -> void:
 	session.press()
 	assert_eq(session.state, FishingSession.State.LOST, "koklarken dokunmak balığı kaçırır")
 	assert_eq(session.last_loss, "early", "erken")
-
-
-func test_run_window_is_longer_in_easy_mode() -> void:
-	var session := _session(true)
-	var log: Array[Dictionary] = []
-	_to_sniffing(session, log)
-	assert_true(_run_until(session, FishingSession.State.BITING, 12.0, log), "koşu gelir")
-	assert_eq(session.window, int(3.5 * HZ), "Kolay modda 3,5 sn")
-	_steps(session, int(3.0 * HZ))
-	assert_eq(session.state, FishingSession.State.BITING, "3 sn sonra hâlâ vurulabilir")
-	_steps(session, int(0.6 * HZ))
-	assert_true(session.state != FishingSession.State.BITING, "pencere kapanır")
 
 
 func test_touch_while_waiting_reels_in() -> void:
@@ -190,7 +177,7 @@ func test_touch_while_waiting_reels_in() -> void:
 ## Yem sepeti: gölgeler takımın çevresine daha erken ve daha sık toplanır (oturumun profili).
 func test_feeder_speeds_up_gathering() -> void:
 	var plain := _session()
-	var fed := _session(false, 99, "feeder")
+	var fed := _session(99, "feeder")
 	var base := plain.sim.rig
 	var with_feeder := fed.sim.rig
 	assert_true(with_feeder.gather_after_steps < base.gather_after_steps, "daha erken toplanır")
@@ -204,7 +191,7 @@ func test_feeder_speeds_up_gathering() -> void:
 func test_same_result_at_any_fps() -> void:
 	var logs: Array[PackedStringArray] = []
 	for fps: int in [30, 60, 120]:
-		var session := _session(false, 4321)
+		var session := _session(4321)
 		var log := PackedStringArray()
 		var targets := [Vector2(0, -4), Vector2(-3, -3), Vector2(3, -2), Vector2(1, -5)]
 		var next_target := 0
@@ -240,7 +227,7 @@ func test_same_result_at_any_fps() -> void:
 func test_random_input_never_gets_stuck() -> void:
 	var lake := content().lake("home_lake")
 	for run in 4:
-		var session := _session(run % 2 == 1, 3000 + run)
+		var session := _session(3000 + run)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 555 + run
 		var since_change := 0

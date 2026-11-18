@@ -1,5 +1,5 @@
 extends BaseTest
-## Çekişme modeli: sakin balıkta kırmızı yok, uyarı zamanı, kopma, kaçma, Kolay mod ve bot
+## Çekişme modeli: sakin balıkta kırmızı yok, uyarı zamanı, kopma, kaçma, yumuşak çekişme (senaryolu ilk av) ve bot
 ## tarzlarının geçme oranları (tools/reel_report.gd'deki tablonun korkulukları).
 
 const RUNS := 40
@@ -13,12 +13,12 @@ const SPIN_DISTANCES := [3.5, 4.5, 5.5, 6.0, 7.0, 8.0]
 
 
 ## gear: kuşanılmış takım (yoksa başlangıç takımı, yani bambu olta); percentile: boy yüzdeliği (ppm).
-func _model(fish_id: String, start: float, easy: bool, seed: int, gear: GearStats = null,
+func _model(fish_id: String, start: float, gentle: bool, seed: int, gear: GearStats = null,
 		percentile: int = 0) -> ReelModel:
 	var db := content()
 	var g := gear if gear != null else GearStats.starter(db)
 	return ReelModel.new(db.rules, db.fish_by_id(fish_id)["fight"], g.reel_speed, start,
-			g.range_m + db.rules.escape_extra + g.escape_extra, easy, seed, g, percentile)
+			g.range_m + db.rules.escape_extra + g.escape_extra, gentle, seed, g, percentile)
 
 
 ## İlk dip kamışı ve kurşun (dip tekniğinin başlangıcı).
@@ -33,11 +33,11 @@ func _bottom_first_gear() -> GearStats:
 
 ## Gölün Bekçisi'nin çekişmesi: kurşun menzilin sonuna düşer, Bekçi orada takılır (menzil ile 2 m kısası arası;
 ## tools/reel_report.gd --fish=keeper); boyu hep aynı (Secret.KEEPER_PERCENTILE).
-func _keeper_model(gear: GearStats, i: int, easy: bool) -> ReelModel:
+func _keeper_model(gear: GearStats, i: int) -> ReelModel:
 	var db := content()
 	var start := gear.range_m - 0.5 * (i % 5)
 	return ReelModel.new(db.rules, db.fish_by_id(Secret.KEEPER_ID)["fight"], gear.reel_speed, start,
-			gear.range_m + db.rules.escape_extra + gear.escape_extra, easy, Dice.derive(4242, i), gear,
+			gear.range_m + db.rules.escape_extra + gear.escape_extra, false, Dice.derive(4242, i), gear,
 			Secret.KEEPER_PERCENTILE)
 
 
@@ -62,7 +62,7 @@ static func _percentile(stars: int, i: int) -> int:
 
 ## RUNS deneme: { caught, snapped, escaped (oran 0..1), mean (tutulanların ortalama sn), max }.
 ## stars: balıkların yıldızı (0: en küçük boy).
-func _rates(fish_id: String, bot_style: ReelBot.Style, reaction: float, easy: bool,
+func _rates(fish_id: String, bot_style: ReelBot.Style, reaction: float, gentle: bool,
 		gear: GearStats = null, stars: int = 0, distances: Array = DISTANCES) -> Dictionary:
 	var caught := 0
 	var snapped := 0
@@ -70,7 +70,7 @@ func _rates(fish_id: String, bot_style: ReelBot.Style, reaction: float, easy: bo
 	var total := 0.0
 	var longest := 0.0
 	for i in RUNS:
-		var model := _model(fish_id, distances[i % distances.size()], easy, Dice.derive(4242, i), gear,
+		var model := _model(fish_id, distances[i % distances.size()], gentle, Dice.derive(4242, i), gear,
 				_percentile(stars, i))
 		var result := ReelBot.play(model, ReelBot.make(bot_style, reaction))
 		match int(result["outcome"]):
@@ -152,60 +152,6 @@ func test_big_fish_need_gear() -> void:
 		assert_true(five["caught"] <= 0.05, "%s 5★: cam elyafı + naylon taşımaz (%.2f)" % [id, five["caught"]])
 
 
-## Kolay modda fazla iri balık kopmaz, kaçmaz; yalnızca yavaş gelir (hep basılı tutan da tutar).
-func test_easy_mode_big_fish_are_only_slower() -> void:
-	var db := content()
-	var limit := db.rules.limit
-	for f in db.fish:
-		var id := str(f["id"])
-		if not bool((f["fight"] as Dictionary)["heavy"]):
-			continue
-		for style: ReelBot.Style in [ReelBot.Style.ALWAYS, ReelBot.Style.PERFECT]:
-			var model := _model(id, 9.0, true, 21, null, 950000)
-			var bot := ReelBot.make(style)
-			var events := PackedStringArray()
-			var peak := 0.0
-			model.holding = true
-			while model.outcome == ReelModel.Outcome.NONE and model.steps < ReelBot.LIMIT_STEPS:
-				model.holding = bot.decide(model, events)
-				events = model.step()
-				peak = maxf(peak, model.tension)
-			assert_eq(int(model.outcome), ReelModel.Outcome.CAUGHT, "%s 5★: Kolay'da tutulur" % id)
-			assert_true(peak <= limit + 0.0001, "%s 5★: Kolay'da gerilim sınırı geçmez" % id)
-			assert_true(model.seconds() < 75.0, "%s 5★: Kolay'da 75 sn'den kısa (%.1f sn)" % [id, model.seconds()])
-		# Hep basılı tutan ve yavaş oyuncu (0,7 sn): fazla iri yalnızca biraz yavaş gelir.
-		for bot: Array in [[ReelBot.Style.ALWAYS, 0.0], [ReelBot.Style.REACT, 0.7]]:
-			var fits: float = _rates(id, bot[0], bot[1], true, null, 3)["mean"]
-			var big := _rates(id, bot[0], bot[1], true, null, 5)
-			assert_eq(big["caught"], 1.0, "%s 5★: Kolay'da hep tutulur (%s)" % [id, str(bot[1])])
-			assert_true(big["mean"] > fits and big["mean"] < 1.75 * fits,
-					"%s: Kolay'da fazla iri biraz yavaş gelir (%s: %.1f → %.1f sn)" % [id, str(bot[1]), fits, big["mean"]])
-
-
-## Kolay mod çekişme sürerken açılırsa (ayarlar) fazla iri balık o andan Kolay kurallarıyla gelir:
-## kopmaz, bırakan yavaş oyuncudan da hızla uzaklaşmaz.
-func test_easy_mode_switched_mid_fight() -> void:
-	var db := content()
-	for f in db.fish:
-		var id := str(f["id"])
-		if not bool((f["fight"] as Dictionary)["heavy"]):
-			continue
-		var model := _model(id, 6.0, false, 5, null, 950000)
-		var bot := ReelBot.make(ReelBot.Style.REACT, 0.7)
-		var events := PackedStringArray()
-		model.holding = true
-		for i in FishingRules.HZ >> 1:
-			model.holding = bot.decide(model, events)
-			events = model.step()
-		assert_eq(int(model.outcome), ReelModel.Outcome.NONE, "%s: ilk yarım saniyede bitmez" % id)
-		model.easy = true
-		while model.outcome == ReelModel.Outcome.NONE and model.steps < ReelBot.LIMIT_STEPS:
-			model.holding = bot.decide(model, events)
-			events = model.step()
-		assert_eq(int(model.outcome), ReelModel.Outcome.CAUGHT, "%s: Kolay açılınca tutulur" % id)
-		assert_true(model.seconds() < 75.0, "%s: Kolay açılınca 75 sn'den kısa (%.1f sn)" % [id, model.seconds()])
-
-
 func test_warning_comes_before_every_burst() -> void:
 	var rules := content().rules
 	for f in content().fish:
@@ -243,7 +189,8 @@ func test_never_reeling_lets_fish_escape() -> void:
 		assert_eq(int(result["outcome"]), ReelModel.Outcome.ESCAPED, "%s: hiç sarmayınca kaçar" % f["id"])
 
 
-func test_easy_mode_never_snaps_or_escapes() -> void:
+## Yumuşak çekişme (senaryolu ilk av, öğretici: oyunun tek modu Normal): kopmaz, kaçmaz, gerilim sınırı geçmez.
+func test_gentle_fight_never_snaps_or_escapes() -> void:
 	var limit := content().rules.limit
 	for f in content().fish:
 		for style: ReelBot.Style in [ReelBot.Style.ALWAYS, ReelBot.Style.PERFECT]:
@@ -256,26 +203,22 @@ func test_easy_mode_never_snaps_or_escapes() -> void:
 				model.holding = bot.decide(model, events)
 				events = model.step()
 				peak = maxf(peak, model.tension)
-			assert_eq(int(model.outcome), ReelModel.Outcome.CAUGHT, "%s: Kolay'da tutulur" % f["id"])
-			assert_true(peak <= limit + 0.0001, "%s: Kolay'da gerilim sınırı geçmez" % f["id"])
-			assert_true(model.seconds() < 60.0, "%s: Kolay'da bir dakikadan kısa (%.1f sn)" % [f["id"], model.seconds()])
+			assert_eq(int(model.outcome), ReelModel.Outcome.CAUGHT, "%s: yumuşak çekişmede tutulur" % f["id"])
+			assert_true(peak <= limit + 0.0001, "%s: gerilim sınırı geçmez" % f["id"])
+			assert_true(model.seconds() < 60.0, "%s: bir dakikadan kısa (%.1f sn)" % [f["id"], model.seconds()])
 
 
 func test_good_players_catch_everything() -> void:
 	for f in content().fish:
 		for bot: Array in [[ReelBot.Style.PERFECT, 0.0], [ReelBot.Style.REACT, 0.4]]:
-			for easy: bool in [false, true]:
-				var r := _rates(f["id"], bot[0], bot[1], easy)
-				assert_eq(r["caught"], 1.0, "%s: iyi oyuncu (%s, %s) her zaman tutar" % [f["id"], str(bot[1]),
-						"Kolay" if easy else "Normal"])
+			var r := _rates(f["id"], bot[0], bot[1], false)
+			assert_eq(r["caught"], 1.0, "%s: iyi oyuncu (%s) her zaman tutar" % [f["id"], str(bot[1])])
 
 
 func test_slow_players_mostly_catch() -> void:
 	for f in content().fish:
 		var normal := _rates(f["id"], ReelBot.Style.REACT, 0.7, false)
 		assert_true(normal["caught"] >= 0.9, "%s: 0,7 sn tepkiyle de çoğunlukla tutulur (%.2f)" % [f["id"], normal["caught"]])
-		var easy := _rates(f["id"], ReelBot.Style.REACT, 0.7, true)
-		assert_true(easy["caught"] >= 0.95, "%s: Kolay'da 0,7 sn tepkiyle tutulur (%.2f)" % [f["id"], easy["caught"]])
 
 
 ## Testçi: "elimi çeksem de çekmesem de balığı alıp geliyor": kırmızıda misina kısa sürede kopar (başlangıç misinası
@@ -290,8 +233,7 @@ func test_holding_only_works_on_small_fish() -> void:
 		assert_true(slow >= 0.95, "%s: uyarıya 0,7 sn'de tepki veren tutar (%.2f)" % [fish_id, slow])
 	for fish_id: String in ["carp", "pike", "wels"]:
 		var r := _rates(fish_id, ReelBot.Style.ALWAYS, 0.0, false)
-		assert_true(r["caught"] <= 0.1, "%s: hep basılı tutunca Normal'de kopar (%.2f)" % [fish_id, r["caught"]])
-		assert_eq(_rates(fish_id, ReelBot.Style.ALWAYS, 0.0, true)["caught"], 1.0, "%s: Kolay'da hep basılı da olur" % fish_id)
+		assert_true(r["caught"] <= 0.1, "%s: hep basılı tutunca kopar (%.2f)" % [fish_id, r["caught"]])
 
 
 ## docs/gdd.md §5: iyi bir oyuncuyla Kızılkanat 4–7 sn, Yayın 14–20 sn.
@@ -427,78 +369,71 @@ func test_only_the_keeper_dives() -> void:
 
 ## Gölün Bekçisi her çekişmede iki kez dalar (takıldığı uzaklığın %60'ına ve %30'una gelince): her dalıştan tam
 ## dive_warn önce, yalnızca sakin evrede uyarı gelir; dalış balığı kaçma sınırının DIVE_MARGIN içine kadar götürür,
-## ötesine değil (ilk dip kamışıyla ve en iyi dip takımıyla, Normal ve Kolay).
+## ötesine değil (ilk dip kamışıyla ve en iyi dip takımıyla).
 func test_keeper_dives_twice_after_a_warning() -> void:
 	var db := content()
 	var warn_steps := int(db.fish_by_id(Secret.KEEPER_ID)["fight"]["dive_warn_steps"])
 	for gear: GearStats in [_bottom_first_gear(), GearStats.best(db, "bottom")]:
-		for easy: bool in [false, true]:
-			for i in 10:
-				var model := _keeper_model(gear, i, easy)
-				var bot := ReelBot.make(ReelBot.Style.REACT, 0.4)
-				var events := PackedStringArray()
-				var warns := 0
-				var dives := 0
-				var warn_at := -1
-				var timed := true
-				var bounded := true
-				while model.outcome == ReelModel.Outcome.NONE and model.steps < ReelBot.LIMIT_STEPS:
-					model.holding = bot.decide(model, events)
-					var calm := model.phase == ReelModel.Phase.CALM
-					var before := model.distance
-					events = model.step()
-					if "dive_warn" in events:
-						warns += 1
-						warn_at = model.steps
-						timed = timed and calm
-					if "dive" in events:
-						dives += 1
-						timed = timed and model.steps - warn_at == warn_steps
-					if model.phase == ReelModel.Phase.DIVE:
-						bounded = bounded and model.distance <= maxf(before, model.max_distance - ReelModel.DIVE_MARGIN) + 0.0001
-				var name := "%s, %s, %d" % [gear.items.get("rod", ""), "Kolay" if easy else "Normal", i]
-				assert_eq(int(model.outcome), ReelModel.Outcome.CAUGHT, name + ": tutulur")
-				assert_eq(dives, 2, name + ": iki dalış")
-				assert_eq(warns, 2, name + ": iki uyarı")
-				assert_true(timed, name + ": uyarı sakin evrede, dalıştan tam %d adım önce" % warn_steps)
-				assert_true(bounded, name + ": dalış kaçma sınırına en çok %.1f m yaklaştırır" % ReelModel.DIVE_MARGIN)
+		for i in 10:
+			var model := _keeper_model(gear, i)
+			var bot := ReelBot.make(ReelBot.Style.REACT, 0.4)
+			var events := PackedStringArray()
+			var warns := 0
+			var dives := 0
+			var warn_at := -1
+			var timed := true
+			var bounded := true
+			while model.outcome == ReelModel.Outcome.NONE and model.steps < ReelBot.LIMIT_STEPS:
+				model.holding = bot.decide(model, events)
+				var calm := model.phase == ReelModel.Phase.CALM
+				var before := model.distance
+				events = model.step()
+				if "dive_warn" in events:
+					warns += 1
+					warn_at = model.steps
+					timed = timed and calm
+				if "dive" in events:
+					dives += 1
+					timed = timed and model.steps - warn_at == warn_steps
+				if model.phase == ReelModel.Phase.DIVE:
+					bounded = bounded and model.distance <= maxf(before, model.max_distance - ReelModel.DIVE_MARGIN) + 0.0001
+			var name := "%s, %d" % [gear.items.get("rod", ""), i]
+			assert_eq(int(model.outcome), ReelModel.Outcome.CAUGHT, name + ": tutulur")
+			assert_eq(dives, 2, name + ": iki dalış")
+			assert_eq(warns, 2, name + ": iki uyarı")
+			assert_true(timed, name + ": uyarı sakin evrede, dalıştan tam %d adım önce" % warn_steps)
+			assert_true(bounded, name + ": dalış kaçma sınırına en çok %.1f m yaklaştırır" % ReelModel.DIVE_MARGIN)
 
 
-## Dalışta basılı tutan (patlamalarda kusursuz bırakan) Normal'de misinayı dalışta koparır: dalışın gerilimi sınırın
-## üstünde; Kolay'da kopmaz, Bekçi yine tutulur.
+## Dalışta basılı tutan (patlamalarda kusursuz bırakan) misinayı dalışta koparır: dalışın gerilimi sınırın üstünde.
 func test_holding_through_a_dive_snaps() -> void:
-	for easy: bool in [false, true]:
-		var model := _keeper_model(_bottom_first_gear(), 0, easy)
-		var bot := ReelBot.make(ReelBot.Style.PERFECT)
-		var events := PackedStringArray()
-		var snapped_diving := false
-		while model.outcome == ReelModel.Outcome.NONE and model.steps < ReelBot.LIMIT_STEPS:
-			model.holding = bot.decide(model, events) or model.diving()
-			events = model.step()
-			if "snap" in events:
-				snapped_diving = model.phase == ReelModel.Phase.DIVE
-		if easy:
-			assert_eq(int(model.outcome), ReelModel.Outcome.CAUGHT, "Kolay'da dalışta basılı tutan da tutar")
-		else:
-			assert_eq(int(model.outcome), ReelModel.Outcome.SNAPPED, "dalışta basılı tutan misinayı koparır")
-			assert_true(snapped_diving, "misina dalışta kopar")
+	var model := _keeper_model(_bottom_first_gear(), 0)
+	var bot := ReelBot.make(ReelBot.Style.PERFECT)
+	var events := PackedStringArray()
+	var snapped_diving := false
+	while model.outcome == ReelModel.Outcome.NONE and model.steps < ReelBot.LIMIT_STEPS:
+		model.holding = bot.decide(model, events) or model.diving()
+		events = model.step()
+		if "snap" in events:
+			snapped_diving = model.phase == ReelModel.Phase.DIVE
+	assert_eq(int(model.outcome), ReelModel.Outcome.SNAPPED, "dalışta basılı tutan misinayı koparır")
+	assert_true(snapped_diving, "misina dalışta kopar")
 
 
 ## Gölün Bekçisi'ni kusursuz oyuncu da 0,4 ve 0,7 sn tepkili oyuncu da tutar (ilk dip kamışıyla ve en iyi dip
-## takımıyla); 0,4 sn tepkiyle çekişme Normal'de 35–55, Kolay'da 25–45 sn (docs/gdd.md §5).
+## takımıyla); 0,4 sn tepkiyle çekişme 35–55 sn (docs/gdd.md §5).
 func test_keeper_is_caught_by_good_and_slow_players() -> void:
 	var db := content()
 	for gear: GearStats in [_bottom_first_gear(), GearStats.best(db, "bottom")]:
-		for easy: bool in [false, true]:
-			for bot: Array in [[ReelBot.Style.PERFECT, 0.0], [ReelBot.Style.REACT, 0.4], [ReelBot.Style.REACT, 0.7]]:
-				var caught := 0
-				var total := 0.0
-				for i in RUNS:
-					var result := ReelBot.play(_keeper_model(gear, i, easy), ReelBot.make(bot[0], bot[1]))
-					if int(result["outcome"]) == ReelModel.Outcome.CAUGHT:
-						caught += 1
-						total += float(result["seconds"])
-				var name := "%s, %s, tepki %.1f" % [gear.items.get("rod", ""), "Kolay" if easy else "Normal", bot[1]]
-				assert_eq(caught, RUNS, name + ": Bekçi tutulur")
-				if is_equal_approx(float(bot[1]), 0.4):
-					assert_between(total / maxi(1, caught), 25.0 if easy else 35.0, 45.0 if easy else 55.0, name + ": süre")
+		for bot: Array in [[ReelBot.Style.PERFECT, 0.0], [ReelBot.Style.REACT, 0.4], [ReelBot.Style.REACT, 0.7]]:
+			var caught := 0
+			var total := 0.0
+			for i in RUNS:
+				var result := ReelBot.play(_keeper_model(gear, i), ReelBot.make(bot[0], bot[1]))
+				if int(result["outcome"]) == ReelModel.Outcome.CAUGHT:
+					caught += 1
+					total += float(result["seconds"])
+			var name := "%s, tepki %.1f" % [gear.items.get("rod", ""), bot[1]]
+			assert_eq(caught, RUNS, name + ": Bekçi tutulur")
+			if is_equal_approx(float(bot[1]), 0.4):
+				assert_between(total / maxi(1, caught), 35.0, 55.0, name + ": süre")

@@ -201,7 +201,7 @@ func test_pity_follows_the_conditions() -> void:
 func test_session_conditions() -> void:
 	var db := content()
 	var gear := GearStats.starter(db)
-	var session := FishingSession.new(db, SPOT, gear, 11, false, false, -1, PackedStringArray(OPEN_ALL))
+	var session := FishingSession.new(db, SPOT, gear, 11, false, -1, PackedStringArray(OPEN_ALL))
 	var rig := session.sim.rig
 	session.set_conditions(_cond("night", "rain"))
 	session.set_conditions({})
@@ -239,8 +239,8 @@ func test_session_conditions() -> void:
 func test_conditions_do_not_draw_dice() -> void:
 	var db := content()
 	var gear := GearStats.starter(db)
-	var a := FishingSession.new(db, SPOT, gear, 21, false, false, -1, PackedStringArray(OPEN_ALL))
-	var b := FishingSession.new(db, SPOT, gear, 21, false, false, -1, PackedStringArray(OPEN_ALL), _cond("evening"))
+	var a := FishingSession.new(db, SPOT, gear, 21, false, -1, PackedStringArray(OPEN_ALL))
+	var b := FishingSession.new(db, SPOT, gear, 21, false, -1, PackedStringArray(OPEN_ALL), _cond("evening"))
 	assert_eq(a.sim.shadows.size(), b.sim.shadows.size(), "aynı sayıda gölge")
 	for i in mini(a.sim.shadows.size(), b.sim.shadows.size()):
 		assert_eq(a.sim.shadows[i].pos, b.sim.shadows[i].pos, "%d. gölgenin yeri aynı" % i)

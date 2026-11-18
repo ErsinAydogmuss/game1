@@ -10,7 +10,7 @@ func test_roundtrip_keeps_every_field() -> void:
 	s.catches = 9
 	s.hint_step = 4
 	s.records = { "carp": { "count": 2, "best_cm": 61, "best_stars": 3, "first_unix": 1200, "released": 1 } }
-	s.settings = { "sfx": false, "easy": true, "locale": "tr" }
+	s.settings = { "sfx": false, "vibration": true, "locale": "tr" }
 	s.flags = { "seen_card": true }
 	s.character = "boy"
 	s.bucket = [{ "fish": "rudd", "size_cm": 22, "stars": 3 }]
