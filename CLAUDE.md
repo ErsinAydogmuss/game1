@@ -139,7 +139,7 @@ xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl
 #     düğmeler pasif); VAKİT + ile yeni gün ("Sabah oldu"dan sonra "Yeni gün!", yuva dolar, rozet); İSTEK BİTİR; rütbe 3'te
 #     yağmurlu günde yağmur isteği adayı; rehberin "Göl yaşıyor" sayfası; telefon oranında, --safe-inset=130, TR ve EN),
 #   tasks (Görevler: rütbe 1'de sağ üstte düğme, rozet yok; panel küçülmeden sığar: ilk adımlar 1/5, istekler kilitli;
-#     rütbe 2'yi getiren balıkla "Görev tamam: Rütbe 2'ye çık" ve rozet; iskelede rozetlerle ≤150 çizim (148); panelde
+#     rütbe 2'yi getiren balıkla "Görev tamam: Rütbe 2'ye çık" ve rozet (tek rozet: Görevler'de); iskelede ≤150 çizim (147); panelde
 #     bitmemiş adımlar ve istek kartları, rozet söner; değiştir panelden de; telefon oranında, --safe-inset=130, TR ve EN),
 #   secret (Gölün Sırrı: rütbe 2'de şişe yok; rütbe 3'te sazlıkta şişe (bildirim, haritada işaret, Dede; ≤150 çizim);
 #     dokun → mektup 1 (kâğıda kaydırmadan sığar, panel güvenli alanda), şişe gider, Dede yazanı tanır; defterde Gölün
