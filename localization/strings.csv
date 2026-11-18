@@ -71,7 +71,7 @@ UI_DEDE_TIP_3,"Let go when it thrashes, or the line snaps.","Balık çırpının
 UI_DEDE_TIP_4,A big shadow means a big fish.,"Büyük gölge, büyük balık demek."
 UI_DEDE_TIP_5,This lake has a secret... I'll tell you one day.,Bu gölün bir sırrı var... Bir gün anlatırım.
 UI_DEDE_TIP_6,"Be patient, kid. The lake is generous.","Sabırlı ol evlat, göl cömerttir."
-UI_DEDE_TIP_7,"Tap the clock, kid, and have tea with me: time flies.","Saate dokun evlat, benimle bir çay iç: vakit geçer."
+UI_DEDE_TIP_7,"Time flows by itself, kid. In a hurry? Tap the clock for tea.","Vakit kendi akar evlat. Acelen varsa saate dokun, çay iç."
 UI_DEDE_TIP_8,"Forgot something, kid? ""How to play?"" is in Settings.","Bir şey unutursan Ayarlar'a bak evlat: ""Nasıl oynanır?"" orada."
 UI_DEDE_TIP_SPIN,"Stop and go, kid: predators strike a lure that pauses.","Dur-kalk yap evlat: yırtıcı en çok duran yeme saldırır."
 UI_DEDE_TIP_TRAP,"A trap fills while you're away, but holds %d crayfish at most.","Tuzak sen yokken de dolar, ama %d kereviti geçmez."
@@ -501,10 +501,10 @@ UI_GUIDE_ZONE_DEEP_WATER,The deepest water and the biggest fish.,Gölün en deri
 UI_GUIDE_LIVING,A living lake,Göl yaşıyor
 UI_GUIDE_LIVING_LEAD,"Time flows and the weather turns. Tap the clock: today, tea and Dede's requests.","Saat akar, hava değişir. Saate dokun: bugün, çay ve Dede'nin istekleri."
 UI_GUIDE_TIME,Time of day,Vakit
-UI_GUIDE_TIME_TEXT,A day lasts %d minutes. Each time of day brings other fish; some come only at night.,Bir gün %d dakika. Her vakit başka balık gelir; bazıları yalnızca gece.
+UI_GUIDE_TIME_TEXT,Time passes by itself: a day lasts %d minutes. Some fish come only at night.,Vakit kendiliğinden akar: bir gün %d dakika. Bazı balıklar yalnızca gece gelir.
 UI_GUIDE_WEATHER,Weather,Hava
 UI_GUIDE_WEATHER_TEXT,"In the rain, fish come from farther away. Tap the clock to see tomorrow.",Yağmurda balık daha uzaktan gelir. Yarının havası için saate dokun.
-UI_GUIDE_TEA_TEXT,Have tea to skip to the next time of day. Catch a fish between cups.,"Çay iç, sonraki vakte geç. İki çay arasında bir balık tut."
+UI_GUIDE_TEA_TEXT,"Don't want to wait? Have tea to skip to the next time of day. Catch a fish between cups.","Beklemek istemezsen çay iç, sonraki vakte geç. İki çay arasında bir balık tut."
 UI_GUIDE_LOVE,Lake love,Göl sevgisi
 UI_GUIDE_LOVE_TEXT,"Release fish, pick up trash: the lake blooms, and each level brings rare fish more often.","Balık bırak, çöp topla: göl güzelleşir; her seviyede nadir balık biraz sıklaşır."
 UI_GUIDE_REQUESTS_TEXT,"%d small jobs a day for coins, points and love. Swap one each day.","Her gün %d küçük iş: para, puan ve sevgi verir. Günde birini değiştirebilirsin."
@@ -550,11 +550,12 @@ UI_MINUTES,%d min,%d dk
 UI_SECONDS,%d s,%d sn
 UI_DAY_DETAIL_rain,Stormy at night,Gece fırtına
 UI_DAY_DETAIL_fog,Morning and night,Sabah ve gece
+UI_DAY_FLOW,Time passes by itself: a day is %d min.,Vakit kendiliğinden akar: bir gün %d dk.
 UI_TEA_TITLE,Tea with Dede,Dede'yle çay
-UI_TEA_TO_morning,Morning comes while the tea brews.,Çay demlenirken sabah olur.
-UI_TEA_TO_noon,Noon comes while the tea brews.,Çay demlenirken öğle olur.
-UI_TEA_TO_evening,Evening comes while the tea brews.,Çay demlenirken akşam olur.
-UI_TEA_TO_night,Night falls while the tea brews.,Çay demlenirken gece olur.
+UI_TEA_TO_morning,"Don't want to wait? Morning comes while the tea brews.","Beklemek istemezsen: çay demlenirken sabah olur."
+UI_TEA_TO_noon,"Don't want to wait? Noon comes while the tea brews.","Beklemek istemezsen: çay demlenirken öğle olur."
+UI_TEA_TO_evening,"Don't want to wait? Evening comes while the tea brews.","Beklemek istemezsen: çay demlenirken akşam olur."
+UI_TEA_TO_night,"Don't want to wait? Night falls while the tea brews.","Beklemek istemezsen: çay demlenirken gece olur."
 UI_TEA_WAIT,"Catch a fish first, then we'll have tea.","Önce bir balık tut, sonra çay içeriz."
 UI_TEA_BUTTON,Have tea,Çay iç
 UI_DEDE_TEA,"Ah, that tea hit the spot! Back to fishing, kid.","Oh be, çay iyi geldi! Hadi evlat, olta suya."

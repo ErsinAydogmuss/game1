@@ -2,10 +2,11 @@ class_name DayPanel
 extends Dialog
 ## "Bugün" paneli (Dalga 4; docs/gdd.md §10.5, §10.7): üst ortadaki saat çipine dokununca açılır (olta
 ## boştayken). Üç kart:
-## - Şimdi: vaktin ikonu ve adı, saat, sonraki vakte kalan süre (gerçek dakika; panel açıkken saat durur);
+## - Şimdi: vaktin ikonu ve adı, saat, sonraki vakte kalan süre (gerçek dakika; panel açıkken saat durur), vaktin
+##   kendiliğinden aktığı (bir günün süresiyle);
 ## - Hava: bugünün ve yarının havası (önceden belli: gelir kuralı 4; yağmurlu günün gecesi fırtına, sisli
 ##   günde sis sabah ve gece);
-## - Dede'yle çay: sonraki vakte geçilir (ücretsiz; tea_requested, main kararmayla geçer). İki çay arasında
+## - Dede'yle çay: beklemeden sonraki vakte geçilir (ücretsiz; tea_requested, main kararmayla geçer). İki çay arasında
 ##   en az bir balık tutulmalı (WorldState.can_tea): yoksa düğme pasif, Dede'nin sözü "Önce bir balık tut".
 ## - Göl sevgisi (çayın yanında): seviye, çubuk, Nadir+ payı, nasıl artar.
 ## - Dede'nin istekleri (rütbe 2'den sonra; Requests): yuva başına bir kart: ikon, ne istendiği, ilerleme
@@ -118,7 +119,8 @@ func refresh() -> void:
 		_requests_box.add_child(_request_card(db, save, slot))
 
 
-## Şimdi: vaktin ikonu ve adı, saat ("18:24"), sonraki vakte kalan süre ("Geceye 3 dk").
+## Şimdi: vaktin ikonu ve adı, saat ("18:24"), sonraki vakte kalan süre ("Geceye 3 dk") ve vaktin kendiliğinden
+## aktığı ("bir gün 24 dk").
 func _now_card(rules: FishingRules, save: SaveData, phase: String) -> Control:
 	var panel := _card("NowCard")
 	var row := HBoxContainer.new()
@@ -141,6 +143,10 @@ func _now_card(rules: FishingRules, save: SaveData, phase: String) -> Control:
 			UiKit.SIZE_SMALL, UiKit.INK_SOFT)
 	until.name = "Until"
 	text.add_child(until)
+	# Testçi: "çay içilmese de gün dönecek mi?": vakit kendiliğinden akar, çay yalnızca beklemeyi atlatır.
+	var flow := UiKit.ink(tr("UI_DAY_FLOW") % roundi(DayClock.day_s(rules) / 60.0), 24, UiKit.INK_SOFT)
+	flow.name = "Flow"
+	text.add_child(flow)
 	return panel
 
 
