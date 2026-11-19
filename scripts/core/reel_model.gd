@@ -18,6 +18,8 @@ extends RefCounted
 ## - İri tür (fight.heavy): boy yüzdeliği sakin çekişi size_pull kadar artırır (yine sınırın
 ##   altında). Yıldızı takımın taşımasını (carry) aşan balık fazla iridir (excess = fazla yıldız):
 ##   sakinken de basılı tutmak kırmızıya çıkar, patlama sertleşir, bırakınca daha hızlı uzaklaşır.
+## - Takım isteyen balık (fight.gear; Gölün Bekçisi: en iyi dip kamışı, makara ve misina): biri kuşanılmamışsa
+##   fazla iri gibi (excess en az 1): tutulamaz (testçi: "bütün takım full olmadan tutulmamalı").
 ## - Dalışlar (fight.stages; Gölün Bekçisi): balık takıldığı uzaklığın bu paylarına yaklaşınca, sakin
 ##   evredeyse, "dive_warn" (dive_warn_steps uyarı) ve "dive" gelir: dalış boyunca bırakınca balık dive_run
 ##   hızla uzaklaşır (en çok kaçma sınırının DIVE_MARGIN içine), basılı tutunca gerilim dive_pull'a (sınırın
@@ -112,6 +114,8 @@ func _init(rules: FishingRules, fight: Dictionary, reel_speed: float, start_dist
 	if bool(fight.get("heavy", false)):
 		_pull += rules.size_pull * float(clampi(percentile, 0, Dice.PPM)) / Dice.PPM
 	excess = excess_for(fight, percentile, carry)
+	if gear != null and not missing_gear(fight, gear).is_empty():
+		excess = maxi(excess, 1)
 	_strained_pull = _pull
 	_strained_burst = _burst_pull
 	_strained_drift = _drift
@@ -249,6 +253,16 @@ static func excess_for(fight: Dictionary, percentile: int, carry: int) -> int:
 	if not bool(fight.get("heavy", false)):
 		return 0
 	return maxi(0, FishTable.stars(percentile) - carry)
+
+
+## Balığın istediği takımdan (fight.gear) kuşanılmamış olanlar, verideki sırayla (yoksa boş).
+static func missing_gear(fight: Dictionary, gear: GearStats) -> Array[String]:
+	var out: Array[String] = []
+	var have := gear.items.values() if gear != null else []
+	for id: String in (fight.get("gear", PackedStringArray()) as PackedStringArray):
+		if not id in have:
+			out.append(id)
+	return out
 
 
 ## Kopmaya ne kadar yakın (0..1; sunumdaki kırmızı dolgu).

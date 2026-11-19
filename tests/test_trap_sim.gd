@@ -258,8 +258,12 @@ func test_shop_shows_the_next_trap() -> void:
 	assert_eq(str(TrapSim.next_trap(db, save)["id"]), "trap_2", "sonra ikincisi")
 	save.owned.append("trap_2")
 	save.owned.append("trap_3")
-	assert_eq(str(TrapSim.next_trap(db, save)["id"]), "trap_3", "hepsi alınınca sonuncusu (sende)")
-	assert_eq(TrapSim.owned(db, save), 3, "en çok 3 tuzak")
+	assert_eq(str(TrapSim.next_trap(db, save)["id"]), "trap_4", "üçüncüden sonra dördüncü (testçi: en az 6)")
+	for id: String in ["trap_4", "trap_5", "trap_6"]:
+		save.owned.append(id)
+	assert_eq(TrapSim.owned(db, save), 6, "altı tuzak")
+	assert_eq(str(TrapSim.next_trap(db, save)["id"]), "trap_6", "hepsi alınınca sonuncusu (sende)")
+	assert_true(SaveData.MAX_TRAPS >= 6, "kayıt altı tuzağı tutar")
 
 
 func test_crayfish_comes_with_bottom_and_traps_only() -> void:
@@ -271,3 +275,32 @@ func test_crayfish_comes_with_bottom_and_traps_only() -> void:
 		assert_true(share > 0.03 and share < 0.15, "%s: dipte arada kerevit (%%%.1f)" % [zone, share * 100.0])
 		var float_odds := CatchOdds.species_ppm(db, place, { "technique": "float" })
 		assert_true(not float_odds.has("crayfish"), "%s: şamandırayla kerevit gelmez" % zone)
+
+
+## Testçi: "üçünü sazlığa kurdum, kayalığa kuramadım". Bütün tuzaklar kuruluyken tuzak kurulan bölgede çantanın
+## düğmesi BURAYA TAŞI (en eskisi gelir), tuzak kurulmayan bölgede HEPSİ KURULU; altı tuzağın hepsi iki bölgede
+## yer bulur (kayıt altısını tutar).
+func test_all_set_offers_a_move_where_traps_go() -> void:
+	var db := content()
+	var save := _save(1)
+	_placed(save)
+	assert_eq(TechniquePanel.trap_state(db, save, SPOT, "rocky_point"), "move", "kayalık burunda taşı")
+	assert_eq(TechniquePanel.trap_state(db, save, SPOT, "reeds"), "move", "sazlıkta da taşı")
+	assert_eq(TechniquePanel.trap_state(db, save, SPOT, "dock_cove"), "set", "iskelede hepsi kurulu")
+	assert_eq(TechniquePanel.trap_state(db, save), "set", "bölgesiz: hepsi kurulu")
+	# Balıkçı kıyıda biraz yürüyünce (atış noktasının iki yanı) altı tuzak iki bölgede yer bulur.
+	var six := _save(6)
+	var lake := db.lake(SPOT)
+	var placed := 0
+	for zone: String in ["reeds", "rocky_point"]:
+		for offset: Vector2 in [Vector2.ZERO, Vector2(3, 0), Vector2(-3, 0), Vector2(0, 3), Vector2(5, 0), Vector2(-5, 0)]:
+			var at := _stand(zone) + offset
+			if placed >= 6 or not lake.in_world(at) or lake.is_water(at):
+				continue
+			var p := TrapSim.spot_near(db, six, SPOT, zone, at, Vector2(0, -1))
+			if Dice.is_point(p):
+				TrapSim.place(db, six, SPOT, zone, p, T0)
+				placed += 1
+	assert_eq(placed, 6, "altı tuzak sazlıkta ve kayalık burunda yer bulur")
+	var copy := SaveData.from_dict(six.to_dict())
+	assert_eq(copy.traps.size(), 6, "kayıt altı tuzağı tutar")

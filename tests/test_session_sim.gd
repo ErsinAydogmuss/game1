@@ -36,7 +36,6 @@ const PACING := [
 	# test_pacing_guard_rails ayrıca denetler (BEFORE).
 	["buy:line_mono", 0.0, 25.0],
 	["buy:bucket_big", 25.0, 70.0],
-	["buy:net", 120.0, 220.0],
 	["buy:boat", 90.0, 180.0],     # rütbe 9 + biriktirme (90–180)
 	["buy:rod_spin_light", 4.0, 10.0], # spin rütbe 2'de: ilk kamışı (150) öncelikli
 	["tech:spin", 4.0, 12.0],      # spinle ilk atış
@@ -77,8 +76,6 @@ const PACING := [
 	["piece_4", 110.0, 200.0],
 	["dough", 120.0, 240.0],
 	["final_ready", 120.0, 240.0],
-	# Final (6. adım): final gecesinde (en geç bir oyun günü sonra) gece sandalla X'e, dipte Bekçi.
-	["keeper", 120.0, 270.0],
 ]
 ## Geç olaylar (LATE_MINUTES'a kadar). Ay Turnası yalnızca gece nilüferli koyda (gecede %0,4–2,5): bot her gece
 ## oraya gider ama gelmesi şansa bağlı. Dalga 5'te akvaryumun parası alışverişleri öne alınca seed 1000'de 185.
@@ -88,6 +85,12 @@ const LATE := [
 	# Tekir'in hediyeleri bitince seed 1000'de 206 → 402 dk, istek yuvaları 5 olunca 649 ve 1077'de 428 dk (ötekiler
 	# 27–230; bot nilüferli koyda önceden daha çok vakit geçirse de zar).
 	["fish:moon_pike", 20.0, 720.0],
+	# Final (6. adım): final gecesinde (en geç bir oyun günü sonra) gece sandalla X'e, dipte Bekçi. Yapı 4'te Bekçi en
+	# iyi dip takımını ister (altın makara rütbe 14, 10.000 para; altın örgü 9.000): bot final hazırken onlara
+	# biriktirir (shop), 6 seed'de 331–364. dakikada (önce 152–209). Biriktirirken öteki alışverişler bekler: kepçe
+	# 136–360 (önce 159–172).
+	["keeper", 150.0, 420.0],
+	["buy:net", 120.0, 420.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.
@@ -124,9 +127,6 @@ func test_pacing_guard_rails() -> void:
 			assert_true(sim.milestones.has(key), "seed %d: %s %d dk içinde hiç olmadı" % [seed_value, key, int(MINUTES)])
 			if sim.milestones.has(key):
 				assert_between(float(sim.milestones[key]), row[1], row[2], "seed %d: %s (dk)" % [seed_value, key])
-		for pair: Array in BEFORE:
-			assert_true(float(sim.milestones.get(pair[0], INF)) <= float(sim.milestones.get(pair[1], -INF)),
-					"seed %d: %s, %s'den önce" % [seed_value, pair[0], pair[1]])
 		var hours := sim.elapsed / 3600.0
 		assert_between(sim.earned / hours, 2500.0, 6500.0, "seed %d: saatte para" % seed_value)
 		assert_between(sim.catches / hours, 120.0, 280.0, "seed %d: saatte av" % seed_value)
@@ -136,6 +136,10 @@ func test_pacing_guard_rails() -> void:
 			assert_true(sim.milestones.has(key), "seed %d: %s %d dk içinde hiç olmadı" % [seed_value, key, int(LATE_MINUTES)])
 			if sim.milestones.has(key):
 				assert_between(float(sim.milestones[key]), row[1], row[2], "seed %d: %s (dk)" % [seed_value, key])
+		# Sıra (geç olaylar da: Bekçi) LATE_MINUTES'tan sonra denetlenir.
+		for pair: Array in BEFORE:
+			assert_true(float(sim.milestones.get(pair[0], INF)) <= float(sim.milestones.get(pair[1], -INF)),
+					"seed %d: %s, %s'den önce" % [seed_value, pair[0], pair[1]])
 
 
 ## Dede'nin istekleri: bot rütbe 2'de istek alır, biten istekler öder (para kazanca girer), günde en çok bir

@@ -50,7 +50,7 @@ Göl büyük ve bölgelere ayrılmış: iskele koyu, sazlık, nilüferli koy, ka
 - ✅ **Spin:** atınca yapay yem düşer. Basılı tut = yem sana gelir (makara tıkırdar, arkasında iz), bırak = durur ve batar. Yırtıcı peşine düşünce dur-kalk yap. Saldırı anında basılıysa balık kendiliğinden takılır, değilse VUR! (0,6 sn). Eylem düğmesi beklerken SAR yazar.
 - ✅ **Dip:** dokunduğun yöne uzağa at, olta sehpaya konur. Zil tek tük çalarsa balık kokluyor: dokunma (kaçar; düğme BEKLE). Zil durmadan çalıp misina akınca ekranın her yerine dokun: VUR! (2,5 sn). Beklerken dokunmak oltayı geri sarar (düğme GERİ SAR).
 - ✅ **Sinek** (yalnızca dere ağzında): akıntıya at, sinek akıntıyla sürüklenir (düğme GERİ SAR). Alabalık sineğin altına gelince bekle (dokunursan kaçar; düğme BEKLE). Halka çıkınca hemen dokun: VUR! (0,5 sn). Durgun suya düşen sinek kımıldamaz, kendiliğinden döner.
-- ✅ **Kerevit tuzağı** (sazlıkta ve kayalık burunda): Takım Çantası'nın altındaki satırda TUZAK BIRAK → tuzak yakındaki sığ suya atılır. Turuncu şamandırasına dokun → içindekiler toplanır (uzaktaysan balıkçı önce yürür); boşsa küçük bir panel: BEKLE ya da KALDIR.
+- ✅ **Kerevit tuzağı** (sazlıkta ve kayalık burunda): Takım Çantası'nın altındaki satırda TUZAK BIRAK → tuzak yakındaki sığ suya atılır. Turuncu şamandırasına dokun → tuzağın paneli (uzaktaysan balıkçı önce yürür): TOPLA (boşsa BEKLE) ya da KALDIR. En çok 6 tuzak; hepsi kuruluyken çantada BURAYA TAŞI: en eski tuzak buraya gelir.
 
 **Mac:** tıkla (yürü, at), WASD (yürü), Space (VUR; basılı tutunca sar).
 
@@ -218,6 +218,11 @@ Bütün sayılar `data/*.json`'da ve testlerde. Telefonda denendikçe ayarlanır
   - fazla iriyi iyi oyuncu en çok %5, kusursuz pompalayan en çok %25 tutar (ölçüm: %0);
   - o yıldızı taşıyan takımla iyi oyuncu en az %90 tutar;
 - **Gölün Bekçisi** (Dalga 4, final; `fight.stages`, §10.5): iri tür değil (takımın taşıması aranmaz), iki dalışı var.
+  - ✅ **En iyi dip takımını ister** (yapı 4; testçi: "ikinci dip kamışı, örgü misina ve orta makarayla kolayca tuttum"):
+    usta dip kamışı, altın makara ve altın örgü (`fight.gear`; `ReelModel.missing_gear`). Biri eksikse fazla iri balık
+    gibi çekişir: belirir, takılır ama getirilemez, misina kopar. Belirince Dede "bu takım onu taşımaz: en iyi dip
+    takımı lazım" der, kaçınca eksikleri sayar (`Economy.gear_for_fish`: Nine'den alınacaklar, sende olup
+    takılacaklar, rütbe). Altın makara rütbe 14'te: final en erken rütbe 14'te biter.
   - Balık takıldığı uzaklığın %60'ına ve %30'una gelince, sakinse, 1,2 sn uyarır: turkuaz halka, gıcırtı, titreşim,
     ipucu "BIRAK! Bekçi dalıyor!".
   - Sonra 2–2,6 sn dalar: bırakınca 1,8 m/sn uzaklaşır (en çok kaçış sınırının 0,5 m içine, kaçmaz); basılı tutunca
@@ -612,7 +617,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 | Spin | Basılı tut = yem gelir, bırak = durur ve batar. Yırtıcı yemi kovalar; "dur-kalk" ritmiyle saldırır. Saldırı anında basılıysa balık kendiliğinden takılır, değilse kısa VUR anı. Otlu ve kayalık yerde uzun bekleyen yem takılır (yalnızca zaman kaybı). | spin kamışı, makara, yapay yem | rütbe 2 |
 | Dip | Uzağa at, olta sehpaya konur. Zil: tek tük bip = balık kokluyor; sürekli bip ve misina akıyor = koşu → dokun. İri balık, uzun çekişme. | dip kamışı (sehpası ve zili onunla), kurşun ya da yem sepeti, yem | rütbe 4 |
 | Sinek | Yalnızca dere ağzında. Akıntıya at, sinek sürüklenir; halka çıkınca 0,5 sn içinde dokun. Alabalık çevik ve sıçrar; dere alabalığı iri tür. | sinek kamışı, sinek | rütbe 7 |
-| Kerevit tuzağı ✅ | Sığ kıyıya bırak. Oyunda değilken de dolar: 20 dk'da bir, en çok 4. İçi bırakılırken belirlenir. | tuzak (en çok 3) | rütbe 3 |
+| Kerevit tuzağı ✅ | Sığ kıyıya bırak. Oyunda değilken de dolar: 20 dk'da bir, en çok 4. İçi bırakılırken belirlenir. | tuzak (en çok 6; yapı 4'ten önce 3) | rütbe 3 |
 
 - ✅ **Teknik altyapısı (Dalga 3):** tekniğin ısırmaya kadarki kuralları bir strateji sınıfında (`Technique`: şamandıra `FloatTechnique`, spin `SpinTechnique`, dip `BottomTechnique`, sinek `FlyTechnique`); sayıları `rules.json` `techniques` (şamandıranınki üst bölümlerden). Teknik yalnızca olta boştayken değişir; değişince gölgeler yeni tekniğin oranıyla yeniden doğar. Şamandıra bit bit eskisi gibi (altın test).
 - ✅ **Tür yatkınlığı** (`fish.json` `affinity`): şamandırada bütün türler 1. Spin yalnızca yırtıcıları çağırır: sudak 2, turna 1,4, levrek 1, tatlısu kefali 0,7, alabalık 0,6, dere alabalığı 0,4, yayın 0,1 (8. adımda; önce sudak 0,9, turna 0,8, yayın 0,25). Defter ve dükkân oranı elindeki tekniğe göre gösterir.
@@ -650,8 +655,17 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - **Dolma** (`TrapSim`): gerçek saatle, oyun kapalıyken de; 20 dakikada bir kerevit girer, en çok 4 (boşta biriken gelir üst sınırda durur; gelir kuralı 7). İçindekiler tuzak kurulunca zarlanır ve bekler (gelir kuralı 4; tuzağın zarı `trap_serial`'dan); parayla hızlandırma yok. Saat geri alınırsa bir şey kaybolmaz ya da kazanılmaz (yalnızca dayanak yenilenir); ileri alınırsa en çok 4. Oyun her saniye ve öne gelince dolmayı yeniler.
   - **Görünüm:** suda turuncu bir şamandıra (beyaz bant, sırık, küçük kırmızı bayrak; tek ağ, gölgesiz; suyla iner kalkar) ve üstünde 2B rozet: kerevit resmi ve "2/4"; boşken soluk, kerevit varken altın, dolunca yeşil ve nabız gibi atar. Haritada tuzakların küçük işareti.
   - **Toplama:** şamandıraya ya da rozete dokun (yakındaysa hemen; 5 m'den uzaksa balıkçı kıyı yolundan yürür, varınca toplar). Kerevitler kovaya, deftere ve rütbe puanına girer (şans garantisi sayaçları ilerlemez); tuzak yeniden kurulur (içeriği yeniden zarlanır), artan süre sonraki kereviti bekler. En irisi elde gösterilir (kodla kurulan kerevit: kabuk, halkalı kuyruk, kıskaçlar, bacaklar, duyargalar; sırtı kameraya dönük), adının üstünde kaç tane olduğu ("Kerevit ×3"); ilk kerevitte yeni tür kartı (Ersin'in kerevit resmiyle). Kova doluysa toplanmaz ("Kova dolu: kerevitler tuzakta bekliyor", Dede Nine'yi söyler); kova toplarken dolarsa kalanı tuzakta bekler (kayıp yok).
-  - **Boş tuzak:** dokununca küçük panel: sıradaki kerevitin kaç dakika sonra gireceği, BEKLE ya da KALDIR (tuzak çantaya döner; henüz girmemiş kerevitler silinir, yeniden kurulan tuzağın içi yeniden zarlanır). Panel açıkken kerevit girerse "Tuzağa bir kerevit girdi!" yazar ve KALDIR TOPLA olur (kerevit girmiş tuzak kaldırılmaz, toplanır). Tuzaktan ilk kerevitin kartı açılana kadar (0,9 sn) dokunuşlar atış ya da yürüyüş olmaz.
-  - **Takım:** 3 tuzak, Ekstra sekmesinde tek kart (sıradaki): kerevit tuzağı 150 para / rütbe 3, ikinci tuzak 400 / 3, üçüncü tuzak 1.000 / 5 (8. adımda; önce 250 / 600 / 1.500). Nine alınca "Takım çantandan sığ suya bırak evladım." der.
+  - ✅ **Tuzağın paneli** (yapı 4; testçi: "kurulan tuzak geri alınmıyor"): şamandıraya dokununca her zaman panel açılır
+    (uzaktaysa balıkçı yürür, varınca): "Tuzakta 2 kerevit var." ya da sıradaki kerevitin süresi; KALDIR ve TOPLA (boşsa
+    BEKLE). Kerevitli tuzak da kaldırılır: önce kerevitler kovaya (kova hepsini almıyorsa kaldırılmaz: "Kova dolu: önce
+    sat, sonra tuzağı kaldır."), sonra tuzak çantaya. Tuzak balıkçının hemen önüne düşüp ekranda başının üstünde göründüğü için
+    dokunma sırasında şişe ve tuzak balıkçıdan (dolap) önce gelir.
+  - ✅ **Taşıma** (yapı 4; testçi: "üçünü sazlığa kurdum, kayalığa kuramadım"): bütün tuzaklar kuruluyken tuzak kurulan
+    bir bölgede çantanın tuzak satırı BURAYA TAŞI der ("Hepsi kurulu: en eski tuzağın buraya gelir, içindeki kerevitler
+    kovaya."): en eski tuzak (ilk kurulan) kalkar, kerevitleri kovaya girer, buraya uçar; "Tuzak buraya taşındı".
+    Yer, eski tuzak çekilmiş gibi aranır; yer yoksa nedeni bildirilir.
+  - **Boş tuzak** (yapı 3'e kadarki hâli; yapı 4'te yukarıdaki panel): dokununca küçük panel: sıradaki kerevitin kaç dakika sonra gireceği, BEKLE ya da KALDIR (tuzak çantaya döner; henüz girmemiş kerevitler silinir, yeniden kurulan tuzağın içi yeniden zarlanır). Panel açıkken kerevit girerse "Tuzağa bir kerevit girdi!" yazar ve KALDIR TOPLA olur (kerevit girmiş tuzak kaldırılmaz, toplanır). Tuzaktan ilk kerevitin kartı açılana kadar (0,9 sn) dokunuşlar atış ya da yürüyüş olmaz.
+  - **Takım:** 6 tuzak (yapı 4; testçi "en az 6 olmalı"; önce 3), Ekstra sekmesinde tek kart (sıradaki): kerevit tuzağı 150 para / rütbe 3, ikinci tuzak 400 / 3, üçüncü tuzak 1.000 / 5 (8. adımda; önce 250 / 600 / 1.500), dördüncü 1.500 / 6, beşinci 2.500 / 8, altıncı 4.000 / 10. Nine alınca "Takım çantandan sığ suya bırak evladım." der.
   - **Kerevit:** Sıradan, 10 para (8. adımda; önce 6), 6–14 cm. Tuzak tablosu sazlıkta ve kayalık burunda; dipte de arada gelir (yeme göre sazlıkta %2,6–5,5, kayalık burunda %4,8–9,2), şamandırayla gelmez.
   - **Açılış:** rütbe 3'te bildirim ("Yeni: kerevit tuzağı!", tuzağın ikonuyla), Dede "Kerevit tuzağa kendi girer evlat. Nine tuzak satıyor!" der, teknik düğmesi nabız gibi atar. Aynı anda bir bölge (rütbe 3'te nilüferli koy) ya da teknik açılırsa Dede önce onu söyler; tuzağın sözü sonraki balıkta (tuzak o zamana dek alınmadıysa).
   - **Sesler:** bırakma (iri plop, tel kafes tıkırtısı, batan kabarcıklar) ve toplama (şıpırtı, damlalar, kerevitlerin tıkırtısı); her birinin titreşimi var.
@@ -1057,6 +1071,8 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
        titreşim, "Gölün Bekçisi geldi!", Dede'nin sözü ("İşte o, Gölün Bekçisi! Zil çalınca vur evlat!") ve Bekçi'nin
        müziği. Gündüz X'te Dede "Bekçi gece gelir evlat. Çay içip geceyi bekleyelim." der; elde dip yoksa "Altın hamur
        dipte işe yarar evlat: dip kamışını al!".
+     - ✅ En iyi dip takımı şart (yapı 4, §5): usta dip kamışı, altın makara, altın örgü. Eksikse Bekçi yine belirir
+       ama misina kopar; Dede eksikleri söyler. Defterin ipucu ve haritanın X notu da takımı yazar.
      - Takıma yalnızca o gelir: o gece X'te öteki balıklar dibe atılan yemi kapmaz (Bekçi belirmeden, kaçıp dönmeden
        de; ilk denemede belirmeden önceki 1,6 sn'de yakındaki bir balık yemi kapıyordu); korkmaz, vazgeçmez, boyu hep
        aynı (~5,2 m, 5★). Koklarken

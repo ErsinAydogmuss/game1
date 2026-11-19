@@ -241,6 +241,35 @@ static func gear_for_stars(db: ContentDB, save: SaveData, stars: int, technique:
 	return { "buy": buy, "equip": equip, "rank": rank }
 
 
+## Kaçan balık için eksik takım (Dede'nin öğüdü): gear_for_stars ile aynı biçim, üstüne türün istediği takım
+## (fish.json fight.gear: Gölün Bekçisi en iyi dip kamışı, makara ve misina): kuşanılmamışsa sendeyse equip,
+## değilse buy (rütbesi yetmiyorsa rank). İstenen takımın yuvasında yıldız öğüdünün seçtiği eşya düşer.
+static func gear_for_fish(db: ContentDB, save: SaveData, fish_id: String, stars: int, technique: String = "float") -> Dictionary:
+	var advice := gear_for_stars(db, save, stars, technique)
+	var need: PackedStringArray = (db.fish_by_id(fish_id).get("fight", {}) as Dictionary).get("gear", PackedStringArray())
+	if need.is_empty():
+		return advice
+	var buy: Array[String] = advice["buy"]
+	var equip: Array[String] = advice["equip"]
+	var rank := int(advice["rank"])
+	var my_rank := Rank.rank(db, save)
+	for id in need:
+		var slot := str(db.gear_item(id)["category"])
+		for list: Array[String] in [buy, equip]:
+			for i in range(list.size() - 1, -1, -1):
+				if str(db.gear_item(list[i])["category"]) == slot:
+					list.remove_at(i)
+		if equipped(db, save, slot, technique) == id:
+			continue
+		if owns(db, save, id):
+			equip.append(id)
+		else:
+			buy.append(id)
+			if my_rank < int(db.gear_item(id)["rank"]):
+				rank = maxi(rank, int(db.gear_item(id)["rank"]))
+	return { "buy": buy, "equip": equip, "rank": rank }
+
+
 ## Balık oltaya takılınca yem harcanır (atışta değil: kaçan gölge yemi yemez). Yapay yem ve sinek
 ## tükenmez.
 static func use_bait(db: ContentDB, save: SaveData, technique: String = "float") -> void:

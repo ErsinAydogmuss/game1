@@ -171,7 +171,10 @@ func _rise(session: FishingSession, save: SaveData) -> bool:
 	# Bildirimde Bekçi'nin sudaki kuşbakışı resmi (Parti 5a keeper_top; yoksa Masalsı rozeti).
 	var icon := "item:keeper_top" if ItemArt.item("keeper_top") != null else "rarity:medallion"
 	hud.toast(tr("UI_KEEPER_RISE"), UiKit.rarity_color(db, db.rarity_index("mythic")), icon)
-	if _lost_tonight:
+	# Takım eksikse (fight.gear: en iyi dip kamışı, makara ve misina) Dede baştan söyler: bu takım onu taşımaz.
+	if not ReelModel.missing_gear(db.fish_by_id(Secret.KEEPER_ID)["fight"], session.gear).is_empty():
+		speak.emit("UI_DEDE_KEEPER_WEAK")
+	elif _lost_tonight:
 		speak.emit("UI_DEDE_KEEPER_BACK")
 	elif save.keeper > 0:
 		speak.emit("UI_DEDE_KEEPER_AGAIN")

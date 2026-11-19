@@ -188,6 +188,8 @@ var technique_panel: TechniquePanel
 var loadout_panel: LoadoutPanel
 ## Boş tuzağın paneli (bekle ya da kaldır).
 var trap_panel: TrapPanel
+## Atılan tuzak taşınan tuzak mı (düşünce "Tuzak buraya taşındı").
+var _trap_moved := false
 var aquarium_panel: AquariumPanel
 var wardrobe_panel: WardrobePanel
 ## Fotoğraf modu (Dalga 5): Ayarlar'dan ya da balık kartından; açıkken oyun donar (_panel_open), arayüz gizli.
@@ -864,6 +866,12 @@ func _build_input() -> void:
 	input.hit_targets = [
 		# Tekir küçük ve dar dokunma alanlı: Dede'den önce (Dede'nin yanında oturabilir).
 		["cat", func(screen: Vector2) -> bool: return not in_boat and cat.hit(camera, screen)],
+		# Şişe ve tuzak küçük: balıkçıdan önce (bırakılan tuzak balıkçının hemen önüne düşer, ekranda başının
+		# üstünde görünür; yoksa ona dokunmak dolabı açardı).
+		["bottle", func(screen: Vector2) -> bool: return bottle.hit(camera, screen)],
+		["trap", func(screen: Vector2) -> bool:
+			_trap_tap = -1 if in_boat else traps.hit(camera, screen)
+			return _trap_tap >= 0],
 		# Balıkçının kendisi: dolap (sandalda değil: orada her dokunuş atış).
 		["angler", func(screen: Vector2) -> bool: return not in_boat and angler.hit(camera, screen)],
 		["dede", func(screen: Vector2) -> bool: return elder.hit(camera, screen)],
@@ -871,10 +879,6 @@ func _build_input() -> void:
 		["aquarium", func(screen: Vector2) -> bool: return shop.tank_hit(camera, screen)],
 		["shop", func(screen: Vector2) -> bool: return nine.hit(camera, screen) or shop.hit(camera, screen)],
 		["boat", func(screen: Vector2) -> bool: return not in_boat and scene.boat_hit(camera, screen)],
-		["bottle", func(screen: Vector2) -> bool: return bottle.hit(camera, screen)],
-		["trap", func(screen: Vector2) -> bool:
-			_trap_tap = -1 if in_boat else traps.hit(camera, screen)
-			return _trap_tap >= 0],
 	]
 	input.targets_active = func() -> bool: return session.state == FishingSession.State.IDLE and not _card_up()
 	add_child(input)
@@ -1333,7 +1337,7 @@ func _on_event(e: Dictionary) -> void:
 func _on_lost(reason: String, too_big: int = 0) -> void:
 	_stop_loops()
 	if too_big > 0 and reason in ["snapped", "escaped"]:
-		_advise_gear(too_big)
+		_advise_gear(too_big, str(session.last_lost.get("fish", "")))
 	match reason:
 		"missed":
 			hud.toast(tr("UI_MISSED"), UiKit.BAD)
@@ -2821,9 +2825,11 @@ func _say(key: String, speaker: String = "dede", args: Array = []) -> void:
 
 
 ## Fazla iri balık kaçtı: Dede eksik takımı adıyla söyler: Nine'den alınacak, sende olup takılacak
-## ya da Nine'nin onu hangi rütbede sattığı. Adlar her gösterişte o anki dilde kurulur.
-func _advise_gear(stars: int) -> void:
-	var advice := Economy.gear_for_stars(GameState.db, GameState.save, stars, session.technique.id)
+## ya da Nine'nin onu hangi rütbede sattığı. Takım isteyen balıkta (Gölün Bekçisi) istediği takım da
+## (Economy.gear_for_fish). Adlar her gösterişte o anki dilde kurulur.
+func _advise_gear(stars: int, fish_id: String = "") -> void:
+	var advice := Economy.gear_for_fish(GameState.db, GameState.save, fish_id, stars, session.technique.id) \
+			if not fish_id.is_empty() else Economy.gear_for_stars(GameState.db, GameState.save, stars, session.technique.id)
 	var buy: Array[String] = advice["buy"]
 	var equip: Array[String] = advice["equip"]
 	if buy.is_empty() and equip.is_empty():
@@ -2848,7 +2854,12 @@ func _gear_list(ids: Array[String]) -> String:
 	for id in ids:
 		var gear_name := tr("GEAR_" + id)
 		names.append(gear_name.left(1).to_lower() + gear_name.substr(1))
-	return names[0] if names.size() == 1 else tr("UI_LIST_AND") % [names[0], names[1]]
+	if names.size() == 1:
+		return names[0]
+	# Üç ve üstü: "a, b ve c" (son ikisi UI_LIST_AND ile).
+	var head := ", ".join(PackedStringArray(names.slice(0, names.size() - 2)))
+	var tail: String = tr("UI_LIST_AND") % [names[-2], names[-1]]
+	return tail if head.is_empty() else head + ", " + tail
 
 
 ## Dünyadaki bir hedefe dokunuldu (InputRouter.hit_targets).
@@ -3170,10 +3181,18 @@ func _place_trap() -> void:
 		Sounds.play("error")
 		Sounds.haptic(30)
 		return
+	_trap_moved = false
+	_throw_trap(p)
+
+
+## Tuzak p'ye atılır (bırakma ve taşıma): atış hareketi, içerik o an belli olur (TrapSim.place), tuzak uçar.
+func _throw_trap(p: Vector2) -> void:
+	var db := GameState.db
+	var save := GameState.save
 	angler.stop()
 	_pending_cast = Dice.NO_POINT
 	_forget_pickups()
-	angler.face(p - at)
+	angler.face(p - angler.pos2())
 	angler.play_cast()
 	var trap := TrapSim.place(db, save, spot_id, zone_id, p, GameState.clock.now_unix())
 	GameState.save_game()
@@ -3188,14 +3207,18 @@ func _on_trap_landed(at: Vector2) -> void:
 	ripples.spawn(at, 1.0, 0.8)
 	Sounds.play("trap_place")
 	Sounds.haptic(30)
-	hud.toast(tr("UI_TRAP_PLACED") % roundi(GameState.db.rules.trap_fill_s / 60.0), UiKit.SUCCESS, "tech_trap")
+	if _trap_moved:
+		hud.toast(tr("UI_TRAP_MOVED"), UiKit.SUCCESS, "tech_trap")
+	else:
+		hud.toast(tr("UI_TRAP_PLACED") % roundi(GameState.db.rules.trap_fill_s / 60.0), UiKit.SUCCESS, "tech_trap")
+	_trap_moved = false
 	if not GameState.save.flags.has("told_trap_first"):
 		GameState.save.flags["told_trap_first"] = true
 		_say("UI_DEDE_TRAP_FIRST")
 
 
-## Bir tuzağa dokunuldu (kıyıdayken): yakınsa toplanır; uzaktaysa balıkçı kıyı yolundan yürür, varınca
-## toplar.
+## Bir tuzağa dokunuldu (kıyıdayken): yakınsa paneli açılır (TOPLA ya da BEKLE, KALDIR; testçi: "kurulan tuzak
+## geri alınmıyor"); uzaktaysa balıkçı kıyı yolundan yürür, varınca açılır.
 func _on_trap_tapped(id: int) -> void:
 	if session.state != FishingSession.State.IDLE or _card_up():
 		return
@@ -3208,13 +3231,23 @@ func _on_trap_tapped(id: int) -> void:
 	Sounds.haptic(10)
 	if angler.pos2().distance_to(p) <= TRAP_REACH:
 		angler.stop()
-		_collect_trap(id)
+		_open_trap(id)
 		return
 	_pending_trap = id
 	_walk_route(p)
 
 
-## Yürüyüş bitti: bekleyen tuzağa yetişildiyse toplanır.
+## Tuzağın paneli: balıkçı tuzağa döner, panel açılır.
+func _open_trap(id: int) -> void:
+	var index := TrapSim.find(GameState.save, id)
+	if index < 0:
+		return
+	angler.face(TrapSim.position(GameState.save.traps[index]) - angler.pos2())
+	input.release_all()
+	trap_panel.open_trap(id)
+
+
+## Yürüyüş bitti: bekleyen tuzağa yetişildiyse paneli açılır.
 func _check_pending_trap() -> void:
 	if _pending_trap < 0 or angler.is_walking() or session.state != FishingSession.State.IDLE:
 		return
@@ -3222,12 +3255,12 @@ func _check_pending_trap() -> void:
 	_forget_pickups()
 	var index := TrapSim.find(GameState.save, id)
 	if index >= 0 and angler.pos2().distance_to(TrapSim.position(GameState.save.traps[index])) <= TRAP_REACH + 0.5:
-		_collect_trap(id)
+		_open_trap(id)
 
 
-## Tuzak toplanır: içindeki kerevitler kovaya (sığmayan tuzakta bekler), deftere ve rütbe puanına
-## (şans garantisi ilerlemez); tuzak yeniden kurulur. En irisi elde gösterilir, yeni türse kartı açılır.
-## Boşsa boş tuzağın paneli açılır (bekle ya da kaldır); kova doluysa Dede Nine'yi söyler.
+## Tuzak toplanır (panelin TOPLA'sı, KALDIR ve taşıma): içindeki kerevitler kovaya (sığmayan tuzakta bekler),
+## deftere ve rütbe puanına (şans garantisi ilerlemez); tuzak yeniden kurulur. En irisi elde gösterilir, yeni türse
+## kartı açılır. Boşsa bir şey olmaz; kova doluysa Dede Nine'yi söyler.
 func _collect_trap(id: int) -> void:
 	var db := GameState.db
 	var save := GameState.save
@@ -3241,8 +3274,6 @@ func _collect_trap(id: int) -> void:
 	var p := TrapSim.position(trap)
 	angler.face(p - angler.pos2())
 	if TrapSim.ready(rules, trap) <= 0:
-		input.release_all()
-		trap_panel.open_trap(id)
 		return
 	if Bucket.is_full(db, save):
 		hud.toast(tr("UI_TRAP_BUCKET_FULL"), UiKit.ACCENT, "tech_trap")
@@ -3303,20 +3334,16 @@ func _collect_trap(id: int) -> void:
 		_card_wait = CARD_DELAY
 
 
-## Boş tuzak kaldırıldı (panelden): tuzak takım çantasına döner. Panel açıkken kerevit girdiyse
-## kaldırılmaz, toplanır (kayıp yok).
+## Tuzak kaldırıldı (panelden): içinde kerevit varsa önce toplanır (kova hepsini almıyorsa kaldırılmaz: kayıp
+## yok), sonra tuzak takım çantasına döner.
 func _on_trap_remove(id: int) -> void:
 	var save := GameState.save
-	var rules := GameState.db.rules
+	if not _empty_trap(id):
+		return
 	var index := TrapSim.find(save, id)
 	if index < 0:
 		return
-	var trap := save.traps[index]
-	TrapSim.update(rules, trap, GameState.clock.now_unix())
-	if TrapSim.ready(rules, trap) > 0:
-		_collect_trap(id)
-		return
-	var p := TrapSim.position(trap)
+	var p := TrapSim.position(save.traps[index])
 	TrapSim.remove(save, index)
 	GameState.save_game()
 	_refresh_traps()
@@ -3324,6 +3351,62 @@ func _on_trap_remove(id: int) -> void:
 	Sounds.play("trap_collect")
 	Sounds.haptic(20)
 	hud.toast(tr("UI_TRAP_REMOVED"), UiKit.TEXT, "tech_trap")
+
+
+## Kaldırmadan ya da taşımadan önce: girmiş kerevitler kovaya. Kova hepsini almıyorsa false (tuzak yerinde kalır,
+## kerevit kaybolmaz; Dede Nine'yi söyler).
+func _empty_trap(id: int) -> bool:
+	var db := GameState.db
+	var save := GameState.save
+	var index := TrapSim.find(save, id)
+	if index < 0:
+		return false
+	TrapSim.update(db.rules, save.traps[index], GameState.clock.now_unix())
+	var ready := TrapSim.ready(db.rules, save.traps[index])
+	if ready <= 0:
+		return true
+	if Bucket.capacity(db, save) - save.bucket.size() < ready:
+		hud.toast(tr("UI_TRAP_REMOVE_FULL"), UiKit.ACCENT, "tech_trap")
+		_say("UI_DEDE_BUCKET")
+		Sounds.play("error")
+		Sounds.haptic(30)
+		return false
+	_collect_trap(id)
+	index = TrapSim.find(save, id)
+	return index >= 0 and TrapSim.ready(db.rules, save.traps[index]) <= 0
+
+
+## Takım çantasında "Buraya taşı" (bütün tuzaklar kuruluyken; testçi: "üçünü sazlığa kurdum, kayalığa kuramadım"):
+## en eski tuzak (ilk kurulan) buraya gelir; içindeki kerevitler önce kovaya (kova yetmezse taşınmaz). Yer, eski
+## tuzak çekilmiş gibi aranır (yakındaysa yerine yenisi kurulabilir); yer yoksa nedeni bildirilir.
+func _move_trap() -> void:
+	if session.state != FishingSession.State.IDLE or _card_up() or traps.is_flying():
+		return
+	var db := GameState.db
+	var save := GameState.save
+	if save.traps.is_empty():
+		return
+	var old: Dictionary = save.traps[0]
+	var id := int(old["id"])
+	var at := angler.pos2()
+	save.traps.remove_at(0)
+	var p := TrapSim.spot_near(db, save, spot_id, zone_id, at, angler.facing)
+	var why := "" if Dice.is_point(p) else TrapSim.why_not(db, save, spot_id, zone_id, at, angler.facing)
+	save.traps.insert(0, old)
+	if not Dice.is_point(p):
+		hud.toast(tr(why if not why.is_empty() else "UI_TRAP_NO_SPOT"), UiKit.ACCENT, "tech_trap")
+		Sounds.play("error")
+		Sounds.haptic(30)
+		return
+	if not _empty_trap(id):
+		return
+	var index := TrapSim.find(save, id)
+	if index >= 0:
+		var was := TrapSim.position(save.traps[index])
+		TrapSim.remove(save, index)
+		ripples.spawn(was, 0.8, 0.6)
+	_trap_moved = true
+	_throw_trap(p)
 
 
 ## Bekleyen toplamalar unutulur (yürüme, atış, geçiş, panel): uzaktaki tuzak ve şişe.
@@ -3815,6 +3898,7 @@ func _build_ui() -> void:
 		else:
 			shop_panel.open_shop("rod", technique, far))
 	technique_panel.trap_requested.connect(_place_trap)
+	technique_panel.trap_move_requested.connect(_move_trap)
 	# Takım paneli çantanın üstünde; kapanınca çanta yeni takımı gösterir.
 	loadout_panel = LoadoutPanel.new()
 	layer.add_child(loadout_panel)
@@ -3830,6 +3914,7 @@ func _build_ui() -> void:
 	trap_panel = TrapPanel.new()
 	layer.add_child(trap_panel)
 	trap_panel.remove_requested.connect(_on_trap_remove)
+	trap_panel.collect_requested.connect(_collect_trap)
 	wardrobe_panel = WardrobePanel.new()
 	layer.add_child(wardrobe_panel)
 	wardrobe_panel.chosen.connect(_on_character_chosen)

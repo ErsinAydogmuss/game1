@@ -778,6 +778,14 @@ func _golden_score(t: String, odds: Dictionary) -> float:
 func _tend_keeper() -> bool:
 	if not Secret.keeper_night(save) or not Economy.technique_ready(db, save, "bottom"):
 		return false
+	# Bekçi en iyi dip takımını ister (fish.json fight.gear): sendekiler takılır (Dede söyler; bot sonradan aldığı
+	# ucuz makarayı ya da misinayı kendiliğinden kuşanmış olabilir), eksikken denenmez (alışveriş sürer: shop).
+	var keeper_fight: Dictionary = db.fish_by_id(Secret.KEEPER_ID)["fight"]
+	for gid: String in ReelModel.missing_gear(keeper_fight, Economy.gear_for(db, save, "bottom")):
+		if Economy.owns(db, save, gid):
+			Economy.equip(db, save, gid, "bottom")
+	if not ReelModel.missing_gear(keeper_fight, Economy.gear_for(db, save, "bottom")).is_empty():
+		return false
 	var cond := conditions()
 	if str(cond["phase"]) != "night":
 		return false
@@ -921,6 +929,13 @@ func shop() -> Array[String]:
 	# İlk kerevit tuzağı da öncelikli (rütbe 3'te Dede haber verir, düğme atar).
 	if TrapSim.owned(db, save) == 0:
 		first.append(TrapSim.next_trap(db, save))
+	# Final hazırken Bekçi'nin istediği en iyi dip takımı (fish.json keeper fight.gear) öncelikli: Dede eksikleri
+	# söyler, oyuncu onlar için biriktirir. Rütbesi gelmeyen atlanır (altın makara rütbe 14).
+	if Secret.keeper_night(save):
+		var keeper_gear: Array = db.fish_by_id(Secret.KEEPER_ID)["fight"].get("gear", PackedStringArray())
+		for gid: String in keeper_gear:
+			if Economy.buy_block(db, save, gid) != "owned":
+				first.append(db.gear_item(gid))
 	for item in first:
 		if item.is_empty() or Rank.rank(db, save) < int(item["rank"]):
 			continue

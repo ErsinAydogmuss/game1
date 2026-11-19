@@ -65,6 +65,9 @@
 		{ "id": "trap_1", "category": "trap", "icon": "trap", "kind": "trap", "price": 150, "rank": 3 },
 		{ "id": "trap_2", "category": "trap", "icon": "trap", "kind": "trap", "price": 400, "rank": 3 },
 		{ "id": "trap_3", "category": "trap", "icon": "trap", "kind": "trap", "price": 1000, "rank": 5 },
+		{ "id": "trap_4", "category": "trap", "icon": "trap", "kind": "trap", "price": 1500, "rank": 6 },
+		{ "id": "trap_5", "category": "trap", "icon": "trap", "kind": "trap", "price": 2500, "rank": 8 },
+		{ "id": "trap_6", "category": "trap", "icon": "trap", "kind": "trap", "price": 4000, "rank": 10 },
 		{ "id": "boat", "category": "boat", "kind": "boat", "price": 3500, "rank": 9 },
 
 		{ "id": "bucket", "category": "bucket", "icon": "bucket", "kind": "bucket", "price": 0, "rank": 1, "capacity": 6 },

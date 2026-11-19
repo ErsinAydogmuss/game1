@@ -429,6 +429,12 @@ GEAR_trap_2,Second trap,İkinci tuzak
 GEAR_trap_2_DESC,Set two traps at once: twice the crayfish.,Aynı anda iki tuzak kurarsın: iki kat kerevit.
 GEAR_trap_3,Third trap,Üçüncü tuzak
 GEAR_trap_3_DESC,"Set three traps at once: the reeds and the rocks are yours.","Aynı anda üç tuzak: sazlık da kayalık da senin."
+GEAR_trap_4,Fourth trap,Dördüncü tuzak
+GEAR_trap_4_DESC,Set four traps at once.,Aynı anda dört tuzak kurarsın.
+GEAR_trap_5,Fifth trap,Beşinci tuzak
+GEAR_trap_5_DESC,Set five traps at once.,Aynı anda beş tuzak kurarsın.
+GEAR_trap_6,Sixth trap,Altıncı tuzak
+GEAR_trap_6_DESC,Six traps at once: the most Nana sells.,Aynı anda altı tuzak: Nine'nin sattığı en çok bu.
 UI_TRAP_NONE,"No trap yet: Nana sells them.","Tuzağın yok: Nine satıyor."
 UI_TRAP_ALL_SET,All your traps are set,Bütün tuzakların kurulu
 UI_TRAP_ZONE,Traps go in the reeds or at the rocks,Tuzak sazlıkta ya da kayalıkta kurulur
@@ -455,6 +461,11 @@ UI_NINE_TRAP,"Set it from your tackle bag, in the shallows, dear.",Takım çanta
 UI_NINE_TRAP_MORE,"%d traps now! Set the new one from your bag, dear.",Artık %d tuzağın var! Yenisini de çantandan bırak.
 UI_TRAP_ENTERED,A crayfish just walked in!,Tuzağa bir kerevit girdi!
 UI_TRAP_COLLECT,Collect,Topla
+UI_TRAP_HAS,%d crayfish in the trap.,Tuzakta %d kerevit var.
+UI_TRAP_REMOVE_FULL,"Bucket full: sell first, then take the trap.","Kova dolu: önce sat, sonra tuzağı kaldır."
+UI_TRAP_MOVED,Trap moved here,Tuzak buraya taşındı
+UI_BAG_TRAP_MOVE,Move here,Buraya taşı
+UI_BAG_TRAP_MOVE_HOW,"All set: your oldest trap comes here, its crayfish go to the bucket.","Hepsi kurulu: en eski tuzağın buraya gelir, içindeki kerevitler kovaya."
 UI_GUIDE_OPEN,How to play?,Nasıl oynanır?
 UI_GUIDE_NEXT,Next,İleri
 UI_GUIDE_BASICS,Fishing,Balık tutmak
@@ -696,6 +707,7 @@ UI_DEDE_FINAL,All done! Fog rolls in tonight: take the boat to the X.,"Hepsi tam
 UI_DEDE_KEEPER_WAIT,"The Keeper comes at night, kid. Let's have tea and wait.",Bekçi gece gelir evlat. Çay içip geceyi bekleyelim.
 UI_DEDE_KEEPER_BOTTOM,"Golden dough is for the bottom, kid: use the bottom rod!",Altın hamur dipte işe yarar evlat: dip kamışını al!
 UI_DEDE_KEEPER_RISE,"There it is, the Lake Keeper! Strike when the bell rings!","İşte o, Gölün Bekçisi! Zil çalınca vur evlat!"
+UI_DEDE_KEEPER_WEAK,"The Keeper! Your gear can't hold it: get the best bottom gear.","İşte Bekçi! Ama bu takım onu taşımaz: en iyi dip takımı lazım."
 UI_DEDE_KEEPER_BACK,"It's back! This time let go when it dives, kid.",Geri geldi! Bu sefer dalınca bırak evlat.
 UI_DEDE_KEEPER_LOST,"We lost it! Wait, it'll come back.","Kaçırdık! Bekle, geri gelecek."
 UI_DEDE_KEEPER_AGAIN,"The Keeper came to you again, kid!",Bekçi yine sana göründü evlat!
@@ -717,9 +729,9 @@ UI_CREDITS_THANKS,Thanks to,Teşekkürler
 UI_CREDITS_PLAYERS,Everyone who plays,Oynayan herkese
 UI_CREDITS_END,You let the Lake Keeper go. The lake is waiting for you!,Gölün Bekçisi'ni göle bıraktın. Göl seni bekliyor!
 UI_ENDING_REPLAY,Ending,Bitiş
-UI_BOOK_HINT_KEEPER,"At the map's X, on a foggy night, with golden dough.","Haritanın X'inde, sisli bir gecede, altın hamurla."
+UI_BOOK_HINT_KEEPER,"At the map's X, on a foggy night, with golden dough and the best bottom gear.","Haritanın X'inde, sisli bir gecede, altın hamurla ve en iyi dip takımıyla."
 UI_BOOK_STORY,"It guards the heart of the lake: caught, then always let go.","Gölün kalbini korur: tutulur, hep göle bırakılır."
-UI_SECRET_X_READY,X: the first buoy in Deep Water. Go by boat at night and fish the bottom!,"X: derin ortanın ilk şamandırası. Gece sandalla git, dibe at!"
+UI_SECRET_X_READY,"X: the first buoy in Deep Water. Go by boat at night, with the best bottom gear!","X: derin ortanın ilk şamandırası. Gece sandalla git, en iyi dip takımıyla dibe at!"
 UI_SECRET_KEEPER_DONE,You let the Lake Keeper go. The lake loves you!,Gölün Bekçisi'ni göle bıraktın. Göl seni seviyor!
 UI_DAY_DETAIL_keeper,Fog tonight: the Keeper's night,Gece sis: Bekçi'nin gecesi
 UI_DEDE_STORY_20_KEEPER,You're the lake's legend now. Even the Keeper greeted you!,Artık gölün efsanesisin. Bekçi bile sana selam verdi!

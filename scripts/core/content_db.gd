@@ -348,6 +348,12 @@ func _load_fish(raw: Dictionary) -> void:
 			fight["dive_len_steps"] = Vector2i(FishingRules.to_steps(dive_len.x), FishingRules.to_steps(dive_len.y))
 			fight["dive_run"] = float(raw_fight.get("dive_run", 1.8))
 			fight["dive_pull"] = float(raw_fight.get("dive_pull", 1.4))
+		# Bu balığı tutmak için kuşanılması gereken takım (Gölün Bekçisi: en iyi dip kamışı, makara ve misina;
+		# testçi: "bütün takım full olmadan tutulmamalı"). Eksikse çekişme fazla iri gibi: ReelModel.missing_gear.
+		var need := PackedStringArray()
+		for v: Variant in raw_fight.get("gear", []):
+			need.append(str(v))
+		fight["gear"] = need
 		# Türün ilk çırpınması (alabalık takılır takılmaz sıçrar); yazılmazsa kuralların reel.first_burst'ü.
 		if raw_fight.has("first_burst"):
 			var first := _vec2(raw_fight["first_burst"], Vector2(1.6, 2.4))
@@ -654,6 +660,10 @@ func _validate() -> void:
 	if rarity_index(rules.love_from) < 0:
 		errors.append("rules.json: love.rare_from bilinmeyen nadirlik: %s" % rules.love_from)
 	_validate_gear()
+	for f in fish:
+		for id: String in ((f["fight"] as Dictionary).get("gear", PackedStringArray()) as PackedStringArray):
+			if gear_item(id).is_empty() or not str(gear_item(id)["category"]) in ["rod", "reel", "line"]:
+				errors.append("fish.json: %s: fight.gear: kamış, makara ya da misina değil: %s" % [f["id"], id])
 	_validate_progression()
 	if spot(main_spot).is_empty():
 		errors.append("spots.json: main bilinmiyor: " + main_spot)

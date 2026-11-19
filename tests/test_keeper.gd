@@ -12,10 +12,10 @@ const HZ := FishingRules.HZ
 const NIGHT_FOG := { "phase": "night", "weather": "fog", "love": 6 }
 
 
+## En iyi dip takımı (Bekçi onu ister: fight.gear), kurşunla.
 func _bottom_gear() -> GearStats:
 	var db := content()
-	var items := db.gear_start.duplicate()
-	items["rod"] = "rod_carp_2"
+	var items := GearStats.best(db, "bottom").items.duplicate()
 	items["rig"] = "sinker"
 	var owned: Array[String] = ["sinker"]
 	return GearStats.from_items(db, items, owned)

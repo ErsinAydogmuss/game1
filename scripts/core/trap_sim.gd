@@ -4,7 +4,7 @@ extends RefCounted
 ## trap_serial) ve zaman (now: gerçek saat, unix sn) parametre olarak gelir.
 ## - Kurulum: bölgenin trap tablosu olan yerde (sazlık, kayalık burun), sığ suya (rules.trap_depth),
 ##   balıkçının yakınına (rules.trap_near), öteki tuzaklara uzak (rules.trap_spacing). En çok sahip
-##   olunan tuzak kadar (dükkândaki trap_1..3).
+##   olunan tuzak kadar (dükkândaki trap_1..6; testçi: "en az 6 tuzak").
 ## - İçerik kurulurken belli olur (gelir kuralı 4): tuzağa girecek trap_max kerevit o an zarlanır
 ##   (Dice.derive(seed, SALT, trap_serial); her zarlama sayacı bir artırır) ve "items"te sırayla
 ##   bekler; aynı zarlamada ayrı bir tuzla çöp de (Trash.in_trap: "trash", kerevitler aynı kalır).
@@ -36,7 +36,7 @@ static func rank(db: ContentDB) -> int:
 	return low
 
 
-## Sahip olunan tuzak sayısı (dükkândan alınan trap_1..3).
+## Sahip olunan tuzak sayısı (dükkândan alınan trap_1..6).
 static func owned(db: ContentDB, save: SaveData) -> int:
 	var n := 0
 	for g in db.gear_in("trap"):

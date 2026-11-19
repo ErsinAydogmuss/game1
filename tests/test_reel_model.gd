@@ -12,6 +12,16 @@ const FLY_DISTANCES := [3.0, 3.5, 4.0, 4.5, 5.0, 5.5]
 const SPIN_DISTANCES := [3.5, 4.5, 5.5, 6.0, 7.0, 8.0]
 
 
+## Takım istemeyen balıklar (fight.gear boş): genel korkuluklar bunlara bakar; Gölün Bekçisi en iyi dip takımını
+## ister, kendi testleri var.
+static func _plain_fish() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for f in content().fish:
+		if ((f["fight"] as Dictionary).get("gear", PackedStringArray()) as PackedStringArray).is_empty():
+			out.append(f)
+	return out
+
+
 ## gear: kuşanılmış takım (yoksa başlangıç takımı, yani bambu olta); percentile: boy yüzdeliği (ppm).
 func _model(fish_id: String, start: float, gentle: bool, seed: int, gear: GearStats = null,
 		percentile: int = 0) -> ReelModel:
@@ -91,7 +101,7 @@ func _rates(fish_id: String, bot_style: ReelBot.Style, reaction: float, gentle: 
 ## Takımın taşıdığı balıkta (bambu olta: 3★'ın en irisi) sakinken basılı tutmak kırmızıya çıkmaz.
 func test_calm_fish_never_goes_red() -> void:
 	var limit := content().rules.limit
-	for f in content().fish:
+	for f in _plain_fish():
 		var model := _model(f["id"], 9.0, false, 7, null, FishTable.STAR_LIMITS[2] - 1)
 		model.holding = true
 		var peak := 0.0
@@ -209,14 +219,14 @@ func test_gentle_fight_never_snaps_or_escapes() -> void:
 
 
 func test_good_players_catch_everything() -> void:
-	for f in content().fish:
+	for f in _plain_fish():
 		for bot: Array in [[ReelBot.Style.PERFECT, 0.0], [ReelBot.Style.REACT, 0.4]]:
 			var r := _rates(f["id"], bot[0], bot[1], false)
 			assert_eq(r["caught"], 1.0, "%s: iyi oyuncu (%s) her zaman tutar" % [f["id"], str(bot[1])])
 
 
 func test_slow_players_mostly_catch() -> void:
-	for f in content().fish:
+	for f in _plain_fish():
 		var normal := _rates(f["id"], ReelBot.Style.REACT, 0.7, false)
 		assert_true(normal["caught"] >= 0.9, "%s: 0,7 sn tepkiyle de çoğunlukla tutulur (%.2f)" % [f["id"], normal["caught"]])
 
@@ -255,7 +265,7 @@ func test_fight_durations() -> void:
 ## (Güzel sazanı tutabilir: takımın ödülü); çekişme kısalır ama en çok %40.
 func test_top_gear_keeps_skill_relevant() -> void:
 	var top := GearStats.best(content())
-	for f in content().fish:
+	for f in _plain_fish():
 		var slow := _rates(f["id"], ReelBot.Style.REACT, 0.7, false, top)
 		assert_true(slow["caught"] >= 0.98, "%s: en iyi takımla 0,7 sn tepkiyle tutulur (%.2f)" % [f["id"], slow["caught"]])
 	var db := content()
@@ -369,11 +379,11 @@ func test_only_the_keeper_dives() -> void:
 
 ## Gölün Bekçisi her çekişmede iki kez dalar (takıldığı uzaklığın %60'ına ve %30'una gelince): her dalıştan tam
 ## dive_warn önce, yalnızca sakin evrede uyarı gelir; dalış balığı kaçma sınırının DIVE_MARGIN içine kadar götürür,
-## ötesine değil (ilk dip kamışıyla ve en iyi dip takımıyla).
+## ötesine değil (en iyi dip takımıyla: Bekçi onu ister).
 func test_keeper_dives_twice_after_a_warning() -> void:
 	var db := content()
 	var warn_steps := int(db.fish_by_id(Secret.KEEPER_ID)["fight"]["dive_warn_steps"])
-	for gear: GearStats in [_bottom_first_gear(), GearStats.best(db, "bottom")]:
+	for gear: GearStats in [GearStats.best(db, "bottom")]:
 		for i in 10:
 			var model := _keeper_model(gear, i)
 			var bot := ReelBot.make(ReelBot.Style.REACT, 0.4)
@@ -407,7 +417,7 @@ func test_keeper_dives_twice_after_a_warning() -> void:
 
 ## Dalışta basılı tutan (patlamalarda kusursuz bırakan) misinayı dalışta koparır: dalışın gerilimi sınırın üstünde.
 func test_holding_through_a_dive_snaps() -> void:
-	var model := _keeper_model(_bottom_first_gear(), 0)
+	var model := _keeper_model(GearStats.best(content(), "bottom"), 0)
 	var bot := ReelBot.make(ReelBot.Style.PERFECT)
 	var events := PackedStringArray()
 	var snapped_diving := false
@@ -420,11 +430,11 @@ func test_holding_through_a_dive_snaps() -> void:
 	assert_true(snapped_diving, "misina dalışta kopar")
 
 
-## Gölün Bekçisi'ni kusursuz oyuncu da 0,4 ve 0,7 sn tepkili oyuncu da tutar (ilk dip kamışıyla ve en iyi dip
-## takımıyla); 0,4 sn tepkiyle çekişme 35–55 sn (docs/gdd.md §5).
+## Gölün Bekçisi'ni en iyi dip takımıyla kusursuz oyuncu da 0,4 ve 0,7 sn tepkili oyuncu da tutar; 0,4 sn tepkiyle
+## çekişme 35–55 sn (docs/gdd.md §5).
 func test_keeper_is_caught_by_good_and_slow_players() -> void:
 	var db := content()
-	for gear: GearStats in [_bottom_first_gear(), GearStats.best(db, "bottom")]:
+	for gear: GearStats in [GearStats.best(db, "bottom")]:
 		for bot: Array in [[ReelBot.Style.PERFECT, 0.0], [ReelBot.Style.REACT, 0.4], [ReelBot.Style.REACT, 0.7]]:
 			var caught := 0
 			var total := 0.0
@@ -437,3 +447,35 @@ func test_keeper_is_caught_by_good_and_slow_players() -> void:
 			assert_eq(caught, RUNS, name + ": Bekçi tutulur")
 			if is_equal_approx(float(bot[1]), 0.4):
 				assert_between(total / maxi(1, caught), 35.0, 55.0, name + ": süre")
+
+
+## Testçi: "Bekçi'yi ikinci dip kamışı, örgü misina ve orta makarayla kolay tuttum; bütün takım full olmadan
+## tutulmamalı". Bekçi en iyi dip kamışını, makarayı ve misinayı ister (fight.gear): biri eksikse fazla iri gibi
+## (excess 1): kusursuz oyuncu da pompalayan da tutamaz. En iyi takımda hiçbiri eksik değil.
+func test_keeper_needs_the_best_bottom_gear() -> void:
+	var db := content()
+	var fight: Dictionary = db.fish_by_id(Secret.KEEPER_ID)["fight"]
+	var best := GearStats.best(db, "bottom")
+	assert_true(ReelModel.missing_gear(fight, best).is_empty(), "en iyi dip takımında eksik yok")
+	var tester := db.gear_start.duplicate()
+	tester["rod"] = "rod_carp_2"
+	tester["reel"] = "reel_strong"
+	tester["line"] = "line_braid"
+	tester["rig"] = "feeder"
+	var none: Array[String] = []
+	var setups := { "ilk dip kamışı": _bottom_first_gear(), "testçinin takımı": GearStats.from_items(db, tester, none) }
+	for only_one: String in ["rod", "reel", "line"]:
+		var items := best.items.duplicate()
+		items[only_one] = str(tester[only_one])
+		setups["en iyisi, " + only_one + " eksik"] = GearStats.from_items(db, items, none)
+	for label: String in setups:
+		var gear: GearStats = setups[label]
+		assert_true(not ReelModel.missing_gear(fight, gear).is_empty(), label + ": eksik takım var")
+		for bot: Array in [[ReelBot.Style.PERFECT, 0.0], [ReelBot.Style.PUMP, 0.0], [ReelBot.Style.REACT, 0.4]]:
+			var caught := 0
+			for i in 10:
+				var model := _keeper_model(gear, i)
+				assert_true(model.excess >= 1, label + ": fazla iri gibi")
+				if int(ReelBot.play(model, ReelBot.make(bot[0], bot[1]))["outcome"]) == ReelModel.Outcome.CAUGHT:
+					caught += 1
+			assert_eq(caught, 0, "%s: Bekçi tutulmaz (%s)" % [label, str(bot[0])])

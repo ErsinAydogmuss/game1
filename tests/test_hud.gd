@@ -59,6 +59,13 @@ func test_gear_advice_fits_one_line() -> void:
 			lines.append((rows[key] as PackedStringArray)[column] % listed)
 		lines.append((rows["UI_DEDE_TOO_BIG_BOTH"] as PackedStringArray)[column] % [widest["rod"], widest["line"]])
 		lines.append((rows["UI_DEDE_TOO_BIG_RANK"] as PackedStringArray)[column] % content().rank_xp.size())
+		# Gölün Bekçisi en iyi dip kamışını, makarayı ve misinayı ister (fight.gear): üç ad, "a, b ve c".
+		var keeper: Array[String] = []
+		for id: String in (content().fish_by_id(Secret.KEEPER_ID)["fight"]["gear"] as PackedStringArray):
+			var gear_name: String = (rows["GEAR_" + id] as PackedStringArray)[column]
+			keeper.append(gear_name.left(1).to_lower() + gear_name.substr(1))
+		var three: String = keeper[0] + ", " + (rows["UI_LIST_AND"] as PackedStringArray)[column] % [keeper[1], keeper[2]]
+		lines.append((rows["UI_DEDE_TOO_BIG_BUY"] as PackedStringArray)[column] % three)
 		for text in lines:
 			var size := UiKit.fit_size(text, font, UiKit.SIZE_BODY, room, Hud.HINT_MIN_SIZE)
 			assert_true(_width(font, text, size) <= room, "takım öğüdü %d boyda da sığmıyor (%s): %s (%.0f > %.0f)" % [

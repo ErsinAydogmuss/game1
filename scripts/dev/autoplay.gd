@@ -2039,6 +2039,14 @@ func _play_trap() -> void:
 	await _shot("45_tuzak_2")
 	await _tap(_screen(traps.mark_point(id)))
 	await _wait_frames(3)
+	var collect_button := trap_panel.find_child("Button_collect", true, false) as Button
+	_check("kerevitli tuzağa dokun → panel: \"Tuzakta 2 kerevit\", TOPLA ve KALDIR", trap_panel.visible
+			and collect_button != null and _texts_in(trap_panel).contains(tr("UI_TRAP_HAS") % 2)
+			and trap_panel.find_child("Button_remove", true, false) != null)
+	await _shot("45b_tuzak_paneli")
+	if collect_button != null:
+		await _tap_control(collect_button)
+	await _wait_frames(3)
 	var got := save.bucket.size() - bucket
 	await _wait(0.8)
 	await _shot("46_kerevit_elde")
@@ -2058,8 +2066,7 @@ func _play_trap() -> void:
 	await _shot("48_tuzak_dolu")
 	while Bucket.capacity(db, save) - save.bucket.size() > 1:
 		save.bucket.append({ "fish": "rudd", "size_cm": 20, "stars": 1 })
-	await _tap(_screen(traps.mark_point(id)))
-	await _wait_frames(3)
+	await _tap_trap_button(trap_panel, id, "Button_collect")
 	# Kartsız toplama: kerevit elde (kodla kurulan model, sırtı kameraya dönük).
 	await _wait(0.5)
 	await _shot("48b_kerevit_elde")
@@ -2088,9 +2095,13 @@ func _play_trap() -> void:
 		main.call("_snap_camera")
 		await _wait(0.5)
 		await _tap(_screen(traps.mark_point(id)))
-		var walked := await _wait_until(func() -> bool: return save.bucket.size() >= rules.trap_max - 1, 15.0)
-		_check("uzaktaki tuzağa dokun → balıkçı yürür ve toplar", walked
-				and _angler().pos2().distance_to(trap_at) <= reach + 0.6)
+		var walked := await _wait_until(func() -> bool: return trap_panel.visible, 15.0)
+		var near_trap := _angler().pos2().distance_to(trap_at) <= reach + 0.6
+		var collect := trap_panel.find_child("Button_collect", true, false) as Button
+		if collect != null:
+			await _tap_control(collect)
+		var took := await _wait_until(func() -> bool: return save.bucket.size() >= rules.trap_max - 1, 3.0)
+		_check("uzaktaki tuzağa dokun → balıkçı yürür, panel açılır, TOPLA", walked and near_trap and took)
 	else:
 		_check("uzaktaki tuzağa dokun: uzak yer bulunamadı", false)
 	await _wait(2.5)
@@ -2116,11 +2127,88 @@ func _play_trap() -> void:
 		await _wait_frames(3)
 	_check("boş tuzak kaldırılır (çantaya döner)", save.traps.is_empty() and not traps.has_mark(id)
 			and TrapSim.spare(db, save) == 1)
+	await _check_trap_move(bag, trap_panel, traps)
 	# Sonraki bölümler boş kovayla ve gerçek saatle başlar.
 	clock.fixed_unix = -1
 	save.bucket.clear()
 	GameState.changed.emit()
 	await _wait_frames(2)
+
+
+## Tuzağa dokunur, panel açılınca düğmesine (Button_collect, Button_remove, Button_wait) basar.
+func _tap_trap_button(trap_panel: TrapPanel, id: int, button: String) -> void:
+	var traps: TrapMarkers = main.get("traps")
+	await _tap(_screen(traps.mark_point(id)))
+	await _wait_until(func() -> bool: return trap_panel.visible, 3.0)
+	await _wait(0.3)
+	var b := trap_panel.find_child(button, true, false) as Button
+	if b == null:
+		_results.append("tuzak panelinde düğme yok: " + button)
+		return
+	await _tap_control(b)
+	await _wait_frames(3)
+
+
+## Testçi: "üçünü sazlığa kurdum, kayalığa kuramadım, kurulan geri alınmıyor". Altı tuzak satılır (dükkânda
+## sırayla, sonuncusu altıncı). Sazlıkta bütün tuzaklar kuruluyken kayalık burunda çantada BURAYA TAŞI: en eski
+## tuzak oraya gelir, içindeki kerevitler kovaya. Kerevitli tuzak panelden KALDIR: önce kovaya, sonra çantaya.
+func _check_trap_move(bag: TechniquePanel, trap_panel: TrapPanel, traps: TrapMarkers) -> void:
+	var db := GameState.db
+	var save := GameState.save
+	var rules := db.rules
+	var clock := GameState.clock
+	var spot := str(main.get("spot_id"))
+	var hud := _hud()
+	var ids: Array[String] = []
+	for g in db.gear_in("trap"):
+		ids.append(str(g["id"]))
+	_check("dükkânda altı tuzak (%d)" % ids.size(), ids.size() == 6)
+	# Bir tuzak sazlıkta (öteki tuzaklar alınmamış: hepsi kurulu); saat ilerler, içine iki kerevit girer.
+	save.xp = maxi(save.xp, db.rank_xp[4])
+	GameState.changed.emit()
+	await _travel_to("reeds")
+	await _tap_control(hud.technique_button)
+	await _wait_until(func() -> bool: return bag.visible, 2.0)
+	await _wait(0.3)
+	await _tap_control(bag.find_child("Button_trap", true, false))
+	await _wait_until(func() -> bool: return not save.traps.is_empty() and not traps.is_flying(), 4.0)
+	await _wait(0.6)
+	var old_id := int(save.traps[0]["id"]) if save.traps.size() == 1 else -1
+	clock.fixed_unix = int(save.traps[0]["last_unix"]) + 2 * rules.trap_fill_s + 30 if old_id >= 0 else clock.now_unix()
+	await _wait(1.3)
+	# Kayalık burunda: çantada BURAYA TAŞI.
+	await _travel_to("rocky_point")
+	await _tap_control(hud.technique_button)
+	await _wait_until(func() -> bool: return bag.visible, 2.0)
+	await _wait(0.4)
+	var state := TechniquePanel.trap_state(db, save, spot, str(main.get("zone_id")))
+	var button := bag.find_child("Button_trap", true, false) as Button
+	_check("hepsi kuruluyken kayalık burunda çantada BURAYA TAŞI", state == "move" and button != null
+			and button.text == UiKit.upper(tr("UI_BAG_TRAP_MOVE")))
+	await _shot("49b_canta_tasi")
+	var bucket := save.bucket.size()
+	if button != null:
+		await _tap_control(button)
+	var moved_now := func() -> bool: return save.traps.size() == 1 and int(save.traps[0]["id"]) != old_id and not traps.is_flying()
+	var moved := await _wait_until(moved_now, 5.0)
+	var toast := await _wait_toast(UiKit.upper(tr("UI_TRAP_MOVED")), 4.0)
+	_check("BURAYA TAŞI → en eski tuzak kayalık buruna gelir, 2 kerevit kovaya (bildirim)", moved and toast
+			and str(save.traps[0]["zone"]) == "rocky_point" and save.bucket.size() - bucket == 2
+			and not traps.has_mark(old_id))
+	await _wait(0.6)
+	await _shot("49c_tasindi")
+	await _close_card(main.get("card"))
+	await _wait(0.5)
+	# Kerevitli tuzak panelden KALDIR: önce kovaya, sonra çantaya.
+	var trap_id := int(save.traps[0]["id"])
+	clock.fixed_unix = int(save.traps[0]["last_unix"]) + rules.trap_fill_s + 30
+	await _wait(1.3)
+	bucket = save.bucket.size()
+	await _tap_trap_button(trap_panel, trap_id, "Button_remove")
+	await _wait(0.5)
+	_check("kerevitli tuzak KALDIR: kerevit kovaya, tuzak çantaya", save.traps.is_empty()
+			and save.bucket.size() - bucket == 1 and TrapSim.spare(db, save) == 1)
+	await _close_card(main.get("card"))
 
 
 ## Sinek (rütbe 7): rütbe gelince haber; iskelede çantadan Nine'ye, sinek kamışı alınır ama ele
@@ -3653,13 +3741,14 @@ func _play_keeper() -> void:
 	# Göl sevgisinin seviye sözleri söylenmiş (finalin sözünü beklemesin).
 	for at in [2, 6, 10]:
 		save.flags["told_love_%d" % at] = true
-	for id: String in ["rod_carp_2", "sinker", "line_braid", "reel_strong", Zones.BOAT]:
+	# Bekçi en iyi dip takımını ister (fish.json fight.gear: usta dip kamışı, altın makara, altın örgü).
+	for id: String in ["rod_carp_3", "sinker", "line_braid_pro", "reel_master", Zones.BOAT]:
 		if not id in save.owned:
 			save.owned.append(id)
-	Economy.equip(db, save, "rod_carp_2", "bottom")
+	Economy.equip(db, save, "rod_carp_3", "bottom")
 	Economy.equip(db, save, "sinker", "bottom")
-	Economy.equip(db, save, "line_braid", "bottom")
-	Economy.equip(db, save, "reel_strong", "bottom")
+	Economy.equip(db, save, "line_braid_pro", "bottom")
+	Economy.equip(db, save, "reel_master", "bottom")
 	GameState.changed.emit()
 	await _wait(1.0)
 	_check("final hazır: final gecesi", Secret.final_ready(save) and Secret.keeper_night(save))

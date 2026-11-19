@@ -13,8 +13,10 @@ extends Dialog
 ## Kamışı oyunda olmayan teknik (henüz yazılmamış) gösterilmez.
 ## Karoların altında kerevit tuzağı satırı (tuzak bir teknik değil, bir eylem; rütbe 3): ikonu, nasıl
 ## olduğu, kaç tuzağın kurulu olduğu ve tek düğme: TUZAK BIRAK (trap_requested: balıkçının yakınındaki
-## sığ suya), NİNE'DE (tuzağı yok: dükkân Ekstra sekmesinde; shop_requested("trap")), HEPSİ KURULU,
-## yer (bu bölgeye kurulmaz: sazlıkta ve kayalıkta) ya da rütbe kilidi.
+## sığ suya), NİNE'DE (tuzağı yok: dükkân Ekstra sekmesinde; shop_requested("trap")), BURAYA TAŞI (hepsi
+## kurulu, bu bölgeye kurulur: en eski tuzak buraya gelir, trap_move_requested; testçi: "üçünü sazlığa kurdum,
+## kayalığa kuramadım"), HEPSİ KURULU (tuzak kurulmayan bölgede), yer (bu bölgeye kurulmaz: sazlıkta ve
+## kayalıkta) ya da rütbe kilidi.
 ## Başlıkta "?": rehber Teknikler sayfasında açılır (help_requested).
 
 signal technique_selected(id: String)
@@ -22,6 +24,8 @@ signal technique_selected(id: String)
 signal loadout_requested(id: String)
 signal shop_requested(id: String)
 signal trap_requested
+## Bütün tuzaklar kurulu: en eskisi buraya taşınsın.
+signal trap_move_requested
 
 ## Karonun boyu ve panelin genişliği (4 karo yan yana; telefonda küçülmeden sığar).
 const TILE := Vector2(360, 470)
@@ -75,14 +79,17 @@ static func state_of(db: ContentDB, save: SaveData, id: String, spot: String = "
 	return "shop"
 
 
-## Tuzak satırının durumu: rank (rütbe kilidi), shop (tuzağı yok: Nine'de), set (hepsi kurulu), zone
-## (bu bölgeye kurulmaz; spot verilmezse bakılmaz) ya da place (bırakılır).
+## Tuzak satırının durumu: rank (rütbe kilidi), shop (tuzağı yok: Nine'de), move (hepsi kurulu, bu bölgeye
+## kurulur: en eskisi taşınır), set (hepsi kurulu; spot verilmezse ya da bölgeye kurulmazsa), zone (bu bölgeye
+## kurulmaz; spot verilmezse bakılmaz) ya da place (bırakılır).
 static func trap_state(db: ContentDB, save: SaveData, spot: String = "", zone: String = "") -> String:
 	if Rank.rank(db, save) < TrapSim.rank(db):
 		return "rank"
 	if TrapSim.owned(db, save) <= 0:
 		return "shop"
 	if TrapSim.spare(db, save) <= 0:
+		if not spot.is_empty() and TrapSim.zone_allows(db, spot, zone) and not save.traps.is_empty():
+			return "move"
 		return "set"
 	if not spot.is_empty() and not TrapSim.zone_allows(db, spot, zone):
 		return "zone"
@@ -204,7 +211,9 @@ func _trap_row() -> Control:
 	var title := UiKit.ink(UiKit.upper(tr("UI_BAG_TRAP")), UiKit.SIZE_BODY, UiKit.INK)
 	title.add_theme_font_override("font", UiKit.display_font())
 	text.add_child(title)
-	var how := UiKit.ink(tr("UI_BAG_TRAP_HOW") % roundi(db.rules.trap_fill_s / 60.0), 26, UiKit.INK_SOFT)
+	var how_text := tr("UI_BAG_TRAP_MOVE_HOW") if state == "move" \
+			else tr("UI_BAG_TRAP_HOW") % roundi(db.rules.trap_fill_s / 60.0)
+	var how := UiKit.ink(how_text, 26, UiKit.INK_SOFT)
 	how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	how.max_lines_visible = 2
 	text.add_child(how)
@@ -237,6 +246,12 @@ func _trap_button(state: String) -> Button:
 				Sounds.play("ui_tap")
 				close_panel()
 				shop_requested.emit("trap"))
+		"move":
+			b = UiKit.button(tr("UI_BAG_TRAP_MOVE"), UiKit.PRIMARY, UiKit.SIZE_SMALL + 4, TRAP_BUTTON)
+			b.pressed.connect(func() -> void:
+				Sounds.play("ui_tap")
+				close_panel()
+				trap_move_requested.emit())
 		"set":
 			b = UiKit.button(tr("UI_BAG_TRAP_SET"), UiKit.NEUTRAL, UiKit.SIZE_SMALL, TRAP_BUTTON)
 			b.pressed.connect(func() -> void: Sounds.play("error"))
