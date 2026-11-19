@@ -197,14 +197,14 @@ Olta: Secret of the Lake is here! Watch the shadows, cast your line, catch 19 sp
 ## Sürüm notları (1.0.0, yapı 4)
 
 Test kanalındaki (Play kapalı test, TestFlight "Test edilecekler") ve 1.0.0 yayındaysa 1.0.1'in notu. En çok 500
-karakter (TR 422, EN 373). Yapı 3 hiç yüklenmediyse de bu not (önceki yapının maddelerini de sayar).
+karakter (TR 486, EN 419). Yapı 3 hiç yüklenmediyse de bu not (önceki yapının maddelerini de sayar).
 
 ```
 <tr-TR>
-Test kullanıcılarının önerileriyle: ileri bölgelerin balıkları daha iri ve daha değerli (derin ortada yaklaşık 2 kat), yem çektiği balığı iri de getirir, 6 kerevit tuzağı (dokun: topla ya da kaldır; hepsi kuruluysa en eskisini buraya taşı), Gölün Bekçisi en iyi dip takımını ister. Önceki yapıdan: Görevler, haritada bölgelerin balıkları ve oranları, balığı göle bırak ya da kovaya koy, Takım Çantası'nda takım değiştirme.
+Test kullanıcılarının önerileriyle: ileri bölgelerin balıkları daha iri ve daha değerli (derin ortada yaklaşık 2 kat), yem çektiği balığı iri de getirir, 6 kerevit tuzağı (dokun: topla ya da kaldır; hepsi kuruluysa en eskisini taşı), Nine'nin yanında balıkların gerçek boyunda yüzdüğü büyük akvaryum (balığa dokun: yakınlaş, adı ve rekoru), Gölün Bekçisi en iyi dip takımını ister. Önceki yapıdan: Görevler, haritada bölgelerin balıkları ve oranları, balığı göle bırak ya da kovaya koy.
 </tr-TR>
 <en-US>
-From our testers' feedback: fish in later areas are bigger and worth more (about 2x in Deep Water), baits also bring bigger fish, 6 crayfish traps (tap to collect or take back; move your oldest trap when all are set), the Lake Keeper now needs the best bottom gear. Also: Tasks, each area's fish and odds on the map, release or keep your catch, swap gear in the tackle bag.
+From our testers' feedback: fish in later areas are bigger and worth more (about 2x in Deep Water), baits also bring bigger fish, 6 crayfish traps (tap to collect or take back; move your oldest trap when all are set), a big aquarium by Nine's shop with life-size fish (tap a fish to zoom in), the Lake Keeper now needs the best bottom gear. Also: Tasks, each area's fish and odds on the map, release or keep your catch.
 </en-US>
 ```
 

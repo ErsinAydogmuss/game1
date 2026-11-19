@@ -190,6 +190,8 @@ var loadout_panel: LoadoutPanel
 var trap_panel: TrapPanel
 ## Atılan tuzak taşınan tuzak mı (düşünce "Tuzak buraya taşındı").
 var _trap_moved := false
+## Defter akvaryumun balık şeridinden açıldı: kapanınca akvaryum yeniden açılır.
+var _book_from_aquarium := false
 var aquarium_panel: AquariumPanel
 var wardrobe_panel: WardrobePanel
 ## Fotoğraf modu (Dalga 5): Ayarlar'dan ya da balık kartından; açıkken oyun donar (_panel_open), arayüz gizli.
@@ -334,7 +336,7 @@ func _ready() -> void:
 	spot_id = GameState.db.main_spot
 	lake = GameState.db.lake(spot_id)
 	scene = LakeScene.new()
-	scene.keep_clear.append(ShopStall.clear_zone(lake.dock))
+	scene.keep_clear.append_array(ShopStall.clear_zones(lake.dock))
 	scene.zones = GameState.db.zones_of(spot_id)
 	add_child(scene)
 	scene.setup(lake)
@@ -2912,7 +2914,8 @@ func _refresh_traps() -> void:
 # --- Akvaryum (Dalga 5) -------------------------------------------------------------
 
 ## Akvaryumun bağış kutusu şimdiye getirilir (gerçek saat; oyun kapalıyken de dolar, üst sınırda durur) ve
-## tezgâhtaki tankta en değerli balıklar görünür (ağı yalnızca balıklar değişince yeniden kurulur).
+## dükkânın yanındaki büyük tankta en değerli balıklar gerçek boylarında görünür (ağı yalnızca balıklar ya da boyları
+## değişince yeniden kurulur).
 func _sync_aquarium() -> void:
 	var db := GameState.db
 	var save := GameState.save
@@ -2923,10 +2926,10 @@ func _sync_aquarium() -> void:
 		if int(a["value"]) != int(b["value"]):
 			return int(a["value"]) > int(b["value"])
 		return str(a["fish"]) < str(b["fish"]))
-	var colors: Array[Color] = []
+	var shown: Array[Dictionary] = []
 	for f in tank:
-		colors.append(db.fish_by_id(str(f["fish"]))["color"])
-	shop.set_tank(colors)
+		shown.append({ "def": db.fish_by_id(str(f["fish"])), "size_cm": int(f["size_cm"]) })
+	shop.set_tank(shown)
 
 
 # --- Balıkçı ve dolap (Dalga 5) -----------------------------------------------------
@@ -3962,6 +3965,15 @@ func _build_ui() -> void:
 	ad_notice.licenses_requested.connect(license_panel.open)
 	settings_panel.privacy_requested.connect(ad_notice.open_info)
 	aquarium_panel.ad_rewarded.connect(_on_aquarium_ad)
+	# Tanktaki balığın şeridinde DEFTER: akvaryum kapanır, defter o türün sayfasında; defter kapanınca akvaryum döner.
+	aquarium_panel.book_requested.connect(func(id: String) -> void:
+		aquarium_panel.close_panel()
+		_book_from_aquarium = true
+		book_panel.open_book(id))
+	book_panel.closed.connect(func() -> void:
+		if _book_from_aquarium:
+			_book_from_aquarium = false
+			aquarium_panel.open())
 	Ads.coins_rewarded.connect(_on_ad_coins)
 	Ads.reward_missed.connect(_on_ad_missed)
 	# Rehber en son: açıldığı panelin (ayarlar, çanta, dükkân) üstünde çizilir; kapanınca o açık kalır.

@@ -378,6 +378,13 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     belirince Dede "bu takım onu taşımaz: en iyi dip takımı lazım", çekişmede misina kopar, Dede eksikleri söyler
     (usta dip kamışı, altın makara, altın örgü). En iyi takımla tutulur. Ayarlar'daki deneme düğmeleriyle (HEPSİNİ AÇ,
     +10.000, SIR +) hızlıca denenebilir.
+71. **Testçi düzeltmeleri 3: büyük akvaryum.** Nine'nin önüne gel: dükkânın solunda, yolun öte yanında ahşap dolabın
+    üstünde büyük tank; içinde en değerli balıkların gerçek boylarında (yayın tankın çoğunu kaplar), rafta kırmızı
+    bağış kutusu. Tanka ya da kutuya dokun: Akvaryum paneli. Tankın içinden yürünemiyor mu? Yeni tür ya da daha iri
+    bir balık tutunca tanktaki balık değişiyor mu, o an takılma var mı?
+72. **Testçi düzeltmeleri 3: balığa dokun.** Akvaryum panelinde bir balığa dokun: kamera ona yaklaşır ve yüzdükçe
+    izler; altta şerit: resmi, adı, nadirliği, en büyük boyu ve yıldızı, kaç tane tuttuğun, saatte kaç para getirdiği.
+    DEFTER: defter o balığın sayfasında açılır, kapatınca akvaryum geri gelir. Boşluğa ya da ✕'e dokun: geri çekilir.
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 

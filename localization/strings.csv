@@ -745,6 +745,8 @@ UI_AQUARIUM_BOX,Donation box,Bağış kutusu
 UI_AQUARIUM_CAP,"Fills while you're away, up to %d hours","Sen yokken de dolar, en çok %d saatlik"
 UI_AQUARIUM_FULL,The box is full! Collect it so it fills again.,Kutu doldu! Topla da yine dolsun.
 UI_AQUARIUM_COLLECT,Collect,Topla
+UI_AQUARIUM_BOOK,Book,Defter
+UI_AQUARIUM_FISH_INFO,Caught: %d · gives %s coins an hour,Tutulan: %d · saatte %s para getirir
 UI_AQUARIUM_EMPTY,The tank is empty. Catch a fish: the biggest of each kind swims here.,Tank boş. Bir balık tut: her türün en irisi burada yüzer.
 UI_AQUARIUM_NOTE,The biggest of each kind joins the tank by itself; the fish in your bucket can still be sold. Protected fish go back to the lake. Visiting the shop collects the box.,Her türün en irisi tanka kendiliğinden girer; kovadaki balık yine satılır. Koruma altındaki balıklar göle döner. Dükkâna uğrayınca kutudaki para sana geçer.
 UI_AQUARIUM_GOT,Aquarium visitors left %s coins,Akvaryuma gelenler %s para bıraktı

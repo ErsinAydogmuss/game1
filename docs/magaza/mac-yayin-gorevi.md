@@ -34,7 +34,8 @@
   sayfaları `~/olta-yayin/durum.md`'de yazıyorsa onlar da tamam. **Bitmiş bölümü yeniden yapma.**
 - **Bu tur: test kullanıcılarının ikinci düzeltmeleri, yapı 4.** Yapı 3'ten beri değişenler: ileri bölgelerin balıkları
   daha iri ve daha değerli, yem çektiği balığı iri de getirir, 6 kerevit tuzağı (dokununca TOPLA / KALDIR, hepsi
-  kuruluysa en eskisini taşı), Gölün Bekçisi en iyi dip takımını ister. Kayıt sürümü 8: eski kayıtlar açılışta
+  kuruluysa en eskisini taşı), Nine'nin yanında büyük akvaryum (balıklar gerçek boyunda; paneldeki balığa dokununca
+  yakınlaşma ve bilgi şeridi), Gölün Bekçisi en iyi dip takımını ister. Kayıt sürümü 8: eski kayıtlar açılışta
   kendiliğinden taşınır. **Mağazaya giden paket bu koddan derlenir:** eski AAB ya da iPhone arşivini yükleme, yeniden
   derle.
 - **Yapı numarası 4:** `export_presets.cfg`'de hazır (iPhone `application/version="4"`, Android `version/code=4`).

@@ -1,6 +1,7 @@
 class_name AquariumPanel
 extends Dialog
-## Akvaryum (Dalga 5, docs/gdd.md §10.6): Nine'nin tezgâhındaki tanka dokununca açılır. Solda canlı tank
+## Akvaryum (Dalga 5, docs/gdd.md §10.6): dükkânın yanındaki büyük tanka dokununca açılır. Tanktaki balığa dokununca
+## yakınlaşma ve bilgi şeridi (AquariumTank; DEFTER → book_requested). Solda canlı tank
 ## (AquariumTank: her tutulmuş türün en irisi yüzer), sağda tür sayısı ("12/15 tür"), ziyaretçilerin saatlik
 ## bağışı, bağış kutusundaki para (gerçek saatle dolar, en çok 2 saatlik) ve TOPLA; altta tanka kimin girdiği.
 ## Kutu panel açıkken her saniye yenilenir. TOPLA'yı main işler (dükkândaki kendiliğinden toplamayla aynı yol).
@@ -8,6 +9,8 @@ extends Dialog
 ## kadar izlenirse ad_rewarded (main kutuyu toplar, aynı parayı bir kez daha verir).
 
 signal collect_requested
+## Tanktaki bir balığın şeridinde DEFTER: Balık Defteri o türün sayfasında açılsın (main).
+signal book_requested(fish_id: String)
 ## Akvaryumun reklamı sonuna kadar izlendi: kutu 2 katıyla toplansın.
 signal ad_rewarded
 
@@ -45,6 +48,7 @@ func _build() -> void:
 	_tank = AquariumTank.new()
 	_tank.name = "Tank"
 	_tank.custom_minimum_size = TANK
+	_tank.book_requested.connect(func(id: String) -> void: book_requested.emit(id))
 	row.add_child(_tank)
 	var side := VBoxContainer.new()
 	side.custom_minimum_size = Vector2(SIDE_W, 0)

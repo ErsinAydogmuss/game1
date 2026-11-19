@@ -116,6 +116,51 @@ func test_shop_stall_layout() -> void:
 	stall.free()
 
 
+## Akvaryum (yapı 4; testçi: "60-80 cm'lik balık küçücük tankta"): dükkânın yanında büyük tank, balıklar gerçek
+## boylarında (yayın da sığar), tankın içinde; dükkânın tek ağında (çizim eklemez); balıkçı tankın içinden geçmez.
+func test_big_aquarium_shows_real_sizes() -> void:
+	var db := content()
+	var tree := Engine.get_main_loop() as SceneTree
+	var stall := ShopStall.new()
+	tree.root.add_child(stall)
+	stall.build(Vector3(2.0, 0.2, 3.0), Vector2(1.0, 0.0))
+	var before := stall.find_children("*", "GeometryInstance3D", true, false).size()
+	var fish: Array[Dictionary] = []
+	for spec: Array in [["wels", 245], ["pike", 112], ["zander", 86], ["golden_carp", 80], ["brook_trout", 70],
+			["crayfish", 12], ["rudd", 25]]:
+		fish.append({ "def": db.fish_by_id(str(spec[0])), "size_cm": int(spec[1]) })
+	stall.set_tank(fish)
+	assert_eq(stall.tank_fish_count(), ShopStall.TANK_SHOWN, "en çok %d balık" % ShopStall.TANK_SHOWN)
+	assert_eq(stall.find_children("*", "GeometryInstance3D", true, false).size(), before, "balıklar çizim eklemez")
+	var half := ShopStall.TANK_W * 0.5
+	for place in stall.tank_fish_layout():
+		var c: Vector3 = place["center"]
+		var length := float(place["length"])
+		assert_true(absf(c.x - ShopStall.TANK_X) + length * 0.5 <= half, "%s tankın içinde (x)" % place["id"])
+		assert_true(absf(c.z - ShopStall.TANK_Z) <= ShopStall.TANK_D * 0.5, "%s tankın içinde (z)" % place["id"])
+	var lengths := {}
+	for place in stall.tank_fish_layout():
+		lengths[place["id"]] = float(place["length"])
+	assert_between(float(lengths.get("pike", 0.0)), 1.11, 1.13, "turna gerçek boyunda (112 cm)")
+	assert_between(float(lengths.get("wels", 0.0)), 2.3, 2.46, "yayın tanka sığar")
+	assert_true(ShopStall.TANK_W >= 2.5, "tank yayını alacak kadar büyük")
+	# Balıkçı tankın içinden geçmez; tankın önünde durulur.
+	var tank := stall.transform * Vector3(ShopStall.TANK_X, 0, ShopStall.TANK_Z)
+	var before_tank := stall.transform * Vector3(ShopStall.TANK_X, 0, ShopStall.TANK_Z + 1.4)
+	var inside := false
+	var front_blocked := false
+	for b in stall.blockers():
+		inside = inside or Vector2(b.x, b.y).distance_to(Vector2(tank.x, tank.z)) < b.z
+		front_blocked = front_blocked or Vector2(b.x, b.y).distance_to(Vector2(before_tank.x, before_tank.z)) < b.z + Angler.BODY
+	assert_true(inside, "balıkçı tankın içine giremez")
+	assert_true(not front_blocked, "tankın önünde durulur")
+	# Aynı balıklar: ağ yeniden kurulmaz.
+	var mesh := stall.find_child("Stall", false, false)
+	stall.set_tank(fish)
+	assert_true(stall.find_child("Stall", false, false) == mesh, "aynı balıklarla ağ yeniden kurulmaz")
+	stall.free()
+
+
 func test_angler_slides_around_blockers() -> void:
 	var list: Array[Vector3] = [Vector3(0.0, 0.0, 0.4)]
 	assert_eq(Angler.avoid(list, Vector2(1.0, 0.0), Vector2(-0.5, 0.0)), Vector2.ZERO, "tam karşıdan gelen durur")
@@ -157,7 +202,7 @@ func test_lake_scenery_keeps_clear_and_cheap() -> void:
 	var db := content()
 	var lake := db.lake(db.main_spot)
 	var scene := LakeScene.new()
-	scene.keep_clear.append(ShopStall.clear_zone(lake.dock))
+	scene.keep_clear.append_array(ShopStall.clear_zones(lake.dock))
 	scene.setup(lake)
 	var occupied: Array[Vector3] = scene.get("_occupied")
 	# Kıyıdan uzaklık bantları ızgaranın dışında da gerçek uzaklıkla çalışır (korular, arkadaki
@@ -194,7 +239,7 @@ func test_lake_love_adds_plants_without_draws() -> void:
 	var db := content()
 	var lake := db.lake(db.main_spot)
 	var scene := LakeScene.new()
-	scene.keep_clear.append(ShopStall.clear_zone(lake.dock))
+	scene.keep_clear.append_array(ShopStall.clear_zones(lake.dock))
 	scene.setup(lake)
 	var start: Vector2 = db.spot(db.main_spot)["start"]
 	var base := scene.plants_triangles()

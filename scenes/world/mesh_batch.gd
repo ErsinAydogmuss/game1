@@ -66,6 +66,65 @@ func add(mesh: PrimitiveMesh, xform: Transform3D, color: Color) -> void:
 			_indices.append(base + index)
 
 
+## Hazır bir ağı (ilk yüzeyi) kendi köşe renkleriyle ekler (akvaryumun balıkları: FishMesh). linear: ağın renkleri
+## doğrusal (balığın gölgelendiricisi COLOR'ı olduğu gibi kullanır), birleşik ağın malzemesi sRGB okur: çevrilir.
+## tint: renk bu renge bu kadar karışır (suyun ardındaki balık). two_sided: her üçgenin ters yüzü de eklenir
+## (yüzgeçler tek yüzlü; malzeme arka yüzü çizmez). Ağın üçgen çorbası (renkleri ve ters yüzüyle) bir kez hazırlanır
+## (_soup, önbellek); her eklemede köşeler ve normaller toplu dönüşür (Transform3D * dizi: yerel kod): akvaryumun
+## altı balığı birkaç ms. Dönüşüm eşit ölçekli olmalı (dönme × ölçek; normaller dönmeyle döner).
+func add_mesh(source: Mesh, xform: Transform3D, linear: bool = false, tint: Color = Color.WHITE, tint_amount: float = 0.0,
+		two_sided: bool = false) -> void:
+	if source == null or source.get_surface_count() == 0:
+		return
+	var soup := _soup(source, linear, tint, tint_amount, two_sided)
+	var verts: PackedVector3Array = soup[0]
+	var base := _verts.size()
+	_verts.append_array(xform * verts)
+	_normals.append_array(Transform3D(xform.basis.orthonormalized(), Vector3.ZERO) * (soup[1] as PackedVector3Array))
+	_uvs.resize(_uvs.size() + verts.size())
+	_colors.append_array(soup[2])
+	_indices.append_array(PackedInt32Array(range(base, base + verts.size())))
+
+
+static var _soups: Dictionary = {}
+
+
+## Ağın üçgen çorbası: [köşeler, normaller, renkler] (sıralı, üçer üçer; ters yüz istenirse ardından sarımı çevrilmiş
+## ve normali ters kopya). Ağ ve ayarlar başına bir kez.
+static func _soup(source: Mesh, linear: bool, tint: Color, tint_amount: float, two_sided: bool) -> Array:
+	var key := "%d:%s:%s:%.3f:%s" % [source.get_instance_id(), linear, tint.to_html(), tint_amount, two_sided]
+	if _soups.has(key):
+		return _soups[key]
+	var arrays := source.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: Variant = arrays[Mesh.ARRAY_NORMAL]
+	var colors: Variant = arrays[Mesh.ARRAY_COLOR]
+	var indices: Variant = arrays[Mesh.ARRAY_INDEX]
+	var order := PackedInt32Array()
+	if indices == null or (indices as PackedInt32Array).is_empty():
+		order = PackedInt32Array(range(verts.size()))
+	else:
+		order = indices
+	var out_v := PackedVector3Array()
+	var out_n := PackedVector3Array()
+	var out_c := PackedColorArray()
+	for face in (2 if two_sided else 1):
+		for t in range(0, order.size() - 2, 3):
+			var second := order[t + 1] if face == 0 else order[t + 2]
+			var third := order[t + 2] if face == 0 else order[t + 1]
+			for i: int in [order[t], second, third]:
+				out_v.append(verts[i])
+				var n: Vector3 = (normals as PackedVector3Array)[i] if normals != null else Vector3.UP
+				out_n.append(n if face == 0 else -n)
+				var c: Color = (colors as PackedColorArray)[i] if colors != null else Color.WHITE
+				if linear:
+					c = c.linear_to_srgb()
+				out_c.append(c.lerp(tint, tint_amount) if tint_amount > 0.0 else c)
+	var soup := [out_v, out_n, out_c]
+	_soups[key] = soup
+	return soup
+
+
 ## Kodla hesaplanan üçgenler (art arda üçer köşe; dışarıdan bakınca saat yönünde: Godot'nun ön
 ## yüzü). Normaller düz (üçgen başına); hepsine color verilir (nilüfer yaprağı, çiçek).
 func triangles(points: PackedVector3Array, color: Color) -> void:
@@ -88,6 +147,14 @@ func is_empty() -> bool:
 
 ## Başka bir topluluğun parçalarını ekler (göl sevgisinin çiçekleri temel bitkilerle tek ağda).
 func append(other: MeshBatch) -> void:
+	if _verts.is_empty():
+		# Boş topluluğa kopya (yerel kod; dükkânın sabit kısmı her yeniden kurulmada).
+		_verts = other._verts.duplicate()
+		_normals = other._normals.duplicate()
+		_uvs = other._uvs.duplicate()
+		_colors = other._colors.duplicate()
+		_indices = other._indices.duplicate()
+		return
 	var base := _verts.size()
 	_verts.append_array(other._verts)
 	_normals.append_array(other._normals)

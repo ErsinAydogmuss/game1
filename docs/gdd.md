@@ -1144,12 +1144,24 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - Ersin'in seçimi: her türün en irisi tanka **kendiliğinden** girer (defterden türer: `Aquarium.fish`, ayrı bir
     liste yok). Tanktaki, tutulan balığın kopyasıdır: kovadaki balık yine satılır. Satılmayan türler (koruma
     altındaki mersin, Ay Turnası, Kocabaş, Gölün Bekçisi) göle döner, tanka girmez: tank 15 türü alır.
-  - Tezgâhta küçük bir cam tank ve yanında kırmızı bağış kutusu. Dükkânın tek ağında (çizim eklemez): su opak, camın
-    ardındaki en değerli 5 balık ön ve yan yüzde kabartma; tanktaki türler değişince dükkânın ağı yeniden kurulur.
+  - ~~Tezgâhta küçük bir cam tank~~ (yapı 3'e kadar). ✅ **Yapı 4: büyük tank** (testçi: "60-70-80 cm'lik balıklar
+    küçücük tankta minimal görünüyor"; Ersin'in seçimi "Nine'nin yanında büyük tank"): dükkânın solunda, kıyı yolunun öte
+    yanında çimende, ahşap dolabın üstünde 2,8 × 0,8 m, 1,1 m camlı tank; önü dükkânınki gibi kameraya bakar. Arka ve
+    sağ duvar su (yukarıdan aşağı koyulaşan), dibi kum, taşlar, bitkiler, kabarcıklar; ön ve sol yüz cam (çerçeve,
+    parıltı, suyun çizgisi). En değerli 6 balık içeride **gerçek boylarında** (190 cm'lik yayın 1,9 m; tanka sığmayan
+    boy kısalır: en çok 2,52 m), suyun rengine biraz karışmış; dükkânın tek ağında (çizim eklemez; iskelede 141 çizim).
+    Bağış kutusu dolabın önündeki rafta. Dükkânın balıksız kısmı bir kez kurulur; balıklar değişince yalnızca onlar
+    eklenir (~6 ms). Balıkçı tankın içinden geçmez (dolabın boyunca dört engel dairesi). İskeleden ekranın sol alt
+    köşesinde kalır; Nine'nin önüne gelince tamamı görünür.
   - Tanka dokununca **Akvaryum paneli**: canlı tank (kendi dünyası olan SubViewport; her tür bir balık, dış
     çizgisiz, kendi şeridinde gidip döner, kerevit kumda yürür; arka plan Ersin'in `aquarium_bg` görseli, yoksa
     kodla), "12/15 tür", saatlik bağış, bağış kutusu ("Sen yokken de dolar, en çok 2 saatlik"; dolunca "Kutu
     doldu!") ve TOPLA. Boş tankta "Bir balık tut".
+  - ✅ **Balığa dokun** (yapı 4; testçi: "tanktaki balığa basınca ismi, özelliği ve yakınlaşma"; Ersin'in seçimi
+    "Yakınlaş ve bilgi şeridi"): panelin tankında bir balığa dokununca kamera ona yaklaşır ve yüzdükçe izler, arka plan
+    büyür; altta şerit: resmi, adı, nadirliği, en büyük boyu ve yıldızı, kaç tane tutulduğu, saatte kaç para getirdiği,
+    DEFTER (akvaryum kapanır, Balık Defteri o türün sayfasında açılır; defter kapanınca akvaryum döner) ve ✕. Boşluğa
+    ya da ✕'e dokununca geri çekilir; panel kapanınca yakınlaşma biter.
   - **Bağış kutusu** (Ersin'in seçimi: para, en çok 2 saatlik): saatte tanktaki tür başına 8 para ve balıkların
     değerinin %40'ı (`rules.json` `aquarium`: `cap_s`, `species_ph`, `value_ph`). Gerçek saatle dolar, oyuncu
     yokken de (tuzak gibi); en çok 2 saatlik birikimde durur (gelir kuralı 7). Saat geri alınırsa kayıp da kazanç da

@@ -7,6 +7,11 @@ extends Control
 ## önünde sırıtıyordu; yükselen kabarcıklar). Çerçeve en üstte. Balıklar görünür alanın içinde kendi
 ## şeritlerinde gidip döner, hafifçe iner kalkar; kerevit kumda yürür. Yerleşim türün sırasından tohumlanır:
 ## her açılışta aynı. Tank yalnızca görünürken çizilir.
+## Balığa dokununca (yapı 4; testçi: "tanktaki balığa basınca ismi, özelliği ve yakınlaşma"): kamera o balığa
+## yaklaşır ve onu izler, arka plan büyür; altta bilgi şeridi: resmi, adı, nadirliği, en iri boyu ve yıldızı, kaç tane
+## tutulduğu, tanka katkısı (saatte para), DEFTER (book_requested) ve ✕. Boşluğa ya da ✕'e dokununca geri çekilir.
+
+signal book_requested(fish_id: String)
 
 ## Kamera: dikey görüş açısı ve balıkların düzlemine uzaklık (m).
 const FOV := 30.0
@@ -28,6 +33,19 @@ const PLANT := Color("#3f8f45")
 const PLANT_LIGHT := Color("#6cbf5a")
 const FRAME := Color("#4a2f1a")
 const BUBBLES := 9
+## Yakınlaşma: kameranın balığa uzaklığı (boyunun katı, en az), arka planın büyümesi, geçişin hızı (1/sn).
+const FOCUS_DIST := 2.6
+const FOCUS_MIN := 1.6
+const FOCUS_BG := 1.35
+const FOCUS_RATE := 5.0
+## Dokunuş sayılan en çok kayma ve balığın dokunma payı (piksel).
+const TAP_SLOP := 28.0
+const FISH_TOUCH := 46.0
+## Bilgi şeridi: yüksekliği, kenar payı, resmi, DEFTER düğmesi.
+const STRIP_H := 150.0
+const STRIP_PAD := 14.0
+const STRIP_ART := 112.0
+const BOOK_BUTTON := Vector2(190, 122)
 
 var _viewport: SubViewport
 var _world: Node3D
@@ -40,11 +58,26 @@ var _empty: Label
 var _swimmers: Array[Dictionary] = []
 var _ids: PackedStringArray = []
 var _time := 0.0
+## Seçilen balık (yüzenlerden biri; boşsa yakınlaşma yok), yakınlaşmanın payı (0..1), arka planın büyüdüğü nokta.
+var _focus: Dictionary = {}
+var _focus_t := 0.0
+var _bg_point := Vector2.ZERO
+var _press_at := Vector2(-1.0, -1.0)
+var _db: ContentDB
+var _strip: PanelContainer
+var _strip_art: TextureRect
+var _strip_name: Label
+var _strip_badge: HBoxContainer
+var _strip_best: Label
+var _strip_info: Label
+var _strip_stars: HBoxContainer
+var _book: Button
 
 
 func _init() -> void:
 	clip_contents = true
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Balığa dokunulur (_gui_input); şeridin düğmeleri kendi dokunuşlarını alır.
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	_art = TextureRect.new()
 	_art.texture = ItemArt.art("aquarium_bg.png")
 	_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -109,10 +142,12 @@ func _init() -> void:
 	_empty.offset_left = 60
 	_empty.offset_right = -60
 	add_child(_empty)
+	_build_strip()
 
 
 ## Tanktaki balıklar (Aquarium.fish); aynı türler gelirse yüzenler yerinde kalır.
 func show_fish(tank: Array[Dictionary], db: ContentDB) -> void:
+	_db = db
 	var ids := PackedStringArray()
 	for f in tank:
 		ids.append("%s:%d" % [str(f["fish"]), int(f["size_cm"])])
@@ -127,7 +162,12 @@ func show_fish(tank: Array[Dictionary], db: ContentDB) -> void:
 		var def := db.fish_by_id(str(tank[i]["fish"]))
 		if def.is_empty():
 			continue
-		_swimmers.append(_make_swimmer(def, int(tank[i]["size_cm"]), i, tank.size()))
+		var swimmer := _make_swimmer(def, int(tank[i]["size_cm"]), i, tank.size())
+		swimmer["id"] = str(tank[i]["fish"])
+		swimmer["size_cm"] = int(tank[i]["size_cm"])
+		swimmer["value"] = int(tank[i].get("value", 0))
+		_swimmers.append(swimmer)
+	unfocus(true)
 
 
 ## Yüzen balık sayısı (bot ve testler).
@@ -180,6 +220,9 @@ func _half_height(z: float) -> float:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_VISIBILITY_CHANGED and is_visible_in_tree():
 		UiKit.apply_preview_msaa(_viewport)
+	elif what == NOTIFICATION_VISIBILITY_CHANGED:
+		# Panel kapanınca yakınlaşma biter: yeniden açılınca tank baştan görünür.
+		unfocus(true)
 
 
 func _process(delta: float) -> void:
@@ -188,6 +231,7 @@ func _process(delta: float) -> void:
 	_time += delta
 	for s in _swimmers:
 		_swim(s, delta)
+	_follow(delta)
 	_front.queue_redraw()
 
 
@@ -223,6 +267,226 @@ func _face(s: Dictionary, turn: float) -> void:
 	var t := smoothstep(0.0, 1.0, turn)
 	# Dönerken başı kameradan uzağa döner (tankın içine doğru yarım tur): kameraya ağzını dayamasın.
 	fish.rotation = Vector3(0.0, (0.0 + PI * t) if right else (PI - PI * t), 0.0)
+
+
+# --- Balığa dokun: yakınlaşma ve bilgi şeridi --------------------------------------
+
+## Dokunuş: basıp kaldırmak (kaymadan) bir balığın üstündeyse ona yakınlaşır, boşluktaysa geri çekilir. Dokunuştan
+## üretilen fare olayı yeter (dokunmanın kendisi de gelir: iki kez sayılmasın).
+func _gui_input(event: InputEvent) -> void:
+	var button := event as InputEventMouseButton
+	if button == null or button.button_index != MOUSE_BUTTON_LEFT:
+		return
+	accept_event()
+	if button.pressed:
+		_press_at = button.position
+		return
+	var tap := _press_at.x >= 0.0 and button.position.distance_to(_press_at) <= TAP_SLOP
+	_press_at = Vector2(-1.0, -1.0)
+	if not tap:
+		return
+	var hit := fish_at(button.position)
+	if hit >= 0:
+		focus(hit)
+	elif not _focus.is_empty():
+		unfocus()
+
+
+## Tankın (yerel) bir noktasındaki balığın sırası: başından kuyruğuna çizginin FISH_TOUCH payında en yakın olan; yoksa −1.
+func fish_at(point: Vector2) -> int:
+	var best := -1
+	var best_d := INF
+	for i in _swimmers.size():
+		var ends := _fish_ends(i)
+		if ends.is_empty():
+			continue
+		var d := Geometry2D.get_closest_point_to_segment(point, ends[0], ends[1]).distance_to(point)
+		if d <= FISH_TOUCH and d < best_d:
+			best = i
+			best_d = d
+	return best
+
+
+## Balığın başı ve kuyruğu tankın (yerel) koordinatında (model +X'e bakar, boyu 1; düğümün ölçeği boy).
+func _fish_ends(i: int) -> PackedVector2Array:
+	var fish: FishMesh = _swimmers[i]["node"]
+	if _camera == null or not fish.is_inside_tree():
+		return PackedVector2Array()
+	var a := fish.global_transform * Vector3(0.45, 0.0, 0.0)
+	var b := fish.global_transform * Vector3(-0.45, 0.0, 0.0)
+	if _camera.is_position_behind(a) or _camera.is_position_behind(b):
+		return PackedVector2Array()
+	return PackedVector2Array([_camera.unproject_position(a), _camera.unproject_position(b)])
+
+
+## Balığın tanktaki yeri (tankın yerel koordinatında; bot dokunur).
+func fish_point(i: int) -> Vector2:
+	var ends := _fish_ends(i)
+	return (ends[0] + ends[1]) * 0.5 if not ends.is_empty() else size * 0.5
+
+
+## Seçilen balığın sırası (yoksa −1; bot).
+func focused_index() -> int:
+	return _swimmers.find(_focus) if not _focus.is_empty() else -1
+
+
+## Kameranın balıkların düzlemine uzaklığı (bot: yakınlaştı mı).
+func camera_distance() -> float:
+	return _camera.position.z if _camera != null else CAMERA_Z
+
+
+## Bilgi şeridi (bot ve testler).
+func strip() -> PanelContainer:
+	return _strip
+
+
+## Balığa yakınlaşır: şerit onun bilgileriyle açılır, arka plan o noktada büyür.
+func focus(i: int) -> void:
+	if i < 0 or i >= _swimmers.size():
+		return
+	var first := _focus.is_empty()
+	_focus = _swimmers[i]
+	if first:
+		_bg_point = fish_point(i)
+	Sounds.play("ui_tap")
+	Sounds.haptic(10)
+	_fill_strip()
+	_strip.visible = true
+
+
+## Geri çekilir (hemen: panel kapanınca, yeni balıklar gelince).
+func unfocus(instant: bool = false) -> void:
+	_focus = {}
+	if _strip != null:
+		_strip.visible = false
+	if instant:
+		_focus_t = 0.0
+		if _camera != null:
+			_camera.position = Vector3(0.0, 0.0, CAMERA_Z)
+		_apply_background(0.0)
+
+
+## Kamera seçilen balığa kayar ve onu izler (yumuşakça); arka plan yakınlaşmayla büyür.
+func _follow(delta: float) -> void:
+	var k := 1.0 - exp(-FOCUS_RATE * delta)
+	var target := Vector3(0.0, 0.0, CAMERA_Z)
+	if not _focus.is_empty():
+		var fish: FishMesh = _focus["node"]
+		var dist := maxf(FOCUS_MIN, float(_focus["half"]) * 2.0 * FOCUS_DIST)
+		target = Vector3(fish.position.x, fish.position.y, fish.position.z + dist)
+	_camera.position = _camera.position.lerp(target, k)
+	var goal := 0.0 if _focus.is_empty() else 1.0
+	_focus_t = lerpf(_focus_t, goal, k)
+	if absf(_focus_t - goal) < 0.002:
+		_focus_t = goal
+	_apply_background(_focus_t)
+
+
+## Arka plan (Ersin'in resmi ya da kodla çizilen kat) yakınlaşmanın payıyla büyür; seçilen noktaya doğru kayar, tankı
+## hep örter.
+func _apply_background(t: float) -> void:
+	var s := lerpf(1.0, FOCUS_BG, t)
+	var box := size
+	var center := box * 0.5
+	var shift := (center - _bg_point * FOCUS_BG).clamp(box - box * FOCUS_BG, Vector2.ZERO)
+	for layer: Control in [_art, _back]:
+		if layer == null:
+			continue
+		layer.scale = Vector2(s, s)
+		layer.position = shift * t
+
+
+## Bilgi şeridi: altta, tankın genişliğinde; koyu yarı saydam zemin. Bir kez kurulur (her kare çizilmez).
+func _build_strip() -> void:
+	_strip = PanelContainer.new()
+	_strip.name = "FishInfo"
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.06, 0.16, 0.24, 0.84)
+	style.set_corner_radius_all(18)
+	style.set_content_margin_all(STRIP_PAD)
+	_strip.add_theme_stylebox_override("panel", style)
+	_strip.mouse_filter = Control.MOUSE_FILTER_STOP
+	_strip.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_strip.offset_left = 16.0
+	_strip.offset_right = -16.0
+	_strip.offset_top = -STRIP_H - 14.0
+	_strip.offset_bottom = -14.0
+	_strip.visible = false
+	add_child(_strip)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	_strip.add_child(row)
+	_strip_art = BookPanel.fish_art("rudd", STRIP_ART, true)
+	row.add_child(_strip_art)
+	var text := VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.alignment = BoxContainer.ALIGNMENT_CENTER
+	text.add_theme_constant_override("separation", 2)
+	row.add_child(text)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 12)
+	text.add_child(top)
+	_strip_name = UiKit.title("", 38, UiKit.TEXT, HORIZONTAL_ALIGNMENT_LEFT, 8)
+	_strip_name.name = "FishName"
+	top.add_child(_strip_name)
+	_strip_badge = HBoxContainer.new()
+	_strip_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(_strip_badge)
+	var mid := HBoxContainer.new()
+	mid.add_theme_constant_override("separation", 10)
+	text.add_child(mid)
+	_strip_best = UiKit.label("", UiKit.SIZE_SMALL, UiKit.TEXT)
+	mid.add_child(_strip_best)
+	_strip_stars = HBoxContainer.new()
+	_strip_stars.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mid.add_child(_strip_stars)
+	_strip_info = UiKit.label("", UiKit.SIZE_SMALL - 4, Color("#cfe9f3"))
+	_strip_info.name = "FishInfoText"
+	text.add_child(_strip_info)
+	_book = UiKit.button("", UiKit.PRIMARY, UiKit.SIZE_SMALL, BOOK_BUTTON)
+	_book.name = "Button_book"
+	_book.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_book.pressed.connect(func() -> void:
+		if _focus.is_empty():
+			return
+		Sounds.play("ui_tap")
+		book_requested.emit(str(_focus["id"])))
+	row.add_child(_book)
+	var close := TextureButton.new()
+	close.name = "Button_unfocus"
+	close.texture_normal = ItemArt.ui("close")
+	close.ignore_texture_size = true
+	close.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	close.custom_minimum_size = Vector2(122, 122)
+	close.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	close.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	close.pressed.connect(func() -> void:
+		Sounds.play("ui_tap")
+		unfocus())
+	row.add_child(close)
+
+
+## Şeridin yazıları seçilen balıkla (o anki dilde).
+func _fill_strip() -> void:
+	if _focus.is_empty() or _db == null:
+		return
+	var id := str(_focus["id"])
+	var def := _db.fish_by_id(id)
+	var record: Dictionary = GameState.save.records.get(id, {}) if GameState.save != null else {}
+	_strip_art.texture = ItemArt.fish(id)
+	_strip_name.text = UiKit.upper(tr("FISH_" + id))
+	_strip_name.add_theme_font_size_override("font_size", UiKit.fit_size(_strip_name.text, UiKit.display_font(), 38, 330.0, 26))
+	Dialog.clear(_strip_badge)
+	_strip_badge.add_child(UiKit.rarity_badge(_db, int(def.get("rarity", 0)), UiKit.SIZE_SMALL - 6))
+	_strip_best.text = tr("UI_BOOK_BEST") % int(_focus["size_cm"])
+	Dialog.clear(_strip_stars)
+	_strip_stars.add_child(UiKit.stars(int(record.get("best_stars", 1)), 26))
+	var rules := _db.rules
+	var rate := rules.aquarium_species_ph + roundi(int(_focus["value"]) * rules.aquarium_value_pm / 1000.0)
+	var info := tr("UI_AQUARIUM_FISH_INFO") % [int(record.get("count", 0)), UiKit.format_int(rate)]
+	_strip_info.text = info
+	_strip_info.add_theme_font_size_override("font_size", UiKit.fit_size(info, UiKit.body_font(), UiKit.SIZE_SMALL - 4, 400.0, 18))
+	_book.text = UiKit.upper(tr("UI_AQUARIUM_BOOK"))
 
 
 ## Arka planda Ersin'in resmi mi var (aquarium_bg; yoksa kodla çizilen su ve kum)?

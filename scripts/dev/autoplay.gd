@@ -6668,13 +6668,17 @@ func _play_aquarium() -> void:
 	var camera: Camera3D = main.get("camera")
 	GameState.changed.emit()
 	await _wait(1.5)
-	# 1) Boş tank: tezgâhta balık yok; tanka dokun → panel, "Tank boş", TOPLA pasif.
-	_check("boş defterde tezgâhın tankı boş", shop.tank_fish_count() == 0)
+	var dock_start := _angler().pos2()
+	# 1) Boş tank: dükkânın yanındaki büyük tankta balık yok; Nine'nin önüne gel, tanka dokun → panel, "Tank boş",
+	# TOPLA pasif. (Yapı 4: tank büyüdü, dükkânın solunda, kıyı yolunun öte yanında: Nine'nin önünden görünür.)
+	_check("boş defterde dükkânın tankı boş", shop.tank_fish_count() == 0)
+	var sell_spot: Vector2 = main.call("_sell_spot")
+	_angler().place(sell_spot)
+	await _wait(1.2)
 	var rect := shop.tank_screen_rect(camera)
-	print("AKVARYUM tank ekranda %s (iskelenin başında)" % str(rect))
-	var touch := minf(rect.size.x, rect.size.y) + 2.0 * ShopStall.TANK_TOUCH_PX
-	_check("tank iskelenin başından ekranda ve dokunulacak kadar büyük (%.0f×%.0f, dokunma alanının kısa kenarı %.0f)"
-			% [rect.size.x, rect.size.y, touch], get_viewport().get_visible_rect().encloses(rect) and touch >= 60.0)
+	print("AKVARYUM tank ekranda %s (Nine'nin önünde)" % str(rect))
+	_check("tank Nine'nin önünden ekranda ve büyük (%.0f×%.0f)" % [rect.size.x, rect.size.y],
+			get_viewport().get_visible_rect().encloses(rect) and minf(rect.size.x, rect.size.y) >= 120.0)
 	await _tap(rect.get_center())
 	await _wait_frames(3)
 	_check("tanka dokun → Akvaryum paneli (dükkân değil)", panel.visible and not shop_panel.visible)
@@ -6692,17 +6696,27 @@ func _play_aquarium() -> void:
 		Records.add(save.records, str(c[0]), int(c[1]), 3, start)
 	var tank := Aquarium.fish(db, save)
 	await _wait(1.3)
-	_check("tezgâhın tankında %d balık (en çok %d)" % [shop.tank_fish_count(), ShopStall.TANK_SHOWN],
+	_check("dükkânın tankında %d balık (en çok %d)" % [shop.tank_fish_count(), ShopStall.TANK_SHOWN],
 			shop.tank_fish_count() == mini(tank.size(), ShopStall.TANK_SHOWN))
 	_check("mersin tanka girmez (%d tür)" % tank.size(), tank.size() == catches.size() - 1)
+	var wels := 0.0
+	for place in shop.tank_fish_layout():
+		if str(place["id"]) == "wels":
+			wels = float(place["length"])
+	_check("büyük tankta yayın gerçek boyunda (%.2f m, 190 cm)" % wels, absf(wels - 1.9) < 0.01)
+	_angler().place(dock_start)
+	await _wait(1.2)
 	var dock := await _measure_draws()
 	print("ÇİZİM iskelede akvaryumla: %d çizim, %d üçgen" % [int(dock["draws"]), int(dock["primitives"])])
 	_check("ÇİZİM iskelede akvaryumla: %d (≤%d)" % [int(dock["draws"]), TOUR_DRAWS], int(dock["draws"]) <= TOUR_DRAWS)
 	await _shot("02_iskele")
+	_angler().place(sell_spot)
+	await _wait(1.2)
+	await _shot("02b_nine_onu")
 	main.set("bot_camera", true)
-	_frame_on(shop.tank_point() + Vector3(0.0, -0.1, 0.0), 0.3)
+	_frame_on(shop.tank_point() + Vector3(0.0, -0.3, 0.0), 0.55)
 	await _wait(0.3)
-	await _shot("03_tezgah_yakin")
+	await _shot("03_tank_yakin")
 	main.set("bot_camera", false)
 	await _wait(0.6)
 	# 3) Panel: her türün en irisi yüzer; 3 saat sonra kutu üst sınırda.
@@ -6725,6 +6739,7 @@ func _play_aquarium() -> void:
 	_check("TOPLA büyük (%.0f×%.0f)" % [r.size.x, r.size.y], minf(r.size.x, r.size.y) >= 121.5 and not collect.disabled)
 	await _wait(1.0)
 	await _shot("04_akvaryum")
+	await _check_tank_focus(panel)
 	var coins := save.coins
 	await _tap_control(collect)
 	await _wait_frames(3)
@@ -6776,6 +6791,65 @@ func _play_aquarium() -> void:
 	for line in _results:
 		print("KONTROL ", line)
 	_quit()
+
+
+## Akvaryum panelinde balığa dokun (yapı 4; testçi: "tanktaki balığa basınca ismi, özelliği ve yakınlaşma"): kamera
+## yaklaşır, şeritte adı, düğmeler büyük; DEFTER → defter o türün sayfasında, kapanınca akvaryum döner; boşluğa dokununca
+## geri çekilir.
+func _check_tank_focus(panel: AquariumPanel) -> void:
+	var tank := panel.find_child("Tank", true, false) as AquariumTank
+	var book: BookPanel = main.get("book_panel")
+	if tank == null or tank.swimmer_count() == 0:
+		_results.append("akvaryumda balık yok: yakınlaşma denenmedi")
+		return
+	# En iri balık (yayın): dokunması kolay.
+	var index := 0
+	var ids: PackedStringArray = tank.get("_ids")
+	for i in ids.size():
+		if ids[i].begins_with("wels:"):
+			index = i
+	var fish_id := ids[index].get_slice(":", 0)
+	await _tap(tank.get_global_transform_with_canvas() * tank.fish_point(index))
+	await _wait(1.4)
+	var strip := tank.strip()
+	var name_label := strip.find_child("FishName", true, false) as Label
+	_check("balığa dokun → yakınlaşır (%.1f m), şeritte adı: %s" % [tank.camera_distance(), name_label.text],
+			tank.focused_index() == index and strip.visible and tank.camera_distance() < AquariumTank.CAMERA_Z - 1.5
+			and name_label.text == UiKit.upper(tr("FISH_" + fish_id)))
+	var book_button := strip.find_child("Button_book", true, false) as Button
+	var unfocus := strip.find_child("Button_unfocus", true, false) as Control
+	var small := 0
+	for b: Control in [book_button, unfocus]:
+		var r := b.get_global_rect()
+		if minf(r.size.x, r.size.y) * panel.fit_scale() < 121.5:
+			small += 1
+	_check("şeridin düğmeleri büyük (DEFTER ve ✕) ve şerit tankın içinde", small == 0
+			and tank.get_global_rect().encloses(strip.get_global_rect()))
+	await _shot("04b_balik_yakin")
+	# Balık yüzdükçe kamera izler: bir süre sonra da o balık seçili.
+	await _wait(2.0)
+	_check("kamera balığı izler (hâlâ seçili, yakın)", tank.focused_index() == index
+			and tank.camera_distance() < AquariumTank.CAMERA_Z - 1.5)
+	await _tap_control(book_button)
+	await _wait(0.8)
+	_check("DEFTER → defter o balığın sayfasında, akvaryum kapalı", book.visible and not panel.visible
+			and str(book.get("_selected")) == fish_id)
+	await _shot("04c_defter")
+	await _tap(book.close_button.get_global_rect().get_center())
+	await _wait(1.0)
+	_check("defter kapanınca akvaryum yine açık, yakınlaşma bitti", panel.visible and not book.visible
+			and tank.focused_index() < 0 and not strip.visible)
+	# Yine dokun, sonra boşluğa: geri çekilir.
+	await _tap(tank.get_global_transform_with_canvas() * tank.fish_point(index))
+	await _wait(0.8)
+	var focused := tank.focused_index() == index
+	var empty := tank.get_global_transform_with_canvas() * Vector2(tank.size.x * 0.5, 30.0)
+	if tank.fish_at(Vector2(tank.size.x * 0.5, 30.0)) >= 0:
+		empty = tank.get_global_transform_with_canvas() * Vector2(30.0, 30.0)
+	await _tap(empty)
+	await _wait(1.2)
+	_check("boşluğa dokun → geri çekilir (%.1f m)" % tank.camera_distance(), focused and tank.focused_index() < 0
+			and not strip.visible and tank.camera_distance() > AquariumTank.CAMERA_Z - 0.3)
 
 
 ## Reklamlar (A2): bkz. dosyanın başı. Sahte sağlayıcı (Ads.use_fake): ekranda kısa bir "deneme reklamı" kartı.
