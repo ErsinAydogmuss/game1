@@ -251,13 +251,18 @@ func _card(db: ContentDB, save: SaveData, row: Dictionary) -> Control:
 	return panel
 
 
-## Çarpanın yazısı (binde → "1,7"; tam sayıda "2"): ondalık ayracı dilin (UI_DECIMAL).
+## Çarpanın yazısı (binde → "1,7", "1,15"; tam sayıda "2"; yüzde birle yuvarlı, sondaki sıfır yazılmaz): ondalık
+## ayracı dilin (UI_DECIMAL).
 static func multiplier_text(pm: int) -> String:
-	var whole := floori(pm / 1000.0)
-	var tenths := roundi(float(pm % 1000) / 100.0)
-	if tenths >= 10:
-		return str(whole + 1)
-	return str(whole) if tenths == 0 else "%d%s%d" % [whole, TranslationServer.translate("UI_DECIMAL"), tenths]
+	var hundredths := roundi(pm / 10.0)
+	var whole := floori(hundredths / 100.0)
+	var rest := hundredths - whole * 100
+	if rest == 0:
+		return str(whole)
+	var digits := "%02d" % rest
+	if digits.ends_with("0"):
+		digits = digits.left(1)
+	return "%d%s%s" % [whole, TranslationServer.translate("UI_DECIMAL"), digits]
 
 
 ## Bilgi hapı: ikon ve kısa yazı (tekniğin adı, "Buradasın").

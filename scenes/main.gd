@@ -2570,11 +2570,11 @@ func _find_trash(item: String) -> bool:
 	return news
 
 
-## Kova panelinde BIRAK: o türün en küçük balığı göle döner (göl sevgisi), su sesi ve titreşim; panel
-## yenilenir (sevgi çubuğu dolar).
+## Kova panelinde BIRAK: o türün en ucuz (eşitse en küçük) balığı göle döner (göl sevgisi), su sesi ve titreşim;
+## panel yenilenir (sevgi çubuğu dolar).
 func _on_bucket_release(fish_id: String) -> void:
 	var save := GameState.save
-	if Bucket.take(save, fish_id).is_empty():
+	if Bucket.take(save, fish_id, GameState.db).is_empty():
 		return
 	_release_fish(fish_id)
 	GameState.save_game()
@@ -3381,6 +3381,8 @@ func _empty_trap(id: int) -> bool:
 ## tuzak çekilmiş gibi aranır (yakındaysa yerine yenisi kurulabilir); yer yoksa nedeni bildirilir.
 func _move_trap() -> void:
 	if session.state != FishingSession.State.IDLE or _card_up() or traps.is_flying():
+		Sounds.play("error")
+		Sounds.haptic(30)
 		return
 	var db := GameState.db
 	var save := GameState.save

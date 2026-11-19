@@ -856,7 +856,9 @@ static func rate(db: ContentDB, sim_timing: Dictionary, place: Dictionary, t: St
 	var size_floor := int(place.get("size_floor", 0))
 	var value_pm := int(place.get("value_pm", 1000))
 	for fid: String in odds:
-		var floor_ppm := Dice.PPM - (Dice.PPM - size_floor) * (Dice.PPM - FishTable.bait_floor(gear.attraction(fid))) / Dice.PPM
+		# Bölgenin ve yemin tabanı birleşir (iç içe lift: 1 − (1 − bölge)(1 − yem)).
+		var keep := float(Dice.PPM - size_floor) * float(Dice.PPM - FishTable.bait_floor(gear.attraction(fid))) / Dice.PPM
+		var floor_ppm := Dice.PPM - roundi(keep)
 		worth += float(odds[fid]) / ContentDB.PPM * kept_value(db, fid, gear.carry, floor_ppm) * value_pm / 1000.0
 	var zone := str(place.get("id", ""))
 	return worth * (1.0 - miss_share(sim_timing, zone, t)) * 60.0 / cycle_s(sim_timing, zone, t)

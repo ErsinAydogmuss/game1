@@ -465,7 +465,7 @@ UI_NINE_TRAP_MORE,"%d traps now! Set the new one from your bag, dear.",Artık %d
 UI_TRAP_ENTERED,A crayfish just walked in!,Tuzağa bir kerevit girdi!
 UI_TRAP_COLLECT,Collect,Topla
 UI_TRAP_HAS,%d crayfish in the trap.,Tuzakta %d kerevit var.
-UI_TRAP_REMOVE_FULL,"Bucket full: sell first, then take the trap.","Kova dolu: önce sat, sonra tuzağı kaldır."
+UI_TRAP_REMOVE_FULL,"No room in the bucket for these crayfish: sell first.","Kovada bu kerevitlere yer yok: önce sat."
 UI_TRAP_MOVED,Trap moved here,Tuzak buraya taşındı
 UI_BAG_TRAP_MOVE,Move here,Buraya taşı
 UI_BAG_TRAP_MOVE_HOW,"All set: your oldest trap comes here, its crayfish go to the bucket.","Hepsi kurulu: en eski tuzağın buraya gelir, içindeki kerevitler kovaya."

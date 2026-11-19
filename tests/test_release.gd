@@ -73,3 +73,19 @@ func test_bucket_rows_group_species() -> void:
 			assert_eq(int(row["count"]), 2, "aynı türün sayısı")
 			assert_eq(int(row["value"]), Economy.fish_value(db, "rudd", 20) + Economy.fish_value(db, "rudd", 12),
 					"değer toplamı")
+
+
+## Kova panelinin BIRAK'ı (yapı 4) en ucuz balığı bırakır: derin ortanın küçük kızılkanatı iskelenin irisinden değerli
+## olabilir; db verilmezse eskisi gibi en küçüğü.
+func test_release_takes_the_cheapest() -> void:
+	var db := content()
+	var save := SaveData.create_new(4)
+	Bucket.add(db, save, "rudd", 18, 1, "deep_water")
+	Bucket.add(db, save, "rudd", 20, 1)
+	var deep := Economy.value_in(db, "rudd", 18, "deep_water")
+	var dock := Economy.fish_value(db, "rudd", 20)
+	assert_true(deep > dock, "derin ortanın küçüğü değerli (%d > %d)" % [deep, dock])
+	var out := Bucket.take(save, "rudd", db)
+	assert_eq(int(out.get("size_cm", 0)), 20, "en ucuzu bırakılır")
+	Bucket.add(db, save, "rudd", 20, 1)
+	assert_eq(int(Bucket.take(save, "rudd").get("size_cm", 0)), 18, "db yoksa en küçüğü")

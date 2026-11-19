@@ -657,8 +657,8 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
   - **Toplama:** şamandıraya ya da rozete dokun (yakındaysa hemen; 5 m'den uzaksa balıkçı kıyı yolundan yürür, varınca toplar). Kerevitler kovaya, deftere ve rütbe puanına girer (şans garantisi sayaçları ilerlemez); tuzak yeniden kurulur (içeriği yeniden zarlanır), artan süre sonraki kereviti bekler. En irisi elde gösterilir (kodla kurulan kerevit: kabuk, halkalı kuyruk, kıskaçlar, bacaklar, duyargalar; sırtı kameraya dönük), adının üstünde kaç tane olduğu ("Kerevit ×3"); ilk kerevitte yeni tür kartı (Ersin'in kerevit resmiyle). Kova doluysa toplanmaz ("Kova dolu: kerevitler tuzakta bekliyor", Dede Nine'yi söyler); kova toplarken dolarsa kalanı tuzakta bekler (kayıp yok).
   - ✅ **Tuzağın paneli** (yapı 4; testçi: "kurulan tuzak geri alınmıyor"): şamandıraya dokununca her zaman panel açılır
     (uzaktaysa balıkçı yürür, varınca): "Tuzakta 2 kerevit var." ya da sıradaki kerevitin süresi; KALDIR ve TOPLA (boşsa
-    BEKLE). Kerevitli tuzak da kaldırılır: önce kerevitler kovaya (kova hepsini almıyorsa kaldırılmaz: "Kova dolu: önce
-    sat, sonra tuzağı kaldır."), sonra tuzak çantaya. Tuzak balıkçının hemen önüne düşüp ekranda başının üstünde göründüğü için
+    BEKLE). Kerevitli tuzak da kaldırılır: önce kerevitler kovaya (kova hepsini almıyorsa kaldırılmaz: "Kovada bu
+    kerevitlere yer yok: önce sat."; taşımada da), sonra tuzak çantaya. Tuzak balıkçının hemen önüne düşüp ekranda başının üstünde göründüğü için
     dokunma sırasında şişe ve tuzak balıkçıdan (dolap) önce gelir.
   - ✅ **Taşıma** (yapı 4; testçi: "üçünü sazlığa kurdum, kayalığa kuramadım"): bütün tuzaklar kuruluyken tuzak kurulan
     bir bölgede çantanın tuzak satırı BURAYA TAŞI der ("Hepsi kurulu: en eski tuzağın buraya gelir, içindeki kerevitler
@@ -714,7 +714,7 @@ Kademeler yalnızca sona eklenir; Masalsı yeni eklenir. Renk tek başına yetme
 - ✅ **Bırakma** (Dalga 4): bırakılan balık para vermez, yalnızca göl sevgisi verir (rütbe puanı balık tutulunca gelmiştir).
   - **Kova paneli:** sol üstteki kovaya dokununca açılır (olta boştayken ve balık eldeyken de; dokunma kutusu 122,
     olta sudayken dokunuş almaz). Tür başına bir satır: resmi, adı, altında "×3", nadirliği ve bir balığın sevgisi
-    ("♥ +5"), değeri, BIRAK (türün en küçüğü göle döner). Bir sayfada 6 satır, fazlası sonraki sayfada ("Sayfa 1/2 »"
+    ("♥ +5"), değeri, BIRAK (türün en küçüğü göle döner; yapı 4: en ucuzu, ileri bölgenin balığı korunur). Bir sayfada 6 satır, fazlası sonraki sayfada ("Sayfa 1/2 »"
     düğmesi; panelin boyu aynı). Altta HEPSİNİ BIRAK (çocuk yanlışlıkla basmasın: ilk dokunuş "Emin misin?", 3 sn
     içinde ikincisi bırakır; hızlı çift dokunuş saymaz), toplam değer ve SAT (Nine'nin tezgâhı, Kova sekmesi).
     Başlıkta göl sevgisinin seviyesi ve çubuğu: bıraktıkça dolar. Telefonda küçülmeden sığar. Kova boşalınca Dede'nin

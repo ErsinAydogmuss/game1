@@ -103,4 +103,7 @@ func test_multiplier_text() -> void:
 	assert_eq(ZonePanel.multiplier_text(1000), "1", "bir")
 	var text := ZonePanel.multiplier_text(1700)
 	assert_true(text.begins_with("1") and text.ends_with("7") and text.length() == 3, "1,7 ya da 1.7: " + text)
-	assert_eq(ZonePanel.multiplier_text(1960), "2", "yuvarlanır")
+	assert_eq(ZonePanel.multiplier_text(1996), "2", "yuvarlanır")
+	var lily := ZonePanel.multiplier_text(1150)
+	assert_true(lily.begins_with("1") and lily.ends_with("15") and lily.length() == 4, "1,15 yazılır: " + lily)
+	assert_eq(ZonePanel.multiplier_text(1700).length(), 3, "sondaki sıfır yazılmaz")

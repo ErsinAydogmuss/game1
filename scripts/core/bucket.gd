@@ -50,14 +50,21 @@ static func add(db: ContentDB, save: SaveData, fish_id: String, size_cm: int, st
 	return true
 
 
-## Kovadan o türün en küçük balığını çıkarır (göle bırakmak için; iri olan satılsın). Döner: çıkan kayıt
-## ({fish, size_cm, stars}) ya da yoksa boş sözlük.
-static func take(save: SaveData, fish_id: String) -> Dictionary:
+## Kovadan o türün en küçük balığını çıkarır (göle bırakmak için; iri olan satılsın). db verilirse en ucuzunu
+## (Economy.entry_value; yapı 4: ileri bölgenin küçük balığı iskeledekinin irisinden değerli olabilir), eşitse en
+## küçüğünü. Döner: çıkan kayıt ({fish, size_cm, stars, zone}) ya da yoksa boş sözlük.
+static func take(save: SaveData, fish_id: String, db: ContentDB = null) -> Dictionary:
 	var pick := -1
+	var pick_value := 0
 	for i in save.bucket.size():
 		var entry := save.bucket[i]
-		if str(entry["fish"]) == fish_id and (pick < 0 or int(entry["size_cm"]) < int(save.bucket[pick]["size_cm"])):
+		if str(entry["fish"]) != fish_id:
+			continue
+		var value := Economy.entry_value(db, entry) if db != null else 0
+		if pick < 0 or value < pick_value \
+				or (value == pick_value and int(entry["size_cm"]) < int(save.bucket[pick]["size_cm"])):
 			pick = i
+			pick_value = value
 	return _remove(save, pick)
 
 
