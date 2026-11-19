@@ -450,7 +450,7 @@ func _stat_row(item: Dictionary, stat: Array) -> Control:
 
 ## Yemin (yapay yemin, sineğin) çektiği balıklar (en çok iki): bir gölgenin o balık olma şansı
 ## çekimsiz ve bu yemle, yemin tekniğinde, gölün şimdiki koşuluyla ("Levrek %22 → %41"; Balık
-## Defteri'yle aynı işlev, CatchOdds). Altında elindeki sayı (yapay yem ve sinek tükenmez: yalnızca
+## Defteri'yle aynı işlev, CatchOdds); yem o türü iri de getiriyorsa (FishTable.bait_floor; yapı 4) "· iri". Altında elindeki sayı (yapay yem ve sinek tükenmez: yalnızca
 ## takılıysa).
 func _bait_info(parent: VBoxContainer, item: Dictionary) -> void:
 	var db := GameState.db
@@ -472,7 +472,9 @@ func _bait_info(parent: VBoxContainer, item: Dictionary) -> void:
 		row.add_child(GameIcon.make("fish:" + fish_id, 40))
 		var odds := "%s %s → %s" % [tr("FISH_" + fish_id), UiKit.format_percent(int(plain[fish_id])),
 				UiKit.format_percent(int(baited[fish_id]))]
-		row.add_child(UiKit.ink(odds, UiKit.fit_size(odds, UiKit.body_font(), 24, ODDS_TEXT, 18)))
+		if FishTable.bait_floor(float(attract[fish_id])) > 0:
+			odds += " · " + tr("UI_SHOP_BIG")
+		row.add_child(UiKit.ink(odds, UiKit.fit_size(odds, UiKit.body_font(), 24, ODDS_TEXT, 16)))
 		parent.add_child(row)
 	if str(item["category"]) != "bait":
 		if _is_equipped(item):

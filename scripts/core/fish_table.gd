@@ -43,6 +43,21 @@ static func lift(percentile: int, floor_ppm: int) -> int:
 	return f + ((Dice.PPM - f) * clampi(percentile, 0, Dice.PPM) + Dice.PPM / 2) / Dice.PPM
 
 
+## Yemin (yapay yemin, sineğin) çektiği tür iri de gelir (yapı 4; testçi: "yemler hiçbir işe yaramıyor, bedava
+## solucan yetiyor"): çekimi en az BAIT_FROM olan türün boy tabanı (çekim − 1) × BAIT_PER, en çok BAIT_MAX (ppm).
+## Solucan ve başlangıç kaşığı, kuru sinek (çekim 1–1,3) iri getirmez.
+const BAIT_FROM := 1.5
+const BAIT_PER := 150000
+const BAIT_MAX := 300000
+
+
+## Yemin bu türe verdiği boy tabanı (ppm; çekim çarpanından).
+static func bait_floor(attraction: float) -> int:
+	if attraction < BAIT_FROM:
+		return 0
+	return clampi(roundi((attraction - 1.0) * BAIT_PER), 0, BAIT_MAX)
+
+
 ## Boy (cm): türün en küçüğü ile en büyüğü arasında, yüzdeliğe göre.
 static func size_cm(def: Dictionary, percentile: int) -> int:
 	var range_cm: Vector2i = def["size_cm"]

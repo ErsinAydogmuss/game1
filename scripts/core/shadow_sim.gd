@@ -84,6 +84,8 @@ var _angler := Vector2.ZERO
 ## Balıkçı suyun üstünde mi (sandalda)?
 var _afloat: bool = false
 var _check: int = 0
+## Kuşanılan yemin (yapay yemin, sineğin) tür çekimi (set_odds): çektiği tür iri de gelir.
+var _attract: Dictionary = {}
 
 
 ## odds: { "attract": yemin tür çekimi, "pity_floor": şans garantisi } (CatchOdds); bölgeli gölde
@@ -394,6 +396,7 @@ func pending_spawns() -> int:
 ## Yemin çekimi ya da şans garantisi değişti: bundan sonra doğan gölgeler yeni oranlarla.
 func set_odds(odds: Dictionary) -> void:
 	_species = CatchOdds.species_ppm(_db, _spot, odds)
+	_attract = odds.get("attract", {})
 	_zone_species.clear()
 	for z in _zones:
 		_zone_species.append(CatchOdds.species_ppm(_db, z, odds))
@@ -548,6 +551,9 @@ func _spawn(angler: Vector2, bobber: Vector2, bobber_active: bool) -> FishShadow
 	# İleri bölgede balık iri (spots.json size_floor; zar aynı, yalnızca yükselir: tek bölgeli göl kaymaz).
 	if _zoned and s.zone >= 0 and s.zone < _zones.size():
 		s.percentile = FishTable.lift(s.percentile, int(_zones[s.zone].get("size_floor", 0)))
+	# Yemin çektiği tür iri de gelir (FishTable.bait_floor; senaryolu ilk av solucanla: taban yok).
+	if not scripted:
+		s.percentile = FishTable.lift(s.percentile, FishTable.bait_floor(float(_attract.get(fish_id, 1.0))))
 	s.size_cm = FishTable.size_cm(def, s.percentile)
 	s.stars = FishTable.stars(s.percentile)
 	s.length = FishTable.shadow_length(def, s.percentile)

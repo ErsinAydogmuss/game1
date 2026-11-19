@@ -266,6 +266,7 @@ UI_SHOP_EQUIP,Equip,Tak
 UI_SHOP_OWNED,Owned,Sende
 UI_SHOP_RANK,Rank %d,Rütbe %d
 UI_SHOP_UNLIMITED,Unlimited,Sınırsız
+UI_SHOP_BIG,big,iri
 UI_SHOP_HAVE,You have %d,Elinde %d
 UI_SHOP_PACK,Pack: %d,Paket: %d
 UI_SHOP_BUCKET,Bucket: %d/%d,Kova: %d/%d
@@ -512,8 +513,8 @@ UI_GUIDE_T_BOBBER,Bobbers,Şamandıra
 UI_GUIDE_T_RIG,"Sinkers, feeders","Kurşun, yem sepeti"
 UI_GUIDE_GEAR_HOOK,A bigger hook makes escapes harder.,Büyük iğne balığın kaçmasını zorlaştırır.
 UI_GUIDE_GEAR_BOBBER,A sensitive bobber gives you more time to strike.,Hassas şamandıra VUR için süre kazandırır.
-UI_GUIDE_GEAR_BAIT,Draws certain fish. Worms never run out.,Bazı türleri çeker. Solucan hiç bitmez.
-UI_GUIDE_GEAR_LURE,For spinning; never runs out. Draws predators.,"Spinin yemi, bitmez. Yırtıcıları çeker."
+UI_GUIDE_GEAR_BAIT,"Draws bigger fish of some kinds. Worms are endless.","Bazı türleri çeker, iri getirir. Solucan hiç bitmez."
+UI_GUIDE_GEAR_LURE,"Spinning lure; endless. Draws bigger predators.","Spinin yemi, bitmez. Yırtıcıları çeker, iri getirir."
 UI_GUIDE_GEAR_RIG,A feeder gathers fish around faster.,Yem sepeti balıkları daha çabuk toplar.
 UI_GUIDE_GEAR_FLY,Never runs out. Trout rise to flies.,Bitmez. Alabalıklar sineğe gelir.
 UI_GUIDE_EXTRAS,Extras,Ekstralar

@@ -363,6 +363,21 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     önce; oranı, nadirliği; tutmadığın balık siluet ve "???"). Üstte elindeki teknik ve şimdiki vakit. GİT'e bas:
     oraya geçersin. Nilüferli koyda gündüz Ay Turnası soluk ve "Gece gelir"; dere ağzında şamandırayla alabalık
     "Sinek ile". Kilitli bölgede GİT yerine nedeni yazar. Kart küçülmeden sığıyor mu, yazılar okunuyor mu?
+66. **Testçi düzeltmeleri 3: tuzak paneli.** Kurulu bir tuzağa dokun (yakında ya da uzakta): her zaman küçük panel
+    açılır: "Tuzakta 2 kerevit var." ya da sıradaki kerevitin süresi; **TOPLA** (boşsa BEKLE) ve **KALDIR**. Kerevitli
+    tuzağı KALDIR: kerevitler kovaya, tuzak çantaya. Tuzak balıkçının hemen önündeyken ona dokunmak dolabı açmamalı.
+67. **Testçi düzeltmeleri 3: 6 tuzak ve taşıma.** Nine'de dördüncü (rütbe 6), beşinci (8), altıncı (10) tuzak.
+    Bütün tuzakların sazlıktayken kayalık burunda Takım Çantası: tuzak satırı **BURAYA TAŞI**; basınca en eski tuzak
+    kalkar (kerevitleri kovaya), buraya uçar: "Tuzak buraya taşındı".
+68. **Testçi düzeltmeleri 3: ileri bölge.** Haritada nilüferli koy, kayalık burun, dere ağzı ve derin ortanın kartında
+    hap: "Balıklar ×1,5 değerli · daha iri". Dere ağzında ya da derin ortada tutup sat: aynı tür iskeledekinden pahalı
+    mı (Kova paneli ve dükkân)? Orada zayıf takımla iri sazan, turna, yayın daha sık kopuyor mu?
+69. **Testçi düzeltmeleri 3: yem.** Dükkânın Yem sekmesinde kartlarda "Sazan %23 → %47 · iri". Mısırla sazan, boiliyle
+    yayın tut: balıklar solucanla tutulandan iri mi (boy, yıldız)? Yazılar kartta sığıyor mu?
+70. **Testçi düzeltmeleri 3: Bekçi.** Final gecesi X'te orta takımla (ör. ikinci dip kamışı, örgü misina): Bekçi
+    belirince Dede "bu takım onu taşımaz: en iyi dip takımı lazım", çekişmede misina kopar, Dede eksikleri söyler
+    (usta dip kamışı, altın makara, altın örgü). En iyi takımla tutulur. Ayarlar'daki deneme düğmeleriyle (HEPSİNİ AÇ,
+    +10.000, SIR +) hızlıca denenebilir.
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 

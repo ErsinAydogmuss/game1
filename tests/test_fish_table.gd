@@ -103,3 +103,14 @@ func test_lift_keeps_order_above_the_floor() -> void:
 		var lifted := FishTable.lift(k * 10000, 300000)
 		assert_true(lifted >= last, "sıra korunur")
 		last = lifted
+
+
+## Yemin çektiği tür iri de gelir (yapı 4; FishTable.bait_floor): çekim 1,5'ten küçükse taban yok (solucan, kaşık,
+## kuru sinek), sonra (çekim − 1) × %15, en çok %30.
+func test_bait_floor() -> void:
+	assert_eq(FishTable.bait_floor(1.0), 0, "çekimsiz")
+	assert_eq(FishTable.bait_floor(1.3), 0, "zayıf çekim iri getirmez")
+	assert_eq(FishTable.bait_floor(1.5), 75000, "1,5 kat: %7,5")
+	assert_eq(FishTable.bait_floor(2.5), 225000, "2,5 kat: %22,5")
+	assert_eq(FishTable.bait_floor(3.0), FishTable.BAIT_MAX, "3 kat: en çok")
+	assert_eq(FishTable.bait_floor(9.0), FishTable.BAIT_MAX, "üst sınır")

@@ -224,7 +224,8 @@ func cast_once() -> void:
 	var species := CatchOdds.species_ppm(db, _spot, CatchOdds.context(gear, technique, cond))
 	var fish_id := CatchOdds.roll(db, rng, species, CatchOdds.pity_floor(db, save, _spot, technique, cond))
 	var def := db.fish_by_id(fish_id)
-	var percentile := FishTable.lift(FishTable.roll_percentile(rng), int(_spot.get("size_floor", 0)))
+	var percentile := FishTable.lift(FishTable.lift(FishTable.roll_percentile(rng), int(_spot.get("size_floor", 0))),
+			FishTable.bait_floor(gear.attraction(fish_id)))
 	if Dice.chance(rng, int(_num("miss_ppm", 150000))):
 		lost += 1
 		elapsed += _num("lost_s", 2.5)
@@ -855,7 +856,8 @@ static func rate(db: ContentDB, sim_timing: Dictionary, place: Dictionary, t: St
 	var size_floor := int(place.get("size_floor", 0))
 	var value_pm := int(place.get("value_pm", 1000))
 	for fid: String in odds:
-		worth += float(odds[fid]) / ContentDB.PPM * kept_value(db, fid, gear.carry, size_floor) * value_pm / 1000.0
+		var floor_ppm := Dice.PPM - (Dice.PPM - size_floor) * (Dice.PPM - FishTable.bait_floor(gear.attraction(fid))) / Dice.PPM
+		worth += float(odds[fid]) / ContentDB.PPM * kept_value(db, fid, gear.carry, floor_ppm) * value_pm / 1000.0
 	var zone := str(place.get("id", ""))
 	return worth * (1.0 - miss_share(sim_timing, zone, t)) * 60.0 / cycle_s(sim_timing, zone, t)
 

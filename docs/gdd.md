@@ -924,6 +924,13 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - Alışverişler öne kayar: kepçe 105–123, sandal 96–102, dev file 413–457 (önce 613–752), usta sinek kamışı 416–451
     (önce 584–755). Bekçi'nin takımı (altın makara 178–224, altın örgü 212–258) ve Bekçi 213–260. dakikada (yalnızca
     takım şartıyla 331–364; korkuluk 150–300).
+- ✅ **Yapı 4: yem iri balık da getirir** (testçi: "yemler hiçbir işe yaramıyor, bedava solucan varken öbürlerini
+  almadım"; Ersin'in seçimi "Yem iri balık da getirsin"). Yemin, yapay yemin ya da sineğin en az 1,5 kat çektiği tür iri
+  de gelir: boy tabanı (çekim − 1) × %15, en çok %30 (`FishTable.bait_floor`; bölgenin tabanıyla birleşir; solucan,
+  kaşık ve kuru sinek iri getirmez). Dükkânın kartında "Sazan %23 → %47 · iri"; rehberde "Bazı türleri çeker, iri
+  getirir". Katalogda (derin orta, şamandıra) balık başına ortalama: solucan 25, boili 32, karides 52 para (paketin
+  bedeli balık başına 6 ve 10). Denge botu yem almaz (yapay yem ve sinek alır): kazancı neredeyse aynı (16 saatte saatte
+  15.400–16.400).
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 

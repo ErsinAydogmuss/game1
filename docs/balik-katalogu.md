@@ -38,6 +38,10 @@ gelir; 5★ türün en iri %10'u.
 
 Ortalama boy çarpanı 0,99: ortalama bir balık türünün değerinin yaklaşık bu katına satılır.
 
+İleri bölgede balık iri gelir: boy yüzdeliği bölgenin tabanından aşağı inmez (yüzdelik = taban + (1 − taban) × zar;
+bölgelerin başlığında). Yemin, yapay yemin ya da sineğin en az 1,5 kat çektiği tür de iri gelir: taban (çekim − 1) × %15,
+en çok %30 (bölgenin tabanıyla birleşir). Tablolardaki ortalama değer ve puan bunu sayar (yapı 4).
+
 ## İri balık ve takım
 
 İri türlerin (sazan, turna, yayın, kadife, sudak, altın sazan, mersin balığı, aynalı sazan, dere alabalığı, ay turnası, kocabaş) boyu çekişini artırır. Bir iri balığı ancak yıldızını taşıyan kamış ve
@@ -337,11 +341,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %50 | %38 | %8 | %4 | 14,38 | 13,93 |
-| Kurtçuk | 30 / 20 | %45,4 | %46,1 | %5,7 | %2,8 | 12,85 | 13,01 |
-| Ekmek hamuru | 30 / 20 | %42,7 | %48,7 | %5,7 | %2,8 | 13,22 | 13,2 |
-| Mısır | 40 / 20 | %35,7 | %55,7 | %5,7 | %2,9 | 13,64 | 13,68 |
-| Boili | 60 / 10 | %37,7 | %50,6 | %5,2 | %6,5 | 17,32 | 15,86 |
-| Karides | 100 / 10 | %41,7 | %31,7 | %16,7 | %10 | 23,29 | 20,18 |
+| Kurtçuk | 30 / 20 | %45,4 | %46,1 | %5,7 | %2,8 | 13,46 | 13,51 |
+| Ekmek hamuru | 30 / 20 | %42,7 | %48,7 | %5,7 | %2,8 | 13,75 | 13,53 |
+| Mısır | 40 / 20 | %35,7 | %55,7 | %5,7 | %2,9 | 14,6 | 14,4 |
+| Boili | 60 / 10 | %37,7 | %50,6 | %5,2 | %6,5 | 19,31 | 17,12 |
+| Karides | 100 / 10 | %41,7 | %31,7 | %16,7 | %10 | 26,32 | 21,85 |
 
 #### Spin (rütbe 2)
 
@@ -358,11 +362,11 @@ Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütb
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Kaşık | başlangıç | %0 | %66,9 | %32 | %1,1 | 20,24 | 20,13 |
-| Döner kaşık | 120 (rütbe 2) | %0 | %75,6 | %23,5 | %0,84 | 18,01 | 18,25 |
+| Döner kaşık | 120 (rütbe 2) | %0 | %75,6 | %23,5 | %0,84 | 18,84 | 18,83 |
 | Silikon yem | 300 (rütbe 3) | %0 | %68,5 | %30,4 | %1,1 | 19,83 | 19,78 |
-| Maket balık | 700 (rütbe 5) | %0 | %41,8 | %57,2 | %0,93 | 25,68 | 24,98 |
-| Su üstü yemi | 1000 (rütbe 6) | %0 | %46,7 | %52,3 | %1 | 24,68 | 24,07 |
-| Altın kaşık | 2500 (rütbe 10) | %0 | %38,6 | %60 | %1,4 | 26,78 | 25,82 |
+| Maket balık | 700 (rütbe 5) | %0 | %41,8 | %57,2 | %0,93 | 27,89 | 26,5 |
+| Su üstü yemi | 1000 (rütbe 6) | %0 | %46,7 | %52,3 | %1 | 26,02 | 24,85 |
+| Altın kaşık | 2500 (rütbe 10) | %0 | %38,6 | %60 | %1,4 | 29,78 | 28,01 |
 
 #### Dip (rütbe 4)
 
@@ -382,11 +386,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %29,1 | %53,6 | %3,6 | %13,6 | 25,24 | 20,86 |
-| Kurtçuk | 30 / 20 | %25,9 | %58,7 | %3,2 | %12,1 | 23,78 | 20,01 |
-| Ekmek hamuru | 30 / 20 | %26,2 | %62,6 | %2,4 | %8,8 | 20,08 | 17,62 |
-| Mısır | 40 / 20 | %15,2 | %75,7 | %1,9 | %7,1 | 18,84 | 17,14 |
-| Boili | 60 / 10 | %17,3 | %65,6 | %1,6 | %15,5 | 27,53 | 22,47 |
-| Karides | 100 / 10 | %21,9 | %40,4 | %6,8 | %30,8 | 44,72 | 33,38 |
+| Kurtçuk | 30 / 20 | %25,9 | %58,7 | %3,2 | %12,1 | 24,08 | 20,25 |
+| Ekmek hamuru | 30 / 20 | %26,2 | %62,6 | %2,4 | %8,8 | 20,75 | 18,02 |
+| Mısır | 40 / 20 | %15,2 | %75,7 | %1,9 | %7,1 | 20,44 | 18,34 |
+| Boili | 60 / 10 | %17,3 | %65,6 | %1,6 | %15,5 | 31,52 | 24,91 |
+| Karides | 100 / 10 | %21,9 | %40,4 | %6,8 | %30,8 | 51,88 | 36,92 |
 
 ### Sazlık (`reeds`; başta açık)
 
@@ -410,11 +414,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %42 | %53 | %5 | 10,32 | 11,22 |
-| Kurtçuk | 30 / 20 | %45 | %51 | %4 | 9,73 | 10,83 |
-| Ekmek hamuru | 30 / 20 | %33,7 | %62,3 | %4 | 10,62 | 11,58 |
-| Mısır | 40 / 20 | %23,2 | %74 | %2,8 | 11,34 | 12,04 |
-| Boili | 60 / 10 | %28,4 | %68,2 | %3,4 | 10,8 | 11,81 |
-| Karides | 100 / 10 | %39,1 | %49,3 | %11,6 | 12 | 12,73 |
+| Kurtçuk | 30 / 20 | %45 | %51 | %4 | 10,05 | 11,1 |
+| Ekmek hamuru | 30 / 20 | %33,7 | %62,3 | %4 | 11,03 | 11,84 |
+| Mısır | 40 / 20 | %23,2 | %74 | %2,8 | 12,85 | 13,12 |
+| Boili | 60 / 10 | %28,4 | %68,2 | %3,4 | 11,89 | 12,63 |
+| Karides | 100 / 10 | %39,1 | %49,3 | %11,6 | 12,56 | 13,14 |
 
 #### Spin (rütbe 2)
 
@@ -430,11 +434,11 @@ Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütb
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|
 | Kaşık | başlangıç | %0 | %56,5 | %43,5 | 21,6 | 21,64 |
-| Döner kaşık | 120 (rütbe 2) | %0 | %66,7 | %33,3 | 19,32 | 19,63 |
+| Döner kaşık | 120 (rütbe 2) | %0 | %66,7 | %33,3 | 20,05 | 20,14 |
 | Silikon yem | 300 (rütbe 3) | %0 | %58,3 | %41,7 | 21,19 | 21,28 |
-| Maket balık | 700 (rütbe 5) | %0 | %31,2 | %68,8 | 27,28 | 26,63 |
-| Su üstü yemi | 1000 (rütbe 6) | %0 | %35,7 | %64,3 | 26,28 | 25,75 |
-| Altın kaşık | 2500 (rütbe 10) | %0 | %28,6 | %71,4 | 27,88 | 27,16 |
+| Maket balık | 700 (rütbe 5) | %0 | %31,2 | %68,8 | 29,93 | 28,46 |
+| Su üstü yemi | 1000 (rütbe 6) | %0 | %35,7 | %64,3 | 27,92 | 26,71 |
+| Altın kaşık | 2500 (rütbe 10) | %0 | %28,6 | %71,4 | 31,35 | 29,72 |
 
 #### Dip (rütbe 4)
 
@@ -455,11 +459,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %17 | %65,1 | %17,9 | 15,38 | 15,43 |
-| Kurtçuk | 30 / 20 | %16,6 | %66,1 | %17,4 | 15,28 | 15,37 |
-| Ekmek hamuru | 30 / 20 | %13,3 | %72,7 | %14 | 14,6 | 14,91 |
-| Mısır | 40 / 20 | %8,1 | %83,5 | %8,5 | 13,92 | 14,17 |
-| Boili | 60 / 10 | %10,3 | %79 | %10,8 | 13,96 | 14,48 |
-| Karides | 100 / 10 | %16,7 | %63,8 | %19,5 | 15,76 | 15,78 |
+| Kurtçuk | 30 / 20 | %16,6 | %66,1 | %17,4 | 15,36 | 15,43 |
+| Ekmek hamuru | 30 / 20 | %13,3 | %72,7 | %14 | 15,06 | 15,19 |
+| Mısır | 40 / 20 | %8,1 | %83,5 | %8,5 | 15,68 | 15,44 |
+| Boili | 60 / 10 | %10,3 | %79 | %10,8 | 15,29 | 15,49 |
+| Karides | 100 / 10 | %16,7 | %63,8 | %19,5 | 15,92 | 15,9 |
 
 #### Kerevit tuzağı (rütbe 3)
 
@@ -494,11 +498,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %22 | %50 | %22 | %6 | 25,83 | 20,61 |
-| Kurtçuk | 30 / 20 | %15,8 | %64 | %15,8 | %4,3 | 22,67 | 18,61 |
-| Ekmek hamuru | 30 / 20 | %15,7 | %64,3 | %15,7 | %4,3 | 22,6 | 18,58 |
-| Mısır | 40 / 20 | %14,6 | %64,9 | %14,6 | %6 | 24,34 | 19,57 |
-| Boili | 60 / 10 | %14 | %62,4 | %14 | %9,6 | 28,47 | 21,97 |
-| Karides | 100 / 10 | %16,5 | %37,6 | %41,4 | %4,5 | 29,84 | 23,93 |
+| Kurtçuk | 30 / 20 | %15,8 | %64 | %15,8 | %4,3 | 23,45 | 19,19 |
+| Ekmek hamuru | 30 / 20 | %15,7 | %64,3 | %15,7 | %4,3 | 23,26 | 19,11 |
+| Mısır | 40 / 20 | %14,6 | %64,9 | %14,6 | %6 | 25,75 | 20,54 |
+| Boili | 60 / 10 | %14 | %62,4 | %14 | %9,6 | 31,03 | 23,48 |
+| Karides | 100 / 10 | %16,5 | %37,6 | %41,4 | %4,5 | 31,9 | 25,24 |
 
 #### Spin (rütbe 2)
 
@@ -515,11 +519,11 @@ Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütb
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|
 | Kaşık | başlangıç | %0 | %52,3 | %47,7 | 27,64 | 23,27 |
-| Döner kaşık | 120 (rütbe 2) | %0 | %62,8 | %37,2 | 24,76 | 21,12 |
+| Döner kaşık | 120 (rütbe 2) | %0 | %62,8 | %37,2 | 25,5 | 21,71 |
 | Silikon yem | 300 (rütbe 3) | %0 | %54,2 | %45,8 | 27,13 | 22,89 |
-| Maket balık | 700 (rütbe 5) | %0 | %27,7 | %72,3 | 34,38 | 28,31 |
-| Su üstü yemi | 1000 (rütbe 6) | %0 | %31,9 | %68,1 | 33,23 | 27,45 |
-| Altın kaşık | 2500 (rütbe 10) | %0 | %25,2 | %74,8 | 35,06 | 28,82 |
+| Maket balık | 700 (rütbe 5) | %0 | %27,7 | %72,3 | 37,29 | 30,29 |
+| Su üstü yemi | 1000 (rütbe 6) | %0 | %31,9 | %68,1 | 35 | 28,99 |
+| Altın kaşık | 2500 (rütbe 10) | %0 | %25,2 | %74,8 | 38,79 | 31,18 |
 
 #### Dip (rütbe 4)
 
@@ -539,11 +543,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %14,7 | %64,9 | %9,8 | %10,7 | 28,56 | 21,82 |
-| Kurtçuk | 30 / 20 | %12,5 | %70,1 | %8,3 | %9,1 | 26,49 | 20,59 |
-| Ekmek hamuru | 30 / 20 | %9,7 | %76,9 | %6,4 | %7 | 23,76 | 18,98 |
-| Mısır | 40 / 20 | %6,9 | %80,9 | %4,6 | %7,5 | 24,1 | 19,15 |
-| Boili | 60 / 10 | %6,6 | %77 | %4,4 | %12 | 29,28 | 22,18 |
-| Karides | 100 / 10 | %12,8 | %56,6 | %21,3 | %9,3 | 30,28 | 23,38 |
+| Kurtçuk | 30 / 20 | %12,5 | %70,1 | %8,3 | %9,1 | 26,9 | 20,9 |
+| Ekmek hamuru | 30 / 20 | %9,7 | %76,9 | %6,4 | %7 | 24,57 | 19,62 |
+| Mısır | 40 / 20 | %6,9 | %80,9 | %4,6 | %7,5 | 26,23 | 20,62 |
+| Boili | 60 / 10 | %6,6 | %77 | %4,4 | %12 | 32,82 | 24,31 |
+| Karides | 100 / 10 | %12,8 | %56,6 | %21,3 | %9,3 | 31,34 | 24,05 |
 
 ### Kayalık Burun (`rocky_point`; rütbe 5)
 
@@ -569,11 +573,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %40 | %28 | %26 | %6 | 33,26 | 21,45 |
-| Kurtçuk | 30 / 20 | %28,2 | %49,3 | %18,3 | %4,2 | 28,56 | 19,34 |
-| Ekmek hamuru | 30 / 20 | %32,7 | %41,2 | %21,2 | %4,9 | 30,35 | 20,15 |
+| Kurtçuk | 30 / 20 | %28,2 | %49,3 | %18,3 | %4,2 | 29,38 | 19,79 |
+| Ekmek hamuru | 30 / 20 | %32,7 | %41,2 | %21,2 | %4,9 | 30,71 | 20,31 |
 | Mısır | 40 / 20 | %40 | %28 | %26 | %6 | 33,26 | 21,45 |
-| Boili | 60 / 10 | %36,7 | %25,7 | %23,9 | %13,8 | 44,79 | 26,93 |
-| Karides | 100 / 10 | %36,6 | %16 | %37,1 | %10,3 | 44,47 | 27,3 |
+| Boili | 60 / 10 | %36,7 | %25,7 | %23,9 | %13,8 | 47,16 | 27,62 |
+| Karides | 100 / 10 | %36,6 | %16 | %37,1 | %10,3 | 49,01 | 28,98 |
 
 #### Spin (rütbe 2)
 
@@ -592,11 +596,11 @@ Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütb
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Kaşık | başlangıç | %20,2 | %35 | %44,2 | %0,58 | 33,63 | 22,92 |
-| Döner kaşık | 120 (rütbe 2) | %24,7 | %41,1 | %33,8 | %0,44 | 29,12 | 20,2 |
-| Silikon yem | 300 (rütbe 3) | %14,5 | %27 | %58,1 | %0,41 | 39,68 | 26,26 |
-| Maket balık | 700 (rütbe 5) | %16,4 | %21,8 | %61,4 | %0,47 | 39,86 | 26,87 |
-| Su üstü yemi | 1000 (rütbe 6) | %35 | %21,2 | %43,3 | %0,45 | 31,59 | 21,54 |
-| Altın kaşık | 2500 (rütbe 10) | %14,1 | %18,8 | %66,5 | %0,64 | 42,39 | 28,28 |
+| Döner kaşık | 120 (rütbe 2) | %24,7 | %41,1 | %33,8 | %0,44 | 29,65 | 20,45 |
+| Silikon yem | 300 (rütbe 3) | %14,5 | %27 | %58,1 | %0,41 | 41,87 | 26,98 |
+| Maket balık | 700 (rütbe 5) | %16,4 | %21,8 | %61,4 | %0,47 | 41,52 | 27,42 |
+| Su üstü yemi | 1000 (rütbe 6) | %35 | %21,2 | %43,3 | %0,45 | 32,37 | 21,8 |
+| Altın kaşık | 2500 (rütbe 10) | %14,1 | %18,8 | %66,5 | %0,64 | 45,25 | 29,28 |
 
 #### Dip (rütbe 4)
 
@@ -617,11 +621,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %50,7 | %12,9 | %15,7 | %20,7 | 52,17 | 29,23 |
-| Kurtçuk | 30 / 20 | %42,5 | %27 | %13,1 | %17,4 | 46,53 | 26,81 |
-| Ekmek hamuru | 30 / 20 | %45,9 | %21,1 | %14,2 | %18,8 | 48,92 | 27,84 |
+| Kurtçuk | 30 / 20 | %42,5 | %27 | %13,1 | %17,4 | 46,98 | 27,06 |
+| Ekmek hamuru | 30 / 20 | %45,9 | %21,1 | %14,2 | %18,8 | 49,1 | 27,92 |
 | Mısır | 40 / 20 | %50,7 | %12,9 | %15,7 | %20,7 | 52,17 | 29,23 |
-| Boili | 60 / 10 | %38,7 | %9,8 | %12 | %39,5 | 80,82 | 43,12 |
-| Karides | 100 / 10 | %40,7 | %6,7 | %20,3 | %32,3 | 72,54 | 39,49 |
+| Boili | 60 / 10 | %38,7 | %9,8 | %12 | %39,5 | 87,63 | 45,12 |
+| Karides | 100 / 10 | %40,7 | %6,7 | %20,3 | %32,3 | 81,25 | 42,7 |
 
 #### Kerevit tuzağı (rütbe 3)
 
@@ -655,11 +659,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %46 | %20 | %26 | %8 | 42,54 | 23,07 |
-| Kurtçuk | 30 / 20 | %35,4 | %38,5 | %20 | %6,2 | 37,63 | 21,14 |
-| Ekmek hamuru | 30 / 20 | %39,7 | %31 | %22,4 | %6,9 | 39,61 | 21,92 |
+| Kurtçuk | 30 / 20 | %35,4 | %38,5 | %20 | %6,2 | 38,29 | 21,69 |
+| Ekmek hamuru | 30 / 20 | %39,7 | %31 | %22,4 | %6,9 | 39,85 | 22,08 |
 | Mısır | 40 / 20 | %46 | %20 | %26 | %8 | 42,54 | 23,07 |
-| Boili | 60 / 10 | %41,1 | %17,9 | %23,2 | %17,9 | 60,56 | 30,25 |
-| Karides | 100 / 10 | %40,7 | %10,9 | %35,4 | %13,1 | 56,5 | 29,39 |
+| Boili | 60 / 10 | %41,1 | %17,9 | %23,2 | %17,9 | 63,67 | 31,62 |
+| Karides | 100 / 10 | %40,7 | %10,9 | %35,4 | %13,1 | 61,52 | 31,67 |
 
 #### Spin (rütbe 2)
 
@@ -679,11 +683,11 @@ Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütb
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Kaşık | başlangıç | %23,3 | %24,1 | %50,4 | %2,2 | 40,95 | 25,91 |
-| Döner kaşık | 120 (rütbe 2) | %29,4 | %29,2 | %39,7 | %1,8 | 35,81 | 22,69 |
+| Döner kaşık | 120 (rütbe 2) | %29,4 | %29,2 | %39,7 | %1,8 | 36,22 | 22,94 |
 | Silikon yem | 300 (rütbe 3) | %22,9 | %25,5 | %49,5 | %2,2 | 40,59 | 25,7 |
-| Maket balık | 700 (rütbe 5) | %17,3 | %13,7 | %67,3 | %1,6 | 47,89 | 29,73 |
-| Su üstü yemi | 1000 (rütbe 6) | %34,4 | %12,4 | %51,8 | %1,5 | 40,06 | 24,82 |
-| Altın kaşık | 2500 (rütbe 10) | %16 | %12,7 | %69,4 | %1,8 | 49,33 | 30,43 |
+| Maket balık | 700 (rütbe 5) | %17,3 | %13,7 | %67,3 | %1,6 | 50,12 | 30,87 |
+| Su üstü yemi | 1000 (rütbe 6) | %34,4 | %12,4 | %51,8 | %1,5 | 41,39 | 25,42 |
+| Altın kaşık | 2500 (rütbe 10) | %16 | %12,7 | %69,4 | %1,8 | 52,36 | 32,23 |
 
 #### Dip (rütbe 4)
 
@@ -702,11 +706,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %49,8 | %9,5 | %12,3 | %28,4 | 75,55 | 35,12 |
-| Kurtçuk | 30 / 20 | %43,6 | %20,7 | %10,8 | %24,9 | 68,79 | 32,58 |
-| Ekmek hamuru | 30 / 20 | %46,3 | %15,9 | %11,5 | %26,4 | 71,72 | 33,68 |
+| Kurtçuk | 30 / 20 | %43,6 | %20,7 | %10,8 | %24,9 | 69,14 | 32,88 |
+| Ekmek hamuru | 30 / 20 | %46,3 | %15,9 | %11,5 | %26,4 | 71,84 | 33,77 |
 | Mısır | 40 / 20 | %49,8 | %9,5 | %12,3 | %28,4 | 75,55 | 35,12 |
-| Boili | 60 / 10 | %34,9 | %6,6 | %8,6 | %49,8 | 115,97 | 51,56 |
-| Karides | 100 / 10 | %40 | %4,5 | %14,7 | %40,7 | 100,75 | 45,66 |
+| Boili | 60 / 10 | %34,9 | %6,6 | %8,6 | %49,8 | 124,65 | 55,37 |
+| Karides | 100 / 10 | %40 | %4,5 | %14,7 | %40,7 | 111,15 | 49,69 |
 
 #### Sinek (rütbe 7)
 
@@ -724,8 +728,8 @@ Sineğe göre nadirlik oranları ve balık başına ortalama değer ile rütbe p
 | Sinek | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Kuru sinek | başlangıç | %34,4 | %0 | %59 | %6,6 | 43,43 | 30,26 |
-| Nimf | 300 (rütbe 7) | %31,9 | %0 | %63,8 | %4,3 | 42,88 | 29,8 |
-| Streamer | 900 (rütbe 8) | %31,9 | %0 | %54,7 | %13,4 | 49,24 | 34,63 |
+| Nimf | 300 (rütbe 7) | %31,9 | %0 | %63,8 | %4,3 | 44,9 | 30,84 |
+| Streamer | 900 (rütbe 8) | %31,9 | %0 | %54,7 | %13,4 | 50,32 | 35,31 |
 
 ### Derin Orta (`deep_water`; rütbe 9, yalnızca sandalla)
 
@@ -753,11 +757,11 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Efsanevi | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %19 | %31,5 | %26 | %22 | %1,5 | 86 | 40,42 |
-| Kurtçuk | 30 / 20 | %16,2 | %41,6 | %22,2 | %18,8 | %1,3 | 77,01 | 36,74 |
-| Ekmek hamuru | 30 / 20 | %26,4 | %39,3 | %18 | %15,3 | %1 | 65,66 | 31,69 |
-| Mısır | 40 / 20 | %13,6 | %51,1 | %18,6 | %15,7 | %1,1 | 68,59 | 33,27 |
-| Boili | 60 / 10 | %18,2 | %38 | %13,8 | %29,2 | %0,80 | 96,08 | 41,78 |
-| Karides | 100 / 10 | %10,4 | %17,2 | %35,5 | %36,1 | %0,82 | 124,18 | 52,86 |
+| Kurtçuk | 30 / 20 | %16,2 | %41,6 | %22,2 | %18,8 | %1,3 | 77,49 | 36,98 |
+| Ekmek hamuru | 30 / 20 | %26,4 | %39,3 | %18 | %15,3 | %1 | 66,28 | 32,09 |
+| Mısır | 40 / 20 | %13,6 | %51,1 | %18,6 | %15,7 | %1,1 | 69,65 | 33,77 |
+| Boili | 60 / 10 | %18,2 | %38 | %13,8 | %29,2 | %0,80 | 101,95 | 43,82 |
+| Karides | 100 / 10 | %10,4 | %17,2 | %35,5 | %36,1 | %0,82 | 134,18 | 56,09 |
 
 #### Spin (rütbe 2)
 
@@ -775,11 +779,11 @@ Yapay yeme göre nadirlik oranları ve balık başına ortalama değer ile rütb
 | Yapay yem | Fiyat (para) | Sıradan | Güzel | Nadir | Destansı | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|
 | Kaşık | başlangıç | %0 | %24,1 | %72,3 | %3,6 | 72,57 | 34,96 |
-| Döner kaşık | 120 (rütbe 2) | %0 | %32,9 | %64 | %3,1 | 67,08 | 32,71 |
-| Silikon yem | 300 (rütbe 3) | %0 | %16,6 | %81,1 | %2,3 | 75,88 | 36 |
-| Maket balık | 700 (rütbe 5) | %0 | %12,4 | %85,2 | %2,4 | 76,12 | 37,04 |
-| Su üstü yemi | 1000 (rütbe 6) | %0 | %16 | %81 | %3,1 | 74,93 | 36,58 |
-| Altın kaşık | 2500 (rütbe 10) | %0 | %10,2 | %86,7 | %3,1 | 78,97 | 37,96 |
+| Döner kaşık | 120 (rütbe 2) | %0 | %32,9 | %64 | %3,1 | 67,5 | 32,99 |
+| Silikon yem | 300 (rütbe 3) | %0 | %16,6 | %81,1 | %2,3 | 78,82 | 37,26 |
+| Maket balık | 700 (rütbe 5) | %0 | %12,4 | %85,2 | %2,4 | 78,48 | 38,39 |
+| Su üstü yemi | 1000 (rütbe 6) | %0 | %16 | %81 | %3,1 | 76,04 | 37,3 |
+| Altın kaşık | 2500 (rütbe 10) | %0 | %10,2 | %86,7 | %3,1 | 82,92 | 39,83 |
 
 #### Dip (rütbe 4)
 
@@ -802,9 +806,9 @@ Yeme göre nadirlik oranları ve balık başına ortalama değer ile rütbe puan
 | Yem | Fiyat (para / paket) | Sıradan | Güzel | Nadir | Destansı | Efsanevi | Ortalama değer | Ortalama puan |
 |---|---|---|---|---|---|---|---|---|
 | Solucan | bedava, sınırsız | %11,9 | %28 | %15,8 | %41,4 | %2,8 | 124,56 | 56,75 |
-| Kurtçuk | 30 / 20 | %11,4 | %31 | %15,2 | %39,7 | %2,7 | 120,42 | 55,03 |
-| Ekmek hamuru | 30 / 20 | %17,8 | %37,5 | %11,8 | %30,8 | %2,1 | 98,02 | 45,47 |
-| Mısır | 40 / 20 | %7,9 | %52,1 | %10,5 | %27,6 | %1,9 | 91,29 | 42,93 |
-| Boili | 60 / 10 | %9,7 | %35,2 | %7,1 | %46,7 | %1,3 | 132,68 | 55,63 |
-| Karides | 100 / 10 | %6,1 | %14,3 | %14,5 | %63,6 | %1,4 | 175,44 | 71,29 |
+| Kurtçuk | 30 / 20 | %11,4 | %31 | %15,2 | %39,7 | %2,7 | 120,56 | 55,1 |
+| Ekmek hamuru | 30 / 20 | %17,8 | %37,5 | %11,8 | %30,8 | %2,1 | 98,55 | 45,82 |
+| Mısır | 40 / 20 | %7,9 | %52,1 | %10,5 | %27,6 | %1,9 | 92,53 | 43,51 |
+| Boili | 60 / 10 | %9,7 | %35,2 | %7,1 | %46,7 | %1,3 | 141,51 | 58,63 |
+| Karides | 100 / 10 | %6,1 | %14,3 | %14,5 | %63,6 | %1,4 | 190,34 | 75,83 |
 

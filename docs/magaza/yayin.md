@@ -11,7 +11,7 @@ Derleme: [`../reklam-mac.md`](../reklam-mac.md).
 |---|---|
 | Ad | Olta: Gölün Sırrı (İngilizcesi: Olta: Secret of the Lake) |
 | Paket kimliği | `com.juiloot.olta` (iki mağazada da) |
-| Sürüm | 1.0.0, Android sürüm kodu 3, iOS yapı numarası 3 (her yeni yüklemede +1; yayındaysa sonraki 1.0.1) |
+| Sürüm | 1.0.0, Android sürüm kodu 4, iOS yapı numarası 4 (her yeni yüklemede +1; yayındaysa sonraki 1.0.1) |
 | Kategori | Oyun → Simülasyon (Play: Simülasyon; App Store: Games → Simulation, ikinci: Casual) |
 | Hedef kitle | 13 yaş ve üstü (Kazı gibi; çocuk kategorisi değil) |
 | Gizlilik politikası | `https://ersinaydogmuss.github.io/olta-gizlilik/` (kaynağı `docs/gizlilik-sayfasi/index.html`) |

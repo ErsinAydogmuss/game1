@@ -272,3 +272,25 @@ func test_later_zones_bring_bigger_fish() -> void:
 	assert_eq(int(content().zone(SPOT, "dock_cove").get("size_floor", -1)), 0, "iskele koyunda taban yok")
 	assert_true(float(means["stream_mouth"]) > float(means["dock_cove"]) + 150000.0,
 			"dere ağzında balık iri (%s)" % str(means))
+
+
+## Yemin çektiği tür iri de gelir (yapı 4): mısırla (sazan ×3) iskele koyunda sazanın yüzdeliği en az %30, çekmediği tür
+## (kızılkanat) eskisi gibi; gölgenin türü ve yeri yemle aynı zardan.
+func test_bait_brings_its_fish_bigger() -> void:
+	var db := content()
+	var corn: Dictionary = db.gear_item("bait_corn")["attract"]
+	var carp_low := Dice.PPM
+	var rudd_low := Dice.PPM
+	var carp := 0
+	for seed_value in 30:
+		var sim := ShadowSim.new(db, db.spot(SPOT), db.lake(SPOT), seed_value, false, DOCK,
+				{ "reach": REACH, "open": PackedStringArray(OPEN_ALL), "attract": corn })
+		for s in sim.shadows:
+			if s.fish_id == "carp":
+				carp += 1
+				carp_low = mini(carp_low, s.percentile)
+			elif s.fish_id == "rudd":
+				rudd_low = mini(rudd_low, s.percentile)
+	assert_true(carp >= 10, "sazan geldi (%d)" % carp)
+	assert_true(carp_low >= FishTable.bait_floor(float(corn["carp"])), "sazan iri (%d)" % carp_low)
+	assert_true(rudd_low < 100000, "kızılkanat yemden etkilenmez (%d)" % rudd_low)

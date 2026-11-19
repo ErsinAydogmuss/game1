@@ -26,33 +26,32 @@
 
 ---
 
-## Şimdiki durum (18 Kasım 2026, akşam): önce bunu oku
+## Şimdiki durum (19 Kasım 2026): önce bunu oku
 
 - **Önceki turlarda yapılanlar** (depoya göre): AdMob'un gerçek kimlikleri oyunda (commit `f1678be`), yükleme anahtarı
-  kuruldu ve parmak izi `tools/check_aab.py`'de (`afdd53b`), performans güncellemesi ve yapı 2 (`41b5678`). Gizlilik
-  sayfası, App Store kaydı, yüklemeler ve mağaza sayfaları `~/olta-yayin/durum.md`'de yazıyorsa onlar da tamam.
-  **Bitmiş bölümü yeniden yapma.**
-- **Bu tur: test kullanıcılarının düzeltmeleri, yapı 3.** O günden beri değişenler: Görevler (sağ üstte: ilk adımlar
-  ve Dede'nin istekleri, istek yuvası 3'ten 5'e), haritada bölge kartı (her bölgenin balıkları ve oranları, GİT),
-  kartsız yakalamada GÖLE BIRAK / KOVAYA, Takım Çantası'nda sahip olunan takımı takma, Tekir'in hediyeleri, çekişmede
-  kırmızı daha sert ve Kolay çekme kaldırıldı (tek mod), çitler, fotoğraf modu, ikinci tuzağın açıklaması. Kayıt
-  sürümü 7: eski kayıtlar açılışta kendiliğinden taşınır. **Mağazaya giden paket bu koddan derlenir:** eski AAB ya da
-  iPhone arşivini yükleme, yeniden derle.
-- **Yapı numarası 3:** `export_presets.cfg`'de hazır (iPhone `application/version="3"`, Android `version/code=3`).
-  Yapı 2 hiç yüklenmediyse de sorun değil: mağazalar yalnızca öncekinden büyük numara ister. Bir mağaza "kullanılmış"
+  kuruldu ve parmak izi `tools/check_aab.py`'de (`afdd53b`), performans güncellemesi ve yapı 2 (`41b5678`), test
+  kullanıcılarının ilk düzeltmeleri ve yapı 3 (`61bf3dd`). Gizlilik sayfası, App Store kaydı, yüklemeler ve mağaza
+  sayfaları `~/olta-yayin/durum.md`'de yazıyorsa onlar da tamam. **Bitmiş bölümü yeniden yapma.**
+- **Bu tur: test kullanıcılarının ikinci düzeltmeleri, yapı 4.** Yapı 3'ten beri değişenler: ileri bölgelerin balıkları
+  daha iri ve daha değerli, yem çektiği balığı iri de getirir, 6 kerevit tuzağı (dokununca TOPLA / KALDIR, hepsi
+  kuruluysa en eskisini taşı), Gölün Bekçisi en iyi dip takımını ister. Kayıt sürümü 8: eski kayıtlar açılışta
+  kendiliğinden taşınır. **Mağazaya giden paket bu koddan derlenir:** eski AAB ya da iPhone arşivini yükleme, yeniden
+  derle.
+- **Yapı numarası 4:** `export_presets.cfg`'de hazır (iPhone `application/version="4"`, Android `version/code=4`).
+  Yapı 3 hiç yüklenmediyse de sorun değil: mağazalar yalnızca öncekinden büyük numara ister. Bir mağaza "kullanılmış"
   derse +1 (Sorun giderme).
 - **Görünen sürüm:** 1.0.0 mağazada **henüz yayında değilse** (App Store'da "Ready for Sale" değil, Play'de üretimde
   yayımlanmamış; test kanalları sayılmaz) **1.0.0** kalır. Bir mağazada yayındaysa `project.godot`'ta
   `config/version="1.0.1"` yap (izinli istisna), commit et; App Store Connect'te yeni sürüm (**+ Sürüm**) "1.0.1" aç,
   sürüm notunu ("Bu Sürümdeki Yenilikler") aşağıdaki notlardan yaz.
 - **İncelemede bekleyen sürüm varsa** (App Store "Waiting for Review" ya da "In Review", Play'de incelemede): yeni
-  yapıyla değiştirmeden önce **Ersin'e sor**. Apple'da incelemeden çek (**Remove from Review**), yapıyı 3 ile
+  yapıyla değiştirmeden önce **Ersin'e sor**. Apple'da incelemeden çek (**Remove from Review**), yapıyı 4 ile
   değiştir, Ersin'in onayıyla yeniden gönder. Play'de aynı kanalda yeni sürüm eskisinin yerine geçer.
 - **Sürüm notları ve TestFlight'ın "Test edilecekler" yazısı:** `magaza-metinleri.md` → "Sürüm notları (1.0.0, yapı
-  3)" (tr-TR ve en-US).
-- **Akış:** 0. bölüm (hazırlık ve denetim) → 5 (iPhone yapısı 3) → 6 (AAB 3) → Play'de durum.md'deki kanal (kapalı
-  test ya da üretim): yeni sürüm, AAB 3, sürüm notları → TestFlight'ta yapı 3: "Test edilecekler" yazısı, iç test
-  grubuna ve (varsa) dış test grubuna ekle → 8. bölümün 0. adımı (Ersin 5 dakika dener) → sürüm sayfasında yapı 3
+  4)" (tr-TR ve en-US).
+- **Akış:** 0. bölüm (hazırlık ve denetim) → 5 (iPhone yapısı 4) → 6 (AAB 4) → Play'de durum.md'deki kanal (kapalı
+  test ya da üretim): yeni sürüm, AAB 4, sürüm notları → TestFlight'ta yapı 4: "Test edilecekler" yazısı, iç test
+  grubuna ve (varsa) dış test grubuna ekle → 8. bölümün 0. adımı (Ersin 5 dakika dener) → sürüm sayfasında yapı 4
   (gönderilmiş bir sürüm varsa yukarıdaki madde) → Ersin'in onayıyla gönder → 9 (rapor). Mağaza metinleri ve ekran
   görüntüleri değişmedi: yeniden yükleme.
 
