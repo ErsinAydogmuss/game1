@@ -175,7 +175,7 @@ static func rows_of(db: ContentDB, save: SaveData) -> Array[Dictionary]:
 					"love": int(db.rarity_def(rarity).get("love", 0)) }
 		var row: Dictionary = by_fish[id]
 		row["count"] = int(row["count"]) + 1
-		row["value"] = int(row["value"]) + Economy.fish_value(db, id, int(entry["size_cm"]))
+		row["value"] = int(row["value"]) + Economy.entry_value(db, entry)
 	var rows: Array[Dictionary] = []
 	for id: String in by_fish:
 		rows.append(by_fish[id])

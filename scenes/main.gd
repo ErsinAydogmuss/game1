@@ -1388,7 +1388,7 @@ func _on_catch() -> void:
 	# doluyken atılmaz (SAT); yine de dolu kovaya gelen balık (çekişmede kova dolduysa) göle döner.
 	var protected := Bucket.release_only(db, fish_id)
 	var was_full := Bucket.is_full(db, save)
-	var kept := Bucket.add(db, save, fish_id, size_cm, stars)
+	var kept := Bucket.add(db, save, fish_id, size_cm, stars, str(info.get("zone", "")))
 	# Kartın "Göle bırak"ı yalnızca kovaya giren balıkta (dolu kovada balık zaten göle döndü).
 	outcome["kept"] = kept
 	# Dede'nin istekleri: av sayılır (bölgesi gölgenin, vakti ve havası şimdiki); biten istek öder. Bildirimi

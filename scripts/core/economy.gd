@@ -28,11 +28,26 @@ static func fish_value(db: ContentDB, fish_id: String, size_cm: int) -> int:
 	return maxi(1, (int(f["value"]) * factor + 500) / 1000)
 
 
+## Bölgede tutulan balığın değeri: fish_value × bölgenin çarpanı (spots.json value_pm; yapı 4: ileri bölgenin
+## balığı değerli), en az 1; satılmayan balık 0.
+static func value_in(db: ContentDB, fish_id: String, size_cm: int, zone_id: String) -> int:
+	var value := fish_value(db, fish_id, size_cm)
+	var pm := db.zone_value(zone_id)
+	if value <= 0 or pm == 1000:
+		return value
+	return maxi(1, (value * pm + 500) / 1000)
+
+
+## Kovadaki bir balığın değeri (tutulduğu bölgenin çarpanıyla).
+static func entry_value(db: ContentDB, entry: Dictionary) -> int:
+	return value_in(db, str(entry["fish"]), int(entry["size_cm"]), str(entry.get("zone", "")))
+
+
 ## Kovadaki bütün balıkların değeri.
 static func bucket_value(db: ContentDB, save: SaveData) -> int:
 	var total := 0
 	for entry in save.bucket:
-		total += fish_value(db, str(entry["fish"]), int(entry["size_cm"]))
+		total += entry_value(db, entry)
 	return total
 
 
@@ -43,7 +58,7 @@ static func sell_all(db: ContentDB, save: SaveData) -> int:
 	var sold := 0
 	var kept: Array[Dictionary] = []
 	for entry in save.bucket:
-		var value := fish_value(db, str(entry["fish"]), int(entry["size_cm"]))
+		var value := entry_value(db, entry)
 		if value <= 0:
 			kept.append(entry)
 			continue

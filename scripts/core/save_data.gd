@@ -4,7 +4,7 @@ extends RefCounted
 ## taşınabilir. Alan eklerken VERSION'ı artır, migrate()'e adım ekle ve test_save_data.gd'ye
 ## göç testi yaz.
 
-const VERSION := 7
+const VERSION := 8
 ## Kayıtta en çok bu kadar tuzak ve tuzak başına içerik tutulur (bozuk kayıt büyümesin).
 const MAX_TRAPS := 8
 const MAX_TRAP_ITEMS := 8
@@ -322,6 +322,11 @@ static func migrate(raw: Dictionary) -> Dictionary:
 				if typeof(entry) == TYPE_DICTIONARY and str((entry as Dictionary).get("kind", "")) == "secret":
 					(entry as Dictionary)["slot"] = GOLDEN_SLOT
 		v = 7
+	if v < 8:
+		# v8 (yapı 4; testçi: "balıklar çok az para ediyor"): kovadaki balık tutulduğu bölgeyi taşır ("zone": ileri
+		# bölgenin balığı değerli, Economy.entry_value). Eski kayıttaki balıkların bölgesi bilinmez: çarpanı 1 (eski
+		# değeri aynen; kova bir satışta boşalır).
+		v = 8
 	d["version"] = v
 	return d
 
@@ -389,7 +394,12 @@ static func _bucket(raw: Variant) -> Array[Dictionary]:
 		var size := _int(e, "size_cm", 0)
 		if fish.is_empty() or size <= 0:
 			continue
-		out.append({ "fish": fish, "size_cm": size, "stars": clampi(_int(e, "stars", 1), 1, 5) })
+		var item := { "fish": fish, "size_cm": size, "stars": clampi(_int(e, "stars", 1), 1, 5) }
+		# v8: tutulduğu bölge (değer çarpanı); yoksa yazılmaz.
+		var zone := _text(e, "zone", "")
+		if not zone.is_empty():
+			item["zone"] = zone
+		out.append(item)
 	return out
 
 

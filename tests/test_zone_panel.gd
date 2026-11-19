@@ -95,3 +95,12 @@ func test_technique_for_the_zone() -> void:
 	# Sinek tekniğiyle dere ağzının oranları: alabalık şimdi gelir.
 	var trout := _row(ZonePanel.rows(db, s, SPOT, "stream_mouth"), "trout")
 	assert_true(int(trout.get("ppm", 0)) > 0, "sinekle alabalık oranıyla")
+
+
+## İleri bölgenin hapı (yapı 4): çarpanın yazısı tam sayıda yalın, kesirde dilin ondalık ayracıyla.
+func test_multiplier_text() -> void:
+	assert_eq(ZonePanel.multiplier_text(2000), "2", "tam sayı")
+	assert_eq(ZonePanel.multiplier_text(1000), "1", "bir")
+	var text := ZonePanel.multiplier_text(1700)
+	assert_true(text.begins_with("1") and text.ends_with("7") and text.length() == 3, "1,7 ya da 1.7: " + text)
+	assert_eq(ZonePanel.multiplier_text(1960), "2", "yuvarlanır")

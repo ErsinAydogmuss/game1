@@ -212,7 +212,7 @@ static func collect(db: ContentDB, save: SaveData, spot_id: String, index: int, 
 	for k in n:
 		var item: Dictionary = items[0]
 		var fish_id := str(item["fish"])
-		if not Bucket.add(db, save, fish_id, int(item["size_cm"]), int(item["stars"])):
+		if not Bucket.add(db, save, fish_id, int(item["size_cm"]), int(item["stars"]), str(trap["zone"])):
 			break
 		items.remove_at(0)
 		trap["progress_s"] = int(trap["progress_s"]) - rules.trap_fill_s
@@ -260,5 +260,5 @@ static func _top_up(db: ContentDB, save: SaveData, spot_id: String, trap: Dictio
 	while items.size() < db.rules.trap_max:
 		var fish_id := ids[maxi(0, Dice.pick_weighted(rng, weights))]
 		var def := db.fish_by_id(fish_id)
-		var percentile := FishTable.roll_percentile(rng)
+		var percentile := FishTable.lift(FishTable.roll_percentile(rng), int(z.get("size_floor", 0)))
 		items.append({ "fish": fish_id, "size_cm": FishTable.size_cm(def, percentile), "stars": FishTable.stars(percentile) })

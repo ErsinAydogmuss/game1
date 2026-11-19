@@ -265,6 +265,18 @@ func zone(spot_id: String, zone_id: String) -> Dictionary:
 	return {}
 
 
+## Bölgede tutulan balığın değer çarpanı (binde; kovadaki kaydın "zone"u: Economy.entry_value). Bilinmeyen ya da
+## boş bölge 1000.
+func zone_value(zone_id: String) -> int:
+	if zone_id.is_empty():
+		return 1000
+	for s in spots:
+		for z: Dictionary in s.get("zones", []):
+			if str(z["id"]) == zone_id:
+				return int(z["value_pm"])
+	return 1000
+
+
 ## Atış noktasının göl şekli (önbellekli).
 func lake(spot_id: String) -> LakeShape:
 	if not _lakes.has(spot_id):
@@ -584,7 +596,8 @@ func _basin_def(raw: Variant, zone: String, deepest: float, shelf_m: float) -> D
 ## ZONE_TECHNIQUES, sinek yalnızca akıntılı bölgede açıkça), snag_s (otlu ya da kayalık bölgede
 ## bu kadar sn bekleyen yapay yem takılır; 0 = takılmaz), trap (kerevit tuzağının tablosu: tür ->
 ## ağırlık; yazılmazsa bölgeye tuzak kurulmaz; trap_ids, trap_weights), suggest (Dede'nin bu bölgede
-## önerdiği teknik: UI_DEDE_SUGGEST_<bölge>; yazılmazsa "").
+## önerdiği teknik: UI_DEDE_SUGGEST_<bölge>; yazılmazsa ""), value_pm (bölgede tutulan balığın değer çarpanı,
+## binde; yazılmazsa 1000), size_floor (boy yüzdeliğinin tabanı, ppm; yazılmazsa 0: FishTable.lift).
 func _zone_def(raw: Variant) -> Dictionary:
 	var z: Dictionary = raw if typeof(raw) == TYPE_DICTIONARY else {}
 	var techniques := PackedStringArray()
@@ -634,6 +647,8 @@ func _zone_def(raw: Variant) -> Dictionary:
 		"trap_ids": trap_ids,
 		"trap_weights": trap_weights,
 		"suggest": str(z.get("suggest", "")),
+		"value_pm": int(z.get("value_pm", 1000)),
+		"size_floor": int(z.get("size_floor", 0)),
 	}
 
 
@@ -989,6 +1004,11 @@ func _validate_zone(spot_id: String, z: Dictionary, known: Dictionary) -> void:
 			errors.append("spots.json: %s: %s: koruma altındaki tür tuzağa girmez: %s" % [spot_id, id, trap_ids[i]])
 	if not trap_ids.is_empty() and bool(z["boat"]):
 		errors.append("spots.json: %s: %s: tuzak sandal bölgesine kurulmaz" % [spot_id, id])
+	# İleri bölgenin balığı değerli ve iri (yapı 4): çarpan 1–5 kat, boy tabanı en çok %60 (5 yıldızın eşiği %90).
+	if int(z["value_pm"]) < 1000 or int(z["value_pm"]) > 5000:
+		errors.append("spots.json: %s: %s: value_pm 1000–5000 olmalı" % [spot_id, id])
+	if int(z["size_floor"]) < 0 or int(z["size_floor"]) > 600000:
+		errors.append("spots.json: %s: %s: size_floor 0–600000 olmalı" % [spot_id, id])
 	# Dede'nin önerdiği teknik bölgede avlanılır ve şamandıra değildir (şamandırayı herkes bilir).
 	var suggest := str(z["suggest"])
 	if not suggest.is_empty() and (suggest == "float" or not suggest in techniques):

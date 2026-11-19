@@ -115,6 +115,8 @@ UI_MAP_HINT,Tap a place: see its fish and go there.,"Bir yere dokun: balıkları
 UI_ZONE_GO,Go,Git
 UI_ZONE_NEXT_BUOY,Next buoy,Sıradaki şamandıra
 UI_ZONE_NOTE,"Odds with your gear, at this time and weather.","Oranlar takımınla, şimdiki vakitte ve havada."
+UI_ZONE_VALUE,Fish worth ×%s · bigger,Balıklar ×%s değerli · daha iri
+UI_DECIMAL,.,","
 UI_ZONE_TRAP,You can set a crayfish trap here.,Burada kerevit tuzağı kurulur.
 UI_ZONE_NIGHT,At night,Gece gelir
 UI_ZONE_STORM,In a storm,Fırtınada

@@ -79,6 +79,11 @@ func refresh() -> void:
 	var technique := technique_for(db, save, spot_id, zone)
 	_info.add_child(_pill("tech_" + technique, tr("UI_TECH_" + technique)))
 	_info.add_child(BookPanel.conditions_pill(db, save))
+	# İleri bölgenin balığı değerli ve iri (yapı 4; spots.json value_pm, size_floor).
+	if int(z.get("value_pm", 1000)) > 1000:
+		var worth := _pill("coin", tr("UI_ZONE_VALUE") % multiplier_text(int(z["value_pm"])))
+		worth.name = "Worth"
+		_info.add_child(worth)
 	_info.add_child(UiKit.spacer())
 	if current:
 		_info.add_child(_pill("pin", tr("UI_MAP_HERE")))
@@ -244,6 +249,15 @@ func _card(db: ContentDB, save: SaveData, row: Dictionary) -> Control:
 	odds.name = "Odds"
 	foot.add_child(odds)
 	return panel
+
+
+## Çarpanın yazısı (binde → "1,7"; tam sayıda "2"): ondalık ayracı dilin (UI_DECIMAL).
+static func multiplier_text(pm: int) -> String:
+	var whole := floori(pm / 1000.0)
+	var tenths := roundi(float(pm % 1000) / 100.0)
+	if tenths >= 10:
+		return str(whole + 1)
+	return str(whole) if tenths == 0 else "%d%s%d" % [whole, TranslationServer.translate("UI_DECIMAL"), tenths]
 
 
 ## Bilgi hapı: ikon ve kısa yazı (tekniğin adı, "Buradasın").

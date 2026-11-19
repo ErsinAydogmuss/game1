@@ -901,6 +901,29 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   uğrayınca kedi açsa kovadaki en ucuz balığı verir: 16 saatte 131–139 balık (saatte ~8,5; ilk besleme 4,4–5,7.
   dakikada). Kazanca etkisi ihmal edilir; botun seyri değiştiği için 16 saatte saatte 7.764–8.480 para (akvaryumla
   7.728–8.053), korkuluğun üç seed'inde 310. dakikada 5.786–6.106 (korkuluk 6.500).
+- ✅ **Yapı 4: ileri bölgenin balığı değerli ve iri** (testçi: "balıklar çok az para ediyor, dere ağzında yayın
+  tutarak ilerlemek zorunda kaldım"; "her bölgede ilerlemek takımı son seviyeye kadar kasmayı istesin"; Ersin'in seçimi
+  "İleri bölge iri ve değerli"). Her bölgenin değer çarpanı (`spots.json` `value_pm`) ve boy tabanı (`size_floor`:
+  gölgenin boy yüzdeliği tabandan aşağı inmez, `FishTable.lift`; iri türde fazla iri balık takım ister: ileri bölgede
+  zayıf takımla misina kopar). Kovadaki balık tutulduğu bölgeyi taşır (kayıt v8), satış ve kovanın değeri çarpanla
+  (`Economy.entry_value`). Haritanın bölge kartında hap: "Balıklar ×1,5 değerli · daha iri".
+
+| Bölge | Rütbe | Çarpan | Boy tabanı | 4★ ve 5★ payı | Balık başına (boyla) |
+|---|---|---|---|---|---|
+| İskele koyu, sazlık | 1 | ×1 | — | %20 | ×1 |
+| Nilüferli koy | 3 | ×1,15 | %10 | %22 | ~×1,2 |
+| Kayalık burun | 5 | ×1,3 | %20 | %25 (1★ yok) | ~×1,5 |
+| Dere ağzı | 7 | ×1,5 | %30 | %30 | ~×1,8 |
+| Derin orta (sandal) | 9 | ×1,7 | %40 | %35 (2★'ın altı yok) | ~×2,1 |
+
+  - Ölçüm (`economy_report.gd -- --hours=16 --seeds=6`): yalnızca boy tabanı +%21, yalnızca çarpanlar (1,2 / 1,4 / 1,7 / 2)
+    +%93, ikisi birlikte +%130 (saatte ~17.000): fazla bulundu, çarpanlar kısıldı. Seçilen değerlerle 16 saatte saatte
+    15.600–16.400 para (önce 7.700–8.500), 163–166 av; korkuluğun üç seed'inde 310. dakikada 10.800–11.600 (korkuluk
+    7.000–14.000).
+  - İri balık daha çok rütbe puanı verir (yıldız): rütbe 9 69–79. dakikada (önce 79–94), rütbe 20 247–264 (önce 317–331).
+  - Alışverişler öne kayar: kepçe 105–123, sandal 96–102, dev file 413–457 (önce 613–752), usta sinek kamışı 416–451
+    (önce 584–755). Bekçi'nin takımı (altın makara 178–224, altın örgü 212–258) ve Bekçi 213–260. dakikada (yalnızca
+    takım şartıyla 331–364; korkuluk 150–300).
 - ✅ **Kova dolunca SAT** (v0.4.1; Ersin: "kova doluyken balık tutmaya izin vermeyelim, oyun dükkâna yönlendirsin"): kova doluyken atılmaz; eylem düğmesi yeşil SAT olur, basınca Nine'nin tezgâhına geçilir (yakındaysa dükkân hemen açılır), dükkân Kova sekmesinde açılır. Önceden dolu kovaya gelen balık göle dönüyordu. Denge botu da atıştan önce satar (satıştan sonra toplanan tuzak kovayı doldurabiliyordu): 16 saat × 6 seed'de saatte 6.557–6.836 para ve 166–168 av, rütbe 20'ye 5,3–5,5 saatte, bütün takım 13,5–13,9 saatte; sayılar değişmedi. Korunmayan her türün değeri 0'dan büyük (`test_session_sim`): değersiz bir tür kovaya girseydi kova satışla boşalmaz, oyuncu atamazdı.
 - ✅ **Yemler** para kazandırmak için değil, istenen türü (defter, rekor, ileride istekler) aramak içindir. Her yem kendi türünün şansını belirgin artırır (iskele koyunda kurtçuk levrek %18 → %32 ve gümüş balığı %14 → %20, mısır sazan %20 → %43, karides yayın %4 → %10 ve turna %8 → %17; sazlıkta mısır kadife %22 → %30; nilüferli koyda boili altın sazan %6 → %9,6). Ucuz yemler balık başına ~1,5–2 para; karides balık başına 10 para ve ortalama değeri solucandan yüksek olduğu için aşağı yukarı başa baş. Bütün oranlar ve balık başına ortalama değer [`balik-katalogu.md`](balik-katalogu.md)'de (`tools/fish_catalog.gd` üretir).
 

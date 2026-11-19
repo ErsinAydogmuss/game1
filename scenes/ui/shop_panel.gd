@@ -625,7 +625,7 @@ func _bucket_rows() -> Array[Array]:
 			by_fish[id] = [id, 0, 0, int(db.fish_by_id(id).get("rarity", 0))]
 		var row: Array = by_fish[id]
 		row[1] = int(row[1]) + 1
-		row[2] = int(row[2]) + Economy.fish_value(db, id, int(entry["size_cm"]))
+		row[2] = int(row[2]) + Economy.entry_value(db, entry)
 	var rows: Array[Array] = []
 	for id: String in by_fish:
 		rows.append(by_fish[id])

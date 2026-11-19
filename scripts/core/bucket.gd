@@ -38,11 +38,15 @@ static func is_full(db: ContentDB, save: SaveData) -> bool:
 	return save.bucket.size() >= capacity(db, save)
 
 
-## Balığı kovaya koyar; kova doluysa ya da tür koruma altındaysa false (çağıran balığı bırakır).
-static func add(db: ContentDB, save: SaveData, fish_id: String, size_cm: int, stars: int) -> bool:
+## Balığı kovaya koyar; kova doluysa ya da tür koruma altındaysa false (çağıran balığı bırakır). zone: tutulduğu
+## bölge (değer çarpanı: Economy.entry_value; boşsa kayıtta yazılmaz, çarpan 1).
+static func add(db: ContentDB, save: SaveData, fish_id: String, size_cm: int, stars: int, zone: String = "") -> bool:
 	if is_full(db, save) or release_only(db, fish_id):
 		return false
-	save.bucket.append({ "fish": fish_id, "size_cm": size_cm, "stars": stars })
+	var entry := { "fish": fish_id, "size_cm": size_cm, "stars": stars }
+	if not zone.is_empty():
+		entry["zone"] = zone
+	save.bucket.append(entry)
 	return true
 
 

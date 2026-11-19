@@ -334,3 +334,29 @@ func test_technique_sets() -> void:
 	assert_true(Economy.technique_allowed(db, "big_lake", "dock_cove", "spin"), "iskelede spin")
 	assert_true(not Economy.technique_allowed(db, "big_lake", "", "fly"), "bölgesiz suda (derin ortanın kıyısı) sinek yok")
 	assert_true(Economy.technique_allowed(db, "big_lake", "", "float"), "bölgesiz suda şamandıra olur")
+
+
+## İleri bölgenin balığı değerli (yapı 4; spots.json value_pm): kovadaki kayıt bölgesini taşır, satış ve kovanın değeri
+## çarpanla. Bölgesiz (eski) kayıt ve iskele koyu çarpansız; satılmayan balık yine 0.
+func test_later_zones_are_worth_more() -> void:
+	var db := content()
+	var base := Economy.fish_value(db, "pike", 100)
+	assert_eq(Economy.value_in(db, "pike", 100, ""), base, "bölgesiz çarpansız")
+	assert_eq(Economy.value_in(db, "pike", 100, "dock_cove"), base, "iskele koyu ×1")
+	var deep := Economy.value_in(db, "pike", 100, "deep_water")
+	assert_eq(deep, (base * db.zone_value("deep_water") + 500) / 1000, "derin ortanın çarpanı")
+	assert_true(deep > base, "derin ortada değerli")
+	assert_eq(Economy.value_in(db, "sturgeon", 160, "deep_water"), 0, "mersin satılmaz")
+	# Çarpanlar bölgelerin sırasıyla artar (rütbe sırası).
+	var last := 0
+	for z in db.zones_of(db.main_spot):
+		var pm := int(z["value_pm"])
+		assert_true(pm >= last, "%s: çarpan öncekinden az değil" % z["id"])
+		last = pm
+	var save := SaveData.create_new(3)
+	assert_true(Bucket.add(db, save, "pike", 100, 3, "deep_water"), "kovaya")
+	assert_true(Bucket.add(db, save, "pike", 100, 3), "kovaya (bölgesiz)")
+	assert_eq(str(save.bucket[0].get("zone", "")), "deep_water", "kayıt bölgesini taşır")
+	assert_true(not save.bucket[1].has("zone"), "bölgesiz kayıtta alan yok")
+	assert_eq(Economy.bucket_value(db, save), deep + base, "kovanın değeri çarpanla")
+	assert_eq(Economy.sell_all(db, save), deep + base, "satış çarpanla")

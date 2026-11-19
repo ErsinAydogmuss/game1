@@ -545,6 +545,9 @@ func _spawn(angler: Vector2, bobber: Vector2, bobber_active: bool) -> FishShadow
 	s.rarity = int(def["rarity"])
 	s.pity = forced and s.rarity >= pity_floor
 	s.percentile = FishTable.roll_percentile(size_rng)
+	# İleri bölgede balık iri (spots.json size_floor; zar aynı, yalnızca yükselir: tek bölgeli göl kaymaz).
+	if _zoned and s.zone >= 0 and s.zone < _zones.size():
+		s.percentile = FishTable.lift(s.percentile, int(_zones[s.zone].get("size_floor", 0)))
 	s.size_cm = FishTable.size_cm(def, s.percentile)
 	s.stars = FishTable.stars(s.percentile)
 	s.length = FishTable.shadow_length(def, s.percentile)

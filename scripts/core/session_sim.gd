@@ -224,7 +224,7 @@ func cast_once() -> void:
 	var species := CatchOdds.species_ppm(db, _spot, CatchOdds.context(gear, technique, cond))
 	var fish_id := CatchOdds.roll(db, rng, species, CatchOdds.pity_floor(db, save, _spot, technique, cond))
 	var def := db.fish_by_id(fish_id)
-	var percentile := FishTable.roll_percentile(rng)
+	var percentile := FishTable.lift(FishTable.roll_percentile(rng), int(_spot.get("size_floor", 0)))
 	if Dice.chance(rng, int(_num("miss_ppm", 150000))):
 		lost += 1
 		elapsed += _num("lost_s", 2.5)
@@ -293,7 +293,7 @@ func _on_catch(def: Dictionary, percentile: int, cond: Dictionary = {}) -> void:
 		if not Zones.unlocked_between(db, spot_id, int(ranked["old_rank"]), int(ranked["new_rank"])).is_empty():
 			_choose_zone()
 			_choose_technique()
-	if not Bucket.add(db, save, fish_id, size_cm, stars):
+	if not Bucket.add(db, save, fish_id, size_cm, stars, zone_id):
 		if not Bucket.release_only(db, fish_id):
 			full_released += 1
 		_released(fish_id)
@@ -407,7 +407,7 @@ func _release_cheap() -> void:
 	while i < save.bucket.size():
 		var entry: Dictionary = save.bucket[i]
 		var fish_id := str(entry["fish"])
-		if Economy.fish_value(db, fish_id, int(entry["size_cm"])) <= limit:
+		if Economy.entry_value(db, entry) <= limit:
 			save.bucket.remove_at(i)
 			_released(fish_id)
 		else:
@@ -426,8 +426,7 @@ func _release_for_request() -> void:
 		for i in save.bucket.size():
 			var entry: Dictionary = save.bucket[i]
 			var best: Dictionary = save.bucket[cheapest]
-			if Economy.fish_value(db, str(entry["fish"]), int(entry["size_cm"])) \
-					< Economy.fish_value(db, str(best["fish"]), int(best["size_cm"])):
+			if Economy.entry_value(db, entry) < Economy.entry_value(db, best):
 				cheapest = i
 		var fish_id := str(save.bucket[cheapest]["fish"])
 		save.bucket.remove_at(cheapest)
@@ -658,8 +657,8 @@ func _zone_score(z: Dictionary) -> float:
 		var odds := CatchOdds.species_ppm(db, z)
 		for fid: String in odds:
 			var f := db.fish_by_id(fid)
-			var span: Vector2i = f["size_cm"]
-			value += float(odds[fid]) / ContentDB.PPM * Economy.fish_value(db, fid, (span.x + span.y) >> 1)
+			var size := FishTable.size_cm(f, FishTable.lift(Dice.PPM >> 1, int(z.get("size_floor", 0))))
+			value += float(odds[fid]) / ContentDB.PPM * Economy.value_in(db, fid, size, id)
 		_zone_values[id] = value
 	return score + float(_zone_values[id]) + int(z["rank"]) * 0.01
 
@@ -853,20 +852,24 @@ func _check_final() -> void:
 static func rate(db: ContentDB, sim_timing: Dictionary, place: Dictionary, t: String, gear: GearStats) -> float:
 	var odds := CatchOdds.species_ppm(db, place, {"attract": gear.attract, "technique": t})
 	var worth := 0.0
+	var size_floor := int(place.get("size_floor", 0))
+	var value_pm := int(place.get("value_pm", 1000))
 	for fid: String in odds:
-		worth += float(odds[fid]) / ContentDB.PPM * kept_value(db, fid, gear.carry)
+		worth += float(odds[fid]) / ContentDB.PPM * kept_value(db, fid, gear.carry, size_floor) * value_pm / 1000.0
 	var zone := str(place.get("id", ""))
 	return worth * (1.0 - miss_share(sim_timing, zone, t)) * 60.0 / cycle_s(sim_timing, zone, t)
 
 
-## Takılan bir balığın ortalama değeri (para): boy zarının eşit aralıklı RATE_SAMPLES örneğiyle;
-## takımın taşıyamadığı boy (fazla iri: ReelModel.excess_for) kaçar, değeri 0.
-static func kept_value(db: ContentDB, fish_id: String, carry: int) -> float:
+## Takılan bir balığın ortalama değeri (para; bölgenin çarpanı olmadan): boy zarının eşit aralıklı RATE_SAMPLES
+## örneğiyle, bölgenin boy tabanıyla (size_floor); takımın taşıyamadığı boy (fazla iri: ReelModel.excess_for) kaçar,
+## değeri 0.
+static func kept_value(db: ContentDB, fish_id: String, carry: int, size_floor: int = 0) -> float:
 	var def := db.fish_by_id(fish_id)
 	var fight: Dictionary = def["fight"]
 	var total := 0
 	for i in RATE_SAMPLES:
-		var percentile := FishTable.percentile_for(int((float(i) + 0.5) / RATE_SAMPLES * Dice.PPM))
+		var percentile := FishTable.lift(FishTable.percentile_for(int((float(i) + 0.5) / RATE_SAMPLES * Dice.PPM)),
+				size_floor)
 		if ReelModel.excess_for(fight, percentile, carry) == 0:
 			total += Economy.fish_value(db, fish_id, FishTable.size_cm(def, percentile))
 	return float(total) / RATE_SAMPLES

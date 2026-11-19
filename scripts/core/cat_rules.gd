@@ -47,7 +47,7 @@ static func pick(db: ContentDB, save: SaveData) -> int:
 	var best_value := 0
 	for i in save.bucket.size():
 		var entry := save.bucket[i]
-		var value := Economy.fish_value(db, str(entry["fish"]), int(entry["size_cm"]))
+		var value := Economy.entry_value(db, entry)
 		if best < 0 or value < best_value \
 				or (value == best_value and int(entry["size_cm"]) < int(save.bucket[best]["size_cm"])):
 			best = i
@@ -76,7 +76,7 @@ static func feed(db: ContentDB, save: SaveData) -> Dictionary:
 		"fish": str(entry["fish"]),
 		"size_cm": int(entry["size_cm"]),
 		"stars": int(entry["stars"]),
-		"value": Economy.fish_value(db, str(entry["fish"]), int(entry["size_cm"])),
+		"value": Economy.entry_value(db, entry),
 		"fed": save.cat_fed,
 		"gift": gift,
 		"gift_id": db.outfits.cat_gift(gift) if gift > 0 else "",

@@ -88,3 +88,18 @@ func test_dice_is_repeatable() -> void:
 		picked[Dice.pick_weighted(rng, PackedInt32Array([1, 0, 3]))] = true
 	assert_true(not picked.has(1), "ağırlığı 0 olan hiç seçilmez")
 	assert_eq(Dice.pick_weighted(rng, PackedInt32Array([0, 0])), -1, "toplam 0 → -1")
+
+
+## Bölgenin boy tabanı (yapı 4; FishTable.lift): taban 0'da yüzdelik aynen, tabanla en küçük taban, en büyük 1e6;
+## sıra korunur.
+func test_lift_keeps_order_above_the_floor() -> void:
+	for p: int in [0, 1, 123456, 500000, 999999, Dice.PPM]:
+		assert_eq(FishTable.lift(p, 0), p, "taban 0: aynen (%d)" % p)
+	assert_eq(FishTable.lift(0, 400000), 400000, "en küçük taban")
+	assert_eq(FishTable.lift(Dice.PPM, 400000), Dice.PPM, "en büyük aynı")
+	assert_eq(FishTable.lift(500000, 400000), 700000, "ortası")
+	var last := -1
+	for k in 101:
+		var lifted := FishTable.lift(k * 10000, 300000)
+		assert_true(lifted >= last, "sıra korunur")
+		last = lifted

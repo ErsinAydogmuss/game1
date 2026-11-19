@@ -34,6 +34,15 @@ static func percentile_for(u_ppm: int) -> int:
 	return a + ((b - a) * rest + Dice.PPM / 2) / Dice.PPM
 
 
+## Bölgenin boy tabanıyla (ppm; spots.json size_floor) yükseltilmiş yüzdelik: taban + (1e6 − taban) × yüzdelik.
+## Taban 0 ise aynen (eski göller ve altın test kaymaz). İleri bölgede balık iri gelir (yapı 4).
+static func lift(percentile: int, floor_ppm: int) -> int:
+	if floor_ppm <= 0:
+		return percentile
+	var f := clampi(floor_ppm, 0, Dice.PPM)
+	return f + ((Dice.PPM - f) * clampi(percentile, 0, Dice.PPM) + Dice.PPM / 2) / Dice.PPM
+
+
 ## Boy (cm): türün en küçüğü ile en büyüğü arasında, yüzdeliğe göre.
 static func size_cm(def: Dictionary, percentile: int) -> int:
 	var range_cm: Vector2i = def["size_cm"]

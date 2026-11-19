@@ -147,6 +147,17 @@ func _spot(db: ContentDB, spot_id: String, lines: PackedStringArray) -> void:
 			opens += ", yalnızca sandalla"
 		lines.append("### %s (`%s`; %s)" % [_name("ZONE_" + str(z["id"])), z["id"], opens])
 		lines.append("")
+		var pm := int(z["value_pm"])
+		var floor_ppm := int(z["size_floor"])
+		if pm != 1000 or floor_ppm > 0:
+			# İleri bölgenin balığı değerli ve iri (yapı 4; spots.json value_pm, size_floor; FishTable.lift).
+			var stars := PackedStringArray()
+			var shares := _star_shares(floor_ppm)
+			for k in shares.size():
+				stars.append("%d★ %s" % [k + 1, _percent(shares[k])])
+			lines.append("Balıklar ×%s değerli, iri gelir: boy yüzdeliği en az %s (%s). Tablolardaki boy, değer ve ortalama değer bölgenin." % [
+					_number(pm / 1000.0), _percent(floor_ppm), ", ".join(stars)])
+			lines.append("")
 		var suggest := str(z["suggest"])
 		if not suggest.is_empty():
 			lines.append("Dede'nin önerisi: %s (\"%s\")." % [_name("UI_TECH_" + suggest).to_lower(),
@@ -207,8 +218,10 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray, techniqu
 		if db.affinity(id, technique) <= 0.0:
 			continue
 		var f := db.fish_by_id(id)
-		var span: Vector2i = f["size_cm"]
-		var value := "%d–%d" % [Economy.fish_value(db, id, span.x), Economy.fish_value(db, id, span.y)]
+		var zone_id := str(spot.get("id", ""))
+		var floor_ppm := int(spot.get("size_floor", 0))
+		var span := Vector2i(FishTable.size_cm(f, FishTable.lift(0, floor_ppm)), (f["size_cm"] as Vector2i).y)
+		var value := "%d–%d" % [Economy.value_in(db, id, span.x, zone_id), Economy.value_in(db, id, span.y, zone_id)]
 		if Bucket.release_only(db, id):
 			value = "satılmaz (bırakılır)"
 		var row := "| %s | %s | %s | %d–%d | %s | %s | %s |" % [_name("FISH_" + id), _name("FISH_" + id, "en"),
@@ -258,8 +271,8 @@ func _tables(db: ContentDB, spot: Dictionary, lines: PackedStringArray, techniqu
 		var xp := 0.0
 		for id: String in odds[b]:
 			var share := float(odds[b][id]) / PPM
-			value += share * _mean_value(db, id)
-			xp += share * _mean_xp(db, int(db.fish_by_id(id)["rarity"]))
+			value += share * _mean_value(db, id, int(spot.get("size_floor", 0)), str(spot.get("id", "")))
+			xp += share * _mean_xp(db, int(db.fish_by_id(id)["rarity"]), int(spot.get("size_floor", 0)))
 		row += " %s | %s |" % [_number(value), _number(xp)]
 		lines.append(row)
 	lines.append("")
@@ -473,26 +486,41 @@ func _trap_table(db: ContentDB, zone: Dictionary, lines: PackedStringArray) -> v
 	for i in ids.size():
 		var id := ids[i]
 		var f := db.fish_by_id(id)
-		var span: Vector2i = f["size_cm"]
+		var zone_id := str(zone["id"])
+		var floor_ppm := int(zone["size_floor"])
+		var span := Vector2i(FishTable.size_cm(f, FishTable.lift(0, floor_ppm)), (f["size_cm"] as Vector2i).y)
 		lines.append("| %s | %s | %s | %d–%d | %s |" % [_name("FISH_" + id), _name("RARITY_" + db.rarity_id(int(f["rarity"]))),
-				_percent(roundi(float(Dice.PPM) * maxi(0, weights[i]) / maxi(1, total))), Economy.fish_value(db, id, span.x),
-				Economy.fish_value(db, id, span.y), _number(_mean_value(db, id))])
+				_percent(roundi(float(Dice.PPM) * maxi(0, weights[i]) / maxi(1, total))), Economy.value_in(db, id, span.x, zone_id),
+				Economy.value_in(db, id, span.y, zone_id), _number(_mean_value(db, id, floor_ppm, zone_id))])
 	lines.append("")
 
 
-## Balığın ortalama değeri (boy zarının dağılımıyla).
-func _mean_value(db: ContentDB, fish_id: String) -> float:
+## Balığın ortalama değeri (boy zarının dağılımıyla; bölgenin boy tabanı ve değer çarpanıyla).
+func _mean_value(db: ContentDB, fish_id: String, floor_ppm: int = 0, zone_id: String = "") -> float:
 	var def := db.fish_by_id(fish_id)
 	var total := 0
 	for i in SAMPLES:
-		total += Economy.fish_value(db, fish_id, FishTable.size_cm(def, FishTable.percentile_for(_sample_u(i))))
+		var percentile := FishTable.lift(FishTable.percentile_for(_sample_u(i)), floor_ppm)
+		total += Economy.value_in(db, fish_id, FishTable.size_cm(def, percentile), zone_id)
 	return float(total) / SAMPLES
 
 
-func _mean_xp(db: ContentDB, rarity: int) -> float:
+## Bölgenin boy tabanıyla yıldızların payı (ppm; 1★..5★).
+func _star_shares(floor_ppm: int) -> PackedInt32Array:
+	var counts := PackedInt32Array([0, 0, 0, 0, 0])
+	for i in SAMPLES:
+		var stars := FishTable.stars(FishTable.lift(FishTable.percentile_for(_sample_u(i)), floor_ppm))
+		counts[stars - 1] += 1
+	var out := PackedInt32Array()
+	for c in counts:
+		out.append(roundi(float(c) * PPM / SAMPLES))
+	return out
+
+
+func _mean_xp(db: ContentDB, rarity: int, floor_ppm: int = 0) -> float:
 	var total := 0
 	for i in SAMPLES:
-		total += Rank.catch_xp(db, rarity, FishTable.stars(FishTable.percentile_for(_sample_u(i))))
+		total += Rank.catch_xp(db, rarity, FishTable.stars(FishTable.lift(FishTable.percentile_for(_sample_u(i)), floor_ppm)))
 	return float(total) / SAMPLES
 
 

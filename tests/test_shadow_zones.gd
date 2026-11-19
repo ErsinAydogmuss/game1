@@ -247,3 +247,28 @@ func test_zone_access() -> void:
 	assert_eq(Zones.unlocked_between(db, SPOT, 2, 3).size(), 1, "rütbe 3'te bir bölge açılır")
 	assert_eq(Zones.place(db, SPOT, "reeds"), db.zone(SPOT, "reeds"), "oranlar bölgeden")
 	assert_eq(Zones.place(db, "home_lake", ""), db.spot("home_lake"), "bölgesiz: gölün kendisi")
+
+
+## İleri bölgenin balığı iri (yapı 4; spots.json size_floor): gölgenin yüzdeliği bölgesinin tabanından aşağı inmez,
+## iskele koyunda taban yok (eski zar aynen). Ortalama boy yüzdeliği dere ağzında iskeleninkinden yüksek.
+func test_later_zones_bring_bigger_fish() -> void:
+	var means := {}
+	for place: Array in [[DOCK, "dock_cove"], [STREAM, "stream_mouth"], [Vector2(14.0, -8.5), "rocky_point"]]:
+		var at: Vector2 = place[0]
+		var total := 0
+		var count := 0
+		var low := Dice.PPM
+		for seed_value in 12:
+			var sim := _sim(seed_value, at, OPEN_ALL)
+			for s in sim.shadows:
+				total += s.percentile
+				count += 1
+				low = mini(low, s.percentile)
+				assert_eq(s.size_cm, FishTable.size_cm(content().fish_by_id(s.fish_id), s.percentile), "boy yüzdelikten")
+				assert_eq(s.stars, FishTable.stars(s.percentile), "yıldız yüzdelikten")
+		var floor_ppm := int(content().zone(SPOT, place[1]).get("size_floor", 0))
+		assert_true(low >= floor_ppm, "%s: yüzdelik tabanın altına inmez (%d ≥ %d)" % [place[1], low, floor_ppm])
+		means[place[1]] = float(total) / maxi(1, count)
+	assert_eq(int(content().zone(SPOT, "dock_cove").get("size_floor", -1)), 0, "iskele koyunda taban yok")
+	assert_true(float(means["stream_mouth"]) > float(means["dock_cove"]) + 150000.0,
+			"dere ağzında balık iri (%s)" % str(means))

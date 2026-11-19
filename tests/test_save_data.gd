@@ -541,7 +541,7 @@ func test_v6_golden_request_moves_to_v7() -> void:
 		],
 	}
 	var s := SaveData.from_dict(raw)
-	assert_eq(int(s.to_dict()["version"]), 7, "v7'ye göçtü")
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "v7 üzerinden güncel sürüme göçtü")
 	var golden := Requests.golden(db, s)
 	assert_eq(int(golden.get("serial", -1)), 5, "altın istek yeni yuvasında")
 	assert_eq(int(golden.get("slot", -1)), SaveData.GOLDEN_SLOT, "altın yuva")
@@ -565,6 +565,46 @@ func test_v7_save_reads_back() -> void:
 	assert_eq(Requests.daily(db, s).size(), 5, "beş günlük istek")
 	assert_eq(int(Requests.golden(db, s).get("slot", -1)), SaveData.GOLDEN_SLOT, "altın istek 5. yuvada")
 	assert_eq(s.letters, 4, "dört mektup")
+	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
+
+
+## v8 (yapı 4): kovadaki balık tutulduğu bölgeyi taşır (değer çarpanı). v7'nin kovası aynen gelir (bölgesiz: çarpan 1);
+## bölge yazıysa kalır, boş ya da yazı olmayan bölge düşer.
+func test_v7_bucket_moves_to_v8_without_zones() -> void:
+	var db := content()
+	var raw := { "version": 7, "seed": 1, "catches": 3, "bucket": [
+		{ "fish": "pike", "size_cm": 100, "stars": 3 },
+		{ "fish": "rudd", "size_cm": 20, "stars": 2, "zone": "deep_water" },
+		{ "fish": "perch", "size_cm": 30, "stars": 2, "zone": 5 },
+		{ "fish": "perch", "size_cm": 31, "stars": 2, "zone": "" },
+	] }
+	var s := SaveData.from_dict(raw)
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "güncel sürüme göçtü")
+	assert_eq(s.bucket.size(), 4, "kova aynen")
+	assert_true(not s.bucket[0].has("zone"), "eski kayıtta bölge yok")
+	assert_eq(Economy.entry_value(db, s.bucket[0]), Economy.fish_value(db, "pike", 100), "eski balığın değeri aynen")
+	assert_eq(str(s.bucket[1].get("zone", "")), "deep_water", "bölge yazıysa kalır")
+	assert_true(not s.bucket[2].has("zone") and not s.bucket[3].has("zone"), "bozuk ya da boş bölge düşer")
+	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
+
+
+## v8'in gerçek kaydı (tests/fixtures/save_v8.json): denge botu (seed 8008) 150 dakika oynadı; kovada ileri bölgelerin
+## balıkları bölgeleriyle. Örnek değiştirilmez.
+func test_v8_save_reads_back() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v8.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v8 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	assert_eq(int((raw as Dictionary)["version"]), 8, "örnek v8 kaydı")
+	var db := content()
+	var s := SaveData.from_dict(raw)
+	var zoned := 0
+	for entry in s.bucket:
+		if entry.has("zone"):
+			zoned += 1
+			assert_true(Economy.entry_value(db, entry) >= Economy.fish_value(db, str(entry["fish"]), int(entry["size_cm"])),
+					"bölgenin çarpanı değeri düşürmez")
+	assert_true(zoned > 0, "kovada bölgeli balık var")
 	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
 
 

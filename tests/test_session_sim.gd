@@ -57,7 +57,7 @@ const PACING := [
 	["release", 15.0, 150.0],
 	["trash", 15.0, 90.0],
 	["love_2", 15.0, 150.0],
-	["love_6", 120.0, 240.0],
+	["love_6", 90.0, 240.0],      # yapı 4: bölgelerin değeriyle alışveriş öne kayar, 6 seed'de 100–145
 	# Dede'nin istekleri (4. adım; economy_report 16 sa × 6 seed): rütbe 2'de (0,6–3,2. dk) dolar, ilki 6,6–17,5. dakikada
 	# biter, onuncusu 156–216. dakikada (saatte 4,0–4,5 istek; bot istekleri kovalamaz, günde bir dünden kalanı değiştirir).
 	# İsteklerin sevgisi göl sevgisi 6'yı az öne çeker (137–227. dk; önce 145–226). Gölün Sırrı'yla (5. adım) bot
@@ -74,8 +74,14 @@ const PACING := [
 	["letter_6", 100.0, 180.0],
 	["piece_1", 30.0, 80.0],
 	["piece_4", 110.0, 200.0],
-	["dough", 120.0, 240.0],
-	["final_ready", 120.0, 240.0],
+	["dough", 90.0, 240.0],
+	["final_ready", 90.0, 240.0],
+	# Final (6. adım): final gecesinde (en geç bir oyun günü sonra) gece sandalla X'e, dipte Bekçi. Yapı 4'te Bekçi en
+	# iyi dip takımını ister (altın makara rütbe 14, 10.000 para; altın örgü 9.000): bot final hazırken onlara
+	# biriktirir (shop). Yalnızca takım şartıyla 331–364. dakika; ileri bölgelerin değeriyle 213–260 (önce 152–209).
+	["keeper", 150.0, 300.0],
+	# Kepçe: bot Bekçi'nin takımına biriktirirken öteki alışverişler bekler; 6 seed'de 105–123 (önce 159–172).
+	["buy:net", 90.0, 220.0],
 ]
 ## Geç olaylar (LATE_MINUTES'a kadar). Ay Turnası yalnızca gece nilüferli koyda (gecede %0,4–2,5): bot her gece
 ## oraya gider ama gelmesi şansa bağlı. Dalga 5'te akvaryumun parası alışverişleri öne alınca seed 1000'de 185.
@@ -85,12 +91,6 @@ const LATE := [
 	# Tekir'in hediyeleri bitince seed 1000'de 206 → 402 dk, istek yuvaları 5 olunca 649 ve 1077'de 428 dk (ötekiler
 	# 27–230; bot nilüferli koyda önceden daha çok vakit geçirse de zar).
 	["fish:moon_pike", 20.0, 720.0],
-	# Final (6. adım): final gecesinde (en geç bir oyun günü sonra) gece sandalla X'e, dipte Bekçi. Yapı 4'te Bekçi en
-	# iyi dip takımını ister (altın makara rütbe 14, 10.000 para; altın örgü 9.000): bot final hazırken onlara
-	# biriktirir (shop), 6 seed'de 331–364. dakikada (önce 152–209). Biriktirirken öteki alışverişler bekler: kepçe
-	# 136–360 (önce 159–172).
-	["keeper", 150.0, 420.0],
-	["buy:net", 120.0, 420.0],
 ]
 ## Önce olması gereken olaylar: test_economy'nin öneri korkuluğu (dip kamışı 4 yıldız taşır, ona
 ## naylon misinayla bakılır) dip açıldığında misinanın alınmış olmasına dayanır.
@@ -128,7 +128,9 @@ func test_pacing_guard_rails() -> void:
 			if sim.milestones.has(key):
 				assert_between(float(sim.milestones[key]), row[1], row[2], "seed %d: %s (dk)" % [seed_value, key])
 		var hours := sim.elapsed / 3600.0
-		assert_between(sim.earned / hours, 2500.0, 6500.0, "seed %d: saatte para" % seed_value)
+		# Yapı 4: ileri bölgenin balığı değerli ve iri (spots.json value_pm, size_floor): 310. dakikada saatte
+		# 10.800–11.600 (önce 5.800).
+		assert_between(sim.earned / hours, 7000.0, 14000.0, "seed %d: saatte para" % seed_value)
 		assert_between(sim.catches / hours, 120.0, 280.0, "seed %d: saatte av" % seed_value)
 		sim.run(LATE_MINUTES)
 		for row: Array in LATE:
