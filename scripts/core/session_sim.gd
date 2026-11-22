@@ -224,8 +224,12 @@ func cast_once() -> void:
 	var species := CatchOdds.species_ppm(db, _spot, CatchOdds.context(gear, technique, cond))
 	var fish_id := CatchOdds.roll(db, rng, species, CatchOdds.pity_floor(db, save, _spot, technique, cond))
 	var def := db.fish_by_id(fish_id)
-	var percentile := FishTable.lift(FishTable.lift(FishTable.roll_percentile(rng), int(_spot.get("size_floor", 0))),
-			FishTable.bait_floor(gear.attraction(fish_id)))
+	# Boy: bölgenin tabanı, bölgenin etkili tekniğiyle biraz daha (yapı 5), yemin tabanı (ShadowSim._spawn'ın sırası).
+	var effective := ContentDB.is_effective(_spot, technique)
+	var percentile := FishTable.lift(FishTable.roll_percentile(rng), int(_spot.get("size_floor", 0)))
+	if effective:
+		percentile = FishTable.lift(percentile, FishTable.EFFECTIVE_FLOOR)
+	percentile = FishTable.lift(percentile, FishTable.bait_floor(gear.attraction(fish_id)))
 	if Dice.chance(rng, int(_num("miss_ppm", 150000))):
 		lost += 1
 		elapsed += _num("lost_s", 2.5)
@@ -294,7 +298,8 @@ func _on_catch(def: Dictionary, percentile: int, cond: Dictionary = {}) -> void:
 		if not Zones.unlocked_between(db, spot_id, int(ranked["old_rank"]), int(ranked["new_rank"])).is_empty():
 			_choose_zone()
 			_choose_technique()
-	if not Bucket.add(db, save, fish_id, size_cm, stars, zone_id):
+	var effective := ContentDB.is_effective(_spot, technique)
+	if not Bucket.add(db, save, fish_id, size_cm, stars, zone_id, effective):
 		if not Bucket.release_only(db, fish_id):
 			full_released += 1
 		_released(fish_id)
@@ -855,6 +860,10 @@ static func rate(db: ContentDB, sim_timing: Dictionary, place: Dictionary, t: St
 	var worth := 0.0
 	var size_floor := int(place.get("size_floor", 0))
 	var value_pm := int(place.get("value_pm", 1000))
+	# Bölgenin etkili tekniği (yapı 5): biraz daha iri, değeri effective_pm katı (iskele koyunda yok).
+	if ContentDB.is_effective(place, t):
+		size_floor = Dice.PPM - roundi(float(Dice.PPM - size_floor) * float(Dice.PPM - FishTable.EFFECTIVE_FLOOR) / Dice.PPM)
+		value_pm = (value_pm * int(place["effective_pm"]) + 500) / 1000
 	for fid: String in odds:
 		# Bölgenin ve yemin tabanı birleşir (iç içe lift: 1 − (1 − bölge)(1 − yem)).
 		var keep := float(Dice.PPM - size_floor) * float(Dice.PPM - FishTable.bait_floor(gear.attraction(fid))) / Dice.PPM

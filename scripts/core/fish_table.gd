@@ -43,6 +43,12 @@ static func lift(percentile: int, floor_ppm: int) -> int:
 	return f + ((Dice.PPM - f) * clampi(percentile, 0, Dice.PPM) + Dice.PPM / 2) / Dice.PPM
 
 
+## Bölgenin etkili tekniğiyle (yapı 5; spots.json suggest, iskele koyunda şamandıra) gelen balığın boy tabanı (ppm):
+## bölgenin ve yemin tabanıyla birleşir (yalnızca ContentDB.is_effective: iskele koyunda yok). Değeri de bölgenin
+## effective_pm katı.
+const EFFECTIVE_FLOOR := 100000
+
+
 ## Yemin (yapay yemin, sineğin) çektiği tür iri de gelir (yapı 4; testçi: "yemler hiçbir işe yaramıyor, bedava
 ## solucan yetiyor"): çekimi en az BAIT_FROM olan türün boy tabanı (çekim − 1) × BAIT_PER, en çok BAIT_MAX (ppm).
 ## Solucan ve başlangıç kaşığı, kuru sinek (çekim 1–1,3) iri getirmez.

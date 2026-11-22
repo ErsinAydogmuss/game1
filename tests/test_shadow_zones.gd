@@ -274,6 +274,43 @@ func test_later_zones_bring_bigger_fish() -> void:
 			"dere ağzında balık iri (%s)" % str(means))
 
 
+## Bölgenin etkili tekniğiyle balık biraz daha iri (yapı 5; ContentDB.is_effective, FishTable.EFFECTIVE_FLOOR): dere
+## ağzında sinekle gelen gölgenin yüzdeliği bölgenin tabanıyla etkili tekniğin tabanının birleşiminin altına inmez,
+## ortalaması şamandırayla gelenden yüksek; iskele koyunda şamandıra etkili ama çarpanı yok: boy aynı.
+func test_effective_technique_brings_bigger_fish() -> void:
+	var db := content()
+	var stream := db.zone(SPOT, "stream_mouth")
+	assert_eq(str(stream["effective"]), "fly", "dere ağzının etkili tekniği sinek")
+	assert_true(ContentDB.is_effective(stream, "fly") and not ContentDB.is_effective(stream, "float"), "yalnızca sinek")
+	assert_true(not ContentDB.is_effective(db.zone(SPOT, "dock_cove"), "float"), "iskele koyunda çarpan yok")
+	var floor_ppm := FishTable.lift(int(stream["size_floor"]), FishTable.EFFECTIVE_FLOOR)
+	var means := {}
+	for technique: String in ["float", "fly"]:
+		var total := 0
+		var count := 0
+		var low := Dice.PPM
+		for seed_value in 12:
+			var sim := ShadowSim.new(db, db.spot(SPOT), db.lake(SPOT), seed_value, false, STREAM,
+					{ "reach": REACH, "open": PackedStringArray(OPEN_ALL), "technique": technique })
+			sim.set_rig(db.rules.technique(technique))
+			sim.relocate(STREAM)
+			for s in sim.shadows:
+				total += s.percentile
+				count += 1
+				low = mini(low, s.percentile)
+		assert_true(count > 0, "%s: gölge doğdu" % technique)
+		means[technique] = float(total) / maxi(1, count)
+		if technique == "fly":
+			assert_true(low >= floor_ppm - 1, "sinekte yüzdelik birleşik tabanın altına inmez (%d ≥ %d)" % [low, floor_ppm])
+	assert_true(float(means["fly"]) > float(means["float"]) + 30000.0, "sinekle balık iri (%s)" % str(means))
+	# Değer: etkili teknikle tutulan balık bölgenin effective_pm katı.
+	var plain := Economy.value_in(db, "trout", 40, "stream_mouth")
+	var best := Economy.value_in(db, "trout", 40, "stream_mouth", true)
+	assert_eq(best, (Economy.fish_value(db, "trout", 40) * ((int(stream["value_pm"]) * int(stream["effective_pm"]) + 500) / 1000)
+			+ 500) / 1000, "değer iki çarpanla")
+	assert_true(best > plain, "etkili teknikle daha değerli")
+
+
 ## Yemin çektiği tür iri de gelir (yapı 4): mısırla (sazan ×3) iskele koyunda sazanın yüzdeliği en az %30, çekmediği tür
 ## (kızılkanat) eskisi gibi; gölgenin türü ve yeri yemle aynı zardan.
 func test_bait_brings_its_fish_bigger() -> void:

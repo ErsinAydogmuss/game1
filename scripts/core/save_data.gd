@@ -4,7 +4,7 @@ extends RefCounted
 ## taşınabilir. Alan eklerken VERSION'ı artır, migrate()'e adım ekle ve test_save_data.gd'ye
 ## göç testi yaz.
 
-const VERSION := 8
+const VERSION := 9
 ## Kayıtta en çok bu kadar tuzak ve tuzak başına içerik tutulur (bozuk kayıt büyümesin).
 const MAX_TRAPS := 8
 const MAX_TRAP_ITEMS := 8
@@ -327,6 +327,10 @@ static func migrate(raw: Dictionary) -> Dictionary:
 		# bölgenin balığı değerli, Economy.entry_value). Eski kayıttaki balıkların bölgesi bilinmez: çarpanı 1 (eski
 		# değeri aynen; kova bir satışta boşalır).
 		v = 8
+	if v < 9:
+		# v9 (yapı 5; testçi: "her bölgenin etkili oltası olsun"): kovadaki balık bölgenin etkili tekniğiyle tutulduysa
+		# "eff" (değeri bölgenin effective_pm katı: ContentDB.EFFECTIVE_PM 1,2). Eski kayıttaki balıklarda yok: çarpanı 1 (kova bir satışta boşalır).
+		v = 9
 	d["version"] = v
 	return d
 
@@ -399,6 +403,9 @@ static func _bucket(raw: Variant) -> Array[Dictionary]:
 		var zone := _text(e, "zone", "")
 		if not zone.is_empty():
 			item["zone"] = zone
+		# v9: etkili teknikle tutuldu (yalnızca true yazılır).
+		if typeof(e.get("eff")) == TYPE_BOOL and bool(e["eff"]):
+			item["eff"] = true
 		out.append(item)
 	return out
 

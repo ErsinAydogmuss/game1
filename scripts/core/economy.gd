@@ -29,18 +29,21 @@ static func fish_value(db: ContentDB, fish_id: String, size_cm: int) -> int:
 
 
 ## Bölgede tutulan balığın değeri: fish_value × bölgenin çarpanı (spots.json value_pm; yapı 4: ileri bölgenin
-## balığı değerli), en az 1; satılmayan balık 0.
-static func value_in(db: ContentDB, fish_id: String, size_cm: int, zone_id: String) -> int:
+## balığı değerli) × bölgenin etkili tekniğiyle tutulduysa onun çarpanı (effective_pm, yapı 5), en az 1; satılmayan
+## balık 0.
+static func value_in(db: ContentDB, fish_id: String, size_cm: int, zone_id: String, effective: bool = false) -> int:
 	var value := fish_value(db, fish_id, size_cm)
 	var pm := db.zone_value(zone_id)
+	if effective:
+		pm = (pm * db.zone_effective_pm(zone_id) + 500) / 1000
 	if value <= 0 or pm == 1000:
 		return value
 	return maxi(1, (value * pm + 500) / 1000)
 
 
-## Kovadaki bir balığın değeri (tutulduğu bölgenin çarpanıyla).
+## Kovadaki bir balığın değeri (tutulduğu bölgenin çarpanıyla; etkili teknikle tutulduysa onunkiyle de).
 static func entry_value(db: ContentDB, entry: Dictionary) -> int:
-	return value_in(db, str(entry["fish"]), int(entry["size_cm"]), str(entry.get("zone", "")))
+	return value_in(db, str(entry["fish"]), int(entry["size_cm"]), str(entry.get("zone", "")), bool(entry.get("eff", false)))
 
 
 ## Kovadaki bütün balıkların değeri.

@@ -924,6 +924,28 @@ v0.3.1 ölçümü (Dalga 2 dengesi) ve v0.4 ölçümü (Dalga 3 dengesi, 8. adı
   - Alışverişler öne kayar: kepçe 105–123, sandal 96–102, dev file 413–457 (önce 613–752), usta sinek kamışı 416–451
     (önce 584–755). Bekçi'nin takımı (altın makara 178–224, altın örgü 212–258) ve Bekçi 213–260. dakikada (yalnızca
     takım şartıyla 331–364; korkuluk 150–300).
+- ✅ **Yapı 5: bölgenin etkili tekniği** (testçi: "sinek yalnızca dere ağzında çalışıyor; her bölgenin tek etkili oltası
+  olsun"; Ersin'in seçimi "Etkili teknik avantajlı"). Her bölgenin etkili tekniği Dede'nin önerdiği teknik (`spots.json`
+  `suggest`; iskele koyunda şamandıra): sazlık ve derin orta dip, nilüferli koy ve kayalık burun spin, dere ağzı sinek.
+  O teknikle tutulan balık ×1,2 değerli (`effective_pm`, `ContentDB.EFFECTIVE_PM`) ve biraz daha iri (boy tabanı %10,
+  `FishTable.EFFECTIVE_FLOOR`; bölgenin ve yemin tabanıyla birleşir). İskele koyunda çarpan yok (herkes şamandırayla
+  başlar: erken ekonomi kaymasın); etkili tekniği yalnızca bölge canavarı için. Kovadaki balık "eff" taşır (kayıt v9).
+  Bölge kartında "Etkili teknik: Spin · balık ×1,2 değerli, daha iri"; Dede'nin bölge önerisi "Spin dene evlat: turna
+  iri ve değerli gelir!". Gelir aynı kalsın diye bölge çarpanları kısıldı:
+
+| Bölge | Etkili teknik | Bölge çarpanı | Etkili teknikle | Önce (yapı 4) |
+|---|---|---|---|---|
+| İskele koyu | Şamandıra | ×1 | ×1 | ×1 |
+| Sazlık | Dip | ×1 | ×1,2 | ×1 |
+| Nilüferli koy | Spin | ×1 | ×1,2 | ×1,15 |
+| Kayalık burun | Spin | ×1,1 | ×1,32 | ×1,3 |
+| Dere ağzı | Sinek | ×1,25 | ×1,5 | ×1,5 |
+| Derin orta | Dip | ×1,4 | ×1,68 | ×1,7 |
+
+  - Ölçüm (`economy_report.gd -- --hours=16 --seeds=6`): ×1,3 ile çarpanlar kısılmadan saatte ~15.000 (korkuluğun
+    310. dakikası; önce ~11.200) ve sandal, sinek kamışı korkuluktan erken: fazla bulundu. Seçilen değerlerle 16 saatte
+    saatte 15.750–16.400 para (önce 15.400–16.400), rütbe 20 240–254. dakikada (önce 250–261); öteki teknikle ileri
+    bölgede balık eskisinden ucuz (kayalıkta şamandırayla ×1,1, önce ×1,3).
 - ✅ **Yapı 4: yem iri balık da getirir** (testçi: "yemler hiçbir işe yaramıyor, bedava solucan varken öbürlerini
   almadım"; Ersin'in seçimi "Yem iri balık da getirsin"). Yemin, yapay yemin ya da sineğin en az 1,5 kat çektiği tür iri
   de gelir: boy tabanı (çekim − 1) × %15, en çok %30 (`FishTable.bait_floor`; bölgenin tabanıyla birleşir; solucan,

@@ -8,6 +8,8 @@ extends RefCounted
 
 const DATA_DIR := "res://data"
 const PPM := 1_000_000
+## Bölgenin etkili tekniğiyle tutulan balığın değer çarpanı (binde; yapı 5), önerisi olan bölgede varsayılan.
+const EFFECTIVE_PM := 1200
 
 ## Nadirlikler, sırayla (0 Sıradan .. 5 Masalsı): id, color, shape, shadow_fx, xp, love, pity.
 ## Kayıtlar sıra numarasını tutar: yalnızca sona eklenir.
@@ -267,6 +269,22 @@ func zone(spot_id: String, zone_id: String) -> Dictionary:
 
 ## Bölgede tutulan balığın değer çarpanı (binde; kovadaki kaydın "zone"u: Economy.entry_value). Bilinmeyen ya da
 ## boş bölge 1000.
+## Bölgenin etkili tekniğiyle tutulan balığın değer çarpanı (binde; yapı 5); bölge yoksa 1000.
+func zone_effective_pm(zone_id: String) -> int:
+	if zone_id.is_empty():
+		return 1000
+	for s in spots:
+		for z: Dictionary in s.get("zones", []):
+			if str(z["id"]) == zone_id:
+				return int(z["effective_pm"])
+	return 1000
+
+
+## Teknik bu bölgede etkili mi (yapı 5): bölgenin etkili tekniği ve çarpanı 1'den büyük (iskele koyunda yok).
+static func is_effective(zone: Dictionary, technique: String) -> bool:
+	return technique == str(zone.get("effective", "-")) and int(zone.get("effective_pm", 1000)) > 1000
+
+
 func zone_value(zone_id: String) -> int:
 	if zone_id.is_empty():
 		return 1000
@@ -647,6 +665,11 @@ func _zone_def(raw: Variant) -> Dictionary:
 		"trap_ids": trap_ids,
 		"trap_weights": trap_weights,
 		"suggest": str(z.get("suggest", "")),
+		# Etkili teknik (yapı 5; testçi: "her bölgenin tek etkili oltası olsun"): Dede'nin önerisi, yoksa şamandıra
+		# (iskele koyu). O teknikle tutulan balığın değer çarpanı effective_pm (binde): önerisi olan bölgede 1300,
+		# iskele koyunda 1000 (herkes şamandırayla başlar: erken ekonomi kaymasın); 1000'de boy tabanı da yok.
+		"effective": str(z.get("suggest", "")) if not str(z.get("suggest", "")).is_empty() else "float",
+		"effective_pm": int(z.get("effective_pm", 1000 if str(z.get("suggest", "")).is_empty() else EFFECTIVE_PM)),
 		"value_pm": int(z.get("value_pm", 1000)),
 		"size_floor": int(z.get("size_floor", 0)),
 	}
@@ -1004,6 +1027,11 @@ func _validate_zone(spot_id: String, z: Dictionary, known: Dictionary) -> void:
 			errors.append("spots.json: %s: %s: koruma altındaki tür tuzağa girmez: %s" % [spot_id, id, trap_ids[i]])
 	if not trap_ids.is_empty() and bool(z["boat"]):
 		errors.append("spots.json: %s: %s: tuzak sandal bölgesine kurulmaz" % [spot_id, id])
+	# Etkili teknik bölgede avlanılır (yapı 5); çarpanı 1–2 kat.
+	if not str(z["effective"]) in techniques:
+		errors.append("spots.json: %s: %s: etkili teknik bölgede avlanılmıyor: %s" % [spot_id, id, z["effective"]])
+	if int(z["effective_pm"]) < 1000 or int(z["effective_pm"]) > 2000:
+		errors.append("spots.json: %s: %s: effective_pm 1000–2000 olmalı" % [spot_id, id])
 	# İleri bölgenin balığı değerli ve iri (yapı 4): çarpan 1–5 kat, boy tabanı en çok %60 (5 yıldızın eşiği %90).
 	if int(z["value_pm"]) < 1000 or int(z["value_pm"]) > 5000:
 		errors.append("spots.json: %s: %s: value_pm 1000–5000 olmalı" % [spot_id, id])

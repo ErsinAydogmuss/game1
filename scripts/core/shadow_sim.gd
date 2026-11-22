@@ -548,9 +548,12 @@ func _spawn(angler: Vector2, bobber: Vector2, bobber_active: bool) -> FishShadow
 	s.rarity = int(def["rarity"])
 	s.pity = forced and s.rarity >= pity_floor
 	s.percentile = FishTable.roll_percentile(size_rng)
-	# İleri bölgede balık iri (spots.json size_floor; zar aynı, yalnızca yükselir: tek bölgeli göl kaymaz).
+	# İleri bölgede balık iri (spots.json size_floor; zar aynı, yalnızca yükselir: tek bölgeli göl kaymaz); bölgenin
+	# etkili tekniğiyle biraz daha iri (FishTable.EFFECTIVE_FLOOR).
 	if _zoned and s.zone >= 0 and s.zone < _zones.size():
 		s.percentile = FishTable.lift(s.percentile, int(_zones[s.zone].get("size_floor", 0)))
+		if not scripted and rig != null and ContentDB.is_effective(_zones[s.zone], rig.id):
+			s.percentile = FishTable.lift(s.percentile, FishTable.EFFECTIVE_FLOOR)
 	# Yemin çektiği tür iri de gelir (FishTable.bait_floor; senaryolu ilk av solucanla: taban yok).
 	if not scripted:
 		s.percentile = FishTable.lift(s.percentile, FishTable.bait_floor(float(_attract.get(fish_id, 1.0))))

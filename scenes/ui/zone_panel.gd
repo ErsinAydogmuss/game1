@@ -97,6 +97,14 @@ func refresh() -> void:
 	var note := UiKit.ink(tr("UI_ZONE_NOTE"), 24, UiKit.INK_SOFT)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	notes.add_child(note)
+	# Bölgenin etkili tekniği (yapı 5): o teknikle balık değerli ve iri (iskele koyunda yalnızca adı).
+	var best := str(z.get("effective", "float"))
+	var best_pm := int(z.get("effective_pm", 1000))
+	var best_text := tr("UI_ZONE_EFFECTIVE") % [tr("UI_TECH_" + best), multiplier_text(best_pm)] if best_pm > 1000 \
+			else tr("UI_ZONE_EFFECTIVE_PLAIN") % tr("UI_TECH_" + best)
+	var effective := UiKit.icon_text("tech_" + best, best_text, 44, 26)
+	effective.name = "Effective"
+	notes.add_child(effective)
 	if not (z["trap_ids"] as PackedStringArray).is_empty():
 		var trap := UiKit.icon_text("trap", tr("UI_ZONE_TRAP"), 44, 26)
 		trap.name = "Trap"

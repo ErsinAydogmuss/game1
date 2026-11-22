@@ -116,6 +116,8 @@ UI_ZONE_GO,Go,Git
 UI_ZONE_NEXT_BUOY,Next buoy,Sıradaki şamandıra
 UI_ZONE_NOTE,"Odds with your gear, at this time and weather.","Oranlar takımınla, şimdiki vakitte ve havada."
 UI_ZONE_VALUE,Fish worth ×%s · bigger,Balıklar ×%s değerli · daha iri
+UI_ZONE_EFFECTIVE,"Best here: %s · fish ×%s worth, bigger","Etkili teknik: %s · balık ×%s değerli, daha iri"
+UI_ZONE_EFFECTIVE_PLAIN,Best here: %s,Etkili teknik: %s
 UI_DECIMAL,.,","
 UI_ZONE_TRAP,You can set a crayfish trap here.,Burada kerevit tuzağı kurulur.
 UI_ZONE_NIGHT,At night,Gece gelir
@@ -396,11 +398,11 @@ UI_HINT_FLY_UNDER,A fish is under it! Wait for the ring.,Altında bir balık var
 UI_HINT_FLY_RISE,A ring! Strike now!,Halka! Hemen VUR!
 UI_DEDE_TECH_OPEN_fly,"Trout rise to flies, kid. Nana sells fly rods!","Alabalık sineğe çıkar evlat. Nine sinek kamışı satıyor!"
 UI_DEDE_TECH_FIRST_fly,"Cast on the current and let the fly drift. Strike at the ring!","Akıntıya at, sinek süzülsün. Halka çıkınca VUR!"
-UI_DEDE_SUGGEST_reeds,"Tench and carp feed on the bottom here, kid. Try ledgering!","Sazlıkta kadife ile sazan dipte beslenir evlat. Dip dene!"
-UI_DEDE_SUGGEST_lily_cove,"Pike lurk among the lilies, kid. Try spinning!","Nilüferlerde turna pusuda evlat. Spin dene!"
-UI_DEDE_SUGGEST_rocky_point,"Zander hunt by the rocks, kid. Spin a lure, stop and go!","Kayalıkta sudak avlanır evlat. Spin dene, dur-kalk yap!"
-UI_DEDE_SUGGEST_deep_water,"Catfish and sturgeon roam the deep, kid. Try ledgering!","Yayın ile mersin derinin dibinde gezer evlat. Dip dene!"
-UI_DEDE_SUGGEST_stream_mouth,"Try a fly here, kid. Trout rise in the current.","Burada sinek dene evlat. Alabalık akıntıda çıkar."
+UI_DEDE_SUGGEST_reeds,"Ledger in the reeds, kid: the fish come bigger and pricier!","Sazlıkta dip dene evlat: balık iri ve değerli gelir!"
+UI_DEDE_SUGGEST_lily_cove,"Spin in the lilies, kid: pike come bigger and pricier!","Nilüferlerde spin dene evlat: turna iri ve değerli gelir!"
+UI_DEDE_SUGGEST_rocky_point,"Spin by the rocks, kid: zander come bigger and pricier!","Kayalıkta spin dene evlat: sudak iri ve değerli gelir!"
+UI_DEDE_SUGGEST_deep_water,"Ledger the deep, kid: catfish come bigger and pricier!","Derinde dip dene evlat: yayın iri ve değerli gelir!"
+UI_DEDE_SUGGEST_stream_mouth,"Try a fly here, kid: trout come bigger and pricier!","Burada sinek dene evlat: alabalık iri ve değerli gelir!"
 UI_TECH_FLY_ONLY,Flies only at the stream mouth,Sinek yalnızca dere ağzında
 UI_NINE_FLY_ZONE,"Use it at the stream mouth, dear: the trout are there.","Dere ağzında kullan evladım, alabalık orada."
 UI_FLY_STILL,Still water,Durgun su

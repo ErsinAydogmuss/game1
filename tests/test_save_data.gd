@@ -608,6 +608,49 @@ func test_v8_save_reads_back() -> void:
 	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
 
 
+## v9 (yapı 5): kovadaki balık bölgenin etkili tekniğiyle tutulduysa "eff" (değeri bölgenin effective_pm katı). v8'in
+## kovası aynen gelir (eff yok: çarpan 1); eff yalnızca true ise kalır.
+func test_v8_bucket_moves_to_v9_without_effective() -> void:
+	var db := content()
+	var raw := { "version": 8, "seed": 1, "catches": 3, "bucket": [
+		{ "fish": "trout", "size_cm": 40, "stars": 2, "zone": "stream_mouth" },
+		{ "fish": "trout", "size_cm": 40, "stars": 2, "zone": "stream_mouth", "eff": true },
+		{ "fish": "perch", "size_cm": 30, "stars": 2, "eff": false },
+		{ "fish": "perch", "size_cm": 31, "stars": 2, "eff": "evet" },
+	] }
+	var s := SaveData.from_dict(raw)
+	assert_eq(int(s.to_dict()["version"]), SaveData.VERSION, "güncel sürüme göçtü")
+	assert_eq(s.bucket.size(), 4, "kova aynen")
+	assert_true(not s.bucket[0].has("eff"), "eski kayıtta etkili teknik yok")
+	assert_eq(Economy.entry_value(db, s.bucket[0]), Economy.value_in(db, "trout", 40, "stream_mouth"),
+			"eski balığın değeri aynen")
+	assert_true(bool(s.bucket[1].get("eff", false)), "eff true ise kalır")
+	assert_true(Economy.entry_value(db, s.bucket[1]) > Economy.entry_value(db, s.bucket[0]),
+			"etkili teknikle tutulan balık daha değerli")
+	assert_true(not s.bucket[2].has("eff") and not s.bucket[3].has("eff"), "false ya da bozuk eff düşer")
+	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
+
+
+## v9'un gerçek kaydı (tests/fixtures/save_v9.json): denge botu (seed 9009) 198 dakika oynadı; kovada etkili teknikle
+## tutulan ve tutulmayan balıklar. Örnek değiştirilmez.
+func test_v9_save_reads_back() -> void:
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v9.json"))
+	assert_eq(typeof(raw), TYPE_DICTIONARY, "v9 kaydı okunur")
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	assert_eq(int((raw as Dictionary)["version"]), 9, "örnek v9 kaydı")
+	var db := content()
+	var s := SaveData.from_dict(raw)
+	var eff := 0
+	for entry in s.bucket:
+		if entry.has("eff"):
+			eff += 1
+			var plain := Economy.value_in(db, str(entry["fish"]), int(entry["size_cm"]), str(entry.get("zone", "")))
+			assert_true(Economy.entry_value(db, entry) >= plain, "etkili tekniğin çarpanı değeri düşürmez")
+	assert_true(eff > 0 and eff < s.bucket.size(), "kovada etkili teknikle tutulan ve tutulmayan balık var")
+	assert_eq(SaveData.from_dict(s.to_dict()).to_dict(), s.to_dict(), "gidiş-dönüşte aynı")
+
+
 ## v6'nın alanları bozuksa ayıklanır: eksi kutu sıfır, saat en az -1, kedinin sayacı tutulan balıkta kalır,
 ## kıyafette yalnızca bilinen yuvalar ve yazı kimlikler, bilinmeyen balıkçı kız olur.
 func test_v6_bad_values_are_sanitized() -> void:
