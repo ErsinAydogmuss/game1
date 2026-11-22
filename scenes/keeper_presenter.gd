@@ -101,7 +101,7 @@ func update(delta: float, session: FishingSession, save: SaveData, cond: Diction
 	_due = due
 	# Bekçi'nin gecesinde X'te takım onun: belirmeden önce yakındaki bir balık yemi kapmasın.
 	session.reserve(due)
-	var keeper := session.summoned()
+	var keeper := _keeper_of(session)
 	if phase != "night":
 		_lost_tonight = false
 	if not due:
@@ -127,29 +127,39 @@ func update(delta: float, session: FishingSession, save: SaveData, cond: Diction
 		elif not _told_wait and Secret.keeper_night(save) and phase != "night":
 			_told_wait = true
 			speak.emit("UI_DEDE_KEEPER_WAIT")
-	keeper = session.summoned()
+	keeper = _keeper_of(session)
 	_set_present(_fighting or (keeper != null and keeper.mode != FishShadow.Mode.FLEE))
+
+
+## Göldeki çağrılan gölge Bekçi'yse o (bölge canavarları da çağrılır: BossPresenter'ın; yapı 5).
+static func _keeper_of(session: FishingSession) -> FishShadow:
+	var s := session.summoned()
+	return s if s != null and s.fish_id == Secret.KEEPER_ID else null
 
 
 ## Oturumun olayı (main _on_event'ten).
 func on_event(e: Dictionary, session: FishingSession) -> void:
 	match str(e["type"]):
 		"hook":
-			_fighting = session.hooked != null and session.hooked.summoned
+			_fighting = session.hooked != null and session.hooked.summoned \
+					and session.hooked.fish_id == Secret.KEEPER_ID
 		"dive_warn":
-			# Uyarı: Bekçi'nin çevresinde turkuaz halka, pes gıcırtı, titreşim (ipucu: BIRAK).
-			ripples.spawn(session.fight_point(), 1.4, 1.0, TURQUOISE, 0.12)
-			Sounds.play("warn", 0.0, 0.7)
-			Sounds.haptic(45)
-			camera.shake(0.05)
+			# Uyarı: Bekçi'nin çevresinde turkuaz halka, pes gıcırtı, titreşim (ipucu: BIRAK). Canavarınki BossPresenter'da.
+			if _fighting:
+				ripples.spawn(session.fight_point(), 1.4, 1.0, TURQUOISE, 0.12)
+				Sounds.play("warn", 0.0, 0.7)
+				Sounds.haptic(45)
+				camera.shake(0.05)
 		"dive":
-			_queue_rings(session.fight_point(), DIVE_RINGS)
-			Sounds.play("dive")
-			Sounds.haptic(120)
-			camera.shake(0.16)
+			if _fighting:
+				_queue_rings(session.fight_point(), DIVE_RINGS)
+				Sounds.play("dive")
+				Sounds.haptic(120)
+				camera.shake(0.16)
 		"dive_end":
-			ripples.spawn(session.fight_point(), 1.0, 0.8, Color(TURQUOISE, 0.6), 0.1)
-			Sounds.haptic(15)
+			if _fighting:
+				ripples.spawn(session.fight_point(), 1.0, 0.8, Color(TURQUOISE, 0.6), 0.1)
+				Sounds.haptic(15)
 		"lost":
 			if _fighting:
 				_fighting = false

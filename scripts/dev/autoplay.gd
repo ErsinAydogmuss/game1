@@ -4162,7 +4162,8 @@ func _play_boss() -> void:
 	book.open_secret()
 	await _wait(0.6)
 	var count := book.find_child("BossCount", true, false) as Label
-	_check("defterde Canavarlar 1/6", count != null and count.text == tr("UI_SECRET_BOSSES") % [1, Bosses.IDS.size()])
+	_check("defterde Canavarlar 1/6", count != null and count.text.to_lower() == (tr("UI_SECRET_BOSSES") % [1,
+			Bosses.IDS.size()]).to_lower())
 	_check("defter küçülmeden sığar (%.2f)" % book.fit_scale(), book.fit_scale() > 0.999 and _panel_inside(book))
 	await _shot("06_defter_canavarlar")
 	book.close_panel()

@@ -744,6 +744,7 @@ UI_DEDE_KEEPER_AGAIN,"The Keeper came to you again, kid!",Bekçi yine sana gör�
 UI_DEDE_KEEPER_GONE,Morning's here. The Keeper went back to the deep.,"Sabah oldu, Bekçi derinlere döndü."
 UI_HINT_KEEPER_DIVE,LET GO! The Keeper is diving!,BIRAK! Bekçi dalıyor!
 UI_KEEPER_RISE,The Lake Keeper is here!,Gölün Bekçisi geldi!
+UI_BOSS_BADGE,Zone boss!,Bölge canavarı!
 UI_BOSS_RISE,Zone boss: %s!,Bölge canavarı: %s!
 UI_BOSS_DONE,%s beaten! +%d coins · Bosses %d/%d,%s yenildi! +%d para · Canavarlar %d/%d
 UI_HINT_BOSS_DIVE,LET GO! The boss is diving!,BIRAK! Canavar dalıyor!

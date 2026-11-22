@@ -1463,8 +1463,7 @@ func _on_catch() -> void:
 		save.coins += reward
 		save.stats["boss_coins"] = int(save.stats.get("boss_coins", 0)) + reward
 		hud.toast_later(tr("UI_BOSS_DONE") % [tr("FISH_" + fish_id), reward, Bosses.caught_count(db, save, spot_id),
-				Bosses.IDS.size()], UiKit.rarity_color(db, rarity), "coin", "boss")
-		Sounds.play("coins")
+				Bosses.IDS.size()], UiKit.rarity_color(db, rarity), "coins", "coin", "boss")
 		GameState.save_game()
 		_refresh_status()
 	if story and fish_id == Secret.KEEPER_ID:
@@ -3025,7 +3024,7 @@ func _open_photo(from_card: bool) -> void:
 		card.visible = false
 		var fish_id := str(_card_info.get("fish", ""))
 		var def := GameState.db.fish_by_id(fish_id)
-		if not def.is_empty() and not bool(def.get("story", false)):
+		if not def.is_empty() and fish_id != Secret.KEEPER_ID:
 			catch_fx.show_catch(def, int(_card_info.get("size_cm", 30)), tr("FISH_" + fish_id), Color.WHITE, _show_point,
 					false)
 			catch_fx.held = true

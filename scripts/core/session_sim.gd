@@ -923,6 +923,9 @@ func _tend_boss() -> bool:
 	var id := _boss_target()
 	if id.is_empty() or not _boss_ready(id):
 		return false
+	# Altın isteğin vakti gelmişse önce o (_choose_zone da onu seçer: iki bölge arasında gidip gelinmesin).
+	if _golden_want().has("zone"):
+		return false
 	var def := db.fish_by_id(id)
 	var lair_id := str(def["boss"])
 	var t := Bosses.technique_of(db, spot_id, id)

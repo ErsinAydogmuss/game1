@@ -15,6 +15,9 @@ signal speak(key: String, args: Array)
 
 ## Takım suya düştükten (takım bekliyor) bu kadar sn sonra canavar belirir.
 const RISE_DELAY := 1.4
+## Yer bulunamazsa (dar dere, kıyıya yakın atış) bu kadar sn daha denenir; sonra takım bırakılır, canavar sıradaki
+## atışta zarsız gelir (takım bütün atış boyunca ayrılı kalmasın).
+const RISE_GIVE_UP := 3.0
 ## Kaçan canavar bu kadar sn sonra (sıradaki atışta zarsız) yine gelir.
 const RETURN_TIME := Bosses.RETURN_S
 ## Belirişin ve dalışın halkaları: (gecikme sn, yarıçap m, ömür sn).
@@ -99,8 +102,12 @@ func update(delta: float, session: FishingSession, save: SaveData, keeper_due: b
 			else summoned.fish_id
 	if session.state != FishingSession.State.WAITING:
 		_waiting = 0.0
-		if session.state == FishingSession.State.IDLE:
+		if _rising:
+			# Zar tuttu ama canavar belirmeden atış bitti (önceden yaklaşan bir balık ısırdı, spinde peşine düştü,
+			# geri sarıldı): zar kaybolmaz, canavar sıradaki atışta zarsız gelir.
 			_rising = false
+			_back = boss
+			_return_wait = 0.0
 		return
 	if not ready or not _present.is_empty():
 		_rising = false
@@ -120,6 +127,12 @@ func update(delta: float, session: FishingSession, save: SaveData, keeper_due: b
 	if _waiting >= RISE_DELAY and _rise(session, save, boss):
 		_rising = false
 		_waiting = 0.0
+	elif _waiting >= RISE_DELAY + RISE_GIVE_UP:
+		_rising = false
+		_waiting = 0.0
+		_back = boss
+		_return_wait = 0.0
+		session.reserve(false)
 
 
 ## Oturumun olayı (main _on_event'ten).

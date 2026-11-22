@@ -96,7 +96,10 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 	badges.alignment = BoxContainer.ALIGNMENT_CENTER
 	badges.add_theme_constant_override("separation", 14)
 	badges.add_child(UiKit.rarity_badge(db, rarity, 40))
-	if bool(outcome.get("new_species", false)):
+	if Bosses.IDS.has(fish_id):
+		# Bölge canavarı defterin türlerinden değil (yapı 5): "Yeni tür" yerine "Bölge canavarı".
+		badges.add_child(_pill(tr("UI_BOSS_BADGE"), UiKit.SUCCESS))
+	elif bool(outcome.get("new_species", false)):
 		badges.add_child(_pill(tr("UI_NEW_SPECIES"), UiKit.SUCCESS))
 	elif bool(outcome.get("new_record", false)):
 		badges.add_child(_pill(tr("UI_NEW_RECORD"), UiKit.SECONDARY))
@@ -164,8 +167,8 @@ func show_catch(db: ContentDB, info: Dictionary, outcome: Dictionary) -> void:
 				release_requested.emit(fish_id)
 				close_card())
 		buttons.add_child(release_button)
-	# Fotoğraf: Gölün Bekçisi elde gösterilmez (5 m), onun kartında yok.
-	if not bool(db.fish_by_id(fish_id).get("story", false)):
+	# Fotoğraf: Gölün Bekçisi elde gösterilmez (5 m), onun kartında yok (bölge canavarları elde: var).
+	if fish_id != Secret.KEEPER_ID:
 		var photo := Button.new()
 		photo.name = "Photo"
 		photo.custom_minimum_size = PHOTO_SIZE
