@@ -118,9 +118,19 @@ How to play: tap the water in front of a fish shadow to cast, wait while the flo
 then hold to reel (release when the line turns red). The first fish is scripted, so the reviewer can learn it in
 under a minute. Settings (gear icon, top right) has a "How to play" guide.
 
-Ads: the game shows Google AdMob ads. After the player catches 3 fish, an "About ads" card explains the ads once;
-after the player taps "Got it", Google's UMP consent flow runs (in the EEA a consent form; on iOS the App Tracking
-Transparency prompt, using NSUserTrackingUsageDescription). Rewarded ads are always optional: "Watch an ad: double
+App Tracking Transparency: the ATT prompt is requested on purpose only after a short warm-up, before any ad
+request. The Google Mobile Ads SDK is not started and no ad is requested before the player answers it. To see it
+(about 2 minutes after a fresh install):
+1. "Choose your angler": tap Choose, then tap Skip on the intro story.
+2. Catch 3 fish: tap the water near a fish shadow, tap "Strike!" when the float sinks, hold to reel, then tap
+   "Keep". The first fish is scripted.
+3. After the 3rd fish an "About ads" card appears: tap "Got it".
+4. Google's UMP message about tracking appears: tap "Continue".
+5. The iOS App Tracking Transparency prompt appears (NSUserTrackingUsageDescription). Ads start only after it.
+In the EEA a Google UMP consent form is shown instead of / before step 4. On later launches the prompt is not shown
+again (the system remembers the answer).
+
+Ads: the game shows Google AdMob ads. Rewarded ads are always optional: "Watch an ad: double
 it" after selling fish at Nana's shop, in the aquarium panel and after Dede's request is done, and "Watch an ad:
 bring it back" when a rare fish escapes. A short interstitial ad may appear at most once every 8 minutes, never in
 the first 20 minutes, only during a screen fade when the player travels with the map or drinks tea. Ad content is
@@ -129,16 +139,24 @@ limited to PG. Privacy: Settings → Privacy (privacy policy, ad choices, licens
 The game does not collect personal data itself; game progress and photos taken in photo mode stay on the device
 (photos are visible in the Files app).
 
-A screen recording showing the first catch, the ads card, the ATT prompt and the rewarded ad offers is attached.
+A screen recording from a physical iPhone (fresh install, tracking permission reset) showing these steps, the
+ATT prompt and the flow after it is attached.
 ```
 
 ### Ekran kaydı (Ersin çeker)
 
-iPhone'da **Denetim Merkezi → Ekran Kaydı** (yoksa Ayarlar → Denetim Merkezi'nden ekle). TestFlight'taki sürümle,
-**Kaydı sıfırla**dan sonra 2–3 dakika:
+Apple 1.0.0 (4)'ü bu yüzden geri çevirdi (22 Kasım 2026, 2.1 Information Needed: iPad'de ATT penceresini
+bulamadılar; fiziksel cihazda, temiz kurulumdan ekran kaydı istediler). Kaydın başında izin sıfırlanmış olmalı:
+
+- Oyunu telefondan **sil**, TestFlight'tan yeniden kur (temiz kurulum: oyun ATT'yi yeniden sorar).
+- **Ayarlar → Gizlilik ve Güvenlik → İzleme → "Uygulamaların İzleme İsteğinde Bulunmasına İzin Ver"** açık olsun
+  (kapalıysa pencere hiç çıkmaz).
+
+iPhone'da **Denetim Merkezi → Ekran Kaydı** (yoksa Ayarlar → Denetim Merkezi'nden ekle), oyunu aç, 2–3 dakika:
 
 1. Açılış: "Balıkçını seç", film (ATLA), ilk balık.
-2. 3 balık tut: "Reklamlar hakkında" kartı → ANLADIM → izleme izni penceresi.
+2. 3 balık tut: "Reklamlar hakkında" kartı → ANLADIM → Google'ın izleme açıklaması (Devam) → iOS'un izleme izni
+   penceresi (izin ver ya da verme; ikisi de olur).
 3. Nine'de sat → **Reklam izle: 2 katı** → reklam (deneme reklamı ya da gerçek, dokunmadan) → para.
 4. Ayarlar → GİZLİLİK → kart, Lisanslar.
 
