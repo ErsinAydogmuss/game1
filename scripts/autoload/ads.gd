@@ -8,8 +8,9 @@ extends Node
 ## sağlayıcı: ekranda kısa bir "deneme reklamı" kartı (fake_mode: "reward" izlenince ödül, "fail" yarıda kalır,
 ## "none" reklam yok). Botta varsayılan "none": eski senaryolarda teklif görünmez; ads senaryosu açar.
 ##
-## Akış: main uygun anda (ısınmadan sonra, olta boşken, panel ve film yokken) önce "Reklamlar hakkında" kartını (bir
-## kez; KVKK aydınlatması) açar, sonra start(): onay (UMP; AB'de form, iPhone'da izleme izninin açıklaması ve ATT),
+## Akış: main ilk sakin anda (olta boşken, panel, seçim ekranı ve film yokken: yeni oyunda açılış filminden hemen
+## sonra) önce "Reklamlar hakkında" kartını (bir kez; KVKK aydınlatması) açar, sonra start(): onay (UMP; AB'de form,
+## iPhone'da izleme izninin açıklaması ve ATT),
 ## SDK'nın açılışı, ödüllü ve geçiş reklamının önceden yüklenmesi. Yüklenemeyen reklam artan aralıklarla yeniden
 ## denenir. Reklam açıkken oyun durur (SceneTree.paused) ve ses kısılır.
 
@@ -98,11 +99,13 @@ func available() -> bool:
 	return _provider != null
 
 
-## "Reklamlar hakkında" kartı gösterilmeli mi (ısınmadan sonra, bir kez).
+## "Reklamlar hakkında" kartı gösterilmeli mi (bir kez, oyunun ilk sakin anında: yeni oyunda açılış filminden
+## hemen sonra). Isınma (AdRules.WARMUP_CATCHES) yalnızca teklifleri ve geçiş reklamını bekletir, kartı değil:
+## Apple'ın incelemesi (22 Kasım 2026, 2.1, yapı 4) izleme izninin (ATT) penceresini 3. balıktan sonra bulamadı;
+## Kazı'nın 0.14.1'deki çözümü gibi pencere oyunun başında çıkar.
 func needs_notice() -> bool:
 	var st := _state()
-	return available() and not st.is_empty() and not AdRules.notice_seen(st) \
-			and AdRules.warmed_up(GameState.save.catches)
+	return available() and not st.is_empty() and not AdRules.notice_seen(st)
 
 
 func accept_notice() -> void:

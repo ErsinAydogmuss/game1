@@ -118,17 +118,16 @@ How to play: tap the water in front of a fish shadow to cast, wait while the flo
 then hold to reel (release when the line turns red). The first fish is scripted, so the reviewer can learn it in
 under a minute. Settings (gear icon, top right) has a "How to play" guide.
 
-App Tracking Transparency: the ATT prompt is requested on purpose only after a short warm-up, before any ad
-request. The Google Mobile Ads SDK is not started and no ad is requested before the player answers it. To see it
-(about 2 minutes after a fresh install):
-1. "Choose your angler": tap Choose, then tap Skip on the intro story.
-2. Catch 3 fish: tap the water near a fish shadow, tap "Strike!" when the float sinks, hold to reel, then tap
-   "Keep". The first fish is scripted.
-3. After the 3rd fish an "About ads" card appears: tap "Got it".
-4. Google's UMP message about tracking appears: tap "Continue".
+App Tracking Transparency (changed in this build): the ATT prompt now appears at the start of the game, before any
+ad request. The Google Mobile Ads SDK is not started and no ad is requested before the player answers it. After a
+fresh install (about 20 seconds):
+1. "Choose your angler": tap Choose.
+2. The intro story starts: tap Skip (top right), or let it play.
+3. An "About ads" card appears right away: tap "Got it".
+4. Google's message about tracking appears: tap "Continue".
 5. The iOS App Tracking Transparency prompt appears (NSUserTrackingUsageDescription). Ads start only after it.
-In the EEA a Google UMP consent form is shown instead of / before step 4. On later launches the prompt is not shown
-again (the system remembers the answer).
+In the EEA a Google UMP consent form may be shown around step 4. The prompt is not shown again on later launches
+(the system remembers the answer).
 
 Ads: the game shows Google AdMob ads. Rewarded ads are always optional: "Watch an ad: double
 it" after selling fish at Nana's shop, in the aquarium panel and after Dede's request is done, and "Watch an ad:
@@ -143,10 +142,11 @@ A screen recording from a physical iPhone (fresh install, tracking permission re
 ATT prompt and the flow after it is attached.
 ```
 
-### Ekran kaydı (Ersin çeker)
+### Ekran kaydı
 
 Apple 1.0.0 (4)'ü bu yüzden geri çevirdi (22 Kasım 2026, 2.1 Information Needed: iPad'de ATT penceresini
-bulamadılar; fiziksel cihazda, temiz kurulumdan ekran kaydı istediler). Kaydın başında izin sıfırlanmış olmalı:
+bulamadılar; fiziksel cihazda, temiz kurulumdan ekran kaydı istediler). Yapı 5'ten beri kart ve izin penceresi oyunun
+başında (açılış filminden hemen sonra; Kazı 0.14.1 gibi). Kaydın başında izin sıfırlanmış olmalı:
 
 - Oyunu telefondan **sil**, TestFlight'tan yeniden kur (temiz kurulum: oyun ATT'yi yeniden sorar).
 - **Ayarlar → Gizlilik ve Güvenlik → İzleme → "Uygulamaların İzleme İsteğinde Bulunmasına İzin Ver"** açık olsun
@@ -154,10 +154,10 @@ bulamadılar; fiziksel cihazda, temiz kurulumdan ekran kaydı istediler). Kaydı
 
 iPhone'da **Denetim Merkezi → Ekran Kaydı** (yoksa Ayarlar → Denetim Merkezi'nden ekle), oyunu aç, 2–3 dakika:
 
-1. Açılış: "Balıkçını seç", film (ATLA), ilk balık.
-2. 3 balık tut: "Reklamlar hakkında" kartı → ANLADIM → Google'ın izleme açıklaması (Devam) → iOS'un izleme izni
-   penceresi (izin ver ya da verme; ikisi de olur).
-3. Nine'de sat → **Reklam izle: 2 katı** → reklam (deneme reklamı ya da gerçek, dokunmadan) → para.
+1. Açılış: "Balıkçını seç", film (ATLA).
+2. Hemen "Reklamlar hakkında" kartı → ANLADIM → Google'ın izleme açıklaması (Devam) → iOS'un izleme izni penceresi
+   (izin ver ya da verme; ikisi de olur).
+3. 3 balık tut (ilki senaryolu), Nine'de sat → **Reklam izle: 2 katı** → reklam (deneme reklamı ya da gerçek, dokunmadan) → para.
 4. Ayarlar → GİZLİLİK → kart, Lisanslar.
 
 Kaydı App Review Information'daki **Attachment** alanına yükle (ya da inceleyici isterse Resolution Center'dan gönder).

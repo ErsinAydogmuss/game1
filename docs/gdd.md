@@ -1326,9 +1326,11 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
   - **Geçiş reklamı** seyrek: ilk 20 dakikada yok, en çok 8 dakikada bir (ödüllü reklamdan sonra da 8 dakika), yalnızca
     oyuncunun başlattığı geçişte ekran karanlıkken: haritayla başka bölgeye, sandalla şamandıraya geçerken ve Dede'yle
     çayda.
-  - **Isınma:** ilk 3 balıktan önce hiçbir reklam ve teklif yok. 3. balıktan sonra, olta boşken bir kez "Reklamlar
-    hakkında" kartı (KVKK aydınlatması: neden reklam, kim sunar, hangi bilgiler gider, seçimler nerede); kapanınca onay
-    (AB'de Google'ın formu, iPhone'da izleme izni) ve reklamlar başlar.
+  - **Isınma:** ilk 3 balıktan önce hiçbir teklif ve geçiş reklamı yok.
+  - **"Reklamlar hakkında" kartı:** oyunun ilk sakin anında bir kez (yeni oyunda balıkçı seçimi ve açılış filminden
+    hemen sonra; KVKK aydınlatması: neden reklam, kim sunar, hangi bilgiler gider, seçimler nerede); kapanınca onay
+    (AB'de Google'ın formu, iPhone'da izleme izni) ve reklamlar başlar. Önceden 3. balıktan sonraydı: Apple'ın
+    incelemesi (22 Kasım 2026, 2.1, yapı 4) izleme izninin (ATT) penceresini bulamadı; Kazı'nın 0.14.1'i gibi başa alındı.
   - **Ayarlar:** Dil satırında GİZLİLİK: aynı kart bilgi olarak, gizlilik politikası
     (`ersinaydogmuss.github.io/olta-gizlilik`), reklam seçimleri (Google'ın formu, gerektiğinde) ve Lisanslar
     (Godot, yazı tipleri, AdMob eklentisi, Google'ın SDK'ları).

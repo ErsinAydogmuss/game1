@@ -7085,14 +7085,12 @@ func _play_ads() -> void:
 	var offer: AdOfferPanel = main.get("ad_offer")
 	var shop: ShopPanel = main.get("shop_panel")
 	Ads.use_fake("reward")
-	await _wait(1.5)
-	# 1) Isınmadan önce (2 balık) kart yok, reklamlar başlamaz.
-	_check("ısınmadan önce (2 balık) bildirim yok, reklamlar başlamaz", not notice.visible and not Ads.started)
-	# 2) Üçüncü balık: olta boşken "Reklamlar hakkında" kartı; ANLADIM → reklamlar başlar.
-	save.catches = AdRules.WARMUP_CATCHES
+	# 1) "Reklamlar hakkında" kartı oyunun ilk sakin anında, ısınmadan önce de (Apple 22 Kasım 2026, 2.1: ATT
+	# penceresini 3. balıktan sonra bulamadı; Kazı 0.14.1 gibi oyunun başında). Kart açılmadan reklamlar başlamaz.
 	var shown := await _wait_until(func() -> bool: return notice.visible, 3.0)
 	await _wait(0.4)
-	_check("ısınmadan sonra \"Reklamlar hakkında\" kartı (ilk kez)", shown and not notice.info
+	_check("\"Reklamlar hakkında\" kartı oyunun başında, ısınmadan önce (%d balık; ilk kez, reklamlar başlamadı)"
+			% save.catches, shown and not notice.info and save.catches < AdRules.WARMUP_CATCHES and not Ads.started
 			and tr("UI_ADS_NOTICE_BODY") in _texts_in(notice))
 	_check("bildirim kartı küçülmeden sığar (ölçek %.3f)" % notice.fit_scale(), notice.fit_scale() > 0.999
 			and _panel_inside(notice))
@@ -7106,6 +7104,10 @@ func _play_ads() -> void:
 			and AdRules.notice_seen(AdRules.state(save.settings)))
 	await _wait(1.0)
 	_check("bildirim bir kez (yeniden açılmaz)", not notice.visible)
+	# 2) Teklifler ve geçiş reklamı yine ısınmayı bekler (AdRules.WARMUP_CATCHES balık).
+	_check("ısınmadan önce (%d balık) teklif yok" % save.catches, Ads.rewarded_ready()
+			and not Ads.offer_ok(AdRules.SELL) and not Ads.interstitial_due())
+	save.catches = AdRules.WARMUP_CATCHES
 	# 3) Satış: kova Nine'de satılır → Kova sekmesinde "Reklam izle: 2 katı"; reklam açıkken oyun durur ve ses kısılır.
 	for c: Array in [["carp", 60], ["perch", 34], ["tench", 45], ["bream", 50]]:
 		Bucket.add(db, save, str(c[0]), int(c[1]), 2)

@@ -3764,8 +3764,9 @@ func _load_faces() -> void:
 
 # --- Reklamlar (A2) ---------------------------------------------------------------
 
-## Reklamlar (Ersin'in kararı 4 Kasım 2026; kurallar AdRules, yükleme ve gösterme Ads): uygun bir anda (ısınmadan
-## sonra, olta boşken, kart, film ve kararma yokken) bir kez "Reklamlar hakkında" kartı, sonra Ads.start (onay, SDK,
+## Reklamlar (Ersin'in kararı 4 Kasım 2026; kurallar AdRules, yükleme ve gösterme Ads): ilk sakin anda (olta boşken,
+## kart, seçim ekranı, film ve kararma yokken: yeni oyunda açılış filminden hemen sonra; Apple ATT'yi oyunun başında
+## arıyor) bir kez "Reklamlar hakkında" kartı, sonra Ads.start (onay, SDK,
 ## yükleme; kartı önceki oturumda görene hemen); kaçan balığın ve Dede'nin isteğinin teklif kartı. Satışın ve akvaryum
 ## kutusunun teklifi kendi panellerinde.
 func _tend_ads(delta: float) -> void:
@@ -3786,7 +3787,7 @@ func _tend_ads(delta: float) -> void:
 		if not Ads.available():
 			return
 		if not AdRules.notice_seen(AdRules.state(GameState.save.settings)):
-			# İlk kez: ısınmadan sonra (AdRules.WARMUP_CATCHES balık) kart; kapanınca reklamlar başlar.
+			# İlk kez: oyunun ilk sakin anında kart (ısınma beklenmez); kapanınca reklamlar başlar.
 			if Ads.needs_notice() and not _ad_notice_shown:
 				_ad_notice_shown = true
 				ad_notice.open_notice()

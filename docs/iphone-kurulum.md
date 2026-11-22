@@ -305,8 +305,8 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     - **Gölün Bekçisi:** göle çıkınca bildirimde kuşbakışı resmi, kartta ve defterde Bekçi'nin resmi görünüyor mu?
     - **Jenerik:** arkada bitiş resmi var mı, yazılar okunuyor mu? Genç Nine ve Dede ile zıplayan Bekçi de görünüyor mu?
 
-46. **Reklamlar: "Reklamlar hakkında".** Yeni oyunda (**Kaydı sıfırla**) 3 balık tuttuktan sonra, olta boşken bir kez
-    "Reklamlar hakkında" kartı çıkar. **ANLADIM**'dan sonra iPhone'un izleme izni sorulur (AdMob'da IDFA açıklama mesajı
+46. **Reklamlar: "Reklamlar hakkında".** Yeni oyunda (**Kaydı sıfırla**) balıkçını seçip açılış filmini izleyince (ya da
+    ATLA'ya basınca) hemen, bir kez "Reklamlar hakkında" kartı çıkar (yapı 5'ten beri; önce 3. balıktan sonraydı). **ANLADIM**'dan sonra iPhone'un izleme izni sorulur (AdMob'da IDFA açıklama mesajı
     yayındaysa önce Google'ın açıklaması). Seçim fark etmez: reklamlar yine gelir, yalnızca kişiselleştirilmez. Kart bir
     daha çıkmamalı.
 47. **Reklamlar: dört teklif.** Debug derlemede Google'ın **deneme reklamları** ("Test Ad") oynar; reklamı sonuna kadar
