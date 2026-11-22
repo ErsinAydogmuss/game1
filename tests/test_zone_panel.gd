@@ -107,3 +107,26 @@ func test_multiplier_text() -> void:
 	var lily := ZonePanel.multiplier_text(1150)
 	assert_true(lily.begins_with("1") and lily.ends_with("15") and lily.length() == 4, "1,15 yazılır: " + lily)
 	assert_eq(ZonePanel.multiplier_text(1700).length(), 3, "sondaki sıfır yazılmaz")
+
+
+## Bölgenin canavarı satırı (yapı 5): eksik takım adıyla (ikiden fazlası sayıyla), takım hazır (tekniğin adıyla),
+## yenildi.
+func test_boss_text() -> void:
+	var db := content()
+	var s := SaveData.create_new(5)
+	s.xp = db.rank_xp[6]
+	var name := TranslationServer.translate("FISH_pier_king")
+	var start := ZonePanel.boss_text(db, s, SPOT, "dock_cove")
+	assert_eq(start, TranslationServer.translate("UI_ZONE_BOSS_NEED_N") % [name, 5], "başta beş takım eksik: " + start)
+	for id: String in ["rod_float_carbon", "bobber_bright", "hook_large", "reel_strong"]:
+		s.owned.append(id)
+		Economy.equip(db, s, id, "float")
+	assert_eq(ZonePanel.boss_text(db, s, SPOT, "dock_cove"), TranslationServer.translate("UI_ZONE_BOSS_NEED") % [name,
+			TranslationServer.translate("GEAR_line_braid")], "biri eksik: adıyla")
+	s.owned.append("line_braid_pro")
+	Economy.equip(db, s, "line_braid_pro", "float")
+	assert_eq(ZonePanel.boss_text(db, s, SPOT, "dock_cove"), TranslationServer.translate("UI_ZONE_BOSS_READY") % [name,
+			TranslationServer.translate("UI_TECH_float")], "daha iyi misinayla takım hazır")
+	Records.add(s.records, "pier_king", 112, 5, 0)
+	assert_eq(ZonePanel.boss_text(db, s, SPOT, "dock_cove"), TranslationServer.translate("UI_ZONE_BOSS_DONE") % name,
+			"yenildi")

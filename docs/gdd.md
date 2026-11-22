@@ -1264,6 +1264,46 @@ Ekran kalabalık olmasın diye her şeyin bir yeri var:
 - **Fotoğraflar uygulamasına doğrudan kayıt** (yerel eklenti).
 - **Çevrimiçi:** arkadaşın akvaryumunu gezme, hediye, köyün ortak hedefi. Açık sohbet ve sık yarışma yok.
 
+### 10.9 Bölge canavarları (yapı 5)
+
+Testçi: "Her bölgenin bölge sonu canavarı olsun; yalnızca o bölgenin etkili oltasıyla ve o bölgenin takımı son
+seviyeye kadar kasılınca tutulsun; oyun yine Bekçi'yle bitsin." Ersin'in seçimleri: "6 canavar, final için şart",
+"Etkili teknik avantajlı" (etkili teknik §10.4'te).
+
+| Bölge | Canavar | Teknik | İstediği takım (ya da aynı yuvada daha iyisi) | Takımın rütbesi | Ödül |
+|---|---|---|---|---|---|
+| İskele koyu | İskele Reisi (altın pullu dev sazan, 110–120 cm) | Şamandıra | karbon kamış, parlak şamandıra, büyük iğne, güçlü makara, örgü misina | 6 | 700 |
+| Nilüferli koy | Nilüfer Sultanı (altın benekli dev turna, 140–155 cm) | Spin | ağır spin kamışı, maket balık, usta makarası, örgü misina | 8 | 1.000 |
+| Sazlık | Saz Ağası (bronz gözlü dev kadife, 85–95 cm) | Dip | usta dip kamışı, yem sepeti, usta makarası, usta florokarbon | 10 | 1.500 |
+| Kayalık burun | Kaya Dişi (dev sudak, 115–125 cm) | Spin | ağır spin kamışı, altın kaşık, usta makarası, usta florokarbon | 10 | 1.500 |
+| Dere ağzı | Dere Hayaleti (soluk dev alabalık, 95–105 cm) | Sinek | usta sinek kamışı, streamer, usta makarası, altın örgü | 12 | 2.500 |
+| Derin orta | Derin Bey (dev yayın, 290–320 cm) | Dip | usta dip kamışı, yem sepeti, altın makara, altın örgü | 14 | 4.000 |
+
+- **Kurallar** (`Bosses`, saf): canavar `fish.json`'da `boss` (bölge) ve `reward` taşır; `story` (zarla gelmez, oyun
+  çağırır) ve `release_only` (tutulunca göle bırakılır, satılmaz; Efsanevi). Çıkar: canavar tutulmadı (kayıttan
+  türer: defter), bölge açık, elindeki teknik bölgenin etkili tekniği, istediği takımın hepsi kuşanılı (aynı yuvada
+  daha pahalısı da sayılır: `ReelModel.missing_gear`) ve atışın zarı tutar (%35; kaydın seed'inden ve atış
+  sayısından). Takım suya düşüp 1,4 sn bekleyince canavar takımın çevresinde belirir (`Bosses.rise_point`); o
+  belirene kadar takım ona ayrılır, belirince yalnızca o gelir. Kaçarsa 20 sn sonra sıradaki atışta zarsız yine
+  gelir. Gölün Bekçisi'nin gecesinde X'te canavar çıkmaz.
+- **Çekişme:** bölgenin balığının devi; iki dalış (Derin Bey üç). Dalıştan önce uyarı (altın halka, "warn", ipucu
+  "BIRAK! Canavar dalıyor!"), dalışta basılı tutmak misinayı koparır. İstediği takımla kusursuz oyuncu ve 0,4 sn
+  tepkili oyuncu tutar (20–60 sn), 0,7 sn tepkili çoğunlukla; hep basılı tutan tutamaz; ilk kamışla kimse tutamaz
+  (`test_bosses`). Ölçüm (`reel_report.gd -- --fish=<canavar>`, 200 deneme): kusursuz 12–27 sn, 0,4 sn tepkiyle
+  %100 ve 23–41 sn, 0,7 sn tepkiyle %100 ve 25–45 sn, hep basılı %0 (misina dalışta kopar); en uzunu Derin Bey (üç
+  dalış).
+- **Sunum** (`BossPresenter`): belirişte altın halkalar, "sting", titreşim, bildirim "Bölge canavarı: İskele
+  Reisi!", Dede'nin sözü (ilk kez, yine, geri geldi). Tutulunca elde gösterilir, Efsanevi kart ve "Göle bırak", ödül
+  bildirimi "İskele Reisi yenildi! +700 para · Canavarlar 1/6". Bölge kartında satır: eksik takım (adıyla ya da
+  sayısıyla), takım hazır, yenildi. Dede bölgede etkili teknikle tutana canavarı bir kez anlatır. Defterin Gölün Sırrı
+  görünüşünde "Canavarlar 2/6" ve altı resim (tutulmamış siluet); harita tamam ama canavar eksikse not.
+- **Final:** `Secret.final_ready` altı mektup, dört parça ve altın hamurun yanında altı canavarı da ister. Dördüncü
+  parçada Dede "Harita tamam! Ama önce her bölgenin canavarını yen."
+- **Denge botu** sıradaki canavarın (takımının rütbesi gelmiş en düşük) takımına biriktirir, takımı tamamlanınca o
+  bölgede etkili teknikle atar. Ölçüm (`economy_report.gd -- --hours=10 --seeds=3`): İskele Reisi 115–128. dakika,
+  Nilüfer Sultanı 146–169, Saz Ağası 174–198, Kaya Dişi 182–207, Dere Hayaleti 263–281, Derin Bey 295–313; final hazır
+  295–313 (önce 151–188), Bekçi 297–331 (önce 213–260). Bot insandan ~2 kat hızlı: insanda final ~10 saat.
+
 ## 11. Gelir
 
 Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`](../CLAUDE.md).

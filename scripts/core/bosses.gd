@@ -2,7 +2,7 @@ class_name Bosses
 extends RefCounted
 ## Bölge canavarları (yapı 5; testçi: "her bölgenin bölge sonu canavarı olsun; yalnızca o bölgenin etkili oltasıyla ve
 ## takım son seviyeye kadar kasılınca tutulsun; oyun yine Bekçi'yle bitsin"; Ersin'in seçimi "6 canavar, final için
-## şart"; docs/gdd.md §10.7). Saf: kayıt ve içerik parametre.
+## şart"; docs/gdd.md §10.9). Saf: kayıt ve içerik parametre.
 ##
 ## Her bölgenin bir canavarı var (fish.json boss: bölgenin kimliği; story: zarla gelmez, oyun çağırır; release_only:
 ## tutulunca göle bırakılır, satılmaz). Canavar şu hâlde çıkar (due):
@@ -26,8 +26,9 @@ const PERCENTILE := 925000
 const RETURN_S := 20.0
 ## Belirdiği yer: takımdan bu uzaklıklarda (m), balıkçıdan takıma bakan yönün bu açılarıyla (derece) sapan yönlerde;
 ## takımın bölgesinin derin suyu, balıkçıya en az NEAR uzakta.
-const FROM: Array[float] = [4.0, 5.0, 3.0, 6.0]
-const TURN: Array[float] = [0.0, 35.0, -35.0, 70.0, -70.0, 105.0, -105.0, 140.0, -140.0, 180.0]
+## Önce yanlar (ekranda takımın sağı ya da solu; arkası ekranın üst kenarına düşebilir).
+const FROM: Array[float] = [3.5, 4.5, 3.0, 5.5]
+const TURN: Array[float] = [70.0, -70.0, 45.0, -45.0, 110.0, -110.0, 0.0, 140.0, -140.0, 180.0]
 const NEAR := 3.0
 
 

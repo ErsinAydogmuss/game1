@@ -244,7 +244,8 @@ func _debug_row() -> void:
 
 ## Geliştirme sürümünün canlı dünya satırı (Dalga 4; telefonda vakit, hava, sevgi, istekler ve sırrı denemek
 ## için): VAKİT + (sonraki vakit), HAVA (bugünün havası sıradakine), SEVGİ + (göl sevgisi), İSTEK BİTİR (Dede'nin
-## ilk bitmemiş isteği biter ve öder; istek yoksa pasif), SIR + (altın istek biter ya da sıradaki şişe çıkar;
+## ilk bitmemiş isteği biter ve öder; istek yoksa pasif), SIR + (altın istek biter ya da sıradaki şişe çıkar; mektuplar
+## bitince sıradaki bölge canavarı tutulmuş sayılır;
 ## mektuplar ve parçalar bitince pasif).
 func _world_row() -> void:
 	var row := HBoxContainer.new()
@@ -266,7 +267,8 @@ func _world_row() -> void:
 		Sounds.play("ui_tap")
 		finish_request_requested.emit())
 	var secret := _debug_button(row, "DebugSecret", tr("UI_DEBUG_SECRET"))
-	secret.disabled = Secret.next_letter(GameState.save) < 0 and Requests.golden(GameState.db, GameState.save).is_empty()
+	secret.disabled = Secret.next_letter(GameState.save) < 0 and Requests.golden(GameState.db, GameState.save).is_empty() \
+			and Bosses.all_caught(GameState.save)
 	secret.pressed.connect(func() -> void:
 		Sounds.play("ui_tap")
 		secret_requested.emit())

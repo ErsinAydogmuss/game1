@@ -54,6 +54,19 @@ const SHAPES := {
 	"keeper": { "ratio": 3.4, "nose": 1.9, "eye": 0.05, "iris": "#e9fffb", "flat": 0.26, "scutes": "#d7fff8",
 		"whiskers": 0.5, "spots": "#c8fbff", "lateral": "#b6fff2", "dorsal": [0.55, 0.85, 0.72, 0.55], "fork": 0.14,
 		"tail_tilt": 0.25 },
+	# Yapı 5: bölge canavarları, bölgenin balığının devleri: İskele Reisi (altın pullu dev sazan), Saz Ağası (bronz benekli
+	# dev kadife), Nilüfer Sultanı (altın benekli dev turna), Kaya Dişi (koyu çizgili dev sudak), Dere Hayaleti (soluk
+	# dev alabalık), Derin Bey (lekeli, uzun bıyıklı dev yayın).
+	"pier_king": { "ratio": 2.15, "nose": 2.6, "eye": 0.058, "iris": "#ffe9a8", "whiskers": 0.18, "thin": 0.7,
+		"mirror": "#ffe08a" },
+	"reed_baron": { "ratio": 2.6, "nose": 2.5, "eye": 0.05, "iris": "#e08a2b", "whiskers": 0.08, "stem": 0.36, "fork": 0.0,
+		"spots": "#c9a13a" },
+	"lily_queen": { "ratio": 3.4, "nose": 1.5, "eye": 0.058, "iris": "#f2cf5b", "flat": 0.15, "spots": "#f0d870" },
+	"rock_jaw": { "ratio": 3.6, "nose": 1.8, "eye": 0.072, "iris": "#ffe9a8", "stripes": 7, "stripe_strength": 0.6,
+		"dorsals": 2 },
+	"stream_ghost": { "ratio": 3.3, "nose": 2.0, "eye": 0.068, "iris": "#d6f2ff", "lateral": "#f6b7c8",
+		"spots": "#9fa7b0", "fork": 0.04 },
+	"deep_lord": { "ratio": 3.2, "nose": 2.9, "eye": 0.034, "whiskers": 0.7, "flat": 0.32, "patches": "#2c2824" },
 }
 const DEFAULT_SHAPE := { "ratio": 2.2, "nose": 2.4, "eye": 0.075 }
 ## Dış çizginin dünyadaki kalınlığı (m).

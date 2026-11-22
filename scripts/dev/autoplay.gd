@@ -378,6 +378,8 @@ func _ready() -> void:
 			_play_secret.call_deferred()
 		"keeper":
 			_play_keeper.call_deferred()
+		"boss":
+			_play_boss.call_deferred()
 		"aquarium":
 			_play_aquarium.call_deferred()
 		"cat":
@@ -3694,7 +3696,11 @@ func _play_secret() -> void:
 	_check("defterde harita dört parça", (book.find_child("Map", true, false) as SecretMap).pieces == SaveData.MAX_MAP_PIECES)
 	await _shot("07_harita_tamam")
 	book.close_panel()
-	_check("final hazır: 6 mektup, 4 parça, altın hamur", Secret.final_ready(save))
+	# Yapı 5: final bölge canavarlarını da ister (defterde sayacı ve resimleri; SIR + sıradakini tutulmuş sayar).
+	_check("canavarlar tutulmadan final yok, defterde Canavarlar 0/6", not Secret.final_ready(save)
+			and Bosses.caught_count(db, save, str(main.get("spot_id"))) == 0)
+	Bosses.debug_catch_all(db, save)
+	_check("final hazır: 6 mektup, 4 parça, altın hamur, 6 canavar", Secret.final_ready(save))
 	_finish_checks()
 
 
@@ -3737,6 +3743,7 @@ func _play_keeper() -> void:
 	save.letter_at = save.catches
 	save.map_pieces = SaveData.MAX_MAP_PIECES
 	save.flags[Secret.DOUGH_FLAG] = true
+	Bosses.debug_catch_all(GameState.db, save)
 	save.love = db.rules.love_levels[Secret.DOUGH_LOVE - 1]
 	# Göl sevgisinin seviye sözleri söylenmiş (finalin sözünü beklemesin).
 	for at in [2, 6, 10]:
@@ -4020,6 +4027,214 @@ func _keeper_cast(snap: bool) -> Dictionary:
 	out["snapped"] = _state() == FishingSession.State.LOST and _session().last_loss == "snapped"
 	out["caught"] = _state() == FishingSession.State.CAUGHT and bool(_session().last_catch.get("story", false))
 	await _wait_frames(4)
+	out["in_hand"] = (main.get("catch_fx") as CatchFx).is_showing()
+	return out
+
+
+## Bölge canavarı (yapı 5; Bosses, BossPresenter): iskele koyunda İskele Reisi (şamandıra). Bölge kartında canavar
+## satırı (eksik takım, hazır, yenildi); eksik takımla atılınca canavar çıkmaz; tam takımla atışın zarı tutunca belirir
+## (bildirim, Dede, altın halkalar; ≤150 çizim); dürter, ısırır, VUR; dalışta basılı tutunca misina kopar (Dede: geri
+## gelir); RETURN_TIME sonra zarsız yine gelir (Dede: geri geldi); dalışta ipucu BIRAK; tutulur: elde gösterilir,
+## Efsanevi kart (Göle bırak), ödül (+para, bildirim "Canavarlar 1/6"), defterde; bir daha çıkmaz; defterin Gölün Sırrı
+## görünüşünde Canavarlar 1/6; telefon oranında, --safe-inset=130, TR ve EN.
+func _play_boss() -> void:
+	_use_save(60)
+	var db := GameState.db
+	var save := GameState.save
+	var spot := str(main.get("spot_id"))
+	var card: FishCard = main.get("card")
+	var map_panel: MapPanel = main.get("map_panel")
+	var zone_panel: ZonePanel = main.get("zone_panel")
+	var boss: BossPresenter = main.get("boss")
+	_roomy_bucket()
+	save.xp = db.rank_xp[6]
+	save.letters = 1
+	save.flags["told_love_2"] = true
+	var full: Array[String] = ["rod_float_carbon", "bobber_bright", "hook_large", "reel_strong", "line_braid"]
+	for id in full:
+		if not id in save.owned:
+			save.owned.append(id)
+	# Önce eksik takım: cam elyafı kamış (canavar karbon kamış ister).
+	if not "rod_float_glass" in save.owned:
+		save.owned.append("rod_float_glass")
+	for id in full:
+		Economy.equip(db, save, id, "float")
+	Economy.equip(db, save, "rod_float_glass", "float")
+	GameState.changed.emit()
+	await _wait(1.0)
+	_check("İskele koyunun canavarı İskele Reisi", db.boss_of("dock_cove") == "pier_king")
+	# Bölge kartı: eksik takım adıyla.
+	await _tap_control(_hud().map_button)
+	await _wait_until(func() -> bool: return map_panel.visible, 2.0)
+	await _wait(0.4)
+	map_panel.zone_requested.emit("dock_cove")
+	await _wait_until(func() -> bool: return zone_panel.visible, 2.0)
+	await _wait(0.6)
+	var row := zone_panel.find_child("Boss", true, false)
+	_check("bölge kartında canavar: eksik takım (karbon kamış)", row != null and _label_with_text(row,
+			ZonePanel.boss_text(db, save, spot, "dock_cove")) != null and ZonePanel.boss_text(db, save, spot,
+			"dock_cove") == tr("UI_ZONE_BOSS_NEED") % [tr("FISH_pier_king"), tr("GEAR_rod_float_carbon")])
+	_check("bölge kartı küçülmeden sığar (%.2f)" % zone_panel.fit_scale(), zone_panel.fit_scale() > 0.999
+			and _panel_inside(zone_panel))
+	await _shot("01_bolge_karti_eksik")
+	zone_panel.close_panel()
+	await _wait(0.3)
+	map_panel.close_panel()
+	await _wait(0.4)
+	# Eksik takımla zarı tutan atış: canavar çıkmaz.
+	_boss_roll_next(true)
+	await _tap_world(_session().angler + Vector2(0.0, -6.0))
+	await _wait_state(FishingSession.State.WAITING, 4.0)
+	await _wait(BossPresenter.RISE_DELAY + 1.5)
+	_check("eksik takımla canavar çıkmaz", _session().summoned() == null)
+	await _tap(Vector2(260, 520))
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	Economy.equip(db, save, "rod_float_carbon", "float")
+	GameState.changed.emit()
+	await _wait(0.8)
+	_check("tam takımla şartlar tutar", Bosses.ready(db, save, spot, "dock_cove", "float", _session().gear))
+	# Zarı tutmayan atış: canavar çıkmaz.
+	_boss_roll_next(false)
+	await _tap_world(_session().angler + Vector2(0.0, -6.0))
+	await _wait_state(FishingSession.State.WAITING, 4.0)
+	await _wait(BossPresenter.RISE_DELAY + 1.0)
+	_check("zarı tutmayan atışta canavar çıkmaz", _session().summoned() == null)
+	await _tap(Vector2(260, 520))
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	# İlk karşılaşma: belirir; dalışta basılı tutunca misina kopar.
+	_boss_roll_next(true)
+	var first := await _boss_cast(true)
+	_check("tam takımla zarı tutan atış: İskele Reisi belirir (bildirim, Dede)", bool(first["rose"]) and bool(first["toast"])
+			and bool(first["dede"]))
+	_check("ÇİZİM canavar gölde, iskelede: %d (≤%d)" % [int(first["draws"]), TOUR_DRAWS],
+			int(first["draws"]) > 0 and int(first["draws"]) <= TOUR_DRAWS)
+	_check("dürter, ısırır, VUR: dalışlı çekişme", bool(first["hooked"]) and bool(first["dives"]))
+	_check("dalışta basılı tutunca misina kopar", bool(first["snapped"]))
+	_check("Dede: kaçırdık, geri gelir", await _wait_until(func() -> bool:
+			return str(main.get("_line")) == "UI_DEDE_BOSS_LOST", 6.0))
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	_check("kaçan canavar hemen gelmez", float(boss.get("_return_wait")) > 0.0)
+	await _wait_until(func() -> bool: return float(boss.get("_return_wait")) <= 0.0, BossPresenter.RETURN_TIME + 5.0)
+	var coins := save.coins
+	_boss_roll_next(false)
+	var second := await _boss_cast(false)
+	_check("%d sn sonra zarsız yine gelir (Dede: geri geldi)" % roundi(BossPresenter.RETURN_TIME), bool(second["rose"])
+			and bool(second["back"]))
+	_check("dalışta ipucu: BIRAK! Canavar dalıyor", bool(second["dive_hint"]))
+	_check("ÇİZİM çekişmede, dalışta: %d (≤%d)" % [int(second["fight_draws"]), TOUR_DRAWS],
+			int(second["fight_draws"]) > 0 and int(second["fight_draws"]) <= TOUR_DRAWS)
+	_check("iki dalış, İskele Reisi tutulur, elde", int(second["dive_count"]) == 2 and bool(second["caught"])
+			and bool(second["in_hand"]))
+	var reward := Bosses.reward(db, "pier_king")
+	_check("ödül +%d para, defterde" % reward, save.coins == coins + reward and Bosses.caught(save, "pier_king"))
+	_check("Efsanevi kart, düğmesi Göle bırak", await _wait_until(func() -> bool: return card.visible, 4.0)
+			and card.ok_button != null and card.ok_button.text == UiKit.upper(tr("UI_CARD_RELEASE")))
+	await _wait(0.6)
+	await _shot("04_reis_kart")
+	await _close_card(card)
+	_check("bildirim: yenildi, Canavarlar 1/6", await _wait_toast(UiKit.upper(tr("UI_BOSS_DONE") % [tr("FISH_pier_king"),
+			reward, 1, Bosses.IDS.size()]), 8.0))
+	await _wait_state(FishingSession.State.IDLE, 6.0)
+	# Tutulan canavar bir daha çıkmaz.
+	_boss_roll_next(true)
+	await _tap_world(_session().angler + Vector2(0.0, -6.0))
+	await _wait_state(FishingSession.State.WAITING, 4.0)
+	await _wait(BossPresenter.RISE_DELAY + 1.5)
+	_check("tutulan canavar bir daha çıkmaz", _session().summoned() == null)
+	await _tap(Vector2(260, 520))
+	await _wait_state(FishingSession.State.IDLE, 8.0)
+	await _tap_control(_hud().map_button)
+	await _wait_until(func() -> bool: return map_panel.visible, 2.0)
+	map_panel.zone_requested.emit("dock_cove")
+	await _wait_until(func() -> bool: return zone_panel.visible, 2.0)
+	await _wait(0.6)
+	_check("bölge kartında: yenildi", ZonePanel.boss_text(db, save, spot, "dock_cove") == tr("UI_ZONE_BOSS_DONE")
+			% tr("FISH_pier_king"))
+	await _shot("05_bolge_karti_yenildi")
+	zone_panel.close_panel()
+	await _wait(0.3)
+	map_panel.close_panel()
+	await _wait(0.4)
+	var book: BookPanel = main.get("book_panel")
+	book.open_secret()
+	await _wait(0.6)
+	var count := book.find_child("BossCount", true, false) as Label
+	_check("defterde Canavarlar 1/6", count != null and count.text == tr("UI_SECRET_BOSSES") % [1, Bosses.IDS.size()])
+	_check("defter küçülmeden sığar (%.2f)" % book.fit_scale(), book.fit_scale() > 0.999 and _panel_inside(book))
+	await _shot("06_defter_canavarlar")
+	book.close_panel()
+	_finish_checks()
+
+
+## Sıradaki atışın canavar zarı (Bosses.roll; atış sayısıyla) tutsun ya da tutmasın: kaydın atış sayısı ona göre
+## ayarlanır (atış olayı sayacı bir artırır).
+func _boss_roll_next(hit: bool) -> void:
+	var save := GameState.save
+	var c := save.casts + 1
+	while Bosses.roll(save, c) != hit:
+		c += 1
+	save.casts = c - 1
+
+
+## Canavara bir atış (şamandıra): belirir, dürter, ısırır, VUR; snap: dalışta basılı tutulur (misina kopar), değilse
+## oyuncu gibi bırakılır.
+func _boss_cast(snap: bool) -> Dictionary:
+	var out := { "rose": false, "toast": false, "dede": false, "back": false, "draws": 0, "hooked": false, "dives": false,
+			"snapped": false, "dive_hint": false, "dive_count": 0, "fight_draws": 0, "caught": false, "in_hand": false }
+	var finger := Vector2(260, 520)
+	await _tap_world(_session().angler + Vector2(0.0, -6.0))
+	if not await _wait_state(FishingSession.State.WAITING, 4.0):
+		return out
+	out["rose"] = await _wait_until(func() -> bool:
+		return _session().summoned() != null and _session().summoned().fish_id == "pier_king", BossPresenter.RISE_DELAY + 3.0)
+	out["toast"] = await _wait_toast(UiKit.upper(tr("UI_BOSS_RISE") % tr("FISH_pier_king")), 2.0)
+	out["dede"] = await _wait_until(func() -> bool: return str(main.get("_line")) in ["UI_DEDE_BOSS_RISE",
+			"UI_DEDE_BOSS_BACK", "UI_DEDE_BOSS_AGAIN"], 2.0)
+	out["back"] = str(main.get("_line")) == "UI_DEDE_BOSS_BACK"
+	await _wait(1.0)
+	await _shot_once("02_reis_geldi")
+	var toast: Control = _hud().get("_toast")
+	var hint: Control = _hud().get("_hint")
+	await _wait_until(func() -> bool: return not toast.is_visible_in_tree() and not hint.visible, 6.0)
+	out["draws"] = int((await _measure_draws(20))["draws"])
+	if not await _wait_state(FishingSession.State.BITING, 40.0):
+		return out
+	await _wait_frames(4)
+	_touch(1, finger, true)
+	await _wait_frames(3)
+	out["hooked"] = _state() == FishingSession.State.FIGHTING
+	out["dives"] = _session().reel != null and _session().reel.has_dives()
+	if not bool(out["hooked"]):
+		_touch(1, finger, false)
+		return out
+	var hold := true
+	var lag := 0
+	var elapsed := 0.0
+	var was_diving := false
+	while _state() == FishingSession.State.FIGHTING and elapsed < 120.0:
+		var reel := _session().reel
+		var diving := reel != null and reel.phase == ReelModel.Phase.DIVE
+		if diving and not was_diving:
+			out["dive_count"] = int(out["dive_count"]) + 1
+			if not snap:
+				await _shot_once("03_reis_daliyor")
+				out["fight_draws"] = maxi(int(out["fight_draws"]), int((await _measure_draws(5))["draws"]))
+		was_diving = diving
+		if reel != null and reel.diving() and str(main.get("_hint_shown")) == "UI_HINT_BOSS_DIVE":
+			out["dive_hint"] = true
+		var want := reel != null and (not reel.thrashing() or (snap and reel.diving()))
+		lag = lag + 1 if want != hold else 0
+		if lag >= 6:
+			hold = want
+			lag = 0
+			_touch(1, finger, hold)
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+	if hold:
+		_touch(1, finger, false)
+	out["snapped"] = _state() == FishingSession.State.LOST and _session().last_loss == "snapped"
+	out["caught"] = _state() == FishingSession.State.CAUGHT and str(_session().last_catch.get("fish", "")) == "pier_king"
+	await _wait_frames(6)
 	out["in_hand"] = (main.get("catch_fx") as CatchFx).is_showing()
 	return out
 
@@ -5755,6 +5970,7 @@ func _reels_fog() -> void:
 	save.letter_at = save.catches
 	save.map_pieces = SaveData.MAX_MAP_PIECES
 	save.flags[Secret.DOUGH_FLAG] = true
+	Bosses.debug_catch_all(GameState.db, save)
 	GameState.changed.emit()
 	(main.get("world_clock") as WorldClock).refresh(save)
 	await _reels_technique("bottom")
@@ -7290,6 +7506,7 @@ func _play_store() -> void:
 	save.letter_at = save.catches
 	save.map_pieces = SaveData.MAX_MAP_PIECES
 	save.flags[Secret.DOUGH_FLAG] = true
+	Bosses.debug_catch_all(GameState.db, save)
 	save.flags[str(main.get("FINAL_TOLD_FLAG"))] = true
 	GameState.changed.emit()
 	clock.refresh(save)
@@ -8391,6 +8608,9 @@ func _use_save(catches: int) -> void:
 	# Dede'nin açlık sözü eski denetimlerin çizimini ve sözlerini şaşırtmasın).
 	if not _scenario in ["cat", "outfits", "video"]:
 		save.cat_meal_at = 1 << 30
+	# Bölge canavarları (yapı 5) yalnızca boss senaryosunda: ötekilerde tam takımla atılan bir atış canavar çağırıp
+	# eski denetimleri şaşırtmasın.
+	(main.get("boss") as BossPresenter).enabled = _scenario == "boss"
 	# Oyun saati donuk: senaryolar sabah ve açık havada, görüntüler eskisi gibi (world saati kendisi sürer).
 	(main.get("world_clock") as WorldClock).frozen = true
 	GameState.use_save(save)

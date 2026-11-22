@@ -46,13 +46,14 @@ func _initialize() -> void:
 			printerr("Bilinmeyen balık: " + id)
 			quit(1)
 			return
-		# Hikâyenin balığı dipte gelir (altın hamur) ve kendi uzaklığında takılır: tek başına ölçülür.
+		# Hikâyenin balığı dipte gelir (altın hamur) ve kendi uzaklığında takılır: tek başına ölçülür. Bölge canavarı
+		# (yapı 5) bölgesinin etkili tekniğiyle ve istediği takımla, tekniğin uzaklıklarında.
 		if bool(db.fish_by_id(id)["story"]):
 			if only.size() > 1:
-				printerr("Hikâyenin balığı tek başına ölçülür: --fish=" + id)
+				printerr("Hikâyenin balığı ve canavar tek başına ölçülür: --fish=" + id)
 				quit(1)
 				return
-			technique = "bottom"
+			technique = "bottom" if not Bosses.IDS.has(id) else Bosses.technique_of(db, db.main_spot, id)
 	if not db.has_technique(technique):
 		printerr("Bilinmeyen teknik: " + technique)
 		quit(1)
@@ -63,7 +64,9 @@ func _initialize() -> void:
 		return
 	var gear := gear_for(db, mode, technique)
 	var distances := distances_for(technique)
-	if only.size() == 1 and bool(db.fish_by_id(only[0])["story"]):
+	if only.size() == 1 and Bosses.IDS.has(only[0]):
+		gear = boss_gear(db, only[0])
+	elif only.size() == 1 and bool(db.fish_by_id(only[0])["story"]):
 		distances = story_distances(gear)
 	var max_distance: float = gear.range_m + db.rules.escape_extra + gear.escape_extra
 	var bots := [
@@ -135,6 +138,15 @@ func _initialize() -> void:
 		times.sort()
 		print("  %-12s en az %.1f  ortanca %.1f  en çok %.1f sn" % [f["id"], times[0], times[times.size() >> 1], times[-1]])
 	quit()
+
+
+## Bölge canavarının istediği takım (fish.json fight.gear) başlangıç takımının üstüne (yapı 5).
+static func boss_gear(db: ContentDB, boss_id: String) -> GearStats:
+	var items := db.gear_start.duplicate()
+	for gid: String in (db.fish_by_id(boss_id)["fight"]["gear"] as PackedStringArray):
+		items[str(db.gear_item(gid)["category"])] = gid
+	var none: Array[String] = []
+	return GearStats.from_items(db, items, none)
 
 
 ## Raporda yer alan tür: --fish= verildiyse yalnızca onlar; yoksa _reported (hikâyenin balığı hiç).

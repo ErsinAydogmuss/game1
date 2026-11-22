@@ -38,6 +38,8 @@ const LETTER_COLUMNS := 3
 const LETTER_CARD := Vector2(348, 232)
 const SECRET_MAP := Vector2(500, 330)
 const VIEW_BUTTON := Vector2(330, 122)
+## Sırrın görünüşünde bölge canavarlarının resmi (yapı 5).
+const BOSS_ART := 92.0
 const LETTER_EDGE := Color("#c79f62")
 const LETTER_FILL := Color("#f7ecd0")
 
@@ -606,6 +608,21 @@ func _build_secret(db: ContentDB, save: SaveData) -> void:
 	for i in Secret.LETTERS.size():
 		_letters.add_child(_letter_card(db, save, i + 1))
 	clear(_secret_foot)
+	# Bölge canavarları (yapı 5; finalin şartı): sayaç ve her birinin resmi (tutulmamış: siluet).
+	var bosses := HBoxContainer.new()
+	bosses.name = "Bosses"
+	bosses.add_theme_constant_override("separation", 6)
+	bosses.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_secret_foot.add_child(bosses)
+	var count := DayPanel._display(tr("UI_SECRET_BOSSES") % [Bosses.caught_count(db, save, spot_id), Bosses.IDS.size()],
+			28, UiKit.INK)
+	count.name = "BossCount"
+	count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bosses.add_child(count)
+	for id in Bosses.IDS:
+		var art := fish_art(id, BOSS_ART, Bosses.caught(save, id))
+		art.name = "Boss_" + id
+		bosses.add_child(art)
 	_secret_foot.add_child(UiKit.spacer())
 	_set_view_button(_secret_foot, "fish")
 	# Harita kartı: harita, parçalar, sıradaki parça ya da X, altın hamur.
@@ -624,6 +641,9 @@ func _build_secret(db: ContentDB, save: SaveData) -> void:
 		note = tr("UI_SECRET_KEEPER_DONE")
 	elif Secret.final_ready(save):
 		note = tr("UI_SECRET_X_READY")
+	elif save.map_pieces >= SaveData.MAX_MAP_PIECES and not Bosses.all_caught(save):
+		# Yapı 5: harita tamam ama bölge canavarları eksik: final onları da ister.
+		note = tr("UI_SECRET_BOSSES_LEFT") % (Bosses.IDS.size() - Bosses.caught_count(db, save, spot_id))
 	elif save.map_pieces >= SaveData.MAX_MAP_PIECES:
 		note = tr("UI_SECRET_X")
 	elif not golden.is_empty():

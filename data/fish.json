@@ -91,7 +91,7 @@
 			"shadow_m": 1.8, "size_cm": [140, 155], "weight": 0, "color": "#93a84c", "back": "#34461a", "accent": "#f0d870",
 			"affinity": { "spin": 1 },
 			"fight": { "jumps": true, "reel": 0.6, "pull": 0.6, "burst_pull": 1.3, "burst_every": [1.8, 2.6], "burst_len": [0.9, 1.2], "run": 0.7,
-				"stages": [0.6, 0.3], "dive_warn": 1.2, "dive_len": [1.6, 2.1], "dive_run": 1.6, "dive_pull": 1.35,
+				"stages": [0.75, 0.4], "dive_warn": 1.2, "dive_len": [1.6, 2.1], "dive_run": 1.6, "dive_pull": 1.35,
 				"gear": ["rod_spin_heavy", "lure_crank", "reel_pro", "line_braid"] } },
 		{ "id": "reed_baron", "rarity": "legendary", "value": 0, "release_only": true, "story": true, "boss": "reeds", "reward": 1500,
 			"shadow_m": 1.4, "size_cm": [85, 95], "weight": 0, "color": "#5f7a2c", "back": "#24330f", "accent": "#d9a441",

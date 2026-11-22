@@ -194,6 +194,20 @@ Olta: Secret of the Lake is here! Watch the shadows, cast your line, catch 19 sp
 </en-US>
 ```
 
+## Sürüm notları (1.0.0, yapı 5)
+
+Test kanalındaki (Play kapalı test, TestFlight "Test edilecekler") ve 1.0.0 yayındaysa 1.0.1'in notu. En çok 500
+karakter (TR 419, EN 415). Yapı 4 hiç yüklenmediyse de bu not (yapı 4'ün maddelerini de sayar).
+
+```
+<tr-TR>
+Test kullanıcılarının önerileriyle: her bölgenin bir canavarı var (6 canavar; yalnızca bölgenin etkili tekniği ve en iyi takımıyla tutulur, final onları da ister), bölgenin etkili tekniğiyle balık iri ve ×1,2 değerli, ileri bölgelerin balıkları iri ve değerli, yem iri balık da getirir, 6 kerevit tuzağı (topla, kaldır, taşı), Nine'nin yanında gerçek boy balıklı büyük akvaryum, Gölün Bekçisi en iyi dip takımını ister.
+</tr-TR>
+<en-US>
+From our testers' feedback: every area has a boss (6 bosses; only the area's best technique and top gear can land them, and the finale needs them all), the area's best technique brings bigger fish worth 1.2x, later areas have bigger and pricier fish, baits bring bigger fish, 6 crayfish traps (collect, take back, move), a big aquarium by Nine's shop with life-size fish, the Lake Keeper needs the best bottom gear.
+</en-US>
+```
+
 ## Sürüm notları (1.0.0, yapı 4)
 
 Test kanalındaki (Play kapalı test, TestFlight "Test edilecekler") ve 1.0.0 yayındaysa 1.0.1'in notu. En çok 500

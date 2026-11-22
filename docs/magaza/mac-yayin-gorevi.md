@@ -26,33 +26,33 @@
 
 ---
 
-## Şimdiki durum (19 Kasım 2026): önce bunu oku
+## Şimdiki durum (22 Kasım 2026): önce bunu oku
 
 - **Önceki turlarda yapılanlar** (depoya göre): AdMob'un gerçek kimlikleri oyunda (commit `f1678be`), yükleme anahtarı
   kuruldu ve parmak izi `tools/check_aab.py`'de (`afdd53b`), performans güncellemesi ve yapı 2 (`41b5678`), test
-  kullanıcılarının ilk düzeltmeleri ve yapı 3 (`61bf3dd`). Gizlilik sayfası, App Store kaydı, yüklemeler ve mağaza
-  sayfaları `~/olta-yayin/durum.md`'de yazıyorsa onlar da tamam. **Bitmiş bölümü yeniden yapma.**
-- **Bu tur: test kullanıcılarının ikinci düzeltmeleri, yapı 4.** Yapı 3'ten beri değişenler: ileri bölgelerin balıkları
-  daha iri ve daha değerli, yem çektiği balığı iri de getirir, 6 kerevit tuzağı (dokununca TOPLA / KALDIR, hepsi
-  kuruluysa en eskisini taşı), Nine'nin yanında büyük akvaryum (balıklar gerçek boyunda; paneldeki balığa dokununca
-  yakınlaşma ve bilgi şeridi), Gölün Bekçisi en iyi dip takımını ister. Kayıt sürümü 8: eski kayıtlar açılışta
+  kullanıcılarının ilk düzeltmeleri ve yapı 3 (`61bf3dd`), ikinci düzeltmeleri ve yapı 4. Gizlilik sayfası, App Store
+  kaydı, yüklemeler ve mağaza sayfaları `~/olta-yayin/durum.md`'de yazıyorsa onlar da tamam. **Bitmiş bölümü yeniden
+  yapma.** Yapı 4'ün yüklenip yüklenmediğini `durum.md`'den ve mağazalardan öğren; Ersin bilmiyor.
+- **Bu tur: test kullanıcılarının üçüncü düzeltmeleri, yapı 5.** Yapı 4'ten beri değişenler: her bölgenin etkili tekniği
+  (o teknikle balık iri ve ×1,2 değerli), her bölgenin bir canavarı (6 canavar: yalnızca bölgenin etkili tekniği ve en
+  iyi takımıyla tutulur; finalde Gölün Bekçisi'nden önce altısı da gerekir). Kayıt sürümü 9: eski kayıtlar açılışta
   kendiliğinden taşınır. **Mağazaya giden paket bu koddan derlenir:** eski AAB ya da iPhone arşivini yükleme, yeniden
   derle.
-- **Yapı numarası 4:** `export_presets.cfg`'de hazır (iPhone `application/version="4"`, Android `version/code=4`).
-  Yapı 3 hiç yüklenmediyse de sorun değil: mağazalar yalnızca öncekinden büyük numara ister. Bir mağaza "kullanılmış"
+- **Yapı numarası 5:** `export_presets.cfg`'de hazır (iPhone `application/version="5"`, Android `version/code=5`).
+  Yapı 4 hiç yüklenmediyse de sorun değil: mağazalar yalnızca öncekinden büyük numara ister. Bir mağaza "kullanılmış"
   derse +1 (Sorun giderme).
 - **Görünen sürüm:** 1.0.0 mağazada **henüz yayında değilse** (App Store'da "Ready for Sale" değil, Play'de üretimde
   yayımlanmamış; test kanalları sayılmaz) **1.0.0** kalır. Bir mağazada yayındaysa `project.godot`'ta
   `config/version="1.0.1"` yap (izinli istisna), commit et; App Store Connect'te yeni sürüm (**+ Sürüm**) "1.0.1" aç,
   sürüm notunu ("Bu Sürümdeki Yenilikler") aşağıdaki notlardan yaz.
 - **İncelemede bekleyen sürüm varsa** (App Store "Waiting for Review" ya da "In Review", Play'de incelemede): yeni
-  yapıyla değiştirmeden önce **Ersin'e sor**. Apple'da incelemeden çek (**Remove from Review**), yapıyı 4 ile
+  yapıyla değiştirmeden önce **Ersin'e sor**. Apple'da incelemeden çek (**Remove from Review**), yapıyı 5 ile
   değiştir, Ersin'in onayıyla yeniden gönder. Play'de aynı kanalda yeni sürüm eskisinin yerine geçer.
 - **Sürüm notları ve TestFlight'ın "Test edilecekler" yazısı:** `magaza-metinleri.md` → "Sürüm notları (1.0.0, yapı
-  4)" (tr-TR ve en-US).
-- **Akış:** 0. bölüm (hazırlık ve denetim) → 5 (iPhone yapısı 4) → 6 (AAB 4) → Play'de durum.md'deki kanal (kapalı
-  test ya da üretim): yeni sürüm, AAB 4, sürüm notları → TestFlight'ta yapı 4: "Test edilecekler" yazısı, iç test
-  grubuna ve (varsa) dış test grubuna ekle → 8. bölümün 0. adımı (Ersin 5 dakika dener) → sürüm sayfasında yapı 4
+  5)" (tr-TR ve en-US; yapı 4'ün maddelerini de sayar).
+- **Akış:** 0. bölüm (hazırlık ve denetim) → 5 (iPhone yapısı 5) → 6 (AAB 5) → Play'de durum.md'deki kanal (kapalı
+  test ya da üretim): yeni sürüm, AAB 5, sürüm notları → TestFlight'ta yapı 5: "Test edilecekler" yazısı, iç test
+  grubuna ve (varsa) dış test grubuna ekle → 8. bölümün 0. adımı (Ersin 5 dakika dener) → sürüm sayfasında yapı 5
   (gönderilmiş bir sürüm varsa yukarıdaki madde) → Ersin'in onayıyla gönder → 9 (rapor). Mağaza metinleri ve ekran
   görüntüleri değişmedi: yeniden yükleme.
 
@@ -70,7 +70,7 @@
   - **GitHub:** `ErsinAydogmuss`.
 - **Künye:**
   - Paket kimliği iki mağazada da `com.juiloot.olta`.
-  - Sürüm **1.0.0** (bir mağazada yayındaysa 1.0.1: yukarıda). Android sürüm kodu ve iPhone yapı numarası **3**.
+  - Sürüm **1.0.0** (bir mağazada yayındaysa 1.0.1: yukarıda). Android sürüm kodu ve iPhone yapı numarası **5**.
   - Ad: TR **Olta: Gölün Sırrı**, EN **Olta: Secret of the Lake**.
 - **Kazı aynı hesaplardan yayımlandı.** Hesap düzeyindeki işler (sözleşmeler, vergi, AB'nin DSA tüccar beyanı,
   geliştirici kimlik doğrulaması) büyük olasılıkla tamam. Formlarda emin olamadığın bir soruda Kazı'nın aynı sayfasına

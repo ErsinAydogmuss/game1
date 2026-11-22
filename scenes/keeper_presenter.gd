@@ -84,6 +84,11 @@ func fighting() -> bool:
 	return _fighting
 
 
+## Son karede Bekçi'nin vakti miydi (Secret.keeper_due; o gece X'te bölge canavarı çıkmaz)?
+func due() -> bool:
+	return _due
+
+
 ## Her oyun karesi. cond: gölün koşulu (WorldState.conditions); at_x: sandal X'te.
 func update(delta: float, session: FishingSession, save: SaveData, cond: Dictionary, at_x: bool) -> void:
 	_step_rings(delta)

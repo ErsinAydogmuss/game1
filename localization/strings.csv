@@ -118,6 +118,10 @@ UI_ZONE_NOTE,"Odds with your gear, at this time and weather.","Oranlar takımın
 UI_ZONE_VALUE,Fish worth ×%s · bigger,Balıklar ×%s değerli · daha iri
 UI_ZONE_EFFECTIVE,"Best here: %s · fish ×%s worth, bigger","Etkili teknik: %s · balık ×%s değerli, daha iri"
 UI_ZONE_EFFECTIVE_PLAIN,Best here: %s,Etkili teknik: %s
+UI_ZONE_BOSS_DONE,Boss: %s · beaten!,Canavar: %s · yenildi!
+UI_ZONE_BOSS_READY,Boss: %s · gear ready: cast with %s!,Canavar: %s · takım hazır: %s ile at!
+UI_ZONE_BOSS_NEED,Boss: %s · needs %s,Canavar: %s · gerekli: %s
+UI_ZONE_BOSS_NEED_N,Boss: %s · %d pieces of gear missing (Nana's shop),Canavar: %s · %d takım eksik (Nine'de)
 UI_DECIMAL,.,","
 UI_ZONE_TRAP,You can set a crayfish trap here.,Burada kerevit tuzağı kurulur.
 UI_ZONE_NIGHT,At night,Gece gelir
@@ -545,7 +549,7 @@ UI_GUIDE_GEAR_BUCKET,"Carry more fish: the smallest holds %d, the biggest %d.","
 UI_GUIDE_GEAR_BOAT,"Row out to the deep middle of the lake, home of the biggest fish.",Gölün derin ortasına açılırsın; en iri balıklar orada.
 UI_GUIDE_GEAR_TRAP,Leave it in the shallows; it fills even while you're away.,"Sığ suya bırak, sen oyunda yokken de dolar."
 UI_GUIDE_ZONES,Fishing spots,Bölgeler
-UI_GUIDE_ZONES_LEAD,Travel with the map. The icon next to Dede is the technique he suggests there.,"Haritadan geçersin. Dede'nin yanındaki ikon, onun orada önerdiği teknik."
+UI_GUIDE_ZONES_LEAD,"Travel with the map. Dede's technique works best there. Each zone has a boss.","Haritadan geçersin. Dede'nin tekniği orada etkili. Her bölgenin bir canavarı var."
 UI_GUIDE_ZONE_DOCK_COVE,Where you start. A bit of everything.,Başladığın yer. Her türden biraz.
 UI_GUIDE_ZONE_REEDS,Shallow and weedy: lures can snag.,Sığ ve otlu: yapay yem otlara takılabilir.
 UI_GUIDE_ZONE_LILY_COVE,Predators hide in the lilies; lures can snag.,Yırtıcılar nilüferde; yapay yem takılabilir.
@@ -570,7 +574,7 @@ UI_GUIDE_NINE,Nana,Nine
 UI_GUIDE_NINE_TEXT,She runs the shop. Tap her to sell fish and buy tackle.,"Dükkânın sahibi. Dokun: balık satar, takım alırsın."
 UI_GUIDE_BOOK_TEXT,"%d species. Uncaught ones are silhouettes; hints, records and odds are inside.","%d tür var. Tutmadığın tür siluettir; ipucu, rekor ve oranlar defterde."
 UI_GUIDE_GOAL,Your goal,Hedef
-UI_GUIDE_GOAL_TEXT,Catch every species! Let the protected sturgeon go. And the lake has a secret…,Bütün türleri tut! Koruma altındaki mersin göle bırakılır. Bir de gölün bir sırrı var…
+UI_GUIDE_GOAL_TEXT,"Catch every species, beat each zone's boss. The lake has a secret…","Bütün türleri tut, her bölgenin canavarını yen. Gölün de bir sırrı var…"
 UI_GUIDE_SECRET_TEXT,Glowing bottles in the water hold old letters. Dede's golden requests complete the map.,Parlayan şişelerde eski mektuplar var. Dede'nin altın istekleri haritayı tamamlar.
 UI_INTRO_1,"Welcome, dear! This summer you'll stay with us in the lake village.","Hoş geldin evladım! Bu yaz bizimle, göl köyünde kalacaksın."
 UI_INTRO_2,"Look at this lake, kiddo. Sparkling, isn't it?","Şu göle bak evlat. Pırıl pırıl, değil mi?"
@@ -709,6 +713,7 @@ UI_DEDE_LETTER_6,"That's where I saw the Keeper. Finish the map, kid!",Bekçi'yi
 UI_DEDE_GOLDEN_FIRST,"I once tore my old map in four. Check your tasks, kid!",Eski haritamı dörde yırtmıştım. Görevlerine bak evlat!
 UI_DEDE_GOLDEN_DONE,"A piece of the map! Check your book, kid.",Haritanın bir parçası! Deftere bak evlat.
 UI_DEDE_MAP_DONE,The map is whole! The X is at the first buoy.,"Harita tamam! X, ilk şamandıranın orada."
+UI_DEDE_MAP_BOSSES,"The map is whole! But first, beat every zone's boss.","Harita tamam! Ama önce her bölgenin canavarını yen."
 UI_BOOK_TAB_SECRET,Lake's Secret,Gölün Sırrı
 UI_BOOK_TAB_FISH,Fish,Balıklar
 UI_SECRET_TITLE,The Lake's Secret,Gölün Sırrı
@@ -719,6 +724,8 @@ UI_SECRET_NEXT_RANK,%s · rank %d,%s · rütbe %d
 UI_SECRET_NEXT_BOAT,%s · by boat,%s · sandalla
 UI_SECRET_NEXT_FISH,%s · in %d fish,%s · %d balık sonra
 UI_SECRET_PIECES,Map pieces %d/%d,Harita parçaları %d/%d
+UI_SECRET_BOSSES,Bosses %d/%d,Canavarlar %d/%d
+UI_SECRET_BOSSES_LEFT,"The X is on the map, but the Keeper waits for the lake's bosses: %d left. Every zone has one.","Haritada X var ama Bekçi gölün canavarlarını bekliyor: %d kaldı. Her bölgenin bir canavarı var."
 UI_SECRET_PIECES_HINT,Dede's golden requests give the pieces.,Dede'nin altın istekleri parça verir.
 UI_SECRET_GOLDEN,Golden request: %s,Altın istek: %s
 UI_SECRET_X,X: the first buoy in Deep Water. Wait for a foggy night!,X: derin ortanın ilk şamandırası. Sisli geceyi bekle!
@@ -737,6 +744,15 @@ UI_DEDE_KEEPER_AGAIN,"The Keeper came to you again, kid!",Bekçi yine sana gör�
 UI_DEDE_KEEPER_GONE,Morning's here. The Keeper went back to the deep.,"Sabah oldu, Bekçi derinlere döndü."
 UI_HINT_KEEPER_DIVE,LET GO! The Keeper is diving!,BIRAK! Bekçi dalıyor!
 UI_KEEPER_RISE,The Lake Keeper is here!,Gölün Bekçisi geldi!
+UI_BOSS_RISE,Zone boss: %s!,Bölge canavarı: %s!
+UI_BOSS_DONE,%s beaten! +%d coins · Bosses %d/%d,%s yenildi! +%d para · Canavarlar %d/%d
+UI_HINT_BOSS_DIVE,LET GO! The boss is diving!,BIRAK! Canavar dalıyor!
+UI_DEDE_BOSS_RISE,"There it is, the %s! Let go when it dives, kid!","İşte o, %s! Dalınca bırak evlat!"
+UI_DEDE_BOSS_AGAIN,"The %s is here again! Easy now, kid.","%s yine burada! Sakin ol evlat."
+UI_DEDE_BOSS_BACK,"The %s is back! Let go when it dives.","%s geri geldi! Dalınca bırak evlat."
+UI_DEDE_BOSS_LOST,"We lost it! Keep casting, it'll come back.","Kaçırdık! Atmaya devam et, geri gelir."
+UI_DEDE_BOSS_HINT,"The %s lives here, kid. Get top gear for it!","Burada %s yaşar evlat. Takımı tamamla!"
+UI_DEDE_BOSS_READY,"The %s lives here. You're ready, keep casting!","Burada %s yaşar. Takımın hazır, at!"
 UI_END_1,"Look, kid... The Keeper is circling your boat. It's thanking you!",Bak evlat... Bekçi sandalın çevresinde dönüyor. Sana teşekkür ediyor!
 UI_END_2,"Morning has come. Look, the fog is lifting!","Sabah oldu. Bakın, sis kalkıyor!"
 UI_END_3,"The lake has never been this beautiful. Thanks to you, dear.",Göl hiç bu kadar güzel olmamıştı. Senin sayende evladım.

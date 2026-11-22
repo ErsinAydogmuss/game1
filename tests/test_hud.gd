@@ -10,7 +10,7 @@ const HINT_PREFIXES: Array[String] = ["UI_HINT_", "UI_DEDE_TIP_", "UI_NINE_LINE_
 const HINT_KEYS: Array[String] = ["UI_DEDE_BUCKET", "UI_DEDE_BUCKET_CAST", "UI_DEDE_BAIT_OUT", "UI_DEDE_BOAT", "UI_DEDE_BOAT_SHOP",
 		"UI_DEDE_BOAT_DEEP", "UI_DEDE_GATE", "UI_DEDE_LEGEND_NEAR", "UI_DEDE_ZONE_OPEN", "UI_DEDE_SNAG",
 		"UI_DEDE_FLY_STILL", "UI_DEDE_TRAP_OPEN", "UI_DEDE_TRAP_FIRST", "UI_DEDE_LANTERN", "UI_DEDE_TEA",
-		"UI_DEDE_BOTTLE_FIRST", "UI_DEDE_MAP_DONE", "UI_DEDE_FINAL"]
+		"UI_DEDE_BOTTLE_FIRST", "UI_DEDE_MAP_DONE", "UI_DEDE_MAP_BOSSES", "UI_DEDE_FINAL"]
 
 
 func test_hint_lines_fit_one_line() -> void:
@@ -88,6 +88,29 @@ func test_bottle_line_fits_one_line() -> void:
 			var zone_name: String = (rows["ZONE_" + str(letter["zone"])] as PackedStringArray)[column]
 			var text: String = (rows["UI_DEDE_BOTTLE"] as PackedStringArray)[column] % zone_name
 			assert_true(_width(font, text) <= room, "şişenin sözü sığmıyor (%s): %s" % ["en" if column == 1 else "tr", text])
+
+
+## Bölge canavarları (yapı 5): Dede'nin canavar sözleri canavarın adıyla, ipucu çubuğu ve bildirim iki dilde tek
+## satır (her canavarın adıyla).
+func test_boss_lines_fit_one_line() -> void:
+	var room := Hud.hint_text_room()
+	var font := UiKit.body_font()
+	var rows := {}
+	var f := FileAccess.open("res://localization/strings.csv", FileAccess.READ)
+	while f != null and not f.eof_reached():
+		var row := f.get_csv_line()
+		if row.size() >= 3:
+			rows[row[0]] = row
+	for column: int in [1, 2]:
+		for id in Bosses.IDS:
+			var name: String = (rows["FISH_" + id] as PackedStringArray)[column]
+			for key: String in ["UI_DEDE_BOSS_RISE", "UI_DEDE_BOSS_AGAIN", "UI_DEDE_BOSS_BACK", "UI_DEDE_BOSS_HINT",
+					"UI_DEDE_BOSS_READY"]:
+				var text: String = (rows[key] as PackedStringArray)[column] % name
+				assert_true(_width(font, text) <= room, "%s sığmıyor (%s): %s" % [key, "en" if column == 1 else "tr", text])
+		for key: String in ["UI_DEDE_BOSS_LOST", "UI_HINT_BOSS_DIVE"]:
+			var text: String = (rows[key] as PackedStringArray)[column]
+			assert_true(_width(font, text) <= room, "%s sığmıyor: %s" % [key, text])
 
 
 static func _width(font: Font, text: String, size: int = UiKit.SIZE_BODY) -> float:

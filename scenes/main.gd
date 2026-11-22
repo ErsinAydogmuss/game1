@@ -325,6 +325,8 @@ var _golden_line: String = ""
 ## Bekçi'nin kartı kapanınca bitiş filmi oynayacak mı (ilk bırakılışta), oynayan film bitiş filmi mi,
 ## Ayarlar'dan yeniden mi izleniyor (o zaman kayıt ve saat değişmez) ve filmin şafağı oldu mu.
 var keeper: KeeperPresenter
+## Bölge canavarları (yapı 5): karşılaşma (BossPresenter).
+var boss: BossPresenter
 var credits_panel: CreditsPanel
 var _ending_due: bool = false
 var _ending: bool = false
@@ -417,6 +419,10 @@ func _ready() -> void:
 	keeper.setup(GameState.db, spot_id, ripples, camera, hud)
 	keeper.speak.connect(func(key: String) -> void: _say(key))
 	keeper.presence_changed.connect(func(_present: bool) -> void: _sync_music())
+	boss = BossPresenter.new()
+	add_child(boss)
+	boss.setup(GameState.db, spot_id, ripples, camera, hud)
+	boss.speak.connect(func(key: String, args: Array) -> void: _say(key, "dede", args))
 	_start_session()
 	_refresh_status()
 	# Eski kayıt: rütbesi çoktan gelmiş teknik de bir kez haber verilir; gece açılan kayıtta fener, yağmurlu
@@ -448,6 +454,7 @@ func _ready() -> void:
 func _start_session() -> void:
 	_stop_intro()
 	keeper.reset()
+	boss.reset()
 	_ending_due = false
 	var save := GameState.save
 	_save_ref = save
@@ -829,6 +836,7 @@ func _process(delta: float) -> void:
 	if _film == null and not fade.busy():
 		world_clock.tick(delta, GameState.save)
 		keeper.update(delta, session, GameState.save, world_clock.conditions(), in_boat and _buoy == Secret.KEEPER_BUOY)
+		boss.update(delta, session, GameState.save, keeper.due())
 	_sync_look(delta)
 	_trap_clock += delta
 	if _trap_clock >= TRAP_SYNC_EVERY:
@@ -1169,6 +1177,7 @@ func _sell_spot() -> Vector2:
 func _on_event(e: Dictionary) -> void:
 	# Gölün Bekçisi: belirişi, dalışları ve kaçışı (halkalar, ses, titreşim, Dede'nin sözü).
 	keeper.on_event(e, session)
+	boss.on_event(e, session)
 	match str(e["type"]):
 		"cast":
 			GameState.save.casts += 1
@@ -1437,6 +1446,8 @@ func _on_catch() -> void:
 		elif not suggestion.is_empty():
 			save.flags[Elder.SUGGEST_FLAG % zone_id] = true
 			_say(suggestion)
+		elif _boss_hint_due():
+			_say_boss_hint()
 		elif _trap_line_due():
 			_say_trap_open()
 		else:
@@ -1446,7 +1457,17 @@ func _on_catch() -> void:
 	# Balığın sudan çıktığı yerde halka: çekişmenin son noktası (kıyıda suyun kenarı).
 	var out_at := Vector2(bobber.fight_point.x, bobber.fight_point.z)
 	ripples.spawn(out_at, 1.0, 0.8)
-	if story:
+	# Bölge canavarı (yapı 5): ödülü ve sayacı (bildirim balığın etiketi sönünce); elde gösterilir, kartı açılır.
+	if Bosses.IDS.has(fish_id):
+		var reward := Bosses.reward(db, fish_id)
+		save.coins += reward
+		save.stats["boss_coins"] = int(save.stats.get("boss_coins", 0)) + reward
+		hud.toast_later(tr("UI_BOSS_DONE") % [tr("FISH_" + fish_id), reward, Bosses.caught_count(db, save, spot_id),
+				Bosses.IDS.size()], UiKit.rarity_color(db, rarity), "coin", "boss")
+		Sounds.play("coins")
+		GameState.save_game()
+		_refresh_status()
+	if story and fish_id == Secret.KEEPER_ID:
 		# Gölün Bekçisi elde gösterilmez (5 m): sudan çıktığı yerde turkuaz halkalar, herkes sevinir, Masalsı kart.
 		# Kart kapanınca ilk seferde bitiş filmi.
 		for ring in KEEPER_RINGS:
@@ -1488,6 +1509,25 @@ func _on_catch() -> void:
 		_quick_catch = 0.0
 		_quick_choice = kept
 		_quick_out = out_at
+
+
+## Bölgenin canavarını Dede bir kez anlatır (yapı 5): balıkçı bölgede etkili teknikle tuttu, canavar tutulmadı ve
+## takımı eksik (tamamsa canavar zaten çıkar). Bayrak boss_told_<canavar>.
+func _boss_hint_due() -> bool:
+	var db := GameState.db
+	var id := db.boss_of(zone_id)
+	if id.is_empty() or Bosses.caught(GameState.save, id) or GameState.save.flags.has("boss_told_" + id):
+		return false
+	var technique := session.technique.id
+	return ContentDB.is_effective(db.zone(spot_id, zone_id), technique) or technique == Bosses.technique_of(db,
+			spot_id, id)
+
+
+func _say_boss_hint() -> void:
+	var id := GameState.db.boss_of(zone_id)
+	GameState.save.flags["boss_told_" + id] = true
+	var ready := Bosses.missing(GameState.db, id, session.gear).is_empty()
+	_say("UI_DEDE_BOSS_READY" if ready else "UI_DEDE_BOSS_HINT", "dede", [tr("FISH_" + id)])
 
 
 ## Rütbe atladıysa (av ya da tuzak): oturumun erişimi ve çitler yenilenir; rütbe bildirimi, açılan
@@ -1656,8 +1696,10 @@ func _pay_requests(done: Array[Dictionary]) -> Dictionary:
 		if piece > 0:
 			hud.toast_later(tr("UI_GOLDEN_DONE") % [piece, SaveData.MAX_MAP_PIECES, UiKit.format_int(int(paid["coins"]))],
 					UiKit.ACCENT, "coins", "item:map_piece")
-			_golden_line = "UI_DEDE_MAP_DONE" if GameState.save.map_pieces >= SaveData.MAX_MAP_PIECES \
-					else "UI_DEDE_GOLDEN_DONE"
+			_golden_line = "UI_DEDE_GOLDEN_DONE"
+			if GameState.save.map_pieces >= SaveData.MAX_MAP_PIECES:
+				# Yapı 5: Bekçi bölge canavarlarını da bekler.
+				_golden_line = "UI_DEDE_MAP_DONE" if Bosses.all_caught(GameState.save) else "UI_DEDE_MAP_BOSSES"
 		else:
 			hud.toast_later(tr("UI_REQ_DONE") % UiKit.format_int(int(paid["coins"])), UiKit.ACCENT, "coins", "requests")
 		# Reklamlar (AdRules.REQUEST): olta boşa dönünce "ödülü 2 katına çıkar" teklifi (harita parçası değil, para).
@@ -1731,6 +1773,13 @@ func _debug_secret() -> void:
 		_after_rank(_pay_requests(done))
 	else:
 		var i := Secret.next_letter(save)
+		if i < 0 and not Bosses.all_caught(save):
+			# Mektuplar bitti: sıradaki bölge canavarı tutulmuş sayılır (yapı 5; finalin şartı).
+			for id in Bosses.IDS:
+				if not Bosses.caught(save, id):
+					var def := db.fish_by_id(id)
+					Records.add(save.records, id, (def["size_cm"] as Vector2i).x, 5, GameState.clock.now_unix())
+					break
 		if i >= 0:
 			var letter := Secret.LETTERS[i]
 			save.xp = maxi(save.xp, db.rank_xp[int(letter["rank"]) - 1])
@@ -2456,7 +2505,7 @@ func _hint_key() -> String:
 		return ""
 	# Gölün Bekçisi dalıyor (ya da dalacak): bırak! Dede'nin sözünden önce.
 	if session.reel != null and session.reel.diving():
-		return "UI_HINT_KEEPER_DIVE"
+		return "UI_HINT_BOSS_DIVE" if boss.fighting() else "UI_HINT_KEEPER_DIVE"
 	if _line_time > 0.0:
 		return _line
 	var technique := session.technique.id
@@ -3763,7 +3812,8 @@ func _tend_ads(delta: float) -> void:
 ## açıkken _process buraya gelmez).
 func _ads_calm() -> bool:
 	return session.state == FishingSession.State.IDLE and not _card_up() and _quick_catch < 0.0 and _film == null \
-			and not fade.busy() and not _choosing and not angler.is_walking() and not keeper.present()
+			and not fade.busy() and not _choosing and not angler.is_walking() and not keeper.present() \
+			and boss.present().is_empty()
 
 
 ## "Reklamlar hakkında" kartı kapandı: ilk kez açıldıysa (Ayarlar'dan bilgi olarak değil) reklamlar başlar (AB'de

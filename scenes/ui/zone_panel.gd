@@ -105,6 +105,13 @@ func refresh() -> void:
 	var effective := UiKit.icon_text("tech_" + best, best_text, 44, 26)
 	effective.name = "Effective"
 	notes.add_child(effective)
+	# Bölgenin canavarı (yapı 5): yenildi, takımı hazır ya da eksik takım (ilk ikisi adıyla, fazlası sayıyla).
+	var boss_id := db.boss_of(zone)
+	if not boss_id.is_empty():
+		var boss := UiKit.icon_text(UiKit.rarity_icon(db, db.rarity_index("legendary")),
+				boss_text(db, save, spot_id, zone), 44, 26)
+		boss.name = "Boss"
+		notes.add_child(boss)
 	if not (z["trap_ids"] as PackedStringArray).is_empty():
 		var trap := UiKit.icon_text("trap", tr("UI_ZONE_TRAP"), 44, 26)
 		trap.name = "Trap"
@@ -257,6 +264,25 @@ func _card(db: ContentDB, save: SaveData, row: Dictionary) -> Control:
 	odds.name = "Odds"
 	foot.add_child(odds)
 	return panel
+
+
+## Bölgenin canavarının satırı (yapı 5): yenildi; takımı hazır; eksik takım (en çok iki adı, fazlası sayıyla).
+## Eksik takım, canavarın tekniğinin kuşanılmış takımına göre (Bosses.missing: aynı yuvada daha iyisi de sayılır).
+static func boss_text(db: ContentDB, save: SaveData, spot: String, zone_id: String) -> String:
+	var id := db.boss_of(zone_id)
+	var name := TranslationServer.translate("FISH_" + id)
+	if Bosses.caught(save, id):
+		return TranslationServer.translate("UI_ZONE_BOSS_DONE") % name
+	var technique := Bosses.technique_of(db, spot, id)
+	var missing := Bosses.missing(db, id, Economy.gear_for(db, save, technique))
+	if missing.is_empty():
+		return TranslationServer.translate("UI_ZONE_BOSS_READY") % [name, TranslationServer.translate("UI_TECH_" + technique)]
+	if missing.size() > 2:
+		return TranslationServer.translate("UI_ZONE_BOSS_NEED_N") % [name, missing.size()]
+	var names := PackedStringArray()
+	for gid in missing:
+		names.append(TranslationServer.translate("GEAR_" + gid))
+	return TranslationServer.translate("UI_ZONE_BOSS_NEED") % [name, ", ".join(names)]
 
 
 ## Çarpanın yazısı (binde → "1,7", "1,15"; tam sayıda "2"; yüzde birle yuvarlı, sondaki sıfır yazılmaz): ondalık

@@ -38,5 +38,10 @@ static func wants_card(rarity: int, outcome: Dictionary) -> bool:
 			or rarity >= CARD_RARITY
 
 
+## Defterdeki tür sayısı (kıyafetlerin şartı): bölge canavarları sayılmaz (yapı 5; defterin balıklarında değiller).
 static func species_count(records: Dictionary) -> int:
-	return records.size()
+	var n := 0
+	for id: String in records:
+		if not Bosses.IDS.has(id):
+			n += 1
+	return n

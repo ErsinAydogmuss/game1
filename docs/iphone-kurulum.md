@@ -385,6 +385,24 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
 72. **Testçi düzeltmeleri 3: balığa dokun.** Akvaryum panelinde bir balığa dokun: kamera ona yaklaşır ve yüzdükçe
     izler; altta şerit: resmi, adı, nadirliği, en büyük boyu ve yıldızı, kaç tane tuttuğun, saatte kaç para getirdiği.
     DEFTER: defter o balığın sayfasında açılır, kapatınca akvaryum geri gelir. Boşluğa ya da ✕'e dokun: geri çekilir.
+73. **Testçi düzeltmeleri 4: etkili teknik.** Haritada bir bölgeye dokun: kartın altında "Etkili teknik: Dip · balık
+    ×1,2 değerli, daha iri" (iskele koyunda yalnızca "Etkili teknik: Şamandıra"). Sazlıkta dip ile, nilüferli koyda
+    spin ile tutulan balık Kova panelinde şamandırayla tutulandan pahalı mı? Dede o bölgede başka teknikle tutunca
+    "Sazlıkta dip dene evlat: balık iri ve değerli gelir!" diyor mu?
+74. **Testçi düzeltmeleri 4: bölge canavarı kartta.** Bölge kartında "Canavar: İskele Reisi · gerekli: Karbon kamış"
+    (eksik takım adıyla; üçten fazlası "5 takım eksik (Nine'de)"), takım tamsa "takım hazır: Şamandıra ile at!",
+    tutunca "yenildi!". Kart küçülmeden sığıyor mu?
+75. **Testçi düzeltmeleri 4: İskele Reisi.** Rütbe 6'da karbon kamış, parlak şamandıra, büyük iğne, güçlü makara ve örgü
+    misinayla iskelede şamandırayla at (Ayarlar'daki deneme düğmeleri: HEPSİNİ AÇ, +10.000): birkaç atışta bir
+    "Bölge canavarı: İskele Reisi!", altın halkalar, Dede "İşte o!". Dürter, ısırır, VUR. Dalmadan önce "BIRAK!
+    Canavar dalıyor!": bırakmazsan misina kopar, Dede "geri gelir", 20 sn sonra yine gelir. Tutunca elde, Efsanevi
+    kart, "+700 para · Canavarlar 1/6". Bir daha çıkmıyor mu?
+76. **Testçi düzeltmeleri 4: öteki canavarlar.** Nilüfer Sultanı (nilüferli koy, spin), Saz Ağası (sazlık, dip), Kaya
+    Dişi (kayalık burun, spin), Dere Hayaleti (dere ağzı, sinek), Derin Bey (derin orta, sandalla dip): her biri
+    yalnızca o teknikle ve kartta yazan takımla çıkıyor mu? Eksik takımla hiç çıkmıyor mu?
+77. **Testçi düzeltmeleri 4: final.** Defterin Gölün Sırrı görünüşünde altta "Canavarlar 2/6" ve altı resim
+    (tutmadıkların siluet). Dördüncü harita parçasında Dede "Ama önce her bölgenin canavarını yen"; altısı tutulmadan
+    final gecesi gelmiyor mu? Deneme için SIR + mektuplar bitince sıradaki canavarı tutulmuş sayar.
 
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 

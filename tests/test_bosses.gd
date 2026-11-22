@@ -1,5 +1,5 @@
 extends BaseTest
-## Bölge canavarları (yapı 5; Bosses, docs/gdd.md §10.7): her bölgenin bir canavarı, yalnızca bölgenin etkili tekniğiyle
+## Bölge canavarları (yapı 5; Bosses, docs/gdd.md §10.9): her bölgenin bir canavarı, yalnızca bölgenin etkili tekniğiyle
 ## ve istediği takımın hepsi (ya da daha iyisi) kuşanılıyken çıkar; atış başına zar; belirme yeri; çekişme beceri ister
 ## ve eksik takımla tutulmaz; altısı finalin şartı.
 
@@ -196,3 +196,4 @@ func test_all_bosses_open_the_final() -> void:
 	var other := _save()
 	Bosses.debug_catch_all(db, other)
 	assert_true(Bosses.all_caught(other), "debug_catch_all")
+	assert_eq(Records.species_count(other.records), 0, "canavarlar defterin tür sayısına (kıyafetlerin şartı) girmez")
