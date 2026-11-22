@@ -60,13 +60,22 @@ static func shadow_size(level: String) -> int:
 	return SHADOW_SHARP if level == HIGH else SHADOW_SMOOTH
 
 
-## Gölün kenar yumuşatması (Viewport.MSAA_*).
-static func msaa(level: String) -> int:
+## Gölün kenar yumuşatması (Viewport.MSAA_*). Android'de hiçbir seviyede yok (Kazı 0.14.4, docs/performans-notlari.md
+## §3.6): Kazı'nın Play Console'daki kendiliğinden kapanmalarının hepsi Mali sürücüsündeydi, çizim tamponu bağlanırken
+## ya da temizlenirken (glBindFramebuffer, glClear) bellek alınamıyordu ("Scudo ERROR: internal map failure").
+## Compatibility çizicisi MSAA'yı telefonda EXT_multisampled_render_to_texture ile yapar; o tamponun belleğini sürücü
+## bağlama anında kendisi ayırır. Kazı'da Android'de MSAA kapanınca çökme bitti. os_name: OS.get_name() (testler
+## başkasını verir).
+static func msaa(level: String, os_name: String = OS.get_name()) -> int:
+	if os_name == "Android":
+		return Viewport.MSAA_DISABLED
 	return Viewport.MSAA_DISABLED if level == LOW else Viewport.MSAA_2X
 
 
-## Panellerdeki küçük 3D önizlemelerin (akvaryum, dolap) kenar yumuşatması.
-static func preview_msaa(level: String) -> int:
+## Panellerdeki küçük 3D önizlemelerin (akvaryum, dolap) kenar yumuşatması. Android'de yok (msaa'daki neden).
+static func preview_msaa(level: String, os_name: String = OS.get_name()) -> int:
+	if os_name == "Android":
+		return Viewport.MSAA_DISABLED
 	return Viewport.MSAA_DISABLED if level == LOW else Viewport.MSAA_2X
 
 

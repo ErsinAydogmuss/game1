@@ -194,6 +194,20 @@ Olta: Secret of the Lake is here! Watch the shadows, cast your line, catch 19 sp
 </en-US>
 ```
 
+## Sürüm notları (1.0.0, yapı 6, Android)
+
+Yalnızca Play (iPhone'da yapı 5 kalır). Kapanma düzeltmesi ve yapı 5'in maddeleri (yapı 5 incelemedeyken yerine geçer).
+En çok 500 karakter (TR 416, EN 406).
+
+```
+<tr-TR>
+Bazı Android telefonlarda oyunun kendiliğinden kapanmasına yol açan grafik sorunu düzeltildi. Ayrıca: her bölgenin bir canavarı (6 canavar; bölgenin etkili tekniği ve en iyi takımıyla tutulur, final onları da ister), etkili teknikle balık iri ve ×1,2 değerli, ileri bölgelerde iri ve değerli balık, yem iri balık da getirir, 6 kerevit tuzağı, Nine'nin yanında büyük akvaryum, Gölün Bekçisi en iyi dip takımını ister.
+</tr-TR>
+<en-US>
+Fixed a graphics issue that made the game close by itself on some Android phones. Also: every area has a boss (6 bosses; the area's best technique and top gear land them, the finale needs them all), the best technique brings bigger fish worth 1.2x, bigger and pricier fish in later areas, baits bring bigger fish, 6 crayfish traps, a big aquarium by Nine's shop, the Lake Keeper needs the best bottom gear.
+</en-US>
+```
+
 ## Sürüm notları (1.0.0, yapı 5)
 
 Test kanalındaki (Play kapalı test, TestFlight "Test edilecekler") ve 1.0.0 yayındaysa 1.0.1'in notu. En çok 500

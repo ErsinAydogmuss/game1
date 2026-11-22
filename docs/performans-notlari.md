@@ -16,7 +16,7 @@ Yeni bir mobil oyunda sırayla:
 1. **Ölçmeden düzeltme.** Önce botla ölç (kare süresi, derleme, bellek, ekran kartı nesneleri), sonra değiştir, sonra
    aynı ölçümü tekrarla (§5).
 2. **Grafik ayarı:** Düşük / Orta / Yüksek. Android'de varsayılan Orta: 3D'yi en fazla 1,7 milyon pikselde çiz, arayüz
-   keskin kalsın (§1).
+   keskin kalsın (§1). Android'de kenar yumuşatma (MSAA) hiç olmasın (§3.6).
 3. **Kare sınırı:** Android'de 90/120 Hz ekranda 60 FPS. 60 Hz ekranda sınır koyma (§1).
 4. **Gölgelendirici ısındırma:** açılış perdesinin arkasında her malzemeyi her ışık düzeninde bir kez çiz (§2.1).
    Telefondaki "anlık takılma"nın asıl sebebi buydu.
@@ -40,7 +40,7 @@ Telefonlar 3D'yi ekranın tam çözünürlüğünde (FHD+ ekranda 2,6 milyon pik
 |---|---|---|---|
 | 3D çözünürlüğü | en fazla 1 milyon piksel (FHD+'da ölçek ~0,62) | en fazla 1,7 milyon piksel (~0,81) | ekranın tamamı |
 | Güneşin gölgesi | kapalı | açık, gölge haritası 1024 | açık, 2048 |
-| Kenar yumuşatma (MSAA) | kapalı | 2x | 2x |
+| Kenar yumuşatma (MSAA) | kapalı | 2x (Android'de kapalı) | 2x (Android'de kapalı) |
 | Parlama (glow) | kapalı | açık | açık |
 
 - **Çözünürlük ölçeği:** `Viewport.scaling_3d_scale = sqrt(bütçe / piksel)`, en az 0,5. Compatibility'de çalışıyor
@@ -53,7 +53,8 @@ Telefonlar 3D'yi ekranın tam çözünürlüğünde (FHD+ ekranda 2,6 milyon pik
   Kazı'da grafik ayarı her kazıda yeniden veriliyordu, `Light3D.shadow_enabled` aynı değerle bile ışığın bağlı olduğu her
   şeyi yeniden eşletir (0.14.3'te düzeltildi).
 - **Ayrı dünyası olan görünümler** (dükkânın 3D vitrini gibi `SubViewport`'lar) de seviyeye baksın: vitrin Yüksek'te
-  MSAA 4x, Orta'da 2x, Düşük'te kapalı.
+  MSAA 4x, Orta'da 2x, Düşük'te kapalı. Android'de sahnede de vitrinde de MSAA hiçbir seviyede yok (0.14.4, §3.6);
+  `project.godot`'ta da `anti_aliasing/quality/msaa_3d.android=0`, ilk kare de MSAA'sız açılsın.
 - Kurallar saf bir sınıfta, test edilir: `scripts/core/graphics_rules.gd`, `tests/test_graphics_rules.gd`. Uygulayan:
   `scenes/main.gd` `_apply_graphics`.
 
@@ -237,6 +238,47 @@ General Mobile GM Era 30 (Helio G36, ekran kartı **PowerVR GE8320**, 4 GB RAM):
 yüklenmesi geliyor. Bu ekran kartının sürücüsü başka motorlarda da çökmeleriyle biliniyor (`glClear`,
 `glBlitFramebuffer`). Telefonun `adb logcat` kaydı bekleniyor (§4.3). Helio G35 / G36 / G37 / P35 ucuz telefonlarda çok
 yaygın: başka oyunda da açılışı bu tür bir telefonda dene.
+
+### 3.6 0.14.3 de çöktü: Android'de MSAA kapalı (0.14.4, 17 Kasım)
+
+- 0.14.3'ten sonra Play Console'da aynı üç küme yeniden geldi: "Scudo ERROR: internal map failure (error desc=Out of
+  memory)", yığın `glClear` / `glBindFramebuffer` → `libGLES_mali.so` → `malloc`. 28 cihazın 25'i Mali (MediaTek,
+  Exynos); 12 GB'lık Dimensity 9300 / 9500'ler de var.
+- Sürücü belleği çizim tamponunu **bağlarken ya da temizlerken** kendisi ayırıyor. Compatibility çizicisi MSAA'yı
+  telefonda `EXT_multisampled_render_to_texture` ile yapar; o tamponun belleği tam bu anlarda alınır.
+- 0.14.4: Android'de MSAA hiçbir seviyede yok (`GraphicsRules.msaa` / `showcase_msaa`, `msaa_3d.android=0`,
+  `test_no_msaa_on_android`). Emülatörde (Pixel 9, API 35, `perf --part=digsoak`) oyunun belleği sabit, ekran kartı
+  doku belleği 153 → 127 MB. Emülatörde Mali yok: asıl kanıt yayından 2–3 gün sonra Android vitals'ta sürüm 15.
+- MSAA yetmezse sıradaki şüpheliler: Orta'daki 3D ölçeği (≠ 1 ise 3D ayrı tampona çizilip ekrana kopyalanır) ve parlama
+  (glow). Bir seferde tek şey değiştir ki hangisinin işe yaradığı görülsün.
+- Emülatörde bot için: `export_presets.cfg`'ye geçici `command_line/extra_args="..."` (pakete gömülür; `am start` ile
+  argüman verilemiyor, Godot'nun etkinliği dışa açık değil) ve `scripts/dev/*`'ı `exclude_filter`'dan geçici çıkar.
+  Emülatörde ASTC yok, ikonlar siyah görünür (yalnızca emülatörde).
+
+### 3.7 Yeni bir özelliği performansa dikkat ederek eklemek (kancalı halat örneği, 0.14.5)
+
+Kazı'ya yürüyerek çıkılamayan yere halatla çekilen "kanca" eklenirken uygulananlar (başka oyunda yeni bir özellik için de
+aynı liste):
+
+- **Her karede hesaplama yok.** Nişangâhın kancası yalnızca nişan alınan blok, yüzü ya da oyuncunun yeri değişince
+  hesaplanır (değişmezse en geç 0,25 sn'de bir). Planın süresi masaüstünde ~95 µs; nişan kıpırdamadıkça hiç çalışmaz.
+  Değişikliği metin kurmadan, değerleri doğrudan karşılaştırarak anla (her karede `"%s" % ...` bellek ayırır).
+- **Ağ (mesh) bir kez kurulur.** Halat bir silindir; uzayıp kısalması yalnızca ölçek (`scale`), yeri ve yönü
+  `global_transform`. Her karede `PrimitiveMesh` boyu değiştirmek ya da Label3D'nin rengini değiştirmek yeni ekran kartı
+  tamponu demek (§3.3).
+- **Malzemeler paylaşılır ve ısınır.** Halatın ve kancanın iki `StandardMaterial3D`'si sınıfta tek (`static var`) ve
+  açılıştaki ısındırma rafında (`HookRope.build_sample`). Doğrulama: `tools/shader_compiles.py scenario --scenario hook`
+  ilk kanca atışında derleme göstermemeli.
+- **Kullanılmazken işlem kapalı.** Godot `_process`'i olan düğümde işlemeyi sahneye girince açar: `_ready`'de
+  `set_process(false)`, yalnızca çekilirken açık.
+- **Hareket kendi `_process`'inde,** Tween'in callback'inde değil (birinci şahısta Tween'in taşıdığı 3D parça çizilmiyordu);
+  düğüm `process_priority = -1`: oyuncunun yeni yeri aynı karede kameraya geçsin.
+- **Ölç ve botla dene.** Bot senaryosu (`--scenario=hook`) özelliği gerçek dokunuşlarla dener, "PERF" satırına sürenin
+  ölçümünü yazar, ekran görüntüleri alır.
+- **Pahalı yol yalnızca gerektiğinde, sıklığı sınırlı (0.14.6).** Kanca yapının kapısına 90 m'ye kadar uzanınca görüş
+  ışınları 70 m'yi buldu (plan ~150-170 µs). Uzun yol yalnızca nişan o yapının kutusundayken denenir; nişan her karede
+  değişse de iki plan arasında en az 0,1 sn (`HOOK_MIN_GAP`); düğmeye basıldığı anda nişan eskiyse hemen yeniden
+  hesaplanır (bekleme yüzünden yanlış yere atılmaz). Uzun çekilmenin süresi de sınırlı (`PULL_MAX` 2,2 sn).
 
 ---
 
@@ -439,7 +481,20 @@ açıkken ~2 sn; telefonda ilk açılışta birkaç saniye (açılış perdesi b
   bir bedeli yok; zemin 4 MB).
 - Kodun piksellerini okuduğu görseller (çerçeveler, saat çipinin ikonları) sıkıştırılmaz (`tests/test_texture_memory.gd`).
 
-### 8.6 Açık kalanlar
+### 8.6 Android'de kendiliğinden kapanma: MSAA kapalı (yapı 6, 22 Kasım)
+
+- Ersin: "Olta da bir Android'de kendi kendine kapandı, Kazı'daki gibi." Kazı'da bu, iki adımda bitti: 0.14.3'ün
+  düzeltmeleri (her karede ekran kartı nesnesi kurmamak, parçacık havuzu, sıkıştırılmış görseller, ayarları yalnızca
+  değişince uygulamak: Olta'da baştan vardı, §8.2) ve 0.14.4'te Android'de kenar yumuşatmanın kapanması (§3.6). Olta'da
+  ikincisi eksikti: Orta ve Yüksek grafikte göl 2x MSAA'yla, akvaryum ve dolap önizlemeleri kurulurken 2x'le çiziliyordu.
+- Yapı 6: Android'de MSAA hiçbir seviyede yok (`GraphicsRules.msaa` ve `preview_msaa` işletim sistemine bakar; önizlemeler
+  kurulurken de kuralla; `project.godot` `anti_aliasing/quality/msaa_3d.android=0`: ilk kare de MSAA'sız;
+  `test_no_msaa_on_android`). iPhone ve bilgisayarda eskisi gibi.
+- Kanıt telefonda: yayından 2–3 gün sonra Play Console → Android vitals'ta yapı 6 filtresi. Çökme sürerse Kazı'nın
+  sıradaki şüphelileri (§3.6): Orta'daki 3D ölçeği ve parlama; bir seferde tek şey. Play Console'daki çökmenin
+  "Durdurma mesajı" (abort message), yığını (§4.1) ve cihazın modeli / RAM'i istenir.
+
+### 8.7 Açık kalanlar
 
 - Telefonda ölçüm: iPhone 14'te deneme listesi 50-53 (`docs/iphone-kurulum.md`). Android cihaz yok: Orta ayarın ve
   60 FPS sınırının etkisi ancak Play'deki kullanıcılarda görülür (Play Console'da "ANR ve çökme").

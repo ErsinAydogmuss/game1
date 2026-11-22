@@ -98,7 +98,8 @@ func _init() -> void:
 	_viewport = SubViewport.new()
 	_viewport.transparent_bg = true
 	_viewport.own_world_3d = true
-	_viewport.msaa_3d = Viewport.MSAA_2X
+	# Görünür olunca grafik seviyesinden (UiKit.apply_preview_msaa); Android'de ilk kareden MSAA'sız.
+	_viewport.msaa_3d = GraphicsRules.preview_msaa(GraphicsRules.HIGH) as Viewport.MSAA
 	_viewport.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	container.add_child(_viewport)
 	_world = Node3D.new()

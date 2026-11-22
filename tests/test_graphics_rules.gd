@@ -51,6 +51,26 @@ func test_levels_trade_effects_for_speed() -> void:
 	assert_true(not GraphicsRules.glow(GraphicsRules.LOW) and GraphicsRules.glow(GraphicsRules.MEDIUM), "Düşük: parlama yok")
 
 
+## Kazı 0.14.4'ün düzeltmesi (docs/performans-notlari.md §3.6): Kazı'nın Android'deki kendiliğinden kapanmaları Mali
+## sürücüsünde, MSAA'lı çizim tamponu bağlanırken / temizlenirken bellek alınamıyordu. Android'de gölde de önizlemelerde
+## de (akvaryum, dolap) kenar yumuşatma hiçbir seviyede yok; iPhone ve bilgisayarda eskisi gibi; projenin ilk karesi de
+## Android'de MSAA'sız.
+func test_no_msaa_on_android() -> void:
+	for level: String in GraphicsRules.LEVELS:
+		assert_eq(GraphicsRules.msaa(level, "Android"), Viewport.MSAA_DISABLED, "Android göl: " + level)
+		assert_eq(GraphicsRules.preview_msaa(level, "Android"), Viewport.MSAA_DISABLED, "Android önizleme: " + level)
+	assert_eq(GraphicsRules.msaa(GraphicsRules.MEDIUM, "iOS"), Viewport.MSAA_2X, "iPhone Orta: 2x")
+	assert_eq(GraphicsRules.preview_msaa(GraphicsRules.HIGH, "iOS"), Viewport.MSAA_2X, "iPhone önizleme: 2x")
+	var config := ConfigFile.new()
+	assert_eq(config.load("res://project.godot"), OK, "project.godot okunur")
+	assert_eq(int(config.get_value("rendering", "anti_aliasing/quality/msaa_3d.android", -1)),
+			Viewport.MSAA_DISABLED, "projede Android'in ilk karesi de MSAA'sız")
+	# Önizlemeler kurulurken de (görünmeden önce) seviyenin kuralıyla: kodda sabit MSAA_2X yok.
+	for path: String in ["res://scenes/ui/aquarium_tank.gd", "res://scenes/ui/angler_preview.gd"]:
+		assert_true(not FileAccess.get_file_as_string(path).contains("msaa_3d = Viewport.MSAA_2X"),
+				path + ": sabit MSAA yok")
+
+
 func test_frame_limit() -> void:
 	assert_eq(GraphicsRules.max_fps("Android", 120.0), 60, "120 Hz Android: 60 fps")
 	assert_eq(GraphicsRules.max_fps("Android", 90.0), 60, "90 Hz Android: 60 fps")

@@ -62,6 +62,7 @@ textures/vram_compression/import_etc2_astc=true
 lights_and_shadows/directional_shadow/size=2048
 anti_aliasing/quality/msaa_3d=1
 environment/defaults/default_clear_color=Color(0.16, 0.45, 0.52, 1)
+anti_aliasing/quality/msaa_3d.android=0
 
 [shader_globals]
 
