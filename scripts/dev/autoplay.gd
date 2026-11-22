@@ -4061,6 +4061,7 @@ func _play_boss() -> void:
 		Economy.equip(db, save, id, "float")
 	Economy.equip(db, save, "rod_float_glass", "float")
 	GameState.changed.emit()
+	main.call("_on_gear_changed")
 	await _wait(1.0)
 	_check("İskele koyunun canavarı İskele Reisi", db.boss_of("dock_cove") == "pier_king")
 	# Bölge kartı: eksik takım adıyla.
@@ -4091,6 +4092,8 @@ func _play_boss() -> void:
 	await _wait_state(FishingSession.State.IDLE, 6.0)
 	Economy.equip(db, save, "rod_float_carbon", "float")
 	GameState.changed.emit()
+	# Oyunda Takım paneli takınca oturumun takımı yenilenir (main._on_gear_changed).
+	main.call("_on_gear_changed")
 	await _wait(0.8)
 	_check("tam takımla şartlar tutar", Bosses.ready(db, save, spot, "dock_cove", "float", _session().gear))
 	# Zarı tutmayan atış: canavar çıkmaz.
