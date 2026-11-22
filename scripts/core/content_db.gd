@@ -10,6 +10,8 @@ const DATA_DIR := "res://data"
 const PPM := 1_000_000
 ## Bölgenin etkili tekniğiyle tutulan balığın değer çarpanı (binde; yapı 5), önerisi olan bölgede varsayılan.
 const EFFECTIVE_PM := 1200
+## Balığın istediği takımın (fight.gear) kategorileri: kuşanılan takım (yem harcanır: istenmez).
+const BOSS_GEAR_CATEGORIES: Array[String] = ["rod", "reel", "line", "hook", "bobber", "lure", "rig", "fly"]
 
 ## Nadirlikler, sırayla (0 Sıradan .. 5 Masalsı): id, color, shape, shadow_fx, xp, love, pity.
 ## Kayıtlar sıra numarasını tutar: yalnızca sona eklenir.
@@ -280,6 +282,16 @@ func zone_effective_pm(zone_id: String) -> int:
 	return 1000
 
 
+## Bölgenin canavarı (yapı 5; fish.json boss; yoksa "").
+func boss_of(zone_id: String) -> String:
+	if zone_id.is_empty():
+		return ""
+	for f in fish:
+		if str(f["boss"]) == zone_id:
+			return str(f["id"])
+	return ""
+
+
 ## Teknik bu bölgede etkili mi (yapı 5): bölgenin etkili tekniği ve çarpanı 1'den büyük (iskele koyunda yok).
 static func is_effective(zone: Dictionary, technique: String) -> bool:
 	return technique == str(zone.get("effective", "-")) and int(zone.get("effective_pm", 1000)) > 1000
@@ -412,6 +424,9 @@ func _load_fish(raw: Dictionary) -> void:
 			"value": int(d.get("value", 0)),
 			"release_only": bool(d.get("release_only", false)),
 			"story": bool(d.get("story", false)),
+			# Bölge canavarı (yapı 5): bölgenin kimliği ve tutulunca verilen para (Bosses).
+			"boss": str(d.get("boss", "")),
+			"reward": int(d.get("reward", 0)),
 			"shadow_m": float(d.get("shadow_m", 0.5)),
 			"size_cm": Vector2i(int(size.x), int(size.y)),
 			"weight": int(d.get("weight", 0)),
@@ -699,9 +714,19 @@ func _validate() -> void:
 		errors.append("rules.json: love.rare_from bilinmeyen nadirlik: %s" % rules.love_from)
 	_validate_gear()
 	for f in fish:
+		# İstenen takımın yuvası, tekniği (kamışta) ve fiyatı (ReelModel.missing_gear: "ya da daha iyisi").
+		var needs: Array[Dictionary] = []
 		for id: String in ((f["fight"] as Dictionary).get("gear", PackedStringArray()) as PackedStringArray):
-			if gear_item(id).is_empty() or not str(gear_item(id)["category"]) in ["rod", "reel", "line"]:
-				errors.append("fish.json: %s: fight.gear: kamış, makara ya da misina değil: %s" % [f["id"], id])
+			var item := gear_item(id)
+			if item.is_empty() or not str(item["category"]) in BOSS_GEAR_CATEGORIES:
+				errors.append("fish.json: %s: fight.gear: kuşanılan takım değil (yem olmaz): %s" % [f["id"], id])
+				needs.append({ "slot": "", "technique": "", "price": 0 })
+				continue
+			needs.append({ "slot": str(item["category"]),
+					"technique": str(item.get("technique", "")) if str(item["category"]) == "rod" else "",
+					"price": int(item.get("price", 0)) })
+		(f["fight"] as Dictionary)["gear_need"] = needs
+	_validate_bosses()
 	_validate_progression()
 	if spot(main_spot).is_empty():
 		errors.append("spots.json: main bilinmiyor: " + main_spot)
@@ -903,6 +928,11 @@ func _validate_fish(f: Dictionary) -> void:
 	# Hikâyenin balığı (Gölün Bekçisi) satılmaz, göle bırakılır.
 	if bool(f["story"]) and not bool(f["release_only"]):
 		errors.append("fish.json: %s: story (hikâyenin balığı) release_only olmalı" % id)
+	# Bölge canavarı (yapı 5): oyun çağırır (story), dalışlı, takım ister, ödülü var.
+	if not str(f["boss"]).is_empty():
+		if not bool(f["story"]) or stages.is_empty() or int(f["reward"]) <= 0 \
+				or ((fight.get("gear", PackedStringArray()) as PackedStringArray)).is_empty():
+			errors.append("fish.json: %s: canavar story olmalı, dalışı, takımı (fight.gear) ve ödülü (reward) olmalı" % id)
 
 
 ## geometry: göl şekli kurulup başlangıç, atış noktaları, şamandıralar ve bölgeler de denetlensin.
@@ -1046,6 +1076,35 @@ func _validate_zone(spot_id: String, z: Dictionary, known: Dictionary) -> void:
 ## Bölge oyunun başında açık mı (rütbe 1, sandalsız)?
 static func _open_at_start(zones: Array[Dictionary], k: int) -> bool:
 	return k >= 0 and k < zones.size() and int(zones[k]["rank"]) <= 1 and not bool(zones[k]["boat"])
+
+
+## Bölge canavarları (yapı 5): her canavarın bölgesi ana gölün bir bölgesi, bölge başına en çok bir canavar, canavar
+## yalnızca bölgesinin etkili tekniğiyle gelir (affinity), istediği takımın kamışı o tekniğin.
+func _validate_bosses() -> void:
+	var seen := {}
+	for f in fish:
+		var zone_id := str(f["boss"])
+		if zone_id.is_empty():
+			continue
+		var id := str(f["id"])
+		var z := zone(main_spot, zone_id)
+		if z.is_empty():
+			errors.append("fish.json: %s: canavarın bölgesi ana gölde yok: %s" % [id, zone_id])
+			continue
+		if seen.has(zone_id):
+			errors.append("fish.json: %s: bölgenin ikinci canavarı: %s" % [id, zone_id])
+		seen[zone_id] = id
+		var technique := str(z["effective"])
+		var affinity: Dictionary = f["affinity"]
+		if affinity.size() != 1 or float(affinity.get(technique, 0.0)) <= 0.0:
+			errors.append("fish.json: %s: canavar yalnızca bölgenin etkili tekniğiyle gelmeli: %s" % [id, technique])
+		var rod_ok := false
+		for gid: String in ((f["fight"] as Dictionary).get("gear", PackedStringArray()) as PackedStringArray):
+			var item := gear_item(gid)
+			if not item.is_empty() and str(item["category"]) == "rod" and str(item.get("technique", "")) == technique:
+				rod_ok = true
+		if not rod_ok:
+			errors.append("fish.json: %s: canavarın istediği takımda bölgenin tekniğinin kamışı yok" % id)
 
 
 func _check_unique(label: String, list: Array[Dictionary]) -> void:

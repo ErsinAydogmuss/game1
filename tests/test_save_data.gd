@@ -423,7 +423,10 @@ func test_v5_save_reads_back() -> void:
 	assert_eq(s.map_pieces, SaveData.MAX_MAP_PIECES, "dört harita parçası")
 	assert_true(Secret.has_dough(s), "altın hamur")
 	assert_eq(s.keeper, 0, "Bekçi henüz bırakılmadı")
-	assert_true(Secret.final_ready(s) and Secret.keeper_night(s), "final hazır: final gecesi")
+	# Yapı 5: final bölge canavarlarını da ister (kayıttan türer: v5'in kaydında yok).
+	assert_true(not Secret.final_ready(s), "canavarlar tutulmadan final hazır değil")
+	Bosses.debug_catch_all(db, s)
+	assert_true(Secret.final_ready(s) and Secret.keeper_night(s), "canavarlarla final hazır: final gecesi")
 	assert_true(LakeLove.level(rules, s.love) >= Secret.DOUGH_LOVE, "göl sevgisi altın hamurun seviyesinde")
 	assert_eq(s.request_serial, 19, "istek sırası")
 	assert_eq(s.request_day, 4, "bugünün istekleri doldu")

@@ -291,6 +291,12 @@ UI_DEDE_CARD_mythic,"The Lake Keeper... So it's real.","Gölün Bekçisi... Deme
 UI_DEDE_CARD_RELEASE_sturgeon,"Sturgeon are protected, kid. Let's admire it and let it go.","Mersin koruma altında evlat. Bir güzel bakalım, sonra bırakalım."
 UI_DEDE_CARD_RELEASE_moon_pike,"The Moon Pike! Nana won't believe it. Let's let it go, kid.","Ay Turnası! Nine buna inanmayacak. Haydi, göle bırakalım evlat."
 UI_DEDE_CARD_RELEASE_kocabas,"Old Bighead himself! He's older than me. Off you go home, old friend.","Kocabaş'ın ta kendisi! Benden yaşlıdır. Haydi koca dost, evine dön."
+UI_DEDE_CARD_RELEASE_pier_king,"The Pier King! The pier is yours now, kid. Let's let him go home.","İskele Reisi! İskele artık senin evlat. Haydi, evine bırakalım."
+UI_DEDE_CARD_RELEASE_reed_baron,"The Reed Baron, at last! The reeds bow to you. Let him go, kid.","Sonunda Saz Ağası! Sazlık sana selam durur. Bırakalım evlat."
+UI_DEDE_CARD_RELEASE_lily_queen,"The Lily Queen herself! What a strike. Let her rule the lilies again.","Nilüfer Sultanı'nın ta kendisi! Ne saldırıydı. Bırakalım, nilüferlere yine o baksın."
+UI_DEDE_CARD_RELEASE_rock_jaw,"Rock Jaw! Mind those teeth, kid. Back to the rocks with him.","Kaya Dişi! Dişlerine dikkat evlat. Haydi, kayalarına dönsün."
+UI_DEDE_CARD_RELEASE_stream_ghost,"You caught the Stream Ghost! Nobody believes it's real. Let it vanish again.","Dere Hayaleti'ni tuttun! Kimse gerçek olduğuna inanmaz. Bırakalım, yine kaybolsun."
+UI_DEDE_CARD_RELEASE_deep_lord,"The Deep Lord! I've waited my whole life to see him. Let him go, kid.","Derin Bey! Bütün ömrüm onu görmeyi bekledim. Bırakalım evlat."
 UI_DEDE_LEGEND_NEAR,"Shh! See that glowing shadow? Could be legendary!","Şşş! Şu parlayan gölgeyi gördün mü? Efsanevi olabilir!"
 UI_BOOK,Fish Book,Balık Defteri
 UI_BOOK_NOT_CAUGHT,Not caught yet.,Henüz tutulmadı.
@@ -415,6 +421,18 @@ FISH_kocabas,Old Bighead,Kocabaş
 FISH_kocabas_DESC,A giant wels as old as the village. It only feeds on stormy nights. Always let it go.,"Köy kadar yaşlı dev bir yayın. Yalnızca fırtınalı gecelerde yemlenir. Hep göle bırakılır."
 FISH_keeper,Lake Keeper,Gölün Bekçisi
 FISH_keeper_DESC,The giant turquoise shadow from the old letters. It guards the heart of the lake: always let it go.,"Eski mektuplardaki dev turkuaz gölge. Gölün kalbini korur: hep göle bırakılır."
+FISH_pier_king,Pier King,İskele Reisi
+FISH_pier_king_DESC,"A golden carp as big as a child, ruling under the old pier. Only a float rig fools it. Always let it go.","İskelenin altında hüküm süren, çocuk boyunda altın bir sazan. Yalnızca şamandırayla kanar. Hep göle bırakılır."
+FISH_reed_baron,Reed Baron,Saz Ağası
+FISH_reed_baron_DESC,"A huge tench with bronze eyes, lord of the reed beds. It feeds only on the bottom. Always let it go.","Sazlığın efendisi, bronz gözlü dev bir kadife. Yalnızca dipte yemlenir. Hep göle bırakılır."
+FISH_lily_queen,Lily Queen,Nilüfer Sultanı
+FISH_lily_queen_DESC,"A giant pike with golden spots, hiding under the lily pads. It strikes only a moving lure. Always let it go.","Nilüferlerin altında saklanan altın benekli dev bir turna. Yalnızca oynayan yeme saldırır. Hep göle bırakılır."
+FISH_rock_jaw,Rock Jaw,Kaya Dişi
+FISH_rock_jaw_DESC,"A silver zander with fangs like rocks, hunting by the point. It strikes only a lure. Always let it go.","Burunda avlanan, kaya gibi dişleri olan gümüş bir sudak. Yalnızca yapay yeme saldırır. Hep göle bırakılır."
+FISH_stream_ghost,Stream Ghost,Dere Hayaleti
+FISH_stream_ghost_DESC,"A pale old trout that vanishes in the current. It rises only to a fly. Always let it go.","Akıntıda kaybolan, soluk ve yaşlı bir alabalık. Yalnızca sineğe çıkar. Hep göle bırakılır."
+FISH_deep_lord,Deep Lord,Derin Bey
+FISH_deep_lord_DESC,"The biggest catfish of the lake, master of the deep. It feeds only on the bottom. Always let it go.","Gölün en büyük yayını, derinlerin efendisi. Yalnızca dipte yemlenir. Hep göle bırakılır."
 PHASE_morning,Morning,Sabah
 PHASE_noon,Noon,Öğle
 PHASE_evening,Evening,Akşam

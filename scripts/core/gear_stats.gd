@@ -34,6 +34,8 @@ var attract: Dictionary = {}
 var rig_pull: float = 0.0
 ## Kuşanılan takım: yuva -> takım kimliği (tekniğin yuvaları: ContentDB.slots_for).
 var items: Dictionary = {}
+## Kuşanılan takımın fiyatı: yuva -> para (bir balığın istediği takımın "ya da daha iyisi": ReelModel.missing_gear).
+var prices: Dictionary = {}
 
 
 ## Başlangıç takımı (gear.json "start").
@@ -64,6 +66,7 @@ static func from_items(db: ContentDB, items: Dictionary, extras: Array[String]) 
 		if item.is_empty():
 			continue
 		g.items[slot] = id
+		g.prices[slot] = int(item.get("price", 0))
 		match slot:
 			"rod":
 				g.technique = str(item["technique"])

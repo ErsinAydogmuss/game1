@@ -141,6 +141,11 @@ func test_final_needs_letters_pieces_and_dough() -> void:
 	save.map_pieces = SaveData.MAX_MAP_PIECES
 	assert_true(not Secret.final_ready(save), "hamursuz değil")
 	save.flags[Secret.DOUGH_FLAG] = true
+	assert_true(not Secret.final_ready(save), "yapı 5: bölge canavarları tutulmadan değil")
+	Bosses.debug_catch_all(content(), save)
+	save.records.erase(Bosses.IDS[5])
+	assert_true(not Secret.final_ready(save), "bir canavar eksik")
+	Bosses.debug_catch_all(content(), save)
 	assert_true(Secret.final_ready(save), "hepsi tamam")
 	save.map_pieces -= 1
 	assert_true(not Secret.final_ready(save), "parça eksik")
@@ -181,12 +186,13 @@ func test_letters_are_written_and_fit_the_paper() -> void:
 					LetterPanel.TEXT_H])
 
 
-## Final hazır bir kayıt: altı mektup, dört parça, altın hamur.
+## Final hazır bir kayıt: altı mektup, dört parça, altın hamur, altı bölge canavarı.
 func _final_save() -> SaveData:
 	var save := _save(13)
 	save.letters = Secret.LETTERS.size()
 	save.map_pieces = SaveData.MAX_MAP_PIECES
 	save.flags[Secret.DOUGH_FLAG] = true
+	Bosses.debug_catch_all(content(), save)
 	return save
 
 

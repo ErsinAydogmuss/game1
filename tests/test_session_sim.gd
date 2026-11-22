@@ -36,13 +36,13 @@ const PACING := [
 	# test_pacing_guard_rails ayrıca denetler (BEFORE).
 	["buy:line_mono", 0.0, 25.0],
 	["buy:bucket_big", 25.0, 70.0],
-	["buy:boat", 90.0, 180.0],     # rütbe 9 + biriktirme (90–180)
+	["buy:boat", 70.0, 180.0],     # rütbe 9 + biriktirme (yapı 5: canavarın takımı şamandırayı erken güçlendirir, 79–98)
 	["buy:rod_spin_light", 4.0, 10.0], # spin rütbe 2'de: ilk kamışı (150) öncelikli
 	["tech:spin", 4.0, 12.0],      # spinle ilk atış
 	["buy:rod_carp_1", 15.0, 35.0], # dip rütbe 4'te: ilk kamışı (500) öncelikli
 	["tech:bottom", 15.0, 40.0],   # dipte ilk atış
-	["buy:rod_fly_1", 60.0, 120.0], # sinek rütbe 7'de: ilk kamışı (1.500) öncelikli
-	["tech:fly", 60.0, 125.0],     # dere ağzında sinekle ilk atış
+	["buy:rod_fly_1", 45.0, 120.0], # sinek rütbe 7'de: ilk kamışı (1.500) öncelikli (yapı 5: 52–55)
+	["tech:fly", 45.0, 125.0],     # dere ağzında sinekle ilk atış
 	["buy:trap_1", 8.0, 20.0],     # tuzak rütbe 3'te: ilk tuzak (150) öncelikli (ölçüm 10–17)
 	["trap", 28.0, 55.0],          # tuzaktan ilk kerevit: bırakıldıktan 20 dk sonra, sıradaki satışta
 	# Efsanevinin ilki Dalga 4'te Ay Turnası: yalnızca gece, nilüferli koyda (nilüferli koy ~10. dakikada
@@ -75,18 +75,28 @@ const PACING := [
 	["piece_1", 30.0, 80.0],
 	["piece_4", 110.0, 200.0],
 	["dough", 90.0, 240.0],
-	["final_ready", 90.0, 240.0],
-	# Final (6. adım): final gecesinde (en geç bir oyun günü sonra) gece sandalla X'e, dipte Bekçi. Yapı 4'te Bekçi en
-	# iyi dip takımını ister (altın makara rütbe 14, 10.000 para; altın örgü 9.000): bot final hazırken onlara
-	# biriktirir (shop). Yalnızca takım şartıyla 331–364. dakika; ileri bölgelerin değeriyle 213–260 (önce 152–209).
-	["keeper", 150.0, 300.0],
-	# Kepçe: bot Bekçi'nin takımına biriktirirken öteki alışverişler bekler; 6 seed'de 105–123 (önce 159–172).
-	["buy:net", 90.0, 220.0],
+	# Bölge canavarları (yapı 5; Bosses): bot sıradaki canavarın takımına biriktirir (shop), takımı tamamlanınca
+	# bölgesinde etkili teknikle atar. 10 saat × 3 seed: İskele Reisi 115–128. dakika, Nilüfer Sultanı 146–169, Saz Ağası
+	# 174–198, Kaya Dişi 182–207, Dere Hayaleti 263–281, Derin Bey (altın makara) 295–313.
+	["boss:pier_king", 70.0, 200.0],
+	["boss:lily_queen", 100.0, 240.0],
+	["boss:reed_baron", 120.0, 280.0],
+	["boss:rock_jaw", 120.0, 280.0],
+	["boss:stream_ghost", 180.0, 300.0],
 ]
 ## Geç olaylar (LATE_MINUTES'a kadar). Ay Turnası yalnızca gece nilüferli koyda (gecede %0,4–2,5): bot her gece
 ## oraya gider ama gelmesi şansa bağlı. Dalga 5'te akvaryumun parası alışverişleri öne alınca seed 1000'de 185.
 ## dakikadan 343. dakikaya kaydı (bot o güne kadar nilüferli koyda 116 gece atışı yaptı; öteki seed'ler 27–154 dk).
 const LATE := [
+	# Yapı 5: final altı canavarı da ister: Derin Bey'le final hazır olur (önce 151–188. dakika, 10 saat × 3 seed'de
+	# 295–313), Bekçi bir gece içinde (297–331; önce 213–260). Derin Bey de Bekçi gibi en iyi dip takımını ister (altın
+	# makara rütbe 14, 10.000 para; altın örgü 9.000).
+	["boss:deep_lord", 200.0, 420.0],
+	["final_ready", 200.0, 420.0],
+	["keeper", 200.0, 450.0],
+	# Kepçe: bot canavarların ve Bekçi'nin takımına biriktirirken öteki alışverişler bekler; 3 seed'de 280–308
+	# (önce 105–123).
+	["buy:net", 90.0, 400.0],
 	# Gece nilüferli koyda Efsanevi: tamamen şansa bağlı. Bot gece o koya nadiren gider (16 saatin %1–6'sı orada);
 	# Tekir'in hediyeleri bitince seed 1000'de 206 → 402 dk, istek yuvaları 5 olunca 649 ve 1077'de 428 dk (ötekiler
 	# 27–230; bot nilüferli koyda önceden daha çok vakit geçirse de zar).

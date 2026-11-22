@@ -120,6 +120,12 @@ Türlerin teknik yatkınlığı (çarpan; boş: o teknikle gelmez) ve tuzağa gi
 | Ay Turnası | Efsanevi | ×1 | ×1,4 | ×0,2 |  |  |
 | Kocabaş | Efsanevi | ×0,5 |  | ×1,5 |  |  |
 | Gölün Bekçisi | Masalsı |  |  | ×1 |  |  |
+| İskele Reisi | Efsanevi | ×1 |  |  |  |  |
+| Nilüfer Sultanı | Efsanevi |  | ×1 |  |  |  |
+| Saz Ağası | Efsanevi |  |  | ×1 |  |  |
+| Kaya Dişi | Efsanevi |  | ×1 |  |  |  |
+| Dere Hayaleti | Efsanevi |  |  |  | ×1 |  |
+| Derin Bey | Efsanevi |  |  | ×1 |  |  |
 
 ## Vakit ve hava
 
@@ -152,6 +158,12 @@ Türlerin teknik yatkınlığı (çarpan; boş: o teknikle gelmez) ve tuzağa gi
 | Ay Turnası | — | — | — | ✓ | bulutlu 0,8, yağmurlu 0,6 |
 | Kocabaş | — | — | — | ✓ | yalnızca yağmurlu |
 | Gölün Bekçisi | — | — | — | ✓ | yalnızca sisli |
+| İskele Reisi | 1 | 1 | 1 | 1 |  |
+| Nilüfer Sultanı | 1 | 1 | 1 | 1 |  |
+| Saz Ağası | 1 | 1 | 1 | 1 |  |
+| Kaya Dişi | 1 | 1 | 1 | 1 |  |
+| Dere Hayaleti | 1 | 1 | 1 | 1 |  |
+| Derin Bey | 1 | 1 | 1 | 1 |  |
 
 ### İskele Koyu, şamandıra: vakte göre (açık hava) ve havaya göre (öğle)
 

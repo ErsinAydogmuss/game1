@@ -255,13 +255,25 @@ static func excess_for(fight: Dictionary, percentile: int, carry: int) -> int:
 	return maxi(0, FishTable.stars(percentile) - carry)
 
 
-## Balığın istediği takımdan (fight.gear) kuşanılmamış olanlar, verideki sırayla (yoksa boş).
+## Balığın istediği takımdan (fight.gear) kuşanılmamış olanlar, verideki sırayla (yoksa boş). Aynı yuvada daha iyisi
+## (daha pahalısı; kamışta aynı tekniğin) de sayılır (yapı 5: bölge canavarı "Güçlü makara" isterken altın makara
+## takan oyuncu eksik sayılmasın): ContentDB her istenen takımın yuvasını, tekniğini ve fiyatını fight.gear_need'e yazar.
 static func missing_gear(fight: Dictionary, gear: GearStats) -> Array[String]:
 	var out: Array[String] = []
-	var have := gear.items.values() if gear != null else []
-	for id: String in (fight.get("gear", PackedStringArray()) as PackedStringArray):
-		if not id in have:
-			out.append(id)
+	var needs: Array = fight.get("gear_need", [])
+	var ids: PackedStringArray = fight.get("gear", PackedStringArray())
+	for i in ids.size():
+		var id := ids[i]
+		if gear != null and id in gear.items.values():
+			continue
+		if gear != null and i < needs.size():
+			var need: Dictionary = needs[i]
+			var slot := str(need["slot"])
+			var technique := str(need["technique"])
+			if gear.items.has(slot) and int(gear.prices.get(slot, -1)) >= int(need["price"]) \
+					and (technique.is_empty() or technique == gear.technique):
+				continue
+		out.append(id)
 	return out
 
 

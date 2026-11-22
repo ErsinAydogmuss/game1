@@ -162,9 +162,11 @@ static func give_dough(db: ContentDB, save: SaveData) -> bool:
 	return true
 
 
-## Final hazır mı: altı mektup, dört harita parçası ve altın hamur (6. adım: sisli gece, derin orta, Bekçi).
+## Final hazır mı: altı mektup, dört harita parçası, altın hamur ve (yapı 5) altı bölge canavarı (Bosses.all_caught; 6. adım:
+## sisli gece, derin orta, Bekçi).
 static func final_ready(save: SaveData) -> bool:
-	return save.letters >= LETTERS.size() and save.map_pieces >= SaveData.MAX_MAP_PIECES and has_dough(save)
+	return save.letters >= LETTERS.size() and save.map_pieces >= SaveData.MAX_MAP_PIECES and has_dough(save) \
+			and Bosses.all_caught(save)
 
 
 ## Final gecesi: final hazır ve Bekçi henüz bırakılmadı. Bu sürede her gece sisli (Weather.at): sisli gece

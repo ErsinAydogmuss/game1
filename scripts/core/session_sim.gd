@@ -118,13 +118,19 @@ var rerolls: int = 0
 var aquarium_coins: int = 0
 ## Tekir'e verilen balık (dükkâna uğrayınca kedi açsa: kovadaki en ucuz balık).
 var cat_meals: int = 0
+## Bölge canavarları (yapı 5): tutulan canavar ve ödüllerinin parası (earned'e de girer).
+var bosses_caught: int = 0
+var boss_coins: int = 0
+## Kaçan canavar (oyunda RETURN_S sonra yine gelir): sıradaki atışta zarsız çıkar.
+var _boss_back: String = ""
 ## Olayların ilk olduğu dakika: "rank_3", "buy" (ilk alışveriş), "buy:<takım>", "sell", "species_4",
 ## "rarity_<id>", "zone:<bölge>" (o bölgede ilk avlanış), "tech:<teknik>" (o teknikle ilk atış),
 ## "trap_set" (ilk tuzak bırakıldı), "trap" (tuzaktan ilk kerevit), "release" (ilk bırakılan balık), "trash"
 ## (ilk çöp), "love_<seviye>" (göl sevgisinin seviyesi), "requests" (ilk istekler), "request_1" (ilk biten
 ## istek), "requests_10" (onuncusu), "letter_<n>" (okunan mektup), "golden_<parça>" (altın istek geldi),
 ## "piece_<parça>" (harita parçası), "dough" (altın hamur), "final_ready", "keeper" (Gölün Bekçisi göle döndü),
-## "aquarium" (bağış kutusundan ilk para), "cat" (Tekir ilk kez beslendi).
+## "aquarium" (bağış kutusundan ilk para), "cat" (Tekir ilk kez beslendi), "boss:<canavar>" (tutuldu), "bosses_<n>"
+## (n. canavar).
 var milestones: Dictionary = {}
 ## Reklam izleyen oyuncu (madde 15; varsayılan kapalı) ve sayaçları: reklamla gelen para (earned'e de girer),
 ## izlenen ödüllü reklam, kurtarılan balık, geçiş reklamı.
@@ -202,6 +208,8 @@ func cast_once() -> void:
 		_sell_and_shop()
 	_tend_secret()
 	if _tend_keeper():
+		return
+	if _tend_boss():
 		return
 	var phase := str(conditions()["phase"])
 	if phase != _last_phase:
@@ -635,6 +643,12 @@ func _choose_zone() -> void:
 	var share := _num("boat_share", 0.5)
 	if not boat.is_empty() and share > 0.0 and fmod(float(_trips) * share, 1.0) + share >= 1.0 - 0.0001:
 		next = boat
+	# Bölge canavarının takımı tamamsa onun bölgesinde (yapı 5: oyuncu canavarı kovalar).
+	var boss := _boss_target()
+	if not boss.is_empty() and _boss_ready(boss):
+		var lair := db.zone(spot_id, str(db.fish_by_id(boss)["boss"]))
+		if not lair.is_empty():
+			next = lair
 	# Altın istek vakti gelince bölgesinde kovalanır (akşam nilüferli koy, gece derin orta).
 	var want := _golden_want()
 	if want.has("zone"):
@@ -685,6 +699,11 @@ func _catchable(z: Dictionary, fish_id: String) -> bool:
 func _choose_technique() -> void:
 	var best := "float"
 	var best_score := -INF
+	# Canavarın bölgesinde takımı tamamsa canavarın tekniği (bölgenin etkili tekniği).
+	var boss := _boss_target()
+	if not boss.is_empty() and str(db.fish_by_id(boss)["boss"]) == zone_id and _boss_ready(boss):
+		best_score = INF
+		best = Bosses.technique_of(db, spot_id, boss)
 	for t: String in ContentDB.TECHNIQUES:
 		if not Economy.technique_ready(db, save, t) or not CatchOdds.allows(_spot, t):
 			continue
@@ -844,6 +863,112 @@ func _tend_keeper() -> bool:
 	return true
 
 
+## Sıradaki bölge canavarı (yapı 5): tutulmamış, bölgesi açık, istediği takımın ve tekniğinin rütbesi gelmiş
+## canavarlardan istediği rütbe en küçük olan (eşitse Bosses.IDS sırası); yoksa "".
+func _boss_target() -> String:
+	var best := ""
+	var best_rank := 1 << 20
+	var rank := Rank.rank(db, save)
+	for id in Bosses.IDS:
+		if Bosses.caught(save, id):
+			continue
+		var def := db.fish_by_id(id)
+		var lair := db.zone(spot_id, str(def.get("boss", "")))
+		if lair.is_empty() or not Zones.unlocked(db, save, lair):
+			continue
+		var need := maxi(int(lair["rank"]), db.technique_rank(str(lair["effective"])))
+		for gid: String in (def["fight"]["gear"] as PackedStringArray):
+			need = maxi(need, int(db.gear_item(gid).get("rank", 1)))
+		if need <= rank and need < best_rank:
+			best = id
+			best_rank = need
+	return best
+
+
+## Canavarın takımı tamam mı: sendeki istenenler (ya da aynı yuvadaki daha iyisi) kuşanılır, sonra eksik yok mu.
+func _boss_ready(id: String) -> bool:
+	var t := Bosses.technique_of(db, spot_id, id)
+	if not Economy.technique_ready(db, save, t):
+		return false
+	for gid: String in Bosses.missing(db, id, Economy.gear_for(db, save, t)):
+		var have := gid if Economy.owns(db, save, gid) else _better_owned(gid, t)
+		if not have.is_empty():
+			Economy.equip(db, save, have, t)
+	return Bosses.missing(db, id, Economy.gear_for(db, save, t)).is_empty()
+
+
+## Aynı yuvada istenenden daha iyi (daha pahalı; kamışta aynı tekniğin) sahip olunan takım ("" yoksa).
+func _better_owned(gid: String, t: String) -> String:
+	var want := db.gear_item(gid)
+	var best := ""
+	for item in db.gear:
+		if str(item["category"]) != str(want["category"]) or int(item["price"]) < int(want["price"]):
+			continue
+		if str(item["category"]) == "rod" and str(item.get("technique", "")) != t:
+			continue
+		if Economy.owns(db, save, str(item["id"])):
+			best = str(item["id"])
+	return best
+
+
+func _owns_better(gid: String, t: String) -> bool:
+	return not _better_owned(gid, t).is_empty()
+
+
+## Bölge canavarı (yapı 5): sıradaki canavarın takımı tamamsa bölgesinde etkili teknikle atılır; atışın zarı
+## (Bosses.roll; kaçan canavar zarsız döner) tutarsa canavar belirir (boss_s) ve tepkili oyuncuyla dalışlarıyla
+## çekişir. Tutulursa ödülü (earned'e) ve göle bırakılır; kaçarsa RETURN_S beklenir, sonraki atışta yine gelir.
+## Zar tutmazsa olağan atış (false).
+func _tend_boss() -> bool:
+	var id := _boss_target()
+	if id.is_empty() or not _boss_ready(id):
+		return false
+	var def := db.fish_by_id(id)
+	var lair_id := str(def["boss"])
+	var t := Bosses.technique_of(db, spot_id, id)
+	if zone_id != lair_id:
+		_go_to(lair_id)
+	if technique != t:
+		technique = t
+		elapsed += _num("switch_s", 3.0)
+		_paused_s += _num("switch_s", 3.0)
+	if _boss_back != id and not Bosses.roll(save, casts):
+		return false
+	_boss_back = ""
+	var before := elapsed
+	var cond := conditions()
+	casts += 1
+	_mark("tech:" + t)
+	_mark("zone:" + lair_id)
+	elapsed += _num("cast_s", 1.6) + _range("boss_s", Vector2(6.0, 12.0))
+	var rules := db.rules
+	var gear := Economy.gear_for(db, save, t)
+	var start := gear.range_m if t == "bottom" else minf(_range("start_m", Vector2(4, 8)), gear.range_m)
+	var model := ReelModel.new(rules, def["fight"], gear.reel_speed, start,
+			gear.range_m + rules.escape_extra + gear.escape_extra, false, rng.randi(), gear, Bosses.PERCENTILE)
+	var fight := ReelBot.play(model, ReelBot.make(ReelBot.Style.REACT, _num("reaction_s", 0.45)))
+	elapsed += float(fight["seconds"])
+	if int(fight["outcome"]) != ReelModel.Outcome.CAUGHT:
+		lost += 1
+		elapsed += _num("lost_s", 2.5) + Bosses.RETURN_S
+		_boss_back = id
+		_count_zone(before, cond)
+		return true
+	_on_catch(def, Bosses.PERCENTILE, cond)
+	var reward := Bosses.reward(db, id)
+	save.coins += reward
+	earned += reward
+	boss_coins += reward
+	bosses_caught += 1
+	_mark("boss:" + id)
+	_mark("bosses_%d" % Bosses.caught_count(db, save, spot_id))
+	_check_final()
+	_count_zone(before, cond)
+	_choose_zone()
+	_choose_technique()
+	return true
+
+
 ## Final hazır olduysa (altı mektup, dört parça, altın hamur) ilk dakikası.
 func _check_final() -> void:
 	if Secret.final_ready(save):
@@ -945,6 +1070,14 @@ func shop() -> Array[String]:
 	# İlk kerevit tuzağı da öncelikli (rütbe 3'te Dede haber verir, düğme atar).
 	if TrapSim.owned(db, save) == 0:
 		first.append(TrapSim.next_trap(db, save))
+	# Sıradaki bölge canavarının istediği takım öncelikli (yapı 5; bölge kartı ve Dede eksikleri söyler; oyuncu onlar
+	# için biriktirir): sende olan ya da aynı yuvada daha iyisi sende olan alınmaz.
+	var boss := _boss_target()
+	if not boss.is_empty():
+		var t := Bosses.technique_of(db, spot_id, boss)
+		for gid: String in Bosses.missing(db, boss, Economy.gear_for(db, save, t)):
+			if not Economy.owns(db, save, gid) and not _owns_better(gid, t):
+				first.append(db.gear_item(gid))
 	# Final hazırken Bekçi'nin istediği en iyi dip takımı (fish.json keeper fight.gear) öncelikli: Dede eksikleri
 	# söyler, oyuncu onlar için biriktirir. Rütbesi gelmeyen atlanır (altın makara rütbe 14).
 	if Secret.keeper_night(save):

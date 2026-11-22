@@ -6,7 +6,7 @@ func test_loads_without_errors() -> void:
 	var db := content()
 	assert_eq(db.errors.size(), 0, "içerik hataları: " + ", ".join(db.errors))
 	assert_eq(db.rarities.size(), 6, "6 nadirlik (Masalsı eklendi)")
-	assert_eq(db.fish.size(), 19, "19 balık (Dalga 2'de 7 tür, Dalga 3'te aynalı sazan, iki alabalık ve kerevit, Dalga 4'te Ay Turnası, Kocabaş ve Gölün Bekçisi)")
+	assert_eq(db.fish.size(), 25, "25 balık (Dalga 2'de 7 tür, Dalga 3'te aynalı sazan, iki alabalık ve kerevit, Dalga 4'te Ay Turnası, Kocabaş ve Gölün Bekçisi, yapı 5'te 6 bölge canavarı)")
 	assert_true(not db.spot("home_lake").is_empty(), "testlerin gölü")
 	assert_eq(db.main_spot, "big_lake", "oyun Köy Gölü'nde açılır")
 	assert_true(db.gear.size() >= 30, "dükkân takımı okundu")
@@ -30,9 +30,10 @@ func test_fish_follow_the_design() -> void:
 	# Mersin koruma altında; Ay Turnası (gece) ve Kocabaş (yağmurlu gece) efsane, Gölün Bekçisi hikâyenin
 	# balığı: satılmaz, yalnızca bırakılır (Dalga 4, Ersin'in seçimi); ötekiler satılır.
 	var released := ["sturgeon", "moon_pike", "kocabas", "keeper"]
+	released.append_array(Bosses.IDS)
 	for f in db.fish:
 		assert_eq(bool(f["release_only"]), str(f["id"]) in released,
-				"%s: yalnızca mersin, Ay Turnası, Kocabaş ve Gölün Bekçisi bırakılır" % f["id"])
+				"%s: yalnızca mersin, Ay Turnası, Kocabaş, Gölün Bekçisi ve bölge canavarları bırakılır" % f["id"])
 	assert_eq(int(db.fish_by_id("sturgeon")["value"]), 0, "mersin satılmaz")
 	assert_eq(db.rarity_id(int(db.fish_by_id("moon_pike")["rarity"])), "legendary", "Ay Turnası Efsanevi")
 	assert_eq(db.rarity_id(int(db.fish_by_id("kocabas")["rarity"])), "legendary", "Kocabaş Efsanevi")

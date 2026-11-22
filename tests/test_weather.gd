@@ -97,6 +97,7 @@ func test_final_nights_are_foggy_until_the_keeper_is_released() -> void:
 	save.letters = Secret.LETTERS.size()
 	save.map_pieces = SaveData.MAX_MAP_PIECES
 	save.flags[Secret.DOUGH_FLAG] = true
+	Bosses.debug_catch_all(db, save)
 	var rain_day := -1
 	for day in range(1, 60):
 		var start := day * DayClock.day_s(rules)

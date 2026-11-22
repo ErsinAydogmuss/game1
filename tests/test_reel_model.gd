@@ -203,6 +203,9 @@ func test_never_reeling_lets_fish_escape() -> void:
 func test_gentle_fight_never_snaps_or_escapes() -> void:
 	var limit := content().rules.limit
 	for f in content().fish:
+		# Bölge canavarı yumuşak çekişmez (yalnızca senaryolu ilk av): test_bosses.
+		if not str(f["boss"]).is_empty():
+			continue
 		for style: ReelBot.Style in [ReelBot.Style.ALWAYS, ReelBot.Style.PERFECT]:
 			var model := _model(f["id"], 9.0, true, 21)
 			model.holding = true
@@ -292,7 +295,7 @@ func test_top_bottom_gear_keeps_skill_relevant() -> void:
 	var first := _bottom_first_gear()
 	for f in db.fish:
 		var id := str(f["id"])
-		if db.affinity(id, "bottom") <= 0.0:
+		if db.affinity(id, "bottom") <= 0.0 or not str(f["boss"]).is_empty():
 			continue
 		var slow := _rates(id, ReelBot.Style.REACT, 0.7, false, top, 0, BOTTOM_DISTANCES)
 		assert_true(slow["caught"] >= 0.98, "%s: en iyi dip takımıyla 0,7 sn tepkiyle tutulur (%.2f)" % [id, slow["caught"]])
@@ -322,7 +325,7 @@ func test_spin_gear_keeps_skill_relevant() -> void:
 	var top := GearStats.best(db, "spin")
 	for f in db.fish:
 		var id := str(f["id"])
-		if db.affinity(id, "spin") <= 0.0:
+		if db.affinity(id, "spin") <= 0.0 or not str(f["boss"]).is_empty():
 			continue
 		for gear: GearStats in [first, top]:
 			var name := "en iyi spin takımı" if gear == top else "spin kamışı"
@@ -355,7 +358,7 @@ func test_fly_gear_keeps_skill_relevant() -> void:
 	var top := GearStats.best(db, "fly")
 	for f in db.fish:
 		var id := str(f["id"])
-		if db.affinity(id, "fly") <= 0.0:
+		if db.affinity(id, "fly") <= 0.0 or not str(f["boss"]).is_empty():
 			continue
 		for gear: GearStats in [first, top]:
 			var name := "en iyi sinek takımı" if gear == top else "sinek kamışı"
@@ -370,11 +373,13 @@ func test_fly_gear_keeps_skill_relevant() -> void:
 					roundi(limit * 100), hold["caught"]])
 
 
-## Dalış yalnızca Gölün Bekçisi'nde (fight.stages); öteki balıkların çekişmesi ve zar sırası eskisi gibi.
-func test_only_the_keeper_dives() -> void:
+## Dalış yalnızca Gölün Bekçisi'nde ve bölge canavarlarında (fight.stages); öteki balıkların çekişmesi ve zar sırası
+## eskisi gibi.
+func test_only_the_keeper_and_bosses_dive() -> void:
 	for f in content().fish:
 		var model := _model(f["id"], 9.0, false, 7)
-		assert_eq(model.has_dives(), str(f["id"]) == Secret.KEEPER_ID, "%s: dalış yalnızca Bekçi'de" % f["id"])
+		var diver := str(f["id"]) == Secret.KEEPER_ID or not str(f["boss"]).is_empty()
+		assert_eq(model.has_dives(), diver, "%s: dalış yalnızca Bekçi'de ve canavarlarda" % f["id"])
 
 
 ## Gölün Bekçisi her çekişmede iki kez dalar (takıldığı uzaklığın %60'ına ve %30'una gelince): her dalıştan tam
