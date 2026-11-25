@@ -101,6 +101,9 @@ Anket: çizgi film şiddeti yok, korku yok, kumar ve şans oyunu yok (ödüllü 
 şans satılmaz), sınırsız web erişimi yok, kullanıcı içeriği yok. Sonuç büyük olasılıkla **4+**; hedef kitle 13+
 olduğundan **Kids kategorisi seçilmez**.
 
+**Reklam (Capabilities → Advertising): Evet.** Oyunda reklam var; Apple 1.0.0 (5)'i 24 Kasım 2026'da 2.3.6 (Accurate
+Metadata) ile bunun "Hayır" olduğu için geri çevirdi. "Evet" yapınca sonuç yine 4+.
+
 ### Fiyat ve bulunabilirlik
 
 Ücretsiz; bütün ülkeler (ya da Kazı'daki gibi).

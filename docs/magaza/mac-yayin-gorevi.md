@@ -448,7 +448,8 @@ Yapı işlenmiş olmalı (TestFlight'ta "1.0.0 (3)", durum "Ready to Submit" ya 
      - Şiddet (çizgi film ya da gerçekçi), korku, cinsellik, küfür, uyuşturucu, kumar ya da simüle kumar,
        yarışma: yok.
      - Sınırsız web erişimi yok (gizlilik düğmesi Safari'yi açar). Kullanıcı içeriği ve mesajlaşma yok.
-     - Reklam soruluyorsa var.
+     - **Advertising (Reklam): Evet** (1. adım, Capabilities). Apple 24 Kasım 2026'da "Hayır" diye 2.3.6 ile geri
+       çevirdi.
      - Kids kategorisi seçme.
    - **Dil ekle → English (U.S.)**: ad "Olta: Secret of the Lake", alt başlık "A cozy fishing adventure".
 2. **Fiyatlandırma ve Bulunabilirlik:**
