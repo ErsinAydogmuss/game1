@@ -242,6 +242,10 @@ Ersin'in yapacakları (AdMob, mağazalar): [`reklam-kurulum.md`](reklam-kurulum.
   `tools/check_aab.py`), sürüm 1.0.0 (Android sürüm kodu 1, iPhone yapı numarası 1). Ekran kaydını Ersin çeker
   (`magaza/yayin.md`).
 - [ ] A5 Gerçek AdMob kimlikleri (Ersin gönderince) ve son denetim.
+- [x] A6 Reklamlar Kazı gibi (27 Kasım 2026, Ersin: "çok az reklam çıkıyor"): geçiş reklamı satışa gidişte de (SAT'la
+  Nine'ye giderken, iskelede satıştan sonra dükkân kapanınca; önceden bir bölgede durup satan hiç görmüyordu), satışta
+  2 katı günde 8 ve 10 dakikada bir. Reklamlı oyuncu saatte +%48–69 (ortalama +%55); saatte ~3 geçiş, ~8 ödüllü
+  reklam. iPhone yapı 6, Android yapı 7.
 
 ## Faz 3: Ücretsiz oyun katmanı
 

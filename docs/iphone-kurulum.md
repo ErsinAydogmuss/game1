@@ -404,6 +404,14 @@ Oyun açılınca kullanıcıdan şunlara bakmasını iste (v0.3: büyük göl; v
     (tutmadıkların siluet). Dördüncü harita parçasında Dede "Ama önce her bölgenin canavarını yen"; altısı tutulmadan
     final gecesi gelmiyor mu? Deneme için SIR + mektuplar bitince sıradaki canavarı tutulmuş sayar.
 
+78. **Reklamlar Kazı gibi: satışta geçiş reklamı.** Önce 20 dakika oyna (ilk 20 dakikada geçiş reklamı yok; deneme
+    düğmeleri bu süreyi kısaltmaz). Kova dolunca başka bir bölgedeyken SAT'a bas: ekran kararır, karanlıkta
+    "DENEME REKLAMI" (geçiş), kapatınca dükkân. Sat, dükkânı kapat: ikinci reklam çıkmıyor mu?
+79. **Reklamlar Kazı gibi: iskelede satış.** 8 dakika sonra iskelede Nine'nin yanında sat ve dükkânı kapat: ekran
+    kararır, geçiş reklamı. Satmadan açıp kapatınca reklam çıkmıyor mu? Reklam bitince oyun kaldığı yerden sürüyor mu?
+80. **Reklamlar Kazı gibi: satışta 2 katı.** Satıştan sonra "Reklam izle: 2 katı" 10 dakikada bir geliyor mu (önce
+    30)? 10 dakika dolmadan ikinci satışta teklif yok mu?
+
 Gözlemleri kısa bir liste hâlinde yaz. Kullanıcı bu listeyi kodu yazan Claude oturumuna iletecek.
 
 ### 12. Telefonda hız ölçümü

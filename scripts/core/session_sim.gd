@@ -353,6 +353,8 @@ func _sell_and_shop() -> void:
 		if AdRules.box_worth_offer(box):
 			_ad_double(AdRules.AQUARIUM, box)
 	shop()
+	# Satıştan sonra dükkân kapanınca geçiş reklamı (oyundaki gibi; uzaktan gelince yolda çıkmıştır: _travel).
+	_ad_interstitial()
 	# Göl sevgisi 6'da Nine altın hamuru verir (dükkân açılınca).
 	if Secret.give_dough(db, save):
 		_mark("dough")

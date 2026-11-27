@@ -3,7 +3,8 @@ extends RefCounted
 ## Reklamların kuralları (Ersin'in kararı, 4 Kasım 2026; Kazı'nın v0.14 yaklaşımı): ödüllü reklamın yerleri, günlük
 ## sınırlar, bekleme süreleri ve geçiş reklamının ne zaman çıkacağı. Ödüllü reklamı oyuncu ister; izlemezse hiçbir şey
 ## kaybetmez, ödül sabittir (zar yok: oranlara ve şans garantisine dokunmaz). Geçiş reklamı yalnızca oyuncunun kendi
-## başlattığı bir geçişten sonra çıkar (haritayla bölge değiştirme, Dede'yle çay: ekran zaten kararıyor).
+## başlattığı bir geçişten sonra çıkar (haritayla bölge değiştirme, sandal, Dede'yle çay, SAT'la Nine'ye gidiş ve
+## satıştan sonra dükkânın kapanışı: ekran kararır).
 ##
 ## Durum tek bir sözlükte (kaydın ayarlarındaki "ads"; kayıt sürümü değişmez): gün (yyyymmdd) ve o günün sayaçları,
 ## toplam oyun süresi ve son reklamların zamanı (oyun saniyesi; Ads her kare ekler), bildirim görüldü mü. JSON'dan
@@ -23,11 +24,12 @@ const PLACES: Array[String] = [SELL, RESCUE, REQUEST, AQUARIUM]
 const INTERSTITIAL := "interstitial"
 
 ## Yer başına günlük sınır ve satışın, akvaryumun beklemesi (bir öncekinden en az bu kadar oyun saniyesi sonra):
-## reklam izleyen oyuncunun denge ölçümüyle seçildi (SessionSim.ads, economy_report --ads; docs/gdd.md §11). İlk
-## değerlerle (satış günde 8, 10 dakikada bir; istek 6; akvaryum 4) her teklifi izleyen oyuncu saatte +%56 para
-## kazanıyordu (satışın 2 katı kazancın %35'i); bunlarla +%17–30.
-const DAILY_CAP := { SELL: 4, RESCUE: 6, REQUEST: 3, AQUARIUM: 3 }
-const SELL_COOLDOWN := 1800.0
+## reklam izleyen oyuncunun denge ölçümüyle (SessionSim.ads, economy_report --ads; docs/gdd.md §11). A3'te satış günde
+## 4 ve 30 dakikada bir, istek ve akvaryum günde 3'e kısılmıştı (ilk değerlerle, satış günde 8 ve 10 dakikada bir,
+## istek 6, akvaryum 4, her teklifi izleyen oyuncu saatte +%56 kazanıyordu); Ersin'in kararıyla (27 Kasım 2026: "çok
+## az reklam çıkıyor") satış yine Kazı'daki gibi günde 8 ve 10 dakikada bir; istek ve akvaryum günde 3.
+const DAILY_CAP := { SELL: 8, RESCUE: 6, REQUEST: 3, AQUARIUM: 3 }
+const SELL_COOLDOWN := 600.0
 const AQUARIUM_COOLDOWN := 900.0
 ## Bundan küçük satışa ve kutuya teklif yok (para).
 const SELL_MIN := 30

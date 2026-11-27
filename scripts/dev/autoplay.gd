@@ -7290,6 +7290,57 @@ func _play_ads() -> void:
 	await _wait_until(func() -> bool: return Ads.showing, 2.0)
 	await _wait_until(func() -> bool: return not Ads.showing and not fade.busy(), 5.0)
 	_check("çayda da (8 dakika sonra)", Ads.fake_interstitials_shown == 2)
+	# Satışa gidişte (Ersin, 27 Kasım 2026; Kazı'nın yüzeye çıkışı gibi): SAT'la uzaktan Nine'ye giderken ekran
+	# karanlıkken; dükkân açılır, satış ve kapanış ikinci reklam getirmez (8 dakika).
+	main.call("_travel", "reeds")
+	await _wait_until(func() -> bool: return not fade.busy(), 3.0)
+	await _wait(0.8)
+	AdRules.add_play(st, AdRules.INTERSTITIAL_GAP)
+	for c: Array in [["carp", 58], ["perch", 33]]:
+		Bucket.add(db, save, str(c[0]), int(c[1]), 2)
+	GameState.changed.emit()
+	main.call("_go_sell")
+	var sell_ad := await _wait_until(func() -> bool: return Ads.showing, 2.0)
+	var sell_dark := fade.busy() and fade.color.a > 0.99
+	await _wait_until(func() -> bool: return not Ads.showing and not fade.busy() and shop.visible, 6.0)
+	_check("SAT'la uzaktan satışa giderken, ekran karanlıkken geçiş reklamı; sonra dükkân", sell_ad and sell_dark
+			and Ads.fake_interstitials_shown == 3 and shop.visible)
+	sell = shop.find_child("SellAll", true, false) as Button
+	if sell != null:
+		await _tap_control(sell)
+	await _wait_frames(3)
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait(1.2)
+	_check("o satışın dükkânı kapanınca ikinci reklam yok (8 dakika)", not shop.visible and not fade.busy()
+			and Ads.fake_interstitials_shown == 3)
+	# İskelede Nine'nin yanında satan: satıştan sonra dükkân kapanınca ekran kararır, reklam karanlıkta.
+	AdRules.add_play(st, AdRules.INTERSTITIAL_GAP)
+	for c: Array in [["tench", 44], ["bream", 51]]:
+		Bucket.add(db, save, str(c[0]), int(c[1]), 2)
+	GameState.changed.emit()
+	await _tap(_screen(_nine().head_point()))
+	await _wait_frames(4)
+	sell = shop.find_child("SellAll", true, false) as Button
+	if sell != null:
+		await _tap_control(sell)
+	await _wait_frames(3)
+	_check("iskelede satışta geçiş reklamı yok (dükkân açık)", shop.visible and Ads.fake_interstitials_shown == 3)
+	await _tap(shop.close_button.get_global_rect().get_center())
+	var close_ad := await _wait_until(func() -> bool: return Ads.showing, 2.0)
+	var close_dark := fade.busy() and fade.color.a > 0.99
+	await _wait_until(func() -> bool: return not Ads.showing and not fade.busy(), 5.0)
+	_check("iskelede satıştan sonra dükkân kapanınca, ekran karanlıkken geçiş reklamı", close_ad and close_dark
+			and Ads.fake_interstitials_shown == 4)
+	# Satışsız açılıp kapanan dükkân reklam getirmez.
+	AdRules.add_play(st, AdRules.INTERSTITIAL_GAP)
+	await _wait(0.8)
+	await _tap(_screen(_nine().head_point()))
+	await _wait_frames(4)
+	var opened := shop.visible
+	await _tap(shop.close_button.get_global_rect().get_center())
+	await _wait(1.2)
+	_check("satış yapmadan kapanan dükkân reklam getirmez", opened and not shop.visible and not fade.busy()
+			and Ads.fake_interstitials_shown == 4)
 	main.call("_travel", "dock_cove")
 	await _wait_until(func() -> bool: return not fade.busy(), 3.0)
 	await _wait(1.0)

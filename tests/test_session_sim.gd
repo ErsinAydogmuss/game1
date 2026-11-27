@@ -350,10 +350,11 @@ func test_bot_collects_the_aquarium() -> void:
 	assert_between(float(rate), 150.0, 450.0, "90 dakikada saatlik bağış (%d tür)" % Aquarium.fish(db, sim.save).size())
 
 
-## Reklam izleyen oyuncu (A3; docs/gdd.md §11): teklif çıkınca hep izleyen bot reklamsıza göre saatte en çok %40 daha
-## fazla kazanır (economy_report --ads, 16 sa × 6 seed: %17–30), en az %5 (izlemeye değsin); saatte en çok 9 ödüllü
-## reklam (6,5–7); geçiş reklamı gelir; tekne ve rütbeler reklamsızdan belirgin önce gelmez (ilerleme rütbeye bağlı;
-## reklamın süresi oyuncunun zamanından gider).
+## Reklam izleyen oyuncu (A3; docs/gdd.md §11): teklif çıkınca hep izleyen bot reklamsıza göre saatte en çok %70 daha
+## fazla kazanır (economy_report --ads, 16 sa × 6 seed: %48–69, ortalama %55; satış Kazı gibi günde 8 ve 10 dakikada
+## bir, Ersin'in kararı 27 Kasım 2026; önce %17–30; 240 dakikada seed'e göre %10–60), en az %5 (izlemeye değsin);
+## saatte en çok 10 ödüllü reklam (8–9); geçiş reklamı gelir; tekne ve rütbeler reklamsızdan belirgin önce gelmez
+## (ilerleme rütbeye bağlı; reklamın süresi oyuncunun zamanından gider).
 func test_ad_watcher_earns_a_fair_bonus() -> void:
 	var db := content()
 	for seed_value: int in [SEEDS[0], SEEDS[1]]:
@@ -364,9 +365,9 @@ func test_ad_watcher_earns_a_fair_bonus() -> void:
 		watcher.run(240.0)
 		assert_eq(plain.ad_rewarded + plain.ad_interstitials, 0, "seed %d: reklamsız oyuncu reklam izlemez" % seed_value)
 		var gain := (watcher.earned / watcher.elapsed) / maxf(1.0, plain.earned / plain.elapsed) - 1.0
-		assert_between(gain, 0.05, 0.40, "seed %d: reklamlı oyuncunun saatlik parası (%+.1f%%)" % [seed_value, 100.0 * gain])
+		assert_between(gain, 0.05, 0.70, "seed %d: reklamlı oyuncunun saatlik parası (%+.1f%%)" % [seed_value, 100.0 * gain])
 		var hours := watcher.elapsed / 3600.0
-		assert_between(watcher.ad_rewarded / hours, 1.0, 9.0, "seed %d: saatte ödüllü reklam" % seed_value)
+		assert_between(watcher.ad_rewarded / hours, 1.0, 10.0, "seed %d: saatte ödüllü reklam" % seed_value)
 		assert_true(watcher.ad_interstitials > 0, "seed %d: geçiş reklamı gelir" % seed_value)
 		assert_eq(watcher.ad_coins, int(watcher.ad_place_coins.get(AdRules.SELL, 0))
 				+ int(watcher.ad_place_coins.get(AdRules.REQUEST, 0)) + int(watcher.ad_place_coins.get(AdRules.AQUARIUM, 0)),

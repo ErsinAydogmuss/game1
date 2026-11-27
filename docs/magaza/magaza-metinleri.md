@@ -194,6 +194,20 @@ Olta: Secret of the Lake is here! Watch the shadows, cast your line, catch 19 sp
 </en-US>
 ```
 
+## Sürüm notları (1.0.1, iPhone yapı 6, Android yapı 7)
+
+İki mağaza. Yapı 5'in (iPhone) ya da 6'nın (Android) maddeleri yayında değilse onların notunu kullan: bu turun farkı
+yalnızca reklamın kuralı (satışta 2 katı teklifi daha sık; geçiş reklamı satıştan sonra da). En çok 500 karakter.
+
+```
+<tr-TR>
+Satışta "Reklam izle: 2 katı" teklifi artık daha sık geliyor: 10 dakikada bir, günde 8 kez. Küçük düzeltmeler.
+</tr-TR>
+<en-US>
+The "Watch an ad: double it" offer after a sale now comes more often: every 10 minutes, up to 8 times a day. Small fixes.
+</en-US>
+```
+
 ## Sürüm notları (1.0.0, yapı 6, Android)
 
 Yalnızca Play (iPhone'da yapı 5 kalır). Kapanma düzeltmesi ve yapı 5'in maddeleri (yapı 5 incelemedeyken yerine geçer).

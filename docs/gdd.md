@@ -1316,7 +1316,7 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
 
     | Yer | Ne zaman | Ödül | Sınır |
     |---|---|---|---|
-    | Satışta 2 katı | Nine'de kova satılınca, Kova sekmesinde (en az 30 para) | satışın parası bir kez daha | günde 4, 30 dakikada bir |
+    | Satışta 2 katı | Nine'de kova satılınca, Kova sekmesinde (en az 30 para) | satışın parası bir kez daha | günde 8, 10 dakikada bir (Kazı gibi; önce günde 4, 30 dakikada bir) |
     | Kaçan balığı kurtar | Nadir ve üstü balık çekişmede kaçınca (misina koptu ya da kaçtı), 0,5 sn sonra kart; takımın taşıyamadığı iri balık ve Gölün Bekçisi değil | balık kaçtığı andaki türü ve boyuyla tutulmuş sayılır | günde 6 |
     | Dede'nin isteği 2 katı | istek bitince, olta boşa dönünce kart (altın istekte de; harita parçası değil, para) | isteğin parası bir kez daha | günde 3 |
     | Akvaryum kutusu 2 katı | Akvaryum panelinde, kutuda en az 40 para varken | kutunun parası bir kez daha | günde 3, 15 dakikada bir |
@@ -1324,8 +1324,10 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
     Sınırlar reklam izleyen oyuncunun denge ölçümüyle seçildi (aşağıda "Reklamların dengesi").
 
   - **Geçiş reklamı** seyrek: ilk 20 dakikada yok, en çok 8 dakikada bir (ödüllü reklamdan sonra da 8 dakika), yalnızca
-    oyuncunun başlattığı geçişte ekran karanlıkken: haritayla başka bölgeye, sandalla şamandıraya geçerken ve Dede'yle
-    çayda.
+    oyuncunun başlattığı geçişte ekran karanlıkken: haritayla başka bölgeye, sandalla şamandıraya geçerken, Dede'yle
+    çayda ve satışta (Ersin, 27 Kasım 2026: "çok az reklam çıkıyor"; Kazı'da her yüzeye çıkışta): SAT'la uzaktan
+    Nine'ye giderken, iskelede satıştan sonra dükkân kapanınca (ekran kararır). Önceden bir bölgede durup satan oyuncu
+    hiç geçiş reklamı görmüyordu (denge botu satışa gidişi zaten geçiş sayıyordu: ölçümü değişmedi).
   - **Isınma:** ilk 3 balıktan önce hiçbir teklif ve geçiş reklamı yok.
   - **"Reklamlar hakkında" kartı:** oyunun ilk sakin anında bir kez (yeni oyunda balıkçı seçimi ve açılış filminden
     hemen sonra; KVKK aydınlatması: neden reklam, kim sunar, hangi bilgiler gider, seçimler nerede); kapanınca onay
@@ -1353,8 +1355,23 @@ Ayrıntı: [`saha-arastirmasi.md`](saha-arastirmasi.md) §7–8 ve [`CLAUDE.md`]
     zamanından gider. Botta kurtarma yok denecek kadar az (tepkili bot takımın taşıdığı balığı pek kaçırmaz).
     İlk sınırlarla (satış günde 8 ve 10 dakikada bir, istek 6, akvaryum 4) reklamlı oyuncu +%56 kazanıyordu, saatte
     ~9,5 ödüllü reklam izliyordu: satışın 2 katı kazancın %35'iydi. Satış 30 dakikada bir ve günde 4'e, istek ve
-    akvaryum günde 3'e indi. Korkuluk `test_session_sim`: reklamlı oyuncu +%5–40, saatte en çok 9 ödüllü reklam,
-    tekne ve rütbeler reklamsızın %80'inden erken değil.
+    akvaryum günde 3'e indi (27 Kasım 2026'da satış yine Kazı gibi: yukarıda). Korkuluk `test_session_sim`: tekne
+    ve rütbeler reklamsızın %80'inden erken değil.
+
+    **Satış Kazı gibi** (Ersin'in kararı, 27 Kasım 2026: satış günde 8 ve 10 dakikada bir; istek ve akvaryum günde 3;
+    geçiş reklamı satışta da), aynı ölçüm (bölge canavarlarıyla, yapı 5'in dengesi; reklamsız saatte 15.249–17.144):
+
+    | | Reklamlı |
+    |---|---|
+    | Saatte para | 24.641–26.352 (+%48–69, ortalama +%55) |
+    | Reklamla gelen para (kazançta payı) | %37–39 (satışın 2 katı %35–37) |
+    | Saatte ödüllü reklam | 7,9–8,3 (satış 2,9–3,2; istek 2,9–3; akvaryum 1,9–2,2) |
+    | Saatte geçiş reklamı | 3,0–3,4 |
+    | Tekne, rütbe 5, 9, 13 (dk) | reklamsızla aynı ya da biraz sonra (reklamın süresi) |
+    | Final hazır, Gölün Bekçisi (dk) | 245–265 / 251–266 (reklamsız 291–313 / 297–330: canavarların takımı paraya bağlı) |
+
+    Reklam izleyen oyuncu takımı ve canavarları ~%15 erken bitirir; rütbeler ve bölgeler aynı kalır. Korkuluk
+    `test_session_sim`: reklamlı oyuncu +%5–70, saatte en çok 10 ödüllü reklam.
 - **Parayla satılmayacaklar:** şans (nadir yem, ek atış, hava olayı).
 - **Oyun parası:** yalnızca oynayarak kazanılır, gerçek parayla asla satılmaz. Bu yüzden oranı değiştiren yem ve yapay yem oyun parasıyla satılabilir.
 - **Boşta gelir üst sınırlı:** tuzak en çok 4 şey toplar, akvaryum kutusu en çok 2 saatlik birikimde durur.

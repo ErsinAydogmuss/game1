@@ -313,6 +313,8 @@ var _trap_tap: int = -1
 var _trap_clock: float = 0.0
 ## SAT ile tezgâha geçildi: kararma bitince dükkân Kova sekmesinde açılır.
 var _pending_sell: bool = false
+## Dükkânın bu açılışında satış yapıldı mı (kapanınca geçiş reklamı).
+var _sold_here: bool = false
 ## Gölün Sırrı: suda şişe ve mektubun paneli; uzaktaki şişeye dokunuldu (balıkçı yürür ya da sandal gider, varınca
 ## alır), az önce okunan mektup (panel kapanınca Dede konuşur; 0 = yok), biten altın isteğin Dede sözü (parça,
 ## harita tamam).
@@ -1158,7 +1160,8 @@ func _go_sell() -> void:
 		session.relocate(spot)
 		_follow_zone()
 		_snap_camera()
-		_pending_sell = true)
+		_pending_sell = true
+		_interstitial())
 
 
 ## SAT'ta balıkçının geldiği yer: tezgâhın önünde, Nine'nin karşısında (yürünebilen ilk yer).
@@ -3701,10 +3704,16 @@ func _on_shop() -> void:
 ## Dükkân kapandı: tezgâhta açıldıysa Nine uğurlar (ipucu çubuğunda, sırayla uğurlama ve öğüt
 ## sözleri); takım çantasından uzaktan açıldıysa Nine yanında değil, susar.
 func _on_shop_closed() -> void:
+	var sold := _sold_here
+	_sold_here = false
 	if shop_panel.is_remote():
 		return
 	_nine_index = _nine_index % Nine.LINE_COUNT + 1
 	_say(Nine.LINE_KEY % _nine_index, "nine")
+	# Satıştan sonra geçiş reklamı (Kazı'nın yüzeye çıkışı gibi; Ersin, 27 Kasım 2026): dükkân kapanınca ekran kararır,
+	# reklam karanlıkta. SAT'la uzaktan gelince reklam yolda çıkmıştır (_go_sell): 8 dakika dolmadan yine yok.
+	if sold and Ads.interstitial_due() and not fade.busy():
+		fade.play(func() -> void: _interstitial())
 
 
 ## Takım değişti (dükkânda satın alma ya da kuşanma; bir tekniğin ilk kamışı o tekniği ele verir):
@@ -3745,6 +3754,7 @@ func _gear() -> GearStats:
 func _on_sold(_coins: int) -> void:
 	_refresh_status()
 	nine.cheer()
+	_sold_here = true
 
 
 ## Dede ve Nine'nin yüzleri (ipucu çubuğu, kart, dükkân) Ersin'in portrelerinden, sözün ifadesiyle
@@ -3885,8 +3895,8 @@ func _on_ad_missed(place: String) -> void:
 
 
 ## Geçiş reklamı (AdRules: ilk 20 dakikadan sonra, en çok 8 dakikada bir; yalnızca oyuncunun başlattığı geçişte):
-## harita geçişinde, sandalla ve çayda ekran karanlıkken. Reklam açıkken oyun durur (kararma da: reklamdan sonra
-## açılır).
+## harita geçişinde, sandalla, çayda, SAT'la Nine'ye giderken ve satıştan sonra dükkân kapanınca, ekran karanlıkken.
+## Reklam açıkken oyun durur (kararma da: reklamdan sonra açılır).
 func _interstitial() -> void:
 	if Ads.interstitial_due():
 		Ads.show_interstitial()

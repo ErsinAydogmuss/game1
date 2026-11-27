@@ -135,7 +135,8 @@ In the EEA a Google UMP consent form may be shown around step 4. The prompt is n
 Ads: the game shows Google AdMob ads. Rewarded ads are always optional: "Watch an ad: double
 it" after selling fish at Nana's shop, in the aquarium panel and after Dede's request is done, and "Watch an ad:
 bring it back" when a rare fish escapes. A short interstitial ad may appear at most once every 8 minutes, never in
-the first 20 minutes, only during a screen fade when the player travels with the map or drinks tea. Ad content is
+the first 20 minutes, only during a screen fade when the player travels with the map, goes to sell or leaves the shop
+after a sale, or drinks tea. Ad content is
 limited to PG. Privacy: Settings → Privacy (privacy policy, ad choices, licenses).
 
 The game does not collect personal data itself; game progress and photos taken in photo mode stay on the device

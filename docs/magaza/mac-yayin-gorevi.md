@@ -26,29 +26,43 @@
 
 ---
 
-## Şimdiki durum (22 Kasım 2026, akşam): önce bunu oku
+## Şimdiki durum (27 Kasım 2026): önce bunu oku
 
 - **Önceki turlarda yapılanlar** (depoya göre): AdMob'un gerçek kimlikleri oyunda (commit `f1678be`), yükleme anahtarı
   kuruldu ve parmak izi `tools/check_aab.py`'de (`afdd53b`), performans güncellemesi ve yapı 2 (`41b5678`), test
   kullanıcılarının düzeltmeleri ve yapı 3, 4, 5 (yapı 5: etkili teknik ve 6 bölge canavarı; "Reklamlar hakkında" kartı
-  ve ATT oyunun başında: `f888938`). Yapı 5 iki mağazada da gönderildi (App Store'da "Waiting for Review", Play'de
-  incelemede). Hangi kanalda ne olduğu `~/olta-yayin/durum.md`'de. **Bitmiş bölümü yeniden yapma.**
-- **Bu tur: yalnızca Android, yapı 6 (çökme düzeltmesi).** Ersin: "Olta bir Android'de kendi kendine kapandı, Kazı'daki
-  gibi." Kazı'da bu, Android'de kenar yumuşatmanın (MSAA) kapanmasıyla bitti (Kazı 0.14.4; Mali ekran kartı sürücüsü
-  MSAA'lı çizim tamponunun belleğini alamayıp oyunu kapatıyordu). Olta'da da Android'de MSAA artık yok
-  (`docs/performans-notlari.md` §8.6). Yapı 5'ten başka fark yok.
-- **Android `version/code=6`** `export_presets.cfg`'de hazır. AAB'yi bu koddan yeniden derle (6. bölüm), `check_aab.py`
-  ile denetle. Play'de yapı 5'in olduğu kanalda **yeni sürüm: AAB 6**, sürüm notları `magaza-metinleri.md` → "Sürüm
-  notları (1.0.0, yapı 6, Android)". Yapı 5 incelemedeyse 6 onun yerine geçer: Ersin bu turu çökme düzeltmesi için
-  istedi, değiştirmeden önce yine de bir cümleyle haber ver ("5'in yerine 6'yı gönderiyorum").
-- **iPhone: dokunma.** Değişiklik yalnızca Android'i etkiliyor (`msaa_3d.android`); iPhone'da yapı 5 incelemede kalsın,
-  `application/version` 5. Apple yapı 5'i geri çevirirse yeni iPhone yapısı 6 olur.
-- **Görünen sürüm:** 1.0.0 Play'de üretimde **henüz yayında değilse** 1.0.0 kalır; yayındaysa `config/version="1.0.1"`
-  (izinli istisna), commit et.
-- **Akış:** 0. bölüm (hazırlık ve denetim) → 6 (AAB 6) → Play'de durum.md'deki kanal: yeni sürüm, AAB 6, sürüm notları →
-  Ersin'in onayıyla gönder → 9 (rapor: durum.md'ye yapı 6). Mağaza metinleri ve ekran görüntüleri değişmedi.
-- **Sonra (2–3 gün):** Play Console → Kalite → Android vitals → Kilitlenmeler ve ANR'ler, sürüm filtresi 6. Çökme sürerse
-  çökmenin "Durdurma mesajı" (abort message), yığını ve cihazları (model, RAM) Ersin'e ver; bulut oturumu bakar.
+  ve ATT oyunun başında: `f888938`), Android yapı 6 (Android'de kenar yumuşatma kapalı: kendiliğinden kapanma
+  düzeltmesi, `279a299`). Apple yapı 5'i 24 Kasım'da 2.3.6 ile geri çevirdi (yaş derecelendirmesinde Advertising
+  "Hayır"dı; Evet yapıldı: `fd0d395`). Hangi kanalda ne olduğu `~/olta-yayin/durum.md`'de. **Bitmiş bölümü yeniden
+  yapma.**
+- **Bu tur: iki mağaza, reklamın kuralları** (Ersin: "çok az reklam çıkıyor, Kazı'daki gibi olsun"):
+  - satışta "Reklam izle: 2 katı" teklifi Kazı gibi günde 8 ve 10 dakikada bir (önce günde 4 ve 30 dakikada bir);
+  - geçiş reklamı satışa gidişte de: SAT'la Nine'ye giderken ve iskelede satıştan sonra dükkân kapanınca (ekran
+    kararır). Kural aynı: ilk 20 dakika yok, en çok 8 dakikada bir. Önceden yalnızca harita, sandal ve çaydaydı.
+  - Kod: `scripts/core/ad_rules.gd`, `scenes/main.gd`. Başka oynanış farkı yok.
+- **Numaralar hazır** (`export_presets.cfg`): iPhone `application/version="6"`, Android `version/code=7`.
+- **Görünen sürüm:** 1.0.0 bir mağazada yayındaysa `config/version="1.0.1"` (izinli istisna), commit et. Ersin "yeni
+  sürüm çıktı" dedi; hangi mağazada yayında olduğunu durum.md'den ve mağazadan doğrula. İki mağazada aynı görünen
+  sürüm olsun. App Store'da 1.0.0 henüz yayında değilse (incelemede ya da onay bekliyor) yeni sürüm açılamaz: Ersin'e
+  sor; 1.0.0'ı geri çekip (Developer Reject) yapı 6'yı 1.0.0'a bağlamak bir yol.
+- **Gizlilik sayfası değişti** (`docs/gizlilik-sayfasi/index.html`: geçiş reklamının cümlesine "satıştan sonra"
+  eklendi, Türkçe ve İngilizce). `olta-gizlilik` deposundaki `index.html`'yi bununla değiştir: `gh` varsa depoyu
+  geçici bir klasöre klonla, dosyayı üstüne kopyala, commit ve push; yoksa Chrome'la deponun sayfasında **Add file →
+  Upload files** ile üzerine yükle. Birkaç dakika sonra
+  `curl -s https://ersinaydogmuss.github.io/olta-gizlilik/ | grep -c "satıştan sonra"` 1 vermeli.
+- **App Store inceleme notu** (`docs/magaza/yayin.md`): geçiş reklamının cümlesi değişti ("goes to sell or leaves the
+  shop after a sale"): App Store Connect → App Review Information → Notes'u güncelle.
+- **Akış:** 0. bölüm (hazırlık ve denetim) → 1 (yalnızca gizlilik sayfasını güncelle) → 5 (iPhone yapı 6) → 6 (AAB 7,
+  `check_aab.py`) → Play'de durum.md'deki kanal: yeni sürüm, AAB 7, sürüm notları → App Store Connect: yapı 6, sürüm
+  notları, inceleme notu → Ersin'in onayıyla gönder → 9 (rapor: durum.md'ye yapı 6 ve 7). Sürüm notları
+  `magaza-metinleri.md` → "Sürüm notları (1.0.1, iPhone yapı 6, Android yapı 7)". Mağaza metinleri, ekran görüntüleri,
+  veri güvenliği ve gizlilik beyanları değişmedi (reklam zaten vardı).
+- **Kendi reklamına dokunma:** Ersin'in telefonu AdMob'da deneme cihazı değilse mağazadan indirilen oyunda gerçek
+  reklam çıkar; Ersin onlara dokunmamalı (AdMob geçersiz trafik sayar). Denemeyi geliştirme derlemesiyle yap
+  (`docs/iphone-kurulum.md`: Google'ın deneme reklamları).
+- **Sonra (2–3 gün):** Play Console → Kalite → Android vitals → Kilitlenmeler ve ANR'ler, sürüm filtresi 6 ve 7. Çökme
+  sürerse çökmenin "Durdurma mesajı" (abort message), yığını ve cihazları (model, RAM) Ersin'e ver; bulut oturumu
+  bakar.
 
 ## Bağlam
 
